@@ -37,13 +37,6 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   );
 });
 
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
@@ -106,9 +99,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">

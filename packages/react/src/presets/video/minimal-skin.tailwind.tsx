@@ -110,28 +110,6 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
-function CaptionsLabel(): string {
-  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? 'Disable captions' : 'Enable captions';
-}
-
-function PiPLabel(): string {
-  const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
-}
-
-function FullscreenLabel(): string {
-  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
-}
-
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
@@ -215,9 +193,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -289,9 +265,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <CaptionsLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -303,9 +277,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <PiPLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -317,9 +289,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <FullscreenLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

@@ -47,11 +47,7 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
-              <span class="media-tooltip-label media-tooltip-label--play">Play</span>
-              <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
-            </media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">

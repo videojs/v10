@@ -193,7 +193,6 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
-export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';

@@ -53,28 +53,6 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   );
 });
 
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
-function CaptionsLabel(): string {
-  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? 'Disable captions' : 'Enable captions';
-}
-
-function PiPLabel(): string {
-  const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
-}
-
-function FullscreenLabel(): string {
-  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
-}
-
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
@@ -151,9 +129,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -222,9 +198,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <CaptionsLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -236,9 +210,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <PiPLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -250,9 +222,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <FullscreenLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

@@ -63,11 +63,7 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
-              <span class="media-tooltip-label media-tooltip-label--play">Play</span>
-              <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
-            </media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -133,28 +129,19 @@ function getTemplateHTML() {
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-button>
-            <media-tooltip id="captions-tooltip" side="top" class="media-surface media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--enable-captions">Enable captions</span>
-              <span class="media-tooltip-label media-tooltip-label--disable-captions">Disable captions</span>
-            </media-tooltip>
+            <media-tooltip id="captions-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
               ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
             </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>
-              <span class="media-tooltip-label media-tooltip-label--exit-pip">Exit picture-in-picture</span>
-            </media-tooltip>
+            <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
               ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
               ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--enter-fullscreen">Enter fullscreen</span>
-              <span class="media-tooltip-label media-tooltip-label--exit-fullscreen">Exit fullscreen</span>
-            </media-tooltip>
+            <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
           </div>
         </media-tooltip-group>
       </media-controls>

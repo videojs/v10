@@ -89,7 +89,6 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
-export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';

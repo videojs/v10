@@ -19,7 +19,6 @@ import {
   seek,
   slider,
   time,
-  tooltipState,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -78,18 +77,12 @@ function getTemplateHTML() {
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroupStart}">
-            <span class="${tooltipState.play.wrapper}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
-                <span class="${tooltipState.play.replay}">Replay</span>
-                <span class="${tooltipState.play.play}">Play</span>
-                <span class="${tooltipState.play.pause}">Pause</span>
-              </media-tooltip>
-            </span>
+              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -157,39 +150,21 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-
-            <span class="${tooltipState.captions.wrapper}">
               <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
-              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
-                <span class="${tooltipState.captions.enable}">Enable captions</span>
-                <span class="${tooltipState.captions.disable}">Disable captions</span>
-              </media-tooltip>
-            </span>
-
-            <span class="${tooltipState.pip.wrapper}">
+              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
                 ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
                 ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
               </media-pip-button>
-              <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
-                <span class="${tooltipState.pip.enter}">Enter picture-in-picture</span>
-                <span class="${tooltipState.pip.exit}">Exit picture-in-picture</span>
-              </media-tooltip>
-            </span>
-
-            <span class="${tooltipState.fullscreen.wrapper}">
+              <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.fullscreen.button)}">
                 ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
                 ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
               </media-fullscreen-button>
-              <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}">
-                <span class="${tooltipState.fullscreen.enter}">Enter fullscreen</span>
-                <span class="${tooltipState.fullscreen.exit}">Exit fullscreen</span>
-              </media-tooltip>
-            </span>
+              <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
           </div>
         </media-tooltip-group>
       </media-controls>
