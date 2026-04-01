@@ -2,7 +2,8 @@
 
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
-import { forwardRef, useState } from 'react';
+import { listen } from '@videojs/utils/dom';
+import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -49,7 +50,6 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     // Keep a ref to the latest volume state for callbacks.
     const volumeRef = useLatestRef(volume);
 
-    const isDisabled = () => !!disabled || !volumeRef.current;
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();
     const setVolume = (percent: number) => volumeRef.current?.setVolume(percent / 100);
@@ -74,7 +74,24 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       onDragEnd,
     });
 
-    const wheelProps = createWheelStep({ isDisabled, getPercent, getStepPercent, onValueChange: setVolume });
+    // Attach wheel listener directly to the DOM with { passive: false } so
+    // preventDefault() can block page scroll. React's onWheel is passive.
+    const wheelRef = useRef<HTMLElement | null>(null);
+
+    const [wheelStep] = useState(() =>
+      createWheelStep({
+        isDisabled: () => !!disabled || !volumeRef.current,
+        getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
+        getStepPercent: () => core.getStepPercent(),
+        onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
+      })
+    );
+
+    useLayoutEffect(() => {
+      const el = wheelRef.current;
+      if (!el) return;
+      return listen(el, 'wheel', wheelStep.onWheel, { passive: false });
+    }, [wheelStep]);
 
     if (!volume) {
       if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
@@ -99,8 +116,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           {
             state,
             stateAttrMap: VolumeSliderDataAttrs,
-            ref: [forwardedRef, rootRef],
-            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, wheelProps, elementProps],
+            ref: [forwardedRef, rootRef, wheelRef],
+            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
           }
         )}
       </SliderProvider>
