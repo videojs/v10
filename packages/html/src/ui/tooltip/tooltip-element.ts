@@ -19,6 +19,13 @@ import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover 
 import { MediaElement } from '../media-element';
 import { tooltipGroupContext } from './context';
 
+export interface TooltipLabelProvider {
+  getLabel(): string | undefined;
+  setSuppressLabel(value: boolean): void;
+}
+
+type TriggerElement = HTMLElement & Partial<TooltipLabelProvider>;
+
 export class TooltipElement extends MediaElement {
   static readonly tagName = 'media-tooltip';
 
@@ -50,7 +57,7 @@ export class TooltipElement extends MediaElement {
   // Cleanup controllers
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
-  #currentTrigger: HTMLElement | null = null;
+  #currentTrigger: TriggerElement | null = null;
   #positionAbort: AbortController | null = null;
   #positionFrame = 0;
   #resizeObserver: ResizeObserver | null = null;
@@ -133,6 +140,9 @@ export class TooltipElement extends MediaElement {
     const triggerEl = this.#findTrigger();
     this.#syncTrigger(triggerEl);
 
+    // Forward label from trigger when it supports label forwarding.
+    this.#syncContent(triggerEl);
+
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
     this.#core.setInput(input);
@@ -208,15 +218,26 @@ export class TooltipElement extends MediaElement {
     }
   }
 
+  #syncContent(triggerEl: TriggerElement | null): void {
+    const label = triggerEl?.getLabel?.();
+    this.#core.setContent(label);
+    triggerEl?.setSuppressLabel?.(true);
+    if (label) this.textContent = label;
+  }
+
   #cleanupTrigger(): void {
     if (this.#currentTrigger) {
+      this.#currentTrigger.setSuppressLabel?.(false);
+
       // Remove ARIA attributes and anchor-name style from the old trigger.
       applyElementProps(this.#currentTrigger, {
         'aria-describedby': undefined,
+        'aria-labelledby': undefined,
       });
       this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
+    this.#core.setContent(undefined);
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;

@@ -128,6 +128,23 @@ describe('SeekButtonCore', () => {
     });
   });
 
+  describe('setSuppressLabel', () => {
+    it('suppresses aria-label when enabled', () => {
+      const core = new SeekButtonCore({ seconds: 30 });
+      core.setSuppressLabel(true);
+      const attrs = core.getAttrs(createState({ direction: 'forward' }));
+      expect(attrs['aria-label']).toBeUndefined();
+    });
+
+    it('restores aria-label when disabled', () => {
+      const core = new SeekButtonCore({ seconds: -10 });
+      core.setSuppressLabel(true);
+      core.setSuppressLabel(false);
+      const attrs = core.getAttrs(createState({ direction: 'backward' }));
+      expect(attrs['aria-label']).toBe('Seek backward 10 seconds');
+    });
+  });
+
   describe('seek', () => {
     it('seeks forward by seconds offset', async () => {
       const core = new SeekButtonCore({ seconds: 30 });

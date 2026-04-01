@@ -81,6 +81,23 @@ describe('PiPButtonCore', () => {
     });
   });
 
+  describe('setSuppressLabel', () => {
+    it('suppresses aria-label when enabled', () => {
+      const core = new PiPButtonCore();
+      core.setSuppressLabel(true);
+      const attrs = core.getAttrs(createState());
+      expect(attrs['aria-label']).toBeUndefined();
+    });
+
+    it('restores aria-label when disabled', () => {
+      const core = new PiPButtonCore();
+      core.setSuppressLabel(true);
+      core.setSuppressLabel(false);
+      const attrs = core.getAttrs(createState({ pip: true }));
+      expect(attrs['aria-label']).toBe('Exit picture-in-picture');
+    });
+  });
+
   describe('toggle', () => {
     it('calls requestPictureInPicture when not in PiP', async () => {
       const core = new PiPButtonCore();

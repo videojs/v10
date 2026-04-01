@@ -21,6 +21,7 @@ export class PlayButtonCore {
 
   #props = { ...PlayButtonCore.defaultProps };
   #media: MediaPlaybackState | null = null;
+  #suppressLabel = false;
 
   constructor(props?: PlayButtonProps) {
     if (props) this.setProps(props);
@@ -44,9 +45,13 @@ export class PlayButtonCore {
     return state.paused ? 'Play' : 'Pause';
   }
 
+  setSuppressLabel(value: boolean): void {
+    this.#suppressLabel = value;
+  }
+
   getAttrs(state: PlayButtonState) {
     return {
-      'aria-label': this.getLabel(state),
+      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

@@ -73,6 +73,8 @@ export function TooltipRoot({
     return instance;
   });
 
+  const [content, setContent] = useState<string | undefined>();
+
   const anchorName = useSafeId();
   const popupId = useSafeId('tooltip');
 
@@ -94,10 +96,13 @@ export function TooltipRoot({
 
   const input = useSnapshot(tooltip.input);
   core.setInput(input);
+  core.setContent(content);
   const state = core.getState();
 
   return (
-    <TooltipContextProvider value={{ core, tooltip, state, stateAttrMap: TooltipDataAttrs, anchorName, popupId }}>
+    <TooltipContextProvider
+      value={{ core, tooltip, state, stateAttrMap: TooltipDataAttrs, anchorName, popupId, content, setContent }}
+    >
       {children}
     </TooltipContextProvider>
   );

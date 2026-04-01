@@ -14,6 +14,13 @@ export interface MediaUIComponent<Props = object, State extends object = object>
   setMedia(media: object): void;
 }
 
+/** Constraint for media button cores that provide a label derived from state. */
+export interface MediaButtonComponent<Props = object, State extends object = object>
+  extends MediaUIComponent<Props, State> {
+  getLabel(state: State): string;
+  setSuppressLabel(value: boolean): void;
+}
+
 /** Extracts the media state parameter type from a core's `setMedia` method. */
 export type InferMediaState<Core extends MediaUIComponent> = Parameters<Core['setMedia']>[0];
 

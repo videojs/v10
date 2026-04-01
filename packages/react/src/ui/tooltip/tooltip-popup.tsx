@@ -21,7 +21,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { core, tooltip, state, stateAttrMap, anchorName, popupId } = useTooltipContext();
+  const { core, tooltip, state, stateAttrMap, anchorName, popupId, content } = useTooltipContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -136,7 +136,10 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
 
   // --- Visibility ---
 
-  if (!state.open) {
+  // When content is forwarded from the trigger, the popup must stay in the
+  // DOM so aria-labelledby can reference it. The popover API keeps the
+  // element hidden when not in the top layer.
+  if (!state.open && !content) {
     return null;
   }
 
@@ -156,6 +159,8 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
           style: positioningStyle,
           ...core.getPopupAttrs(state),
         },
+        // Forwarded content as default children — explicit children override.
+        { children: content },
         { ...restPopupProps, onBlur: onFocusOut },
         elementProps,
       ],

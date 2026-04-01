@@ -23,6 +23,7 @@ export class CaptionsButtonCore {
 
   #props = { ...CaptionsButtonCore.defaultProps };
   #media: MediaTextTrackState | null = null;
+  #suppressLabel = false;
 
   constructor(props?: CaptionsButtonProps) {
     if (props) this.setProps(props);
@@ -45,9 +46,13 @@ export class CaptionsButtonCore {
     return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
   }
 
+  setSuppressLabel(value: boolean): void {
+    this.#suppressLabel = value;
+  }
+
   getAttrs(state: CaptionsButtonState) {
     return {
-      'aria-label': this.getLabel(state),
+      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

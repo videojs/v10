@@ -23,6 +23,7 @@ export class PlaybackRateButtonCore {
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
+  #suppressLabel = false;
 
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
@@ -45,9 +46,13 @@ export class PlaybackRateButtonCore {
     return `Playback rate ${state.rate}`;
   }
 
+  setSuppressLabel(value: boolean): void {
+    this.#suppressLabel = value;
+  }
+
   getAttrs(state: PlaybackRateButtonState) {
     return {
-      'aria-label': this.getLabel(state),
+      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
