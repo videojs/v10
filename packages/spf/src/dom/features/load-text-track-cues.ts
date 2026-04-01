@@ -2,7 +2,8 @@ import { effect } from '../../core/signals/effect';
 import { computed, type Signal } from '../../core/signals/primitives';
 import type { Presentation, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
-import { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
+import type { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
+import { createTextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
 import { TextTracksActor } from './text-tracks-actor';
 
 // ============================================================================
@@ -123,7 +124,7 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
       segmentLoaderActor?.destroy();
       if (currentMediaElement) {
         textTracksActor = new TextTracksActor(currentMediaElement);
-        segmentLoaderActor = new TextTrackSegmentLoaderActor(textTracksActor);
+        segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
       } else {
         textTracksActor = undefined;
         segmentLoaderActor = undefined;

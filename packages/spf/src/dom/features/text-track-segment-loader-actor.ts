@@ -1,7 +1,7 @@
-import type { ActorSnapshot, SignalActor } from '../../core/actor';
 import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
-import type { ReadonlySignal } from '../../core/signals/primitives';
-import { signal, untrack, update } from '../../core/signals/primitives';
+import type { MessageActor } from '../../core/create-actor';
+import { createActor } from '../../core/create-actor';
+import { untrack } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/task';
 import type { TextTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
@@ -11,15 +11,19 @@ import type { TextTracksActor } from './text-tracks-actor';
 // Types
 // =============================================================================
 
-export type TextTrackSegmentLoaderStatus = 'idle' | 'loading' | 'destroyed';
-
-export type TextTrackSegmentLoaderSnapshot = ActorSnapshot<TextTrackSegmentLoaderStatus, object>;
+export type TextTrackSegmentLoaderStatus = 'idle' | 'loading';
 
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';
   track: TextTrack;
   currentTime: number;
 };
+
+export type TextTrackSegmentLoaderActor = MessageActor<
+  TextTrackSegmentLoaderStatus | 'destroyed',
+  object,
+  TextTrackSegmentLoaderMessage
+>;
 
 // =============================================================================
 // Implementation
@@ -30,47 +34,31 @@ export type TextTrackSegmentLoaderMessage = {
  * TextTracksActor. Mirrors the SegmentLoaderActor/SourceBufferActor pattern
  * for the text track equivalent.
  *
- * Planning is done in send(): segments already recorded in TextTracksActor's
- * context are skipped. Each new send() preempts in-flight work via abortAll()
- * before scheduling fresh tasks.
+ * Planning is done in the load handler: segments already recorded in
+ * TextTracksActor's context are skipped. Each load preempts in-flight work
+ * via abortAll() before scheduling fresh tasks. The runner's onSettled
+ * callback transitions back to idle when all tasks complete.
  */
-export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegmentLoaderStatus, object> {
-  readonly #textTracksActor: TextTracksActor;
-  readonly #snapshotSignal = signal<TextTrackSegmentLoaderSnapshot>({
-    status: 'idle',
-    context: {},
-  });
-  readonly #runner = new SerialRunner();
-
-  constructor(textTracksActor: TextTracksActor) {
-    this.#textTracksActor = textTracksActor;
-  }
-
-  get snapshot(): ReadonlySignal<TextTrackSegmentLoaderSnapshot> {
-    return this.#snapshotSignal;
-  }
-
-  send(message: TextTrackSegmentLoaderMessage): void {
-    const status = untrack(() => this.#snapshotSignal.get().status);
-    if (status === 'destroyed') return;
+export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksActor): TextTrackSegmentLoaderActor {
+  const loadHandler = (
+    message: TextTrackSegmentLoaderMessage,
+    { transition, runner }: { transition: (to: TextTrackSegmentLoaderStatus) => void; runner: SerialRunner }
+  ): void => {
     const { track, currentTime } = message;
     const trackId = track.id;
-    const bufferedSegments = untrack(() => this.#textTracksActor.snapshot.get().context.segments[trackId] ?? []);
+    const bufferedSegments = untrack(() => textTracksActor.snapshot.get().context.segments[trackId] ?? []);
     const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
 
     // Preempt any in-flight work before scheduling the new plan.
-    this.#runner.abortAll();
+    runner.abortAll();
     if (!segmentsToLoad.length) {
-      update(this.#snapshotSignal, { status: 'idle' });
+      transition('idle');
       return;
     }
 
-    update(this.#snapshotSignal, { status: 'loading' });
-
-    // Capture actor reference so Tasks close over it, not `this`.
-    const textTracksActor = this.#textTracksActor;
-    segmentsToLoad.forEach((segment) => {
-      this.#runner.schedule(
+    transition('loading');
+    for (const segment of segmentsToLoad) {
+      runner.schedule(
         new Task(async (signal) => {
           if (signal.aborted) return;
           try {
@@ -87,24 +75,21 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
           }
         })
       );
-    });
+    }
+  };
 
-    // Transition to idle when this generation's tasks all settle.
-    // runner.settled is the chain tail after the tasks above; if a new send()
-    // arrives and abortAll() + new scheduling advances the chain, the reference
-    // will differ and the stale callback is a no-op.
-    const settled = this.#runner.settled;
-    settled.then(() => {
-      if (this.#runner.settled !== settled) return;
-      if (this.#snapshotSignal.get().status !== 'destroyed') {
-        update(this.#snapshotSignal, { status: 'idle' });
-      }
-    });
-  }
-
-  destroy(): void {
-    if (this.#snapshotSignal.get().status === 'destroyed') return;
-    this.#runner.destroy();
-    update(this.#snapshotSignal, { status: 'destroyed' });
-  }
+  return createActor({
+    runner: () => new SerialRunner(),
+    initial: 'idle' as TextTrackSegmentLoaderStatus,
+    context: {} as object,
+    states: {
+      idle: {
+        on: { load: loadHandler },
+      },
+      loading: {
+        onSettled: 'idle',
+        on: { load: loadHandler },
+      },
+    },
+  });
 }
