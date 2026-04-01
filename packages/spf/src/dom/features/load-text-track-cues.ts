@@ -90,6 +90,16 @@ function deriveStatus(state: TextTrackCueLoadingState, owners: TextTrackCueLoadi
   return 'monitoring-for-loads';
 }
 
+function teardownActors(owners: Signal<TextTrackCueLoadingOwners>) {
+  const { textTracksActor, segmentLoaderActor } = untrack(() => owners.get());
+  // Only update owners if there are actors to clean up — avoids spurious
+  // signal writes on initial startup that would re-trigger other features.
+  if (!textTracksActor && !segmentLoaderActor) return;
+  textTracksActor?.destroy();
+  segmentLoaderActor?.destroy();
+  update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined });
+}
+
 // ============================================================================
 // Main export
 // ============================================================================
@@ -128,6 +138,8 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
   owners: Signal<O>;
 }): Reactor<LoadTextTrackCuesStatus | 'destroying' | 'destroyed', object> {
   const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
+  const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
+  const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
 
   return createReactor<LoadTextTrackCuesStatus, object>({
     initial: 'preconditions-unmet',
@@ -141,25 +153,15 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
     states: {
       'preconditions-unmet': [
         () => {
-          const { textTracksActor, segmentLoaderActor } = untrack(() => owners.get());
-          // Only update owners if there are actors to clean up — avoids spurious
-          // signal writes on initial startup that would re-trigger other features.
-          if (!textTracksActor && !segmentLoaderActor) return;
-          textTracksActor?.destroy();
-          segmentLoaderActor?.destroy();
-          update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
+          // Defensive reset before creating fresh actors (no-op if already undefined).
+          teardownActors(owners);
         },
       ],
 
       'setting-up': [
         () => {
           // Defensive reset before creating fresh actors (no-op if already undefined).
-          const existing = untrack(() => owners.get());
-          if (existing.textTracksActor || existing.segmentLoaderActor) {
-            existing.textTracksActor?.destroy();
-            existing.segmentLoaderActor?.destroy();
-            update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
-          }
+          teardownActors(owners);
           const mediaElement = untrack(() => owners.get().mediaElement as HTMLMediaElement);
           const textTracksActor = createTextTracksActor(mediaElement);
           const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
@@ -171,14 +173,14 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
 
       'monitoring-for-loads': [
         () => {
-          const s = state.get(); // tracked — re-runs on currentTime / selection / presentation changes
+          const currentTime = currentTimeSignal.get();
+          const track = selectedTrackSignal.get()!;
           // deriveStatus guarantees segmentLoaderActor is in owners and findSelectedTrack
           // returns a valid resolved track when in this state. The always monitor
           // (registered before this effect) transitions us out before this re-runs
           // if either invariant ever stops holding.
           const { segmentLoaderActor } = untrack(() => owners.get());
-          const track = findSelectedTrack(s)!;
-          segmentLoaderActor!.send({ type: 'load', track, currentTime: s.currentTime ?? 0 });
+          segmentLoaderActor!.send({ type: 'load', track, currentTime });
         },
       ],
     },
