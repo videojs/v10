@@ -19,10 +19,10 @@ class FakeHost extends EventTarget implements NativeMediaHost {
   }
 }
 
-const NativeMediaErrors = NativeHlsMediaErrorsMixin(FakeHost);
+const NativeHlsMediaErrors = NativeHlsMediaErrorsMixin(FakeHost);
 
 function setup() {
-  const host = new NativeMediaErrors();
+  const host = new NativeHlsMediaErrors();
   const video = document.createElement('video');
   host.attach(video);
   return { host, video };
@@ -159,6 +159,17 @@ describe('NativeHlsMediaErrorsMixin', () => {
     expect(host.error).not.toBeNull();
 
     host.destroy();
+
+    expect(host.error).toBeNull();
+  });
+
+  it('clears stale error on source change (emptied event)', () => {
+    const { host, video } = setup();
+
+    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'failure');
+    expect(host.error).not.toBeNull();
+
+    video.dispatchEvent(new Event('emptied'));
 
     expect(host.error).toBeNull();
   });

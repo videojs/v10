@@ -22,7 +22,7 @@ class FakeHost extends EventTarget {
   }
 }
 
-const HlsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
+const HlsJsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -42,7 +42,7 @@ function createEngine(): Hls {
 
 function setup() {
   const engine = createEngine();
-  const host = new HlsMediaErrors(engine);
+  const host = new HlsJsMediaErrors(engine);
   const video = document.createElement('video');
   host.attach(video);
   (engine as any).emit(Hls.Events.MEDIA_ATTACHED);

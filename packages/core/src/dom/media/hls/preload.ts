@@ -17,7 +17,7 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
  * - `'none'` / `''` → no start, deferred full load on play.
  */
 export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
+  class HlsJsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
     #preloadAbort: AbortController | null = null;
     #preload: PreloadType = 'metadata';
     #defaultMaxBufferLength: number | undefined;
@@ -91,5 +91,5 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     }
   }
 
-  return HlsMediaPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
+  return HlsJsMediaPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
 }

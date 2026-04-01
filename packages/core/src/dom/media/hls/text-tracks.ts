@@ -19,7 +19,7 @@ interface HlsEngineHost {
  * hls.js via `engine.subtitleTrack`.
  */
 export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
+  class HlsJsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
 
     constructor(...args: any[]) {
@@ -145,7 +145,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
     }
   }
 
-  return HlsMediaTextTracks as unknown as Base;
+  return HlsJsMediaTextTracks as unknown as Base;
 }
 
 function addTextTrack(

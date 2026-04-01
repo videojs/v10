@@ -1,4 +1,3 @@
-import { listen } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import { MediaError } from '../../../core/media/media-error';
@@ -11,7 +10,7 @@ export interface NativeMediaHost extends EventTarget {
 }
 
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
+  class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
@@ -34,12 +33,19 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
       super.destroy();
     }
 
+    #destroy(): void {
+      this.#disconnect?.abort();
+      this.#disconnect = null;
+      this.#error = null;
+    }
+
     #init(target: HTMLMediaElement): void {
       this.#destroy();
       this.#disconnect = new AbortController();
 
-      listen(
-        target,
+      const signal = this.#disconnect.signal;
+
+      target.addEventListener(
         'error',
         (event) => {
           event.stopImmediatePropagation();
@@ -52,16 +58,18 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
         },
-        { signal: this.#disconnect.signal }
+        { signal }
       );
-    }
 
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-      this.#error = null;
+      target.addEventListener(
+        'emptied',
+        () => {
+          this.#error = null;
+        },
+        { signal }
+      );
     }
   }
 
-  return NativeMediaErrors as unknown as Base & Constructor<{ readonly error: MediaError | null }>;
+  return NativeHlsMediaErrors as unknown as Base & Constructor<{ readonly error: MediaError | null }>;
 }
