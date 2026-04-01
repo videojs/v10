@@ -34,8 +34,8 @@ function makePresentation(tracks: Array<{ id: string; kind?: string; language?: 
 function setup(initialState: TextTrackSyncState = {}, initialOwners: TextTrackSyncOwners = {}) {
   const state = signal<TextTrackSyncState>(initialState);
   const owners = signal<TextTrackSyncOwners>(initialOwners);
-  const cleanup = syncTextTracks({ state, owners });
-  return { state, owners, cleanup };
+  const reactor = syncTextTracks({ state, owners });
+  return { state, owners, reactor };
 }
 
 describe('syncTextTracks', () => {
@@ -46,7 +46,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup();
+    const { state, owners, reactor } = setup();
 
     owners.set({ ...owners.get(), mediaElement });
     state.set({ ...state.get(), presentation });
@@ -56,22 +56,22 @@ describe('syncTextTracks', () => {
     expect((mediaElement.children[0] as HTMLTrackElement).id).toBe('track-en');
     expect((mediaElement.children[1] as HTMLTrackElement).id).toBe('track-es');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not create tracks when no mediaElement', async () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
-    const { state, owners, cleanup } = setup();
+    const { state, reactor } = setup();
 
     state.set({ ...state.get(), presentation });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not create tracks when presentation has no text tracks', async () => {
     const mediaElement = document.createElement('video');
-    const { state, owners, cleanup } = setup();
+    const { state, owners, reactor } = setup();
 
     owners.set({ ...owners.get(), mediaElement });
     state.set({
@@ -85,7 +85,7 @@ describe('syncTextTracks', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mediaElement.children.length).toBe(0);
-    cleanup();
+    reactor.destroy();
   });
 
   it('sets selected track to "showing" and others to "disabled"', async () => {
@@ -95,7 +95,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup({ presentation });
+    const { state, owners, reactor } = setup({ presentation });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -106,7 +106,7 @@ describe('syncTextTracks', () => {
     expect(enEl!.track.mode).toBe('showing');
     expect(esEl!.track.mode).toBe('disabled');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('switches active track when selection changes', async () => {
@@ -116,7 +116,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    const { state, owners, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -130,7 +130,7 @@ describe('syncTextTracks', () => {
     expect(enEl!.track.mode).toBe('disabled');
     expect(esEl!.track.mode).toBe('showing');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('disables all tracks when selection is cleared', async () => {
@@ -140,7 +140,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    const { state, owners, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -151,7 +151,7 @@ describe('syncTextTracks', () => {
     expect(enEl!.track.mode).toBe('disabled');
     expect(esEl!.track.mode).toBe('disabled');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not touch non-subtitle/caption tracks', async () => {
@@ -166,13 +166,13 @@ describe('syncTextTracks', () => {
     mediaElement.appendChild(chaptersEl);
     chaptersEl.track.mode = 'hidden';
 
-    const { owners, cleanup } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    const { owners, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(chaptersEl.track.mode).toBe('hidden');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('bridges external mode change → selectedTextTrackId', async () => {
@@ -182,7 +182,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup({ presentation });
+    const { state, owners, reactor } = setup({ presentation });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -197,7 +197,7 @@ describe('syncTextTracks', () => {
 
     expect(state.get().selectedTextTrackId).toBe('track-es');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('clears selectedTextTrackId when external code disables all tracks', async () => {
@@ -207,7 +207,7 @@ describe('syncTextTracks', () => {
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { state, owners, cleanup } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    const { state, owners, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -222,23 +222,23 @@ describe('syncTextTracks', () => {
 
     expect(state.get().selectedTextTrackId).toBeUndefined();
 
-    cleanup();
+    reactor.destroy();
   });
 
-  it('removes track elements on cleanup', async () => {
+  it('removes track elements on destroy', async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([
       { id: 'track-en', language: 'en' },
       { id: 'track-es', language: 'es' },
     ]);
 
-    const { owners, cleanup } = setup({ presentation });
+    const { owners, reactor } = setup({ presentation });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mediaElement.children.length).toBe(2);
 
-    cleanup();
+    reactor.destroy();
     expect(mediaElement.children.length).toBe(0);
   });
 
@@ -246,7 +246,7 @@ describe('syncTextTracks', () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
-    const { state, owners, cleanup } = setup({ presentation });
+    const { state, owners, reactor } = setup({ presentation });
     owners.set({ ...owners.get(), mediaElement });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -260,6 +260,6 @@ describe('syncTextTracks', () => {
     expect(mediaElement.children.length).toBe(1);
     expect(mediaElement.children[0]).toBe(firstChild);
 
-    cleanup();
+    reactor.destroy();
   });
 });

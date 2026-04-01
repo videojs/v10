@@ -267,7 +267,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 6.5. Signal end of stream when all segments loaded
     endOfStream({ state, owners }),
 
-    // 7-8.5. Text track sync: setup, mode sync, and DOM bridge in one reactive function.
+    // 7-8.5. Text track sync: setup, mode sync, and DOM bridge.
     //        Consolidates setupTextTracks, syncTextTrackModes, syncSelectedTextTrackFromDom.
     syncTextTracks({ state, owners }),
 
@@ -280,7 +280,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     state,
     owners,
     destroy: () => {
-      cleanups.forEach((cleanup) => cleanup());
+      cleanups.forEach((cleanup) => (typeof cleanup === 'function' ? cleanup() : cleanup.destroy()));
       destroyVttParser();
     },
   };
