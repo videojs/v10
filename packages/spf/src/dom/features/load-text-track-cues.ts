@@ -1,5 +1,6 @@
-import { effect } from '../../core/signals/effect';
-import { computed, type Signal } from '../../core/signals/primitives';
+import type { Reactor } from '../../core/create-reactor';
+import { createReactor } from '../../core/create-reactor';
+import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
 import type { Presentation, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import type { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
@@ -7,9 +8,25 @@ import { createTextTrackSegmentLoaderActor } from './text-track-segment-loader-a
 import type { TextTracksActor } from './text-tracks-actor';
 import { createTextTracksActor } from './text-tracks-actor';
 
-// ============================================================================
-// STATE & OWNERS
-// ============================================================================
+/**
+ * FSM states for text track cue loading.
+ *
+ * ```
+ * 'preconditions-unmet' ── mediaElement + presentation + text tracks ──→ 'setting-up'
+ *        ↑                                                                      |
+ *        │                                                             actors created
+ *        │                                                             in owners
+ *        │                                                                      ↓
+ *        ├───────────────── preconditions lost ─────────────────────── 'pending'
+ *        │                                                                      |
+ *        │                                                  selectedTrack resolved + in DOM
+ *        │                                                                      ↓
+ *        └───────────────── preconditions lost ──────────── 'monitoring-for-loads'
+ *
+ * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
+ * ```
+ */
+export type LoadTextTrackCuesStatus = 'preconditions-unmet' | 'setting-up' | 'pending' | 'monitoring-for-loads';
 
 /**
  * State shape for text track cue loading.
@@ -23,81 +40,85 @@ export interface TextTrackCueLoadingState {
 
 /**
  * Owners shape for text track cue loading.
+ *
+ * `textTracksActor` and `segmentLoaderActor` are managed by this reactor:
+ * written to owners in `'setting-up'` and reset to `undefined` on entry to
+ * `'preconditions-unmet'` or `'setting-up'`. Callers are responsible for
+ * destroying them when the reactor itself is destroyed (actors are not
+ * auto-cleaned on `destroy()` — read them from owners and destroy explicitly).
  */
 export interface TextTrackCueLoadingOwners {
   mediaElement?: HTMLMediaElement | undefined;
+  textTracksActor?: TextTracksActor | undefined;
+  segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function getTextTracks(presentation: Presentation | undefined) {
+  return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks;
+}
+
+function findSelectedTrack(state: TextTrackCueLoadingState): TextTrack | undefined {
+  const track = getTextTracks(state.presentation)?.find((t) => t.id === state.selectedTextTrackId);
+  return track && isResolvedTrack(track) ? track : undefined;
 }
 
 /**
- * Find the selected text track in the presentation.
+ * Derives the correct status from current state and owners.
+ *
+ * States are mutually exclusive and exhaustive:
+ * - `'preconditions-unmet'`: no mediaElement, or no resolved presentation with text tracks
+ * - `'setting-up'`:          preconditions met; actors not yet in owners
+ * - `'pending'`:             actors alive; no selection, or selected track not yet resolved/in DOM
+ * - `'monitoring-for-loads'`: selected track resolved, in DOM — ready to dispatch load messages
  */
-function findSelectedTextTrack(state: TextTrackCueLoadingState): TextTrack | undefined {
-  if (!state.presentation || !state.selectedTextTrackId) {
-    return undefined;
+function deriveStatus(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): LoadTextTrackCuesStatus {
+  if (!owners.mediaElement || !getTextTracks(state.presentation)?.length) {
+    return 'preconditions-unmet';
   }
-
-  const textSet = state.presentation.selectionSets.find((set) => set.type === 'text');
-  if (!textSet?.switchingSets?.[0]?.tracks) {
-    return undefined;
+  if (!owners.textTracksActor || !owners.segmentLoaderActor) {
+    return 'setting-up';
   }
-
-  const track = textSet.switchingSets[0].tracks.find((t) => t.id === state.selectedTextTrackId);
-
-  return track as TextTrack | undefined;
+  const track = findSelectedTrack(state);
+  if (!track || track.segments.length === 0) return 'pending';
+  if (!Array.from(owners.mediaElement.textTracks).some((t) => t.id === state.selectedTextTrackId)) {
+    return 'pending';
+  }
+  return 'monitoring-for-loads';
 }
 
-/**
- * Get the browser's TextTrack object for the selected text track.
- */
-function getSelectedTextTrackFromOwners(
-  state: TextTrackCueLoadingState,
-  owners: TextTrackCueLoadingOwners
-): globalThis.TextTrack | undefined {
-  const trackId = state.selectedTextTrackId;
-  if (!trackId || !owners.mediaElement) {
-    return undefined;
-  }
-
-  return Array.from(owners.mediaElement.textTracks).find((t) => t.id === trackId);
-}
+// ============================================================================
+// Main export
+// ============================================================================
 
 /**
- * Check if we can load text track cues.
- */
-export function canLoadTextTrackCues(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): boolean {
-  return (
-    !!state.selectedTextTrackId &&
-    !!owners.mediaElement &&
-    Array.from(owners.mediaElement.textTracks).some((t) => t.id === state.selectedTextTrackId)
-  );
-}
-
-/**
- * Check if we should load text track cues.
- */
-export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): boolean {
-  if (!canLoadTextTrackCues(state, owners)) {
-    return false;
-  }
-
-  const track = findSelectedTextTrack(state);
-  if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
-    return false;
-  }
-
-  const textTrack = getSelectedTextTrackFromOwners(state, owners);
-  if (!textTrack) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Load text track cues orchestration.
+ * Text track cue loading orchestration.
+ *
+ * A single `always` monitor keeps the reactor in sync with conditions.
+ * Actor lifecycle is managed across two states:
+ *
+ * - **`'setting-up'`** — creates `TextTracksActor` and `TextTrackSegmentLoaderActor`
+ *   and writes them to owners. Entry resets any stale actors first.
+ * - **`'preconditions-unmet'`** — destroys any actors in owners and resets them to
+ *   `undefined`. Handles all paths back from active states.
+ * - **`'monitoring-for-loads'`** — reactive dispatch: re-runs whenever `state`
+ *   changes (selection, currentTime, presentation) and sends a `load` message to
+ *   the segment loader.
+ *
+ * **Destroy note:** actors written to owners are NOT auto-destroyed when
+ * `reactor.destroy()` is called. Callers must read them from owners and destroy
+ * them explicitly alongside the reactor.
  *
  * @example
- * const cleanup = loadTextTrackCues({ state, owners });
+ * const reactor = loadTextTrackCues({ state, owners });
+ * // later:
+ * const { textTracksActor, segmentLoaderActor } = owners.get();
+ * textTracksActor?.destroy();
+ * segmentLoaderActor?.destroy();
+ * reactor.destroy();
  */
 export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends TextTrackCueLoadingOwners>({
   state,
@@ -105,46 +126,59 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): () => void {
-  // Actor lifecycle: both actors are tied to the mediaElement.
-  // Recreated together when mediaElement changes.
-  let textTracksActor: TextTracksActor | undefined;
-  let segmentLoaderActor: TextTrackSegmentLoaderActor | undefined;
-  let actorMediaElement: HTMLMediaElement | undefined;
+}): Reactor<LoadTextTrackCuesStatus | 'destroying' | 'destroyed', object> {
+  const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
 
-  const mediaElement = computed(() => owners.get().mediaElement);
+  return createReactor<LoadTextTrackCuesStatus, object>({
+    initial: 'preconditions-unmet',
+    context: {},
+    always: [
+      ({ status, transition }) => {
+        const target = derivedStatusSignal.get();
+        if (target !== status) transition(target);
+      },
+    ],
+    states: {
+      'preconditions-unmet': [
+        () => {
+          const { textTracksActor, segmentLoaderActor } = untrack(() => owners.get());
+          // Only update owners if there are actors to clean up — avoids spurious
+          // signal writes on initial startup that would re-trigger other features.
+          if (!textTracksActor && !segmentLoaderActor) return;
+          textTracksActor?.destroy();
+          segmentLoaderActor?.destroy();
+          update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
+        },
+      ],
 
-  const cleanupEffect = effect(() => {
-    const s = state.get();
-    const o = owners.get();
+      'setting-up': [
+        () => {
+          // Defensive reset before creating fresh actors (no-op if already undefined).
+          const existing = untrack(() => owners.get());
+          if (existing.textTracksActor || existing.segmentLoaderActor) {
+            existing.textTracksActor?.destroy();
+            existing.segmentLoaderActor?.destroy();
+            update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
+          }
+          const mediaElement = untrack(() => owners.get().mediaElement as HTMLMediaElement);
+          const textTracksActor = createTextTracksActor(mediaElement);
+          const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
+          update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
+        },
+      ],
 
-    // Manage actor lifecycle when mediaElement changes.
-    const currentMediaElement = mediaElement.get();
-    if (currentMediaElement !== actorMediaElement) {
-      textTracksActor?.destroy();
-      segmentLoaderActor?.destroy();
-      if (currentMediaElement) {
-        textTracksActor = createTextTracksActor(currentMediaElement);
-        segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
-      } else {
-        textTracksActor = undefined;
-        segmentLoaderActor = undefined;
-      }
-      actorMediaElement = currentMediaElement;
-    }
+      pending: [],
 
-    if (!segmentLoaderActor) return;
-    if (!shouldLoadTextTrackCues(s, o)) return;
-
-    const track = findSelectedTextTrack(s);
-    if (!track || !isResolvedTrack(track)) return;
-
-    segmentLoaderActor.send({ type: 'load', track, currentTime: s.currentTime ?? 0 });
+      'monitoring-for-loads': [
+        () => {
+          const s = state.get(); // tracked — re-runs on currentTime / selection / presentation changes
+          const { segmentLoaderActor } = untrack(() => owners.get());
+          if (!segmentLoaderActor) return;
+          const track = findSelectedTrack(s);
+          if (!track) return;
+          segmentLoaderActor.send({ type: 'load', track, currentTime: s.currentTime ?? 0 });
+        },
+      ],
+    },
   });
-
-  return () => {
-    textTracksActor?.destroy();
-    segmentLoaderActor?.destroy();
-    cleanupEffect();
-  };
 }

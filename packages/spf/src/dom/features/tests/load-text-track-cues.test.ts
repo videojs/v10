@@ -2,19 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
 import type { Presentation, Segment, TextTrack } from '../../../core/types';
 import {
-  canLoadTextTrackCues,
   loadTextTrackCues,
-  shouldLoadTextTrackCues,
   type TextTrackCueLoadingOwners,
   type TextTrackCueLoadingState,
 } from '../load-text-track-cues';
-
-function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: TextTrackCueLoadingOwners) {
-  const state = signal<TextTrackCueLoadingState>(initialState);
-  const owners = signal<TextTrackCueLoadingOwners>(initialOwners);
-  const cleanup = loadTextTrackCues({ state, owners });
-  return { state, owners, cleanup };
-}
 
 // Mock parseVttSegment
 vi.mock('../../text/parse-vtt-segment', () => ({
@@ -64,98 +55,22 @@ function createMockSegments(count: number): Segment[] {
   }));
 }
 
-describe('canLoadTextTrackCues', () => {
-  it('returns false when no selected track', () => {
-    const state: TextTrackCueLoadingState = {
-      presentation: createMockPresentation([]),
-    };
-    const owners: TextTrackCueLoadingOwners = {};
-
-    expect(canLoadTextTrackCues(state, owners)).toBe(false);
-  });
-
-  it('returns false when no track elements', () => {
-    const state: TextTrackCueLoadingState = {
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([]),
-    };
-    const owners: TextTrackCueLoadingOwners = {};
-
-    expect(canLoadTextTrackCues(state, owners)).toBe(false);
-  });
-
-  it('returns false when track element does not exist for selected track', () => {
-    const state: TextTrackCueLoadingState = {
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([]),
-    };
-    const owners: TextTrackCueLoadingOwners = {
-      mediaElement: document.createElement('video'),
-    };
-
-    expect(canLoadTextTrackCues(state, owners)).toBe(false);
-  });
-
-  it('returns true when track selected and elements exist', () => {
-    const state: TextTrackCueLoadingState = {
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([]),
-    };
-    const video = document.createElement('video');
-    const trackElement = document.createElement('track');
-    trackElement.id = 'text-1';
-    video.appendChild(trackElement);
-    const owners: TextTrackCueLoadingOwners = {
-      mediaElement: video,
-    };
-
-    expect(canLoadTextTrackCues(state, owners)).toBe(true);
-  });
-});
-
-describe('shouldLoadTextTrackCues', () => {
-  it('returns false when track not resolved', () => {
-    const state: TextTrackCueLoadingState = {
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          // No segments = not resolved
-        },
-      ]),
-    };
-    const trackElement = document.createElement('track');
-    trackElement.id = 'text-1';
-    const video = document.createElement('video');
-    video.appendChild(trackElement);
-    const owners: TextTrackCueLoadingOwners = { mediaElement: video };
-
-    expect(shouldLoadTextTrackCues(state, owners)).toBe(false);
-  });
-
-  // Note: "returns false when cues already loaded" was removed — with forward
-  // buffer windowing, existing cues don't prevent loading new in-window segments.
-
-  it('returns true when track resolved and no cues', () => {
-    const state: TextTrackCueLoadingState = {
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          segments: createMockSegments(1),
-        },
-      ]),
-    };
-    const trackElement = document.createElement('track');
-    trackElement.id = 'text-1';
-    const video = document.createElement('video');
-    video.appendChild(trackElement);
-    trackElement.track.mode = 'hidden'; // Enable cue access
-    const owners: TextTrackCueLoadingOwners = { mediaElement: video };
-
-    expect(shouldLoadTextTrackCues(state, owners)).toBe(true);
-  });
-});
+/**
+ * Sets up loadTextTrackCues with the given state/owners and returns a
+ * combined cleanup that destroys actors from owners before destroying the reactor.
+ */
+function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: TextTrackCueLoadingOwners) {
+  const state = signal<TextTrackCueLoadingState>(initialState);
+  const owners = signal<TextTrackCueLoadingOwners>(initialOwners);
+  const reactor = loadTextTrackCues({ state, owners });
+  const cleanup = () => {
+    const { textTracksActor, segmentLoaderActor } = owners.get();
+    textTracksActor?.destroy();
+    segmentLoaderActor?.destroy();
+    reactor.destroy();
+  };
+  return { state, owners, cleanup };
+}
 
 describe('loadTextTrackCues', () => {
   beforeEach(() => {

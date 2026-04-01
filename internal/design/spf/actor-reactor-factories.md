@@ -343,3 +343,27 @@ The second argument to message handlers is currently sketched as
 `{ transition, runner, context, setContext }`. The exact shape — including whether `runner` is
 always present (or `undefined` when no runner is declared) and whether `context` is the full
 snapshot context or a subset — is to be finalized during implementation.
+
+---
+
+### Reactor per-state effect semantics: entry vs. reactive
+
+In practice, per-state effects fall into two distinct categories:
+
+- **Enter-once effects** — run once on state entry, do setup work, return a cleanup. Signal reads
+  inside these should generally be wrapped in `untrack()` to prevent accidental re-runs. Example:
+  creating `<track>` elements, starting a fetch.
+- **Reactive-within-state effects** — intentionally re-run when a signal changes while the state
+  is active. Example: `syncTextTracks` effect 2, which re-runs whenever `selectedTextTrackId`
+  changes to re-apply mode sync.
+
+Currently both categories use the same `effect()` mechanism, and the distinction is enforced by
+convention (explicit `untrack()` calls) rather than by the API. The `always` array is the primary
+mechanism for reactive condition monitoring, but reactive-within-state effects are also a
+legitimate use case.
+
+A possible future direction: distinguish these in the definition shape — e.g., `entry` for
+enter-once effects (automatically untracked) and `on` (signal-keyed or otherwise) for
+reactive-within-state effects. This would make intent explicit and prevent accidental tracking
+bugs in entry effects. Worth revisiting once more examples of the reactive-within-state pattern
+accumulate.
