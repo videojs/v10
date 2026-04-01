@@ -8,24 +8,14 @@ import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../
  * FSM states for text track sync.
  *
  * ```
- * 'preconditions-unmet' ──── mediaElement + tracks available ────→ 'setting-up'
- *        ↑                                                                 |
- *        |                                                        setup complete
- * preconditions lost                                                       |
- *   (exit cleanup)                                                         ↓
- *        └──────────────────────────────────────────────────────── 'set-up'
- *                                                                          |
- *                                                       presentation changed │
- *                                                   (exit cleanup tears down │
- *                                                    old tracks, re-entry    │
- *                                                    creates new ones)       │
- *                                                          ↓                 │
- *                                                   'setting-up' ←──────────┘
+ * 'preconditions-unmet' ──── mediaElement + tracks available ────→ 'set-up'
+ *        ↑                                                              |
+ *        └──────────────── preconditions lost (exit cleanup) ──────────┘
  *
- * any non-final state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
+ * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
  * ```
  */
-export type TextTrackSyncStatus = 'preconditions-unmet' | 'setting-up' | 'set-up';
+export type TextTrackSyncStatus = 'preconditions-unmet' | 'set-up';
 
 /**
  * State shape for text track sync.
@@ -78,17 +68,13 @@ function syncModes(textTracks: TextTrackList, selectedId: string | undefined): v
 /**
  * Text track sync orchestration.
  *
- * Implements the TextTrackSync FSM via `createReactor` with one effect per
- * concern per state:
+ * A single `always` monitor keeps the reactor in sync with preconditions.
+ * `'set-up'` owns the full lifecycle of `<track>` elements:
  *
- * - **`'preconditions-unmet'`** — waits for preconditions, then transitions
- *   to `'setting-up'`.
- * - **`'setting-up'`** — creates `<track>` elements, then transitions to
- *   `'set-up'`.
- * - **`'set-up'` effect 1** — guards the state; exit cleanup removes `<track>`
- *   elements and clears `selectedTextTrackId` on any outbound transition.
- * - **`'set-up'` effect 2** — owns mode sync, the Chromium settling-window
- *   guard, and the `'change'` listener that bridges DOM state back to
+ * - **Effect 1** — creates `<track>` elements on entry; exit cleanup removes
+ *   them and clears `selectedTextTrackId` on any outbound transition.
+ * - **Effect 2** — owns mode sync, the Chromium settling-window guard, and
+ *   the `'change'` listener that bridges DOM state back to
  *   `selectedTextTrackId`.
  *
  * @example
@@ -125,34 +111,25 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
   return createReactor<TextTrackSyncStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
+    always: [
+      ({ status, transition }) => {
+        const target = preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet';
+        if (target !== status) transition(target);
+      },
+    ],
     states: {
-      'preconditions-unmet': [
-        ({ transition }) => {
-          if (preconditionsMetSignal.get()) transition('setting-up');
-        },
-      ],
-
-      'setting-up': [
-        ({ transition }) => {
-          const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
-          const modelTextTracks = modelTextTracksSignal.get() as PartiallyResolvedTextTrack[];
-          modelTextTracks.forEach((track) => mediaElement.appendChild(createTrackElement(track)));
-          transition('set-up');
-        },
-      ],
+      'preconditions-unmet': [],
 
       'set-up': [
-        // Effect 1 — guards state; exit cleanup tears down track elements and
-        // clears selectedTextTrackId on any outbound transition (including destroy).
-        ({ transition }) => {
-          if (!preconditionsMetSignal.get()) {
-            transition('preconditions-unmet');
-            return;
-          }
-          const currentMediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
+        // Effect 1 — create <track> elements on entry; exit cleanup removes them
+        // and clears selectedTextTrackId on any outbound transition.
+        () => {
+          const mediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
+          const modelTextTracks = untrack(() => modelTextTracksSignal.get() as PartiallyResolvedTextTrack[]);
+          modelTextTracks.forEach((track) => mediaElement.appendChild(createTrackElement(track)));
           return () => {
-            currentMediaElement
-              .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"')
+            mediaElement
+              .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"]')
               .forEach((trackEl) => trackEl.remove());
             update(state, { selectedTextTrackId: undefined } as Partial<S>);
           };
