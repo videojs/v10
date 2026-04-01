@@ -24,7 +24,6 @@ jobs:
     outputs:
       has_diff: ${{ steps.classify.outputs.has_diff }}
       has_new: ${{ steps.classify.outputs.has_new }}
-      has_changed: ${{ steps.classify.outputs.has_changed }}
 
     steps:
       - name: Checkout code
@@ -136,12 +135,6 @@ jobs:
             echo "has_new=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_new=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if [ -s /tmp/api-sync/changed-components.txt ] || [ -s /tmp/api-sync/changed-utils.txt ]; then
-            echo "has_changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload artifact
@@ -345,14 +338,9 @@ jobs:
             - `after-utils/` — current util JSON files
             - `pr-meta.json` — `{number, url, author, title}` of the triggering PR
 
-            Note: If HEAD~1 build failed, `changed-*.txt` will be empty because everything appears
-            as "new." In that case, treat ALL JSON files in `after-*` directories as changed and use
-            `diff.patch` (which will show everything as additions) to understand the current API surface.
-
-            Important: Skip any components listed in `new-components.txt` and utils listed in
-            `new-utils.txt` — a separate job already opens issues for those. Only analyze items
-            in `changed-components.txt` and `changed-utils.txt` (or all items in the fallback case,
-            minus anything in the new-*.txt files).
+            Important: Focus on items in `changed-components.txt` and `changed-utils.txt`.
+            Skip any components/utils listed in `new-components.txt` or `new-utils.txt` —
+            a separate job already opens issues for those.
 
             ## Process
 
