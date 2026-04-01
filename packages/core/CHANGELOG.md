@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.12...@videojs/core@10.0.0-beta.13) (2026-04-01)
+
+
+### Bug Fixes
+
+* **core:** fix media proxy for React ([#1169](https://github.com/videojs/v10/issues/1169)) ([c0a3277](https://github.com/videojs/v10/commit/c0a3277f4cbc7f2abafa1b4f166049d57bdb1ee5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.13
+    * @videojs/store bumped to 10.0.0-beta.13
+    * @videojs/utils bumped to 10.0.0-beta.13
+
 ## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.11...@videojs/core@10.0.0-beta.12) (2026-04-01)
 
 
