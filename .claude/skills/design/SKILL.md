@@ -97,8 +97,8 @@ Start high-level, reveal complexity gradually:
 1. **Problem** — What pain exists?
 2. **Solution overview** — How do we solve it?
 3. **Quick start** — Show it working
-4. **Details** — API surface, architecture
-5. **Rationale** — Why these choices?
+4. **API surface** — Props, state, accessibility
+5. **Rationale** — Why these choices? (only if debated)
 
 ### 5. Code Illustrates Ideas
 
@@ -139,9 +139,11 @@ Before writing, explore relevant parts of the codebase. Link to existing pattern
 Based on the existing `SnapshotController` pattern. See `packages/store/src/snapshot.ts`.
 ```
 
-### 8. Track Key Decisions
+### 8. Decisions Only When Debated
 
-Record every significant design decision. Include alternatives considered. When a decision evolves, **update the existing entry** — don't append a new one.
+Don't scaffold a `decisions.md` upfront. Only document decisions when they're actually raised and debated — alternatives weighed, trade-offs discussed. Let the code and implementation speak for themselves.
+
+When you do document a decision, update the existing entry — don't append a new one:
 
 ```markdown
 // ❌ Appending creates confusion
@@ -178,22 +180,24 @@ Before finalizing a Design Doc:
 - [ ] Minimal examples — only show what's different, `{/* ... */}` for the rest
 - [ ] Scannable — lists and whitespace, not walls of text
 - [ ] Single source of truth — explain once, link elsewhere
-- [ ] Decisions have alternatives and rationale
-- [ ] Decisions updated in place, not appended
+- [ ] API surface covers props, data attributes, CSS custom properties
+- [ ] State & store requirements documented (features, slices, state shape)
+- [ ] Accessibility is first-class (ARIA, keyboard, focus management)
+- [ ] Decisions only documented when debated (alternatives + rationale)
+- [ ] No architecture/implementation details (those go in `.claude/plans/`)
 - [ ] Examples match current design
 - [ ] Focused scope — future work in Open Questions
-- [ ] Multi-file if 3+ distinct concepts
 - [ ] Frontmatter has correct `status`
 
 ## Process
 
 1. **Explore** — Read relevant code, understand current patterns
 2. **Choose type** — Decision, feature design, or component spec?
-3. **Choose structure** — Single or multi-file?
-4. **Draft** — Start with problem, build progressively
-5. **Cut** — Remove anything that doesn't earn its place
-6. **Link** — Reference existing code, related docs
-7. **Review** — Check against checklist
+3. **Draft** — Start with problem, then API surface, state, accessibility
+4. **Cut** — Remove anything that doesn't earn its place. No implementation details — those go in `.claude/plans/`
+5. **Link** — Reference existing code, related docs
+6. **Review** — Check against checklist
+7. **Decisions** — Only add `decisions.md` if real debates happened during the process
 
 ## Related
 

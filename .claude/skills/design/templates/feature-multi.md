@@ -1,12 +1,14 @@
 ## Directory Structure
 
 ```
-rfc/feature-name/
-├── index.md          # Overview, problem, quick start, surface API
-├── architecture.md   # How it works internally
-├── decisions.md      # Design decisions and rationale
-└── examples.md       # Extended usage examples
+internal/design/feature-name/
+├── index.md          # Problem, API surface, state, behavior
+└── decisions.md      # Only when decisions are raised and debated
 ```
+
+`decisions.md` is **optional**. Don't scaffold it upfront — add it when real trade-offs are discussed and alternatives are weighed. Let the code and implementation speak for themselves.
+
+Architecture and implementation details belong in `.claude/plans/`, not here.
 
 ---
 
@@ -20,15 +22,6 @@ status: draft
 # Feature Name
 
 One-sentence summary.
-
-## Contents
-
-| Document                           | Purpose                        |
-| ---------------------------------- | ------------------------------ |
-| [index.md](index.md)               | Overview, quick start, API     |
-| [architecture.md](architecture.md) | Internal structure             |
-| [decisions.md](decisions.md)       | Design decisions and rationale |
-| [examples.md](examples.md)         | Extended usage examples        |
 
 ## Problem
 
@@ -51,9 +44,9 @@ What happens if we don't solve this?
 // Same concept, different platform
 \`\`\`
 
-## Surface API
+## API Surface
 
-### createFeature
+### createFeature / Primary Entry Point
 
 \`\`\`ts
 // Primary factory or entry point
@@ -63,7 +56,7 @@ What happens if we don't solve this?
 
 \`\`\`ts
 const {
-// What you get back
+  // What you get back
 } = createFeature(config);
 \`\`\`
 
@@ -73,75 +66,53 @@ const {
 // Only the types users interact with directly
 \`\`\`
 
-## Related Docs
+## State & Store
 
-- [decisions.md](decisions.md) — Why these choices
-- [architecture.md](architecture.md) — How it works internally
-- [examples.md](examples.md) — More usage examples
-```
+### Slice Definition
 
----
-
-## architecture.md
-
-```markdown
-# Architecture
-
-Internal structure of Feature Name.
-
-## Overview
-
-\`\`\`
-ASCII diagram showing key components and data flow
-\`\`\`
-
-One-paragraph summary of the architecture.
-
-## Component 1
-
-### Purpose
-
-What this component does.
-
-### Interface
+What state does this feature introduce?
 
 \`\`\`ts
-interface Component1 {
-// ...
+// State shape
+interface FeatureState {
+  // ...
 }
 \`\`\`
 
-### Behavior
+### Dependencies
 
-How it works. Keep high-level.
+- What other features/slices does this depend on?
 
-## Component 2
+### Side Effects
 
-(Same structure)
+- What happens on connect/disconnect?
+- Any subscriptions or observers?
 
-## Data Flow
+## Behavior
 
-How information moves through the system.
+How it works at a high level. No implementation details.
 
-## Constraints
+- What triggers updates
+- What side effects occur
+- Error handling approach
 
-- Architectural limitations
-- Invariants that must hold
-- Performance considerations
+## Open Questions
+
+- Unresolved items
 ```
 
 ---
 
-## decisions.md
+## decisions.md (optional)
+
+Only create this file when decisions are actually debated — alternatives weighed, trade-offs discussed.
 
 ```markdown
 # Design Decisions
 
 Rationale behind Feature Name choices.
 
-## Category 1 (e.g., Naming)
-
-### Decision Title
+## Decision Title
 
 **Decision:** What we chose.
 
@@ -152,9 +123,7 @@ Rationale behind Feature Name choices.
 
 **Rationale:** Why this choice wins. Keep concise.
 
-## Category 2 (e.g., API Shape)
-
-### Another Decision
+## Another Decision
 
 **Decision:** What we chose.
 
@@ -170,56 +139,4 @@ Rationale behind Feature Name choices.
 ### Question 1
 
 Context and options being considered.
-```
-
----
-
-## examples.md
-
-```markdown
-# Examples
-
-Usage examples for Feature Name.
-
-## Basic Usage
-
-### Scenario 1
-
-\`\`\`ts
-// Example with comments explaining what's happening
-\`\`\`
-
-### Scenario 2
-
-\`\`\`ts
-// Another example
-\`\`\`
-
-## Advanced Usage
-
-### Custom Configuration
-
-\`\`\`ts
-// Example with non-default options
-\`\`\`
-
-### Integration with Other Features
-
-\`\`\`ts
-// How this works alongside other APIs
-\`\`\`
-
-## Platform-Specific
-
-### React
-
-\`\`\`tsx
-// React-specific patterns
-\`\`\`
-
-### HTML
-
-\`\`\`ts
-// HTML/Web Component patterns
-\`\`\`
 ```

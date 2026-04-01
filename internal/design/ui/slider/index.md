@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 date: 2026-02-09
 ---
 
@@ -9,12 +9,10 @@ Compound, headless slider components for media controls — seek, volume, and fu
 
 ## Contents
 
-| Document                           | Purpose                                          |
-| ---------------------------------- | ------------------------------------------------ |
-| [index.md](index.md)              | Overview, anatomy, quick start                   |
-| [architecture.md](architecture.md) | Core classes, DOM interaction, file structure     |
-| [parts.md](parts.md)              | All compound parts — props, state, data attributes |
-| [decisions.md](decisions.md)       | Design decisions and rationale                   |
+| Document                     | Purpose                        |
+| ---------------------------- | ------------------------------ |
+| [index.md](index.md)        | Overview, anatomy, quick start |
+| [decisions.md](decisions.md) | Design decisions and rationale |
 
 ## Problem
 
