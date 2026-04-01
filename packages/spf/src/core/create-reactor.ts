@@ -17,7 +17,7 @@ export type ReactorEffectFn<UserStatus extends string, Context extends object> =
   transition: (to: UserStatus) => void;
   context: Context;
   setContext: (next: Context) => void;
-}) => (() => void) | void;
+}) => (() => void) | { abort(): void } | void;
 
 /**
  * Full reactor definition passed to `createReactor`.
@@ -122,7 +122,7 @@ export function createReactor<UserStatus extends string, Context extends object>
       const dispose = effect(() => {
         const snapshot = snapshotSignal.get();
         if (snapshot.status !== state) return;
-        return fn({
+        const result = fn({
           transition: (to: UserStatus) => {
             if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
             transition(to as FullStatus);
@@ -133,6 +133,9 @@ export function createReactor<UserStatus extends string, Context extends object>
             setContext(context);
           },
         });
+        if (!result) return undefined;
+        if (typeof result === 'function') return result;
+        return () => result.abort();
       });
       effectDisposals.push(dispose);
     }

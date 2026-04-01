@@ -482,9 +482,10 @@ variant1.m3u8`)
       // Now load a different presentation
       state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
 
-      // Wait for second resolution
+      // Wait for second resolution — check id to confirm the fetch actually completed
       await vi.waitFor(() => {
         const pres = state.get().presentation as Presentation;
+        expect(pres).toHaveProperty('id');
         expect(pres.url).toBe('http://example.com/second.m3u8');
       });
 
