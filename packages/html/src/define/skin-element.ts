@@ -1,44 +1,20 @@
 import { ReactiveElement } from '@videojs/element';
-import {
-  applyShadowStyles,
-  createShadowStyle,
-  createTemplate,
-  ensureGlobalStyle,
-  type ShadowStyle,
-} from '@videojs/utils/dom';
+import { applyShadowStyles, createShadowStyle, ensureGlobalStyle, type ShadowStyle } from '@videojs/utils/dom';
 import rootStyles from './base.css?inline';
 import sharedStyles from './shared.css?inline';
 
 const STYLES_ID = '__media-styles';
 const sharedSheet = createShadowStyle(sharedStyles);
-const templateCache = new WeakMap<Function, HTMLTemplateElement>();
-
-function resolveTemplate(ctor: typeof SkinElement): HTMLTemplateElement | undefined {
-  const cached = templateCache.get(ctor);
-  if (cached) return cached;
-
-  if (ctor.getTemplateHTML) {
-    const template = createTemplate(ctor.getTemplateHTML());
-    if (template) {
-      templateCache.set(ctor, template);
-      return template;
-    }
-  }
-
-  return undefined;
-}
 
 /**
  * Base element for skin definitions. Attaches a shadow root, clones
- * the template from `static getTemplateHTML` into it, and applies
- * shared + per-skin styles via `adoptedStyleSheets` (or `<style>` fallback).
- *
- * The template is lazily created and cached per subclass on first construction.
+ * `static template` into it, and applies shared + per-skin styles
+ * via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends ReactiveElement {
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static styles?: ShadowStyle;
-  static getTemplateHTML?: () => string;
+  static template?: HTMLTemplateElement | null;
 
   constructor() {
     super();
@@ -49,9 +25,8 @@ export class SkinElement extends ReactiveElement {
       const ctor = this.constructor as typeof SkinElement;
       this.attachShadow(ctor.shadowRootOptions);
 
-      const template = resolveTemplate(ctor);
-      if (template) {
-        this.shadowRoot!.appendChild(this.ownerDocument.importNode(template.content, true));
+      if (ctor.template) {
+        this.shadowRoot!.appendChild(this.ownerDocument.importNode(ctor.template.content, true));
       }
 
       const sheets: ShadowStyle[] = [sharedSheet];

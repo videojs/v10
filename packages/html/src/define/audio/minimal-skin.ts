@@ -1,5 +1,5 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
-import { createShadowStyle } from '@videojs/utils/dom';
+import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './minimal-skin.css?inline';
@@ -108,7 +108,7 @@ function getTemplateHTML() {
 export class MinimalAudioSkinElement extends SkinElement {
   static readonly tagName = 'audio-minimal-skin';
   static styles = createShadowStyle(styles);
-  static getTemplateHTML = getTemplateHTML;
+  static template = createTemplate(getTemplateHTML());
 }
 
 safeDefine(MinimalAudioSkinElement);
