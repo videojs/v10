@@ -212,19 +212,18 @@ gap. The observable model makes reactive participation explicit at the cost of p
 ceremony. The signal model makes reactive participation implicit at the cost of requiring
 discipline (and footgun risk) at every read site.
 
-SPF's current answer: **accept the ambient context, compensate through conventions.**
-The conventions are:
-- `untrack()` at every enter-once read inside an effect
-- Naming effect intent in comments (`// tracked — re-run on change`, `// untrack: ...`)
-- The `always` array for reactive condition monitors vs. per-state effects for state-scoped work
-- Code review attention to accidental tracking
+One approach is to accept the ambient context and compensate through conventions:
+`untrack()` at every non-reactive read site, comments naming effect intent, code review
+attention to accidental tracking. This keeps the API surface minimal but relies on
+discipline.
 
-A future API improvement would encode some of this intent structurally — an `entry` /
-`reactive` distinction in the `createReactor` definition shape — so that enter-once
-effects are automatically untracked and the distinction is visible in the definition
-rather than in the effect body. See [actor-reactor-factories.md](actor-reactor-factories.md).
-That improvement would address the "enter-once" category but not the broader ambient
-context concern for reactive-within-state effects.
+Another approach — more relevant to abstractions built on signals than to direct signal
+usage — is to make reactive participation explicit at the API surface. An abstraction that
+distinguishes "run once on entry" from "re-run reactively" in its definition shape
+encodes the intent structurally, removing the need for `untrack()` in the common case.
+The tradeoff is more API surface in exchange for fewer footguns. See
+[actor-reactor-factories.md](actor-reactor-factories.md) for how this applies to
+`createReactor` specifically.
 
 ---
 
@@ -233,31 +232,36 @@ context concern for reactive-within-state effects.
 ### Inline computed anti-pattern
 
 `computed()` inside an effect body creates a new `Computed` node on every re-run — no
-memoization, no shared cache. `Computed`s that gate effect re-runs must be hoisted outside
-the effect body, typically at the factory function scope before `createReactor()`.
+memoization, no shared cache. This is a general signals footgun that applies anywhere
+`computed()` and `effect()` are combined directly:
 
 ```typescript
-// Wrong — new Computed on every effect re-run
-states: {
-  'monitoring-for-loads': [() => {
-    const trackSignal = computed(() => findSelectedTrack(state.get())); // new each time
-    const track = trackSignal.get();
-    // ...
-  }]
-}
-
-// Correct — hoist to factory scope
-const trackSignal = computed(() => findSelectedTrack(state.get()));
-createReactor({ states: { 'monitoring-for-loads': [() => {
+// Wrong — new Computed on every effect re-run, no memoization
+effect(() => {
+  const trackSignal = computed(() => findSelectedTrack(state.get())); // new each time
   const track = trackSignal.get();
   // ...
-}] } });
+});
+
+// Correct — hoist computed to the same scope as the effect
+const trackSignal = computed(() => findSelectedTrack(state.get()));
+effect(() => {
+  const track = trackSignal.get();
+  // ...
+});
 ```
 
-This mistake is uniquely hard to detect because it produces incorrect behavior (no
-memoization) rather than an error, and the incorrect code looks structurally reasonable.
-With observable pipelines, the equivalent mistake (a new `.pipe()` chain inside a
-subscription) creates extra upstream subscriptions — a more visible correctness failure.
+The mistake produces incorrect behavior (no memoization, no shared cache) rather than an
+error, and the incorrect code looks structurally reasonable. With observable pipelines,
+the equivalent mistake (constructing a new `.pipe()` chain inside a subscription callback)
+creates extra upstream subscriptions — a more visible correctness failure, easier to catch
+in review.
+
+Abstractions built on signals compound this subtly. When an abstraction hides the effect
+boundary — as `createReactor` does, where each array entry in `states[S]` becomes an
+`effect()` — the author does not see the `effect(() => { ... })` wrapper at the call site.
+The anti-pattern is easier to miss when the reactive boundary is implicit in a definition
+shape rather than explicit at the point of use.
 
 ---
 
@@ -439,43 +443,67 @@ evaluating alternatives (minimal hand-roll, alternative polyfill) at the time.
 
 ---
 
-## The `always`-Before-State Ordering: A Polyfill Dependency
+## Effect Execution Order: Behavioral, Not Guaranteed
 
-The `createReactor` ordering guarantee — `always` effects run before per-state effects —
-is load-bearing for all Reactor FSMs. It depends on the `Signal.subtle.Watcher`
-implementation returning pending computeds in insertion order, and on the effect scheduler
-draining them into an insertion-ordered `Set`.
+The TC39 Signals proposal specifies *that* effects re-run when their dependencies change;
+it does not specify the *order* in which multiple effects re-run relative to one another.
+Execution order among concurrent effects is an implementation detail of the scheduler, not
+a formal commitment of the spec.
 
-This is the behavior of the current `signal-polyfill`. It is **not a formal guarantee of
-the TC39 proposal specification**. If a future polyfill version or native implementation
-chose to deliver pending computeds in a different order (e.g., for optimization), all
-Reactor FSMs that rely on `always`-before-state ordering would silently break.
+This matters whenever an abstraction relies on one effect running before another. The
+current `core/signals/effect.ts` scheduler drains pending effects via `queueMicrotask`,
+collecting dirty effects into an insertion-ordered `Set` before draining. This produces
+a predictable execution order: effects registered first run first. But that is a property
+of the polyfill's `Watcher` implementation and the scheduler's use of `Set` — not
+something the TC39 proposal guarantees.
 
-This is worth naming as a known dependency: SPF's Reactor model is correct as implemented,
-but correctness depends on a behavioral property of the polyfill, not on a spec guarantee.
+`createReactor` takes a load-bearing dependency on this property. The `always`-before-state
+ordering guarantee — that `always` effects always run before per-state effects — is an
+explicit guarantee of `createReactor`'s own API, documented in source and tested in
+practice. But it depends on the underlying scheduler preserving insertion order. A future
+polyfill version or native implementation that reordered effects for optimization would
+silently break every Reactor FSM that relies on this ordering.
+
+This is worth naming as a general principle: **any abstraction that requires ordered effect
+execution takes an implicit dependency on the scheduler's behavioral properties, not on a
+spec guarantee.** For SPF this is currently manageable — the polyfill is pinned and the
+dependency is documented — but it is a constraint that would need attention if the TC39
+proposal's scheduling semantics changed substantially.
 
 ---
 
 ## Future Directions
 
-### `entry` vs. `reactive` in `createReactor` definition shape
+### Making reactive participation explicit at abstraction boundaries
 
-The most impactful near-term improvement would be distinguishing enter-once effects from
-reactive-within-state effects in the definition itself:
+The ambient reactive context concern — and the `untrack()` discipline it requires — is a
+property of direct signal usage. Abstractions built on signals have an additional option:
+encode reactive intent in their API surface, removing the burden from callers.
+
+An abstraction that distinguishes "run once on entry" from "re-run reactively" in its
+definition shape makes reactive participation a declaration rather than a runtime property
+of call-site context:
 
 ```typescript
+// Hypothetical: intent encoded in definition shape
 states: {
   'set-up': {
-    entry: [/* automatically untracked — run once on state entry */],
+    entry: [/* automatically untracked — run once */],
     reactive: [/* tracked — re-run when dependencies change */],
   }
 }
 ```
 
-This would make intent visible in the definition, eliminate the class of bugs where an
-enter-once effect accidentally tracks a signal, and remove the need for `untrack()` in
-the common case. It would not fully resolve the ambient reactive context concern for
-reactive effects, but it would address the most frequent footgun.
+For `createReactor`, this would make `untrack()` unnecessary in the common case of
+enter-once effects, eliminate the class of bugs where accidental tracking causes unexpected
+re-runs, and make the author's intent visible in the definition rather than in `untrack()`
+calls buried inside effect bodies.
+
+The principle generalizes: any abstraction built on signals can choose to make reactive
+context explicit at its API boundary, trading more surface area for fewer footguns and more
+readable intent. The tradeoff favors explicitness as abstraction complexity grows — the
+ambient context concern that is manageable with a small number of direct `effect()` calls
+becomes harder to track when effects are hidden inside a factory definition.
 
 ### Structured update utilities
 
