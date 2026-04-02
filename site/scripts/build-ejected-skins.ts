@@ -679,19 +679,10 @@ function resolveCss(cssPath: string): string {
 }
 
 function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
-  if (skin.id.includes('minimal-video')) {
-    return 'video-minimal';
-  }
+  const isMinimal = skin.id.includes('minimal');
+  const prefix = skin.id.includes('video') ? 'video' : 'audio';
 
-  if (skin.id.includes('minimal-audio')) {
-    return 'audio-minimal';
-  }
-
-  if (skin.id.includes('video')) {
-    return 'video';
-  }
-
-  return 'audio';
+  return isMinimal ? `${prefix}-minimal-ui` : `${prefix}-ui`;
 }
 
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {

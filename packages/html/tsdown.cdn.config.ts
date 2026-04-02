@@ -12,7 +12,17 @@ const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src'
 
 const buildModes: BuildMode[] = ['dev', 'prod'];
 
-const presets = ['video', 'video-minimal', 'audio', 'audio-minimal', 'background'];
+const presets = [
+  'video',
+  'video-minimal',
+  'video-ui',
+  'video-minimal-ui',
+  'audio',
+  'audio-minimal',
+  'audio-ui',
+  'audio-minimal-ui',
+  'background',
+];
 const media = ['hls-video', 'mux-video', 'simple-hls-video', 'dash-video'];
 
 const entries = [

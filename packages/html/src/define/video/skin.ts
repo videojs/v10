@@ -4,25 +4,8 @@ import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
 
-// Side-effect imports: register all custom elements used in the template.
-import '../media/container';
-import '../ui/buffering-indicator';
-import '../ui/captions-button';
-import '../ui/error-dialog';
-import '../ui/controls';
-import '../ui/fullscreen-button';
-import '../ui/mute-button';
-import '../ui/pip-button';
-import '../ui/play-button';
-import '../ui/playback-rate-button';
-import '../ui/popover';
-import '../ui/poster';
-import '../ui/seek-button';
-import '../ui/time';
-import '../ui/time-slider';
-import '../ui/tooltip';
-import '../ui/tooltip-group';
-import '../ui/volume-slider';
+// Register the player, container, and all UI custom elements.
+import './ui';
 
 const SEEK_TIME = 10;
 
