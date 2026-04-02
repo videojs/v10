@@ -14,12 +14,16 @@ interface PageEntry {
 }
 
 export default function llmsMarkdown(): AstroIntegration {
+  let siteUrl = '';
+
   return {
     name: 'llms-markdown',
     hooks: {
-      'astro:build:done': async ({ dir, pages, logger, config }) => {
+      'astro:config:done': ({ config }) => {
+        siteUrl = config.site?.replace(/\/$/, '') ?? '';
+      },
+      'astro:build:done': async ({ dir, pages, logger }) => {
         const siteDir = fileURLToPath(dir);
-        const siteUrl = config.site?.replace(/\/$/, '') ?? '';
         const turndown = new TurndownService({
           headingStyle: 'atx',
           codeBlockStyle: 'fenced',
