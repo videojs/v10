@@ -97,6 +97,33 @@ This is not a knock on observables — the power they provide is real. But for a
 that needs to be readable and maintainable by a broad community of contributors, including
 those coming from non-reactive backgrounds, the lower entry cost of signals is meaningful.
 
+### Lower structural overhead for new patterns
+
+With observables, every reactive behavior — including one-off cases — must be expressed
+within the operator/pipeline paradigm. When standard operators cover the scenario, the
+pipeline is elegant; when they don't, the options are creative composition of existing
+operators or writing a custom operator (`new Observable(subscriber => ...)` / a lifting
+function). Either way, the paradigm overhead is always present.
+
+RxJS's operator library is comprehensive enough that "no existing operator fits" is
+genuinely rare. The constraint is more subtle: even when existing operators *do* cover
+a scenario, expressing it requires conforming to the pipeline shape — types, subscription
+semantics, operator chaining. There is no option to step outside and write a few
+imperative lines instead.
+
+With signals, new behaviors can be expressed ad-hoc directly in effect bodies, mixing
+reactive reads and imperative writes as needed. Reusable patterns can be extracted into
+utilities — `update()` emerged this way, as did `teardownActors` — but that extraction
+is a convenience choice, not a structural requirement. The code without the utility works
+and reads reasonably; the utility just reduces repetition. With observables, the equivalent
+extraction produces an operator — a first-class typed thing with the full observable
+contract — which is more powerful but also more ceremony.
+
+The practical effect: the floor for "trying something new" is lower with signals. An
+exploratory or one-off reactive behavior can be written inline without committing to a
+reusable abstraction. If the pattern proves stable and recurring, extraction into a utility
+is straightforward. If it doesn't recur, nothing was wasted.
+
 ### Imperative and functional versatility
 
 Signals support both imperative and reactive usage patterns — and the two compose
