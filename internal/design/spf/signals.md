@@ -313,16 +313,85 @@ happened, in what order, relative to other events.
 > *When initiated:* listen for the next qualifying reset — url changes, or element swaps
 > while paused.
 
-This is fundamentally temporal / sequential reasoning. The Observable equivalent uses
-`switchMap` to alternate between two subscription modes, `fromEvent` for the play
-listener, `distinctUntilChanged` for change detection, and `withLatestFrom` to sample
-current values at event time. These operators compose naturally because they were designed
-for event-sequence reasoning.
+This is fundamentally temporal / sequential reasoning. An RxJS-style observable version
+expresses it directly:
 
-The signals version must simulate the same structure imperatively: a local intermediate
-signal as a scratch pad, closure variables (`lastPresentationUrl`, `lastMediaElement`) to
-manually implement change detection, and multiple coordinated effects that are harder to
-follow than a single pipeline.
+```typescript
+function trackPlaybackInitiated({ state$, owners$, events }) {
+  const url$     = state$.pipe(map(s => s.presentation?.url), distinctUntilChanged());
+  const element$ = owners$.pipe(map(o => o.mediaElement ?? null), distinctUntilChanged());
+
+  return state$.pipe(
+    map(s => !!s.playbackInitiated),
+    distinctUntilChanged(),
+    switchMap(initiated =>
+      initiated
+        ? // true → watch for the next qualifying reset
+          merge(url$, element$).pipe(
+            withLatestFrom(element$),
+            filter(([, el]) => !el || el.paused),
+            take(1),
+            mapTo(false as const)
+          )
+        : // false → watch for the next play on the current element
+          element$.pipe(
+            switchMap(el => el ? fromEvent(el, 'play').pipe(take(1)) : EMPTY),
+            tap(() => events.next({ type: 'play' })),
+            mapTo(true as const)
+          )
+    ),
+    tap(playbackInitiated => state$.next({ playbackInitiated }))
+  );
+}
+```
+
+`switchMap` alternates between the two subscription modes declaratively. `distinctUntilChanged`
+handles change detection implicitly. `withLatestFrom` samples the current element at reset
+time. `take(1)` expresses "wait for the next qualifying event" naturally. The structure of
+the logic maps directly onto the structure of the code.
+
+The current signals version must simulate the same structure with more moving parts: a
+local intermediate signal as a scratch pad, closure variables (`lastPresentationUrl`,
+`lastMediaElement`) that manually implement what `distinctUntilChanged` does implicitly,
+and three coordinated effects whose relationships are harder to follow than a single
+pipeline:
+
+```typescript
+// Local signal: written by the URL effect (false) and the play listener (true).
+// undefined = not yet initialized (suppresses the merge effect on startup).
+const playbackInitiated = signal<boolean | undefined>(undefined);
+
+let lastPresentationUrl: string | undefined;
+let lastMediaElement: HTMLMediaElement | undefined;
+
+// False stream: reset on URL change or element swap.
+effect(() => {
+  const url = presentationUrl.get();
+  const el  = mediaElement.get();
+  const urlChanged = url !== lastPresentationUrl;
+  const elChanged  = el  !== lastMediaElement;
+  if ((urlChanged && lastPresentationUrl !== undefined) ||
+      (elChanged  && lastMediaElement    !== undefined)) {
+    playbackInitiated.set(false);
+  }
+  lastPresentationUrl = url;
+  lastMediaElement    = el;
+});
+
+// True stream: set on play event.
+effect(() => {
+  const el = mediaElement.get();
+  if (!el) return;
+  return listen(el, 'play', () => playbackInitiated.set(true));
+});
+
+// Merge effect: bridge local signal → state.
+effect(() => {
+  const pi = playbackInitiated.get();
+  if (pi === undefined) return;
+  if (state.get().playbackInitiated !== pi) update(state, { playbackInitiated: pi });
+});
+```
 
 Migrating `trackPlaybackInitiated` to a Reactor would improve legibility — Reactor
 states name the two modes explicitly, Reactor context formalizes the "previous value"
