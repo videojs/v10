@@ -5,7 +5,7 @@ date: 2026-03-11
 
 # SPF Primitives
 
-The five foundational building blocks of SPF. Most design decisions here are **open** — this document captures the intended shape and unresolved questions, not final answers.
+The five foundational building blocks of SPF. Each section tracks what is decided, what is the current approach, and what remains open — the balance has shifted significantly as the text track spike (videojs/v10#1158) settled the factory designs and committed the signals primitive.
 
 ---
 
@@ -166,7 +166,7 @@ function-based with no formal status or snapshot — they remain to be migrated.
 - **Factory function, not base class** — `createReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
 - **`always` effects for cross-cutting monitors** — a dedicated `always` array runs before per-state effects in every flush. The primary use case is condition monitoring that drives transitions from one place. See the ordering guarantee in [actor-reactor-factories.md](actor-reactor-factories.md).
-- **Context via closure (current direction)** — the text track spike used `context: {}` throughout; Reactor non-finite state lived in closure variables and the `owners` signal. A formal `context` field exists in `createReactor` but usage patterns are not yet settled.
+- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. A formal `context` field in `createReactor` has been prototyped but is tracked as a future improvement, not current practice.
 
 ### Open questions
 
@@ -303,13 +303,13 @@ Currently the `PlaybackEngine` explicitly creates, wires, and destroys every Act
 
 An alternative: if Reactors self-scope to the reactive graph (e.g., signal effects are owned by a context that the engine controls), destroying the engine's reactive scope could automatically dispose all Reactors. Actors would still need explicit lifecycle management since they hold external resources (SourceBuffer, MediaSource).
 
-This is not a decision yet — it's worth understanding what the Observable State primitive makes possible before committing to a lifecycle model.
+The signals primitive is now committed, so this is a real option — but it has not been evaluated against the explicit engine ownership model. See Open Questions.
 
 ### Scheduling coordination
 
 The current `patch()` + `flush()` model exists because batching is needed for correctness (multiple synchronous patches shouldn't fire N subscriber callbacks), but immediate propagation is sometimes needed (bandwidth sampling must reach ABR before the next fetch starts).
 
-Whatever Observable State primitive is chosen, SPF needs an explicit answer for: *when does a state change propagate to subscribers?* Options:
+With signals as the committed primitive, SPF still needs an explicit answer for: *when does a state change propagate to subscribers?* Options:
 
 - **Always synchronous** (within batch): predictable, but requires careful batch discipline
 - **Always deferred** (microtask): safe default, but requires explicit "flush" for time-sensitive paths
