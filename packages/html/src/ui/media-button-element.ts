@@ -1,6 +1,13 @@
-import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
+import type {
+  ButtonState,
+  InferComponentState,
+  InferMediaState,
+  MediaButtonComponent,
+  StateAttrMap,
+} from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { State } from '@videojs/store';
 
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
@@ -20,6 +27,10 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
 
   protected abstract activate(state: InferMediaState<Core>): void;
+
+  get $state(): State<ButtonState> {
+    return this.core.state;
+  }
 
   #disconnect: AbortController | null = null;
 
@@ -48,10 +59,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
   /** Returns the button's current label derived from media state. */
   getLabel(): string | undefined {
-    const media = this.mediaState.value;
-    if (!media) return undefined;
-    this.core.setMedia(media);
-    return this.core.getLabel(this.core.getState());
+    return this.core.state.current.label || undefined;
   }
 
   protected override willUpdate(changed: PropertyValues): void {

@@ -18,6 +18,7 @@ function createState(overrides: Partial<SeekButtonState> = {}): SeekButtonState 
   return {
     seeking: false,
     direction: 'forward',
+    label: '',
     ...overrides,
   };
 }

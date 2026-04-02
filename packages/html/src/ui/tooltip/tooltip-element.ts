@@ -1,4 +1,4 @@
-import { TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
+import { type ButtonState, TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -13,13 +13,21 @@ import {
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 import { tooltipGroupContext } from './context';
 
-type TriggerElement = HTMLElement & { getLabel?(): string | undefined };
+type TriggerElement = HTMLElement & {
+  getLabel(): string | undefined;
+  $state: State<ButtonState>;
+};
+
+function isLabelTrigger(el: HTMLElement): el is TriggerElement {
+  return '$state' in el;
+}
 
 export class TooltipElement extends MediaElement {
   static readonly tagName = 'media-tooltip';
@@ -52,7 +60,7 @@ export class TooltipElement extends MediaElement {
   // Cleanup controllers
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
-  #currentTrigger: TriggerElement | null = null;
+  #currentTrigger: HTMLElement | null = null;
   #positionAbort: AbortController | null = null;
   #positionFrame = 0;
   #resizeObserver: ResizeObserver | null = null;
@@ -135,9 +143,6 @@ export class TooltipElement extends MediaElement {
     const triggerEl = this.#findTrigger();
     this.#syncTrigger(triggerEl);
 
-    // Forward label from trigger when it supports label forwarding.
-    this.#syncContent(triggerEl);
-
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
     this.#core.setInput(input);
@@ -209,26 +214,18 @@ export class TooltipElement extends MediaElement {
     if (triggerEl && this.#tooltip) {
       this.#triggerAbort = new AbortController();
       applyElementProps(triggerEl, this.#tooltip.triggerProps, { signal: this.#triggerAbort.signal });
+
+      if (isLabelTrigger(triggerEl)) {
+        this.#syncContent(triggerEl);
+        triggerEl.$state.subscribe(() => this.#syncContent(triggerEl), {
+          signal: this.#triggerAbort.signal,
+        });
+      }
     }
   }
 
-  #contentObserver: MutationObserver | null = null;
-
-  #syncContent(triggerEl: TriggerElement | null): void {
-    const label = triggerEl?.getLabel?.();
-    this.textContent = label ?? '';
-
-    // Observe trigger attribute changes so tooltip content stays in sync
-    // when media state changes while the tooltip is visible.
-    if (triggerEl && !this.#contentObserver) {
-      this.#contentObserver = new MutationObserver(() => {
-        this.textContent = triggerEl.getLabel?.() ?? '';
-      });
-      this.#contentObserver.observe(triggerEl, { attributes: true });
-    } else if (!triggerEl && this.#contentObserver) {
-      this.#contentObserver.disconnect();
-      this.#contentObserver = null;
-    }
+  #syncContent(triggerEl: TriggerElement): void {
+    this.textContent = triggerEl.getLabel() ?? '';
   }
 
   #cleanupTrigger(): void {
@@ -236,8 +233,6 @@ export class TooltipElement extends MediaElement {
       this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
-    this.#contentObserver?.disconnect();
-    this.#contentObserver = null;
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
