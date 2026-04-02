@@ -28,7 +28,7 @@ Two changes:
 ### Interactive (humans, chatbot-assisted)
 
 ```bash
-npx @videojs/cli
+npx @videojs/cli create
 
 # ? Framework: (html / react)
 # ? Use case: (video / audio / background-video)
@@ -40,7 +40,7 @@ npx @videojs/cli
 ### Flags (agentic LLMs)
 
 ```bash
-npx @videojs/cli --framework react --use-case video --renderer hls
+npx @videojs/cli create --framework react --use-case video --renderer hls
 ```
 
 ### LLMCase in MDX
@@ -57,13 +57,13 @@ npx @videojs/cli --framework react --use-case video --renderer hls
 To generate installation code tailored to your project, run:
 
 ```bash
-npx @videojs/cli
+npx @videojs/cli create
 ```
 
 If you already know your choices, pass them as flags:
 
 ```bash
-npx @videojs/cli --framework react --use-case video --skin default --renderer hls
+npx @videojs/cli create --framework react --use-case video --skin default --renderer hls
 ```
 </LLMCase>
 ```
@@ -73,7 +73,7 @@ npx @videojs/cli --framework react --use-case video --skin default --renderer hl
 ### CLI
 
 ```
-npx @videojs/cli [flags]
+npx @videojs/cli create [flags]
 
 Flags:
   --framework <html|react>
