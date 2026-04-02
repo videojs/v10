@@ -4,6 +4,7 @@ import { ArrowUpRight } from 'lucide-react';
 import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import Search from '@/components/Search';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import GetStartedLink from './GetStartedLink';
@@ -40,15 +41,7 @@ const { class: className } = Astro.props;
   <a href="/" class="flex h-5 items-center gap-2 sm:h-6 sm:gap-3">
     <Logo height="100%" />
     <span class="sr-only">Video.js video player</span>
-    <span
-      class="inline-flex h-full items-center justify-center rounded-full border border-orange px-2 font-display-compact text-(length:--text) font-bold text-orange sm:px-3 sm:font-display"
-      style={{
-        "--text": "0.75rem",
-      } as React.CSSProperties}
-    >
-      <span>v10</span>
-      <span class="hidden whitespace-pre uppercase sm:inline"> beta</span>
-    </span>
+    <BetaPill compact />
   </a>
   <Search client:load className="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}

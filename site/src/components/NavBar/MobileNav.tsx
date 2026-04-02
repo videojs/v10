@@ -2,6 +2,7 @@ import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
 import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import GetStartedLink from './GetStartedLink';
 
@@ -52,12 +53,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
             <a href="/" className="flex h-7 items-center gap-3 lg:gap-4 lg:h-10">
               <Logo height="100%" />
               <span className="sr-only">Video.js video player</span>
-              <span
-                className="hidden h-full items-center justify-center rounded-full border border-orange px-3 font-display text-(length:--text) font-bold text-orange sm:inline-flex lg:border-2 lg:px-4 lg:text-h4"
-                style={{ '--text': '0.75rem' } as React.CSSProperties}
-              >
-                v10 <span className="whitespace-pre uppercase"> beta</span>
-              </span>
+              <BetaPill className="hidden sm:inline-flex" />
             </a>
             <Dialog.Close
               className={clsx(

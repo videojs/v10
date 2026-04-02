@@ -1,5 +1,6 @@
 ---
 import MuxLogoSmall from '@/assets/logos/mux-small.svg?react';
+import BetaPill from '@/components/BetaPill';
 import FrameworkControl from '@/components/home/FrameworkControl';
 import HeroVideo from '@/components/home/HeroVideo';
 import SkinControl from '@/components/home/SkinControl';
@@ -20,11 +21,10 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
   class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
   style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
 >
-  <span
-    class="mb-7 inline-flex h-7 items-center justify-center justify-self-center rounded-full border border-orange px-3 font-display text-(length:--text) font-bold text-orange sm:hidden"
-    style={{ "--text": "0.75rem", gridArea: "pill" }}
-    >v10 <span class="whitespace-pre uppercase">beta</span></span
-  >
+  <BetaPill
+    className="mb-7 justify-self-center sm:hidden"
+    style={{ gridArea: "pill" }}
+  />
   <h1
     class="z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
     style="--grid-area: title; --md-grid-area: video;"
