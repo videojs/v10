@@ -100,8 +100,9 @@ export default function llmsMarkdown(): AstroIntegration {
             // Write markdown file as sibling to the directory
             // docs/framework/html/how-to/slug -> docs/framework/html/how-to/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
+            const footer = `\n\n---\n\nMore documentation: ${siteUrl}/llms.txt\n`;
             await mkdir(dirname(mdPath), { recursive: true });
-            await writeFile(mdPath, markdown, 'utf-8');
+            await writeFile(mdPath, markdown + footer, 'utf-8');
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
