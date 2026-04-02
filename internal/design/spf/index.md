@@ -15,6 +15,7 @@ A lean, actor-based framework for HLS playback over MSE. Handles manifest parsin
 | ---------------------------------------------------------- | ------------------------------------------------------------- |
 | [index.md](index.md)                                       | Overview, problem, quick start, surface API                   |
 | [primitives.md](primitives.md)                             | Foundational building blocks (Tasks, Actors, Reactors, State) |
+| [signals.md](signals.md)                                   | Signals as the reactive primitive — decision, tradeoffs, friction |
 | [actor-reactor-factories.md](actor-reactor-factories.md)   | Decided design for `createActor` / `createReactor` factories  |
 | [text-track-architecture.md](text-track-architecture.md)   | Reference Actor/Reactor implementation + spike assessment     |
 | [architecture.md](architecture.md)                         | Current implementation: layers, components, data flow         |

@@ -179,7 +179,13 @@ function-based with no formal status or snapshot — they remain to be migrated.
 
 ## 5. Observable State
 
-The reactive primitive that drives everything. State that can be observed over time, derived from other state, and composed in complex ways. The most consequential open design question in SPF.
+The reactive primitive that drives everything. State that can be observed over time, derived
+from other state, and composed in complex ways.
+
+The choice of signals as this primitive is a **committed architectural direction** — not an
+open question. See [signals.md](signals.md) for the full decision rationale, tradeoffs,
+and known friction. The sections below preserve the original conceptual comparison for
+context; the "Current approach" and "Open questions" sections reflect the current state.
 
 ### Concept
 
@@ -246,23 +252,28 @@ A disciplined hybrid could work: signals for state (current values, derived valu
 
 ### Current approach
 
-The TC39 `signal-polyfill` with a thin effect layer in `core/signals/effect.ts`. Writable
-`Signal.State`, `Signal.Computed`, and `Signal.subtle.Watcher` are used directly. SPF adds
-`signal()`, `computed()`, `untrack()`, `update()`, and `effect()` as thin wrappers.
+The TC39 `signal-polyfill` with a thin effect layer in `core/signals/effect.ts`. SPF wraps
+this as `signal()`, `computed()`, `untrack()`, `update()`, and `effect()` in `core/signals/`.
 
-This is the approach used by the text track spike and is tentatively committed. It is not
-a final decision — if the TC39 proposal diverges significantly from the polyfill, or if
-bundle size / scheduling requirements favor a different library, this could change. The
-pre-existing `core/state/` observable is no longer used for new code and should be
-treated as legacy.
+This is a committed architectural direction. The text track spike (videojs/v10#1158) proved
+that Actors and Reactors can be cleanly built on top of signals. The pre-existing
+`core/state/` observable layer is no longer used for new code and should be treated as legacy.
+
+See [signals.md](signals.md) for full decision rationale, TC39 risks and mitigations,
+points of friction, and future directions.
 
 ### Open questions
 
-- **Signals vs observables as the canonical state primitive** — or a defined hybrid with explicit bridge points?
-- **Home-grown vs. off-the-shelf** — given SPF's bundle size goals, a home-grown implementation that covers exactly what SPF needs is the most likely path, regardless of whether signals or observables are chosen. Off-the-shelf libraries are unlikely to satisfy both requirements simultaneously: full feature coverage and acceptable size. A possible exception is the TC39 Signals polyfill, which may prove small enough and well-aligned enough to be viable — but this isn't obvious yet and warrants evaluation.
-- **Does "always having a current value" cause problems in practice?** The initialization question is solvable; the real question is whether reading-outside-reactive-context is a discipline problem or a design problem.
-- **Scheduling model for Reactors** — if signal effects are synchronous, do Reactors fire mid-batch? If so, is that correct for all Reactors, or should some defer? Should the Reactor abstraction impose a scheduling policy, or leave it to the state primitive?
-- **How does abort/cleanup compose with the state primitive?** An explicit answer here would clean up a lot of the current manual AbortController management scattered across features.
+- **Scheduling model for Reactors** — effects are currently deferred via `queueMicrotask`.
+  The exact semantics under compound state changes (multiple signal writes in the same turn)
+  are not fully characterized. SPF controls the scheduler via the `Watcher` API; whether
+  different parts of the system ever need different scheduling is open.
+- **How does abort/cleanup compose with the state primitive?** Cleanup today is manual
+  (`effect()` returns a disposal function, wired by hand). A more principled integration
+  with `AbortController` or signal-scoped lifetimes could reduce boilerplate.
+- **Reading outside reactive context** — is this a discipline problem or a design problem?
+  Currently discipline (`untrack()` conventions). The `entry`/`reactive` split in
+  `createReactor` would address the most common case structurally.
 
 ---
 
