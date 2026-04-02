@@ -76,20 +76,17 @@ npx @videojs/cli create --framework react --use-case video --skin default --rend
 npx @videojs/cli create [flags]
 
 Flags:
-  --framework <html|react>
-  --use-case <video|audio|background-video>
-  --skin <default|minimal>
-  --renderer <html5-video|html5-audio|hls|background-video>
-  --install-method <cdn|npm|pnpm|yarn|bun>  (HTML framework only)
+  --framework <html|react>                                    (required)
+  --use-case <video|audio|background-video>                   (default: video)
+  --skin <default|minimal>                                    (default: default)
+  --renderer <html5-video|html5-audio|hls|background-video>   (default: depends on use case)
+  --install-method <cdn|npm|pnpm|yarn|bun>                    (default: npm, HTML only)
 
 No flags → interactive prompts.
-All flags → prints code to stdout.
-Partial flags → error listing what's missing.
+--framework provided → prints code to stdout, defaults for the rest.
 ```
 
 Invalid combinations produce a non-zero exit code and an error explaining the constraint.
-
-Each dimension has a default value. Choices constrain subsequent options (e.g., `audio` use case filters renderers to `html5-audio`).
 
 ### Generator Functions
 
