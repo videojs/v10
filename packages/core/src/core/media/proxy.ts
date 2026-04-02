@@ -18,6 +18,7 @@ export const ProxyMixin = <T extends EventTarget>(
 ) => {
   class MediaProxy extends EventTarget {
     #target: EventTarget | null = null;
+    #types = new Set<string>();
 
     get target() {
       return this.#target;
@@ -41,10 +42,16 @@ export const ProxyMixin = <T extends EventTarget>(
     attach(target: EventTarget): void {
       if (!target || this.#target === target) return;
       this.#target = target;
+      for (const type of this.#types) {
+        target.addEventListener(type, this.#forwardEvent);
+      }
     }
 
     detach(): void {
       if (!this.#target) return;
+      for (const type of this.#types) {
+        this.#target.removeEventListener(type, this.#forwardEvent);
+      }
       this.#target = null;
     }
 
@@ -53,23 +60,16 @@ export const ProxyMixin = <T extends EventTarget>(
       listener: EventListenerOrEventListenerObject,
       options?: boolean | AddEventListenerOptions
     ): void {
-      this.#target?.addEventListener(type, this, options);
+      if (!this.#types.has(type)) {
+        this.#types.add(type);
+        this.#target?.addEventListener(type, this.#forwardEvent);
+      }
       super.addEventListener(type, listener, options);
     }
 
-    removeEventListener(
-      type: string,
-      listener: EventListenerOrEventListenerObject,
-      options?: boolean | EventListenerOptions
-    ): void {
-      this.#target?.removeEventListener(type, this, options);
-      super.removeEventListener(type, listener, options);
-    }
-
-    handleEvent(event: Event): void {
-      const eventClone = new (event.constructor as typeof Event)(event.type, event);
-      this.dispatchEvent(eventClone);
-    }
+    #forwardEvent = (event: Event) => {
+      this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    };
   }
 
   for (const Class of [PrimaryClass, ...AdditionalClasses]) {
