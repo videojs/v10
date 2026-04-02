@@ -100,7 +100,7 @@ export default function llmsMarkdown(): AstroIntegration {
             // Write markdown file as sibling to the directory
             // docs/framework/html/how-to/slug -> docs/framework/html/how-to/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
-            const footer = `\n\n---\n\nMore documentation: ${siteUrl}/llms.txt\n`;
+            const footer = generatePageFooter(pathname, framework, siteUrl);
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
 
@@ -159,14 +159,34 @@ export default function llmsMarkdown(): AstroIntegration {
   };
 }
 
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/** Breadcrumb footer linking a per-page .md back to its parent index and root llms.txt. */
+function generatePageFooter(pathname: string, framework: string | undefined, siteUrl: string): string {
+  const lines = ['\n\n---\n'];
+  if (pathname.startsWith('docs/') && framework) {
+    lines.push(`${capitalize(framework)} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`);
+  } else if (pathname.startsWith('blog/')) {
+    lines.push(`All blog posts: ${siteUrl}/blog/llms.txt`);
+  }
+  lines.push(`All documentation: ${siteUrl}/llms.txt`);
+  return lines.join('\n');
+}
+
+/** Breadcrumb footer linking a sub-index back to root llms.txt. */
+function generateIndexFooter(siteUrl: string): string {
+  return `\n---\n\nAll documentation: ${siteUrl}/llms.txt\n`;
+}
+
 function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10\n\n`;
   content += `> Modern video player framework with multi-platform support\n\n`;
 
   content += `## Documentation\n\n`;
   for (const fw of [...frameworks].sort()) {
-    const label = fw.charAt(0).toUpperCase() + fw.slice(1);
-    content += `- [${label} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)\n`;
+    content += `- [${capitalize(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)\n`;
   }
   content += `\n`;
 
@@ -179,11 +199,9 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
     content += `## Other\n\n`;
     const sorted = [...otherPages].sort((a, b) => a.pathname.localeCompare(b.pathname));
     for (const page of sorted) {
-      if (page.description) {
-        content += `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`;
-      } else {
-        content += `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
-      }
+      content += page.description
+        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
+        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
     }
     content += `\n`;
   }
@@ -192,25 +210,19 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
 }
 
 function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string): string {
-  const label = framework.charAt(0).toUpperCase() + framework.slice(1);
-  let content = `# Video.js v10 — ${label} Documentation\n\n`;
-
+  let content = `# Video.js v10 — ${capitalize(framework)} Documentation\n\n`;
   const sorted = [...pages].sort((a, b) => a.pathname.localeCompare(b.pathname));
   for (const page of sorted) {
-    if (page.description) {
-      content += `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`;
-    } else {
-      content += `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
-    }
+    content += page.description
+      ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
+      : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
   }
-  content += `\n`;
-
+  content += generateIndexFooter(siteUrl);
   return content;
 }
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10 — Blog\n\n`;
-
   // Newest first
   const sorted = [...pages].sort((a, b) => {
     if (a.sort && b.sort) {
@@ -218,15 +230,11 @@ function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
     }
     return b.pathname.localeCompare(a.pathname);
   });
-
   for (const post of sorted) {
-    if (post.description) {
-      content += `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}\n`;
-    } else {
-      content += `- [${post.title}](${siteUrl}${post.pathname}.md)\n`;
-    }
+    content += post.description
+      ? `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}\n`
+      : `- [${post.title}](${siteUrl}${post.pathname}.md)\n`;
   }
-  content += `\n`;
-
+  content += generateIndexFooter(siteUrl);
   return content;
 }
