@@ -16,7 +16,7 @@ Video.js handles accessibility out of the box so your player works for everyone.
 
 ## ARIA roles and labels
 
-Components set ARIA roles and attributes automatically. For example, sliders render with `role="slider"` and value attributes, buttons update their `aria-label` based on player state, and decorative elements like time separators are hidden with `aria-hidden="true"`.
+Components set ARIA roles and attributes automatically. For example, sliders render with `role="slider"` and value attributes, buttons update their `aria-label` based on player state (auto-forwarded from the `label` prop or resolved internally), and decorative elements like time separators are hidden with `aria-hidden="true"`. Tooltips are visual-only and do not participate in the accessibility tree — button labels are applied directly to the button's `aria-label` rather than through `aria-describedby` on the tooltip.
 
 Verify that labels are contextually correct for your content and language. Each component's reference page documents the attributes it sets.
 

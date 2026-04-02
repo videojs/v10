@@ -72,8 +72,7 @@ The `side` and `align` props control placement relative to the trigger. Position
 <FrameworkCase frameworks={["html"]}>
   The `<media-tooltip>` element is the popup itself. Link it to a trigger using
   the `commandfor` attribute on any button, pointing to the tooltip's `id`. The element
-  discovers its trigger automatically and manages open/close state, ARIA attributes, and
-  positioning. Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate
+  discovers its trigger automatically and manages open/close state and positioning. Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate
   timing — the group's `delay`, `close-delay`, and `timeout` attributes control shared
   timing for all contained tooltips.
 </FrameworkCase>
@@ -146,7 +145,9 @@ media-tooltip[data-side="bottom"] {
 
 ## Accessibility
 
-The trigger receives `aria-describedby` pointing to the popup when open. The popup renders with `role="tooltip"` and `popover="manual"`. Tooltips open on focus and close when focus leaves, ensuring keyboard-only users can access the label.
+Tooltips are **visual-only** — they do not set `aria-describedby` on triggers or use `role="tooltip"`. The popup renders with `role="presentation"` and `popover="manual"`, so screen readers skip it entirely. Accessible names for media buttons are provided directly via `aria-label` on the button itself, not through the tooltip.
+
+When a tooltip wraps a media button, the button's resolved label is automatically forwarded as the tooltip's text content. This keeps the visual tooltip in sync with the button's accessible name without duplicating it in the accessibility tree. Tooltips open on focus and close when focus leaves, ensuring keyboard-only users can see the label visually.
 
 ## Examples
 
