@@ -337,17 +337,23 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       this.shadowRoot!.addEventListener('slotchange', () => this.#syncMediaChildren());
       this.#syncMediaChildren();
 
+      // Media element events don't bubble so we need to capture them on the shadow root.
       for (const type of (this.constructor as typeof CustomMedia).Events) {
-        this.shadowRoot!.addEventListener(type, this, true);
+        this.shadowRoot!.addEventListener(type, this.#deferForwardEvent, true);
       }
     }
 
-    handleEvent(event: Event): void {
-      if (event.target === this.target) {
-        const eventClone = new (event.constructor as typeof Event)(event.type, event);
-        this.dispatchEvent(eventClone);
+    #deferForwardEvent = (event: Event) => {
+      if (this.target && this.target === event.target) {
+        // Add an event listener on the bubbling phase that forwards the event
+        // so consumers can still stop propagation of the event.
+        this.target.addEventListener(event.type, this.#forwardEvent, { once: true });
       }
-    }
+    };
+
+    #forwardEvent = (event: Event) => {
+      this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    };
 
     #syncMediaChildren(): void {
       const removeNativeChildren = new Map(this.#childMap);
