@@ -26,7 +26,7 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
-      <${tag} class="w-full aspect-video max-w-4xl mx-auto">
+      <${tag} class="aspect-video max-w-4xl mx-auto">
         <mux-video ${sourceAttr} debug playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </mux-video>

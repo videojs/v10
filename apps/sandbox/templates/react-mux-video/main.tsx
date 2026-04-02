@@ -28,12 +28,7 @@ function App() {
 
   return (
     <VideoProvider>
-      <VideoSkinComponent
-        poster={poster}
-        skin={skin}
-        styling={styling}
-        className="w-full aspect-video max-w-4xl mx-auto"
-      >
+      <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <MuxVideo {...sourceAttr} debug playsInline crossOrigin="anonymous">
           <Storyboard src={storyboard} />
         </MuxVideo>

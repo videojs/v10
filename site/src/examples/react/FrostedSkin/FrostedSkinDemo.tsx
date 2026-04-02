@@ -19,7 +19,7 @@ const Player = createPlayer({ features: videoFeatures });
 export function FrostedSkinDemo() {
   return (
     <Player.Provider>
-      <VideoSkin className="w-full aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
+      <VideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </VideoSkin>
     </Player.Provider>

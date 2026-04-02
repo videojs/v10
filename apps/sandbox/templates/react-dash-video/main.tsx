@@ -20,7 +20,7 @@ function App() {
 
   return (
     <VideoProvider>
-      <VideoSkinComponent skin={skin} styling={styling} className="w-full aspect-video max-w-4xl mx-auto">
+      <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <DashVideo src={SOURCES[source].url} playsInline />
       </VideoSkinComponent>
     </VideoProvider>

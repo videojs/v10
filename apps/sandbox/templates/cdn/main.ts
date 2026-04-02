@@ -138,7 +138,7 @@ async function render() {
 
   root.innerHTML = html`
     <${playerTag}>
-      <${skinTag} class="w-full aspect-video max-w-4xl mx-auto">
+      <${skinTag} class="aspect-video max-w-4xl mx-auto">
         <${mediaTag} src="${src}" playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </${mediaTag}>

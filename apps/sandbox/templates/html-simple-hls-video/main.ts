@@ -21,7 +21,7 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
-      <${tag} class="w-full aspect-video max-w-4xl mx-auto">
+      <${tag} class="aspect-video max-w-4xl mx-auto">
         <simple-hls-video src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </simple-hls-video>
