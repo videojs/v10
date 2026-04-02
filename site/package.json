@@ -5,9 +5,7 @@
   "scripts": {
     "api-docs": "tsx scripts/api-docs-builder/src/index.ts",
     "ejected-skins": "tsx scripts/build-ejected-skins.ts",
-    "predev": "pnpm api-docs && pnpm ejected-skins",
     "dev": "NETLIFY_DEV=1 astro dev",
-    "prebuild": "pnpm api-docs && pnpm ejected-skins",
     "build": "astro build",
     "astro": "astro",
     "test": "vitest run",
