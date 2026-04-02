@@ -17,8 +17,9 @@ export default function llmsMarkdown(): AstroIntegration {
   return {
     name: 'llms-markdown',
     hooks: {
-      'astro:build:done': async ({ dir, pages, logger }) => {
+      'astro:build:done': async ({ dir, pages, logger, config }) => {
         const siteDir = fileURLToPath(dir);
+        const siteUrl = config.site?.replace(/\/$/, '') ?? '';
         const turndown = new TurndownService({
           headingStyle: 'atx',
           codeBlockStyle: 'fenced',
@@ -125,7 +126,7 @@ export default function llmsMarkdown(): AstroIntegration {
         const frameworks: string[] = [];
         for (const [fw, fwPages] of docsByFramework) {
           frameworks.push(fw);
-          const subIndex = generateDocsIndex(fw, fwPages);
+          const subIndex = generateDocsIndex(fw, fwPages, siteUrl);
           const subIndexPath = join(siteDir, 'docs', 'framework', fw, 'llms.txt');
           await mkdir(dirname(subIndexPath), { recursive: true });
           await writeFile(subIndexPath, subIndex, 'utf-8');
@@ -133,14 +134,14 @@ export default function llmsMarkdown(): AstroIntegration {
 
         // Write blog sub-index
         if (blogPages.length > 0) {
-          const blogIndex = generateBlogIndex(blogPages);
+          const blogIndex = generateBlogIndex(blogPages, siteUrl);
           const blogIndexPath = join(siteDir, 'blog', 'llms.txt');
           await mkdir(dirname(blogIndexPath), { recursive: true });
           await writeFile(blogIndexPath, blogIndex, 'utf-8');
         }
 
         // Write root llms.txt index
-        const rootIndex = generateRootIndex(frameworks, blogPages.length > 0, otherPages);
+        const rootIndex = generateRootIndex(frameworks, blogPages.length > 0, otherPages, siteUrl);
         const rootIndexPath = join(siteDir, 'llms.txt');
         await writeFile(rootIndexPath, rootIndex, 'utf-8');
 
@@ -153,20 +154,20 @@ export default function llmsMarkdown(): AstroIntegration {
   };
 }
 
-function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[]): string {
+function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10\n\n`;
   content += `> Modern video player framework with multi-platform support\n\n`;
 
   content += `## Documentation\n\n`;
   for (const fw of [...frameworks].sort()) {
     const label = fw.charAt(0).toUpperCase() + fw.slice(1);
-    content += `- [${label} Docs](/docs/framework/${fw}/llms.txt)\n`;
+    content += `- [${label} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)\n`;
   }
   content += `\n`;
 
   if (hasBlog) {
     content += `## Blog\n\n`;
-    content += `- [Blog Posts](/blog/llms.txt)\n\n`;
+    content += `- [Blog Posts](${siteUrl}/blog/llms.txt)\n\n`;
   }
 
   if (otherPages.length > 0) {
@@ -174,9 +175,9 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
     const sorted = [...otherPages].sort((a, b) => a.pathname.localeCompare(b.pathname));
     for (const page of sorted) {
       if (page.description) {
-        content += `- [${page.title}](${page.pathname}.md): ${page.description}\n`;
+        content += `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`;
       } else {
-        content += `- [${page.title}](${page.pathname}.md)\n`;
+        content += `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
       }
     }
     content += `\n`;
@@ -185,16 +186,16 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
   return content;
 }
 
-function generateDocsIndex(framework: string, pages: PageEntry[]): string {
+function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string): string {
   const label = framework.charAt(0).toUpperCase() + framework.slice(1);
   let content = `# Video.js v10 — ${label} Documentation\n\n`;
 
   const sorted = [...pages].sort((a, b) => a.pathname.localeCompare(b.pathname));
   for (const page of sorted) {
     if (page.description) {
-      content += `- [${page.title}](${page.pathname}.md): ${page.description}\n`;
+      content += `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`;
     } else {
-      content += `- [${page.title}](${page.pathname}.md)\n`;
+      content += `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
     }
   }
   content += `\n`;
@@ -202,7 +203,7 @@ function generateDocsIndex(framework: string, pages: PageEntry[]): string {
   return content;
 }
 
-function generateBlogIndex(pages: PageEntry[]): string {
+function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10 — Blog\n\n`;
 
   // Newest first
@@ -215,9 +216,9 @@ function generateBlogIndex(pages: PageEntry[]): string {
 
   for (const post of sorted) {
     if (post.description) {
-      content += `- [${post.title}](${post.pathname}.md): ${post.description}\n`;
+      content += `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}\n`;
     } else {
-      content += `- [${post.title}](${post.pathname}.md)\n`;
+      content += `- [${post.title}](${siteUrl}${post.pathname}.md)\n`;
     }
   }
   content += `\n`;
