@@ -97,57 +97,38 @@ This is not a knock on observables — the power they provide is real. But for a
 that needs to be readable and maintainable by a broad community of contributors, including
 those coming from non-reactive backgrounds, the lower entry cost of signals is meaningful.
 
-### Lower structural overhead for new patterns
+### Flexibility: no paradigm overhead
 
-With observables, every reactive behavior — including one-off cases — must be expressed
-within the operator/pipeline paradigm. When standard operators cover the scenario, the
-pipeline is elegant; when they don't, the options are creative composition of existing
-operators or writing a custom operator (`new Observable(subscriber => ...)` / a lifting
-function). Either way, the paradigm overhead is always present.
+Signals support both reactive and imperative usage, and the two compose freely. A signal
+can be written from anywhere — a DOM event handler, a Promise callback, an actor message
+handler, an async Task — and read reactively inside `computed()` or `effect()`, or
+imperatively via `signal.get()` outside those contexts. There is no boundary between the
+two modes; they are the same API used in different contexts.
 
-RxJS's operator library is comprehensive enough that "no existing operator fits" is
-genuinely rare. The constraint is more subtle: even when existing operators *do* cover
-a scenario, expressing it requires conforming to the pipeline shape — types, subscription
-semantics, operator chaining. There is no option to step outside and write a few
-imperative lines instead.
+This matters in three directions:
 
-With signals, new behaviors can be expressed ad-hoc directly in effect bodies, mixing
-reactive reads and imperative writes as needed. Reusable patterns can be extracted into
-utilities — `update()` emerged this way, as did `teardownActors` — but that extraction
-is a convenience choice, not a structural requirement. The code without the utility works
-and reads reasonably; the utility just reduces repetition. With observables, the equivalent
-extraction produces an operator — a first-class typed thing with the full observable
-contract — which is more powerful but also more ceremony.
+**Authoring new behaviors**: With observables, every reactive behavior — including one-off
+cases — must be expressed within the operator/pipeline paradigm. When standard operators
+cover the scenario, the pipeline is elegant; when they don't, the options are creative
+composition or a custom operator. Either way, the pipeline shape is non-negotiable. With
+signals, a new behavior can be expressed ad-hoc in an effect body — reactive reads and
+imperative writes mixed as needed — without conforming to any operator shape. Reusable
+patterns can be extracted into utilities when they prove recurring (`update()` and
+`teardownActors` both emerged this way), but that extraction is a choice, not a
+requirement. The code without the abstraction works and reads reasonably.
 
-The practical effect: the floor for "trying something new" is lower with signals. An
-exploratory or one-off reactive behavior can be written inline without committing to a
-reusable abstraction. If the pattern proves stable and recurring, extraction into a utility
-is straightforward. If it doesn't recur, nothing was wasted.
+**Internal actor/reactor integration**: SPF's Actors are inherently imperative —
+message handlers call `setContext()`, `transition()`, and `runner.schedule()`, not
+observable operators. Imperative writes to signals immediately update the reactive graph;
+Reactors pick them up on the next microtask. There is no impedance mismatch at the
+boundary between the actor layer and the reactive layer.
 
-### Imperative and functional versatility
-
-Signals support both imperative and reactive usage patterns — and the two compose
-naturally. A signal can be written from anywhere: a DOM event handler, a Promise callback,
-an actor message handler, an async Task. It can be read reactively inside `computed()` or
-`effect()`, and read imperatively (with or without `untrack()`) outside those contexts.
-There is no barrier between the two modes.
-
-This versatility matters in two directions:
-
-**Internal**: SPF's Actors are inherently message-driven and execute work imperatively.
-Message handlers call `setContext()`, `transition()`, and `send()` — not observable
-operators. The fact that these imperative writes immediately update the signal graph,
-and that Reactors will pick them up on the next microtask, means there is no impedance
-mismatch between the reactive layer and the imperative actor layer.
-
-**External**: Third-party integrators and higher-level abstractions built on SPF can
-interact with the engine's state without adopting the full reactive model. They can call
-`state.get()` to read current values imperatively, `state.set()` / `owners.patch()` to
-write, and observe changes by wrapping a read in their own `effect()` — or just poll. The
-signal is a value container first; the reactive graph is opt-in.
-
-With observables, integration requires working within the observable paradigm or
-bridging out explicitly at every boundary. Signals offer a gentler integration surface.
+**External integration surface**: Third-party integrators and higher-level abstractions
+built on SPF can interact with engine state without adopting the full reactive model.
+`state.get()` reads current values imperatively; `owners.patch()` writes imperatively;
+wrapping a read in `effect()` opts into reactivity. The signal is a value container first;
+the reactive graph is opt-in. With observables, integration requires working within the
+observable paradigm or bridging out explicitly at every boundary.
 
 ### Community validation
 
