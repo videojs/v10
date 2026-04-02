@@ -5,9 +5,9 @@ date: 2026-04-02
 
 # CLI for LLM-friendly installation
 
-Generate installation code from the command line — the same code the installation page produces, without the interactive UI that breaks in plain text.
+Generate installation code from the command line. It's docs/installation.md, but without the interactive UI that breaks in plain text.
 
-This is the MVP scope for `@videojs/cli`. The same package will later support skin ejection and other workflows.
+This means... it's finally time for `@videojs/cli`. The same package will later support skin ejection and other workflows.
 
 ## Problem
 
@@ -19,7 +19,7 @@ Related: videojs/v10#1185
 
 **`@videojs/cli create`** — a `create` subcommand that takes the same choices as the installation page and prints the corresponding code to stdout. The CLI owns the code generation functions. The site imports them — no drift because both run the same code path.
 
-**`HumanCase` / `LLMCase` components** — Astro components that show different content to browsers and the LLM markdown pipeline. The installation MDX wraps interactive pickers in `HumanCase` and CLI instructions in `LLMCase`. Same file, both audiences. Three consumer types are covered: agentic LLMs run the CLI directly, chat LLMs recommend it to the user, and humans run it when prompted.
+**`HumanCase` / `LLMCase` MDX components** — Astro components that show different content to browsers and the LLM markdown pipeline. installation.mdx wraps interactive pickers in `HumanCase` and CLI instructions in `LLMCase`. Same file, both audiences. Three consumer types are covered: humans still have their react-powered interactive web page, agentic LLMs run the CLI directly, chat LLMs recommend the CLI to the user.
 
 ## API
 
@@ -31,7 +31,7 @@ Flags:
   --use-case <video|audio|background-video>                   (default: video)
   --skin <default|minimal>                                    (default: default)
   --renderer <html5-video|html5-audio|hls|background-video>   (default: per use case)
-  --install-method <cdn|npm|pnpm|yarn|bun>                    (default: npm, HTML only)
+  --install-method <cdn|npm|pnpm|yarn|bun>                    (default: npm)
 ```
 
 No flags starts interactive prompts. With `--framework`, the CLI prints code to stdout and defaults the rest. Invalid combinations exit non-zero with an error explaining the constraint.
@@ -54,8 +54,11 @@ npx @videojs/cli create --framework react --renderer hls
 
 The CLI avoids the combinatorial problem entirely — it lets the consumer narrow their own path.
 
-## Open questions
+## Open questions for now
 
 - **Prompt library** — `@inquirer/prompts` vs `@clack/prompts` vs something else?
 - **`--source-url` flag** — The site lets users paste a source URL that gets embedded in generated code. Should the CLI support this?
+
+## Open questions for later
+- **Mux Uploader** — idk how we'd even reproduce this in a CLI but it would be so cool
 - **Output format** — Should the CLI support `--format json` for machine consumption later?
