@@ -8,9 +8,10 @@ date: 2026-03-31
 Design for `createActor` and `createReactor` — the declarative factory functions that replace
 bespoke Actor classes and function-based Reactors in SPF.
 
-Motivated by the text track architecture spike (see `.claude/plans/foamy-finding-quasar.md`),
-which produced the first proper `SignalActor` class implementations and surfaced the need for
-shared, principled primitives.
+Motivated by the text track architecture spike (videojs/v10#1158), which produced the first
+`createActor` / `createReactor`-based implementations in SPF and surfaced the need for
+shared, principled primitives. See [text-track-architecture.md](text-track-architecture.md)
+for the reference implementation and spike assessment.
 
 ---
 
@@ -37,27 +38,33 @@ Both return instances that implement `SignalActor` and expose `snapshot` and `de
 ### Shape
 
 ```typescript
-type ActorDefinition<UserStatus extends string, Context, Message extends { type: string }> = {
-  runner?: () => RunnerLike;      // factory — called once at createActor() time
+type ActorDefinition<
+  UserStatus extends string,
+  Context extends object,
+  Message extends { type: string },
+  RunnerFactory extends (() => RunnerLike) | undefined = undefined,
+> = {
+  runner?: RunnerFactory;    // factory — called once at createActor() time
   initial: UserStatus;
   context: Context;
-  states: {
-    [S in UserStatus]: {
-      onSettled?: UserStatus;     // when runner settles in this state → transition here
-      on?: {
-        [M in Message as M['type']]?: (
-          message: M,
-          ctx: {
-            transition: (to: UserStatus) => void;
-            runner: RunnerLike;
-            context: Context;
-            setContext: (next: Context) => void;
-          }
-        ) => void;
-      };
+  states: Partial<Record<UserStatus, {
+    onSettled?: UserStatus;  // when runner settles in this state → transition here
+    on?: {
+      [M in Message as M['type']]?: (
+        message: Extract<Message, { type: M['type'] }>,
+        ctx: HandlerContext<UserStatus, Context, RunnerFactory>
+      ) => void;
     };
-  };
+  }>>;
 };
+
+// runner is present and typed as the exact runner only when runner: is declared.
+// When omitted, runner is absent from the type entirely (not undefined).
+type HandlerContext<UserStatus, Context, RunnerFactory> = {
+  transition: (to: UserStatus) => void;
+  context: Context;
+  setContext: (next: Context) => void;
+} & (RunnerFactory extends () => infer R ? { runner: R } : object);
 ```
 
 ### Example — `TextTrackSegmentLoaderActor`
@@ -124,50 +131,140 @@ const textTracksActorDef = {
 ### Shape
 
 ```typescript
-type ReactorDefinition<UserStatus extends string> = {
+type ReactorDefinition<UserStatus extends string, Context extends object> = {
   initial: UserStatus;
-  states: {
-    [S in UserStatus]: Array<
-      (ctx: { transition: (to: UserStatus) => void }) => (() => void) | void
-    >;
-  };
+  context: Context;
+  /**
+   * Cross-cutting effects that run in every non-terminal state.
+   * Each element becomes one independent effect() call. The current status is
+   * available in ctx, allowing a single effect to monitor conditions and drive
+   * transitions from any state without duplicating guards in every state block.
+   *
+   * ORDERING GUARANTEE: always effects run before per-state effects in every flush.
+   * This is load-bearing — see the "always-before-state ordering" decision below.
+   */
+  always?: ReactorAlwaysEffectFn<UserStatus, Context>[];
+  /**
+   * Per-state effect arrays. Every valid status must be declared (use [] for
+   * states with no effects). Each element becomes one independent effect() call
+   * gated on that state, with its own dependency tracking and cleanup lifecycle.
+   */
+  states: Record<UserStatus, ReactorEffectFn<UserStatus, Context>[]>;
 };
+
+type ReactorEffectFn<UserStatus extends string, Context extends object> = (ctx: {
+  transition: (to: UserStatus) => void;
+  context: Context;
+  setContext: (next: Context) => void;
+}) => (() => void) | { abort(): void } | void;
+
+type ReactorAlwaysEffectFn<UserStatus extends string, Context extends object> = (ctx: {
+  status: UserStatus;  // current status — not available in per-state effects
+  transition: (to: UserStatus) => void;
+  context: Context;
+  setContext: (next: Context) => void;
+}) => (() => void) | { abort(): void } | void;
 ```
 
-Each array element becomes one independent `effect()` call gated on that state. Multiple entries
-for the same state produce multiple effects — each with independent dependency tracking and
-cleanup. This is the mechanism that replaces multiple named `cleanupX` variables in the current
-function-based reactors.
+Each array element becomes one independent `effect()` call. `always` entries run in every
+non-terminal state and fire *before* per-state entries — see the `always`-before-state
+ordering guarantee below. Multiple entries for the same state produce multiple effects —
+each with independent dependency tracking and cleanup. This is the mechanism that replaces
+multiple named `cleanupX` variables in the current function-based reactors.
 
 ### Example — `syncTextTracks`
+
+Two states (`preconditions-unmet` ↔ `set-up`), one `always` monitor, two independent
+effects in `set-up` with separate tracking and cleanup.
 
 ```typescript
 const syncTextTracksDef = {
   initial: 'preconditions-unmet' as const,
+  context: {},
+  // Single always effect drives all transitions from one place.
+  always: [
+    ({ status, transition }) => {
+      const target = preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet';
+      if (target !== status) transition(target);
+    }
+  ],
+  states: {
+    'preconditions-unmet': [],  // no effects — always monitor handles exit
+
+    'set-up': [
+      // Effect 1 — enter-once: create <track> elements, return teardown cleanup.
+      // untrack() prevents re-runs on mediaElement/modelTextTracks changes.
+      () => {
+        const el = untrack(() => mediaElementSignal.get()!);
+        const tracks = untrack(() => modelTextTracksSignal.get()!);
+        tracks.forEach(t => el.appendChild(createTrackElement(t)));
+        return () => {
+          el.querySelectorAll('track[data-src-track]').forEach(t => t.remove());
+          update(state, { selectedTextTrackId: undefined });
+        };
+      },
+
+      // Effect 2 — reactive-within-state: re-runs when selectedId changes.
+      // Independent tracking and cleanup from Effect 1.
+      () => {
+        const el = untrack(() => mediaElementSignal.get()!);
+        const selectedId = selectedIdSignal.get();  // tracked — re-run on change
+        syncModes(el.textTracks, selectedId);
+        const unlisten = listen(el.textTracks, 'change', onChange);
+        return () => unlisten();
+      }
+    ]
+  }
+};
+```
+
+### Example — `loadTextTrackCues`
+
+Four states with actor lifecycle managed across states, the `deriveStatus` pattern for
+complex multi-condition transitions, and `untrack()` for non-reactive owner reads.
+
+```typescript
+// Hoist computeds outside effects — computed() inside an effect body
+// creates a new Computed node on every re-run with no memoization.
+const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
+const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
+const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
+
+const loadTextTrackCuesDef = {
+  initial: 'preconditions-unmet' as const,
+  context: {},
+  always: [
+    ({ status, transition }) => {
+      const target = derivedStatusSignal.get();
+      if (target !== status) transition(target);
+    }
+  ],
   states: {
     'preconditions-unmet': [
-      ({ transition }) => {
-        if (preconditionsMet.get()) transition('setting-up');
+      () => {
+        // Entry-reset: destroy any stale actors; no-op if already undefined.
+        // Runs on every entry, handling all paths back from active states.
+        teardownActors(owners);
       }
     ],
     'setting-up': [
-      ({ transition }) => {
-        setupTextTracks(mediaElement.get()!, modelTextTracks.get()!);
-        transition('set-up');
+      () => {
+        teardownActors(owners);  // defensive — same as preconditions-unmet
+        const mediaElement = untrack(() => owners.get().mediaElement!);
+        const textTracksActor = createTextTracksActor(mediaElement);
+        const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
+        update(owners, { textTracksActor, segmentLoaderActor });
+        // No return — deriveStatus drives the onward transition automatically.
       }
     ],
-    'set-up': [
-      // Effect #1 — guards state; exit cleanup tears down track elements
-      ({ transition }) => {
-        if (!preconditionsMet.get()) { transition('preconditions-unmet'); return; }
-        const el = untrack(() => mediaElement.get()!);
-        return () => teardownTextTracks(el);
-      },
-      // Effect #2 — mode sync + DOM change listener (independent tracking/cleanup)
+    pending: [],  // neutral waiting state — no effects
+    'monitoring-for-loads': [
       () => {
-        syncModes(mediaElement.textTracks, selectedId.get());
-        const unlisten = listen(mediaElement.textTracks, 'change', onChange);
-        return () => unlisten();
+        const currentTime = currentTimeSignal.get();   // tracked — re-run on advance
+        const track = selectedTrackSignal.get()!;      // tracked — re-run on change
+        // untrack owners — actor snapshot changes must not re-trigger this effect.
+        const { segmentLoaderActor } = untrack(() => owners.get());
+        segmentLoaderActor!.send({ type: 'load', track, currentTime });
       }
     ]
   }
@@ -259,6 +356,28 @@ stale one) is handled by the framework internally rather than by runner scope.
 
 ---
 
+### `always`-before-state ordering guarantee
+
+**Decision:** `always` effects are registered before per-state effects in `createReactor`.
+This ordering is **load-bearing**: per-state effects can rely on invariants established by
+`always` monitors having already run.
+
+**How it works:** The effect scheduler drains pending computeds into an insertion-ordered
+`Set` before executing them. Because `always` effects are registered first, they are
+guaranteed to execute before per-state effects in every flush.
+
+**What this enables:** When an `always` monitor calls `transition(newState)`, the snapshot
+signal updates immediately. By the time per-state effects run, the reactor is already in
+`newState` — so a per-state effect gated on `snapshot.status !== state` correctly no-ops
+without needing to re-check conditions that the `always` monitor just resolved.
+
+**Important caveat:** This guarantee is specific to `createReactor`'s registration order.
+It is not a formal guarantee of the TC39 Signals proposal — it depends on the polyfill's
+`Watcher` implementation preserving insertion order in `getPending()`. Do not assume this
+ordering holds outside of `createReactor`.
+
+---
+
 ### Per-state `on` handlers
 
 **Decision:** Message handlers are declared per state. The same message type can appear in
@@ -312,58 +431,69 @@ instantiation. SPF's current factory approach is compatible with this future dir
 `runner: () => new SerialRunner()` today becomes a named reference resolved against a provided
 implementation map later. The migration path is additive — no existing definitions need to change.
 
+### Handler context API
+
+The second argument to Actor message handlers is:
+```typescript
+{ transition: (to: UserStatus) => void; context: Context; setContext: (next: Context) => void }
+  & (RunnerFactory extends () => infer R ? { runner: R } : {})
+```
+
+`runner` is present and typed as the exact runner instance *only* when the definition
+declares a `runner` factory. When no runner is declared, `runner` is absent from the type
+entirely (not `undefined` — it simply doesn't exist). This is enforced at the type level via
+conditional intersection.
+
+---
+
+### Entry vs. reactive per-state effects
+
+Per-state effects fall into two distinct categories:
+
+- **Enter-once effects** — run once on state entry, do setup work, return a cleanup.
+  Signal reads inside these should be wrapped in `untrack()` to prevent accidental re-runs.
+  Example: creating `<track>` elements, reading `mediaElement` from owners, starting a fetch.
+- **Reactive-within-state effects** — intentionally re-run when a tracked signal changes while
+  the state is active. Example: `syncTextTracks` Effect 2, which re-runs whenever
+  `selectedTextTrackId` changes to re-apply mode sync.
+
+Both categories use the same `effect()` mechanism. The distinction is enforced by convention
+(`untrack()` for enter-once reads) rather than by the API — nothing in the definition shape
+prevents an enter-once effect from accidentally tracking a signal and re-running.
+
+**Inline computed anti-pattern:** `computed()` inside an effect body creates a new `Computed`
+node on every re-run with no memoization. `Computed`s that gate effect re-runs must be hoisted
+*outside* the effect body (typically at the factory function scope, before `createReactor()`).
+This applies regardless of whether the effect is enter-once or reactive.
+
+**Future direction:** Distinguish these in the definition shape — e.g., `entry` for enter-once
+effects (automatically untracked) and `reactive` (or signal-keyed `on`) for reactive-within-state
+effects. Revisit once more reactive-within-state examples accumulate.
+
 ---
 
 ## Open Questions
 
 ### `settled` on `ConcurrentRunner`
 
-`SerialRunner` exposes `.settled` (the current promise chain tail). `ConcurrentRunner` does not.
-`onSettled` at the state level implies the runner has a way to signal completion.
+`SerialRunner` exposes `.whenSettled()`. `ConcurrentRunner` does not. `onSettled` at the
+state level implies the runner has a way to signal completion.
 
 Options:
-- Add `settled` to `ConcurrentRunner` (resolves when `#pending` map empties — same concept)
+- Add `whenSettled()` to `ConcurrentRunner` (triggers when `#pending` map empties)
 - Define a `SettledRunner` interface and make `onSettled` only valid for runners that implement it
 
-Leaning toward the former: `settled` is a generally useful concept for any runner.
+Leaning toward the former: `whenSettled` is a generally useful concept for any runner.
 
-### Reactor `context`
+### Reactor `context` — what belongs where
 
-The current design gives Reactors no context (no non-finite state). This matches the current
-function-based reactors. If a Reactor needs to track something across effect re-runs (e.g.,
-`prevInputs` in `loadSegments`), it currently uses a closure variable.
+`createReactor` accepts a `context` field, and effects receive `context` + `setContext`.
+Reactor context is non-finite state visible in the snapshot.
 
-Open: should `createReactor` support an optional `context` field, or should Reactor context
-always be held via closure? Closure is simpler; a formal context field would make Reactor
-snapshots richer and more inspectable.
+In practice, the text track spike used empty `context: {}` throughout — reactor state was
+held via closure variables and the `owners` signal. The formal `context` field is available
+but its usage patterns are not yet settled.
 
-### Handler context API stability
-
-The second argument to message handlers is currently sketched as
-`{ transition, runner, context, setContext }`. The exact shape — including whether `runner` is
-always present (or `undefined` when no runner is declared) and whether `context` is the full
-snapshot context or a subset — is to be finalized during implementation.
-
----
-
-### Reactor per-state effect semantics: entry vs. reactive
-
-In practice, per-state effects fall into two distinct categories:
-
-- **Enter-once effects** — run once on state entry, do setup work, return a cleanup. Signal reads
-  inside these should generally be wrapped in `untrack()` to prevent accidental re-runs. Example:
-  creating `<track>` elements, starting a fetch.
-- **Reactive-within-state effects** — intentionally re-run when a signal changes while the state
-  is active. Example: `syncTextTracks` effect 2, which re-runs whenever `selectedTextTrackId`
-  changes to re-apply mode sync.
-
-Currently both categories use the same `effect()` mechanism, and the distinction is enforced by
-convention (explicit `untrack()` calls) rather than by the API. The `always` array is the primary
-mechanism for reactive condition monitoring, but reactive-within-state effects are also a
-legitimate use case.
-
-A possible future direction: distinguish these in the definition shape — e.g., `entry` for
-enter-once effects (automatically untracked) and `on` (signal-keyed or otherwise) for
-reactive-within-state effects. This would make intent explicit and prevent accidental tracking
-bugs in entry effects. Worth revisiting once more examples of the reactive-within-state pattern
-accumulate.
+Open: what belongs in Reactor `context` vs. closure variables vs. the `owners` signal?
+Tradeoffs: observability (context is in the snapshot; closure is not) vs. simplicity
+(closure is zero API surface). Revisit as more Reactors are written.

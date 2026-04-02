@@ -107,7 +107,13 @@ An Actor does not know about state outside itself. It receives messages and prod
 
 ### Current approach
 
-The concept is approximately right in the current codebase, but implementations are bespoke closures rather than classes. They will need to be refactored into classes with a formal interface. Beyond that structural change, additional structure is likely to emerge — for example, an Actor may define an explicit message map from message type to Task, making the relationship between inputs and work more declarative and inspectable.
+`createActor` in `core/create-actor.ts` — a declarative factory replacing bespoke closures.
+Actors define state, context, message handlers per state, and an optional runner factory in
+a definition object. The factory manages the snapshot signal, runner lifecycle, and
+`'destroyed'` terminal state. See [actor-reactor-factories.md](actor-reactor-factories.md).
+
+The existing `SourceBufferActor` predates `createActor` and has not been migrated — the
+behavioral contract is equivalent, but the factory pattern is not yet used there.
 
 ### Decided
 
@@ -146,19 +152,28 @@ A Reactor is typically the bridge between observable state and one or more Actor
 
 ### Current approach
 
-The current codebase has top-level functions in `dom/features/` that gesture at the Reactor concept — they observe state and produce side effects — but lack the formal structure entirely: no class, no status, no snapshot, no defined lifecycle. These will need significant rework to become first-class Reactors.
+`createReactor` in `core/create-reactor.ts` — a declarative factory. The first Reactor
+implementations are in `dom/features/` as part of the text track spike (videojs/v10#1158):
+`syncTextTracks` and `loadTextTrackCues`. See [text-track-architecture.md](text-track-architecture.md)
+for the reference implementation.
+
+Older features in `dom/features/` (e.g., `loadSegments`, `endOfStream`) are still
+function-based with no formal status or snapshot — they remain to be migrated.
 
 ### Decided
 
-- **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status: ReactorStatus }>`.
-- **Factory function, not base class** — `createReactor(definition)`. Per-state effects arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status, context }>`.
+- **Factory function, not base class** — `createReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
+- **`always` effects for cross-cutting monitors** — a dedicated `always` array runs before per-state effects in every flush. The primary use case is condition monitoring that drives transitions from one place. See the ordering guarantee in [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Context via closure (current direction)** — the text track spike used `context: {}` throughout; Reactor non-finite state lived in closure variables and the `owners` signal. A formal `context` field exists in `createReactor` but usage patterns are not yet settled.
 
 ### Open questions
 
-- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? Tightly coupled to §5.
-- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns all of this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose.
-- **Reactor context** — should `createReactor` support an optional `context` field for non-finite state, or should Reactor context always be held via closure? See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? The current implementation defers via `queueMicrotask`; the exact semantics under compound state changes are not fully characterized.
+- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose.
+- **Reactor context — what belongs where** — see the "Reactor `context`" open question in [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Entry vs. reactive per-state effect distinction** — currently a `untrack()` convention rather than an API distinction. A future `entry` / `reactive` split in the definition shape would make intent explicit. See [actor-reactor-factories.md](actor-reactor-factories.md).
 
 ---
 
@@ -231,7 +246,15 @@ A disciplined hybrid could work: signals for state (current values, derived valu
 
 ### Current approach
 
-A minimal hand-rolled observable in `core/state/` and `core/reactive/`. The concept is directionally correct but the primitive is insufficient for SPF's needs: no operators, no caching, no scheduling control, manual dependency wiring. This will be replaced entirely — the current implementation should be treated as a placeholder that established the pattern, not a foundation to build on.
+The TC39 `signal-polyfill` with a thin effect layer in `core/signals/effect.ts`. Writable
+`Signal.State`, `Signal.Computed`, and `Signal.subtle.Watcher` are used directly. SPF adds
+`signal()`, `computed()`, `untrack()`, `update()`, and `effect()` as thin wrappers.
+
+This is the approach used by the text track spike and is tentatively committed. It is not
+a final decision — if the TC39 proposal diverges significantly from the polyfill, or if
+bundle size / scheduling requirements favor a different library, this could change. The
+pre-existing `core/state/` observable is no longer used for new code and should be
+treated as legacy.
 
 ### Open questions
 

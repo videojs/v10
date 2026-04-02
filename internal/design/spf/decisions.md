@@ -11,6 +11,67 @@ Rationale behind SPF's key choices.
 
 ---
 
+## Actor/Reactor Pattern (from text track spike)
+
+These decisions were made or confirmed during the text track architecture spike
+(videojs/v10#1158). See [text-track-architecture.md](text-track-architecture.md) for
+the full reference implementation and assessment.
+
+---
+
+### `always`-before-state ordering as a load-bearing guarantee
+
+**Decision:** `always` effects in `createReactor` always run before per-state effects.
+This ordering guarantee is documented in `createReactor`'s source and must be preserved.
+
+**Rationale:** Per-state effects rely on invariants established by `always` monitors.
+When an `always` monitor calls `transition(newState)`, the snapshot updates before any
+per-state effect fires — so per-state effects that no-op when `status !== expectedState`
+do so correctly without needing to re-check conditions themselves.
+
+**Caveat:** The guarantee is specific to `createReactor`'s registration order. It depends
+on the TC39 `signal-polyfill`'s `Watcher` preserving insertion order in `getPending()` —
+not a formal guarantee of the TC39 Signals proposal.
+
+---
+
+### `deriveStatus` pattern for transition logic
+
+**Decision:** Transition conditions live in a pure `deriveStatus` function, wrapped in a
+`computed()` signal outside any effect body, consumed by the `always` monitor to drive
+transitions. The `always` effect contains only: read the computed, compare, call `transition`.
+
+**Rationale:** Keeps `always` minimal and machine-readable; makes transition conditions
+independently testable as a plain function; prevents the inline computed anti-pattern
+(see [actor-reactor-factories.md](actor-reactor-factories.md)).
+
+---
+
+### Actors in owners as the lifecycle contract
+
+**Decision:** Actors created by a reactor are written to the shared `owners` signal.
+The engine's `destroy()` generically destroys any value in owners with a `destroy()`
+method. The reactor does not destroy its own actors.
+
+**Rationale:** Keeps reactor cleanup simple — no tracking of which actors were created,
+no custom destroy logic. Gives the engine a single, uniform cleanup point. The tradeoff
+is an implicit contract: callers using a reactor outside the engine must destroy actors
+from owners before destroying the reactor.
+
+---
+
+### Entry-reset as a defensive pattern for actor-creating states
+
+**Decision:** States that create actors (`'setting-up'`) and states that are reset points
+(`'preconditions-unmet'`) both call `teardownActors()` on entry. `teardownActors` is a
+guarded no-op when actors are already `undefined`, preventing spurious signal writes.
+
+**Rationale:** Any transition to a reset state may arrive from a state where actors were
+alive. Defensive teardown on *both* states eliminates the need to track "did I come from
+an actor-alive state?" — the entry effect is always safe to run.
+
+---
+
 ## Architecture
 
 ### Reactor / Actor Separation

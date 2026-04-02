@@ -7,7 +7,7 @@ date: 2026-03-11
 
 > **This is a living design document for a highly tentative codebase.** The current implementation captures useful early lessons but is expected to undergo significant architectural change in the near term. [architecture.md](architecture.md) and [decisions.md](decisions.md) document the current state; [primitives.md](primitives.md) is the forward-looking design.
 
-A lean, actor-based framework for HLS playback over MSE. Handles manifest parsing, quality selection, segment buffering, and end-of-stream coordination — without a monolithic player.
+A lean, actor-based framework for HLS playback over MSE. Handles manifest parsing, quality selection, segment buffering, and end-of-stream coordination — without a monolithic player. Actors and Reactors are defined via declarative factory functions (`createActor`, `createReactor`) backed by TC39 Signals.
 
 ## Contents
 
@@ -16,6 +16,7 @@ A lean, actor-based framework for HLS playback over MSE. Handles manifest parsin
 | [index.md](index.md)                                       | Overview, problem, quick start, surface API                   |
 | [primitives.md](primitives.md)                             | Foundational building blocks (Tasks, Actors, Reactors, State) |
 | [actor-reactor-factories.md](actor-reactor-factories.md)   | Decided design for `createActor` / `createReactor` factories  |
+| [text-track-architecture.md](text-track-architecture.md)   | Reference Actor/Reactor implementation + spike assessment     |
 | [architecture.md](architecture.md)                         | Current implementation: layers, components, data flow         |
 | [decisions.md](decisions.md)                               | Decided and open design decisions                             |
 
@@ -122,6 +123,8 @@ interface PlaybackEngineOwners {
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
+  textTracksActor?: TextTracksActor;
+  segmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 ```
 
