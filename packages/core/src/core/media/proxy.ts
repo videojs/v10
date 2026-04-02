@@ -16,7 +16,7 @@ export const ProxyMixin = <T extends EventTarget>(
   PrimaryClass: AnyConstructor<T>,
   ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
-  class MediaProxy {
+  class MediaProxy extends EventTarget {
     #target: EventTarget | null = null;
 
     get target() {
@@ -53,7 +53,8 @@ export const ProxyMixin = <T extends EventTarget>(
       listener: EventListenerOrEventListenerObject,
       options?: boolean | AddEventListenerOptions
     ): void {
-      this.#target?.addEventListener(type, listener, options);
+      this.#target?.addEventListener(type, this, options);
+      super.addEventListener(type, listener, options);
     }
 
     removeEventListener(
@@ -61,11 +62,13 @@ export const ProxyMixin = <T extends EventTarget>(
       listener: EventListenerOrEventListenerObject,
       options?: boolean | EventListenerOptions
     ): void {
-      this.#target?.removeEventListener(type, listener, options);
+      this.#target?.removeEventListener(type, this, options);
+      super.removeEventListener(type, listener, options);
     }
 
-    dispatchEvent(event: Event): boolean {
-      return this.#target?.dispatchEvent(event) ?? false;
+    handleEvent(event: Event): void {
+      const eventClone = new (event.constructor as typeof Event)(event.type, event);
+      this.dispatchEvent(eventClone);
     }
   }
 

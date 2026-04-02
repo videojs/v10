@@ -1,11 +1,11 @@
-import { DelegateMixin } from '../../../core/media/delegate';
+import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 import { NativeHlsMediaErrorsMixin } from './errors';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
-class NativeHlsMediaDelegateBase extends EventTarget {
+class NativeHlsMediaDelegateBase extends EventTarget implements Delegate {
   #target: HTMLMediaElement | null = null;
   #src: string = '';
   #preload: PreloadType = 'metadata';

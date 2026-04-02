@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-
 import { MediaError } from '../../../../core/media/media-error';
 import { NativeHlsMediaErrorsMixin, type NativeMediaHost } from '../errors';
 

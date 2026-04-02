@@ -1,16 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
-
+import { bridgeEvents } from '../utils/bridge-events';
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
-
-/** Wrap `source.dispatchEvent` so every event is also re-dispatched on `target`. */
-export function bridgeEvents(source: EventTarget, target: EventTarget): void {
-  const origDispatch = source.dispatchEvent.bind(source);
-  source.dispatchEvent = (event: Event): boolean => {
-    const result = origDispatch(event);
-    target.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
-    return result;
-  };
-}
 
 export interface Delegate {
   attach?(target: EventTarget): void;

@@ -1,10 +1,10 @@
 import * as dashjs from 'dashjs';
 
-import { DelegateMixin } from '../../../core/media/delegate';
+import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 
-export class DashMediaDelegate {
+export class DashMediaDelegate implements Delegate {
   #engine: dashjs.MediaPlayerClass;
   #src: string = '';
 

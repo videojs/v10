@@ -344,7 +344,8 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
 
     handleEvent(event: Event): void {
       if (event.target === this.target) {
-        this.dispatchEvent(new CustomEvent(event.type, { detail: (event as CustomEvent).detail }));
+        const eventClone = new (event.constructor as typeof Event)(event.type, event);
+        this.dispatchEvent(eventClone);
       }
     }
 
