@@ -5,6 +5,10 @@ import type { AstroIntegration } from 'astro';
 import { JSDOM } from 'jsdom';
 import TurndownService from 'turndown';
 
+import { sidebar } from '../src/docs.config';
+import type { Sidebar, SupportedFramework } from '../src/types/docs';
+import { isSection, isValidFramework } from '../src/types/docs';
+
 interface PageEntry {
   pathname: string;
   title: string;
@@ -211,14 +215,78 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
 
 function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10 — ${capitalize(framework)} Documentation\n\n`;
-  const sorted = [...pages].sort((a, b) => a.pathname.localeCompare(b.pathname));
-  for (const page of sorted) {
-    content += page.description
-      ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
-      : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
+
+  // Build slug → page lookup
+  const prefix = `/docs/framework/${framework}/`;
+  const pageBySlug = new Map<string, PageEntry>();
+  for (const page of pages) {
+    if (page.pathname.startsWith(prefix)) {
+      const slug = page.pathname.slice(prefix.length).replace(/\/$/, '');
+      pageBySlug.set(slug, page);
+    }
   }
+
+  // Get sidebar filtered for this framework (production only)
+  if (!isValidFramework(framework)) return content;
+  const filtered = filterSidebarForLlms(sidebar, framework);
+
+  content += renderSidebarToMarkdown(filtered, pageBySlug, siteUrl);
   content += generateIndexFooter(siteUrl);
+
   return content;
+}
+
+function renderSidebarToMarkdown(
+  items: Sidebar,
+  pageBySlug: Map<string, PageEntry>,
+  siteUrl: string,
+  depth: number = 0
+): string {
+  let content = '';
+
+  for (const item of items) {
+    if (isSection(item)) {
+      const heading = '#'.repeat(depth + 2);
+      content += `${heading} ${item.sidebarLabel}\n\n`;
+      if (item.llmsDescription) {
+        content += `${item.llmsDescription}\n\n`;
+      }
+      content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
+    } else {
+      const page = pageBySlug.get(item.slug);
+      if (!page) continue;
+      content += page.description
+        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
+        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
+    }
+  }
+
+  if (content.length > 0 && !content.endsWith('\n\n')) {
+    content += '\n';
+  }
+
+  return content;
+}
+
+/**
+ * Inline sidebar filter for the integration context where `@/` path aliases
+ * aren't available (can't import `filterSidebar` from `src/utils/docs/sidebar`).
+ * Filters out `devOnly` items and sections restricted to other frameworks,
+ * then removes empty sections.
+ */
+function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Sidebar {
+  return items
+    .filter((item) => {
+      if (item.devOnly) return false;
+      return !item.frameworks || item.frameworks.includes(framework);
+    })
+    .map((item) => {
+      if (isSection(item)) {
+        return { ...item, contents: filterSidebarForLlms(item.contents, framework) };
+      }
+      return item;
+    })
+    .filter((item) => !isSection(item) || item.contents.length > 0);
 }
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
