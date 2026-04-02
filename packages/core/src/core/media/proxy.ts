@@ -1,6 +1,15 @@
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
+export interface MediaProxy {
+  readonly target: EventTarget | null;
+  get(prop: keyof EventTarget): any;
+  set(prop: keyof EventTarget, val: any): void;
+  call(prop: keyof EventTarget, ...args: any[]): any;
+  attach(target: EventTarget): void;
+  detach(): void;
+}
+
 /**
  * This mixin creates an API from the passed classes and proxies the methods and properties to the attached target.
  *
@@ -16,7 +25,7 @@ export const ProxyMixin = <T extends EventTarget>(
   PrimaryClass: AnyConstructor<T>,
   ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
-  class MediaProxy extends EventTarget {
+  class MediaProxyImpl extends EventTarget {
     #target: EventTarget | null = null;
     #types = new Set<string>();
 
@@ -73,8 +82,8 @@ export const ProxyMixin = <T extends EventTarget>(
   }
 
   for (const Class of [PrimaryClass, ...AdditionalClasses]) {
-    defineClassPropHooks(MediaProxy, Class.prototype);
+    defineClassPropHooks(MediaProxyImpl, Class.prototype);
   }
 
-  return MediaProxy as unknown as Constructor<T>;
+  return MediaProxyImpl as unknown as Constructor<T & MediaProxy>;
 };

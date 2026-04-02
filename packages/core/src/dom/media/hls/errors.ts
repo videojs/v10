@@ -51,7 +51,7 @@ export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(B
         if (!data.fatal) return;
 
         const code = hlsErrorTypeToCode[data.type] ?? MediaError.MEDIA_ERR_CUSTOM;
-        const error = new MediaError(data.error.message, code, true, data.details);
+        const error = new MediaError(data.error?.message, code, true, data.details);
         error.data = data;
 
         this.#error = error;
