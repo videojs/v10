@@ -70,6 +70,72 @@ This scheduling control is what makes the `always`-before-state ordering guarant
 `createReactor` possible. The effect scheduler drains pending computeds in an
 insertion-ordered `Set`, so registration order determines execution order.
 
+### Lower barrier to entry
+
+Signals have a shallower learning curve than observables, even for contributors with
+little or no prior reactive programming experience. The core mental model is immediately
+graspable: a signal is a value that changes over time; reading it inside a `computed()`
+or `effect()` makes that computation react when the value changes.
+
+The progression from basic to advanced is natural:
+1. `signal(value)` / `signal.get()` / `signal.set(value)` — read and write a value
+2. `computed(() => derive(signal.get()))` — derive new state automatically
+3. `effect(() => { sideEffect(signal.get()); return cleanup; })` — react to changes
+4. `untrack(() => signal.get())` — read without creating a dependency
+
+Each step adds one concept. No prior knowledge of cold vs. hot streams, subscription
+lifetime management, operator composition, or the subject/observable distinction is
+required to be productive.
+
+Observables demand more upfront. Even basic usage — a `BehaviorSubject` with a
+derived observable — requires understanding `.pipe()`, `shareReplay(1)`,
+`distinctUntilChanged()`, subscription lifecycle, and the difference between multicasting
+and unicasting. Contributors unfamiliar with RxJS will need to internalize these idioms
+before they can write or review reactive code confidently.
+
+This is not a knock on observables — the power they provide is real. But for a framework
+that needs to be readable and maintainable by a broad community of contributors, including
+those coming from non-reactive backgrounds, the lower entry cost of signals is meaningful.
+
+### Imperative and functional versatility
+
+Signals support both imperative and reactive usage patterns — and the two compose
+naturally. A signal can be written from anywhere: a DOM event handler, a Promise callback,
+an actor message handler, an async Task. It can be read reactively inside `computed()` or
+`effect()`, and read imperatively (with or without `untrack()`) outside those contexts.
+There is no barrier between the two modes.
+
+This versatility matters in two directions:
+
+**Internal**: SPF's Actors are inherently message-driven and execute work imperatively.
+Message handlers call `setContext()`, `transition()`, and `send()` — not observable
+operators. The fact that these imperative writes immediately update the signal graph,
+and that Reactors will pick them up on the next microtask, means there is no impedance
+mismatch between the reactive layer and the imperative actor layer.
+
+**External**: Third-party integrators and higher-level abstractions built on SPF can
+interact with the engine's state without adopting the full reactive model. They can call
+`state.get()` to read current values imperatively, `state.set()` / `owners.patch()` to
+write, and observe changes by wrapping a read in their own `effect()` — or just poll. The
+signal is a value container first; the reactive graph is opt-in.
+
+With observables, integration requires working within the observable paradigm or
+bridging out explicitly at every boundary. Signals offer a gentler integration surface.
+
+### Community validation
+
+Discussions with engineers from adjacent projects in the streaming and playback space
+reinforced this direction. Specifically:
+
+- **Luke Curley** (Media over QUIC / MoQ) — reviewed the approach and preferred signals
+  over observables, particularly after seeing the Actor/Reactor layering built on top.
+- **Casey Occhialini** (Common Media Library maintainer; principal player engineer,
+  Paramount) — independently preferred signals, citing readability and the lower mental
+  overhead compared to RxJS-style observable pipelines.
+
+Neither of these is a proof of correctness, but they represent relevant signal (no pun
+intended) from engineers who work on similar problems and have considered both options.
+
 ---
 
 ## Three Roles in SPF's Architecture
