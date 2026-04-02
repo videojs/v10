@@ -3,6 +3,7 @@ import {
   applyElementProps,
   applyStateDataAttrs,
   createSlider,
+  createWheelStep,
   getSliderCSSVars,
   logMissingFeature,
   type SliderApi,
@@ -24,6 +25,7 @@ export class VolumeSliderElement extends MediaElement {
     label: { type: String },
     step: { type: Number },
     largeStep: { type: Number, attribute: 'large-step' },
+    wheelStep: { type: Number, attribute: 'wheel-step' },
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
@@ -32,6 +34,7 @@ export class VolumeSliderElement extends MediaElement {
   label = VolumeSliderCore.defaultProps.label;
   step = VolumeSliderCore.defaultProps.step;
   largeStep = VolumeSliderCore.defaultProps.largeStep;
+  wheelStep = VolumeSliderCore.defaultProps.wheelStep;
   orientation = VolumeSliderCore.defaultProps.orientation;
   disabled = VolumeSliderCore.defaultProps.disabled;
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
@@ -50,25 +53,22 @@ export class VolumeSliderElement extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
+    const isDisabled = () => this.disabled || !this.#volumeState.value;
+    const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
+    const getStepPercent = () => this.#core.getStepPercent();
+    const setVolume = (percent: number) => this.#setVolume(percent);
+
     this.#slider = createSlider({
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
       isRTL: () => isRTL(this),
-      isDisabled: () => this.disabled || !this.#volumeState.value,
-      getPercent: () => {
-        const media = this.#volumeState.value;
-        if (!media) return 0;
-        return media.volume * 100;
-      },
-      getStepPercent: () => this.#core.getStepPercent(),
+      isDisabled,
+      getPercent,
+      getStepPercent,
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
-      onValueChange: (percent) => {
-        this.#setVolume(percent);
-      },
-      onValueCommit: (percent) => {
-        this.#setVolume(percent);
-      },
+      onValueChange: setVolume,
+      onValueCommit: setVolume,
       onDragStart: () => {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
@@ -79,7 +79,15 @@ export class VolumeSliderElement extends MediaElement {
       onResize: () => this.requestUpdate(),
     });
 
+    const wheelProps = createWheelStep({
+      isDisabled,
+      getPercent,
+      getStepPercent: () => this.#core.getWheelStepPercent(),
+      onValueChange: setVolume,
+    });
+
     applyElementProps(this, this.#slider.rootProps, { signal });
+    applyElementProps(this, wheelProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
