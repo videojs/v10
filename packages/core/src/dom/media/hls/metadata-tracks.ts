@@ -27,23 +27,25 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
       [...target.textTracks].forEach((track) => {
         if (!(track.kind === 'metadata' || track.kind === 'chapters')) return;
 
-        if (!track.cues?.length) {
-          let selector = 'track';
-          if (track.kind) selector += `[kind="${track.kind}"]`;
-          if (track.label) selector += `[label="${track.label}"]`;
-          const trackEl = target.querySelector(selector) as HTMLTrackElement | null;
-          const src = trackEl?.getAttribute('src') ?? '';
-          const TRACK_LOADED = 2;
-          // Only reset the src attribute if the track was loaded before and had no cues.
-          if (trackEl && trackEl.readyState === TRACK_LOADED) {
-            trackEl.removeAttribute('src');
-            setTimeout(() => {
-              trackEl.setAttribute('src', src);
-            }, 0);
-          }
+        let selector = 'track';
+        if (track.kind) selector += `[kind="${track.kind}"]`;
+        if (track.label) selector += `[label="${track.label}"]`;
+
+        const trackEl = target.querySelector(selector) as HTMLTrackElement | null;
+        if (!trackEl) return;
+
+        const src = trackEl.getAttribute('src') ?? '';
+        const TRACK_LOADED = 2;
+
+        // Only reset the src attribute if the track was loaded before and had no cues.
+        if (trackEl.readyState === TRACK_LOADED && !track.cues?.length) {
+          trackEl.removeAttribute('src');
+          setTimeout(() => {
+            trackEl.setAttribute('src', src);
+          }, 0);
         }
 
-        if (track.mode !== 'hidden') {
+        if (trackEl?.default && track.mode !== 'hidden') {
           track.mode = 'hidden';
         }
       });
