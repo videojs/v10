@@ -55,8 +55,9 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {
     if (externalThumbnails && externalThumbnails.length > 0) return externalThumbnails;
-    if (!textTrack?.thumbnailCues.length) return [];
-    return mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined);
+    return textTrack && textTrack.thumbnailCues.length > 0
+      ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+      : [];
   }, [externalThumbnails, textTrack]);
 
   const thumbnail = useMemo(() => core.findActiveThumbnail(thumbnails, time), [core, thumbnails, time]);

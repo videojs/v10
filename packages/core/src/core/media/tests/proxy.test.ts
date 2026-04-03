@@ -155,6 +155,46 @@ describe('ProxyMixin', () => {
     });
   });
 
+  describe('prototype chain walking', () => {
+    it('proxies methods inherited from ancestor prototypes', () => {
+      class Grandparent extends EventTarget {
+        inherited() {
+          return 'grandparent';
+        }
+      }
+
+      class Parent extends Grandparent {
+        direct() {
+          return 'parent';
+        }
+      }
+
+      const ParentProxy = ProxyMixin(Parent);
+      const proxy = new ParentProxy();
+      const target = new Parent();
+      proxy.attach(target);
+
+      expect(proxy.direct()).toBe('parent');
+      expect(proxy.inherited()).toBe('grandparent');
+    });
+
+    it('stops before prototypes the proxy already extends', () => {
+      class Child extends EventTarget {
+        custom() {
+          return 'custom';
+        }
+      }
+
+      const ChildProxy = ProxyMixin(Child);
+
+      // addEventListener is defined by the proxy itself — the walk
+      // should not overwrite it with a forwarding hook.
+      expect(Object.getOwnPropertyDescriptor(ChildProxy.prototype, 'addEventListener')?.value).toBe(
+        ChildProxy.prototype.addEventListener
+      );
+    });
+  });
+
   describe('EventListenerObject support', () => {
     it('invokes handleEvent on an object listener', () => {
       const { proxy, target } = setup();

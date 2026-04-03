@@ -21,10 +21,7 @@ export interface MediaProxy {
  *
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
-export const ProxyMixin = <T extends EventTarget>(
-  PrimaryClass: AnyConstructor<T>,
-  ...AdditionalClasses: AnyConstructor<EventTarget>[]
-) => {
+export const ProxyMixin = <T extends EventTarget>(BaseClass: AnyConstructor<T>) => {
   class MediaProxyImpl extends EventTarget {
     #target: EventTarget | null = null;
     #types = new Set<string>();
@@ -81,8 +78,12 @@ export const ProxyMixin = <T extends EventTarget>(
     };
   }
 
-  for (const Class of [PrimaryClass, ...AdditionalClasses]) {
-    defineClassPropHooks(MediaProxyImpl, Class.prototype);
+  for (
+    let proto = BaseClass.prototype;
+    proto && !Object.prototype.isPrototypeOf.call(proto, MediaProxyImpl.prototype);
+    proto = Object.getPrototypeOf(proto)
+  ) {
+    defineClassPropHooks(MediaProxyImpl, proto);
   }
 
   return MediaProxyImpl as unknown as Constructor<T & MediaProxy>;

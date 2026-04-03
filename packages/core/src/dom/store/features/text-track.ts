@@ -60,6 +60,11 @@ export const textTrackFeature = definePlayerFeature({
         }
       }
 
+      // Browsers don't auto-load cues for metadata/chapters tracks even with
+      // the `default` attribute — mode stays 'disabled' until explicitly set.
+      if (chaptersTrack && chaptersTrack.mode === 'disabled') chaptersTrack.mode = 'hidden';
+      if (thumbnailTrack && thumbnailTrack.mode === 'disabled') thumbnailTrack.mode = 'hidden';
+
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
       // the CueList is typed as TextTrackCue which doesn't expose `text`.
       const chaptersCues: MediaTextCue[] = chaptersTrack?.cues
