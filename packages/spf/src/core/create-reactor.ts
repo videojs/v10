@@ -1,5 +1,5 @@
-import type { ActorSnapshot, SignalActor } from './actor';
 import { effect } from './signals/effect';
+import type { ReadonlySignal } from './signals/primitives';
 import { signal, untrack, update } from './signals/primitives';
 
 // =============================================================================
@@ -14,26 +14,15 @@ import { signal, untrack, update } from './signals/primitives';
  * those signals change and automatically calls `transition()` when the returned
  * status differs from the current one.
  */
-export type ReactorDeriveFn<UserStatus extends string, Context extends object> = (ctx: {
-  status: UserStatus;
-  transition: (to: UserStatus) => void;
-  context: Context;
-  setContext: (next: Context) => void;
-}) => UserStatus;
+export type ReactorDeriveFn<UserStatus extends string> = () => UserStatus;
 
 /**
  * An effect function used in reactor `entry` and `reactions` blocks.
  *
- * Receives `status`, `transition`, `context`, and `setContext`. May return a
- * cleanup function that runs before each re-evaluation and on state exit
- * (including destroy).
+ * May return a cleanup function that runs before each re-evaluation and on
+ * state exit (including destroy).
  */
-export type ReactorEffectFn<UserStatus extends string, Context extends object> = (ctx: {
-  status: UserStatus;
-  transition: (to: UserStatus) => void;
-  context: Context;
-  setContext: (next: Context) => void;
-}) => (() => void) | { abort(): void } | void;
+export type ReactorEffectFn = () => (() => void) | { abort(): void } | void;
 
 /**
  * Per-state effect grouping for a single reactor state.
@@ -45,11 +34,11 @@ export type ReactorEffectFn<UserStatus extends string, Context extends object> =
  *   inside the fn body changes. Use `untrack()` for reads you do not want to
  *   track. Use this for work that must stay in sync with reactive state.
  *
- * Both arrays are optional; pass `{}` for states with no effects.
+ * Both are optional; pass `{}` for states with no effects.
  */
-export type ReactorStateDefinition<UserStatus extends string, Context extends object> = {
-  entry?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
-  reactions?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
+export type ReactorStateDefinition = {
+  entry?: ReactorEffectFn | ReactorEffectFn[];
+  reactions?: ReactorEffectFn | ReactorEffectFn[];
 };
 
 /**
@@ -59,23 +48,21 @@ export type ReactorStateDefinition<UserStatus extends string, Context extends ob
  * `'destroyed'` are always added by the framework as implicit terminal states —
  * do not include them here.
  */
-export type ReactorDefinition<UserStatus extends string, Context extends object> = {
+export type ReactorDefinition<UserStatus extends string> = {
   /** Initial status. */
   initial: UserStatus;
-  /** Initial context. */
-  context: Context;
   /**
    * Reactive status derivation. Registered before per-state effects — the
    * ordering guarantee ensures transitions fired here take effect before
    * per-state effects re-evaluate in the same flush.
    */
-  derive?: ReactorDeriveFn<UserStatus, Context> | ReactorDeriveFn<UserStatus, Context>[];
+  derive?: ReactorDeriveFn<UserStatus> | ReactorDeriveFn<UserStatus>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
    * `effect()` calls gated on that state, with their own cleanup lifecycles.
    */
-  states: Record<UserStatus, ReactorStateDefinition<UserStatus, Context>>;
+  states: Record<UserStatus, ReactorStateDefinition>;
 };
 
 // =============================================================================
@@ -83,7 +70,10 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
 // =============================================================================
 
 /** Live reactor instance returned by `createReactor`. */
-export type Reactor<Status extends string, Context extends object> = SignalActor<Status, Context>;
+export type Reactor<Status extends string> = {
+  readonly snapshot: ReadonlySignal<{ status: Status }>;
+  destroy(): void;
+};
 
 // =============================================================================
 // Implementation helpers
@@ -101,9 +91,7 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  * A Reactor is driven by subscriptions to external signals rather than
  * imperative messages. Each state holds an array of effect functions —
  * every element becomes one independent `effect()` call gated on that state,
- * with its own dependency tracking and cleanup lifecycle. This replaces the
- * pattern of multiple named `cleanupX = effect(...)` variables in function-based
- * reactors.
+ * with its own dependency tracking and cleanup lifecycle.
  *
  * `'destroying'` and `'destroyed'` are always implicit terminal states.
  * `destroy()` transitions through both in sequence: `'destroying'` first (for
@@ -113,12 +101,7 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  * @example
  * const reactor = createReactor({
  *   initial: 'waiting',
- *   context: {},
- *   derive: ({ status, transition }) => {
- *     const target = deriveStatus();
- *     if (target !== status) transition(target);
- *     return target;
- *   },
+ *   derive: () => srcSignal.get() ? 'active' : 'waiting',
  *   states: {
  *     active: {
  *       // entry: runs once on state entry; fn body is automatically untracked.
@@ -126,18 +109,17 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  *       // reactions: re-runs whenever tracked signals change.
  *       reactions: () => { currentTimeSignal.get(); return cleanup; },
  *     },
- *     idle: {}, // no effects
+ *     waiting: {},
  *   }
  * });
  */
-export function createReactor<UserStatus extends string, Context extends object>(
-  def: ReactorDefinition<UserStatus, Context>
-): Reactor<UserStatus | 'destroying' | 'destroyed', Context> {
+export function createReactor<UserStatus extends string>(
+  def: ReactorDefinition<UserStatus>
+): Reactor<UserStatus | 'destroying' | 'destroyed'> {
   type FullStatus = UserStatus | 'destroying' | 'destroyed';
 
-  const snapshotSignal = signal<ActorSnapshot<FullStatus, Context>>({
+  const snapshotSignal = signal<{ status: FullStatus }>({
     status: def.initial as FullStatus,
-    context: def.context,
   });
 
   const getStatus = (): FullStatus => untrack(() => snapshotSignal.get().status);
@@ -146,42 +128,25 @@ export function createReactor<UserStatus extends string, Context extends object>
     update(snapshotSignal, { status: to });
   };
 
-  const setContext = (context: Context): void => {
-    update(snapshotSignal, { context });
-  };
-
   const effectDisposals: Array<() => void> = [];
 
-  const makeCtx = (snapshot: ActorSnapshot<FullStatus, Context>) => ({
-    status: snapshot.status as UserStatus,
-    transition: (to: UserStatus) => {
-      if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-      transition(to as FullStatus);
-    },
-    context: snapshot.context,
-    setContext: (context: Context) => {
-      if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-      setContext(context);
-    },
-  });
-
-  const wrapResult = (result: ReturnType<ReactorEffectFn<UserStatus, Context>>) => {
+  const wrapResult = (result: ReturnType<ReactorEffectFn>) => {
     if (!result) return undefined;
     if (typeof result === 'function') return result;
     return () => result.abort();
   };
 
-  type EffectCall = () => ReturnType<ReactorEffectFn<UserStatus, Context>>;
+  type EffectCall = () => ReturnType<ReactorEffectFn>;
 
   type EffectDescriptor = {
-    fn: ReactorEffectFn<UserStatus, Context>;
-    shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean;
+    fn: ReactorEffectFn;
+    shouldSkip: (snapshot: { status: FullStatus }) => boolean;
     toFnCall?: (baseCall: EffectCall) => EffectCall;
   };
 
   const untracked: EffectDescriptor['toFnCall'] = (baseCall) => () => untrack(baseCall);
 
-  const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
+  const isTerminal = (snapshot: { status: FullStatus }) =>
     snapshot.status === 'destroying' || snapshot.status === 'destroyed';
 
   // `derive` descriptors are built first — the ordering guarantee ensures
@@ -190,28 +155,26 @@ export function createReactor<UserStatus extends string, Context extends object>
   // previous implementation for full details.
   const descriptors: EffectDescriptor[] = [
     ...toArray(def.derive).map((fn) => ({
-      fn: (ctx: Parameters<ReactorEffectFn<UserStatus, Context>>[0]) => {
-        const target = fn(ctx);
-        if (target !== ctx.status) ctx.transition(target);
+      fn: () => {
+        const target = fn();
+        if (target !== (getStatus() as UserStatus)) transition(target as FullStatus);
       },
       shouldSkip: isTerminal,
     })),
-    ...(Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).flatMap(
-      ([state, stateDef]) => {
-        const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
-        return [
-          ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
-          ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState })),
-        ];
-      }
-    ),
+    ...(Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition]>).flatMap(([state, stateDef]) => {
+      const isNotState = (snapshot: { status: FullStatus }) => snapshot.status !== state;
+      return [
+        ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
+        ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState })),
+      ];
+    }),
   ];
 
   const toEffect = ({ fn, shouldSkip, toFnCall = (baseCall) => baseCall }: EffectDescriptor) =>
     effect(() => {
       const snapshot = snapshotSignal.get();
       if (shouldSkip(snapshot)) return;
-      const baseCall = () => fn(makeCtx(snapshot));
+      const baseCall = () => fn();
       return wrapResult(toFnCall(baseCall)());
     });
 

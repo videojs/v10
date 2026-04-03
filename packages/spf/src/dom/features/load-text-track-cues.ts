@@ -136,14 +136,13 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<LoadTextTrackCuesStatus | 'destroying' | 'destroyed', object> {
+}): Reactor<LoadTextTrackCuesStatus | 'destroying' | 'destroyed'> {
   const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
   const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
   const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
 
-  return createReactor<LoadTextTrackCuesStatus, object>({
+  return createReactor<LoadTextTrackCuesStatus>({
     initial: 'preconditions-unmet',
-    context: {},
     derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {

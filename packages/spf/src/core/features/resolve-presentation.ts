@@ -90,12 +90,11 @@ export function resolvePresentation<S extends PresentationState>({
   state,
 }: {
   state: Signal<S>;
-}): Reactor<ResolvePresentationStatus | 'destroying' | 'destroyed', object> {
+}): Reactor<ResolvePresentationStatus | 'destroying' | 'destroyed'> {
   const derivedStatusSignal = computed(() => deriveStatus(state.get()));
 
-  return createReactor<ResolvePresentationStatus, object>({
+  return createReactor<ResolvePresentationStatus>({
     initial: 'preconditions-unmet',
-    context: {},
     derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},

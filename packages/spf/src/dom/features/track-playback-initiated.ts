@@ -63,14 +63,13 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<PlaybackInitiatedStatus | 'destroying' | 'destroyed', object> {
+}): Reactor<PlaybackInitiatedStatus | 'destroying' | 'destroyed'> {
   const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   const urlSignal = computed(() => state.get().presentation?.url);
 
-  return createReactor<PlaybackInitiatedStatus, object>({
+  return createReactor<PlaybackInitiatedStatus>({
     initial: 'preconditions-unmet',
-    context: {},
     derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},

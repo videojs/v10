@@ -10,15 +10,13 @@ const tick = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 // =============================================================================
 
 describe('createReactor', () => {
-  it('starts with the initial status and context', () => {
+  it('starts with the initial status', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: { value: 0 },
       states: { idle: {} },
     });
 
     expect(reactor.snapshot.get().status).toBe('idle');
-    expect(reactor.snapshot.get().context).toEqual({ value: 0 });
 
     reactor.destroy();
   });
@@ -27,7 +25,6 @@ describe('createReactor', () => {
     const fn = vi.fn();
     createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { entry: [fn] } },
     }).destroy();
 
@@ -38,7 +35,6 @@ describe('createReactor', () => {
     const fn = vi.fn();
     createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { reactions: [fn] } },
     }).destroy();
 
@@ -47,9 +43,8 @@ describe('createReactor', () => {
 
   it('does not run effects for states other than the initial state', () => {
     const otherFn = vi.fn();
-    createReactor<'idle' | 'other', object>({
+    createReactor<'idle' | 'other'>({
       initial: 'idle',
-      context: {},
       states: {
         idle: {},
         other: { entry: [otherFn] },
@@ -59,40 +54,13 @@ describe('createReactor', () => {
     expect(otherFn).not.toHaveBeenCalled();
   });
 
-  it('passes transition, context, and setContext to entry effect fns', () => {
-    let captured: unknown;
-    createReactor({
-      initial: 'idle' as const,
-      context: { x: 1 },
-      states: {
-        idle: {
-          entry: [
-            (ctx) => {
-              captured = ctx;
-            },
-          ],
-        },
-      },
-    }).destroy();
-
-    expect(typeof (captured as { transition: unknown }).transition).toBe('function');
-    expect((captured as { context: unknown }).context).toEqual({ x: 1 });
-    expect(typeof (captured as { setContext: unknown }).setContext).toBe('function');
-  });
-
-  it('transitions status via transition() in a reaction', async () => {
+  it('transitions status via derive', async () => {
     const src = signal(false);
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
+      derive: () => (src.get() ? 'active' : 'waiting'),
       states: {
-        waiting: {
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('active');
-            },
-          ],
-        },
+        waiting: {},
         active: {},
       },
     });
@@ -111,17 +79,11 @@ describe('createReactor', () => {
     const src = signal(false);
     const activeFn = vi.fn();
 
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
+      derive: () => (src.get() ? 'active' : 'waiting'),
       states: {
-        waiting: {
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('active');
-            },
-          ],
-        },
+        waiting: {},
         active: { entry: [activeFn] },
       },
     });
@@ -137,30 +99,6 @@ describe('createReactor', () => {
     reactor.destroy();
   });
 
-  it('updates context via setContext()', () => {
-    let captured = 0;
-    const reactor = createReactor({
-      initial: 'idle' as const,
-      context: { count: 0 },
-      states: {
-        idle: {
-          entry: [
-            ({ context, setContext }) => {
-              captured = context.count;
-              setContext({ count: context.count + 1 });
-            },
-          ],
-        },
-      },
-    });
-
-    // Effect ran on creation with count: 0, then setContext wrote count: 1
-    expect(captured).toBe(0);
-    expect(reactor.snapshot.get().context.count).toBe(1);
-
-    reactor.destroy();
-  });
-
   it('multiple entry effects in the same state run independently', () => {
     const fn1 = vi.fn();
     const fn2 = vi.fn();
@@ -168,7 +106,6 @@ describe('createReactor', () => {
 
     createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { entry: [fn1, fn2, fn3] } },
     }).destroy();
 
@@ -189,7 +126,6 @@ describe('createReactor', () => {
 
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { reactions: [fn1, fn2] } },
     });
 
@@ -213,7 +149,6 @@ describe('createReactor', () => {
 
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { entry: [fn] } },
     });
 
@@ -229,17 +164,11 @@ describe('createReactor', () => {
 
   it('snapshot is reactive', async () => {
     const src = signal(false);
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
+      derive: () => (src.get() ? 'active' : 'waiting'),
       states: {
-        waiting: {
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('active');
-            },
-          ],
-        },
+        waiting: {},
         active: {},
       },
     });
@@ -265,20 +194,15 @@ describe('createReactor — cleanup', () => {
     const src = signal(false);
     const cleanup = vi.fn();
 
-    const reactor = createReactor<'active' | 'done', object>({
+    const reactor = createReactor<'active' | 'done'>({
       initial: 'active',
-      context: {},
+      derive: () => (src.get() ? 'done' : 'active'),
       states: {
         active: {
           // entry: cleanup fires on exit regardless of whether fn is tracked
           entry: [
             () => {
               return cleanup;
-            },
-          ],
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('done');
             },
           ],
         },
@@ -302,7 +226,6 @@ describe('createReactor — cleanup', () => {
 
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: {
         idle: {
           reactions: [
@@ -331,7 +254,6 @@ describe('createReactor — cleanup', () => {
 
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: {
         idle: {
           entry: [() => entryCleanup],
@@ -350,9 +272,8 @@ describe('createReactor — cleanup', () => {
     const activeCleanup = vi.fn();
     const inactiveCleanup = vi.fn();
 
-    createReactor<'idle' | 'other', object>({
+    createReactor<'idle' | 'other'>({
       initial: 'idle',
-      context: {},
       states: {
         idle: { entry: [() => activeCleanup] },
         other: { entry: [() => inactiveCleanup] },
@@ -371,9 +292,8 @@ describe('createReactor — cleanup', () => {
 describe('createReactor — derive', () => {
   it('transitions to the status returned by the derive fn', async () => {
     const src = signal<'waiting' | 'active'>('waiting');
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
       derive: () => src.get(),
       states: { waiting: {}, active: {} },
     });
@@ -390,9 +310,8 @@ describe('createReactor — derive', () => {
 
   it('does not transition when the derive fn returns the current status', async () => {
     const activeFn = vi.fn();
-    const reactor = createReactor<'idle' | 'active', object>({
+    const reactor = createReactor<'idle' | 'active'>({
       initial: 'idle',
-      context: {},
       derive: () => 'idle',
       states: { idle: {}, active: { entry: activeFn } },
     });
@@ -409,9 +328,8 @@ describe('createReactor — derive', () => {
     const src = signal<'waiting' | 'active'>('waiting');
     const deriveFn = vi.fn(() => src.get());
 
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
       derive: deriveFn,
       states: { waiting: {}, active: {} },
     });
@@ -430,7 +348,6 @@ describe('createReactor — derive', () => {
     const deriveFn = vi.fn(() => 'idle' as const);
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       derive: deriveFn,
       states: { idle: {} },
     });
@@ -446,9 +363,8 @@ describe('createReactor — derive', () => {
     const src = signal<'waiting' | 'active'>('waiting');
     const order: string[] = [];
 
-    const reactor = createReactor<'waiting' | 'active', object>({
+    const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      context: {},
       derive: () => {
         order.push('derive');
         return src.get();
@@ -488,7 +404,6 @@ describe('createReactor — destroy', () => {
   it('transitions to destroyed on destroy()', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: {} },
     });
 
@@ -500,7 +415,6 @@ describe('createReactor — destroy', () => {
   it('destroy() is idempotent', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: {} },
     });
 
@@ -517,7 +431,6 @@ describe('createReactor — destroy', () => {
 
     const reactor = createReactor({
       initial: 'idle' as const,
-      context: {},
       states: { idle: { reactions: [fn] } },
     });
 

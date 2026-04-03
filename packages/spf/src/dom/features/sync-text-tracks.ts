@@ -88,7 +88,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<TextTrackSyncStatus | 'destroying' | 'destroyed', object> {
+}): Reactor<TextTrackSyncStatus | 'destroying' | 'destroyed'> {
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   const modelTextTracksSignal = computed(() => getModelTextTracks(state.get().presentation), {
     /** @TODO Make generic and abstract away for Array<T> | undefined (CJP) */
@@ -108,9 +108,8 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
   const selectedTextTrackIdSignal = computed(() => state.get().selectedTextTrackId);
   const preconditionsMetSignal = computed(() => !!mediaElementSignal.get() && !!modelTextTracksSignal.get()?.length);
 
-  return createReactor<TextTrackSyncStatus, object>({
+  return createReactor<TextTrackSyncStatus>({
     initial: 'preconditions-unmet',
-    context: {},
     derive: () => (preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet'),
     states: {
       'preconditions-unmet': {},
