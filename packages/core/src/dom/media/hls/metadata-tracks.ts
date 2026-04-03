@@ -17,7 +17,8 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
     constructor(...args: any[]) {
       super(...args);
 
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      // Watch out here, AFTER the manifest is loaded!
+      this.engine?.on(Hls.Events.MANIFEST_LOADED, () => this.#init());
       this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
       this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
       this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
@@ -36,22 +37,26 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
     }
 
     #forceHiddenTracks(): void {
-      const { engine, target } = this;
-      if (!engine || !target) return;
+      const { target } = this;
+      if (!target) return;
 
-      Array.from(target.textTracks).forEach((track) => {
+      [...target.textTracks].forEach((track) => {
         if (!(track.kind === 'metadata' || track.kind === 'chapters')) return;
 
         if (!track.cues?.length) {
           let selector = 'track';
           if (track.kind) selector += `[kind="${track.kind}"]`;
           if (track.label) selector += `[label="${track.label}"]`;
-          const trackEl = target.querySelector(selector);
+          const trackEl = target.querySelector(selector) as HTMLTrackElement | null;
           const src = trackEl?.getAttribute('src') ?? '';
-          trackEl?.removeAttribute('src');
-          setTimeout(() => {
-            trackEl?.setAttribute('src', src);
-          }, 0);
+          const TRACK_LOADED = 2;
+          // Only reset the src attribute if the track was loaded before and had no cues.
+          if (trackEl && trackEl.readyState === TRACK_LOADED) {
+            trackEl.removeAttribute('src');
+            setTimeout(() => {
+              trackEl.setAttribute('src', src);
+            }, 0);
+          }
         }
 
         if (track.mode !== 'hidden') {

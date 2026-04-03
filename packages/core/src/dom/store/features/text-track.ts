@@ -60,11 +60,6 @@ export const textTrackFeature = definePlayerFeature({
         }
       }
 
-      // Browsers don't auto-load cues for metadata/chapters tracks even with
-      // the `default` attribute — mode stays 'disabled' until explicitly set.
-      if (chaptersTrack && chaptersTrack.mode === 'disabled') chaptersTrack.mode = 'hidden';
-      if (thumbnailTrack && thumbnailTrack.mode === 'disabled') thumbnailTrack.mode = 'hidden';
-
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
       // the CueList is typed as TextTrackCue which doesn't expose `text`.
       const chaptersCues: MediaTextCue[] = chaptersTrack?.cues
@@ -83,7 +78,11 @@ export const textTrackFeature = definePlayerFeature({
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event
       // on the <track> element to know when cues are ready.
-      for (const trackEl of media.querySelectorAll?.('track') ?? []) {
+      const tracks = media.querySelectorAll?.('track') ?? [];
+      // For a CustomMediaElement, the functional tracks are in the shadow root.
+      const shadowTracks = media.shadowRoot?.querySelectorAll?.('track') ?? [];
+
+      for (const trackEl of [...tracks, ...shadowTracks]) {
         if (!trackEl.track?.cues?.length) {
           listen(trackEl, 'load', sync, { signal: trackCleanup.signal });
         }
