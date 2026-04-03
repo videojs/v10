@@ -372,6 +372,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
           this.#childObserver?.observe(el, { attributes: true });
         }
         this.target?.append(clone);
+        this.#enableDefaultTrack(clone as HTMLTrackElement);
       });
 
       removeNativeChildren.forEach((clone, el) => {
@@ -387,8 +388,23 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
           const clone = this.#childMap.get(target as MediaChild);
           if (clone && attributeName) {
             clone.setAttribute(attributeName, (target as MediaChild).getAttribute(attributeName) ?? '');
+            this.#enableDefaultTrack(clone as HTMLTrackElement);
           }
         }
+      }
+    }
+
+    #enableDefaultTrack(trackEl: HTMLTrackElement): void {
+      // Browsers don't honor the `default` attribute if a track is added via JS.
+      // Enable default tracks for chapters or metadata.
+      if (
+        trackEl &&
+        trackEl.localName === 'track' &&
+        trackEl.default &&
+        (trackEl.kind === 'chapters' || trackEl.kind === 'metadata') &&
+        trackEl.track.mode === 'disabled'
+      ) {
+        trackEl.track.mode = 'hidden';
       }
     }
 
