@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.13...@videojs/skins@10.0.0-beta.14) (2026-04-03)
+
+
+### Features
+
+* **html:** add ui bundles for eject ([#1206](https://github.com/videojs/v10/issues/1206)) ([0ed7bf0](https://github.com/videojs/v10/commit/0ed7bf0653b373a353c039fac1aa2bca4fa2973e))
+
+
+### Bug Fixes
+
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.14
+
 ## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.12...@videojs/skins@10.0.0-beta.13) (2026-04-01)
 
 
