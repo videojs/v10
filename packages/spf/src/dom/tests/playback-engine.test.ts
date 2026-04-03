@@ -580,7 +580,9 @@ http://example.com/audio-seg1.m4s
     expect(state.presentation?.selectionSets).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
 
-    // PHASE 2: Simulate play (via media element — sets playbackInitiated + dispatches to event stream)
+    // PHASE 2: Simulate play — reflect real browser behavior where paused becomes
+    // false before the play event fires (per WHATWG §4.8.11.8), then dispatch.
+    Object.defineProperty(mediaElement, 'paused', { get: () => false, configurable: true });
     mediaElement.dispatchEvent(new Event('play'));
 
     // Wait for complete orchestration
