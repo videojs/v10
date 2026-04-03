@@ -176,10 +176,9 @@ export function createReactor<UserStatus extends string, Context extends object>
   type EffectDescriptor = {
     fn: ReactorEffectFn<UserStatus, Context>;
     shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean;
-    toFnCall: (baseCall: EffectCall) => EffectCall;
+    toFnCall?: (baseCall: EffectCall) => EffectCall;
   };
 
-  const identity: EffectDescriptor['toFnCall'] = (baseCall) => baseCall;
   const untracked: EffectDescriptor['toFnCall'] = (baseCall) => () => untrack(baseCall);
 
   const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
@@ -196,20 +195,19 @@ export function createReactor<UserStatus extends string, Context extends object>
         if (target !== ctx.status) ctx.transition(target);
       },
       shouldSkip: isTerminal,
-      toFnCall: identity,
     })),
     ...(Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).flatMap(
       ([state, stateDef]) => {
         const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
         return [
           ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
-          ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: identity })),
+          ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState })),
         ];
       }
     ),
   ];
 
-  const toEffect = ({ fn, shouldSkip, toFnCall }: EffectDescriptor) =>
+  const toEffect = ({ fn, shouldSkip, toFnCall = (baseCall) => baseCall }: EffectDescriptor) =>
     effect(() => {
       const snapshot = snapshotSignal.get();
       if (shouldSkip(snapshot)) return;
