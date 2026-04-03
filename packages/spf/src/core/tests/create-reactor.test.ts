@@ -365,90 +365,22 @@ describe('createReactor — cleanup', () => {
 });
 
 // =============================================================================
-// createReactor — always
+// createReactor — derive
 // =============================================================================
 
-describe('createReactor — always', () => {
-  it('runs in the initial state', () => {
-    const fn = vi.fn();
-    createReactor({
-      initial: 'idle' as const,
-      context: {},
-      always: [fn],
-      states: { idle: {} },
-    }).destroy();
-
-    expect(fn).toHaveBeenCalledOnce();
-  });
-
-  it('receives the current status in ctx', () => {
-    let capturedStatus: string | undefined;
-    createReactor({
-      initial: 'idle' as const,
-      context: {},
-      always: [
-        ({ status }) => {
-          capturedStatus = status;
-        },
-      ],
-      states: { idle: {} },
-    }).destroy();
-
-    expect(capturedStatus).toBe('idle');
-  });
-
-  it('re-runs on status change and receives the new status', async () => {
-    const src = signal(false);
-    const statuses: string[] = [];
-
+describe('createReactor — derive', () => {
+  it('transitions to the status returned by the derive fn', async () => {
+    const src = signal<'waiting' | 'active'>('waiting');
     const reactor = createReactor<'waiting' | 'active', object>({
       initial: 'waiting',
       context: {},
-      always: [
-        ({ status }) => {
-          statuses.push(status);
-        },
-      ],
-      states: {
-        waiting: {
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('active');
-            },
-          ],
-        },
-        active: {},
-      },
-    });
-
-    expect(statuses).toEqual(['waiting']);
-
-    src.set(true);
-    await tick();
-    await tick();
-
-    expect(statuses).toEqual(['waiting', 'active']);
-
-    reactor.destroy();
-  });
-
-  it('can trigger transitions', async () => {
-    const src = signal(false);
-
-    const reactor = createReactor<'waiting' | 'active', object>({
-      initial: 'waiting',
-      context: {},
-      always: [
-        ({ status, transition }) => {
-          if (src.get() && status === 'waiting') transition('active');
-        },
-      ],
+      derive: () => src.get(),
       states: { waiting: {}, active: {} },
     });
 
     expect(reactor.snapshot.get().status).toBe('waiting');
 
-    src.set(true);
+    src.set('active');
     await tick();
 
     expect(reactor.snapshot.get().status).toBe('active');
@@ -456,65 +388,95 @@ describe('createReactor — always', () => {
     reactor.destroy();
   });
 
-  it('cleanup runs before each re-run', async () => {
-    const src = signal(false);
-    const cleanup = vi.fn();
+  it('does not transition when the derive fn returns the current status', async () => {
+    const activeFn = vi.fn();
+    const reactor = createReactor<'idle' | 'active', object>({
+      initial: 'idle',
+      context: {},
+      derive: () => 'idle',
+      states: { idle: {}, active: { entry: activeFn } },
+    });
+
+    await tick();
+
+    expect(reactor.snapshot.get().status).toBe('idle');
+    expect(activeFn).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('re-runs when reactive dependencies change', async () => {
+    const src = signal<'waiting' | 'active'>('waiting');
+    const deriveFn = vi.fn(() => src.get());
 
     const reactor = createReactor<'waiting' | 'active', object>({
       initial: 'waiting',
       context: {},
-      always: [() => cleanup],
-      states: {
-        waiting: {
-          reactions: [
-            ({ transition }) => {
-              if (src.get()) transition('active');
-            },
-          ],
-        },
-        active: {},
-      },
+      derive: deriveFn,
+      states: { waiting: {}, active: {} },
     });
 
-    expect(cleanup).not.toHaveBeenCalled();
+    expect(deriveFn).toHaveBeenCalledOnce();
 
-    src.set(true);
+    src.set('active');
     await tick();
 
-    expect(cleanup).toHaveBeenCalledOnce();
+    expect(deriveFn).toHaveBeenCalledTimes(2);
 
     reactor.destroy();
   });
 
   it('does not run during destroying or destroyed', async () => {
-    const fn = vi.fn();
+    const deriveFn = vi.fn(() => 'idle' as const);
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
-      always: [fn],
+      derive: deriveFn,
       states: { idle: {} },
     });
 
-    fn.mockClear();
+    deriveFn.mockClear();
     reactor.destroy();
     await tick();
 
-    expect(fn).not.toHaveBeenCalled();
+    expect(deriveFn).not.toHaveBeenCalled();
   });
 
-  it('runs alongside per-state effects in the same state', () => {
-    const alwaysFn = vi.fn();
-    const stateFn = vi.fn();
+  it('runs before per-state effects so its transitions take effect first', async () => {
+    const src = signal<'waiting' | 'active'>('waiting');
+    const order: string[] = [];
 
-    createReactor({
-      initial: 'idle' as const,
+    const reactor = createReactor<'waiting' | 'active', object>({
+      initial: 'waiting',
       context: {},
-      always: [alwaysFn],
-      states: { idle: { entry: [stateFn] } },
-    }).destroy();
+      derive: () => {
+        order.push('derive');
+        return src.get();
+      },
+      states: {
+        waiting: {
+          entry: () => {
+            order.push('waiting-entry');
+          },
+        },
+        active: {
+          entry: () => {
+            order.push('active-entry');
+          },
+        },
+      },
+    });
 
-    expect(alwaysFn).toHaveBeenCalledOnce();
-    expect(stateFn).toHaveBeenCalledOnce();
+    order.length = 0;
+    src.set('active');
+    await tick();
+    await tick();
+
+    expect(order[0]).toBe('derive');
+    expect(order).toContain('active-entry');
+    expect(order).not.toContain('waiting-entry');
+
+    reactor.destroy();
   });
 });
 

@@ -96,10 +96,7 @@ export function resolvePresentation<S extends PresentationState>({
   return createReactor<ResolvePresentationStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: ({ status, transition }) => {
-      const target = derivedStatusSignal.get();
-      if (target !== status) transition(target);
-    },
+    derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},
       idle: {},

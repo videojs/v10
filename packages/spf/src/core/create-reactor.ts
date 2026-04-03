@@ -7,14 +7,21 @@ import { signal, untrack, update } from './signals/primitives';
 // =============================================================================
 
 /**
- * An effect function used in reactor states and `always` blocks.
+ * A reactive status-deriving function used in the `derive` field.
  *
- * Receives `status` (the current reactor status), `transition`, `context`, and
- * `setContext`. May return a cleanup function that runs before each re-evaluation
- * and on state exit (including destroy).
+ * Returns the target status the reactor should be in. Any signals read inside
+ * the fn body create reactive dependencies — the framework re-evaluates it when
+ * those signals change and automatically calls `transition()` when the returned
+ * status differs from the current one.
+ */
+export type ReactorDeriveFn<UserStatus extends string> = () => UserStatus;
+
+/**
+ * An effect function used in reactor `entry` and `reactions` blocks.
  *
- * In `always` blocks, `status` reflects whichever non-terminal state is active.
- * In per-state `entry`/`reactions` blocks, `status` is always that state's value.
+ * Receives `status`, `transition`, `context`, and `setContext`. May return a
+ * cleanup function that runs before each re-evaluation and on state exit
+ * (including destroy).
  */
 export type ReactorEffectFn<UserStatus extends string, Context extends object> = (ctx: {
   status: UserStatus;
@@ -53,12 +60,11 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
   /** Initial context. */
   context: Context;
   /**
-   * Cross-cutting effects that run in every non-terminal state.
-   * Each element becomes one independent `effect()` call that re-runs on any
-   * status or context change, with the current `status` available in ctx.
-   * Useful for condition monitors that apply uniformly across all states.
+   * Reactive status derivation. Registered before per-state effects — the
+   * ordering guarantee ensures transitions fired here take effect before
+   * per-state effects re-evaluate in the same flush.
    */
-  always?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
+  derive?: ReactorDeriveFn<UserStatus> | ReactorDeriveFn<UserStatus>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
@@ -160,11 +166,12 @@ export function createReactor<UserStatus extends string, Context extends object>
   // skips if shouldSkip returns true, then calls fn — untracked for entry effects
   // (so only snapshotSignal is tracked), tracked for reactions and always effects.
   const registerEffects = (
-    effects: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[] | undefined,
+    fnOrFns: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[] | undefined,
     shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean,
     untracked = false
   ) => {
-    const fns = effects === undefined ? [] : Array.isArray(effects) ? effects : [effects];
+    if (!fnOrFns) return;
+    const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
     fns.forEach((fn) => {
       effectDisposals.push(
         effect(() => {
@@ -180,30 +187,42 @@ export function createReactor<UserStatus extends string, Context extends object>
   const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
     snapshot.status === 'destroying' || snapshot.status === 'destroyed';
 
-  // 'always' effects run in every non-terminal state — processed first so that
-  // cross-cutting condition monitors fire before per-state effects in the
-  // initial synchronous run AND on every subsequent re-run.
+  // `derive` fns are registered first — the ordering guarantee ensures transitions
+  // they trigger take effect before per-state effects re-evaluate in the same flush.
   //
   // The ordering guarantee: effect() calls watcher.watch(computed) in order of
   // registration. runPending() drains watcher.getPending() into a Set (insertion-
-  // ordered) before iterating it. Because 'always' effects are registered before
+  // ordered) before iterating it. Because derive effects are registered before
   // per-state effects here, they are guaranteed to run first in every flush.
-  // This is load-bearing: it means a transition triggered by an 'always' monitor
+  // This is load-bearing: it means a transition triggered by a derive fn
   // takes effect before the per-state effects of the (now-exited) state re-run,
-  // so per-state effects can rely on the invariants established by 'always'.
-  registerEffects(def.always, isTerminal);
+  // so per-state effects can rely on the invariants established by derive.
+  const fnOrFns = def.derive;
+  if (fnOrFns) {
+    const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
+    fns.forEach((fn) => {
+      effectDisposals.push(
+        effect(() => {
+          const snapshot = snapshotSignal.get();
+          if (isTerminal(snapshot)) return;
+          const target = fn();
+          if ((target as FullStatus) !== snapshot.status) transition(target as FullStatus);
+        })
+      );
+    });
+  }
 
   // Per-state effects — each is gated on its matching status.
   // `entry` effects are registered with untracked=true so the fn body creates no
   // reactive dependencies; they run once on state entry and clean up on exit.
   // `reactions` effects leave the fn body tracked normally.
-  for (const [state, stateDef] of Object.entries(def.states) as Array<
-    [UserStatus, ReactorStateDefinition<UserStatus, Context>]
-  >) {
-    const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
-    registerEffects(stateDef.entry, isNotState, true);
-    registerEffects(stateDef.reactions, isNotState);
-  }
+  (Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).forEach(
+    ([state, stateDef]) => {
+      const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
+      registerEffects(stateDef.entry, isNotState, true);
+      registerEffects(stateDef.reactions, isNotState);
+    }
+  );
 
   return {
     get snapshot() {

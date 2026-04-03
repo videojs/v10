@@ -144,10 +144,7 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
   return createReactor<LoadTextTrackCuesStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: ({ status, transition }) => {
-      const target = derivedStatusSignal.get();
-      if (target !== status) transition(target);
-    },
+    derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {
         // Entry: defensive actor reset on state entry (no-op if already undefined).

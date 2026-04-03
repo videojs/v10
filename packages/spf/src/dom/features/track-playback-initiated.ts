@@ -71,10 +71,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
   return createReactor<PlaybackInitiatedStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: ({ status, transition }) => {
-      const target = derivedStatusSignal.get();
-      if (target !== status) transition(target);
-    },
+    derive: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},
 
