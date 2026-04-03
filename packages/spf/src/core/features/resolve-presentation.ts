@@ -56,10 +56,10 @@ export function shouldResolve(state: PresentationState): boolean {
   );
 }
 
-export type ResolvePresentationStatus = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
+export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
 
 /**
- * Derives the correct status from current state conditions.
+ * Derives the correct state from current state conditions.
  *
  * States are mutually exclusive and exhaustive:
  * - `'preconditions-unmet'`: no presentation, or presentation has no URL
@@ -67,7 +67,7 @@ export type ResolvePresentationStatus = 'preconditions-unmet' | 'idle' | 'resolv
  * - `'resolving'`: URL present, unresolved (no id), shouldResolve met
  * - `'resolved'`:  URL present, resolved (has id)
  */
-function deriveStatus(state: PresentationState): ResolvePresentationStatus {
+function deriveState(state: PresentationState): ResolvePresentationState {
   const { presentation } = state;
   if (!presentation || !('url' in presentation)) return 'preconditions-unmet';
   if ('id' in presentation) return 'resolved';
@@ -77,7 +77,7 @@ function deriveStatus(state: PresentationState): ResolvePresentationStatus {
 /**
  * Resolves unresolved presentations using reactive composition.
  *
- * FSM driven by `deriveStatus` — a single `always` monitor keeps the status in
+ * FSM driven by `deriveState` — a single `always` monitor keeps the state in
  * sync with conditions at all times. `'resolving'` additionally runs the fetch
  * task and returns an AbortController so the framework aborts it on state exit.
  *
@@ -90,12 +90,12 @@ export function resolvePresentation<S extends PresentationState>({
   state,
 }: {
   state: Signal<S>;
-}): Reactor<ResolvePresentationStatus | 'destroying' | 'destroyed'> {
-  const derivedStatusSignal = computed(() => deriveStatus(state.get()));
+}): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get()));
 
-  return createReactor<ResolvePresentationStatus>({
+  return createReactor<ResolvePresentationState>({
     initial: 'preconditions-unmet',
-    monitor: () => derivedStatusSignal.get(),
+    monitor: () => derivedStateSignal.get(),
     states: {
       'preconditions-unmet': {},
       idle: {},

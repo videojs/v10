@@ -15,8 +15,6 @@ import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../
  * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
  * ```
  */
-export type TextTrackSyncStatus = 'preconditions-unmet' | 'set-up';
-
 /**
  * State shape for text track sync.
  */
@@ -88,7 +86,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<TextTrackSyncStatus | 'destroying' | 'destroyed'> {
+}): Reactor<'preconditions-unmet' | 'set-up' | 'destroying' | 'destroyed'> {
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   const modelTextTracksSignal = computed(() => getModelTextTracks(state.get().presentation), {
     /** @TODO Make generic and abstract away for Array<T> | undefined (CJP) */
@@ -108,7 +106,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
   const selectedTextTrackIdSignal = computed(() => state.get().selectedTextTrackId);
   const preconditionsMetSignal = computed(() => !!mediaElementSignal.get() && !!modelTextTracksSignal.get()?.length);
 
-  return createReactor<TextTrackSyncStatus>({
+  return createReactor<'preconditions-unmet' | 'set-up'>({
     initial: 'preconditions-unmet',
     monitor: () => (preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet'),
     states: {

@@ -46,7 +46,7 @@ export type ActorStateDefinition<
 > = {
   /**
    * When the actor's runner settles while in this state, automatically
-   * transition to this status. The framework owns the generation-token logic —
+   * transition to this state. The framework owns the generation-token logic —
    * re-registering after each `runner.schedule()` call so that
    * `abortAll()` + reschedule correctly supersedes stale callbacks.
    */
@@ -80,7 +80,7 @@ export type ActorDefinition<
    * runner: () => new SerialRunner()
    */
   runner?: RunnerFactory;
-  /** Initial status. */
+  /** Initial state. */
   initial: UserState;
   /** Initial context. */
   context: Context;
@@ -96,8 +96,8 @@ export type ActorDefinition<
 // =============================================================================
 
 /** Live actor instance returned by `createActor`. */
-export interface MessageActor<Status extends string, Context extends object, Message extends { type: string }>
-  extends SignalActor<Status, Context> {
+export interface MessageActor<State extends string, Context extends object, Message extends { type: string }>
+  extends SignalActor<State, Context> {
   send(message: Message): void;
 }
 
@@ -108,7 +108,7 @@ export interface MessageActor<Status extends string, Context extends object, Mes
 /**
  * Creates a message-driven actor from a declarative definition.
  *
- * The actor owns a reactive snapshot signal (status + context), an optional
+ * The actor owns a reactive snapshot signal (state + context), an optional
  * runner, and dispatches incoming messages to per-state handlers. `'destroyed'`
  * is always the implicit terminal state — `destroy()` transitions there
  * unconditionally and all subsequent `send()` calls are no-ops.
@@ -160,7 +160,7 @@ export function createActor<
     context: def.context,
   });
 
-  const getStatus = (): FullState => untrack(() => snapshotSignal.get().value);
+  const getState = (): FullState => untrack(() => snapshotSignal.get().value);
   const getContext = (): Context => untrack(() => snapshotSignal.get().context);
 
   const transition = (to: FullState): void => {
@@ -177,7 +177,7 @@ export function createActor<
     },
 
     send(message: Message): void {
-      const state = getStatus();
+      const state = getState();
       if (state === 'destroyed') return;
       const stateDef = def.states[state as UserState];
       const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
@@ -191,13 +191,13 @@ export function createActor<
         ...(runner ? { runner } : {}),
       } as HandlerContext<UserState, Context, RunnerFactory>);
       // Register onSettled after the handler so we read the post-transition state.
-      const newState = getStatus();
+      const newState = getState();
       if (newState !== 'destroyed') {
         const newStateDef = def.states[newState as UserState];
         if (newStateDef?.onSettled && runner) {
           const targetState = newStateDef.onSettled as FullState;
           runner.whenSettled(() => {
-            if (getStatus() !== newState) return;
+            if (getState() !== newState) return;
             transition(targetState);
           });
         }
@@ -205,7 +205,7 @@ export function createActor<
     },
 
     destroy(): void {
-      if (getStatus() === 'destroyed') return;
+      if (getState() === 'destroyed') return;
       runner?.destroy();
       transition('destroyed');
     },

@@ -26,7 +26,7 @@ import { createTextTracksActor } from './text-tracks-actor';
  * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
  * ```
  */
-export type LoadTextTrackCuesStatus = 'preconditions-unmet' | 'setting-up' | 'pending' | 'monitoring-for-loads';
+export type LoadTextTrackCuesState = 'preconditions-unmet' | 'setting-up' | 'pending' | 'monitoring-for-loads';
 
 /**
  * State shape for text track cue loading.
@@ -67,7 +67,7 @@ function findSelectedTrack(state: TextTrackCueLoadingState): TextTrack | undefin
 }
 
 /**
- * Derives the correct status from current state and owners.
+ * Derives the correct state from current state and owners.
  *
  * States are mutually exclusive and exhaustive:
  * - `'preconditions-unmet'`: no mediaElement, or no resolved presentation with text tracks
@@ -75,7 +75,7 @@ function findSelectedTrack(state: TextTrackCueLoadingState): TextTrack | undefin
  * - `'pending'`:             actors alive; no selection, or selected track not yet resolved/in DOM
  * - `'monitoring-for-loads'`: selected track resolved, in DOM — ready to dispatch load messages
  */
-function deriveStatus(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): LoadTextTrackCuesStatus {
+function deriveState(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): LoadTextTrackCuesState {
   if (!owners.mediaElement || !getTextTracks(state.presentation)?.length) {
     return 'preconditions-unmet';
   }
@@ -136,14 +136,14 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<LoadTextTrackCuesStatus | 'destroying' | 'destroyed'> {
-  const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
+}): Reactor<LoadTextTrackCuesState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
   const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
   const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
 
-  return createReactor<LoadTextTrackCuesStatus>({
+  return createReactor<LoadTextTrackCuesState>({
     initial: 'preconditions-unmet',
-    monitor: () => derivedStatusSignal.get(),
+    monitor: () => derivedStateSignal.get(),
     states: {
       'preconditions-unmet': {
         // Entry: defensive actor reset on state entry (no-op if already undefined).
@@ -169,11 +169,11 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
       'monitoring-for-loads': {
         // Reaction: re-runs whenever currentTime or selectedTrack changes, dispatching
         // a load message to the segment loader. owners is read with untrack() since
-        // actor presence is guaranteed by deriveStatus when in this state.
+        // actor presence is guaranteed by deriveState when in this state.
         reactions: () => {
           const currentTime = currentTimeSignal.get();
           const track = selectedTrackSignal.get()!;
-          // deriveStatus guarantees segmentLoaderActor is in owners and findSelectedTrack
+          // deriveState guarantees segmentLoaderActor is in owners and findSelectedTrack
           // returns a valid resolved track when in this state. The always monitor
           // (registered before this effect) transitions us out before this re-runs
           // if either invariant ever stops holding.

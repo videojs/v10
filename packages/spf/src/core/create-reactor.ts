@@ -7,12 +7,12 @@ import { signal, untrack, update } from './signals/primitives';
 // =============================================================================
 
 /**
- * A reactive status-deriving function used in the `monitor` field.
+ * A reactive state-deriving function used in the `monitor` field.
  *
- * Returns the target status the reactor should be in. Any signals read inside
+ * Returns the target state the reactor should be in. Any signals read inside
  * the fn body create reactive dependencies — the framework re-evaluates it when
  * those signals change and automatically calls `transition()` when the returned
- * status differs from the current one.
+ * state differs from the current one.
  */
 export type ReactorDeriveFn<State extends string> = () => State;
 
@@ -49,16 +49,16 @@ export type ReactorStateDefinition = {
  * do not include them here.
  */
 export type ReactorDefinition<State extends string> = {
-  /** Initial status. */
+  /** Initial state. */
   initial: State;
   /**
-   * Reactive status derivation. Registered before per-state effects — the
+   * Reactive state derivation. Registered before per-state effects — the
    * ordering guarantee ensures transitions fired here take effect before
    * per-state effects re-evaluate in the same flush.
    */
   monitor?: ReactorDeriveFn<State> | ReactorDeriveFn<State>[];
   /**
-   * Per-state effect groupings. Every valid status must be declared — pass `{}`
+   * Per-state effect groupings. Every valid state must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
    * `effect()` calls gated on that state, with their own cleanup lifecycles.
    */
@@ -70,8 +70,8 @@ export type ReactorDefinition<State extends string> = {
 // =============================================================================
 
 /** Live reactor instance returned by `createReactor`. */
-export type Reactor<Status extends string> = {
-  readonly snapshot: ReadonlySignal<{ status: Status }>;
+export type Reactor<State extends string> = {
+  readonly snapshot: ReadonlySignal<{ value: State }>;
   destroy(): void;
 };
 
@@ -122,7 +122,7 @@ export function createReactor<State extends string>(
     value: def.initial as FullState,
   });
 
-  const getStatus = (): FullState => untrack(() => snapshotSignal.get().value);
+  const getState = (): FullState => untrack(() => snapshotSignal.get().value);
 
   const transition = (to: FullState): void => {
     update(snapshotSignal, { value: to });
@@ -157,7 +157,7 @@ export function createReactor<State extends string>(
     ...toArray(def.monitor).map((fn) => ({
       fn: () => {
         const target = fn();
-        if (target !== (getStatus() as State)) transition(target as FullState);
+        if (target !== (getState() as State)) transition(target as FullState);
       },
       shouldSkip: isTerminal,
     })),
@@ -186,7 +186,7 @@ export function createReactor<State extends string>(
     },
 
     destroy(): void {
-      const state = getStatus();
+      const state = getState();
       if (state === 'destroying' || state === 'destroyed') return;
       // Two-step teardown: transition through 'destroying' first to leave room
       // for async teardown in a future extension, then immediately 'destroyed'

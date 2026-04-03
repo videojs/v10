@@ -34,9 +34,10 @@ export interface PlaybackInitiatedOwners {
  * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
  * ```
  */
-type PlaybackInitiatedStatus = 'preconditions-unmet' | 'monitoring' | 'playback-initiated';
-
-function deriveStatus(state: PlaybackInitiatedState, owners: PlaybackInitiatedOwners): PlaybackInitiatedStatus {
+function deriveState(
+  state: PlaybackInitiatedState,
+  owners: PlaybackInitiatedOwners
+): 'preconditions-unmet' | 'monitoring' | 'playback-initiated' {
   if (!owners.mediaElement || !state.presentation?.url) return 'preconditions-unmet';
   if (state.playbackInitiated) return 'playback-initiated';
   return 'monitoring';
@@ -46,7 +47,7 @@ function deriveStatus(state: PlaybackInitiatedState, owners: PlaybackInitiatedOw
  * Track whether playback has been initiated for the current presentation URL.
  *
  * A three-state Reactor FSM driven by `state.playbackInitiated` and the
- * `deriveStatus` pattern:
+ * `deriveState` pattern:
  * - `'preconditions-unmet'` — no element or URL yet; no effects.
  * - `'monitoring'` — checks `!el.paused` on entry; listens for `play`.
  * - `'playback-initiated'` — tracks element and URL; exit cleanup resets
@@ -63,14 +64,14 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): Reactor<PlaybackInitiatedStatus | 'destroying' | 'destroyed'> {
-  const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
+}): Reactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated' | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   const urlSignal = computed(() => state.get().presentation?.url);
 
-  return createReactor<PlaybackInitiatedStatus>({
+  return createReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
     initial: 'preconditions-unmet',
-    monitor: () => derivedStatusSignal.get(),
+    monitor: () => derivedStateSignal.get(),
     states: {
       'preconditions-unmet': {},
 
@@ -89,11 +90,11 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
       'playback-initiated': {
         // Reaction: tracks element and URL while initiated. When either changes,
         // the effect re-runs — the exit cleanup fires first, resetting
-        // state.playbackInitiated to false. deriveStatus then returns 'monitoring'
+        // state.playbackInitiated to false. deriveState then returns 'monitoring'
         // on the next microtask, and the always monitor drives the transition.
         //
         // This covers both the preconditions-lost path (element/URL → undefined,
-        // which also triggers a deriveStatus → 'preconditions-unmet' transition)
+        // which also triggers a deriveState → 'preconditions-unmet' transition)
         // and the URL-change / element-swap path (preconditions still met but
         // values changed, handled entirely by this effect's cleanup).
         reactions: () => {
