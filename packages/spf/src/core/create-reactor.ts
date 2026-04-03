@@ -165,7 +165,7 @@ export function createReactor<UserStatus extends string, Context extends object>
     untracked = false
   ) => {
     const fns = effects === undefined ? [] : Array.isArray(effects) ? effects : [effects];
-    for (const fn of fns) {
+    fns.forEach((fn) => {
       effectDisposals.push(
         effect(() => {
           const snapshot = snapshotSignal.get();
@@ -174,7 +174,7 @@ export function createReactor<UserStatus extends string, Context extends object>
           return wrapResult(untracked ? untrack(call) : call());
         })
       );
-    }
+    });
   };
 
   const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
