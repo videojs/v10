@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.14...@videojs/store@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.15
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.15
+
 ## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.13...@videojs/store@10.0.0-beta.14) (2026-04-03)
 
 

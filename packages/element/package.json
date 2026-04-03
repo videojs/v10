@@ -1,7 +1,7 @@
 {
   "name": "@videojs/element",
   "type": "module",
-  "version": "10.0.0-beta.14",
+  "version": "10.0.0-beta.15",
   "description": "Lightweight reactive custom element base for Video.js",
   "license": "Apache-2.0",
   "repository": {
