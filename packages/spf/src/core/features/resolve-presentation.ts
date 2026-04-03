@@ -95,7 +95,7 @@ export function resolvePresentation<S extends PresentationState>({
 
   return createReactor<ResolvePresentationStatus>({
     initial: 'preconditions-unmet',
-    derive: () => derivedStatusSignal.get(),
+    monitor: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},
       idle: {},

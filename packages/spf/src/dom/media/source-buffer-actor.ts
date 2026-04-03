@@ -27,8 +27,8 @@ export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; m
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type SourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 
-/** Finite (bounded) operational modes of the actor. */
-export type SourceBufferActorStatus = 'idle' | 'updating' | 'destroyed';
+/** Finite states of the actor. */
+export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
 
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface SourceBufferActorContext {
@@ -49,7 +49,7 @@ export interface SourceBufferActorContext {
 }
 
 /** Complete snapshot of a SourceBufferActor. */
-export type SourceBufferActorSnapshot = ActorSnapshot<SourceBufferActorStatus, SourceBufferActorContext>;
+export type SourceBufferActorSnapshot = ActorSnapshot<SourceBufferActorState, SourceBufferActorContext>;
 
 /**
  * Thrown when a message is sent to the actor in a state that does not
@@ -63,7 +63,7 @@ export class SourceBufferActorError extends Error {
 }
 
 /** SourceBuffer actor: queues operations, owns its snapshot. */
-export interface SourceBufferActor extends SignalActor<SourceBufferActorStatus, SourceBufferActorContext> {
+export interface SourceBufferActor extends SignalActor<SourceBufferActorState, SourceBufferActorContext> {
   send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
   batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void>;
 }
@@ -231,7 +231,7 @@ export function createSourceBufferActor(
   initialContext?: Partial<SourceBufferActorContext>
 ): SourceBufferActor {
   const snapshotSignal = signal<SourceBufferActorSnapshot>({
-    status: 'idle',
+    value: 'idle',
     context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
   });
 
@@ -241,8 +241,8 @@ export function createSourceBufferActor(
   // If the actor was destroyed while the operation was in flight, preserve
   // 'destroyed' — do not regress to 'idle'.
   function applyResult(newContext: SourceBufferActorContext): void {
-    const status = snapshotSignal.get().status === 'destroyed' ? 'destroyed' : 'idle';
-    snapshotSignal.set({ status, context: newContext });
+    const status = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
+    snapshotSignal.set({ value: status, context: newContext });
   }
 
   function handleError(e: unknown): never {
@@ -251,8 +251,8 @@ export function createSourceBufferActor(
     // improvement should detect QuotaExceededError specifically and use total
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
-    const status = snapshotSignal.get().status === 'destroyed' ? 'destroyed' : 'idle';
-    update(snapshotSignal, { status });
+    const status = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
+    update(snapshotSignal, { value: status });
     throw e;
   }
 
@@ -262,18 +262,16 @@ export function createSourceBufferActor(
     },
 
     send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
-      if (snapshotSignal.get().status !== 'idle') {
-        return Promise.reject(
-          new SourceBufferActorError(`send() called while actor is ${snapshotSignal.get().status}`)
-        );
+      if (snapshotSignal.get().value !== 'idle') {
+        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${snapshotSignal.get().value}`));
       }
 
       // Transition synchronously so any subsequent send/batch within the same
       // tick is rejected — the actor is now committed to this operation.
-      update(snapshotSignal, { status: 'updating' });
+      update(snapshotSignal, { value: 'updating' });
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
-        snapshotSignal.set({ status: 'updating', context: ctx });
+        snapshotSignal.set({ value: 'updating', context: ctx });
       };
 
       const task = messageToTask(message, {
@@ -287,16 +285,16 @@ export function createSourceBufferActor(
     },
 
     batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void> {
-      if (snapshotSignal.get().status !== 'idle') {
+      if (snapshotSignal.get().value !== 'idle') {
         return Promise.reject(
-          new SourceBufferActorError(`batch() called while actor is ${snapshotSignal.get().status}`)
+          new SourceBufferActorError(`batch() called while actor is ${snapshotSignal.get().value}`)
         );
       }
 
       if (messages.length === 0) return Promise.resolve();
 
       // Transition synchronously — the entire batch is one 'updating' period.
-      update(snapshotSignal, { status: 'updating' });
+      update(snapshotSignal, { value: 'updating' });
 
       // Each message is its own Task on the runner, executed in submission order.
       // workingCtx threads the result of each task into the next without
@@ -318,7 +316,7 @@ export function createSourceBufferActor(
       // directly so external subscribers see in-progress state, but workingCtx
       // is only advanced on task completion to preserve batch context threading.
       const onPartialContext = (ctx: SourceBufferActorContext) => {
-        snapshotSignal.set({ status: 'updating', context: ctx });
+        snapshotSignal.set({ value: 'updating', context: ctx });
       };
 
       for (const message of messages.slice(0, -1)) {
@@ -339,7 +337,7 @@ export function createSourceBufferActor(
     },
 
     destroy(): void {
-      update(snapshotSignal, { status: 'destroyed' });
+      update(snapshotSignal, { value: 'destroyed' });
       runner.destroy();
     },
   };

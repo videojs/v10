@@ -134,8 +134,8 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   // SourceBufferActors must be idle — setting duration while a SourceBuffer is
   // updating throws InvalidStateError. The actor subscriber in endOfStream() will
   // re-evaluate when each actor transitions back to idle.
-  if (owners.videoBufferActor?.snapshot.get().status === 'updating') return false;
-  if (owners.audioBufferActor?.snapshot.get().status === 'updating') return false;
+  if (owners.videoBufferActor?.snapshot.get().value === 'updating') return false;
+  if (owners.audioBufferActor?.snapshot.get().value === 'updating') return false;
 
   // Last segment must be appended for each selected track
   if (!hasLastSegmentLoaded(state, owners)) return false;
@@ -169,7 +169,7 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
  */
 function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
   const updatingActors = [owners.videoBufferActor, owners.audioBufferActor].filter(
-    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().status === 'updating'
+    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().value === 'updating'
   );
 
   if (updatingActors.length === 0) return Promise.resolve();
@@ -186,7 +186,7 @@ function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
           let cleanup: (() => void) | undefined;
           let resolved = false;
           cleanup = effect(() => {
-            if (actor.snapshot.get().status !== 'updating') {
+            if (actor.snapshot.get().value !== 'updating') {
               if (!resolved) {
                 resolved = true;
                 resolve();

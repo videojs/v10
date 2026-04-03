@@ -7,14 +7,14 @@ import { signal, untrack, update } from './signals/primitives';
 // =============================================================================
 
 /**
- * A reactive status-deriving function used in the `derive` field.
+ * A reactive status-deriving function used in the `monitor` field.
  *
  * Returns the target status the reactor should be in. Any signals read inside
  * the fn body create reactive dependencies — the framework re-evaluates it when
  * those signals change and automatically calls `transition()` when the returned
  * status differs from the current one.
  */
-export type ReactorDeriveFn<UserStatus extends string> = () => UserStatus;
+export type ReactorDeriveFn<State extends string> = () => State;
 
 /**
  * An effect function used in reactor `entry` and `reactions` blocks.
@@ -44,25 +44,25 @@ export type ReactorStateDefinition = {
 /**
  * Full reactor definition passed to `createReactor`.
  *
- * `UserStatus` is the set of domain-meaningful states. `'destroying'` and
+ * `State` is the set of domain-meaningful states. `'destroying'` and
  * `'destroyed'` are always added by the framework as implicit terminal states —
  * do not include them here.
  */
-export type ReactorDefinition<UserStatus extends string> = {
+export type ReactorDefinition<State extends string> = {
   /** Initial status. */
-  initial: UserStatus;
+  initial: State;
   /**
    * Reactive status derivation. Registered before per-state effects — the
    * ordering guarantee ensures transitions fired here take effect before
    * per-state effects re-evaluate in the same flush.
    */
-  derive?: ReactorDeriveFn<UserStatus> | ReactorDeriveFn<UserStatus>[];
+  monitor?: ReactorDeriveFn<State> | ReactorDeriveFn<State>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
    * `effect()` calls gated on that state, with their own cleanup lifecycles.
    */
-  states: Record<UserStatus, ReactorStateDefinition>;
+  states: Record<State, ReactorStateDefinition>;
 };
 
 // =============================================================================
@@ -101,7 +101,7 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  * @example
  * const reactor = createReactor({
  *   initial: 'waiting',
- *   derive: () => srcSignal.get() ? 'active' : 'waiting',
+ *   monitor: () => srcSignal.get() ? 'active' : 'waiting',
  *   states: {
  *     active: {
  *       // entry: runs once on state entry; fn body is automatically untracked.
@@ -113,19 +113,19 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  *   }
  * });
  */
-export function createReactor<UserStatus extends string>(
-  def: ReactorDefinition<UserStatus>
-): Reactor<UserStatus | 'destroying' | 'destroyed'> {
-  type FullStatus = UserStatus | 'destroying' | 'destroyed';
+export function createReactor<State extends string>(
+  def: ReactorDefinition<State>
+): Reactor<State | 'destroying' | 'destroyed'> {
+  type FullState = State | 'destroying' | 'destroyed';
 
-  const snapshotSignal = signal<{ status: FullStatus }>({
-    status: def.initial as FullStatus,
+  const snapshotSignal = signal<{ value: FullState }>({
+    value: def.initial as FullState,
   });
 
-  const getStatus = (): FullStatus => untrack(() => snapshotSignal.get().status);
+  const getStatus = (): FullState => untrack(() => snapshotSignal.get().value);
 
-  const transition = (to: FullStatus): void => {
-    update(snapshotSignal, { status: to });
+  const transition = (to: FullState): void => {
+    update(snapshotSignal, { value: to });
   };
 
   const effectDisposals: Array<() => void> = [];
@@ -140,29 +140,29 @@ export function createReactor<UserStatus extends string>(
 
   type EffectDescriptor = {
     fn: ReactorEffectFn;
-    shouldSkip: (snapshot: { status: FullStatus }) => boolean;
+    shouldSkip: (snapshot: { value: FullState }) => boolean;
     toFnCall?: (baseCall: EffectCall) => EffectCall;
   };
 
   const untracked: EffectDescriptor['toFnCall'] = (baseCall) => () => untrack(baseCall);
 
-  const isTerminal = (snapshot: { status: FullStatus }) =>
-    snapshot.status === 'destroying' || snapshot.status === 'destroyed';
+  const isTerminal = (snapshot: { value: FullState }) =>
+    snapshot.value === 'destroying' || snapshot.value === 'destroyed';
 
-  // `derive` descriptors are built first — the ordering guarantee ensures
+  // `monitor` descriptors are built first — the ordering guarantee ensures
   // transitions they trigger take effect before per-state effects re-evaluate
   // in the same flush. See the comment on effect registration order in the
   // previous implementation for full details.
   const descriptors: EffectDescriptor[] = [
-    ...toArray(def.derive).map((fn) => ({
+    ...toArray(def.monitor).map((fn) => ({
       fn: () => {
         const target = fn();
-        if (target !== (getStatus() as UserStatus)) transition(target as FullStatus);
+        if (target !== (getStatus() as State)) transition(target as FullState);
       },
       shouldSkip: isTerminal,
     })),
-    ...(Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition]>).flatMap(([state, stateDef]) => {
-      const isNotState = (snapshot: { status: FullStatus }) => snapshot.status !== state;
+    ...(Object.entries(def.states) as Array<[State, ReactorStateDefinition]>).flatMap(([state, stateDef]) => {
+      const isNotState = (snapshot: { value: FullState }) => snapshot.value !== state;
       return [
         ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
         ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState })),

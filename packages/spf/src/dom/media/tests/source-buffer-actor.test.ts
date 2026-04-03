@@ -119,7 +119,7 @@ describe('createSourceBufferActor', () => {
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted);
 
@@ -186,9 +186,9 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const statusValues: string[] = [];
+    const stateValues: string[] = [];
     const cleanup = effect(() => {
-      statusValues.push(actor.snapshot.get().status);
+      stateValues.push(actor.snapshot.get().value);
     });
 
     await actor.batch(
@@ -207,8 +207,8 @@ describe('createSourceBufferActor', () => {
 
     // Initial idle (immediate subscribe fire) → updating → idle
     // No intermediate context-update-while-updating snapshots
-    expect(statusValues).toContain('updating');
-    expect(statusValues[statusValues.length - 1]).toBe('idle');
+    expect(stateValues).toContain('updating');
+    expect(stateValues[stateValues.length - 1]).toBe('idle');
 
     actor.destroy();
   });
@@ -282,7 +282,7 @@ describe('createSourceBufferActor', () => {
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
     expect(actor.snapshot.get().context.initTrackId).toBe('track-1');
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
 
     actor.destroy();
   });
@@ -311,7 +311,7 @@ describe('createSourceBufferActor', () => {
       duration: 10,
       trackId: 'track-1',
     });
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
 
     actor.destroy();
   });
@@ -392,7 +392,7 @@ describe('createSourceBufferActor', () => {
     expect(ids).not.toContain('s1');
     expect(ids).not.toContain('s2');
     expect(ids).toContain('s3');
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
 
     actor.destroy();
   });
@@ -405,9 +405,9 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const statusValues: string[] = [];
+    const stateValues: string[] = [];
     const cleanup = effect(() => {
-      statusValues.push(actor.snapshot.get().status);
+      stateValues.push(actor.snapshot.get().value);
     });
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
@@ -415,8 +415,8 @@ describe('createSourceBufferActor', () => {
     cleanup();
 
     // Initial 'idle' (from immediate subscribe fire) → 'updating' → 'idle'
-    expect(statusValues).toContain('updating');
-    expect(statusValues[statusValues.length - 1]).toBe('idle');
+    expect(stateValues).toContain('updating');
+    expect(stateValues[stateValues.length - 1]).toBe('idle');
 
     actor.destroy();
   });
@@ -429,7 +429,7 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    expect(actor.snapshot.get()).toMatchObject({ status: 'idle', context: { segments: [], bufferedRanges: [] } });
+    expect(actor.snapshot.get()).toMatchObject({ value: 'idle', context: { segments: [], bufferedRanges: [] } });
 
     actor.destroy();
   });

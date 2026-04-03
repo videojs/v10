@@ -34,7 +34,7 @@ describe('createActor', () => {
   it('starts with the initial status and context', () => {
     const actor = makeCounter();
 
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
     expect(actor.snapshot.get().context).toEqual({ count: 0 });
 
     actor.destroy();
@@ -88,7 +88,7 @@ describe('createActor', () => {
 
     actor.send({ type: 'start' });
 
-    expect(actor.snapshot.get().status).toBe('running');
+    expect(actor.snapshot.get().value).toBe('running');
 
     actor.destroy();
   });
@@ -163,9 +163,9 @@ describe('createActor', () => {
     actor.send({ type: 'start' });
     const after = actor.snapshot.get();
 
-    expect(before.status).toBe('idle');
+    expect(before.value).toBe('idle');
     expect(before.context.count).toBe(0);
-    expect(after.status).toBe('running');
+    expect(after.value).toBe('running');
     expect(after.context.count).toBe(1);
 
     actor.destroy();
@@ -182,7 +182,7 @@ describe('createActor — destroy', () => {
 
     actor.destroy();
 
-    expect(actor.snapshot.get().status).toBe('destroyed');
+    expect(actor.snapshot.get().value).toBe('destroyed');
   });
 
   it('destroy() is idempotent', () => {
@@ -190,7 +190,7 @@ describe('createActor — destroy', () => {
 
     actor.destroy();
     expect(() => actor.destroy()).not.toThrow();
-    expect(actor.snapshot.get().status).toBe('destroyed');
+    expect(actor.snapshot.get().value).toBe('destroyed');
   });
 
   it('drops send() after destroy()', () => {
@@ -299,10 +299,10 @@ describe('createActor — runner', () => {
     });
 
     actor.send({ type: 'load' });
-    expect(actor.snapshot.get().status).toBe('loading');
+    expect(actor.snapshot.get().value).toBe('loading');
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('idle');
+      expect(actor.snapshot.get().value).toBe('idle');
     });
 
     actor.destroy();
@@ -344,13 +344,13 @@ describe('createActor — runner', () => {
     await vi.waitFor(() => expect(resolveTask).toBeDefined());
 
     actor.send({ type: 'cancel' });
-    expect(actor.snapshot.get().status).toBe('cancelled');
+    expect(actor.snapshot.get().value).toBe('cancelled');
 
     // Unblock the task — the settled callback fires but the state check prevents transition
     resolveTask();
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(actor.snapshot.get().status).toBe('cancelled'); // not 'idle'
+    expect(actor.snapshot.get().value).toBe('cancelled'); // not 'idle'
 
     actor.destroy();
   });
@@ -405,10 +405,10 @@ describe('createActor — runner', () => {
     resolveFirst();
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('idle');
+      expect(actor.snapshot.get().value).toBe('idle');
     });
 
-    expect(actor.snapshot.get().status).toBe('idle'); // exactly one transition, not two
+    expect(actor.snapshot.get().value).toBe('idle'); // exactly one transition, not two
 
     actor.destroy();
   });

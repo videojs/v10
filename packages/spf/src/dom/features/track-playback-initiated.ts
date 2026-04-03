@@ -70,7 +70,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
 
   return createReactor<PlaybackInitiatedStatus>({
     initial: 'preconditions-unmet',
-    derive: () => derivedStatusSignal.get(),
+    monitor: () => derivedStatusSignal.get(),
     states: {
       'preconditions-unmet': {},
 

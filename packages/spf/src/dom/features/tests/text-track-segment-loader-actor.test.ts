@@ -57,7 +57,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
 
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
     expect(actor.snapshot.get().context).toEqual({});
 
     actor.destroy();
@@ -72,7 +72,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     actor.send({ type: 'load', track, currentTime: 0 });
 
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
 
     actor.destroy();
     textTracksActor.destroy();
@@ -85,10 +85,10 @@ describe('TextTrackSegmentLoaderActor', () => {
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
-    expect(actor.snapshot.get().status).toBe('loading');
+    expect(actor.snapshot.get().value).toBe('loading');
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('idle');
+      expect(actor.snapshot.get().value).toBe('idle');
     });
 
     actor.destroy();
@@ -104,7 +104,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     actor.send({ type: 'load', track, currentTime: 0 });
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('idle');
+      expect(actor.snapshot.get().value).toBe('idle');
     });
 
     expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2);
@@ -123,12 +123,12 @@ describe('TextTrackSegmentLoaderActor', () => {
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
     expect(parseVttSegment).toHaveBeenCalledTimes(2);
 
     // Repeat send — all segments already in TextTracksActor context
     actor.send({ type: 'load', track, currentTime: 0 });
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
     expect(parseVttSegment).toHaveBeenCalledTimes(2);
 
     actor.destroy();
@@ -155,7 +155,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     actor.send({ type: 'load', track, currentTime: 0 });
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load VTT segment:', expect.any(Error));
     // Segments 0 and 2 succeeded; the failed segment is not recorded
@@ -188,7 +188,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     // Start loading track1 — paused waiting for seg0
     actor.send({ type: 'load', track: track1, currentTime: 0 });
-    expect(actor.snapshot.get().status).toBe('loading');
+    expect(actor.snapshot.get().value).toBe('loading');
 
     // Wait for the Task to actually start running — resolveSeg0 is assigned inside
     // the Promise constructor, which executes when parseVttSegment is called async.
@@ -200,7 +200,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     // Unblock seg0 — signal is already aborted, so the cue is discarded
     resolveSeg0([]);
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     // track-en was preempted — no cues recorded
     expect(textTracksActor.snapshot.get().context.segments['track-en']).toBeUndefined();
@@ -218,7 +218,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     actor.destroy();
 
-    expect(actor.snapshot.get().status).toBe('destroyed');
+    expect(actor.snapshot.get().value).toBe('destroyed');
 
     textTracksActor.destroy();
   });
@@ -237,7 +237,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(parseVttSegment).not.toHaveBeenCalled();
-    expect(actor.snapshot.get().status).toBe('destroyed');
+    expect(actor.snapshot.get().value).toBe('destroyed');
 
     textTracksActor.destroy();
   });
@@ -248,13 +248,13 @@ describe('TextTrackSegmentLoaderActor', () => {
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
-    const observed = [actor.snapshot.get().status];
+    const observed = [actor.snapshot.get().value];
 
     actor.send({ type: 'load', track, currentTime: 0 });
-    observed.push(actor.snapshot.get().status);
+    observed.push(actor.snapshot.get().value);
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
-    observed.push(actor.snapshot.get().status);
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
+    observed.push(actor.snapshot.get().value);
 
     expect(observed).toEqual(['idle', 'loading', 'idle']);
 

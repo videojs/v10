@@ -1,24 +1,24 @@
 /**
  * Generic actor types.
  *
- * An actor owns its snapshot (finite status + non-finite context) and
+ * An actor owns its snapshot (finite state + non-finite context) and
  * notifies observers when it changes. Mirrors the XState snapshot model:
- * `snapshot.status` is the bounded operational mode, `snapshot.context`
+ * `snapshot.value` is the bounded operational mode, `snapshot.context`
  * holds arbitrary non-finite data.
  */
 
 import type { ReadonlySignal } from './signals/primitives';
 
-/** Complete actor snapshot: finite status + non-finite context. */
-export interface ActorSnapshot<Status extends string, Context> {
-  status: Status;
+/** Complete actor snapshot: finite state + non-finite context. */
+export interface ActorSnapshot<State extends string, Context> {
+  value: State;
   context: Context;
 }
 
 /** Generic actor interface: owns its snapshot and notifies observers. */
-export interface Actor<Status extends string, Context> {
+export interface Actor<State extends string, Context> {
   /** Current snapshot. */
-  readonly snapshot: ActorSnapshot<Status, Context>;
+  readonly snapshot: ActorSnapshot<State, Context>;
 
   /**
    * Subscribe to snapshot changes. Fires immediately with the current
@@ -26,16 +26,16 @@ export interface Actor<Status extends string, Context> {
    *
    * @returns Unsubscribe function.
    */
-  subscribe(listener: (snapshot: ActorSnapshot<Status, Context>) => void): () => void;
+  subscribe(listener: (snapshot: ActorSnapshot<State, Context>) => void): () => void;
 
   /** Tear down the actor. */
   destroy(): void;
 }
 
 /** Generic actor interface: owns its snapshot and notifies observers. */
-export interface SignalActor<Status extends string, Context> {
+export interface SignalActor<State extends string, Context> {
   /** Current snapshot. Readable and reactive; not writable by consumers. */
-  readonly snapshot: ReadonlySignal<ActorSnapshot<Status, Context>>;
+  readonly snapshot: ReadonlySignal<ActorSnapshot<State, Context>>;
   /** Tear down the actor. */
   destroy(): void;
 }

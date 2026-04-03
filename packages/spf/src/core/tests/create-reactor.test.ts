@@ -16,7 +16,7 @@ describe('createReactor', () => {
       states: { idle: {} },
     });
 
-    expect(reactor.snapshot.get().status).toBe('idle');
+    expect(reactor.snapshot.get().value).toBe('idle');
 
     reactor.destroy();
   });
@@ -58,19 +58,19 @@ describe('createReactor', () => {
     const src = signal(false);
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: () => (src.get() ? 'active' : 'waiting'),
+      monitor: () => (src.get() ? 'active' : 'waiting'),
       states: {
         waiting: {},
         active: {},
       },
     });
 
-    expect(reactor.snapshot.get().status).toBe('waiting');
+    expect(reactor.snapshot.get().value).toBe('waiting');
 
     src.set(true);
     await tick();
 
-    expect(reactor.snapshot.get().status).toBe('active');
+    expect(reactor.snapshot.get().value).toBe('active');
 
     reactor.destroy();
   });
@@ -81,7 +81,7 @@ describe('createReactor', () => {
 
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: () => (src.get() ? 'active' : 'waiting'),
+      monitor: () => (src.get() ? 'active' : 'waiting'),
       states: {
         waiting: {},
         active: { entry: [activeFn] },
@@ -166,7 +166,7 @@ describe('createReactor', () => {
     const src = signal(false);
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: () => (src.get() ? 'active' : 'waiting'),
+      monitor: () => (src.get() ? 'active' : 'waiting'),
       states: {
         waiting: {},
         active: {},
@@ -178,8 +178,8 @@ describe('createReactor', () => {
     await tick();
     const after = reactor.snapshot.get();
 
-    expect(before.status).toBe('waiting');
-    expect(after.status).toBe('active');
+    expect(before.value).toBe('waiting');
+    expect(after.value).toBe('active');
 
     reactor.destroy();
   });
@@ -196,7 +196,7 @@ describe('createReactor — cleanup', () => {
 
     const reactor = createReactor<'active' | 'done'>({
       initial: 'active',
-      derive: () => (src.get() ? 'done' : 'active'),
+      monitor: () => (src.get() ? 'done' : 'active'),
       states: {
         active: {
           // entry: cleanup fires on exit regardless of whether fn is tracked
@@ -294,16 +294,16 @@ describe('createReactor — derive', () => {
     const src = signal<'waiting' | 'active'>('waiting');
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: () => src.get(),
+      monitor: () => src.get(),
       states: { waiting: {}, active: {} },
     });
 
-    expect(reactor.snapshot.get().status).toBe('waiting');
+    expect(reactor.snapshot.get().value).toBe('waiting');
 
     src.set('active');
     await tick();
 
-    expect(reactor.snapshot.get().status).toBe('active');
+    expect(reactor.snapshot.get().value).toBe('active');
 
     reactor.destroy();
   });
@@ -312,13 +312,13 @@ describe('createReactor — derive', () => {
     const activeFn = vi.fn();
     const reactor = createReactor<'idle' | 'active'>({
       initial: 'idle',
-      derive: () => 'idle',
+      monitor: () => 'idle',
       states: { idle: {}, active: { entry: activeFn } },
     });
 
     await tick();
 
-    expect(reactor.snapshot.get().status).toBe('idle');
+    expect(reactor.snapshot.get().value).toBe('idle');
     expect(activeFn).not.toHaveBeenCalled();
 
     reactor.destroy();
@@ -330,7 +330,7 @@ describe('createReactor — derive', () => {
 
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: deriveFn,
+      monitor: deriveFn,
       states: { waiting: {}, active: {} },
     });
 
@@ -348,7 +348,7 @@ describe('createReactor — derive', () => {
     const deriveFn = vi.fn(() => 'idle' as const);
     const reactor = createReactor({
       initial: 'idle' as const,
-      derive: deriveFn,
+      monitor: deriveFn,
       states: { idle: {} },
     });
 
@@ -365,7 +365,7 @@ describe('createReactor — derive', () => {
 
     const reactor = createReactor<'waiting' | 'active'>({
       initial: 'waiting',
-      derive: () => {
+      monitor: () => {
         order.push('derive');
         return src.get();
       },
@@ -409,7 +409,7 @@ describe('createReactor — destroy', () => {
 
     reactor.destroy();
 
-    expect(reactor.snapshot.get().status).toBe('destroyed');
+    expect(reactor.snapshot.get().value).toBe('destroyed');
   });
 
   it('destroy() is idempotent', () => {
@@ -420,7 +420,7 @@ describe('createReactor — destroy', () => {
 
     reactor.destroy();
     expect(() => reactor.destroy()).not.toThrow();
-    expect(reactor.snapshot.get().status).toBe('destroyed');
+    expect(reactor.snapshot.get().value).toBe('destroyed');
   });
 
   it('does not run reactions after destroy()', async () => {

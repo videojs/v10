@@ -11,7 +11,7 @@ import type { TextTracksActor } from './text-tracks-actor';
 // Types
 // =============================================================================
 
-export type TextTrackSegmentLoaderStatus = 'idle' | 'loading';
+export type TextTrackSegmentLoaderState = 'idle' | 'loading';
 
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';
@@ -20,7 +20,7 @@ export type TextTrackSegmentLoaderMessage = {
 };
 
 export type TextTrackSegmentLoaderActor = MessageActor<
-  TextTrackSegmentLoaderStatus | 'destroyed',
+  TextTrackSegmentLoaderState | 'destroyed',
   object,
   TextTrackSegmentLoaderMessage
 >;
@@ -42,7 +42,7 @@ export type TextTrackSegmentLoaderActor = MessageActor<
 export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksActor): TextTrackSegmentLoaderActor {
   const loadHandler = (
     message: TextTrackSegmentLoaderMessage,
-    { transition, runner }: { transition: (to: TextTrackSegmentLoaderStatus) => void; runner: SerialRunner }
+    { transition, runner }: { transition: (to: TextTrackSegmentLoaderState) => void; runner: SerialRunner }
   ): void => {
     const { track, currentTime } = message;
     const trackId = track.id;
@@ -80,7 +80,7 @@ export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksAct
 
   return createActor({
     runner: () => new SerialRunner(),
-    initial: 'idle' as TextTrackSegmentLoaderStatus,
+    initial: 'idle' as TextTrackSegmentLoaderState,
     context: {} as object,
     states: {
       idle: {

@@ -22,7 +22,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
 
-    expect(actor.snapshot.get().status).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('idle');
     expect(actor.snapshot.get().context.loaded).toEqual({});
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
@@ -156,7 +156,7 @@ describe('TextTracksActor', () => {
 
     actor.destroy();
 
-    expect(actor.snapshot.get().status).toBe('destroyed');
+    expect(actor.snapshot.get().value).toBe('destroyed');
   });
 
   it('ignores send() after destroy()', () => {

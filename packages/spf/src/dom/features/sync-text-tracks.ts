@@ -110,7 +110,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
 
   return createReactor<TextTrackSyncStatus>({
     initial: 'preconditions-unmet',
-    derive: () => (preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet'),
+    monitor: () => (preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet'),
     states: {
       'preconditions-unmet': {},
 

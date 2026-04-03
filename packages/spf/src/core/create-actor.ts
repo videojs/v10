@@ -26,11 +26,11 @@ export interface RunnerLike {
  * definition includes a runner factory.
  */
 export type HandlerContext<
-  UserStatus extends string,
+  UserState extends string,
   Context extends object,
   RunnerFactory extends (() => RunnerLike) | undefined,
 > = {
-  transition: (to: UserStatus) => void;
+  transition: (to: UserState) => void;
   context: Context;
   setContext: (next: Context) => void;
 } & (RunnerFactory extends () => infer R ? { runner: R } : object);
@@ -39,7 +39,7 @@ export type HandlerContext<
  * Definition for a single user-defined state.
  */
 export type ActorStateDefinition<
-  UserStatus extends string,
+  UserState extends string,
   Context extends object,
   Message extends { type: string },
   RunnerFactory extends (() => RunnerLike) | undefined,
@@ -50,12 +50,12 @@ export type ActorStateDefinition<
    * re-registering after each `runner.schedule()` call so that
    * `abortAll()` + reschedule correctly supersedes stale callbacks.
    */
-  onSettled?: UserStatus;
+  onSettled?: UserState;
   /** Message handlers active in this state. Messages with no handler are silently dropped. */
   on?: {
     [M in Message as M['type']]?: (
       message: Extract<Message, { type: M['type'] }>,
-      ctx: HandlerContext<UserStatus, Context, RunnerFactory>
+      ctx: HandlerContext<UserState, Context, RunnerFactory>
     ) => void;
   };
 };
@@ -63,11 +63,11 @@ export type ActorStateDefinition<
 /**
  * Full actor definition passed to `createActor`.
  *
- * `UserStatus` is the set of domain-meaningful states. `'destroyed'` is always
+ * `UserState` is the set of domain-meaningful states. `'destroyed'` is always
  * added by the framework as the implicit terminal state — do not include it here.
  */
 export type ActorDefinition<
-  UserStatus extends string,
+  UserState extends string,
   Context extends object,
   Message extends { type: string },
   RunnerFactory extends (() => RunnerLike) | undefined = undefined,
@@ -81,14 +81,14 @@ export type ActorDefinition<
    */
   runner?: RunnerFactory;
   /** Initial status. */
-  initial: UserStatus;
+  initial: UserState;
   /** Initial context. */
   context: Context;
   /**
    * Per-state definitions. States with no definition silently drop all messages.
-   * All user-defined states must appear as keys in the `UserStatus` union.
+   * All user-defined states must appear as keys in the `UserState` union.
    */
-  states: Partial<Record<UserStatus, ActorStateDefinition<UserStatus, Context, Message, RunnerFactory>>>;
+  states: Partial<Record<UserState, ActorStateDefinition<UserState, Context, Message, RunnerFactory>>>;
 };
 
 // =============================================================================
@@ -145,26 +145,26 @@ export interface MessageActor<Status extends string, Context extends object, Mes
  * });
  */
 export function createActor<
-  UserStatus extends string,
+  UserState extends string,
   Context extends object,
   Message extends { type: string },
   RunnerFactory extends (() => RunnerLike) | undefined = undefined,
 >(
-  def: ActorDefinition<UserStatus, Context, Message, RunnerFactory>
-): MessageActor<UserStatus | 'destroyed', Context, Message> {
-  type FullStatus = UserStatus | 'destroyed';
+  def: ActorDefinition<UserState, Context, Message, RunnerFactory>
+): MessageActor<UserState | 'destroyed', Context, Message> {
+  type FullState = UserState | 'destroyed';
 
   const runner = def.runner?.() as RunnerLike | undefined;
-  const snapshotSignal = signal<ActorSnapshot<FullStatus, Context>>({
-    status: def.initial as FullStatus,
+  const snapshotSignal = signal<ActorSnapshot<FullState, Context>>({
+    value: def.initial as FullState,
     context: def.context,
   });
 
-  const getStatus = (): FullStatus => untrack(() => snapshotSignal.get().status);
+  const getStatus = (): FullState => untrack(() => snapshotSignal.get().value);
   const getContext = (): Context => untrack(() => snapshotSignal.get().context);
 
-  const transition = (to: FullStatus): void => {
-    update(snapshotSignal, { status: to });
+  const transition = (to: FullState): void => {
+    update(snapshotSignal, { value: to });
   };
 
   const setContext = (context: Context): void => {
@@ -179,23 +179,23 @@ export function createActor<
     send(message: Message): void {
       const status = getStatus();
       if (status === 'destroyed') return;
-      const stateDef = def.states[status as UserStatus];
+      const stateDef = def.states[status as UserState];
       const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
-        | ((msg: Message, ctx: HandlerContext<UserStatus, Context, RunnerFactory>) => void)
+        | ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void)
         | undefined;
       if (!handler) return;
       handler(message, {
         context: getContext(),
-        transition: (to: UserStatus) => transition(to as FullStatus),
+        transition: (to: UserState) => transition(to as FullState),
         setContext,
         ...(runner ? { runner } : {}),
-      } as HandlerContext<UserStatus, Context, RunnerFactory>);
+      } as HandlerContext<UserState, Context, RunnerFactory>);
       // Register onSettled after the handler so we read the post-transition status.
       const newStatus = getStatus();
       if (newStatus !== 'destroyed') {
-        const newStateDef = def.states[newStatus as UserStatus];
+        const newStateDef = def.states[newStatus as UserState];
         if (newStateDef?.onSettled && runner) {
-          const targetStatus = newStateDef.onSettled as FullStatus;
+          const targetStatus = newStateDef.onSettled as FullState;
           runner.whenSettled(() => {
             if (getStatus() !== newStatus) return;
             transition(targetStatus);
