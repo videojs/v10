@@ -39,7 +39,6 @@ export default function HeroVideo({
             kind="metadata"
             label="thumbnails"
             src={`https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.vtt`}
-            default
           />
         </HlsVideo>
       </SkinComponent>

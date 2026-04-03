@@ -16,6 +16,7 @@ export const textTrackFeature = definePlayerFeature({
         target().media,
         (track) => track.kind === 'subtitles' || track.kind === 'captions'
       );
+
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track: TextTrack) => track.mode === 'showing');

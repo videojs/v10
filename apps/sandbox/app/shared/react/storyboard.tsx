@@ -4,5 +4,5 @@ type StoryboardProps = {
 
 export function Storyboard({ src }: StoryboardProps) {
   if (!src) return null;
-  return <track kind="metadata" label="thumbnails" src={src} default />;
+  return <track kind="metadata" label="thumbnails" src={src} />;
 }
