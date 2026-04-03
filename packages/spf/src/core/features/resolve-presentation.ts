@@ -2,7 +2,7 @@ import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
 import type { Reactor } from '../create-reactor';
 import { createReactor } from '../create-reactor';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
-import { computed, type Signal, untrack, update } from '../signals/primitives';
+import { computed, type Signal, update } from '../signals/primitives';
 import type { AddressableObject, Presentation } from '../types';
 
 /**
@@ -103,29 +103,32 @@ export function resolvePresentation<S extends PresentationState>({
       },
     ],
     states: {
-      'preconditions-unmet': [],
-      idle: [],
-      resolving: [
-        // Fetch task — returns the AbortController so the framework aborts on exit.
-        () => {
-          const presentation = untrack(() => state.get().presentation) as UnresolvedPresentation;
-          const ac = new AbortController();
+      'preconditions-unmet': {},
+      idle: {},
+      resolving: {
+        // Entry: start fetch on state entry; return AbortController so the
+        // framework aborts the in-flight request on state exit.
+        entry: [
+          () => {
+            const presentation = state.get().presentation as UnresolvedPresentation;
+            const ac = new AbortController();
 
-          fetchResolvable(presentation, { signal: ac.signal })
-            .then((response) => getResponseText(response))
-            .then((text) => {
-              const parsed = parseMultivariantPlaylist(text, presentation);
-              update(state, { presentation: parsed } as Partial<S>);
-            })
-            .catch((error) => {
-              if (error instanceof Error && error.name === 'AbortError') return;
-              throw error;
-            });
+            fetchResolvable(presentation, { signal: ac.signal })
+              .then((response) => getResponseText(response))
+              .then((text) => {
+                const parsed = parseMultivariantPlaylist(text, presentation);
+                update(state, { presentation: parsed } as Partial<S>);
+              })
+              .catch((error) => {
+                if (error instanceof Error && error.name === 'AbortError') return;
+                throw error;
+              });
 
-          return ac;
-        },
-      ],
-      resolved: [],
+            return ac;
+          },
+        ],
+      },
+      resolved: {},
     },
   });
 }

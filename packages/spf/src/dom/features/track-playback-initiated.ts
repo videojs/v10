@@ -1,7 +1,7 @@
 import { listen } from '@videojs/utils/dom';
 import type { Reactor } from '../../core/create-reactor';
 import { createReactor } from '../../core/create-reactor';
-import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
@@ -78,21 +78,24 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
       },
     ],
     states: {
-      'preconditions-unmet': [],
+      'preconditions-unmet': {},
 
-      monitoring: [
-        // Enter-once: check if already playing; otherwise listen for play.
-        () => {
-          const el = untrack(() => mediaElementSignal.get())!;
-          update(state, { playbackInitiated: !el.paused } as Partial<S>);
-          return listen(el, 'play', () => {
+      monitoring: {
+        // Entry: check if already playing; otherwise listen for play.
+        // The fn body is automatically untracked — el is read at entry time only.
+        entry: [
+          () => {
+            const el = mediaElementSignal.get()!;
             update(state, { playbackInitiated: !el.paused } as Partial<S>);
-          });
-        },
-      ],
+            return listen(el, 'play', () => {
+              update(state, { playbackInitiated: !el.paused } as Partial<S>);
+            });
+          },
+        ],
+      },
 
-      'playback-initiated': [
-        // Reactive: tracks element and URL while initiated. When either changes,
+      'playback-initiated': {
+        // Reaction: tracks element and URL while initiated. When either changes,
         // the effect re-runs — the exit cleanup fires first, resetting
         // state.playbackInitiated to false. deriveStatus then returns 'monitoring'
         // on the next microtask, and the always monitor drives the transition.
@@ -101,12 +104,14 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
         // which also triggers a deriveStatus → 'preconditions-unmet' transition)
         // and the URL-change / element-swap path (preconditions still met but
         // values changed, handled entirely by this effect's cleanup).
-        () => {
-          mediaElementSignal.get(); // tracked — re-run on element change
-          urlSignal.get(); // tracked — re-run on URL change
-          return () => update(state, { playbackInitiated: false } as Partial<S>);
-        },
-      ],
+        reactions: [
+          () => {
+            mediaElementSignal.get(); // tracked — re-run on element change
+            urlSignal.get(); // tracked — re-run on URL change
+            return () => update(state, { playbackInitiated: false } as Partial<S>);
+          },
+        ],
+      },
     },
   });
 }

@@ -151,38 +151,48 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
       },
     ],
     states: {
-      'preconditions-unmet': [
-        () => {
-          // Defensive reset before creating fresh actors (no-op if already undefined).
-          teardownActors(owners);
-        },
-      ],
+      'preconditions-unmet': {
+        // Entry: defensive actor reset on state entry (no-op if already undefined).
+        entry: [
+          () => {
+            teardownActors(owners);
+          },
+        ],
+      },
 
-      'setting-up': [
-        () => {
-          // Defensive reset before creating fresh actors (no-op if already undefined).
-          teardownActors(owners);
-          const mediaElement = untrack(() => owners.get().mediaElement as HTMLMediaElement);
-          const textTracksActor = createTextTracksActor(mediaElement);
-          const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
-          update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
-        },
-      ],
+      'setting-up': {
+        // Entry: reset any stale actors, then create fresh ones and write to owners.
+        // The fn body is automatically untracked — no untrack() needed for mediaElement.
+        entry: [
+          () => {
+            teardownActors(owners);
+            const mediaElement = owners.get().mediaElement as HTMLMediaElement;
+            const textTracksActor = createTextTracksActor(mediaElement);
+            const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
+            update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
+          },
+        ],
+      },
 
-      pending: [],
+      pending: {},
 
-      'monitoring-for-loads': [
-        () => {
-          const currentTime = currentTimeSignal.get();
-          const track = selectedTrackSignal.get()!;
-          // deriveStatus guarantees segmentLoaderActor is in owners and findSelectedTrack
-          // returns a valid resolved track when in this state. The always monitor
-          // (registered before this effect) transitions us out before this re-runs
-          // if either invariant ever stops holding.
-          const { segmentLoaderActor } = untrack(() => owners.get());
-          segmentLoaderActor!.send({ type: 'load', track, currentTime });
-        },
-      ],
+      'monitoring-for-loads': {
+        // Reaction: re-runs whenever currentTime or selectedTrack changes, dispatching
+        // a load message to the segment loader. owners is read with untrack() since
+        // actor presence is guaranteed by deriveStatus when in this state.
+        reactions: [
+          () => {
+            const currentTime = currentTimeSignal.get();
+            const track = selectedTrackSignal.get()!;
+            // deriveStatus guarantees segmentLoaderActor is in owners and findSelectedTrack
+            // returns a valid resolved track when in this state. The always monitor
+            // (registered before this effect) transitions us out before this re-runs
+            // if either invariant ever stops holding.
+            const { segmentLoaderActor } = untrack(() => owners.get());
+            segmentLoaderActor!.send({ type: 'load', track, currentTime });
+          },
+        ],
+      },
     },
   });
 }

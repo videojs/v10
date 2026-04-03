@@ -14,7 +14,7 @@ describe('createReactor', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
       context: { value: 0 },
-      states: { idle: [] },
+      states: { idle: {} },
     });
 
     expect(reactor.snapshot.get().status).toBe('idle');
@@ -23,12 +23,23 @@ describe('createReactor', () => {
     reactor.destroy();
   });
 
-  it('runs the effect for the initial state on creation', () => {
+  it('runs the entry effect for the initial state on creation', () => {
     const fn = vi.fn();
     createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [fn] },
+      states: { idle: { entry: [fn] } },
+    }).destroy();
+
+    expect(fn).toHaveBeenCalledOnce();
+  });
+
+  it('runs the reaction effect for the initial state on creation', () => {
+    const fn = vi.fn();
+    createReactor({
+      initial: 'idle' as const,
+      context: {},
+      states: { idle: { reactions: [fn] } },
     }).destroy();
 
     expect(fn).toHaveBeenCalledOnce();
@@ -40,25 +51,27 @@ describe('createReactor', () => {
       initial: 'idle',
       context: {},
       states: {
-        idle: [],
-        other: [otherFn],
+        idle: {},
+        other: { entry: [otherFn] },
       },
     }).destroy();
 
     expect(otherFn).not.toHaveBeenCalled();
   });
 
-  it('passes transition, context, and setContext to effect fns', () => {
+  it('passes transition, context, and setContext to entry effect fns', () => {
     let captured: unknown;
     createReactor({
       initial: 'idle' as const,
       context: { x: 1 },
       states: {
-        idle: [
-          (ctx) => {
-            captured = ctx;
-          },
-        ],
+        idle: {
+          entry: [
+            (ctx) => {
+              captured = ctx;
+            },
+          ],
+        },
       },
     }).destroy();
 
@@ -67,18 +80,20 @@ describe('createReactor', () => {
     expect(typeof (captured as { setContext: unknown }).setContext).toBe('function');
   });
 
-  it('transitions status via transition()', async () => {
+  it('transitions status via transition() in a reaction', async () => {
     const src = signal(false);
     const reactor = createReactor<'waiting' | 'active', object>({
       initial: 'waiting',
       context: {},
       states: {
-        waiting: [
-          ({ transition }) => {
-            if (src.get()) transition('active');
-          },
-        ],
-        active: [],
+        waiting: {
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('active');
+            },
+          ],
+        },
+        active: {},
       },
     });
 
@@ -100,12 +115,14 @@ describe('createReactor', () => {
       initial: 'waiting',
       context: {},
       states: {
-        waiting: [
-          ({ transition }) => {
-            if (src.get()) transition('active');
-          },
-        ],
-        active: [activeFn],
+        waiting: {
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('active');
+            },
+          ],
+        },
+        active: { entry: [activeFn] },
       },
     });
 
@@ -126,12 +143,14 @@ describe('createReactor', () => {
       initial: 'idle' as const,
       context: { count: 0 },
       states: {
-        idle: [
-          ({ context, setContext }) => {
-            captured = context.count;
-            setContext({ count: context.count + 1 });
-          },
-        ],
+        idle: {
+          entry: [
+            ({ context, setContext }) => {
+              captured = context.count;
+              setContext({ count: context.count + 1 });
+            },
+          ],
+        },
       },
     });
 
@@ -142,7 +161,7 @@ describe('createReactor', () => {
     reactor.destroy();
   });
 
-  it('multiple effects in the same state run independently', () => {
+  it('multiple entry effects in the same state run independently', () => {
     const fn1 = vi.fn();
     const fn2 = vi.fn();
     const fn3 = vi.fn();
@@ -150,7 +169,7 @@ describe('createReactor', () => {
     createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [fn1, fn2, fn3] },
+      states: { idle: { entry: [fn1, fn2, fn3] } },
     }).destroy();
 
     expect(fn1).toHaveBeenCalledOnce();
@@ -158,7 +177,7 @@ describe('createReactor', () => {
     expect(fn3).toHaveBeenCalledOnce();
   });
 
-  it('re-runs only the effect whose dependency changed', async () => {
+  it('re-runs only the reaction whose dependency changed', async () => {
     const src1 = signal(0);
     const src2 = signal(0);
     const fn1 = vi.fn(() => {
@@ -171,7 +190,7 @@ describe('createReactor', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [fn1, fn2] },
+      states: { idle: { reactions: [fn1, fn2] } },
     });
 
     expect(fn1).toHaveBeenCalledOnce();
@@ -186,18 +205,42 @@ describe('createReactor', () => {
     reactor.destroy();
   });
 
+  it('entry effect does not re-run when a signal read inside it changes', async () => {
+    const src = signal(0);
+    const fn = vi.fn(() => {
+      src.get(); // read inside entry — should NOT create a reactive dep
+    });
+
+    const reactor = createReactor({
+      initial: 'idle' as const,
+      context: {},
+      states: { idle: { entry: [fn] } },
+    });
+
+    expect(fn).toHaveBeenCalledOnce();
+
+    src.set(1);
+    await tick();
+
+    expect(fn).toHaveBeenCalledOnce(); // NOT re-run
+
+    reactor.destroy();
+  });
+
   it('snapshot is reactive', async () => {
     const src = signal(false);
     const reactor = createReactor<'waiting' | 'active', object>({
       initial: 'waiting',
       context: {},
       states: {
-        waiting: [
-          ({ transition }) => {
-            if (src.get()) transition('active');
-          },
-        ],
-        active: [],
+        waiting: {
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('active');
+            },
+          ],
+        },
+        active: {},
       },
     });
 
@@ -218,7 +261,7 @@ describe('createReactor', () => {
 // =============================================================================
 
 describe('createReactor — cleanup', () => {
-  it('calls the effect cleanup on state exit', async () => {
+  it('calls the entry effect cleanup on state exit', async () => {
     const src = signal(false);
     const cleanup = vi.fn();
 
@@ -226,13 +269,20 @@ describe('createReactor — cleanup', () => {
       initial: 'active',
       context: {},
       states: {
-        active: [
-          ({ transition }) => {
-            if (src.get()) transition('done');
-            return cleanup;
-          },
-        ],
-        done: [],
+        active: {
+          // entry: cleanup fires on exit regardless of whether fn is tracked
+          entry: [
+            () => {
+              return cleanup;
+            },
+          ],
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('done');
+            },
+          ],
+        },
+        done: {},
       },
     });
 
@@ -246,7 +296,7 @@ describe('createReactor — cleanup', () => {
     reactor.destroy();
   });
 
-  it('calls the effect cleanup before re-running when a dependency changes', async () => {
+  it('calls the reaction cleanup before re-running when a dependency changes', async () => {
     const src = signal(0);
     const cleanup = vi.fn();
 
@@ -254,12 +304,14 @@ describe('createReactor — cleanup', () => {
       initial: 'idle' as const,
       context: {},
       states: {
-        idle: [
-          () => {
-            src.get();
-            return cleanup;
-          },
-        ],
+        idle: {
+          reactions: [
+            () => {
+              src.get();
+              return cleanup;
+            },
+          ],
+        },
       },
     });
 
@@ -274,19 +326,24 @@ describe('createReactor — cleanup', () => {
   });
 
   it('calls effect cleanups on destroy()', () => {
-    const cleanup = vi.fn();
+    const entryCleanup = vi.fn();
+    const reactionCleanup = vi.fn();
 
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
       states: {
-        idle: [() => cleanup],
+        idle: {
+          entry: [() => entryCleanup],
+          reactions: [() => reactionCleanup],
+        },
       },
     });
 
     reactor.destroy();
 
-    expect(cleanup).toHaveBeenCalledOnce();
+    expect(entryCleanup).toHaveBeenCalledOnce();
+    expect(reactionCleanup).toHaveBeenCalledOnce();
   });
 
   it('does not call cleanup for inactive state effects on destroy()', () => {
@@ -297,8 +354,8 @@ describe('createReactor — cleanup', () => {
       initial: 'idle',
       context: {},
       states: {
-        idle: [() => activeCleanup],
-        other: [() => inactiveCleanup],
+        idle: { entry: [() => activeCleanup] },
+        other: { entry: [() => inactiveCleanup] },
       },
     }).destroy();
 
@@ -318,7 +375,7 @@ describe('createReactor — always', () => {
       initial: 'idle' as const,
       context: {},
       always: [fn],
-      states: { idle: [] },
+      states: { idle: {} },
     }).destroy();
 
     expect(fn).toHaveBeenCalledOnce();
@@ -334,7 +391,7 @@ describe('createReactor — always', () => {
           capturedStatus = status;
         },
       ],
-      states: { idle: [] },
+      states: { idle: {} },
     }).destroy();
 
     expect(capturedStatus).toBe('idle');
@@ -353,12 +410,14 @@ describe('createReactor — always', () => {
         },
       ],
       states: {
-        waiting: [
-          ({ transition }) => {
-            if (src.get()) transition('active');
-          },
-        ],
-        active: [],
+        waiting: {
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('active');
+            },
+          ],
+        },
+        active: {},
       },
     });
 
@@ -384,7 +443,7 @@ describe('createReactor — always', () => {
           if (src.get() && status === 'waiting') transition('active');
         },
       ],
-      states: { waiting: [], active: [] },
+      states: { waiting: {}, active: {} },
     });
 
     expect(reactor.snapshot.get().status).toBe('waiting');
@@ -406,12 +465,14 @@ describe('createReactor — always', () => {
       context: {},
       always: [() => cleanup],
       states: {
-        waiting: [
-          ({ transition }) => {
-            if (src.get()) transition('active');
-          },
-        ],
-        active: [],
+        waiting: {
+          reactions: [
+            ({ transition }) => {
+              if (src.get()) transition('active');
+            },
+          ],
+        },
+        active: {},
       },
     });
 
@@ -431,7 +492,7 @@ describe('createReactor — always', () => {
       initial: 'idle' as const,
       context: {},
       always: [fn],
-      states: { idle: [] },
+      states: { idle: {} },
     });
 
     fn.mockClear();
@@ -449,7 +510,7 @@ describe('createReactor — always', () => {
       initial: 'idle' as const,
       context: {},
       always: [alwaysFn],
-      states: { idle: [stateFn] },
+      states: { idle: { entry: [stateFn] } },
     }).destroy();
 
     expect(alwaysFn).toHaveBeenCalledOnce();
@@ -466,7 +527,7 @@ describe('createReactor — destroy', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [] },
+      states: { idle: {} },
     });
 
     reactor.destroy();
@@ -478,7 +539,7 @@ describe('createReactor — destroy', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [] },
+      states: { idle: {} },
     });
 
     reactor.destroy();
@@ -486,7 +547,7 @@ describe('createReactor — destroy', () => {
     expect(reactor.snapshot.get().status).toBe('destroyed');
   });
 
-  it('does not run effects after destroy()', async () => {
+  it('does not run reactions after destroy()', async () => {
     const src = signal(0);
     const fn = vi.fn(() => {
       src.get();
@@ -495,7 +556,7 @@ describe('createReactor — destroy', () => {
     const reactor = createReactor({
       initial: 'idle' as const,
       context: {},
-      states: { idle: [fn] },
+      states: { idle: { reactions: [fn] } },
     });
 
     reactor.destroy();

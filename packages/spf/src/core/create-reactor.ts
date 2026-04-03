@@ -9,7 +9,6 @@ import { signal, untrack, update } from './signals/primitives';
 /**
  * A single effect function within a reactor state.
  *
- * Called when the reactor enters or re-evaluates the state it belongs to.
  * May return a cleanup function that runs before each re-evaluation and on
  * state exit (including destroy).
  */
@@ -18,6 +17,23 @@ export type ReactorEffectFn<UserStatus extends string, Context extends object> =
   context: Context;
   setContext: (next: Context) => void;
 }) => (() => void) | { abort(): void } | void;
+
+/**
+ * Per-state effect grouping for a single reactor state.
+ *
+ * - `entry` effects run once on state entry. The fn body is automatically
+ *   untracked — no `untrack()` calls are needed inside. Use this for
+ *   one-time setup: reading current values, attaching event listeners, etc.
+ * - `reactions` effects run on state entry and re-run whenever a signal read
+ *   inside the fn body changes. Use `untrack()` for reads you do not want to
+ *   track. Use this for work that must stay in sync with reactive state.
+ *
+ * Both arrays are optional; pass `{}` for states with no effects.
+ */
+export type ReactorStateDefinition<UserStatus extends string, Context extends object> = {
+  entry?: ReactorEffectFn<UserStatus, Context>[];
+  reactions?: ReactorEffectFn<UserStatus, Context>[];
+};
 
 /**
  * A cross-cutting effect function that runs in every non-terminal state.
@@ -53,12 +69,11 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
    */
   always?: ReactorAlwaysEffectFn<UserStatus, Context>[];
   /**
-   * Per-state effect arrays. Every valid status must be declared — use an empty
-   * array for states with no effects. Each element becomes one independent
-   * `effect()` call gated on that state, with its own dependency tracking and
-   * cleanup lifecycle.
+   * Per-state effect groupings. Every valid status must be declared — pass `{}`
+   * for states with no effects. `entry` and `reactions` each become independent
+   * `effect()` calls gated on that state, with their own cleanup lifecycles.
    */
-  states: Record<UserStatus, ReactorEffectFn<UserStatus, Context>[]>;
+  states: Record<UserStatus, ReactorStateDefinition<UserStatus, Context>>;
 };
 
 // =============================================================================
@@ -99,13 +114,13 @@ export type Reactor<Status extends string, Context extends object> = SignalActor
  *     }
  *   ],
  *   states: {
- *     active: [
- *       // State-specific work with its own cleanup lifecycle.
- *       () => {
- *         const unsub = subscribe(valueSignal.get(), handler);
- *         return () => unsub();
- *       }
- *     ]
+ *     active: {
+ *       // entry: runs once on state entry; fn body is automatically untracked.
+ *       entry: [() => listen(el, 'play', handler)],
+ *       // reactions: re-runs whenever tracked signals change.
+ *       reactions: [() => { currentTimeSignal.get(); return cleanup; }],
+ *     },
+ *     idle: {}, // no effects
  *   }
  * });
  */
@@ -166,24 +181,41 @@ export function createReactor<UserStatus extends string, Context extends object>
   }
 
   // Per-state effects — each is gated on its matching status.
-  for (const [state, fns] of Object.entries(def.states) as Array<
-    [UserStatus, ReactorEffectFn<UserStatus, Context>[]]
+  // `entry` effects wrap the fn call in `untrack()` so the fn body creates no
+  // reactive dependencies; they run once on state entry and clean up on exit.
+  // `reactions` effects leave the fn body tracked normally.
+  for (const [state, stateDef] of Object.entries(def.states) as Array<
+    [UserStatus, ReactorStateDefinition<UserStatus, Context>]
   >) {
-    for (const fn of fns) {
+    const makeCtx = (snapshot: ActorSnapshot<FullStatus, Context>) => ({
+      transition: (to: UserStatus) => {
+        if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+        transition(to as FullStatus);
+      },
+      context: snapshot.context,
+      setContext: (context: Context) => {
+        if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+        setContext(context);
+      },
+    });
+
+    for (const fn of stateDef.entry ?? []) {
       const dispose = effect(() => {
         const snapshot = snapshotSignal.get();
         if (snapshot.status !== state) return;
-        const result = fn({
-          transition: (to: UserStatus) => {
-            if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-            transition(to as FullStatus);
-          },
-          context: snapshot.context,
-          setContext: (context: Context) => {
-            if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-            setContext(context);
-          },
-        });
+        const result = untrack(() => fn(makeCtx(snapshot)));
+        if (!result) return undefined;
+        if (typeof result === 'function') return result;
+        return () => result.abort();
+      });
+      effectDisposals.push(dispose);
+    }
+
+    for (const fn of stateDef.reactions ?? []) {
+      const dispose = effect(() => {
+        const snapshot = snapshotSignal.get();
+        if (snapshot.status !== state) return;
+        const result = fn(makeCtx(snapshot));
         if (!result) return undefined;
         if (typeof result === 'function') return result;
         return () => result.abort();
