@@ -23,6 +23,8 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
   switch (preset) {
     case 'video':
     case 'hls-video':
+    case 'mux-video':
+    case 'native-hls-video':
     case 'simple-hls-video':
     case 'dash-video':
       if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
@@ -42,6 +44,12 @@ async function loadCdnMedia(preset: Preset) {
   switch (preset) {
     case 'hls-video':
       await import('@videojs/html/cdn/media/hls-video');
+      break;
+    case 'mux-video':
+      await import('@videojs/html/cdn/media/mux-video');
+      break;
+    case 'native-hls-video':
+      await import('@videojs/html/cdn/media/native-hls-video');
       break;
     case 'simple-hls-video':
       await import('@videojs/html/cdn/media/simple-hls-video');
@@ -71,6 +79,8 @@ function getSkinTag(preset: Preset, skin: Skin): string {
 function getMediaTag(preset: Preset): string {
   const tags: Partial<Record<Preset, string>> = {
     'hls-video': 'hls-video',
+    'mux-video': 'mux-video',
+    'native-hls-video': 'native-hls-video',
     'simple-hls-video': 'simple-hls-video',
     'dash-video': 'dash-video',
     audio: 'audio',
@@ -87,7 +97,14 @@ function loadStylesheets(preset: Preset, skin: Skin) {
 }
 
 function isVideoPreset(preset: Preset): boolean {
-  return preset === 'video' || preset === 'hls-video' || preset === 'simple-hls-video' || preset === 'dash-video';
+  return (
+    preset === 'video' ||
+    preset === 'hls-video' ||
+    preset === 'mux-video' ||
+    preset === 'native-hls-video' ||
+    preset === 'simple-hls-video' ||
+    preset === 'dash-video'
+  );
 }
 
 async function render() {
@@ -102,9 +119,16 @@ async function render() {
   const playerTag = getPlayerTag(preset);
   const skinTag = getSkinTag(preset, state.skin);
   const mediaTag = getMediaTag(preset);
-  const src = preset === 'background-video' ? BACKGROUND_VIDEO_SRC : SOURCES[state.source].url;
+  const source = SOURCES[state.source];
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
+
+  const sourceAttr =
+    preset === 'background-video'
+      ? `src="${BACKGROUND_VIDEO_SRC}"`
+      : preset === 'mux-video' && source.type !== 'mp4'
+        ? `playback-id="${source.playbackId}"`
+        : `src="${source.url}"`;
 
   // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {
@@ -116,7 +140,7 @@ async function render() {
     root.innerHTML = html`
       <${playerTag}>
         <${skinTag}>
-          <${mediaTag} src="${src}"></${mediaTag}>
+          <${mediaTag} ${sourceAttr}></${mediaTag}>
         </${skinTag}>
       </${playerTag}>
     `;
@@ -128,7 +152,7 @@ async function render() {
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>
           <${skinTag}>
-            <${mediaTag} src="${src}"></${mediaTag}>
+            <${mediaTag} ${sourceAttr}></${mediaTag}>
           </${skinTag}>
         </${playerTag}>
       </div>
@@ -139,7 +163,7 @@ async function render() {
   root.innerHTML = html`
     <${playerTag}>
       <${skinTag} class="aspect-video max-w-4xl mx-auto">
-        <${mediaTag} src="${src}" playsinline crossorigin="anonymous">
+        <${mediaTag} ${sourceAttr} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </${mediaTag}>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

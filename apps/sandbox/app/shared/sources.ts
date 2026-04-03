@@ -59,6 +59,7 @@ export const SOURCES = {
 export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
+export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => !!SOURCES[id].playbackId);

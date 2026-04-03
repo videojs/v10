@@ -7,7 +7,7 @@ import {
   DEFAULT_SOURCE,
   MP4_SOURCE_IDS,
   MUX_SOURCE_IDS,
-  SOURCE_IDS,
+  NON_DASH_SOURCE_IDS,
   SOURCES,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
@@ -71,6 +71,13 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
+  // Constrain source away from DASH for non-DASH presets
+  useEffect(() => {
+    if (preset !== 'dash-video' && SOURCES[source].type === 'dash') {
+      setSource(DEFAULT_SOURCE);
+    }
+  }, [preset, source, setSource]);
+
   // Constrain source to Mux playbackId sources when switching to mux-video
   useEffect(() => {
     if (preset === 'mux-video' && !SOURCES[source].playbackId) {
@@ -92,7 +99,7 @@ export function App() {
         ? DASH_SOURCE_IDS
         : preset === 'mux-video'
           ? MUX_SOURCE_IDS
-          : SOURCE_IDS;
+          : NON_DASH_SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
