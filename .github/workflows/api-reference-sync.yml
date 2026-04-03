@@ -188,7 +188,7 @@ jobs:
 
               # Check for existing open issue (dedup by drift-type + component name)
               EXISTING=$(gh issue list \
-                --label "docs:reference" \
+                --label "docs" \
                 --search "docs(reference): add $NAME API reference page" \
                 --state open \
                 --json number \
@@ -228,7 +228,7 @@ jobs:
               gh issue create \
                 --title "docs(reference): add $NAME API reference page" \
                 --body "$BODY" \
-                --label "docs,docs:reference,site,components" \
+                --label "docs,site,components" \
                 $ASSIGNEE_FLAG
 
               echo "Created issue for component $NAME"
@@ -251,7 +251,7 @@ jobs:
 
               # Check for existing open issue
               EXISTING=$(gh issue list \
-                --label "docs:reference" \
+                --label "docs" \
                 --search "docs(reference): add $NAME API reference page" \
                 --state open \
                 --json number \
@@ -291,7 +291,7 @@ jobs:
               gh issue create \
                 --title "docs(reference): add $NAME API reference page" \
                 --body "$BODY" \
-                --label "docs,docs:reference,site" \
+                --label "docs,site" \
                 $ASSIGNEE_FLAG
 
               echo "Created issue for util $NAME"
@@ -380,7 +380,7 @@ jobs:
 
             Title: `docs(site): stale docs from #$PR_NUMBER`
 
-            Labels: `docs,docs:reference,site,triage`
+            Labels: `docs,site`
 
             Body (use this structure exactly):
             ```
