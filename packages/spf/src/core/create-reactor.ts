@@ -156,6 +156,29 @@ export function createReactor<UserStatus extends string, Context extends object>
     return () => result.abort();
   };
 
+  // Registers each fn as an independent effect. The effect reads snapshotSignal,
+  // skips if shouldSkip returns true, then calls fn — untracked for entry effects
+  // (so only snapshotSignal is tracked), tracked for reactions and always effects.
+  const registerEffects = (
+    fns: ReactorEffectFn<UserStatus, Context>[],
+    shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean,
+    untracked = false
+  ) => {
+    for (const fn of fns) {
+      effectDisposals.push(
+        effect(() => {
+          const snapshot = snapshotSignal.get();
+          if (shouldSkip(snapshot)) return;
+          const call = () => fn(makeCtx(snapshot));
+          return wrapResult(untracked ? untrack(call) : call());
+        })
+      );
+    }
+  };
+
+  const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
+    snapshot.status === 'destroying' || snapshot.status === 'destroyed';
+
   // 'always' effects run in every non-terminal state — processed first so that
   // cross-cutting condition monitors fire before per-state effects in the
   // initial synchronous run AND on every subsequent re-run.
@@ -167,39 +190,18 @@ export function createReactor<UserStatus extends string, Context extends object>
   // This is load-bearing: it means a transition triggered by an 'always' monitor
   // takes effect before the per-state effects of the (now-exited) state re-run,
   // so per-state effects can rely on the invariants established by 'always'.
-  for (const fn of def.always ?? []) {
-    const dispose = effect(() => {
-      const snapshot = snapshotSignal.get();
-      if (snapshot.status === 'destroying' || snapshot.status === 'destroyed') return;
-      return wrapResult(fn(makeCtx(snapshot)));
-    });
-    effectDisposals.push(dispose);
-  }
+  registerEffects(def.always ?? [], isTerminal);
 
   // Per-state effects — each is gated on its matching status.
-  // `entry` effects wrap the fn call in `untrack()` so the fn body creates no
+  // `entry` effects are registered with untracked=true so the fn body creates no
   // reactive dependencies; they run once on state entry and clean up on exit.
   // `reactions` effects leave the fn body tracked normally.
   for (const [state, stateDef] of Object.entries(def.states) as Array<
     [UserStatus, ReactorStateDefinition<UserStatus, Context>]
   >) {
-    for (const fn of stateDef.entry ?? []) {
-      const dispose = effect(() => {
-        const snapshot = snapshotSignal.get();
-        if (snapshot.status !== state) return;
-        return wrapResult(untrack(() => fn(makeCtx(snapshot))));
-      });
-      effectDisposals.push(dispose);
-    }
-
-    for (const fn of stateDef.reactions ?? []) {
-      const dispose = effect(() => {
-        const snapshot = snapshotSignal.get();
-        if (snapshot.status !== state) return;
-        return wrapResult(fn(makeCtx(snapshot)));
-      });
-      effectDisposals.push(dispose);
-    }
+    const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
+    registerEffects(stateDef.entry ?? [], isNotState, true);
+    registerEffects(stateDef.reactions ?? [], isNotState);
   }
 
   return {
