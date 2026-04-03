@@ -164,7 +164,7 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
 
 /**
  * Wait for all currently-updating SourceBufferActors to finish.
- * Uses actor status rather than raw SourceBuffer.updating so the wait is
+ * Uses actor state rather than raw SourceBuffer.updating so the wait is
  * aligned with the same abstraction that owns all buffer operations.
  */
 function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {

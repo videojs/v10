@@ -186,8 +186,8 @@ export function createReactor<State extends string>(
     },
 
     destroy(): void {
-      const status = getStatus();
-      if (status === 'destroying' || status === 'destroyed') return;
+      const state = getStatus();
+      if (state === 'destroying' || state === 'destroyed') return;
       // Two-step teardown: transition through 'destroying' first to leave room
       // for async teardown in a future extension, then immediately 'destroyed'
       // for the synchronous base case. Active effect cleanups fire via disposal.

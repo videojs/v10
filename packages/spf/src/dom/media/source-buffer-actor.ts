@@ -241,8 +241,8 @@ export function createSourceBufferActor(
   // If the actor was destroyed while the operation was in flight, preserve
   // 'destroyed' — do not regress to 'idle'.
   function applyResult(newContext: SourceBufferActorContext): void {
-    const status = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
-    snapshotSignal.set({ value: status, context: newContext });
+    const state = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
+    snapshotSignal.set({ value: state, context: newContext });
   }
 
   function handleError(e: unknown): never {
@@ -251,8 +251,8 @@ export function createSourceBufferActor(
     // improvement should detect QuotaExceededError specifically and use total
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
-    const status = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
-    update(snapshotSignal, { value: status });
+    const state = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
+    update(snapshotSignal, { value: state });
     throw e;
   }
 
@@ -301,9 +301,9 @@ export function createSourceBufferActor(
       // writing to the signal between steps — context is only written atomically
       // when the last task completes.
       //
-      // workingCtx is captured here (synchronously after status → 'updating'),
+      // workingCtx is captured here (synchronously after state → 'updating'),
       // so it reflects the current context at the moment the batch was accepted.
-      // This is correct: status is now 'updating' so no other sender can modify
+      // This is correct: state is now 'updating' so no other sender can modify
       // context between this line and the first task executing.
       //
       // NOTE: if an intermediate task fails (e.g. SourceBuffer error event),

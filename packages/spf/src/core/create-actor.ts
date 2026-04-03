@@ -177,9 +177,9 @@ export function createActor<
     },
 
     send(message: Message): void {
-      const status = getStatus();
-      if (status === 'destroyed') return;
-      const stateDef = def.states[status as UserState];
+      const state = getStatus();
+      if (state === 'destroyed') return;
+      const stateDef = def.states[state as UserState];
       const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
         | ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void)
         | undefined;
@@ -190,15 +190,15 @@ export function createActor<
         setContext,
         ...(runner ? { runner } : {}),
       } as HandlerContext<UserState, Context, RunnerFactory>);
-      // Register onSettled after the handler so we read the post-transition status.
-      const newStatus = getStatus();
-      if (newStatus !== 'destroyed') {
-        const newStateDef = def.states[newStatus as UserState];
+      // Register onSettled after the handler so we read the post-transition state.
+      const newState = getStatus();
+      if (newState !== 'destroyed') {
+        const newStateDef = def.states[newState as UserState];
         if (newStateDef?.onSettled && runner) {
-          const targetStatus = newStateDef.onSettled as FullState;
+          const targetState = newStateDef.onSettled as FullState;
           runner.whenSettled(() => {
-            if (getStatus() !== newStatus) return;
-            transition(targetStatus);
+            if (getStatus() !== newState) return;
+            transition(targetState);
           });
         }
       }
