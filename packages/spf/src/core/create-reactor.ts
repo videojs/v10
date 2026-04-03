@@ -167,41 +167,25 @@ export function createReactor<UserStatus extends string, Context extends object>
     return () => result.abort();
   };
 
+  type EffectCall = () => ReturnType<ReactorEffectFn<UserStatus, Context>>;
+
   // Registers each fn as an independent effect. The effect reads snapshotSignal,
-  // skips if shouldSkip returns true, then calls fn — untracked for entry effects
-  // (so only snapshotSignal is tracked), tracked for reactions and always effects.
+  // skips if shouldSkip returns true, then calls toFnCall(baseCall)(). The default
+  // toFnCall is the identity — pass (baseCall) => () => untrack(baseCall) for entry
+  // effects so the fn body creates no reactive dependencies.
   const registerEffects = (
     fnOrFns: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[] | undefined,
     shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean,
-    untracked = false
+    toFnCall: (baseCall: EffectCall) => EffectCall = (baseCall) => baseCall
   ) => {
     if (!fnOrFns) return;
     const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
-    const toCall = untracked
-      ? (
-          baseCall: () =>
-            | void
-            | (() => void)
-            | {
-                abort(): void;
-              }
-        ) =>
-          () =>
-            untrack(baseCall)
-      : (
-          baseCall: () =>
-            | void
-            | (() => void)
-            | {
-                abort(): void;
-              }
-        ) => baseCall;
     const toEffect = (fn: ReactorEffectFn<UserStatus, Context>) =>
       effect(() => {
         const snapshot = snapshotSignal.get();
         if (shouldSkip(snapshot)) return;
         const baseCall = () => fn(makeCtx(snapshot));
-        return wrapResult(toCall(baseCall)());
+        return wrapResult(toFnCall(baseCall)());
       });
     effectDisposals.push(...fns.map(toEffect));
   };
@@ -244,7 +228,7 @@ export function createReactor<UserStatus extends string, Context extends object>
   (Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).forEach(
     ([state, stateDef]) => {
       const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
-      registerEffects(stateDef.entry, isNotState, true);
+      registerEffects(stateDef.entry, isNotState, (baseCall) => () => untrack(baseCall));
       registerEffects(stateDef.reactions, isNotState);
     }
   );
