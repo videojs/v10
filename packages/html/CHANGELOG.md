@@ -1,5 +1,35 @@
 # Changelog
 
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.13...@videojs/html@10.0.0-beta.14) (2026-04-03)
+
+
+### Features
+
+* **html:** add native hls video to cdn ([#1208](https://github.com/videojs/v10/issues/1208)) ([80c43d2](https://github.com/videojs/v10/commit/80c43d2c187c6062c088993f0d1b48c5e117a715))
+* **html:** add ui bundles for eject ([#1206](https://github.com/videojs/v10/issues/1206)) ([0ed7bf0](https://github.com/videojs/v10/commit/0ed7bf0653b373a353c039fac1aa2bca4fa2973e))
+* **packages:** volume slider scroll support ([#1175](https://github.com/videojs/v10/issues/1175)) ([390b004](https://github.com/videojs/v10/commit/390b004d809272fd453b8a73e1969c59410c3620))
+
+
+### Bug Fixes
+
+* **html:** include base and shared styles in ejected skin CSS ([#1196](https://github.com/videojs/v10/issues/1196)) ([341b405](https://github.com/videojs/v10/commit/341b405a21d9ee3c58cab4ca3d27fa376917f7b7))
+* **html:** move TimeElement child creation from constructor to connectedCallback ([#1209](https://github.com/videojs/v10/issues/1209)) ([4ee55c0](https://github.com/videojs/v10/commit/4ee55c08bdadc292175c7586ef899fc53b543e49))
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.14
+    * @videojs/element bumped to 10.0.0-beta.14
+    * @videojs/spf bumped to 10.0.0-beta.14
+    * @videojs/store bumped to 10.0.0-beta.14
+    * @videojs/utils bumped to 10.0.0-beta.14
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.14
+    * @videojs/skins bumped to 10.0.0-beta.14
+
 ## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.12...@videojs/html@10.0.0-beta.13) (2026-04-01)
 
 

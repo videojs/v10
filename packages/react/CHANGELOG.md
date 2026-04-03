@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.13...@videojs/react@10.0.0-beta.14) (2026-04-03)
+
+
+### Features
+
+* **packages:** volume slider scroll support ([#1175](https://github.com/videojs/v10/issues/1175)) ([390b004](https://github.com/videojs/v10/commit/390b004d809272fd453b8a73e1969c59410c3620))
+
+
+### Bug Fixes
+
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+* **react:** thumbnails broken when using hls media ([#1210](https://github.com/videojs/v10/issues/1210)) ([8b571f5](https://github.com/videojs/v10/commit/8b571f5f05566f52deea866f4a64a7408d6c2c21))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.14
+    * @videojs/spf bumped to 10.0.0-beta.14
+    * @videojs/store bumped to 10.0.0-beta.14
+    * @videojs/utils bumped to 10.0.0-beta.14
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.14
+    * @videojs/skins bumped to 10.0.0-beta.14
+
 ## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.12...@videojs/react@10.0.0-beta.13) (2026-04-01)
 
 
