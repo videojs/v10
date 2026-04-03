@@ -177,16 +177,33 @@ export function createReactor<UserStatus extends string, Context extends object>
   ) => {
     if (!fnOrFns) return;
     const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
-    fns.forEach((fn) => {
-      effectDisposals.push(
-        effect(() => {
-          const snapshot = snapshotSignal.get();
-          if (shouldSkip(snapshot)) return;
-          const call = () => fn(makeCtx(snapshot));
-          return wrapResult(untracked ? untrack(call) : call());
-        })
-      );
-    });
+    const toCall = untracked
+      ? (
+          baseCall: () =>
+            | void
+            | (() => void)
+            | {
+                abort(): void;
+              }
+        ) =>
+          () =>
+            untrack(baseCall)
+      : (
+          baseCall: () =>
+            | void
+            | (() => void)
+            | {
+                abort(): void;
+              }
+        ) => baseCall;
+    const toEffect = (fn: ReactorEffectFn<UserStatus, Context>) =>
+      effect(() => {
+        const snapshot = snapshotSignal.get();
+        if (shouldSkip(snapshot)) return;
+        const baseCall = () => fn(makeCtx(snapshot));
+        return wrapResult(toCall(baseCall)());
+      });
+    effectDisposals.push(...fns.map(toEffect));
   };
 
   const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
@@ -210,8 +227,11 @@ export function createReactor<UserStatus extends string, Context extends object>
         effect(() => {
           const snapshot = snapshotSignal.get();
           if (isTerminal(snapshot)) return;
-          const target = fn(makeCtx(snapshot));
-          if ((target as FullStatus) !== snapshot.status) transition(target as FullStatus);
+          const call = () => {
+            const target = fn(makeCtx(snapshot));
+            if ((target as FullStatus) !== snapshot.status) transition(target as FullStatus);
+          };
+          return wrapResult(call());
         })
       );
     });
