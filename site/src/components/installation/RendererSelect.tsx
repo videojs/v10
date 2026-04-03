@@ -1,9 +1,10 @@
 import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
 import { Select, type SelectOption } from '@/components/Select';
-import type { Renderer, UseCase } from '@/stores/installation';
-import { renderer, sourceUrl, useCase, VALID_RENDERERS } from '@/stores/installation';
+import { renderer, sourceUrl, useCase } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
+import type { Renderer, UseCase } from '@/utils/installation/types';
+import { VALID_RENDERERS } from '@/utils/installation/types';
 
 const RENDERER_LABELS: Record<Renderer, string> = {
   'background-video': 'Background Video',
