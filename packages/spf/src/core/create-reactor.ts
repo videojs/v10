@@ -7,12 +7,17 @@ import { signal, untrack, update } from './signals/primitives';
 // =============================================================================
 
 /**
- * A single effect function within a reactor state.
+ * An effect function used in reactor states and `always` blocks.
  *
- * May return a cleanup function that runs before each re-evaluation and on
- * state exit (including destroy).
+ * Receives `status` (the current reactor status), `transition`, `context`, and
+ * `setContext`. May return a cleanup function that runs before each re-evaluation
+ * and on state exit (including destroy).
+ *
+ * In `always` blocks, `status` reflects whichever non-terminal state is active.
+ * In per-state `entry`/`reactions` blocks, `status` is always that state's value.
  */
 export type ReactorEffectFn<UserStatus extends string, Context extends object> = (ctx: {
+  status: UserStatus;
   transition: (to: UserStatus) => void;
   context: Context;
   setContext: (next: Context) => void;
@@ -36,20 +41,6 @@ export type ReactorStateDefinition<UserStatus extends string, Context extends ob
 };
 
 /**
- * A cross-cutting effect function that runs in every non-terminal state.
- *
- * Identical to `ReactorEffectFn` except the current `status` is also passed,
- * allowing a single effect to monitor conditions and drive transitions from
- * any state without duplicating the same guard in every state block.
- */
-export type ReactorAlwaysEffectFn<UserStatus extends string, Context extends object> = (ctx: {
-  status: UserStatus;
-  transition: (to: UserStatus) => void;
-  context: Context;
-  setContext: (next: Context) => void;
-}) => (() => void) | { abort(): void } | void;
-
-/**
  * Full reactor definition passed to `createReactor`.
  *
  * `UserStatus` is the set of domain-meaningful states. `'destroying'` and
@@ -67,7 +58,7 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
    * status or context change, with the current `status` available in ctx.
    * Useful for condition monitors that apply uniformly across all states.
    */
-  always?: ReactorAlwaysEffectFn<UserStatus, Context>[];
+  always?: ReactorEffectFn<UserStatus, Context>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
@@ -146,6 +137,25 @@ export function createReactor<UserStatus extends string, Context extends object>
 
   const effectDisposals: Array<() => void> = [];
 
+  const makeCtx = (snapshot: ActorSnapshot<FullStatus, Context>) => ({
+    status: snapshot.status as UserStatus,
+    transition: (to: UserStatus) => {
+      if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+      transition(to as FullStatus);
+    },
+    context: snapshot.context,
+    setContext: (context: Context) => {
+      if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+      setContext(context);
+    },
+  });
+
+  const wrapResult = (result: ReturnType<ReactorEffectFn<UserStatus, Context>>) => {
+    if (!result) return undefined;
+    if (typeof result === 'function') return result;
+    return () => result.abort();
+  };
+
   // 'always' effects run in every non-terminal state — processed first so that
   // cross-cutting condition monitors fire before per-state effects in the
   // initial synchronous run AND on every subsequent re-run.
@@ -161,21 +171,7 @@ export function createReactor<UserStatus extends string, Context extends object>
     const dispose = effect(() => {
       const snapshot = snapshotSignal.get();
       if (snapshot.status === 'destroying' || snapshot.status === 'destroyed') return;
-      const result = fn({
-        status: snapshot.status as UserStatus,
-        transition: (to: UserStatus) => {
-          if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-          transition(to as FullStatus);
-        },
-        context: snapshot.context,
-        setContext: (context: Context) => {
-          if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-          setContext(context);
-        },
-      });
-      if (!result) return undefined;
-      if (typeof result === 'function') return result;
-      return () => result.abort();
+      return wrapResult(fn(makeCtx(snapshot)));
     });
     effectDisposals.push(dispose);
   }
@@ -187,26 +183,11 @@ export function createReactor<UserStatus extends string, Context extends object>
   for (const [state, stateDef] of Object.entries(def.states) as Array<
     [UserStatus, ReactorStateDefinition<UserStatus, Context>]
   >) {
-    const makeCtx = (snapshot: ActorSnapshot<FullStatus, Context>) => ({
-      transition: (to: UserStatus) => {
-        if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-        transition(to as FullStatus);
-      },
-      context: snapshot.context,
-      setContext: (context: Context) => {
-        if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
-        setContext(context);
-      },
-    });
-
     for (const fn of stateDef.entry ?? []) {
       const dispose = effect(() => {
         const snapshot = snapshotSignal.get();
         if (snapshot.status !== state) return;
-        const result = untrack(() => fn(makeCtx(snapshot)));
-        if (!result) return undefined;
-        if (typeof result === 'function') return result;
-        return () => result.abort();
+        return wrapResult(untrack(() => fn(makeCtx(snapshot))));
       });
       effectDisposals.push(dispose);
     }
@@ -215,10 +196,7 @@ export function createReactor<UserStatus extends string, Context extends object>
       const dispose = effect(() => {
         const snapshot = snapshotSignal.get();
         if (snapshot.status !== state) return;
-        const result = fn(makeCtx(snapshot));
-        if (!result) return undefined;
-        if (typeof result === 'function') return result;
-        return () => result.abort();
+        return wrapResult(fn(makeCtx(snapshot)));
       });
       effectDisposals.push(dispose);
     }
