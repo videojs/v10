@@ -86,6 +86,12 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
 export type Reactor<Status extends string, Context extends object> = SignalActor<Status, Context>;
 
 // =============================================================================
+// Implementation helpers
+// =============================================================================
+
+const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Array.isArray(x) ? x : [x]);
+
+// =============================================================================
 // Implementation
 // =============================================================================
 
@@ -108,19 +114,17 @@ export type Reactor<Status extends string, Context extends object> = SignalActor
  * const reactor = createReactor({
  *   initial: 'waiting',
  *   context: {},
- *   // Runs in every non-terminal state — drives transitions from a single place.
- *   always: [
- *     ({ status, transition }) => {
- *       const target = deriveStatus();
- *       if (target !== status) transition(target);
- *     }
- *   ],
+ *   derive: ({ status, transition }) => {
+ *     const target = deriveStatus();
+ *     if (target !== status) transition(target);
+ *     return target;
+ *   },
  *   states: {
  *     active: {
  *       // entry: runs once on state entry; fn body is automatically untracked.
- *       entry: [() => listen(el, 'play', handler)],
+ *       entry: () => listen(el, 'play', handler),
  *       // reactions: re-runs whenever tracked signals change.
- *       reactions: [() => { currentTimeSignal.get(); return cleanup; }],
+ *       reactions: () => { currentTimeSignal.get(); return cleanup; },
  *     },
  *     idle: {}, // no effects
  *   }
@@ -169,69 +173,51 @@ export function createReactor<UserStatus extends string, Context extends object>
 
   type EffectCall = () => ReturnType<ReactorEffectFn<UserStatus, Context>>;
 
-  // Registers each fn as an independent effect. The effect reads snapshotSignal,
-  // skips if shouldSkip returns true, then calls toFnCall(baseCall)(). The default
-  // toFnCall is the identity — pass (baseCall) => () => untrack(baseCall) for entry
-  // effects so the fn body creates no reactive dependencies.
-  const registerEffects = (
-    fnOrFns: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[] | undefined,
-    shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean,
-    toFnCall: (baseCall: EffectCall) => EffectCall = (baseCall) => baseCall
-  ) => {
-    if (!fnOrFns) return;
-    const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
-    const toEffect = (fn: ReactorEffectFn<UserStatus, Context>) =>
-      effect(() => {
-        const snapshot = snapshotSignal.get();
-        if (shouldSkip(snapshot)) return;
-        const baseCall = () => fn(makeCtx(snapshot));
-        return wrapResult(toFnCall(baseCall)());
-      });
-    effectDisposals.push(...fns.map(toEffect));
+  type EffectDescriptor = {
+    fn: ReactorEffectFn<UserStatus, Context>;
+    shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean;
+    toFnCall: (baseCall: EffectCall) => EffectCall;
   };
+
+  const identity: EffectDescriptor['toFnCall'] = (baseCall) => baseCall;
+  const untracked: EffectDescriptor['toFnCall'] = (baseCall) => () => untrack(baseCall);
 
   const isTerminal = (snapshot: ActorSnapshot<FullStatus, Context>) =>
     snapshot.status === 'destroying' || snapshot.status === 'destroyed';
 
-  // `derive` fns are registered first — the ordering guarantee ensures transitions
-  // they trigger take effect before per-state effects re-evaluate in the same flush.
-  //
-  // The ordering guarantee: effect() calls watcher.watch(computed) in order of
-  // registration. runPending() drains watcher.getPending() into a Set (insertion-
-  // ordered) before iterating it. Because derive effects are registered before
-  // per-state effects here, they are guaranteed to run first in every flush.
-  // This is load-bearing: it means a transition triggered by a derive fn
-  // takes effect before the per-state effects of the (now-exited) state re-run,
-  // so per-state effects can rely on the invariants established by derive.
-  const fnOrFns = def.derive;
-  if (fnOrFns) {
-    const fns = Array.isArray(fnOrFns) ? fnOrFns : [fnOrFns];
-    fns.forEach((fn) => {
-      effectDisposals.push(
-        effect(() => {
-          const snapshot = snapshotSignal.get();
-          if (isTerminal(snapshot)) return;
-          const call = () => {
-            const target = fn(makeCtx(snapshot));
-            if ((target as FullStatus) !== snapshot.status) transition(target as FullStatus);
-          };
-          return wrapResult(call());
-        })
-      );
-    });
-  }
+  // `derive` descriptors are built first — the ordering guarantee ensures
+  // transitions they trigger take effect before per-state effects re-evaluate
+  // in the same flush. See the comment on effect registration order in the
+  // previous implementation for full details.
+  const descriptors: EffectDescriptor[] = [
+    ...toArray(def.derive).map((fn) => ({
+      fn: (ctx: Parameters<ReactorEffectFn<UserStatus, Context>>[0]) => {
+        const target = fn(ctx);
+        if (target !== ctx.status) ctx.transition(target);
+      },
+      shouldSkip: isTerminal,
+      toFnCall: identity,
+    })),
+    ...(Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).flatMap(
+      ([state, stateDef]) => {
+        const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
+        return [
+          ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
+          ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: identity })),
+        ];
+      }
+    ),
+  ];
 
-  // Per-state effects — each is gated on its matching status.
-  // `entry` effects are registered with untracked=true so the fn body creates no
-  // reactive dependencies; they run once on state entry and clean up on exit.
-  // `reactions` effects leave the fn body tracked normally.
-  (Object.entries(def.states) as Array<[UserStatus, ReactorStateDefinition<UserStatus, Context>]>).forEach(
-    ([state, stateDef]) => {
-      const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
-      registerEffects(stateDef.entry, isNotState, (baseCall) => () => untrack(baseCall));
-      registerEffects(stateDef.reactions, isNotState);
-    }
-  );
+  const toEffect = ({ fn, shouldSkip, toFnCall }: EffectDescriptor) =>
+    effect(() => {
+      const snapshot = snapshotSignal.get();
+      if (shouldSkip(snapshot)) return;
+      const baseCall = () => fn(makeCtx(snapshot));
+      return wrapResult(toFnCall(baseCall)());
+    });
+
+  effectDisposals.push(...descriptors.map(toEffect));
 
   return {
     get snapshot() {
