@@ -12,28 +12,12 @@ import type { HlsEngineHost } from './preload';
  */
 export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {
-    #disconnect: AbortController | null = null;
-
     constructor(...args: any[]) {
       super(...args);
 
       // Watch out here, AFTER the manifest is loaded!
-      this.engine?.on(Hls.Events.MANIFEST_LOADED, () => this.#init());
-      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
-      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
-      this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
-    }
-
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-    }
-
-    #init(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = new AbortController();
-
-      this.#forceHiddenTracks();
+      this.engine?.on(Hls.Events.MANIFEST_LOADED, () => this.#forceHiddenTracks());
+      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#forceHiddenTracks());
     }
 
     #forceHiddenTracks(): void {
