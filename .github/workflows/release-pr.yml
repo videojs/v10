@@ -5,6 +5,10 @@ on:
     branches:
       - 'release-please--branches--main'
 
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
 jobs:
   changelog:
     runs-on: ubuntu-latest
@@ -99,4 +103,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md site/src/content/changelog/
           git diff --cached --quiet || git commit -m "chore(release): update root changelog"
+          git pull --rebase
           git push
