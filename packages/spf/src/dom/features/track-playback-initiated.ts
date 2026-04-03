@@ -71,27 +71,23 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
   return createReactor<PlaybackInitiatedStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: [
-      ({ status, transition }) => {
-        const target = derivedStatusSignal.get();
-        if (target !== status) transition(target);
-      },
-    ],
+    always: ({ status, transition }) => {
+      const target = derivedStatusSignal.get();
+      if (target !== status) transition(target);
+    },
     states: {
       'preconditions-unmet': {},
 
       monitoring: {
         // Entry: check if already playing; otherwise listen for play.
         // The fn body is automatically untracked — el is read at entry time only.
-        entry: [
-          () => {
-            const el = mediaElementSignal.get()!;
+        entry: () => {
+          const el = mediaElementSignal.get()!;
+          update(state, { playbackInitiated: !el.paused } as Partial<S>);
+          return listen(el, 'play', () => {
             update(state, { playbackInitiated: !el.paused } as Partial<S>);
-            return listen(el, 'play', () => {
-              update(state, { playbackInitiated: !el.paused } as Partial<S>);
-            });
-          },
-        ],
+          });
+        },
       },
 
       'playback-initiated': {
@@ -104,13 +100,11 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
         // which also triggers a deriveStatus → 'preconditions-unmet' transition)
         // and the URL-change / element-swap path (preconditions still met but
         // values changed, handled entirely by this effect's cleanup).
-        reactions: [
-          () => {
-            mediaElementSignal.get(); // tracked — re-run on element change
-            urlSignal.get(); // tracked — re-run on URL change
-            return () => update(state, { playbackInitiated: false } as Partial<S>);
-          },
-        ],
+        reactions: () => {
+          mediaElementSignal.get(); // tracked — re-run on element change
+          urlSignal.get(); // tracked — re-run on URL change
+          return () => update(state, { playbackInitiated: false } as Partial<S>);
+        },
       },
     },
   });

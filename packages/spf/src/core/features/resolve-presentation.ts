@@ -96,37 +96,33 @@ export function resolvePresentation<S extends PresentationState>({
   return createReactor<ResolvePresentationStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: [
-      ({ status, transition }) => {
-        const target = derivedStatusSignal.get();
-        if (target !== status) transition(target);
-      },
-    ],
+    always: ({ status, transition }) => {
+      const target = derivedStatusSignal.get();
+      if (target !== status) transition(target);
+    },
     states: {
       'preconditions-unmet': {},
       idle: {},
       resolving: {
         // Entry: start fetch on state entry; return AbortController so the
         // framework aborts the in-flight request on state exit.
-        entry: [
-          () => {
-            const presentation = state.get().presentation as UnresolvedPresentation;
-            const ac = new AbortController();
+        entry: () => {
+          const presentation = state.get().presentation as UnresolvedPresentation;
+          const ac = new AbortController();
 
-            fetchResolvable(presentation, { signal: ac.signal })
-              .then((response) => getResponseText(response))
-              .then((text) => {
-                const parsed = parseMultivariantPlaylist(text, presentation);
-                update(state, { presentation: parsed } as Partial<S>);
-              })
-              .catch((error) => {
-                if (error instanceof Error && error.name === 'AbortError') return;
-                throw error;
-              });
+          fetchResolvable(presentation, { signal: ac.signal })
+            .then((response) => getResponseText(response))
+            .then((text) => {
+              const parsed = parseMultivariantPlaylist(text, presentation);
+              update(state, { presentation: parsed } as Partial<S>);
+            })
+            .catch((error) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
+              throw error;
+            });
 
-            return ac;
-          },
-        ],
+          return ac;
+        },
       },
       resolved: {},
     },

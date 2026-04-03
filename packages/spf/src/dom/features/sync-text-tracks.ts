@@ -111,12 +111,10 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
   return createReactor<TextTrackSyncStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
-    always: [
-      ({ status, transition }) => {
-        const target = preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet';
-        if (target !== status) transition(target);
-      },
-    ],
+    always: ({ status, transition }) => {
+      const target = preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet';
+      if (target !== status) transition(target);
+    },
     states: {
       'preconditions-unmet': {},
 
@@ -124,65 +122,61 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
         // Entry: create <track> elements once on state entry; exit cleanup removes
         // them and clears selectedTextTrackId on any outbound transition.
         // The fn body is automatically untracked — no untrack() needed.
-        entry: [
-          () => {
-            const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
-            const modelTextTracks = modelTextTracksSignal.get() as PartiallyResolvedTextTrack[];
-            modelTextTracks.forEach((track) => mediaElement.appendChild(createTrackElement(track)));
-            return () => {
-              mediaElement
-                .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"]')
-                .forEach((trackEl) => trackEl.remove());
-              update(state, { selectedTextTrackId: undefined } as Partial<S>);
-            };
-          },
-        ],
+        entry: () => {
+          const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
+          const modelTextTracks = modelTextTracksSignal.get() as PartiallyResolvedTextTrack[];
+          modelTextTracks.forEach((track) => mediaElement.appendChild(createTrackElement(track)));
+          return () => {
+            mediaElement
+              .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"]')
+              .forEach((trackEl) => trackEl.remove());
+            update(state, { selectedTextTrackId: undefined } as Partial<S>);
+          };
+        },
 
         // Reaction: mode sync + DOM change listener; re-runs when selectedId changes.
         // mediaElement is read with untrack() since element changes go through the
         // always monitor (preconditions-unmet path), not this effect.
-        reactions: [
-          () => {
-            const mediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
-            const selectedId = selectedTextTrackIdSignal.get();
+        reactions: () => {
+          const mediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
+          const selectedId = selectedTextTrackIdSignal.get();
 
-            syncModes(mediaElement.textTracks, selectedId);
-            let syncTimeout: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
-              syncTimeout = undefined;
-            }, 0);
+          syncModes(mediaElement.textTracks, selectedId);
+          let syncTimeout: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+            syncTimeout = undefined;
+          }, 0);
 
-            const onChange = () => {
-              if (syncTimeout) {
-                // Inside the settling window: browser auto-selection is overriding our
-                // modes. Re-apply to restore the intended state without touching state.
-                // change events are queued as tasks (async), so no re-entrancy risk.
-                syncModes(
-                  mediaElement.textTracks,
-                  untrack(() => selectedTextTrackIdSignal.get())
-                );
-                return;
-              }
-
-              const showingTrack = Array.from(mediaElement.textTracks).find(
-                (t) => t.mode === 'showing' && (t.kind === 'subtitles' || t.kind === 'captions')
+          const onChange = () => {
+            if (syncTimeout) {
+              // Inside the settling window: browser auto-selection is overriding our
+              // modes. Re-apply to restore the intended state without touching state.
+              // change events are queued as tasks (async), so no re-entrancy risk.
+              syncModes(
+                mediaElement.textTracks,
+                untrack(() => selectedTextTrackIdSignal.get())
               );
+              return;
+            }
 
-              // showingTrack.id matches the SPF track ID set by createTrackElement above.
-              // Fall back to undefined for empty-string IDs (non-SPF-managed tracks).
-              const newId = showingTrack?.id;
-              const currentModelId = untrack(() => selectedTextTrackIdSignal.get());
-              if (newId === currentModelId) return;
-              update(state, { selectedTextTrackId: newId } as Partial<S>);
-            };
+            const showingTrack = Array.from(mediaElement.textTracks).find(
+              (t) => t.mode === 'showing' && (t.kind === 'subtitles' || t.kind === 'captions')
+            );
 
-            const unlisten = listen(mediaElement.textTracks, 'change', onChange);
+            // showingTrack.id matches the SPF track ID set by createTrackElement above.
+            // Fall back to undefined for empty-string IDs (non-SPF-managed tracks).
+            const newId = showingTrack?.id;
+            const currentModelId = untrack(() => selectedTextTrackIdSignal.get());
+            if (newId === currentModelId) return;
+            update(state, { selectedTextTrackId: newId } as Partial<S>);
+          };
 
-            return () => {
-              clearTimeout(syncTimeout ?? undefined);
-              unlisten();
-            };
-          },
-        ],
+          const unlisten = listen(mediaElement.textTracks, 'change', onChange);
+
+          return () => {
+            clearTimeout(syncTimeout ?? undefined);
+            unlisten();
+          };
+        },
       },
     },
   });
