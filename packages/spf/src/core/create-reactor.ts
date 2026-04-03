@@ -36,8 +36,8 @@ export type ReactorEffectFn<UserStatus extends string, Context extends object> =
  * Both arrays are optional; pass `{}` for states with no effects.
  */
 export type ReactorStateDefinition<UserStatus extends string, Context extends object> = {
-  entry?: ReactorEffectFn<UserStatus, Context>[];
-  reactions?: ReactorEffectFn<UserStatus, Context>[];
+  entry?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
+  reactions?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
 };
 
 /**
@@ -58,7 +58,7 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
    * status or context change, with the current `status` available in ctx.
    * Useful for condition monitors that apply uniformly across all states.
    */
-  always?: ReactorEffectFn<UserStatus, Context>[];
+  always?: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
@@ -160,10 +160,11 @@ export function createReactor<UserStatus extends string, Context extends object>
   // skips if shouldSkip returns true, then calls fn — untracked for entry effects
   // (so only snapshotSignal is tracked), tracked for reactions and always effects.
   const registerEffects = (
-    fns: ReactorEffectFn<UserStatus, Context>[],
+    effects: ReactorEffectFn<UserStatus, Context> | ReactorEffectFn<UserStatus, Context>[] | undefined,
     shouldSkip: (snapshot: ActorSnapshot<FullStatus, Context>) => boolean,
     untracked = false
   ) => {
+    const fns = effects === undefined ? [] : Array.isArray(effects) ? effects : [effects];
     for (const fn of fns) {
       effectDisposals.push(
         effect(() => {
@@ -190,7 +191,7 @@ export function createReactor<UserStatus extends string, Context extends object>
   // This is load-bearing: it means a transition triggered by an 'always' monitor
   // takes effect before the per-state effects of the (now-exited) state re-run,
   // so per-state effects can rely on the invariants established by 'always'.
-  registerEffects(def.always ?? [], isTerminal);
+  registerEffects(def.always, isTerminal);
 
   // Per-state effects — each is gated on its matching status.
   // `entry` effects are registered with untracked=true so the fn body creates no
@@ -200,8 +201,8 @@ export function createReactor<UserStatus extends string, Context extends object>
     [UserStatus, ReactorStateDefinition<UserStatus, Context>]
   >) {
     const isNotState = (snapshot: ActorSnapshot<FullStatus, Context>) => snapshot.status !== state;
-    registerEffects(stateDef.entry ?? [], isNotState, true);
-    registerEffects(stateDef.reactions ?? [], isNotState);
+    registerEffects(stateDef.entry, isNotState, true);
+    registerEffects(stateDef.reactions, isNotState);
   }
 
   return {
