@@ -60,8 +60,8 @@ export function DelegateMixin<Base extends Constructor<BaseType>, D extends Cons
     }
 
     attach(target: EventTarget): void {
-      super.attach?.(target);
       this.#delegate.attach?.(target);
+      super.attach?.(target);
     }
 
     detach(): void {

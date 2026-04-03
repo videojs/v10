@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { DelegateMixin } from '../delegate';
+import { ProxyMixin } from '../proxy';
 
 class FakeBase extends EventTarget {
   get(_prop: string): any {}
@@ -56,6 +57,36 @@ describe('DelegateMixin', () => {
       host.addEventListener('custom', handler);
 
       expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('attach order with ProxyMixin', () => {
+    it('delegate interceptor fires before proxy forwarder when listener added pre-attach', () => {
+      class InterceptingDelegate extends EventTarget {
+        attach(target: EventTarget): void {
+          target.addEventListener('error', (event) => {
+            event.stopImmediatePropagation();
+            this.dispatchEvent(new CustomEvent('error', { detail: 'enriched' }));
+          });
+        }
+        detach(): void {}
+      }
+
+      const ProxyBase = ProxyMixin(EventTarget);
+      const Mixed = DelegateMixin(ProxyBase, InterceptingDelegate);
+
+      const host = new Mixed();
+      const handler = vi.fn();
+      host.addEventListener('error', handler);
+
+      const target = new EventTarget();
+      host.attach(target);
+
+      target.dispatchEvent(new Event('error'));
+
+      expect(handler).toHaveBeenCalledOnce();
+      const event = handler.mock.calls[0]![0] as CustomEvent;
+      expect(event.detail).toBe('enriched');
     });
   });
 });
