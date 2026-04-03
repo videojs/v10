@@ -374,7 +374,8 @@ without needing to re-check conditions that the `always` monitor just resolved.
 **Important caveat:** This guarantee is specific to `createReactor`'s registration order.
 It is not a formal guarantee of the TC39 Signals proposal — it depends on the polyfill's
 `Watcher` implementation preserving insertion order in `getPending()`. Do not assume this
-ordering holds outside of `createReactor`.
+ordering holds outside of `createReactor`. See [signals.md § Effect Execution Order](signals.md)
+for the general principle.
 
 ---
 
