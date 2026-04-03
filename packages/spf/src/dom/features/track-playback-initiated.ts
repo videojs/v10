@@ -1,6 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-import { effect } from '../../core/signals/effect';
-import { computed, type Signal, signal, update } from '../../core/signals/primitives';
+import type { Reactor } from '../../core/create-reactor';
+import { createReactor } from '../../core/create-reactor';
+import { computed, type Signal, signal, untrack, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
@@ -20,18 +21,50 @@ export interface PlaybackInitiatedOwners {
 }
 
 /**
+ * FSM states for playback initiation tracking.
+ *
+ * ```
+ * 'preconditions-unmet' ──── element + URL ────→ 'monitoring'
+ *         ↑                        ↑                  │
+ *         │   preconditions lost   │             play event
+ *         │                        │                  ↓
+ *         └────────────── 'playback-initiated' ←──────┘
+ *                (exit cleanup resets state.playbackInitiated → false)
+ *                URL change / element swap → 'monitoring' via deriveStatus
+ *
+ * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
+ * ```
+ */
+type PlaybackInitiatedStatus = 'preconditions-unmet' | 'monitoring' | 'playback-initiated';
+
+function deriveStatus(
+  element: HTMLMediaElement | undefined,
+  url: string | undefined,
+  playbackInitiated: boolean | undefined,
+  capturedUrl: string | undefined,
+  capturedElement: HTMLMediaElement | undefined
+): PlaybackInitiatedStatus {
+  if (!element || !url) return 'preconditions-unmet';
+  if (playbackInitiated && url === capturedUrl && element === capturedElement) {
+    return 'playback-initiated';
+  }
+  return 'monitoring';
+}
+
+/**
  * Track whether playback has been initiated for the current presentation URL.
  *
- * Uses a local intermediate signal written by two effect streams:
- * - false stream: resets on URL change
- * - true stream: sets on play event
- *
- * A third merge effect reads the local signal and writes to state, reading
- * `state.get()` at merge time so the spread uses the up-to-date value after
- * the async forward bridge has run.
+ * A three-state Reactor FSM driven by `state.playbackInitiated` and the
+ * `deriveStatus` pattern:
+ * - `'preconditions-unmet'` — no element or URL yet; no effects.
+ * - `'monitoring'` — listens for a `play` event; re-attaches when element changes.
+ * - `'playback-initiated'` — writes `true` to state; exit cleanup resets to `false`
+ *   on any outbound transition (URL change, element swap, or lost preconditions).
  *
  * @example
- * const cleanup = trackPlaybackInitiated({ state, owners, events });
+ * const reactor = trackPlaybackInitiated({ state, owners });
+ * // later:
+ * reactor.destroy();
  */
 export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
   state,
@@ -39,59 +72,64 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-}): () => void {
-  const presentationUrl = computed(() => state.get().presentation?.url);
-  const mediaElement = computed(() => owners.get().mediaElement);
+}): Reactor<PlaybackInitiatedStatus | 'destroying' | 'destroyed', object> {
+  const presentationUrlSignal = computed(() => state.get().presentation?.url);
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const playbackInitiatedSignal = computed(() => state.get().playbackInitiated);
 
-  // Local signal: written by the URL effect (false) and the play listener (true).
-  // undefined = not yet initialized (suppresses the merge effect on startup).
-  const playbackInitiated = signal<boolean | undefined>(undefined);
+  // Captured at the moment playback is initiated — used by deriveStatus to detect
+  // URL changes or element swaps that should reset to 'monitoring'.
+  const capturedUrlSignal = signal<string | undefined>(undefined);
+  const capturedElementSignal = signal<HTMLMediaElement | undefined>(undefined);
 
-  let lastPresentationUrl: string | undefined;
-  let lastMediaElement: HTMLMediaElement | undefined;
+  const derivedStatusSignal = computed(() =>
+    deriveStatus(
+      mediaElementSignal.get(),
+      presentationUrlSignal.get(),
+      playbackInitiatedSignal.get(),
+      capturedUrlSignal.get(),
+      capturedElementSignal.get()
+    )
+  );
 
-  // False stream: reset on URL change or element swap.
-  const cleanupResetEffect = effect(() => {
-    const url = presentationUrl.get();
-    const el = mediaElement.get();
+  function initiate() {
+    capturedUrlSignal.set(untrack(() => presentationUrlSignal.get()));
+    capturedElementSignal.set(untrack(() => mediaElementSignal.get()));
+    update(state, { playbackInitiated: true } as Partial<S>);
+  }
 
-    const urlChanged = url !== lastPresentationUrl;
-    const elChanged = el !== lastMediaElement;
+  return createReactor<PlaybackInitiatedStatus, object>({
+    initial: 'preconditions-unmet',
+    context: {},
+    always: [
+      ({ status, transition }) => {
+        const target = derivedStatusSignal.get();
+        if (target !== status) transition(target);
+      },
+    ],
+    states: {
+      'preconditions-unmet': [],
 
-    if ((urlChanged && lastPresentationUrl !== undefined) || (elChanged && lastMediaElement !== undefined)) {
-      playbackInitiated.set(false);
-    }
+      monitoring: [
+        // Reactive: attach play listener; re-runs when element changes.
+        () => {
+          const el = mediaElementSignal.get(); // tracked
+          if (!el) return;
+          return listen(el, 'play', initiate);
+        },
+      ],
 
-    lastPresentationUrl = url;
-    lastMediaElement = el;
+      'playback-initiated': [
+        // Enter-once: write true to state.
+        // Exit cleanup: reset to false on any outbound transition — URL change,
+        // element swap, or lost preconditions all go through here.
+        () => {
+          update(state, { playbackInitiated: true } as Partial<S>);
+          return () => {
+            update(state, { playbackInitiated: false } as Partial<S>);
+          };
+        },
+      ],
+    },
   });
-
-  // True stream: set on play event. Cleanup return removes the listener on element swap.
-  const cleanupPlayEffect = effect(() => {
-    const el = mediaElement.get();
-    if (!el) return;
-    return listen(el, 'play', () => {
-      playbackInitiated.set(true);
-    });
-  });
-
-  // Merge effect: bridge local signal → state.
-  // Reads state.get() at merge time (after the async forward bridge has flushed)
-  // so the spread captures the current value rather than a stale event-time snapshot.
-  // The guard makes the write idempotent.
-  const cleanupMergeEffect = effect(() => {
-    const pi = playbackInitiated.get();
-    if (pi === undefined) return;
-    const current = state.get();
-    if (current.playbackInitiated !== pi) {
-      const patch: Partial<PlaybackInitiatedState> = { playbackInitiated: pi };
-      update(state, patch);
-    }
-  });
-
-  return () => {
-    cleanupResetEffect();
-    cleanupPlayEffect();
-    cleanupMergeEffect();
-  };
 }
