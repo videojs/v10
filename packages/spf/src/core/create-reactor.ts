@@ -14,7 +14,12 @@ import { signal, untrack, update } from './signals/primitives';
  * those signals change and automatically calls `transition()` when the returned
  * status differs from the current one.
  */
-export type ReactorDeriveFn<UserStatus extends string> = () => UserStatus;
+export type ReactorDeriveFn<UserStatus extends string, Context extends object> = (ctx: {
+  status: UserStatus;
+  transition: (to: UserStatus) => void;
+  context: Context;
+  setContext: (next: Context) => void;
+}) => UserStatus;
 
 /**
  * An effect function used in reactor `entry` and `reactions` blocks.
@@ -64,7 +69,7 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
    * ordering guarantee ensures transitions fired here take effect before
    * per-state effects re-evaluate in the same flush.
    */
-  derive?: ReactorDeriveFn<UserStatus> | ReactorDeriveFn<UserStatus>[];
+  derive?: ReactorDeriveFn<UserStatus, Context> | ReactorDeriveFn<UserStatus, Context>[];
   /**
    * Per-state effect groupings. Every valid status must be declared — pass `{}`
    * for states with no effects. `entry` and `reactions` each become independent
@@ -205,7 +210,7 @@ export function createReactor<UserStatus extends string, Context extends object>
         effect(() => {
           const snapshot = snapshotSignal.get();
           if (isTerminal(snapshot)) return;
-          const target = fn();
+          const target = fn(makeCtx(snapshot));
           if ((target as FullStatus) !== snapshot.status) transition(target as FullStatus);
         })
       );
