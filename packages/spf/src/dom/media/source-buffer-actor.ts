@@ -237,11 +237,10 @@ export function createSourceBufferActor(
             if (messages.length === 0) return;
 
             transition('updating');
-
-            for (const subMsg of messages) {
-              const task = messageToTask(subMsg, { getContext, sourceBuffer, setContext });
+            messages.forEach((msg) => {
+              const task = messageToTask(msg, { getContext, sourceBuffer, setContext });
               runner.schedule(task).then(setContext, handleError);
-            }
+            });
           },
         },
       },
