@@ -1,4 +1,4 @@
-import { createActor, type MessageActor } from '../../core/create-actor';
+import { createActor, type HandlerContext, type MessageActor } from '../../core/create-actor';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -214,6 +214,14 @@ export function createSourceBufferActor(
     }
   };
 
+  type Ctx = HandlerContext<UserState, SourceBufferActorContext, () => SerialRunner>;
+
+  const onMessage = (msg: IndividualSourceBufferMessage, { transition, setContext, getContext, runner }: Ctx): void => {
+    transition('updating');
+    const task = messageToTask(msg, { getContext, sourceBuffer, setContext });
+    runner.schedule(task).then(setContext, handleError);
+  };
+
   return createActor<UserState, SourceBufferActorContext, SourceBufferMessage, () => SerialRunner>({
     runner: () => new SerialRunner(),
     initial: 'idle',
@@ -221,21 +229,9 @@ export function createSourceBufferActor(
     states: {
       idle: {
         on: {
-          'append-init': (msg, { transition, setContext, getContext, runner }) => {
-            transition('updating');
-            const task = appendInitTask(msg, { getContext, sourceBuffer, setContext });
-            runner.schedule(task).then(setContext, handleError);
-          },
-          'append-segment': (msg, { transition, setContext, getContext, runner }) => {
-            transition('updating');
-            const task = appendSegmentTask(msg, { getContext, sourceBuffer, setContext });
-            runner.schedule(task).then(setContext, handleError);
-          },
-          remove: (msg, { transition, setContext, getContext, runner }) => {
-            transition('updating');
-            const task = removeTask(msg, { getContext, sourceBuffer, setContext });
-            runner.schedule(task).then(setContext, handleError);
-          },
+          'append-init': onMessage,
+          'append-segment': onMessage,
+          remove: onMessage,
           batch: (msg, { transition, setContext, getContext, runner }) => {
             const { messages } = msg;
             if (messages.length === 0) return;
