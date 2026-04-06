@@ -75,10 +75,7 @@ export function useSlider<State extends SliderState = SliderState>(
       getStepPercent: () => optionsRef.current.getStepPercent(),
       getLargeStepPercent: () => optionsRef.current.getLargeStepPercent(),
       changeThrottle: optionsRef.current.changeThrottle,
-      adjustPercent: optionsRef.current.adjustPercent
-        ? (rawPercent: number, thumbSize: number, trackSize: number) =>
-            optionsRef.current.adjustPercent!(rawPercent, thumbSize, trackSize)
-        : undefined,
+      adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
       onDragStart: () => optionsRef.current.onDragStart?.(),
