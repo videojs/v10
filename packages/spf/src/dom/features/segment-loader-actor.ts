@@ -265,7 +265,7 @@ export function createSegmentLoaderActor(
     const signal = abortController!.signal;
     try {
       if (task.type === 'remove') {
-        sourceBufferActor.send(task, signal);
+        sourceBufferActor.send({ ...task, signal });
         await waitForIdle(sourceBufferActor.snapshot, signal);
         return;
       }
@@ -287,7 +287,7 @@ export function createSegmentLoaderActor(
           );
           if (!signal.aborted || !isTrackSwitch) {
             const appendSignal = signal.aborted ? new AbortController().signal : signal;
-            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta, signal: appendSignal });
             await waitForIdle(sourceBufferActor.snapshot, appendSignal);
           }
         }
@@ -301,7 +301,7 @@ export function createSegmentLoaderActor(
       if (!signal.aborted) {
         const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
+          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta, signal });
           await waitForIdle(sourceBufferActor.snapshot, signal);
         }
       }

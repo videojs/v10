@@ -1,5 +1,4 @@
-import type { ActorSnapshot, SignalActor } from '../../core/actor';
-import { createMachineCore } from '../../core/machine';
+import { createActor, type MessageActor } from '../../core/create-actor';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -27,7 +26,13 @@ export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; m
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 export type BatchMessage = { type: 'batch'; messages: IndividualSourceBufferMessage[] };
-export type SourceBufferMessage = IndividualSourceBufferMessage | BatchMessage;
+
+/**
+ * All messages accepted by a SourceBufferActor.
+ * Each top-level send carries its own AbortSignal — signal is per-message,
+ * not per-actor, so each call site controls its own cancellation scope.
+ */
+export type SourceBufferMessage = (IndividualSourceBufferMessage | BatchMessage) & { signal: AbortSignal };
 
 /** Finite states of the actor. */
 export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
@@ -50,13 +55,8 @@ export interface SourceBufferActorContext {
   bufferedRanges: BufferedRange[];
 }
 
-/** Complete snapshot of a SourceBufferActor. */
-export type SourceBufferActorSnapshot = ActorSnapshot<SourceBufferActorState, SourceBufferActorContext>;
-
 /** SourceBuffer actor: queues operations, owns its snapshot. */
-export interface SourceBufferActor extends SignalActor<SourceBufferActorState, SourceBufferActorContext> {
-  send(message: SourceBufferMessage, signal: AbortSignal): void;
-}
+export type SourceBufferActor = MessageActor<SourceBufferActorState, SourceBufferActorContext, SourceBufferMessage>;
 
 // =============================================================================
 // Helpers
@@ -225,106 +225,82 @@ export function createSourceBufferActor(
   sourceBuffer: SourceBuffer,
   initialContext?: Partial<SourceBufferActorContext>
 ): SourceBufferActor {
-  const { snapshotSignal, getState, transition } = createMachineCore<SourceBufferActorState, SourceBufferActorSnapshot>(
-    {
-      value: 'idle',
-      context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
-    }
-  );
+  type UserState = Exclude<SourceBufferActorState, 'destroyed'>;
 
-  const runner = new SerialRunner();
-
-  // Applies the completed context atomically with the idle transition.
-  // If the actor was destroyed while the operation was in flight, preserve
-  // 'destroyed' — do not regress to 'idle'.
-  function applyResult(newContext: SourceBufferActorContext): void {
-    const state = getState() === 'destroyed' ? 'destroyed' : 'idle';
-    snapshotSignal.set({ value: state, context: newContext });
-  }
-
-  function handleError(e: unknown): void {
-    // TODO: QuotaExceededError and other SourceBuffer errors leave the physical
-    // buffer in an unknown partial state while context goes unchanged. A future
-    // improvement should detect QuotaExceededError specifically and use total
-    // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
-    // enabling targeted flush-and-retry rather than silent model drift.
-    transition(getState() === 'destroyed' ? 'destroyed' : 'idle');
+  const handleError = (e: unknown): void => {
     if (!(e instanceof Error && e.name === 'AbortError')) {
       console.error('SourceBuffer operation failed:', e);
     }
-  }
-
-  return {
-    get snapshot() {
-      return snapshotSignal;
-    },
-
-    send(message: SourceBufferMessage, signal: AbortSignal): void {
-      // Silently drop if not idle — callers observe state via snapshot.
-      if (getState() !== 'idle') return;
-
-      // Empty batch — guard must pass (actor is idle) but nothing to do.
-      if (message.type === 'batch' && message.messages.length === 0) return;
-
-      // Transition synchronously so any subsequent send() within the same tick
-      // is dropped — the actor is now committed to this operation.
-      transition('updating');
-
-      const onPartialContext = (ctx: SourceBufferActorContext) => {
-        snapshotSignal.set({ value: 'updating', context: ctx });
-      };
-
-      if (message.type === 'batch') {
-        const { messages } = message;
-        // Each message is its own Task on the runner, executed in submission order.
-        // workingCtx threads the result of each task into the next without
-        // writing to the signal between steps — context is only written atomically
-        // when the last task completes.
-        //
-        // workingCtx is captured here (synchronously after state → 'updating'),
-        // so it reflects the current context at the moment the batch was accepted.
-        // This is correct: state is now 'updating' so no other sender can modify
-        // context between this line and the first task executing.
-        //
-        // NOTE: if an intermediate task fails (e.g. SourceBuffer error event),
-        // workingCtx is not updated for that step and subsequent tasks in the
-        // batch will operate on a stale context. This is an edge case — happy-path
-        // appends do not fail — but worth revisiting if MSE error recovery lands.
-        let workingCtx = snapshotSignal.get().context;
-
-        // Partial context updates from streaming appends write to the signal
-        // directly so external subscribers see in-progress state, but workingCtx
-        // is only advanced on task completion to preserve batch context threading.
-        for (const msg of messages.slice(0, -1)) {
-          const task = messageToTask(msg, { signal, getCtx: () => workingCtx, sourceBuffer, onPartialContext });
-          const result = runner.schedule(task);
-          result.then((newCtx) => {
-            workingCtx = newCtx;
-          });
-        }
-
-        const lastTask = messageToTask(messages[messages.length - 1]!, {
-          signal,
-          getCtx: () => workingCtx,
-          sourceBuffer,
-          onPartialContext,
-        });
-        runner.schedule(lastTask).then(applyResult, handleError);
-        return;
-      }
-
-      const task = messageToTask(message, {
-        signal,
-        getCtx: () => snapshotSignal.get().context,
-        sourceBuffer,
-        onPartialContext,
-      });
-      runner.schedule(task).then(applyResult, handleError);
-    },
-
-    destroy(): void {
-      transition('destroyed');
-      runner.destroy();
-    },
   };
+
+  return createActor<UserState, SourceBufferActorContext, SourceBufferMessage, () => SerialRunner>({
+    runner: () => new SerialRunner(),
+    initial: 'idle',
+    context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
+    states: {
+      idle: {
+        on: {
+          'append-init': (msg, { transition, setContext, runner, context }) => {
+            transition('updating');
+            const task = appendInitTask(msg, {
+              signal: msg.signal,
+              getCtx: () => context,
+              sourceBuffer,
+              onPartialContext: setContext,
+            });
+            runner.schedule(task).then(setContext, handleError);
+          },
+          'append-segment': (msg, { transition, setContext, runner, context }) => {
+            transition('updating');
+            const task = appendSegmentTask(msg, {
+              signal: msg.signal,
+              getCtx: () => context,
+              sourceBuffer,
+              onPartialContext: setContext,
+            });
+            runner.schedule(task).then(setContext, handleError);
+          },
+          remove: (msg, { transition, setContext, runner, context }) => {
+            transition('updating');
+            const task = removeTask(msg, {
+              signal: msg.signal,
+              getCtx: () => context,
+              sourceBuffer,
+              onPartialContext: setContext,
+            });
+            runner.schedule(task).then(setContext, handleError);
+          },
+          batch: (msg, { transition, setContext, runner, context }) => {
+            const { messages, signal } = msg;
+            if (messages.length === 0) return;
+
+            transition('updating');
+            let workingCtx = context;
+
+            for (const [i, subMsg] of messages.entries()) {
+              const isLast = i === messages.length - 1;
+              const task = messageToTask(subMsg, {
+                signal,
+                getCtx: () => workingCtx,
+                sourceBuffer,
+                onPartialContext: setContext,
+              });
+              const p = runner.schedule(task);
+              if (isLast) {
+                p.then(setContext, handleError);
+              } else {
+                p.then((ctx) => {
+                  workingCtx = ctx;
+                }, handleError);
+              }
+            }
+          },
+        },
+      },
+      updating: {
+        // Automatically return to idle once all scheduled tasks settle.
+        onSettled: 'idle',
+      },
+    },
+  });
 }

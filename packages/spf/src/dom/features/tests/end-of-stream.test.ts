@@ -543,24 +543,22 @@ describe('endOfStream', () => {
 
     // Append the last two segments via the actor — this updates actor context
     // and triggers the actor subscribers that endOfStream watches.
-    await actor.send(
-      {
-        type: 'batch',
-        messages: [
-          {
-            type: 'append-segment',
-            data: new ArrayBuffer(8),
-            meta: { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
-          },
-          {
-            type: 'append-segment',
-            data: new ArrayBuffer(8),
-            meta: { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' },
-          },
-        ],
-      },
-      neverAborted
-    );
+    actor.send({
+      type: 'batch',
+      messages: [
+        {
+          type: 'append-segment',
+          data: new ArrayBuffer(8),
+          meta: { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
+        },
+        {
+          type: 'append-segment',
+          data: new ArrayBuffer(8),
+          meta: { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' },
+        },
+      ],
+      signal: neverAborted,
+    });
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
