@@ -11,27 +11,7 @@ const { framework } = Astro.params;
 
 // Only render if current framework matches, or if no frameworks specified (all frameworks)
 const shouldRender = !frameworks || frameworks.includes(framework as SupportedFramework);
+const html = shouldRender ? await Astro.slots.render('default') : '';
 ---
 
-{
-  /*
-    What I WANT to do is
-    ```
-    {shouldRender && <slot />}
-    ```
-
-    But I'm running into some crazy problems with hydration.
-    Putting client:* in one of these conditionals causes Astro to just give up hydrating the whole app for some reason.
-    TODO: fix this
-
-    So, while I debug those... let's do this
-  */
-}
-<div
-  class="contents"
-  hidden={!shouldRender}
-  data-search-ignore={shouldRender ? undefined : "all"}
-  data-llms-ignore={shouldRender ? undefined : "all"}
->
-  <slot />
-</div>
+{shouldRender && <Fragment set:html={html} />}
