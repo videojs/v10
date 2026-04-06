@@ -96,7 +96,7 @@ describe('createSourceBufferActor', () => {
     actor.destroy();
   });
 
-  it('rejects batch() with SourceBufferActorError when actor is updating', async () => {
+  it('rejects batch message with SourceBufferActorError when actor is updating', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
@@ -106,7 +106,10 @@ describe('createSourceBufferActor', () => {
     );
 
     await expect(
-      actor.batch([{ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }], neverAborted)
+      actor.send(
+        { type: 'batch', messages: [{ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }] },
+        neverAborted
+      )
     ).rejects.toBeInstanceOf(SourceBufferActorError);
 
     await p1;
@@ -131,20 +134,24 @@ describe('createSourceBufferActor', () => {
   // Batch — individual tasks, context threading
   // ---------------------------------------------------------------------------
 
-  it('batch executes all messages in order as individual tasks', async () => {
+  it('batch message executes all messages in order as individual tasks', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const messages = [
-      { type: 'append-init' as const, data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+    await actor.send(
       {
-        type: 'append-segment' as const,
-        data: new ArrayBuffer(8),
-        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+        type: 'batch',
+        messages: [
+          { type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+          },
+        ],
       },
-    ];
-
-    await actor.batch(messages, neverAborted);
+      neverAborted
+    );
 
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(2);
     expect(actor.snapshot.get().context.initTrackId).toBe('track-1');
@@ -153,24 +160,27 @@ describe('createSourceBufferActor', () => {
     actor.destroy();
   });
 
-  it('batch threads context between tasks so overlap detection works', async () => {
+  it('batch message threads context between tasks so overlap detection works', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
     // Two segments at the same time range — the second should replace the first
-    await actor.batch(
-      [
-        {
-          type: 'append-segment' as const,
-          data: new ArrayBuffer(8),
-          meta: { id: 's1-low', startTime: 0, duration: 10, trackId: 'track-low' },
-        },
-        {
-          type: 'append-segment' as const,
-          data: new ArrayBuffer(8),
-          meta: { id: 's1-high', startTime: 0, duration: 10, trackId: 'track-high' },
-        },
-      ],
+    await actor.send(
+      {
+        type: 'batch',
+        messages: [
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1-low', startTime: 0, duration: 10, trackId: 'track-low' },
+          },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1-high', startTime: 0, duration: 10, trackId: 'track-high' },
+          },
+        ],
+      },
       neverAborted
     );
 
@@ -182,7 +192,7 @@ describe('createSourceBufferActor', () => {
     actor.destroy();
   });
 
-  it('batch status stays idle until after last task completes', async () => {
+  it('batch message status stays idle until after last task completes', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
@@ -191,15 +201,18 @@ describe('createSourceBufferActor', () => {
       stateValues.push(actor.snapshot.get().value);
     });
 
-    await actor.batch(
-      [
-        { type: 'append-init' as const, data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
-        {
-          type: 'append-segment' as const,
-          data: new ArrayBuffer(8),
-          meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-        },
-      ],
+    await actor.send(
+      {
+        type: 'batch',
+        messages: [
+          { type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+          },
+        ],
+      },
       neverAborted
     );
 
@@ -238,20 +251,11 @@ describe('createSourceBufferActor', () => {
   // Abort: during batch execution
   // ---------------------------------------------------------------------------
 
-  it('batch: aborts mid-flight; subsequent messages in batch are skipped', async () => {
+  it('batch message: aborts mid-flight; subsequent messages in batch are skipped', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
     const controller = new AbortController();
-
-    const messages = [
-      { type: 'append-init' as const, data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
-      {
-        type: 'append-segment' as const,
-        data: new ArrayBuffer(8),
-        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      },
-    ];
 
     const mockedAppend = vi.mocked(sourceBuffer.appendBuffer);
     const origAppend = mockedAppend.getMockImplementation();
@@ -264,7 +268,20 @@ describe('createSourceBufferActor', () => {
       return origAppend?.(data);
     });
 
-    await actor.batch(messages, controller.signal);
+    await actor.send(
+      {
+        type: 'batch',
+        messages: [
+          { type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+          },
+        ],
+      },
+      controller.signal
+    );
 
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1);
 
@@ -363,24 +380,27 @@ describe('createSourceBufferActor', () => {
     ]);
     const actor = createSourceBufferActor(sourceBuffer);
 
-    await actor.batch(
-      [
-        {
-          type: 'append-segment',
-          data: new ArrayBuffer(8),
-          meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-        },
-        {
-          type: 'append-segment',
-          data: new ArrayBuffer(8),
-          meta: { id: 's2', startTime: 10, duration: 10, trackId: 'track-1' },
-        },
-        {
-          type: 'append-segment',
-          data: new ArrayBuffer(8),
-          meta: { id: 's3', startTime: 20, duration: 10, trackId: 'track-1' },
-        },
-      ],
+    await actor.send(
+      {
+        type: 'batch',
+        messages: [
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+          },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's2', startTime: 10, duration: 10, trackId: 'track-1' },
+          },
+          {
+            type: 'append-segment',
+            data: new ArrayBuffer(8),
+            meta: { id: 's3', startTime: 20, duration: 10, trackId: 'track-1' },
+          },
+        ],
+      },
       neverAborted
     );
 

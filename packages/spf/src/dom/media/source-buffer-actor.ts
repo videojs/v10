@@ -25,7 +25,9 @@ export type { AppendData };
 export type AppendInitMessage = { type: 'append-init'; data: AppendData; meta: { trackId: Track['id'] } };
 export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; meta: AppendSegmentMeta };
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
-export type SourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
+export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
+export type BatchMessage = { type: 'batch'; messages: IndividualSourceBufferMessage[] };
+export type SourceBufferMessage = IndividualSourceBufferMessage | BatchMessage;
 
 /** Finite states of the actor. */
 export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
@@ -65,7 +67,6 @@ export class SourceBufferActorError extends Error {
 /** SourceBuffer actor: queues operations, owns its snapshot. */
 export interface SourceBufferActor extends SignalActor<SourceBufferActorState, SourceBufferActorContext> {
   send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
-  batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void>;
 }
 
 // =============================================================================
@@ -206,7 +207,7 @@ function removeTask(
   );
 }
 
-type MessageTaskFactory<T extends SourceBufferMessage> = (
+type MessageTaskFactory<T extends IndividualSourceBufferMessage> = (
   message: T,
   options: MessageTaskOptions
 ) => Task<SourceBufferActorContext>;
@@ -215,9 +216,14 @@ const messageTaskFactories = {
   'append-init': appendInitTask,
   'append-segment': appendSegmentTask,
   remove: removeTask,
-} satisfies { [K in SourceBufferMessage['type']]: MessageTaskFactory<Extract<SourceBufferMessage, { type: K }>> };
+} satisfies {
+  [K in IndividualSourceBufferMessage['type']]: MessageTaskFactory<Extract<IndividualSourceBufferMessage, { type: K }>>;
+};
 
-function messageToTask(message: SourceBufferMessage, options: MessageTaskOptions): Task<SourceBufferActorContext> {
+function messageToTask(
+  message: IndividualSourceBufferMessage,
+  options: MessageTaskOptions
+): Task<SourceBufferActorContext> {
   const factory = messageTaskFactories[message.type] as MessageTaskFactory<typeof message>;
   return factory(message, options);
 }
@@ -267,13 +273,54 @@ export function createSourceBufferActor(
         return Promise.reject(new SourceBufferActorError(`send() called while actor is ${getState()}`));
       }
 
-      // Transition synchronously so any subsequent send/batch within the same
-      // tick is rejected — the actor is now committed to this operation.
+      // Empty batch — guard must pass (actor is idle) but nothing to do.
+      if (message.type === 'batch' && message.messages.length === 0) return Promise.resolve();
+
+      // Transition synchronously so any subsequent send() within the same tick
+      // is rejected — the actor is now committed to this operation.
       transition('updating');
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
         snapshotSignal.set({ value: 'updating', context: ctx });
       };
+
+      if (message.type === 'batch') {
+        const { messages } = message;
+        // Each message is its own Task on the runner, executed in submission order.
+        // workingCtx threads the result of each task into the next without
+        // writing to the signal between steps — context is only written atomically
+        // when the last task completes.
+        //
+        // workingCtx is captured here (synchronously after state → 'updating'),
+        // so it reflects the current context at the moment the batch was accepted.
+        // This is correct: state is now 'updating' so no other sender can modify
+        // context between this line and the first task executing.
+        //
+        // NOTE: if an intermediate task fails (e.g. SourceBuffer error event),
+        // workingCtx is not updated for that step and subsequent tasks in the
+        // batch will operate on a stale context. This is an edge case — happy-path
+        // appends do not fail — but worth revisiting if MSE error recovery lands.
+        let workingCtx = snapshotSignal.get().context;
+
+        // Partial context updates from streaming appends write to the signal
+        // directly so external subscribers see in-progress state, but workingCtx
+        // is only advanced on task completion to preserve batch context threading.
+        for (const msg of messages.slice(0, -1)) {
+          const task = messageToTask(msg, { signal, getCtx: () => workingCtx, sourceBuffer, onPartialContext });
+          const result = runner.schedule(task);
+          result.then((newCtx) => {
+            workingCtx = newCtx;
+          });
+        }
+
+        const lastTask = messageToTask(messages[messages.length - 1]!, {
+          signal,
+          getCtx: () => workingCtx,
+          sourceBuffer,
+          onPartialContext,
+        });
+        return runner.schedule(lastTask).then(applyResult).catch(handleError);
+      }
 
       const task = messageToTask(message, {
         signal,
@@ -281,58 +328,7 @@ export function createSourceBufferActor(
         sourceBuffer,
         onPartialContext,
       });
-
       return runner.schedule(task).then(applyResult).catch(handleError);
-    },
-
-    batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void> {
-      if (getState() !== 'idle') {
-        return Promise.reject(new SourceBufferActorError(`batch() called while actor is ${getState()}`));
-      }
-
-      if (messages.length === 0) return Promise.resolve();
-
-      // Transition synchronously — the entire batch is one 'updating' period.
-      transition('updating');
-
-      // Each message is its own Task on the runner, executed in submission order.
-      // workingCtx threads the result of each task into the next without
-      // writing to the signal between steps — context is only written atomically
-      // when the last task completes.
-      //
-      // workingCtx is captured here (synchronously after state → 'updating'),
-      // so it reflects the current context at the moment the batch was accepted.
-      // This is correct: state is now 'updating' so no other sender can modify
-      // context between this line and the first task executing.
-      //
-      // NOTE: if an intermediate task fails (e.g. SourceBuffer error event),
-      // workingCtx is not updated for that step and subsequent tasks in the
-      // batch will operate on a stale context. This is an edge case — happy-path
-      // appends do not fail — but worth revisiting if MSE error recovery lands.
-      let workingCtx = snapshotSignal.get().context;
-
-      // Partial context updates from streaming appends write to the signal
-      // directly so external subscribers see in-progress state, but workingCtx
-      // is only advanced on task completion to preserve batch context threading.
-      const onPartialContext = (ctx: SourceBufferActorContext) => {
-        snapshotSignal.set({ value: 'updating', context: ctx });
-      };
-
-      for (const message of messages.slice(0, -1)) {
-        const task = messageToTask(message, { signal, getCtx: () => workingCtx, sourceBuffer, onPartialContext });
-        const result = runner.schedule(task);
-        result.then((newCtx) => {
-          workingCtx = newCtx;
-        });
-      }
-
-      const lastTask = messageToTask(messages[messages.length - 1]!, {
-        signal,
-        getCtx: () => workingCtx,
-        sourceBuffer,
-        onPartialContext,
-      });
-      return runner.schedule(lastTask).then(applyResult).catch(handleError);
     },
 
     destroy(): void {
