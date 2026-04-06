@@ -272,10 +272,18 @@ The coordinator maintains a registry mapping action strings to their bound key p
 **Consumer pattern:** Controls query the registry during their update cycle and apply the attribute:
 
 ```ts
-// Inside a button element's update
+// HTML — inside a button element's update
 const shortcuts = this.#hotkeyRegistry.value?.getShortcutsForAction('togglePaused');
 // → "k Space"
 // Applied as aria-keyshortcuts="k Space" on the button
+```
+
+```tsx
+// React — inside a button component
+const registry = useHotkeyRegistry();
+const shortcuts = registry?.getShortcutsForAction('togglePaused');
+
+<button aria-keyshortcuts={shortcuts}>{/* ... */}</button>
 ```
 
 **Format:** The registry converts internal key patterns to WAI-ARIA format — modifier names use the formal forms (`Ctrl` → `Control`, `Mod` → `Meta` or `Control`), combos use `+`, alternatives are space-separated.
