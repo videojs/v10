@@ -265,7 +265,7 @@ The coordinator maintains a registry mapping action strings to their bound key p
 
 **Registration:** When `<media-hotkey keys="k" action="togglePaused">` connects, the coordinator registers `{ action: "togglePaused", keys: "k" }`. When multiple hotkeys bind the same action, shortcuts accumulate: `"k"` + `"Space"` → `"k Space"` (space-separated alternatives, per the WAI-ARIA `aria-keyshortcuts` format).
 
-**Query:** The coordinator exposes `getShortcutsForAction(action)` which returns the `aria-keyshortcuts` formatted string, or `undefined` if no bindings exist for that action.
+**Query:** The coordinator exposes `getAriaKeys(action)` which returns the `aria-keyshortcuts` formatted string, or `undefined` if no bindings exist for that action.
 
 **Context:** The registry is provided via context alongside the player store. In HTML, a `HotkeyRegistryController` consumes it. In React, a `useHotkeyRegistry()` hook.
 
@@ -273,7 +273,7 @@ The coordinator maintains a registry mapping action strings to their bound key p
 
 ```ts
 // HTML — inside a button element's update
-const shortcuts = this.#hotkeyRegistry.value?.getShortcutsForAction('togglePaused');
+const shortcuts = this.#hotkeyRegistry.value?.getAriaKeys('togglePaused');
 // → "k Space"
 // Applied as aria-keyshortcuts="k Space" on the button
 ```
@@ -281,7 +281,7 @@ const shortcuts = this.#hotkeyRegistry.value?.getShortcutsForAction('togglePause
 ```tsx
 // React — inside a button component
 const registry = useHotkeyRegistry();
-const shortcuts = registry?.getShortcutsForAction('togglePaused');
+const shortcuts = registry?.getAriaKeys('togglePaused');
 
 <button aria-keyshortcuts={shortcuts}>{/* ... */}</button>
 ```
