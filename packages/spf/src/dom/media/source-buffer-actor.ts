@@ -1,5 +1,5 @@
 import type { ActorSnapshot, SignalActor } from '../../core/actor';
-import { type ReadonlySignal, signal, update } from '../../core/signals/primitives';
+import { createMachineCore } from '../../core/machine';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -230,10 +230,12 @@ export function createSourceBufferActor(
   sourceBuffer: SourceBuffer,
   initialContext?: Partial<SourceBufferActorContext>
 ): SourceBufferActor {
-  const snapshotSignal = signal<SourceBufferActorSnapshot>({
-    value: 'idle',
-    context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
-  });
+  const { snapshotSignal, getState, transition } = createMachineCore<SourceBufferActorState, SourceBufferActorSnapshot>(
+    {
+      value: 'idle',
+      context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
+    }
+  );
 
   const runner = new SerialRunner();
 
@@ -241,7 +243,7 @@ export function createSourceBufferActor(
   // If the actor was destroyed while the operation was in flight, preserve
   // 'destroyed' — do not regress to 'idle'.
   function applyResult(newContext: SourceBufferActorContext): void {
-    const state = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
+    const state = getState() === 'destroyed' ? 'destroyed' : 'idle';
     snapshotSignal.set({ value: state, context: newContext });
   }
 
@@ -251,24 +253,23 @@ export function createSourceBufferActor(
     // improvement should detect QuotaExceededError specifically and use total
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
-    const state = snapshotSignal.get().value === 'destroyed' ? 'destroyed' : 'idle';
-    update(snapshotSignal, { value: state });
+    transition(getState() === 'destroyed' ? 'destroyed' : 'idle');
     throw e;
   }
 
   return {
-    get snapshot(): ReadonlySignal<SourceBufferActorSnapshot> {
+    get snapshot() {
       return snapshotSignal;
     },
 
     send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
-      if (snapshotSignal.get().value !== 'idle') {
-        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${snapshotSignal.get().value}`));
+      if (getState() !== 'idle') {
+        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${getState()}`));
       }
 
       // Transition synchronously so any subsequent send/batch within the same
       // tick is rejected — the actor is now committed to this operation.
-      update(snapshotSignal, { value: 'updating' });
+      transition('updating');
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
         snapshotSignal.set({ value: 'updating', context: ctx });
@@ -285,16 +286,14 @@ export function createSourceBufferActor(
     },
 
     batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void> {
-      if (snapshotSignal.get().value !== 'idle') {
-        return Promise.reject(
-          new SourceBufferActorError(`batch() called while actor is ${snapshotSignal.get().value}`)
-        );
+      if (getState() !== 'idle') {
+        return Promise.reject(new SourceBufferActorError(`batch() called while actor is ${getState()}`));
       }
 
       if (messages.length === 0) return Promise.resolve();
 
       // Transition synchronously — the entire batch is one 'updating' period.
-      update(snapshotSignal, { value: 'updating' });
+      transition('updating');
 
       // Each message is its own Task on the runner, executed in submission order.
       // workingCtx threads the result of each task into the next without
@@ -337,7 +336,7 @@ export function createSourceBufferActor(
     },
 
     destroy(): void {
-      update(snapshotSignal, { value: 'destroyed' });
+      transition('destroyed');
       runner.destroy();
     },
   };
