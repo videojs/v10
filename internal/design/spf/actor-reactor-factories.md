@@ -464,11 +464,11 @@ entirely (not `undefined` — it simply doesn't exist). This is enforced at the 
 conditional intersection.
 
 `context` vs `getContext`: use `context` for synchronous logic that runs in the handler body
-itself (dispatch time). Use `getContext` when passing `getCtx` to tasks scheduled on the
-runner — async tasks execute after the handler returns, by which point `context` may be stale
-(e.g. a previous task in a batch has already called `setContext`). Passing `getCtx: getContext`
-ensures each task reads the context committed by the task before it, making `workingCtx`
-threading unnecessary for sequential operations.
+itself (dispatch time). Use `getContext` when passing it to tasks scheduled on the runner —
+async tasks execute after the handler returns, by which point `context` may be stale (e.g. a
+previous task in a batch has already called `setContext`). Passing `getContext` ensures each
+task reads the context committed by the task before it, making `workingCtx` threading
+unnecessary for sequential operations.
 
 ---
 
@@ -538,7 +538,7 @@ runner outlives any particular state. Cancellation must be threaded manually via
 This is non-trivial — `SegmentLoaderActor` has ~50 lines of abort signal management that
 XState's state-scoped invocation would eliminate.
 
-**Partial / streaming updates.** SPF calls `onPartialContext` — a closure callback that writes
+**Partial / streaming updates.** SPF calls `setContext` — a closure callback that writes
 context directly from inside the task, bypassing the event system. XState's equivalent is the
 invoked service sending intermediate events back to the machine
 (`sendBack({ type: 'CHUNK', data })`), which trigger context-updating transitions while the
@@ -560,7 +560,7 @@ The XState approach is not strictly better. The costs:
 - **The dispatch table is the same either way.** Whether messages are routed in the `idle`
   handler or via `input: ({ event }) => event` in `updating`'s invoke, the `messageToTask`
   dispatch exists in both models. Location changes, not complexity.
-- **Partial updates as events adds ceremony for a narrow case.** `onPartialContext` fires once
+- **Partial updates as events adds ceremony for a narrow case.** `setContext` fires once
   per streaming segment when the first chunk lands. Modeling it as machine events means the
   `updating` state handles task-internal events alongside external messages, with every chunk
   going through the full dispatch loop. Heavy machinery for one operation type.
@@ -569,29 +569,9 @@ The XState approach is not strictly better. The costs:
 
 #### Middle ground: state-scoped runner
 
-The most targeted improvement is making the runner *state-scoped* — created on entry to
-`updating`, destroyed on exit — without adopting the full `invoke` model:
-
-```typescript
-idle: {
-  on: {
-    'append-init': (msg, { transition, createRunner }) => {
-      const runner = createRunner();             // fresh runner, owned by updating
-      transition('updating');
-      runner.schedule(makeTask(msg)).then(setContext);
-    }
-  }
-},
-updating: {
-  onSettled: 'idle',
-  onExit: (runner) => runner.destroy()          // state exit = cancellation
-}
-```
-
-This buys lifecycle scoping (leaving `updating` for any reason destroys the runner and cancels
-in-flight tasks) without requiring `invoke`/`fromCallback` ceremony, chunk events, or
-restructuring the dispatch model. The two-phase emission remains, but the cancellation gap is
-closed. See [Open Questions](#state-scoped-runner).
+The most targeted improvement would be making the runner *state-scoped* — created on entry to
+`updating`, destroyed on exit — without adopting the full `invoke` model. This was explored
+and deferred; see [Open Questions](#state-scoped-runner).
 
 ---
 
@@ -605,15 +585,23 @@ SourceBuffer write must be reflected in the model even if a signal fires mid-ope
 other actors, it's accidental — there's no mechanism to say "if the actor leaves this state,
 abandon in-flight work."
 
-A state-scoped runner (created on entry to the active state, destroyed on exit) would close
-this gap without requiring the full XState `invoke` model. The main open questions:
+A state-scoped runner would close this gap, but the investigation concluded it requires more
+than convention:
 
-- **API shape.** Does the definition declare a per-state runner factory, or does the framework
-  provide a `createRunner()` helper in the handler context?
-- **`SourceBufferActor` carve-out.** Some actors need the current behavior (context updates
-  even after leaving the state). A per-actor or per-state opt-in (`keepRunnerOnExit: true`?)
-  would handle the exception without changing the default.
-- **`TextTrackSegmentLoaderActor` compatibility.** This actor's runner intentionally persists
-  across `idle`/`loading` cycles — tasks from one `loading` entry are still valid in the next.
-  State-scoped runners would break this unless the runner persists at actor scope (status quo)
-  or across specific state transitions.
+- **Scheduling happens in `idle`, not `updating`.** `idle` handlers transition to `updating`
+  and then schedule tasks — in the same function body, on the same runner reference. For the
+  runner to be state-scoped, either `transition()` must return the new state's runner (magic,
+  rejected), or task inputs must travel through context so that an `onEnter` hook on `updating`
+  can drain them and do the scheduling there.
+- **`onEnter` is a real API addition.** The "entry hook drains context" model is essentially
+  a lightweight `invoke` — it requires `onEnter` in `ActorStateDefinition`, a per-state
+  runner factory, and the framework to wire them up on state entry and exit. That's a meaningful
+  framework change, not a convention.
+- **Context as side channel is awkward.** Task inputs (message payloads) traveling through
+  observable actor context leaks internal scheduling details into the public snapshot.
+
+**Decision:** Keep actor-lifetime runners for now. The generation-token problem is already
+handled by the framework. The cancellation gap (work outliving its state) is real but not
+currently exploited — no actor today has a non-settle path out of its work state. Revisit if
+a new actor needs explicit cancellation on state exit, or if the framework grows `onEnter`
+support for other reasons (at which point state-scoped runners become straightforward).
