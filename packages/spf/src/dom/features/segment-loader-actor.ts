@@ -1,3 +1,4 @@
+import type { CallbackActor } from '../../core/actor';
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
@@ -79,10 +80,7 @@ export type LoadTask =
 // ACTOR INTERFACE
 // ============================================================================
 
-export interface SegmentLoaderActor {
-  send(message: SegmentLoaderMessage): void;
-  destroy(): void;
-}
+export type SegmentLoaderActor = CallbackActor<SegmentLoaderMessage>;
 
 // ============================================================================
 // IMPLEMENTATION

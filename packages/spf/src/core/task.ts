@@ -127,8 +127,10 @@ export class ConcurrentRunner {
   readonly #pending = new Map<string, { task: TaskLike<unknown, unknown>; promise: Promise<unknown> }>();
   #settled: Promise<void> = Promise.resolve();
   #resolveSettled: (() => void) | null = null;
+  #destroyed = false;
 
   schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): Promise<TValue> {
+    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
     const existing = this.#pending.get(task.id);
     if (existing) return existing.promise as Promise<TValue>;
 
@@ -185,6 +187,7 @@ export class ConcurrentRunner {
   }
 
   destroy(): void {
+    this.#destroyed = true;
     this.abortAll();
   }
 }
@@ -211,8 +214,10 @@ export class SerialRunner {
   #chain: Promise<unknown> = Promise.resolve();
   readonly #pending = new Set<TaskLike<unknown, unknown>>();
   #current: TaskLike<unknown, unknown> | null = null;
+  #destroyed = false;
 
   schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): Promise<TValue> {
+    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
     const t = task as TaskLike<unknown, unknown>;
     this.#pending.add(t);
 
@@ -271,6 +276,7 @@ export class SerialRunner {
   }
 
   destroy(): void {
+    this.#destroyed = true;
     this.abortAll();
   }
 }
