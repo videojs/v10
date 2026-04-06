@@ -26,13 +26,10 @@ export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; m
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 export type BatchMessage = { type: 'batch'; messages: IndividualSourceBufferMessage[] };
+export type CancelMessage = { type: 'cancel' };
 
-/**
- * All messages accepted by a SourceBufferActor.
- * Each top-level send carries its own AbortSignal — signal is per-message,
- * not per-actor, so each call site controls its own cancellation scope.
- */
-export type SourceBufferMessage = (IndividualSourceBufferMessage | BatchMessage) & { signal: AbortSignal };
+/** All messages accepted by a SourceBufferActor. */
+export type SourceBufferMessage = IndividualSourceBufferMessage | BatchMessage | CancelMessage;
 
 /** Finite states of the actor. */
 export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
@@ -79,7 +76,6 @@ function snapshotBuffered(buffered: TimeRanges): BufferedRange[] {
 // when it was scheduled.
 
 interface MessageTaskOptions {
-  signal: AbortSignal;
   getContext: () => SourceBufferActorContext;
   sourceBuffer: SourceBuffer;
   setContext: (ctx: SourceBufferActorContext) => void;
@@ -87,64 +83,40 @@ interface MessageTaskOptions {
 
 function appendInitTask(
   message: AppendInitMessage,
-  { signal, getContext, sourceBuffer }: MessageTaskOptions
+  { getContext, sourceBuffer }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
-  return new Task(
-    async (taskSignal) => {
-      const ctx = getContext();
-      if (taskSignal.aborted) return ctx;
-      await appendSegment(sourceBuffer, message.data);
-      // No abort check here: the physical SourceBuffer has been modified, so
-      // the model must be updated to match regardless of signal state.
-      return { ...ctx, initTrackId: message.meta.trackId };
-    },
-    { signal }
-  );
+  return new Task(async (taskSignal) => {
+    const ctx = getContext();
+    if (taskSignal.aborted) return ctx;
+    await appendSegment(sourceBuffer, message.data);
+    // No abort check here: the physical SourceBuffer has been modified, so
+    // the model must be updated to match regardless of signal state.
+    return { ...ctx, initTrackId: message.meta.trackId };
+  });
 }
 
 function appendSegmentTask(
   message: AppendSegmentMessage,
-  { signal, getContext, sourceBuffer, setContext }: MessageTaskOptions
+  { getContext, sourceBuffer, setContext }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
-  return new Task(
-    async (taskSignal) => {
-      const ctx = getContext();
-      if (taskSignal.aborted) return ctx;
+  return new Task(async (taskSignal) => {
+    const ctx = getContext();
+    if (taskSignal.aborted) return ctx;
 
-      const { meta } = message;
-      // Remove any existing entry at the same start time (same "slot" in the
-      // timeline), then record the new segment. Assumes time-aligned segments
-      // across playlists. The epsilon guards against floating-point drift in
-      // parsed timestamps.
-      const EPSILON = 0.0001;
-      const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
+    const { meta } = message;
+    // Remove any existing entry at the same start time (same "slot" in the
+    // timeline), then record the new segment. Assumes time-aligned segments
+    // across playlists. The epsilon guards against floating-point drift in
+    // parsed timestamps.
+    const EPSILON = 0.0001;
+    const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
 
-      // For streaming data: emit partial state before the first chunk so
-      // downstream code can see the in-progress segment and treat it as
-      // incomplete. ArrayBuffer appends are atomic so no partial state is
-      // needed — context is updated once at task completion.
-      if (!(message.data instanceof ArrayBuffer)) {
-        setContext({
-          ...ctx,
-          segments: [
-            ...filtered,
-            {
-              id: meta.id,
-              startTime: meta.startTime,
-              duration: meta.duration,
-              trackId: meta.trackId,
-              ...(meta.trackBandwidth !== undefined && { trackBandwidth: meta.trackBandwidth }),
-              partial: true,
-            },
-          ],
-          bufferedRanges: ctx.bufferedRanges,
-        });
-      }
-
-      await appendSegment(sourceBuffer, message.data, taskSignal);
-      // No abort check here: the physical SourceBuffer has been modified, so
-      // the model must be updated to match regardless of signal state.
-      return {
+    // For streaming data: emit partial state before the first chunk so
+    // downstream code can see the in-progress segment and treat it as
+    // incomplete. ArrayBuffer appends are atomic so no partial state is
+    // needed — context is updated once at task completion.
+    if (!(message.data instanceof ArrayBuffer)) {
+      setContext({
         ...ctx,
         segments: [
           ...filtered,
@@ -154,40 +126,55 @@ function appendSegmentTask(
             duration: meta.duration,
             trackId: meta.trackId,
             ...(meta.trackBandwidth !== undefined && { trackBandwidth: meta.trackBandwidth }),
+            partial: true,
           },
         ],
-        bufferedRanges: snapshotBuffered(sourceBuffer.buffered),
-      };
-    },
-    { signal }
-  );
+        bufferedRanges: ctx.bufferedRanges,
+      });
+    }
+
+    await appendSegment(sourceBuffer, message.data, taskSignal);
+    // No abort check here: the physical SourceBuffer has been modified, so
+    // the model must be updated to match regardless of signal state.
+    return {
+      ...ctx,
+      segments: [
+        ...filtered,
+        {
+          id: meta.id,
+          startTime: meta.startTime,
+          duration: meta.duration,
+          trackId: meta.trackId,
+          ...(meta.trackBandwidth !== undefined && { trackBandwidth: meta.trackBandwidth }),
+        },
+      ],
+      bufferedRanges: snapshotBuffered(sourceBuffer.buffered),
+    };
+  });
 }
 
 function removeTask(
   message: RemoveMessage,
-  { signal, getContext, sourceBuffer }: MessageTaskOptions
+  { getContext, sourceBuffer }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
-  return new Task(
-    async (taskSignal) => {
-      const ctx = getContext();
-      if (taskSignal.aborted) return ctx;
-      await flushBuffer(sourceBuffer, message.start, message.end);
-      // No abort check here: the physical SourceBuffer has been modified, so
-      // the model must be updated to match regardless of signal state.
-      //
-      // Use the post-flush buffered ranges as ground truth. A segment is kept
-      // in the model only if its midpoint falls within a buffered range.
-      // Midpoint-based membership handles flush boundaries that don't align
-      // exactly with segment edges without over-removing adjacent segments.
-      const bufferedRanges = snapshotBuffered(sourceBuffer.buffered);
-      const filtered = ctx.segments.filter((s) => {
-        const midpoint = s.startTime + s.duration / 2;
-        return bufferedRanges.some((r) => midpoint >= r.start && midpoint < r.end);
-      });
-      return { ...ctx, segments: filtered, bufferedRanges };
-    },
-    { signal }
-  );
+  return new Task(async (taskSignal) => {
+    const ctx = getContext();
+    if (taskSignal.aborted) return ctx;
+    await flushBuffer(sourceBuffer, message.start, message.end);
+    // No abort check here: the physical SourceBuffer has been modified, so
+    // the model must be updated to match regardless of signal state.
+    //
+    // Use the post-flush buffered ranges as ground truth. A segment is kept
+    // in the model only if its midpoint falls within a buffered range.
+    // Midpoint-based membership handles flush boundaries that don't align
+    // exactly with segment edges without over-removing adjacent segments.
+    const bufferedRanges = snapshotBuffered(sourceBuffer.buffered);
+    const filtered = ctx.segments.filter((s) => {
+      const midpoint = s.startTime + s.duration / 2;
+      return bufferedRanges.some((r) => midpoint >= r.start && midpoint < r.end);
+    });
+    return { ...ctx, segments: filtered, bufferedRanges };
+  });
 }
 
 type MessageTaskFactory<T extends IndividualSourceBufferMessage> = (
@@ -236,47 +223,27 @@ export function createSourceBufferActor(
         on: {
           'append-init': (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
-            const task = appendInitTask(msg, {
-              signal: msg.signal,
-              getContext,
-              sourceBuffer,
-              setContext,
-            });
+            const task = appendInitTask(msg, { getContext, sourceBuffer, setContext });
             runner.schedule(task).then(setContext, handleError);
           },
           'append-segment': (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
-            const task = appendSegmentTask(msg, {
-              signal: msg.signal,
-              getContext,
-              sourceBuffer,
-              setContext,
-            });
+            const task = appendSegmentTask(msg, { getContext, sourceBuffer, setContext });
             runner.schedule(task).then(setContext, handleError);
           },
           remove: (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
-            const task = removeTask(msg, {
-              signal: msg.signal,
-              getContext,
-              sourceBuffer,
-              setContext,
-            });
+            const task = removeTask(msg, { getContext, sourceBuffer, setContext });
             runner.schedule(task).then(setContext, handleError);
           },
           batch: (msg, { transition, setContext, getContext, runner }) => {
-            const { messages, signal } = msg;
+            const { messages } = msg;
             if (messages.length === 0) return;
 
             transition('updating');
 
             for (const subMsg of messages) {
-              const task = messageToTask(subMsg, {
-                signal,
-                getContext,
-                sourceBuffer,
-                setContext,
-              });
+              const task = messageToTask(subMsg, { getContext, sourceBuffer, setContext });
               runner.schedule(task).then(setContext, handleError);
             }
           },
@@ -285,6 +252,13 @@ export function createSourceBufferActor(
       updating: {
         // Automatically return to idle once all scheduled tasks settle.
         onSettled: 'idle',
+        on: {
+          // Abort all in-progress and pending tasks. onSettled handles → 'idle'
+          // once the aborted tasks drain.
+          cancel: (_, { runner }) => {
+            runner.abortAll();
+          },
+        },
       },
     },
   });

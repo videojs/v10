@@ -265,7 +265,7 @@ export function createSegmentLoaderActor(
     const signal = abortController!.signal;
     try {
       if (task.type === 'remove') {
-        sourceBufferActor.send({ ...task, signal });
+        sourceBufferActor.send(task);
         await waitForIdle(sourceBufferActor.snapshot, signal);
         return;
       }
@@ -279,16 +279,19 @@ export function createSegmentLoaderActor(
           // all chunks and yield exactly one — equivalent to arrayBuffer() but
           // through the same streaming path as media segments.
           const data = await fetchBytes(task, { signal, minChunkSize: Infinity });
-          // For seeks on the same track: commit even if aborted — avoids re-fetching the
-          // same init next time. For track switches: don't commit the old track's init;
-          // the new track's init follows in pendingTasks.
+          // For seeks on the same track: commit even if aborted — avoids re-fetching
+          // the same init next time. The preempt path in send() only sends cancel to
+          // the SourceBufferActor for track switches, so for same-track seeks the actor
+          // is still idle and will accept this append.
+          // For track switches: cancel was already sent; skip the commit.
           const isTrackSwitch = pendingTasks?.some(
             (t) => t.type === 'append-init' && t.meta.trackId !== task.meta.trackId
           );
           if (!signal.aborted || !isTrackSwitch) {
-            const appendSignal = signal.aborted ? new AbortController().signal : signal;
-            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta, signal: appendSignal });
-            await waitForIdle(sourceBufferActor.snapshot, appendSignal);
+            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta });
+            // Use a fresh signal when committing despite abort so waitForIdle doesn't
+            // reject before the actor reaches idle.
+            await waitForIdle(sourceBufferActor.snapshot, signal.aborted ? new AbortController().signal : signal);
           }
         }
         return;
@@ -301,7 +304,7 @@ export function createSegmentLoaderActor(
       if (!signal.aborted) {
         const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta, signal });
+          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta });
           await waitForIdle(sourceBufferActor.snapshot, signal);
         }
       }
@@ -385,6 +388,17 @@ export function createSegmentLoaderActor(
         // Preempt: in-flight work is not needed for the new plan. Abort and replan.
         pendingTasks = allTasks;
         abortController?.abort();
+        // Cancel SourceBufferActor tasks when there's a segment in-flight (always
+        // discard) or when a track switch is happening (new track's init follows).
+        // For same-track seek with an in-flight init, we intentionally skip cancel
+        // so the init commits — executeLoadTask handles the waitForIdle in that case.
+        const cancelSourceBuffer =
+          inFlightSegmentId !== null ||
+          (inFlightInitTrackId !== null &&
+            allTasks.some((t) => t.type === 'append-init' && t.meta.trackId !== inFlightInitTrackId));
+        if (cancelSourceBuffer) {
+          sourceBufferActor.send({ type: 'cancel' });
+        }
       }
     },
 

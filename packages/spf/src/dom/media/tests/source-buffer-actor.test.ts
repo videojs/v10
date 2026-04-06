@@ -70,8 +70,6 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
   } as unknown as SourceBuffer;
 }
 
-const neverAborted = new AbortController().signal;
-
 describe('createSourceBufferActor', () => {
   // ---------------------------------------------------------------------------
   // State guard — messages rejected when not idle
@@ -83,8 +81,8 @@ describe('createSourceBufferActor', () => {
 
     // state transitions to 'updating' synchronously, so the second send() in
     // the same tick sees 'updating' and is dropped.
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' }, signal: neverAborted });
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } });
 
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1);
@@ -97,10 +95,10 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } });
     await vi.waitFor(() => expect(actor.snapshot.get().context.initTrackId).toBe('track-2'));
 
     actor.destroy();
@@ -124,7 +122,6 @@ describe('createSourceBufferActor', () => {
           meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
         },
       ],
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -154,7 +151,6 @@ describe('createSourceBufferActor', () => {
           meta: { id: 's1-high', startTime: 0, duration: 10, trackId: 'track-high' },
         },
       ],
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -185,7 +181,6 @@ describe('createSourceBufferActor', () => {
           meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
         },
       ],
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
     cleanup();
@@ -202,45 +197,21 @@ describe('createSourceBufferActor', () => {
   // Abort: before start
   // ---------------------------------------------------------------------------
 
-  it('skips message when signal is aborted before execution starts', async () => {
+  it('cancel during batch skips tasks not yet started', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const abortedController = new AbortController();
-    abortedController.abort();
-
-    actor.send({
-      type: 'append-init',
-      data: new ArrayBuffer(4),
-      meta: { trackId: 'track-1' },
-      signal: abortedController.signal,
-    });
-    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
-
-    expect(sourceBuffer.appendBuffer).not.toHaveBeenCalled();
-
-    actor.destroy();
-  });
-
-  // ---------------------------------------------------------------------------
-  // Abort: during batch execution
-  // ---------------------------------------------------------------------------
-
-  it('batch message: aborts mid-flight; subsequent messages in batch are skipped', async () => {
-    const sourceBuffer = makeSourceBuffer();
-    const actor = createSourceBufferActor(sourceBuffer);
-
-    const controller = new AbortController();
-
-    const mockedAppend = vi.mocked(sourceBuffer.appendBuffer);
-    const origAppend = mockedAppend.getMockImplementation();
+    // Intercept appendBuffer to send cancel after the first task starts,
+    // before the second task has a chance to run.
+    const appendMock = vi.mocked(sourceBuffer.appendBuffer);
+    const origImpl = appendMock.getMockImplementation();
     let firstCall = true;
-    mockedAppend.mockImplementation((data: BufferSource) => {
+    appendMock.mockImplementation((data: BufferSource) => {
       if (firstCall) {
         firstCall = false;
-        controller.abort();
+        actor.send({ type: 'cancel' });
       }
-      return origAppend?.(data);
+      return origImpl?.(data);
     });
 
     actor.send({
@@ -253,11 +224,27 @@ describe('createSourceBufferActor', () => {
           meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
         },
       ],
-      signal: controller.signal,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1);
+
+    actor.destroy();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Abort: during batch execution
+  // ---------------------------------------------------------------------------
+
+  it('cancel while updating returns actor to idle', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
+    // Actor is now in 'updating' — cancel should abort tasks and return to idle.
+    actor.send({ type: 'cancel' });
+
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     actor.destroy();
   });
@@ -270,7 +257,7 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     expect(actor.snapshot.get().context.initTrackId).toBe('track-1');
@@ -290,7 +277,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: new ArrayBuffer(8),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -318,7 +304,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: new ArrayBuffer(8),
       meta: { id: 's1-low', startTime: 0, duration: 10, trackId: 'track-low' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -326,7 +311,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: new ArrayBuffer(8),
       meta: { id: 's1-high', startTime: 0, duration: 10, trackId: 'track-high' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -370,12 +354,11 @@ describe('createSourceBufferActor', () => {
           meta: { id: 's3', startTime: 20, duration: 10, trackId: 'track-1' },
         },
       ],
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     // Remove at a segment boundary so midpoints cleanly fall inside or outside.
-    actor.send({ type: 'remove', start: 0, end: 20, signal: neverAborted });
+    actor.send({ type: 'remove', start: 0, end: 20 });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     expect(sourceBuffer.remove).toHaveBeenCalledWith(0, 20);
@@ -401,7 +384,7 @@ describe('createSourceBufferActor', () => {
       stateValues.push(actor.snapshot.get().value);
     });
 
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     cleanup();
@@ -447,7 +430,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: new ArrayBuffer(8),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
     cleanup();
@@ -477,7 +459,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: twoChunks(),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
     cleanup();
@@ -502,7 +483,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: oneChunk(),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
@@ -513,8 +493,8 @@ describe('createSourceBufferActor', () => {
     actor.destroy();
   });
 
-  it('leaves partial:true entry in context when streaming append is aborted', async () => {
-    // Use a controllable iterable that pauses, allowing abort mid-stream
+  it('leaves partial:true entry in context when streaming append is cancelled', async () => {
+    // Use a controllable iterable that pauses, allowing cancel mid-stream
     let resolveFirst: () => void;
     const firstChunkReady = new Promise<void>((r) => {
       resolveFirst = r;
@@ -522,7 +502,7 @@ describe('createSourceBufferActor', () => {
 
     async function* pausingStream() {
       yield new Uint8Array(4);
-      // Pause here — abort will fire before the second chunk
+      // Pause here — cancel will fire before the second chunk
       await firstChunkReady;
       yield new Uint8Array(4);
     }
@@ -532,13 +512,11 @@ describe('createSourceBufferActor', () => {
       [5, 10],
     ]);
     const actor = createSourceBufferActor(sourceBuffer);
-    const ac = new AbortController();
 
     actor.send({
       type: 'append-segment',
       data: pausingStream(),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: ac.signal,
     });
 
     // Wait until partial state is emitted (first chunk queued)
@@ -546,11 +524,11 @@ describe('createSourceBufferActor', () => {
       expect(actor.snapshot.get().context.segments.some((s) => s.id === 's1' && s.partial === true)).toBe(true);
     });
 
-    // Abort — the stream is paused waiting for resolveFirst
-    ac.abort();
+    // Cancel — aborts the runner's tasks; stream is paused waiting for resolveFirst
+    actor.send({ type: 'cancel' });
     resolveFirst!();
 
-    // Wait for the actor to settle back to idle after the aborted task
+    // Wait for the actor to settle back to idle after the cancelled task
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     // partial: true entry should remain — accurately reflects data in SourceBuffer
@@ -575,7 +553,6 @@ describe('createSourceBufferActor', () => {
       type: 'append-segment',
       data: new ArrayBuffer(8),
       meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      signal: neverAborted,
     });
     await vi.waitFor(() => expect(actorWithPartial.snapshot.get().value).toBe('idle'));
 
@@ -591,7 +568,7 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
 
     await vi.waitFor(() => expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1));
 
@@ -600,7 +577,7 @@ describe('createSourceBufferActor', () => {
     expect(actor.snapshot.get().value).toBe('destroyed');
 
     // After destroy, send() is silently dropped — state stays destroyed
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' }, signal: neverAborted });
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } });
     expect(actor.snapshot.get().value).toBe('destroyed');
   });
 });
