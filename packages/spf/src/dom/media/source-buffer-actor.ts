@@ -53,20 +53,9 @@ export interface SourceBufferActorContext {
 /** Complete snapshot of a SourceBufferActor. */
 export type SourceBufferActorSnapshot = ActorSnapshot<SourceBufferActorState, SourceBufferActorContext>;
 
-/**
- * Thrown when a message is sent to the actor in a state that does not
- * accept messages (currently: 'updating').
- */
-export class SourceBufferActorError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SourceBufferActorError';
-  }
-}
-
 /** SourceBuffer actor: queues operations, owns its snapshot. */
 export interface SourceBufferActor extends SignalActor<SourceBufferActorState, SourceBufferActorContext> {
-  send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
+  send(message: SourceBufferMessage, signal: AbortSignal): void;
 }
 
 // =============================================================================
@@ -253,14 +242,16 @@ export function createSourceBufferActor(
     snapshotSignal.set({ value: state, context: newContext });
   }
 
-  function handleError(e: unknown): never {
+  function handleError(e: unknown): void {
     // TODO: QuotaExceededError and other SourceBuffer errors leave the physical
     // buffer in an unknown partial state while context goes unchanged. A future
     // improvement should detect QuotaExceededError specifically and use total
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
     transition(getState() === 'destroyed' ? 'destroyed' : 'idle');
-    throw e;
+    if (!(e instanceof Error && e.name === 'AbortError')) {
+      console.error('SourceBuffer operation failed:', e);
+    }
   }
 
   return {
@@ -268,16 +259,15 @@ export function createSourceBufferActor(
       return snapshotSignal;
     },
 
-    send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
-      if (getState() !== 'idle') {
-        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${getState()}`));
-      }
+    send(message: SourceBufferMessage, signal: AbortSignal): void {
+      // Silently drop if not idle — callers observe state via snapshot.
+      if (getState() !== 'idle') return;
 
       // Empty batch — guard must pass (actor is idle) but nothing to do.
-      if (message.type === 'batch' && message.messages.length === 0) return Promise.resolve();
+      if (message.type === 'batch' && message.messages.length === 0) return;
 
       // Transition synchronously so any subsequent send() within the same tick
-      // is rejected — the actor is now committed to this operation.
+      // is dropped — the actor is now committed to this operation.
       transition('updating');
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
@@ -319,7 +309,8 @@ export function createSourceBufferActor(
           sourceBuffer,
           onPartialContext,
         });
-        return runner.schedule(lastTask).then(applyResult).catch(handleError);
+        runner.schedule(lastTask).then(applyResult, handleError);
+        return;
       }
 
       const task = messageToTask(message, {
@@ -328,7 +319,7 @@ export function createSourceBufferActor(
         sourceBuffer,
         onPartialContext,
       });
-      return runner.schedule(task).then(applyResult).catch(handleError);
+      runner.schedule(task).then(applyResult, handleError);
     },
 
     destroy(): void {

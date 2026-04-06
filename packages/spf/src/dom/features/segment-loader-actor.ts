@@ -1,6 +1,7 @@
 import type { CallbackActor } from '../../core/actor';
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
+import { effect } from '../../core/signals/effect';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
 import type {
   AppendInitMessage,
@@ -81,6 +82,53 @@ export type LoadTask =
 // ============================================================================
 
 export type SegmentLoaderActor = CallbackActor<SegmentLoaderMessage>;
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Resolves when the SourceBufferActor snapshot reaches 'idle'.
+ * Rejects if the signal is aborted or the actor is destroyed.
+ *
+ * Used to sequence SourceBufferActor operations without awaiting send()
+ * directly — send() is fire-and-forget; callers observe completion via
+ * state transition.
+ */
+function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (snapshot.get().value === 'idle') {
+      resolve();
+      return;
+    }
+    if (snapshot.get().value === 'destroyed') {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    if (signal.aborted) {
+      reject(signal.reason);
+      return;
+    }
+
+    let stop: (() => void) | undefined;
+
+    const cleanup = (fn: () => void) => {
+      stop?.();
+      signal.removeEventListener('abort', onAbort);
+      fn();
+    };
+
+    const onAbort = () => cleanup(() => reject(signal.reason));
+
+    stop = effect(() => {
+      const value = snapshot.get().value;
+      if (value === 'idle') cleanup(resolve);
+      else if (value === 'destroyed') cleanup(() => reject(new DOMException('Aborted', 'AbortError')));
+    });
+
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
 
 // ============================================================================
 // IMPLEMENTATION
@@ -217,7 +265,8 @@ export function createSegmentLoaderActor(
     const signal = abortController!.signal;
     try {
       if (task.type === 'remove') {
-        await sourceBufferActor.send(task, signal);
+        sourceBufferActor.send(task, signal);
+        await waitForIdle(sourceBufferActor.snapshot, signal);
         return;
       }
 
@@ -238,7 +287,8 @@ export function createSegmentLoaderActor(
           );
           if (!signal.aborted || !isTrackSwitch) {
             const appendSignal = signal.aborted ? new AbortController().signal : signal;
-            await sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+            await waitForIdle(sourceBufferActor.snapshot, appendSignal);
           }
         }
         return;
@@ -251,7 +301,8 @@ export function createSegmentLoaderActor(
       if (!signal.aborted) {
         const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          await sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
+          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
+          await waitForIdle(sourceBufferActor.snapshot, signal);
         }
       }
     } finally {
@@ -281,7 +332,7 @@ export function createSegmentLoaderActor(
           // Abort is handled in the post-task check below.
         } else {
           console.error('Unexpected error in segment loader:', error);
-          // Non-abort error (e.g. network failure on init): don't continue with
+          // Non-abort error (e.g. fetch failure on init): don't continue with
           // remaining tasks in this sequence — they depend on the failed step.
           // A pending replacement plan (if any) will still be picked up below.
           scheduled = [];
