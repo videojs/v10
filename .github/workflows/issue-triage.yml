@@ -51,10 +51,10 @@ jobs:
             - Prefixes:
               - `Feature:` — New capability or behavior
               - `Bug:` — Something broken or not working as expected
-              - `Docs:` — Documentation additions or improvements
+              - `Docs:` — Writing or improving documentation content (not tooling)
               - `Architecture:` — Internal structure, design patterns, core refactoring
               - `Chore:` — Maintenance, deps, tooling, CI
-              - `Design:` — Design docs, component specs, visual design
+              - `Design:` — Design docs, component specs, discovery/research
             2. Classify and label:
             - Determine best-fit labels from issue content and template sections.
             - Review labels used on related/cross-referenced issues before deciding.
