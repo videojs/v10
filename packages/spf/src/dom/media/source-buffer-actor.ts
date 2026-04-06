@@ -74,13 +74,13 @@ function snapshotBuffered(buffered: TimeRanges): BufferedRange[] {
 // Message task factories
 // =============================================================================
 
-// Context is read lazily via getCtx at task execution time — not at creation
+// Context is read lazily via getContext at task execution time — not at creation
 // time — so each task always operates on the most recent context regardless of
 // when it was scheduled.
 
 interface MessageTaskOptions {
   signal: AbortSignal;
-  getCtx: () => SourceBufferActorContext;
+  getContext: () => SourceBufferActorContext;
   sourceBuffer: SourceBuffer;
   /**
    * Called when a streaming append transitions to a partial state — i.e.
@@ -93,11 +93,11 @@ interface MessageTaskOptions {
 
 function appendInitTask(
   message: AppendInitMessage,
-  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+  { signal, getContext, sourceBuffer }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   return new Task(
     async (taskSignal) => {
-      const ctx = getCtx();
+      const ctx = getContext();
       if (taskSignal.aborted) return ctx;
       await appendSegment(sourceBuffer, message.data);
       // No abort check here: the physical SourceBuffer has been modified, so
@@ -110,11 +110,11 @@ function appendInitTask(
 
 function appendSegmentTask(
   message: AppendSegmentMessage,
-  { signal, getCtx, sourceBuffer, onPartialContext }: MessageTaskOptions
+  { signal, getContext, sourceBuffer, onPartialContext }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   return new Task(
     async (taskSignal) => {
-      const ctx = getCtx();
+      const ctx = getContext();
       if (taskSignal.aborted) return ctx;
 
       const { meta } = message;
@@ -171,11 +171,11 @@ function appendSegmentTask(
 
 function removeTask(
   message: RemoveMessage,
-  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+  { signal, getContext, sourceBuffer }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   return new Task(
     async (taskSignal) => {
-      const ctx = getCtx();
+      const ctx = getContext();
       if (taskSignal.aborted) return ctx;
       await flushBuffer(sourceBuffer, message.start, message.end);
       // No abort check here: the physical SourceBuffer has been modified, so
@@ -244,7 +244,7 @@ export function createSourceBufferActor(
             transition('updating');
             const task = appendInitTask(msg, {
               signal: msg.signal,
-              getCtx: getContext,
+              getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
@@ -254,7 +254,7 @@ export function createSourceBufferActor(
             transition('updating');
             const task = appendSegmentTask(msg, {
               signal: msg.signal,
-              getCtx: getContext,
+              getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
@@ -264,7 +264,7 @@ export function createSourceBufferActor(
             transition('updating');
             const task = removeTask(msg, {
               signal: msg.signal,
-              getCtx: getContext,
+              getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
@@ -279,7 +279,7 @@ export function createSourceBufferActor(
             for (const subMsg of messages) {
               const task = messageToTask(subMsg, {
                 signal,
-                getCtx: getContext,
+                getContext,
                 sourceBuffer,
                 onPartialContext: setContext,
               });
