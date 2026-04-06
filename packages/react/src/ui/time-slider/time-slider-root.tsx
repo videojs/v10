@@ -26,7 +26,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       className,
       style,
       label,
-      commitThrottle = TimeSliderCore.defaultProps.commitThrottle,
+      changeThrottle = TimeSliderCore.defaultProps.changeThrottle,
       step = TimeSliderCore.defaultProps.step,
       largeStep = TimeSliderCore.defaultProps.largeStep,
       orientation,
@@ -71,10 +71,14 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       getLargeStepPercent: () => core.getLargeStepPercent(),
       orientation,
       disabled,
-      commitThrottle,
+      changeThrottle,
       adjustPercent: (rawPercent, thumbSize, trackSize) =>
         core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
       getCSSVars: getTimeSliderCSSVars,
+      onValueChange: (percent) => {
+        const media = mediaRef.current;
+        if (media) media.seek(core.rawValueFromPercent(percent));
+      },
       onValueCommit: (percent) => {
         const media = mediaRef.current;
         if (media) media.seek(core.rawValueFromPercent(percent));

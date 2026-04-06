@@ -13,8 +13,8 @@ export interface TimeSliderProps extends SliderProps {
   min?: number | undefined;
   /** @internal Derived from `duration` — not user-settable. */
   max?: number | undefined;
-  /** Trailing-edge throttle (ms) for seek requests during drag. */
-  commitThrottle?: number | undefined;
+  /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
+  changeThrottle?: number | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -27,7 +27,7 @@ export class TimeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     ...SliderCore.defaultProps,
     label: 'Seek',
-    commitThrottle: 100,
+    changeThrottle: 100,
   };
 
   #props = { ...TimeSliderCore.defaultProps };

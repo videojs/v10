@@ -24,7 +24,7 @@ export class TimeSliderElement extends MediaElement {
 
   static override properties = {
     label: { type: String },
-    commitThrottle: { type: Number, attribute: 'commit-throttle' },
+    changeThrottle: { type: Number, attribute: 'change-throttle' },
     step: { type: Number },
     largeStep: { type: Number, attribute: 'large-step' },
     orientation: { type: String },
@@ -33,7 +33,7 @@ export class TimeSliderElement extends MediaElement {
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
-  commitThrottle = TimeSliderCore.defaultProps.commitThrottle;
+  changeThrottle = TimeSliderCore.defaultProps.changeThrottle;
   step = TimeSliderCore.defaultProps.step;
   largeStep = TimeSliderCore.defaultProps.largeStep;
   orientation = TimeSliderCore.defaultProps.orientation;
@@ -68,11 +68,15 @@ export class TimeSliderElement extends MediaElement {
       },
       getStepPercent: () => this.#core.getStepPercent(),
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
+      onValueChange: (percent) => {
+        const media = this.#timeState.value;
+        if (media) media.seek(this.#core.rawValueFromPercent(percent));
+      },
       onValueCommit: (percent) => {
         const media = this.#timeState.value;
         if (media) media.seek(this.#core.rawValueFromPercent(percent));
       },
-      commitThrottle: this.commitThrottle,
+      changeThrottle: this.changeThrottle,
       onDragStart: () => {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
