@@ -333,9 +333,11 @@ when the actor is destroyed.
 - **Constructor reference** (`runner: SerialRunner`) — `new def.runner()`. Slightly less explicit
   than a factory; doesn't compose as naturally when construction needs configuration.
 - **State-lifetime runners** — runner created on state entry, destroyed on state exit. Naturally
-  eliminates the generation-token problem (`onSettled` always refers to the fresh chain).
-  Rejected because it prevents runner state from persisting across state transitions — the
-  current `TextTrackSegmentLoaderActor` intentionally keeps its runner across idle/loading cycles.
+  eliminates the generation-token problem (`onSettled` always refers to the fresh chain), and
+  aligns with XState's `invoke` model where async work is tied to the state that started it.
+  Not adopted as the default because `TextTrackSegmentLoaderActor` intentionally persists runner
+  state across idle/loading cycles. But this is worth revisiting per-actor — see
+  [Open Questions](#state-scoped-runner).
 
 **Rationale:** Actor-lifetime scope matches the current pattern and is the most flexible default.
 A factory function (`() => new X(options)`) handles configured runners without changing the
@@ -423,7 +425,9 @@ node on every re-run with no memoization. `Computed`s that gate effect re-runs m
 
 ---
 
-## XState-style Definition vs. Implementation
+## XState Comparison
+
+### Definition vs. Implementation
 
 The current design uses a single definition object that contains both structure (states, runner
 type, initial state) and behavior (handler functions). XState v5 separates these:
@@ -441,7 +445,7 @@ instantiation. SPF's current factory approach is compatible with this future dir
 `runner: () => new SerialRunner()` today becomes a named reference resolved against a provided
 implementation map later. The migration path is additive — no existing definitions need to change.
 
-### Handler context API
+#### Handler context API
 
 The second argument to Actor message handlers is:
 ```typescript
@@ -456,6 +460,148 @@ conditional intersection.
 
 ---
 
+### Async Work Model: Where Does Work "Belong"?
+
+This is the most significant behavioral divergence from XState, with real tradeoffs in both
+directions.
+
+#### The SPF pattern
+
+In SPF, when an actor like `SourceBufferActor` receives an `append-init` message while `idle`,
+the `idle` handler does three things: transitions to `updating`, schedules the work on the
+runner, and registers callbacks to update context and settle back to `idle` via `onSettled`.
+
+```typescript
+idle: {
+  on: {
+    'append-init': (msg, { transition, setContext, runner }) => {
+      transition('updating');                   // 1. route
+      const task = makeTask(msg);
+      runner.schedule(task).then(setContext);   // 2. start work
+      // 3. onSettled: 'idle' in updating handles the return
+    }
+  }
+},
+updating: { onSettled: 'idle' }
+```
+
+The work starts in the `idle` handler and finishes in `updating` via `onSettled`. Two things
+happen in separate microtasks: `setContext` (from the task's `.then()`), then `transition('idle')`
+(from `onSettled`). Observers see two emissions: `{ value: 'updating', context: newCtx }` followed
+by `{ value: 'idle', context: newCtx }`.
+
+#### The XState pattern
+
+In XState, `idle` *only routes* — the work belongs to the state that is doing it:
+
+```typescript
+idle: {
+  on: { 'append-init': { target: 'updating' } }  // just routing
+},
+updating: {
+  invoke: {
+    src: 'executeMessage',
+    input: ({ event }) => event,     // the triggering event travels with the transition
+    onDone: {
+      target: 'idle',
+      actions: assign(({ event }) => event.output)  // context + state update, atomically
+    }
+  }
+}
+```
+
+`updating` invokes the work on entry, using the event that caused the transition as input.
+When the work completes, `onDone` updates context and transitions state in one atomic step —
+one emission: `{ value: 'idle', context: newCtx }`.
+
+#### Consequences
+
+**Atomicity.** XState's `onDone` updates context and state together; SPF does it in two
+microtasks. Currently harmless — all consumers wait for `idle` before reading context — but
+it's load-bearing discipline rather than a model guarantee.
+
+**Lifecycle scoping.** In XState, when the machine leaves `updating` for any reason (a
+`cancel` event, `destroy()`, etc.), the invoked service is cancelled automatically. In SPF, the
+runner outlives any particular state. Cancellation must be threaded manually via abort signals.
+This is non-trivial — `SegmentLoaderActor` has ~50 lines of abort signal management that
+XState's state-scoped invocation would eliminate.
+
+**Partial / streaming updates.** SPF calls `onPartialContext` — a closure callback that writes
+context directly from inside the task, bypassing the event system. XState's equivalent is the
+invoked service sending intermediate events back to the machine
+(`sendBack({ type: 'CHUNK', data })`), which trigger context-updating transitions while the
+machine stays in `updating`. More ceremony, but each intermediate state is a proper
+event-driven transition — observable, testable, guarded.
+
+**State graph scalability.** With two states the differences are manageable. If the actor grew
+to handle `errored`, `draining`, or `quota-exceeded` states, the XState model scales cleanly —
+each state owns its behavior, and leaving any state cancels its work. The SPF model requires
+increasingly careful manual management as the graph grows.
+
+#### Tradeoffs of adopting the XState model
+
+The XState approach is not strictly better. The costs:
+
+- **The runner doesn't go away.** `SerialRunner`'s serial queuing and abort semantics don't
+  exist in XState's `invoke` primitive. The runner would move inside the invoked service rather
+  than being eliminated. The benefit is lifecycle scoping, not simplification.
+- **The dispatch table is the same either way.** Whether messages are routed in the `idle`
+  handler or via `input: ({ event }) => event` in `updating`'s invoke, the `messageToTask`
+  dispatch exists in both models. Location changes, not complexity.
+- **Partial updates as events adds ceremony for a narrow case.** `onPartialContext` fires once
+  per streaming segment when the first chunk lands. Modeling it as machine events means the
+  `updating` state handles task-internal events alongside external messages, with every chunk
+  going through the full dispatch loop. Heavy machinery for one operation type.
+- **TypeScript complexity.** With multiple message types all targeting `updating`, the invoke
+  `input` type is a union and the service must discriminate on `event.type`.
+
+#### Middle ground: state-scoped runner
+
+The most targeted improvement is making the runner *state-scoped* — created on entry to
+`updating`, destroyed on exit — without adopting the full `invoke` model:
+
+```typescript
+idle: {
+  on: {
+    'append-init': (msg, { transition, createRunner }) => {
+      const runner = createRunner();             // fresh runner, owned by updating
+      transition('updating');
+      runner.schedule(makeTask(msg)).then(setContext);
+    }
+  }
+},
+updating: {
+  onSettled: 'idle',
+  onExit: (runner) => runner.destroy()          // state exit = cancellation
+}
+```
+
+This buys lifecycle scoping (leaving `updating` for any reason destroys the runner and cancels
+in-flight tasks) without requiring `invoke`/`fromCallback` ceremony, chunk events, or
+restructuring the dispatch model. The two-phase emission remains, but the cancellation gap is
+closed. See [Open Questions](#state-scoped-runner).
+
+---
+
 ## Open Questions
 
-_No open questions._
+### State-scoped runner {#state-scoped-runner}
+
+The current actor-lifetime runner means work scheduled in `updating` completes regardless of
+subsequent state transitions. For `SourceBufferActor`, this is intentional (a physical
+SourceBuffer write must be reflected in the model even if a signal fires mid-operation). For
+other actors, it's accidental — there's no mechanism to say "if the actor leaves this state,
+abandon in-flight work."
+
+A state-scoped runner (created on entry to the active state, destroyed on exit) would close
+this gap without requiring the full XState `invoke` model. The main open questions:
+
+- **API shape.** Does the definition declare a per-state runner factory, or does the framework
+  provide a `createRunner()` helper in the handler context?
+- **`SourceBufferActor` carve-out.** Some actors need the current behavior (context updates
+  even after leaving the state). A per-actor or per-state opt-in (`keepRunnerOnExit: true`?)
+  would handle the exception without changing the default.
+- **`TextTrackSegmentLoaderActor` compatibility.** This actor's runner intentionally persists
+  across `idle`/`loading` cycles — tasks from one `loading` entry are still valid in the next.
+  State-scoped runners would break this unless the runner persists at actor scope (status quo)
+  or across specific state transitions.
