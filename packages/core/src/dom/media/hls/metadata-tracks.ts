@@ -39,11 +39,14 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
 
         // Only reset the track if it was loaded before and had no cues.
         if (src && trackEl.readyState === TRACK_LOADED && !track.cues?.length) {
-          const newTrackEl = target.replaceChild(trackEl.cloneNode(), trackEl);
+          const clonedTrackEl = trackEl.cloneNode() as HTMLTrackElement;
+          target.replaceChild(clonedTrackEl, trackEl);
+        }
 
-          if (newTrackEl?.default && newTrackEl.track.mode !== 'hidden') {
-            newTrackEl.track.mode = 'hidden';
-          }
+        // Force mode to 'hidden' for default tracks (independent of replacement).
+        const currentTrackEl = target.querySelector(selector) as HTMLTrackElement | null;
+        if (currentTrackEl?.default && currentTrackEl.track.mode !== 'hidden') {
+          currentTrackEl.track.mode = 'hidden';
         }
       });
     }
