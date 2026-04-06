@@ -521,8 +521,6 @@ describe('endOfStream', () => {
   it('calls endOfStream() when actor context is updated to include the last segment', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
-    const neverAborted = new AbortController().signal;
-
     // Start with only first two segments loaded
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer, {
@@ -557,7 +555,6 @@ describe('endOfStream', () => {
           meta: { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' },
         },
       ],
-      signal: neverAborted,
     });
 
     await vi.waitFor(() => {

@@ -1,7 +1,8 @@
-import type { CallbackActor } from '../../core/actor';
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
+import { createActor, type HandlerContext, type MessageActor } from '../../core/create-actor';
 import { effect } from '../../core/signals/effect';
+import { SerialRunner, Task } from '../../core/task';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
 import type {
   AppendInitMessage,
@@ -81,11 +82,27 @@ export type LoadTask =
 // ACTOR INTERFACE
 // ============================================================================
 
-export type SegmentLoaderActor = CallbackActor<SegmentLoaderMessage>;
+/** Finite states of the actor. */
+export type SegmentLoaderActorState = 'idle' | 'loading' | 'destroyed';
+
+/** Non-finite (extended) data managed by the actor. */
+export interface SegmentLoaderActorContext {
+  /** Track ID of the init segment currently being fetched/appended, or null. */
+  inFlightInitTrackId: string | null;
+  /** Segment ID currently being fetched/appended, or null. */
+  inFlightSegmentId: string | null;
+}
+
+export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLoaderActorContext, SegmentLoaderMessage>;
 
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+type FetchBytes = (
+  addressable: AddressableObject,
+  options?: RequestInit & { minChunkSize?: number }
+) => Promise<AsyncIterable<Uint8Array>>;
 
 /**
  * Resolves when the SourceBufferActor snapshot reaches 'idle'.
@@ -131,6 +148,68 @@ function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSigna
 }
 
 // ============================================================================
+// LOAD TASK FACTORY
+// ============================================================================
+
+interface LoadTaskOptions {
+  getContext: () => SegmentLoaderActorContext;
+  setContext: (ctx: SegmentLoaderActorContext) => void;
+  fetchBytes: FetchBytes;
+  sourceBufferActor: SourceBufferActor;
+}
+
+/**
+ * Wraps a LoadTask descriptor into a Task that fetches (if needed) and
+ * forwards to SourceBufferActor. Updates in-flight context around async
+ * operations so the loading handler can make accurate continue/preempt
+ * decisions at any point.
+ */
+function makeLoadTask(
+  op: LoadTask,
+  { getContext, setContext, fetchBytes, sourceBufferActor }: LoadTaskOptions
+): Task<void> {
+  return new Task(async (taskSignal) => {
+    if (taskSignal.aborted) return;
+
+    if (op.type === 'remove') {
+      sourceBufferActor.send(op);
+      await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+      return;
+    }
+
+    if (op.type === 'append-init') {
+      setContext({ ...getContext(), inFlightInitTrackId: op.meta.trackId });
+      try {
+        // Init segments are small and need the full body before appending.
+        // minChunkSize: Infinity accumulates all chunks into one before yielding.
+        const data = await fetchBytes(op, { signal: taskSignal, minChunkSize: Infinity });
+        if (!taskSignal.aborted) {
+          sourceBufferActor.send({ type: 'append-init', data, meta: op.meta });
+          await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+        }
+      } finally {
+        setContext({ ...getContext(), inFlightInitTrackId: null });
+      }
+      return;
+    }
+
+    // append-segment: await headers eagerly (starts the HTTP connection and
+    // records the fetch in observers like tests), then pass the body stream
+    // directly to the actor so chunks are appended as they arrive.
+    setContext({ ...getContext(), inFlightSegmentId: op.meta.id });
+    try {
+      const stream = await fetchBytes(op, { signal: taskSignal });
+      if (!taskSignal.aborted) {
+        sourceBufferActor.send({ type: 'append-segment', data: stream, meta: op.meta });
+        await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+      }
+    } finally {
+      setContext({ ...getContext(), inFlightSegmentId: null });
+    }
+  });
+}
+
+// ============================================================================
 // IMPLEMENTATION
 // ============================================================================
 
@@ -141,10 +220,12 @@ function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSigna
  * removes, fetches, and appends. Coordinates with the SourceBufferActor for
  * all physical SourceBuffer operations.
  *
- * Planning (Cases 1–3) happens in `send()` on every incoming message, producing
- * an ordered LoadTask list. The runner drains that list sequentially. When a new
- * message arrives mid-run, send() replans and either continues the in-flight
- * operation (if still needed) or preempts it.
+ * Planning (Cases 1–3) happens in the `load` handler on every incoming
+ * message, producing an ordered LoadTask list. The runner drains that list
+ * sequentially via SerialRunner. When a new message arrives mid-run, the
+ * handler replans and either continues the in-flight operation (abortPending
+ * + schedule new remainder) or preempts it (abortAll + cancel SourceBuffer
+ * if needed + schedule new plan).
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
  * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
@@ -153,17 +234,10 @@ function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSigna
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (
-    addressable: AddressableObject,
-    options?: RequestInit & { minChunkSize?: number }
-  ) => Promise<AsyncIterable<Uint8Array>>
+  fetchBytes: FetchBytes
 ): SegmentLoaderActor {
-  let pendingTasks: LoadTask[] | null = null;
-  let inFlightInitTrackId: string | null = null;
-  let inFlightSegmentId: string | null = null;
-  let abortController: AbortController | null = null;
-  let running = false;
-  let destroyed = false;
+  type UserState = Exclude<SegmentLoaderActorState, 'destroyed'>;
+  type Ctx = HandlerContext<UserState, SegmentLoaderActorContext, () => SerialRunner>;
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     // Exclude partial segments — they are still being streamed and must not be
@@ -179,7 +253,7 @@ export function createSegmentLoaderActor(
 
   /**
    * Translate a load message into an ordered LoadTask list based on committed
-   * actor state. In-flight awareness is handled separately in send().
+   * actor state. In-flight awareness is handled separately in the load handler.
    *
    * @todo Rename alongside LoadTask (e.g. planOps).
    *
@@ -254,157 +328,81 @@ export function createSegmentLoaderActor(
     return tasks;
   };
 
-  /**
-   * Execute a single LoadTask: fetch (if needed) then forward to SourceBufferActor.
-   * Sets/clears in-flight tracking around async operations so send() can make
-   * accurate continue/preempt decisions at any point during execution.
-   *
-   * @todo Rename alongside LoadTask (e.g. executeOp).
-   */
-  const executeLoadTask = async (task: LoadTask): Promise<void> => {
-    const signal = abortController!.signal;
-    try {
-      if (task.type === 'remove') {
-        sourceBufferActor.send(task);
-        await waitForIdle(sourceBufferActor.snapshot, signal);
-        return;
-      }
-
-      if (task.type === 'append-init') {
-        inFlightInitTrackId = task.meta.trackId;
-        if (!signal.aborted) {
-          // Init segments are small and need the full body before the
-          // same-track-seek vs track-switch commit decision can be made.
-          // minChunkSize: Infinity causes ChunkedStreamIterable to accumulate
-          // all chunks and yield exactly one — equivalent to arrayBuffer() but
-          // through the same streaming path as media segments.
-          const data = await fetchBytes(task, { signal, minChunkSize: Infinity });
-          // For seeks on the same track: commit even if aborted — avoids re-fetching
-          // the same init next time. The preempt path in send() only sends cancel to
-          // the SourceBufferActor for track switches, so for same-track seeks the actor
-          // is still idle and will accept this append.
-          // For track switches: cancel was already sent; skip the commit.
-          const isTrackSwitch = pendingTasks?.some(
-            (t) => t.type === 'append-init' && t.meta.trackId !== task.meta.trackId
-          );
-          if (!signal.aborted || !isTrackSwitch) {
-            sourceBufferActor.send({ type: 'append-init', data, meta: task.meta });
-            // Use a fresh signal when committing despite abort so waitForIdle doesn't
-            // reject before the actor reaches idle.
-            await waitForIdle(sourceBufferActor.snapshot, signal.aborted ? new AbortController().signal : signal);
-          }
-        }
-        return;
-      }
-
-      // append-segment: await headers eagerly (starts the HTTP connection and
-      // records the fetch in observers like tests), then pass the body stream
-      // directly to the actor so chunks are appended as they arrive.
-      inFlightSegmentId = task.meta.id;
-      if (!signal.aborted) {
-        const stream = await fetchBytes(task, { signal });
-        if (!signal.aborted) {
-          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta });
-          await waitForIdle(sourceBufferActor.snapshot, signal);
-        }
-      }
-    } finally {
-      inFlightInitTrackId = null;
-      inFlightSegmentId = null;
-    }
+  const scheduleAll = (tasks: LoadTask[], { getContext, setContext, runner }: Ctx): void => {
+    tasks.forEach((op) => {
+      runner
+        .schedule(makeLoadTask(op, { getContext, setContext, fetchBytes, sourceBufferActor }))
+        .then(undefined, (e: unknown) => {
+          if (e instanceof Error && e.name === 'AbortError') return;
+          // On unexpected fetch/append errors, abort remaining tasks so a failed
+          // init doesn't cause segment fetches to proceed with no init segment.
+          console.error('Unexpected error in segment loader:', e);
+          runner.abortPending();
+        });
+    });
   };
 
-  /**
-   * Drain the scheduled task list sequentially.
-   * After each task completes, checks for a pending replacement plan from send().
-   * If the signal was aborted and no new plan arrived, stops immediately.
-   */
-  const runScheduled = async (initialTasks: LoadTask[]): Promise<void> => {
-    running = true;
-    abortController = new AbortController();
-    let scheduled = initialTasks;
+  return createActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
+    runner: () => new SerialRunner(),
+    initial: 'idle',
+    context: { inFlightInitTrackId: null, inFlightSegmentId: null },
+    states: {
+      idle: {
+        on: {
+          load: (msg, ctx) => {
+            const allTasks = planTasks(msg);
+            if (allTasks.length === 0) return;
+            ctx.transition('loading');
+            scheduleAll(allTasks, ctx);
+          },
+        },
+      },
+      loading: {
+        onSettled: 'idle',
+        on: {
+          load: (msg, ctx) => {
+            const { context, runner } = ctx;
+            const allTasks = planTasks(msg);
 
-    while (scheduled.length > 0 && !destroyed) {
-      const task = scheduled[0]!;
-      scheduled = scheduled.slice(1);
+            // Determine whether the in-flight operation is still needed.
+            const inFlightStillNeeded =
+              (context.inFlightSegmentId !== null &&
+                allTasks.some((t) => t.type === 'append-segment' && t.meta.id === context.inFlightSegmentId)) ||
+              (context.inFlightInitTrackId !== null &&
+                allTasks.some((t) => t.type === 'append-init' && t.meta.trackId === context.inFlightInitTrackId));
 
-      try {
-        await executeLoadTask(task);
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          // Abort is handled in the post-task check below.
-        } else {
-          console.error('Unexpected error in segment loader:', error);
-          // Non-abort error (e.g. fetch failure on init): don't continue with
-          // remaining tasks in this sequence — they depend on the failed step.
-          // A pending replacement plan (if any) will still be picked up below.
-          scheduled = [];
-        }
-      }
-
-      if (pendingTasks !== null) {
-        // A new plan arrived while this task was running — switch to it.
-        scheduled = pendingTasks;
-        pendingTasks = null;
-        abortController = new AbortController();
-      } else if (abortController.signal.aborted) {
-        // Aborted with no replacement plan — stop.
-        break;
-      }
-    }
-
-    abortController = null;
-    running = false;
-  };
-
-  return {
-    send(message: SegmentLoaderMessage) {
-      if (destroyed) return;
-
-      const allTasks = planTasks(message);
-
-      if (!running) {
-        if (allTasks.length === 0) return;
-        runScheduled(allTasks);
-        return;
-      }
-
-      // Determine whether the in-flight operation is still needed for the new plan.
-      const inFlightStillNeeded =
-        (inFlightSegmentId !== null &&
-          allTasks.some((t) => t.type === 'append-segment' && t.meta.id === inFlightSegmentId)) ||
-        (inFlightInitTrackId !== null &&
-          allTasks.some((t) => t.type === 'append-init' && t.meta.trackId === inFlightInitTrackId));
-
-      if (inFlightStillNeeded) {
-        // Continue: the in-flight operation covers something the new plan needs.
-        // Queue everything except the in-flight item — it will complete on its own.
-        pendingTasks = allTasks.filter(
-          (t) =>
-            !(t.type === 'append-segment' && t.meta.id === inFlightSegmentId) &&
-            !(t.type === 'append-init' && t.meta.trackId === inFlightInitTrackId)
-        );
-      } else {
-        // Preempt: in-flight work is not needed for the new plan. Abort and replan.
-        pendingTasks = allTasks;
-        abortController?.abort();
-        // Cancel SourceBufferActor tasks when there's a segment in-flight (always
-        // discard) or when a track switch is happening (new track's init follows).
-        // For same-track seek with an in-flight init, we intentionally skip cancel
-        // so the init commits — executeLoadTask handles the waitForIdle in that case.
-        const cancelSourceBuffer =
-          inFlightSegmentId !== null ||
-          (inFlightInitTrackId !== null &&
-            allTasks.some((t) => t.type === 'append-init' && t.meta.trackId !== inFlightInitTrackId));
-        if (cancelSourceBuffer) {
-          sourceBufferActor.send({ type: 'cancel' });
-        }
-      }
+            if (inFlightStillNeeded) {
+              // Continue: abort only the pending queue, let the in-flight task finish.
+              // Schedule everything except the in-flight item — it covers that slot.
+              runner.abortPending();
+              scheduleAll(
+                allTasks.filter(
+                  (t) =>
+                    !(t.type === 'append-segment' && t.meta.id === context.inFlightSegmentId) &&
+                    !(t.type === 'append-init' && t.meta.trackId === context.inFlightInitTrackId)
+                ),
+                ctx
+              );
+            } else {
+              // Preempt: abort everything and replan.
+              runner.abortAll();
+              // Cancel SourceBufferActor tasks when a segment is in-flight (always
+              // discard) or when a track switch is happening (new track's init follows).
+              // For a same-track seek with an in-flight init, skip cancel — the task's
+              // signal is not aborted (abortAll was called on the runner, but the init
+              // task already completed or will complete via its own signal path).
+              const cancelSourceBuffer =
+                context.inFlightSegmentId !== null ||
+                (context.inFlightInitTrackId !== null &&
+                  allTasks.some((t) => t.type === 'append-init' && t.meta.trackId !== context.inFlightInitTrackId));
+              if (cancelSourceBuffer) {
+                sourceBufferActor.send({ type: 'cancel' });
+              }
+              scheduleAll(allTasks, ctx);
+            }
+          },
+        },
+      },
     },
-
-    destroy() {
-      destroyed = true;
-      abortController?.abort();
-    },
-  };
+  });
 }

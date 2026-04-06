@@ -269,9 +269,14 @@ export class SerialRunner {
     );
   }
 
-  abortAll(): void {
+  /** Aborts and clears queued tasks without touching the in-flight task. */
+  abortPending(): void {
     for (const task of this.#pending) task.abort();
     this.#pending.clear();
+  }
+
+  abortAll(): void {
+    this.abortPending();
     this.#current?.abort();
   }
 

@@ -481,6 +481,78 @@ describe('SerialRunner', () => {
     expect(receivedSignal?.aborted).toBe(true);
   });
 
+  it('abortPending() aborts queued tasks but not the in-flight task', async () => {
+    const runner = new SerialRunner();
+
+    let resolveFirst!: () => void;
+    let firstSignal: AbortSignal | undefined;
+    const first = new Task(
+      async (signal) => {
+        firstSignal = signal;
+        await new Promise<void>((resolve) => {
+          resolveFirst = resolve;
+        });
+      },
+      { id: '1' }
+    );
+
+    let secondSignal: AbortSignal | undefined;
+    const second = new Task(
+      async (signal) => {
+        secondSignal = signal;
+      },
+      { id: '2' }
+    );
+
+    runner.schedule(first);
+    const p2 = runner.schedule(second);
+
+    await vi.waitFor(() => expect(first.status).toBe('running'));
+
+    runner.abortPending();
+
+    // In-flight task is unaffected
+    expect(firstSignal?.aborted).toBe(false);
+
+    // Queued task receives aborted signal when it runs
+    resolveFirst();
+    await p2;
+    expect(secondSignal?.aborted).toBe(true);
+  });
+
+  it('abortPending() does not affect the in-flight task — it completes normally', async () => {
+    const runner = new SerialRunner();
+    const results: string[] = [];
+
+    let resolveFirst!: () => void;
+    const first = new Task(
+      async () => {
+        await new Promise<void>((r) => {
+          resolveFirst = r;
+        });
+        results.push('first-done');
+      },
+      { id: '1' }
+    );
+    const second = new Task(
+      async () => {
+        results.push('second-done');
+      },
+      { id: '2' }
+    );
+
+    runner.schedule(first);
+    runner.schedule(second);
+
+    await vi.waitFor(() => expect(first.status).toBe('running'));
+    runner.abortPending();
+    resolveFirst();
+
+    await vi.waitFor(() => expect(first.status).toBe('done'));
+    // first completed, second ran (with aborted signal) but we only assert first completed
+    expect(results).toContain('first-done');
+  });
+
   it('abortAll() aborts the in-flight task', async () => {
     const runner = new SerialRunner();
     let taskSignal: AbortSignal | undefined;
