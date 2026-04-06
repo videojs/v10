@@ -1,5 +1,158 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.14...@videojs/skins@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.13...@videojs/skins@10.0.0-beta.14) (2026-04-03)
+
+
+### Features
+
+* **html:** add ui bundles for eject ([#1206](https://github.com/videojs/v10/issues/1206)) ([0ed7bf0](https://github.com/videojs/v10/commit/0ed7bf0653b373a353c039fac1aa2bca4fa2973e))
+
+
+### Bug Fixes
+
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.14
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.12...@videojs/skins@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.13
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.11...@videojs/skins@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* **packages:** error dialog component ([#1077](https://github.com/videojs/v10/issues/1077)) ([3430fe1](https://github.com/videojs/v10/commit/3430fe1a493e4bee34f03112206a0cb3cf9d88cf))
+
+
+### Bug Fixes
+
+* **skin:** responsive design fixes and improvements ([#1129](https://github.com/videojs/v10/issues/1129)) ([1082693](https://github.com/videojs/v10/commit/10826932be7861ebf5df8c66db7811c0510339f4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.12
+
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.10...@videojs/skins@10.0.0-beta.11) (2026-03-24)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.11
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.9...@videojs/skins@10.0.0-beta.10) (2026-03-23)
+
+
+### Bug Fixes
+
+* **skin:** fix button text alignment and text shadow ([#1091](https://github.com/videojs/v10/issues/1091)) ([4af0f66](https://github.com/videojs/v10/commit/4af0f664625f3158c25788b96ef175f6866293a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.10
+
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.8...@videojs/skins@10.0.0-beta.9) (2026-03-23)
+
+
+### Features
+
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+
+
+### Bug Fixes
+
+* **skin:** extract transition properties into CSS custom properties ([#1075](https://github.com/videojs/v10/issues/1075)) ([657e711](https://github.com/videojs/v10/commit/657e7111b423ac2d2a1d0c6422b88297f40e2b04))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.9
+
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.7...@videojs/skins@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.8
+
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.6...@videojs/skins@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* **packages:** add poster component to video skins ([#994](https://github.com/videojs/v10/issues/994)) ([59bbf6c](https://github.com/videojs/v10/commit/59bbf6c20924ec04e559fe23cbc1a0ad8c8ca080))
+* **skin:** add --media-color-primary customization ([#957](https://github.com/videojs/v10/issues/957)) ([0e9f537](https://github.com/videojs/v10/commit/0e9f5376e1756b66a06bfa7ece33d03f5526f927))
+* **skin:** add pip-enter and pip-exit icons ([#1015](https://github.com/videojs/v10/issues/1015)) ([81781ca](https://github.com/videojs/v10/commit/81781ca5854f4943b533073b1875b127308a5419))
+
+
+### Bug Fixes
+
+* **skin:** add subtle control transitions on touch devices ([#985](https://github.com/videojs/v10/issues/985)) ([7e0827c](https://github.com/videojs/v10/commit/7e0827c330dc796aa0375cd5839fc4fc1661f055))
+* **skin:** bake in safari layout fix into skins ([#954](https://github.com/videojs/v10/issues/954)) ([177bd26](https://github.com/videojs/v10/commit/177bd26c1fae2ff436e614a87614841a07b836fd))
+* **skin:** fixes for react poster image alignment ([#1003](https://github.com/videojs/v10/issues/1003)) ([5c7cafc](https://github.com/videojs/v10/commit/5c7cafca9b7bf08c0d555c76bccb9630c2e3e9a9))
+* **skin:** hide volume popover when volume control is unsupported ([#1025](https://github.com/videojs/v10/issues/1025)) ([c09dbdd](https://github.com/videojs/v10/commit/c09dbdd121f2b8bb01e42d79350bf7a7acf09f28))
+* **skin:** remove overflow in minimal video skin ([#993](https://github.com/videojs/v10/issues/993)) ([89d9e15](https://github.com/videojs/v10/commit/89d9e15bb3a3c6328920693387bed4a4c2607368))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.5...@videojs/skins@10.0.0-beta.6) (2026-03-15)
 
 

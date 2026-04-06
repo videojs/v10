@@ -57,7 +57,7 @@ function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
   const src = url.trim() || getDefaultSourceUrl(renderer);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
-  return `<${tag} slot="media" src="${src}"${playsInline}></${tag}>`;
+  return `<${tag} src="${src}"${playsInline}></${tag}>`;
 }
 
 function getDefaultSourceUrl(renderer: Renderer): string {
@@ -121,15 +121,13 @@ function generateJS(useCase: UseCase, skin: Skin, renderer: Renderer): string {
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
-import '@videojs/html/background/skin.css';
 import '@videojs/html/background/video';${mediaImport}`;
   }
   const { group, skinFile } = getSkinImportParts(skin);
   const mediaSubpath = getMediaImportSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
   return `import '@videojs/html/${group}/player';
-import '@videojs/html/${group}/${skinFile}';
-import '@videojs/html/${group}/${skinFile}.css';${mediaImport}`;
+import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 }
 
 export default function HTMLUsageCodeBlock() {

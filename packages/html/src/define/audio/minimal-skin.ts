@@ -1,43 +1,44 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render/minimal';
-import { createStyles, SkinMixin } from '../skin-mixin';
+import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+import { safeDefine } from '../safe-define';
+import { SkinElement } from '../skin-element';
 import styles from './minimal-skin.css?inline';
 
-// Side-effect imports: register all custom elements used in the template.
-import '../media/container';
-import '../ui/mute-button';
-import '../ui/play-button';
-import '../ui/playback-rate-button';
-import '../ui/popover';
-import '../ui/seek-button';
-import '../ui/time';
-import '../ui/time-slider';
-import '../ui/tooltip';
-import '../ui/tooltip-group';
-import '../ui/volume-slider';
+// Register the player, container, and all UI custom elements.
+import './minimal-ui';
 
 const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--audio">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
+
+      <media-error-dialog class="media-error">
+        <div class="media-error__dialog">
+          <div class="media-error__content">
+            <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+          </div>
+          <div class="media-error__actions">
+            <media-alert-dialog-close class="media-button media-button--subtle">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <div class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
-            <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
+            <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
               ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
-              <span class="media-tooltip-label media-tooltip-label--play">Play</span>
-              <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
-            </media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek media-icon--flipped' })}
                 <span class="media-icon__label">${SEEK_TIME}</span>
@@ -47,7 +48,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek' })}
                 <span class="media-icon__label">${SEEK_TIME}</span>
@@ -59,10 +60,10 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-time-controls">
-            <media-time-group class="media-time">
-              <media-time type="current" class="media-time__value media-time__value--current"></media-time>
-              <media-time-separator class="media-time__separator"></media-time-separator>
-              <media-time type="duration" class="media-time__value media-time__value--duration"></media-time>
+            <media-time-group class="media-time-group">
+              <media-time type="current" class="media-time media-time--current"></media-time>
+              <media-time-separator class="media-time-separator"></media-time-separator>
+              <media-time type="duration" class="media-time media-time--duration"></media-time>
             </media-time-group>
 
             <media-time-slider class="media-slider">
@@ -75,13 +76,13 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--icon media-button--playback-rate">
+            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--subtle media-button--icon media-button--playback-rate">
             </media-playback-rate-button>
             <media-tooltip id="playback-rate-tooltip" side="top" class="media-tooltip">
               Toggle playback rate
             </media-tooltip>
 
-            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--icon media-button--mute">
+            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
@@ -102,13 +103,13 @@ function getTemplateHTML() {
   `;
 }
 
-export class MinimalAudioSkinElement extends SkinMixin(ReactiveElement) {
+export class MinimalAudioSkinElement extends SkinElement {
   static readonly tagName = 'audio-minimal-skin';
-  static styles = createStyles(styles);
-  static getTemplateHTML = getTemplateHTML;
+  static styles = createShadowStyle(styles);
+  static template = createTemplate(getTemplateHTML());
 }
 
-customElements.define(MinimalAudioSkinElement.tagName, MinimalAudioSkinElement);
+safeDefine(MinimalAudioSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {

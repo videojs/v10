@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface PlayButtonProps {
   /** Custom label for the button. */
@@ -11,13 +13,20 @@ export interface PlayButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'> {}
+export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'>, ButtonState {}
 
 export class PlayButtonCore {
   static readonly defaultProps: NonNullableObject<PlayButtonProps> = {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<PlayButtonState>({
+    paused: true,
+    ended: false,
+    started: false,
+    label: '',
+  });
 
   #props = { ...PlayButtonCore.defaultProps };
   #media: MediaPlaybackState | null = null;
@@ -57,11 +66,11 @@ export class PlayButtonCore {
 
   getState(): PlayButtonState {
     const media = this.#media!;
-    return {
-      paused: media.paused,
-      ended: media.ended,
-      started: media.started,
-    };
+
+    this.state.patch({ paused: media.paused, ended: media.ended, started: media.started });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   async toggle(media: MediaPlaybackState): Promise<void> {

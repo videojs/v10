@@ -5,8 +5,8 @@
   "globalEnv": ["CONTEXT", "DEPLOY_PRIME_URL"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".netlify/**"]
+      "dependsOn": ["^build", "^build:cdn"],
+      "outputs": ["dist/**", "types/**", "*.tsbuildinfo", ".netlify/**"]
     },
     "build:cdn": {
       "dependsOn": ["build"],

@@ -1,25 +1,11 @@
-import { DashCustomMedia } from '@videojs/core/dom/media/dash';
+import { DashCustomMedia, DashMediaDelegate } from '@videojs/core/dom/media/dash';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { MediaPropsMixin } from '../../utils/media-props-mixin';
 
-export class DashVideo extends DashCustomMedia {
-  static getTemplateHTML(attrs: Record<string, string>): string {
-    const { src, ...rest } = attrs;
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return super.getTemplateHTML(rest);
-  }
-
+export class DashVideo extends MediaPropsMixin(MediaAttachMixin(DashCustomMedia), DashMediaDelegate) {
   constructor() {
     super();
     this.attach(this.target);
-  }
-
-  attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-    if (attrName !== 'src') {
-      super.attributeChangedCallback(attrName, oldValue, newValue);
-    }
-
-    if (attrName === 'src' && oldValue !== newValue) {
-      this.src = newValue ?? '';
-    }
   }
 
   disconnectedCallback(): void {

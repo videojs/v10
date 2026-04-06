@@ -1,11 +1,16 @@
 import { ReactiveElement } from '@videojs/element';
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { ensureGlobalStyle, namedNodeMapToObject } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
+import styles from './skin.css?inline';
+
+const STYLES_ID = '__media-background-styles';
 
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
     <media-container>
-      <slot name="media" slot="media"></slot>
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
+      <slot name="media"></slot>
+      <slot></slot>
     </media-container>
   `;
 }
@@ -17,6 +22,8 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
 
   constructor() {
     super();
+
+    ensureGlobalStyle(STYLES_ID, styles);
 
     if (!this.shadowRoot) {
       this.attachShadow((this.constructor as typeof BackgroundVideoSkinElement).shadowRootOptions);

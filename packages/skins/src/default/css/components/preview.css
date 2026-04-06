@@ -4,6 +4,7 @@
 .media-default-skin .media-preview {
   background-color: oklch(0 0 0 / 0.9);
   border-radius: 0.75rem;
+  pointer-events: none;
 
   & .media-preview__thumbnail {
     display: block;
@@ -20,12 +21,11 @@
     }
   }
 
-  & .media-preview__timestamp {
+  & .media-preview__time {
     position: absolute;
     bottom: 0.5rem;
     inset-inline: 0;
     text-align: center;
-    font-variant-numeric: tabular-nums;
   }
 
   & .media-overlay {
@@ -36,7 +36,7 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    translate: -50% -50%;
     opacity: 0;
   }
 

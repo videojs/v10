@@ -1,286 +1,169 @@
 import { describe, expect, it } from 'vitest';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation, TextSelectionSet } from '../../../core/types';
-import {
-  canSetupTextTracks,
-  setupTextTracks,
-  shouldSetupTextTracks,
-  type TextTrackOwners,
-  type TextTrackState,
-} from '../setup-text-tracks';
+import { setupTextTracks, type TextTrackOwners, type TextTrackState } from '../setup-text-tracks';
 
-describe('setupTextTracks', () => {
-  describe('canSetupTextTracks', () => {
-    it('returns false when no mediaElement', () => {
-      const state: TextTrackState = {
-        presentation: {
-          id: 'pres-1',
-          url: 'http://example.com/playlist.m3u8',
-          selectionSets: [],
-        },
-      };
-      const owners: TextTrackOwners = {};
+function setupSetupTextTracks(initialState: TextTrackState = {}, initialOwners: TextTrackOwners = {}) {
+  const state = signal<TextTrackState>(initialState);
+  const owners = signal<TextTrackOwners>(initialOwners);
+  const cleanup = setupTextTracks({ state, owners });
+  return { state, owners, cleanup };
+}
 
-      expect(canSetupTextTracks(state, owners)).toBe(false);
-    });
-
-    it('returns false when no presentation', () => {
-      const state: TextTrackState = {};
-      const owners: TextTrackOwners = {
-        mediaElement: document.createElement('video'),
-      };
-
-      expect(canSetupTextTracks(state, owners)).toBe(false);
-    });
-
-    it('returns false when presentation not resolved (no selectionSets)', () => {
-      const state: TextTrackState = {
-        presentation: {
-          id: 'pres-1',
-          url: 'http://example.com/playlist.m3u8',
-          selectionSets: [],
-        },
-      };
-      const owners: TextTrackOwners = {
-        mediaElement: document.createElement('video'),
-      };
-
-      expect(canSetupTextTracks(state, owners)).toBe(false);
-    });
-
-    it('returns true when mediaElement and presentation resolved with text tracks', () => {
-      const state: TextTrackState = {
-        presentation: {
-          id: 'pres-1',
-          url: 'http://example.com/playlist.m3u8',
-          selectionSets: [
+const textPresentation: Presentation = {
+  id: 'pres-1',
+  url: 'http://example.com/playlist.m3u8',
+  selectionSets: [
+    {
+      id: 'text-set',
+      type: 'text',
+      switchingSets: [
+        {
+          id: 'text-switching',
+          type: 'text',
+          tracks: [
             {
-              id: 'text-set',
               type: 'text',
-              switchingSets: [
-                {
-                  id: 'text-switching',
-                  type: 'text',
-                  tracks: [
-                    {
-                      type: 'text',
-                      id: 'text-en',
-                      url: 'http://example.com/text-en.m3u8',
-                      bandwidth: 256,
-                      mimeType: 'text/vtt',
-                      codecs: [],
-                      groupId: 'subs',
-                      label: 'English',
-                      kind: 'subtitles',
-                      language: 'en',
-                    },
-                  ],
-                },
-              ],
+              id: 'text-en',
+              url: 'http://example.com/text-en.m3u8',
+              bandwidth: 256,
+              mimeType: 'text/vtt',
+              codecs: [],
+              groupId: 'subs',
+              label: 'English',
+              kind: 'subtitles',
+              language: 'en',
+            },
+            {
+              type: 'text',
+              id: 'text-es',
+              url: 'http://example.com/text-es.m3u8',
+              bandwidth: 256,
+              mimeType: 'text/vtt',
+              codecs: [],
+              groupId: 'subs',
+              label: 'Spanish',
+              kind: 'subtitles',
+              language: 'es',
+              default: true,
             },
           ],
         },
-      };
-      const owners: TextTrackOwners = {
-        mediaElement: document.createElement('video'),
-      };
+      ],
+    } as TextSelectionSet,
+  ],
+};
 
-      expect(canSetupTextTracks(state, owners)).toBe(true);
-    });
+describe('setupTextTracks', () => {
+  it('creates track elements when mediaElement and presentation ready', async () => {
+    const mediaElement = document.createElement('video');
+
+    const { owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation }, { mediaElement });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(owners.get().textTracks?.size).toBe(2);
+    expect(mediaElement.children.length).toBe(2);
+
+    const track1 = mediaElement.children[0] as HTMLTrackElement;
+    expect(track1.tagName).toBe('TRACK');
+    expect(track1.id).toBe('text-en');
+    expect(track1.kind).toBe('subtitles');
+    expect(track1.label).toBe('English');
+    expect(track1.srclang).toBe('en');
+    expect(track1.src).toBe('http://example.com/text-en.m3u8');
+    expect(track1.default).toBe(false);
+
+    const track2 = mediaElement.children[1] as HTMLTrackElement;
+    expect(track2.tagName).toBe('TRACK');
+    expect(track2.id).toBe('text-es');
+    expect(track2.kind).toBe('subtitles');
+    expect(track2.label).toBe('Spanish');
+    expect(track2.srclang).toBe('es');
+    expect(track2.src).toBe('http://example.com/text-es.m3u8');
+    expect(track2.default).toBe(true);
+
+    cleanup();
   });
 
-  describe('shouldSetupTextTracks', () => {
-    it('returns true when textTracks not set', () => {
-      const owners: TextTrackOwners = {
-        mediaElement: document.createElement('video'),
-      };
+  it('waits for mediaElement before creating tracks', async () => {
+    const { owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation });
 
-      expect(shouldSetupTextTracks(owners)).toBe(true);
-    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(owners.get().textTracks).toBeUndefined();
 
-    it('returns false when textTracks already set', () => {
-      const owners: TextTrackOwners = {
-        mediaElement: document.createElement('video'),
-        textTracks: new Map(),
-      };
+    const mediaElement = document.createElement('video');
+    owners.set({ ...owners.get(), mediaElement });
 
-      expect(shouldSetupTextTracks(owners)).toBe(false);
-    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(owners.get().textTracks?.size).toBe(2);
+
+    cleanup();
   });
 
-  describe('setupTextTracks orchestration', () => {
-    it('creates track elements when mediaElement and presentation ready', async () => {
-      const presentation: Presentation = {
-        id: 'pres-1',
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            id: 'text-set',
-            type: 'text',
-            switchingSets: [
-              {
-                id: 'text-switching',
-                type: 'text',
-                tracks: [
-                  {
-                    type: 'text',
-                    id: 'text-en',
-                    url: 'http://example.com/text-en.m3u8',
-                    bandwidth: 256,
-                    mimeType: 'text/vtt',
-                    codecs: [],
-                    groupId: 'subs',
-                    label: 'English',
-                    kind: 'subtitles',
-                    language: 'en',
-                  },
-                  {
-                    type: 'text',
-                    id: 'text-es',
-                    url: 'http://example.com/text-es.m3u8',
-                    bandwidth: 256,
-                    mimeType: 'text/vtt',
-                    codecs: [],
-                    groupId: 'subs',
-                    label: 'Spanish',
-                    kind: 'subtitles',
-                    language: 'es',
-                    default: true,
-                  },
-                ],
-              },
-            ],
-          } as TextSelectionSet,
-        ],
-      };
+  it('waits for presentation before creating tracks', async () => {
+    const mediaElement = document.createElement('video');
+    const { state, owners, cleanup } = setupSetupTextTracks({}, { mediaElement });
 
-      const state = createState<TextTrackState>({});
-      const owners = createState<TextTrackOwners>({});
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(owners.get().textTracks).toBeUndefined();
 
-      const cleanup = setupTextTracks({ state, owners });
+    state.set({ ...state.get(), presentation: textPresentation });
 
-      // Patch owners first (mediaElement)
-      const mediaElement = document.createElement('video');
-      owners.patch({ mediaElement });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(owners.get().textTracks?.size).toBe(2);
 
-      // Then patch state (presentation)
-      state.patch({ presentation });
+    cleanup();
+  });
 
-      // Wait for orchestration to run
-      await new Promise((resolve) => setTimeout(resolve, 50));
+  it('does not create track elements when no text tracks in presentation', async () => {
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [],
+    };
 
-      // Verify track elements created
-      expect(owners.current.textTracks).toBeDefined();
-      expect(owners.current.textTracks?.size).toBe(2);
+    const mediaElement = document.createElement('video');
+    const { owners, cleanup } = setupSetupTextTracks({ presentation }, { mediaElement });
 
-      // Verify track elements in DOM
-      expect(mediaElement.children.length).toBe(2);
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Verify first track element
-      const track1 = mediaElement.children[0] as HTMLTrackElement;
-      expect(track1.tagName).toBe('TRACK');
-      expect(track1.id).toBe('text-en');
-      expect(track1.kind).toBe('subtitles');
-      expect(track1.label).toBe('English');
-      expect(track1.srclang).toBe('en');
-      expect(track1.src).toBe('http://example.com/text-en.m3u8');
-      expect(track1.default).toBe(false);
+    expect(owners.get().textTracks).toBeUndefined();
+    expect(mediaElement.children.length).toBe(0);
 
-      // Verify second track element
-      const track2 = mediaElement.children[1] as HTMLTrackElement;
-      expect(track2.tagName).toBe('TRACK');
-      expect(track2.id).toBe('text-es');
-      expect(track2.kind).toBe('subtitles');
-      expect(track2.label).toBe('Spanish');
-      expect(track2.srclang).toBe('es');
-      expect(track2.src).toBe('http://example.com/text-es.m3u8');
-      expect(track2.default).toBe(true);
+    cleanup();
+  });
 
-      cleanup();
-    });
+  it('only runs once (idempotent)', async () => {
+    const mediaElement = document.createElement('video');
 
-    it('does not create track elements when no text tracks', async () => {
-      const presentation: Presentation = {
-        id: 'pres-1',
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [],
-      };
+    const { state, owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation }, { mediaElement });
 
-      const state = createState<TextTrackState>({});
-      const owners = createState<TextTrackOwners>({});
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const cleanup = setupTextTracks({ state, owners });
+    const firstTrackMap = owners.get().textTracks;
+    expect(firstTrackMap?.size).toBe(2);
+    expect(mediaElement.children.length).toBe(2);
 
-      const mediaElement = document.createElement('video');
-      owners.patch({ mediaElement });
-      state.patch({ presentation });
+    state.set({ ...state.get(), selectedTextTrackId: 'text-en' });
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Should not create textTracks map when no tracks
-      expect(owners.current.textTracks).toBeUndefined();
-      expect(mediaElement.children.length).toBe(0);
+    expect(owners.get().textTracks).toBe(firstTrackMap);
+    expect(mediaElement.children.length).toBe(2);
 
-      cleanup();
-    });
+    cleanup();
+  });
 
-    it('only runs once (idempotent)', async () => {
-      const presentation: Presentation = {
-        id: 'pres-1',
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            id: 'text-set',
-            type: 'text',
-            switchingSets: [
-              {
-                id: 'text-switching',
-                type: 'text',
-                tracks: [
-                  {
-                    type: 'text',
-                    id: 'text-en',
-                    url: 'http://example.com/text-en.m3u8',
-                    bandwidth: 256,
-                    mimeType: 'text/vtt',
-                    codecs: [],
-                    groupId: 'subs',
-                    label: 'English',
-                    kind: 'subtitles',
-                    language: 'en',
-                  },
-                ],
-              },
-            ],
-          } as TextSelectionSet,
-        ],
-      };
+  it('removes track elements on cleanup', async () => {
+    const mediaElement = document.createElement('video');
 
-      const state = createState<TextTrackState>({});
-      const owners = createState<TextTrackOwners>({});
+    const { cleanup } = setupSetupTextTracks({ presentation: textPresentation }, { mediaElement });
 
-      const cleanup = setupTextTracks({ state, owners });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mediaElement.children.length).toBe(2);
 
-      const mediaElement = document.createElement('video');
-      owners.patch({ mediaElement });
-      state.patch({ presentation });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const firstTrackMap = owners.current.textTracks;
-      expect(firstTrackMap?.size).toBe(1);
-      expect(mediaElement.children.length).toBe(1);
-
-      // Trigger another state update
-      state.patch({ selectedTextTrackId: 'text-en' });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // Should not create duplicate track elements
-      expect(owners.current.textTracks).toBe(firstTrackMap);
-      expect(mediaElement.children.length).toBe(1);
-
-      cleanup();
-    });
+    cleanup();
+    expect(mediaElement.children.length).toBe(0);
   });
 });

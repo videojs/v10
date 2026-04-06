@@ -94,6 +94,12 @@ Sometimes you may want to do (non-dev) builds, say, to validate the full build p
 pnpm build:packages
 ```
 
+To build the sandbox (and its package dependencies):
+
+```sh
+pnpm build:sandbox
+```
+
 To build all workspace packages and applications:
 
 ```sh

@@ -129,13 +129,12 @@ const jsonLdSchema = createTechArticleSchema({
     >
       <article
         class="mb-18 flex-1"
-        data-pagefind-body
+        data-search-content
         data-llms-content
         data-llms-description={doc.data.description}
         data-framework={framework}
         data-site="docs"
         data-category={sections[0]}
-        data-pagefind-filter="framework[data-framework], section[data-site]"
       >
         <header
           class:list={[

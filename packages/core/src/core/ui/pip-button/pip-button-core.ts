@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface PiPButtonProps {
   /** Custom label for the button. */
@@ -11,7 +13,7 @@ export interface PiPButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'> {
+export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>, ButtonState {
   /** Whether picture-in-picture can be requested on this platform. */
   availability: MediaPictureInPictureState['pipAvailability'];
 }
@@ -21,6 +23,12 @@ export class PiPButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<PiPButtonState>({
+    pip: false,
+    availability: 'available',
+    label: '',
+  });
 
   #props = { ...PiPButtonCore.defaultProps };
   #media: MediaPictureInPictureState | null = null;
@@ -59,10 +67,10 @@ export class PiPButtonCore {
 
   getState(): PiPButtonState {
     const media = this.#media!;
-    return {
-      pip: media.pip,
-      availability: media.pipAvailability,
-    };
+    this.state.patch({ pip: media.pip, availability: media.pipAvailability });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   async toggle(media: MediaPictureInPictureState): Promise<void> {

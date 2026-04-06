@@ -7,20 +7,17 @@ export const overlay = cn(
   // Default: hidden
   'opacity-0',
   'bg-linear-to-t from-black/70 via-black/50 via-[7.5rem] to-transparent',
-  'backdrop-blur-none backdrop-saturate-150',
-  // Transitions (fine pointer only)
-  '[@media(pointer:fine)]:transition-[opacity,backdrop-filter]',
-  '[@media(pointer:fine)]:ease-out',
-  '[@media(pointer:fine)]:duration-500 [@media(pointer:fine)]:delay-500',
+  'backdrop-blur-none backdrop-saturate-100',
+  // Transitions
+  'transition-[opacity,backdrop-filter]',
+  'duration-(--media-controls-transition-duration)',
+  'ease-out',
   // Shown when controls visible
   'peer-data-visible/controls:opacity-100',
-  '[@media(pointer:fine)]:peer-data-visible/controls:duration-150',
-  '[@media(pointer:fine)]:peer-data-visible/controls:delay-0',
   // Shown when error visible (+ blur)
+  // Light DOM: peer/error is a direct sibling (React)
   'peer-data-open/error:opacity-100',
-  '[@media(pointer:fine)]:peer-data-open/error:duration-150',
-  '[@media(pointer:fine)]:peer-data-open/error:delay-0',
-  'peer-data-open/error:backdrop-blur-lg',
-  // Reduced motion
-  '[@media(pointer:fine)]:motion-reduce:duration-100'
+  'peer-data-open/error:duration-(--media-error-dialog-transition-duration)',
+  'peer-data-open/error:delay-(--media-error-dialog-transition-delay)',
+  'peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-120'
 );

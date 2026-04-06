@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createState } from '../../core/state/create-state';
+import { signal } from '../../core/signals/primitives';
 import type { Presentation, VideoSelectionSet } from '../../core/types';
 import type { SegmentLoadingOwners, SegmentLoadingState } from '../features/load-segments';
 import { loadSegments } from '../features/load-segments';
@@ -131,7 +131,7 @@ describe('loadSegments — track switch', () => {
       ],
     });
 
-    const state = createState<SegmentLoadingState>({
+    const state = signal<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
@@ -139,7 +139,7 @@ describe('loadSegments — track switch', () => {
       currentTime: 5,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
 
@@ -147,7 +147,7 @@ describe('loadSegments — track switch', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     // ABR switches to track B
-    state.patch({ selectedVideoTrackId: 'track-b' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
 
     // Wait for task to process track switch
     await new Promise((r) => setTimeout(r, 50));
@@ -156,7 +156,7 @@ describe('loadSegments — track switch', () => {
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     // New track-b init should be committed.
-    const ctx = owners.current.videoBufferActor?.snapshot.context;
+    const ctx = owners.get().videoBufferActor?.snapshot.get().context;
     expect(ctx?.initTrackId).toBe('track-b');
 
     // Old track-a segments should be gone: time-aligned deduplication replaces
@@ -181,7 +181,7 @@ describe('loadSegments — track switch', () => {
     const videoBuffer = makeMockSourceBuffer();
     const videoBufferActor = createSourceBufferActor(videoBuffer);
 
-    const state = createState<SegmentLoadingState>({
+    const state = signal<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
@@ -189,14 +189,14 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
 
     // Wait for track-a init fetch to start (but leave it pending)
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
     // Switch tracks while track-a init is still in-flight
-    state.patch({ selectedVideoTrackId: 'track-b' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
 
     // Unblock the pending init fetch so the runner can progress
     resolve('https://example.com/track-a-init.mp4');
@@ -208,7 +208,7 @@ describe('loadSegments — track switch', () => {
 
     resolve('https://example.com/track-b-init.mp4');
 
-    await vi.waitFor(() => expect(owners.current.videoBufferActor?.snapshot.context.initTrackId).toBe('track-b'), {
+    await vi.waitFor(() => expect(owners.get().videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-b'), {
       timeout: 3000,
     });
 
@@ -231,7 +231,7 @@ describe('loadSegments — track switch', () => {
       ],
     });
 
-    const state = createState<SegmentLoadingState>({
+    const state = signal<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
@@ -239,13 +239,13 @@ describe('loadSegments — track switch', () => {
       currentTime: 25,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
 
     await new Promise((r) => setTimeout(r, 20));
 
     // Switch to track-b at currentTime=25
-    state.patch({ selectedVideoTrackId: 'track-b' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
@@ -281,14 +281,14 @@ describe('loadSegments — track switch', () => {
     // Actor starts fresh (no prior track)
     const videoBufferActor = createSourceBufferActor(videoBuffer);
 
-    const state = createState<SegmentLoadingState>({
+    const state = signal<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
       currentTime: 0,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
     await new Promise((r) => setTimeout(r, 50));

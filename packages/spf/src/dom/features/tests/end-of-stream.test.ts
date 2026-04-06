@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation, Segment, VideoTrack } from '../../../core/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../media/source-buffer-actor';
 import {
@@ -10,6 +10,13 @@ import {
   hasLastSegmentLoaded,
   shouldEndStream,
 } from '../end-of-stream';
+
+function setupEndOfStream(initialState: EndOfStreamState, initialOwners: EndOfStreamOwners) {
+  const state = signal<EndOfStreamState>(initialState);
+  const owners = signal<EndOfStreamOwners>(initialOwners);
+  const cleanup = endOfStream({ state, owners });
+  return { state, owners, cleanup };
+}
 
 // ============================================================================
 // Mock helpers
@@ -361,22 +368,18 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-    });
-
-    const cleanup = endOfStream({ state, owners });
+    const { cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-
     cleanup();
   });
 
@@ -384,23 +387,19 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(10);
     const mockMs = makeMediaSource();
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
     // Back buffer flushed, only last few segments remain — last segment still present
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
-    });
-
-    const cleanup = endOfStream({ state, owners });
+    const { cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
+      }
+    );
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-
     cleanup();
   });
 
@@ -413,28 +412,24 @@ describe('endOfStream', () => {
       (mockMs as unknown as { readyState: string }).readyState = 'ended';
     });
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-    });
-
-    const cleanup = endOfStream({ state, owners });
+    const { state, cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
 
     // Trigger another state change — readyState is 'ended' so must not call again
-    state.patch({ presentation: makePresentation(track) });
+    state.set({ ...state.get(), presentation: makePresentation(track) });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-
     cleanup();
   });
 
@@ -442,56 +437,56 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']), // missing seg-3
-    });
-
-    const cleanup = endOfStream({ state, owners });
+    const { cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']),
+      } // missing seg-3
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
-
     cleanup();
   });
 
   it('calls endOfStream() again after seek-back re-opens the MediaSource', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
+    // Reactive readyState signal — drives re-evaluation when MSE transitions readyState.
+    const msReadyState = signal<MediaSource['readyState']>('open');
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
+    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (mockMs as unknown as { readyState: string }).readyState = 'ended';
+      msReadyState.set('ended');
     });
 
-    const cleanup = endOfStream({ state, owners });
+    const { cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        mediaSourceReadyState: msReadyState,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
 
-    // First play-through: endOfStream() is called
+    // First play-through: endOfStream() is called, readyState transitions to 'ended'.
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
 
-    // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec
+    // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec.
+    // The reactive signal update drives re-evaluation — no owners.patch needed.
     (mockMs as unknown as { readyState: string }).readyState = 'open';
+    msReadyState.set('open');
 
-    // Patch owners with a new actor that still has the last segment
-    owners.patch({ videoBufferActor: makeActorWithSegments(['seg-2', 'seg-3']) });
-
-    // endOfStream() should be called again
+    // endOfStream() should be called again driven purely by the readyState signal.
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(2);
     });
-
     cleanup();
   });
 
@@ -499,17 +494,14 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-    });
-
-    const cleanup = endOfStream({ state, owners });
+    const { state, cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
@@ -519,11 +511,10 @@ describe('endOfStream', () => {
     (mockMs as unknown as { readyState: string }).readyState = 'ended';
 
     // Trigger a state change — should not call endOfStream() again
-    state.patch({ presentation: makePresentation(track) });
+    state.set({ ...state.get(), presentation: makePresentation(track) });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-
     cleanup();
   });
 
@@ -531,11 +522,6 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
     const neverAborted = new AbortController().signal;
-
-    const state = createState<EndOfStreamState>({
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    });
 
     // Start with only first two segments loaded
     const sourceBuffer = makeSourceBuffer();
@@ -546,13 +532,11 @@ describe('endOfStream', () => {
         { id: 'seg-1', startTime: 2.5, duration: 2.5, trackId: 'video-1' },
       ],
     });
-    const owners = createState<EndOfStreamOwners>({
-      mediaSource: mockMs,
-      videoBuffer: sourceBuffer,
-      videoBufferActor: actor,
-    });
 
-    const cleanup = endOfStream({ state, owners });
+    const { cleanup } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      { mediaSource: mockMs, videoBuffer: sourceBuffer, videoBufferActor: actor }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
@@ -578,7 +562,6 @@ describe('endOfStream', () => {
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-
     cleanup();
   });
 });

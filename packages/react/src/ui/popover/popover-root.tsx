@@ -70,7 +70,7 @@ export function PopoverRoot({
   });
 
   const anchorName = useSafeId();
-  const popupId = useSafeId('popup-');
+  const popupId = useSafeId('popup');
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {

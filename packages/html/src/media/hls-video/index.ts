@@ -1,12 +1,8 @@
-import { HlsCustomMedia } from '@videojs/core/dom/media/hls';
+import { HlsCustomMedia, HlsMediaDelegate } from '@videojs/core/dom/media/hls';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { MediaPropsMixin } from '../../utils/media-props-mixin';
 
-export class HlsVideo extends HlsCustomMedia {
-  static getTemplateHTML(attrs: Record<string, string>): string {
-    const { src, ...rest } = attrs;
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return super.getTemplateHTML(rest);
-  }
-
+export class HlsVideo extends MediaPropsMixin(MediaAttachMixin(HlsCustomMedia), HlsMediaDelegate) {
   constructor() {
     super();
     // TODO: If we like to support native media elements that
@@ -14,16 +10,6 @@ export class HlsVideo extends HlsCustomMedia {
     // attach the native element to the Media API after the native element
     // is appended to the DOM. This is currently not supported.
     this.attach(this.target);
-  }
-
-  attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-    if (attrName !== 'src') {
-      super.attributeChangedCallback(attrName, oldValue, newValue);
-    }
-
-    if (attrName === 'src' && oldValue !== newValue) {
-      this.src = newValue ?? '';
-    }
   }
 
   disconnectedCallback(): void {

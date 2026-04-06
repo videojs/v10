@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createEventStream } from '../../events/create-event-stream';
-import { createState } from '../../state/create-state';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '../../signals/primitives';
 import type {
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
@@ -8,8 +7,12 @@ import type {
   Presentation,
 } from '../../types';
 import { isResolvedTrack } from '../../types';
-import type { TrackResolutionAction, TrackResolutionState } from '../resolve-track';
+import type { TrackResolutionState } from '../resolve-track';
 import { resolveTrack } from '../resolve-track';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('resolveTrack (video)', () => {
   it('resolves unresolved video track', async () => {
@@ -42,15 +45,13 @@ describe('resolveTrack (video)', () => {
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedVideoTrackId: 'track-1',
     });
 
-    const events = createEventStream<TrackResolutionAction>();
-
     // Mock fetch to return media playlist with absolute URLs
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:7
@@ -63,18 +64,17 @@ http://example.com/segment2.m4s
     );
 
     // Act
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'video' as const });
 
     // Wait for resolution
     await vi.waitFor(() => {
-      const { presentation: currentPres } = state.current;
+      const { presentation: currentPres } = state.get();
       const track = findTrackById(currentPres!, 'track-1');
       expect(isResolvedTrack(track!)).toBe(true);
     });
 
     // Assert - track should now be resolved with segments
-    const resolvedPres = state.current.presentation!;
+    const resolvedPres = state.get().presentation!;
     const resolvedTrack = findTrackById(resolvedPres, 'track-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
@@ -87,7 +87,7 @@ http://example.com/segment2.m4s
   });
 
   it('does not resolve when track is already resolved', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     // Create presentation with already-resolved track
     const presentation: Presentation = {
@@ -125,14 +125,12 @@ http://example.com/segment2.m4s
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedVideoTrackId: 'track-1',
     });
 
-    const events = createEventStream<TrackResolutionAction>();
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'video' as const });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -142,7 +140,7 @@ http://example.com/segment2.m4s
   });
 
   it('does not resolve when no track is selected', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     const presentation: Presentation = {
       id: 'pres-1',
@@ -151,14 +149,12 @@ http://example.com/segment2.m4s
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedVideoTrackId: undefined,
     });
 
-    const events = createEventStream<TrackResolutionAction>();
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'video' as const });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -202,14 +198,12 @@ describe('resolveTrack (audio)', () => {
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedAudioTrackId: 'audio-1',
     });
 
-    const events = createEventStream<TrackResolutionAction>();
-
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:7
@@ -219,16 +213,15 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, events }, { type: 'audio' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'audio' as const });
 
     await vi.waitFor(() => {
-      const { presentation: currentPres } = state.current;
+      const { presentation: currentPres } = state.get();
       const track = findTrackById(currentPres!, 'audio-1');
       expect(isResolvedTrack(track!)).toBe(true);
     });
 
-    const resolvedPres = state.current.presentation!;
+    const resolvedPres = state.get().presentation!;
     const resolvedTrack = findTrackById(resolvedPres, 'audio-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
@@ -274,14 +267,12 @@ describe('resolveTrack (text)', () => {
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedTextTrackId: 'text-1',
     });
 
-    const events = createEventStream<TrackResolutionAction>();
-
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:3
@@ -294,16 +285,15 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, events }, { type: 'text' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'text' as const });
 
     await vi.waitFor(() => {
-      const { presentation: currentPres } = state.current;
+      const { presentation: currentPres } = state.get();
       const track = findTrackById(currentPres!, 'text-1');
       expect(isResolvedTrack(track!)).toBe(true);
     });
 
-    const resolvedPres = state.current.presentation!;
+    const resolvedPres = state.get().presentation!;
     const resolvedTrack = findTrackById(resolvedPres, 'text-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
@@ -350,11 +340,10 @@ describe('resolveTrack — concurrent resolution', () => {
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedVideoTrackId: 'track-a',
     });
-    const events = createEventStream<TrackResolutionAction>();
 
     const makePlaylist = (segUrl: string) => `#EXTM3U
 #EXT-X-TARGETDURATION:10
@@ -363,32 +352,31 @@ ${segUrl}
 #EXT-X-ENDLIST`;
 
     // Both fetches resolve immediately — concurrent resolution, no abort.
-    global.fetch = vi.fn().mockImplementation((requestOrUrl: Request | string) => {
-      const url = requestOrUrl instanceof Request ? requestOrUrl.url : requestOrUrl;
+    vi.spyOn(globalThis, 'fetch').mockImplementation((requestOrUrl: RequestInfo | URL) => {
+      const url = requestOrUrl instanceof Request ? requestOrUrl.url : String(requestOrUrl);
       if (url.includes('track-a')) return Promise.resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'video' as const });
 
     // While track-a resolution is in flight, switch to track-b.
-    state.patch({ selectedVideoTrackId: 'track-b' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
 
     // Both tracks should be resolved (concurrently, neither aborts the other).
     await vi.waitFor(() => {
-      const pres = state.current.presentation!;
+      const pres = state.get().presentation!;
       expect(isResolvedTrack(findTrackById(pres, 'track-a')!)).toBe(true);
       expect(isResolvedTrack(findTrackById(pres, 'track-b')!)).toBe(true);
     });
 
     // Each track URL should have been fetched exactly once.
-    const fetchedUrls = vi.mocked(global.fetch).mock.calls.map((call) => {
-      const arg = call[0];
+    const fetchedUrls = vi.mocked(globalThis.fetch).mock.calls.map((call) => {
+      const arg: RequestInfo | URL = call[0];
       return arg instanceof Request ? arg.url : String(arg);
     });
-    expect(fetchedUrls.filter((u) => u.includes('track-a'))).toHaveLength(1);
-    expect(fetchedUrls.filter((u) => u.includes('track-b'))).toHaveLength(1);
+    expect(fetchedUrls.filter((u: string) => u.includes('track-a'))).toHaveLength(1);
+    expect(fetchedUrls.filter((u: string) => u.includes('track-b'))).toHaveLength(1);
 
     cleanup();
   });
@@ -416,33 +404,32 @@ ${segUrl}
       startTime: 0,
     };
 
-    const state = createState<TrackResolutionState>({
+    const state = signal<TrackResolutionState>({
       presentation,
       selectedVideoTrackId: 'track-a',
     });
-    const events = createEventStream<TrackResolutionAction>();
 
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(`#EXTM3U
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(`#EXTM3U
 #EXT-X-TARGETDURATION:10
 #EXTINF:10.0,
 http://example.com/a-seg1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolveTrack({ state }, { type: 'video' as const });
 
     // Trigger multiple state changes while track-a is resolving.
-    state.patch({ selectedVideoTrackId: 'track-a' });
-    state.patch({ selectedVideoTrackId: 'track-a' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-a' });
+    state.set({ ...state.get(), selectedVideoTrackId: 'track-a' });
 
     await vi.waitFor(() => {
-      expect(isResolvedTrack(findTrackById(state.current.presentation!, 'track-a')!)).toBe(true);
+      expect(isResolvedTrack(findTrackById(state.get().presentation!, 'track-a')!)).toBe(true);
     });
 
     // Should only have been fetched once despite multiple state triggers.
-    expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     cleanup();
   });

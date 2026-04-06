@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
@@ -11,7 +13,7 @@ export interface PlaybackRateButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface PlaybackRateButtonState {
+export interface PlaybackRateButtonState extends ButtonState {
   rate: number;
 }
 
@@ -20,6 +22,11 @@ export class PlaybackRateButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<PlaybackRateButtonState>({
+    rate: 1,
+    label: '',
+  });
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
@@ -58,9 +65,10 @@ export class PlaybackRateButtonCore {
 
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
-    return {
-      rate: media.playbackRate,
-    };
+    this.state.patch({ rate: media.playbackRate });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   cycle(media: MediaPlaybackRateState): void {

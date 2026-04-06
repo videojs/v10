@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import Computer from '@/assets/icons/computer.svg?react';
+import Moon from '@/assets/icons/moon.svg?react';
+import Sun from '@/assets/icons/sun.svg?react';
 import { THEME_KEY } from '@/consts';
-import Computer from './icons/computer.svg?react';
-import Moon from './icons/moon.svg?react';
-import Sun from './icons/sun.svg?react';
 import ToggleGroup from './ToggleGroup';
 
 type Preference = 'system' | 'light' | 'dark';

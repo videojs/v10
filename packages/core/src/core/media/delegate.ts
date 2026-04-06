@@ -1,10 +1,18 @@
 import type { Constructor } from '@videojs/utils/types';
-
+import { bridgeEvents } from '../utils/bridge-events';
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
 export interface Delegate {
   attach?(target: EventTarget): void;
   detach?(): void;
+}
+
+export interface BaseType extends EventTarget {
+  attach?(target: EventTarget): void;
+  detach?(): void;
+  get?(prop: string): any;
+  set?(prop: string, val: any): void;
+  call?(prop: string, ...args: any[]): any;
 }
 
 /**
@@ -14,12 +22,20 @@ export interface Delegate {
  *
  * Works with both `CustomMediaMixin` and `ProxyMixin`.
  */
-export function DelegateMixin<Base extends Constructor<any>, D extends Constructor<Delegate>>(
+export function DelegateMixin<Base extends Constructor<BaseType>, D extends Constructor<Delegate>>(
   BaseClass: Base,
   DelegateClass: D
 ) {
-  class DelegateImpl extends (BaseClass as Constructor<any>) {
+  class DelegateImpl extends BaseClass {
     #delegate = new DelegateClass();
+
+    constructor(...args: any[]) {
+      super(...args);
+
+      if (this.#delegate instanceof EventTarget) {
+        bridgeEvents(this.#delegate, this);
+      }
+    }
 
     get(prop: string): any {
       if (prop in this.#delegate) {
@@ -44,8 +60,8 @@ export function DelegateMixin<Base extends Constructor<any>, D extends Construct
     }
 
     attach(target: EventTarget): void {
-      super.attach?.(target);
       this.#delegate.attach?.(target);
+      super.attach?.(target);
     }
 
     detach(): void {
@@ -58,12 +74,5 @@ export function DelegateMixin<Base extends Constructor<any>, D extends Construct
     defineClassPropHooks(DelegateImpl, proto);
   }
 
-  return DelegateImpl as unknown as Constructor<
-    InstanceType<Base> &
-      InstanceType<D> & {
-        attach(target: EventTarget): void;
-        detach(): void;
-      }
-  > &
-    Omit<Base, 'prototype'>;
+  return DelegateImpl as unknown as Constructor<InstanceType<Base> & InstanceType<D>> & Omit<Base, 'prototype'>;
 }

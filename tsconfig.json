@@ -18,6 +18,8 @@
 
     { "path": "packages/skins" },
 
+    { "path": "packages/spf" },
+
     { "path": "packages/html" },
     { "path": "packages/react" }
   ],

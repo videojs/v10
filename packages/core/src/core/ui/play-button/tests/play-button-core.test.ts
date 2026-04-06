@@ -21,6 +21,7 @@ function createState(overrides: Partial<PlayButtonState> = {}): PlayButtonState 
     paused: true,
     ended: false,
     started: false,
+    label: '',
     ...overrides,
   };
 }

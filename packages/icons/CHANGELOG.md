@@ -1,5 +1,131 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.14...@videojs/icons@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.13...@videojs/icons@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.14
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.12...@videojs/icons@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.13
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.11...@videojs/icons@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.12
+
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.10...@videojs/icons@10.0.0-beta.11) (2026-03-24)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.11
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.9...@videojs/icons@10.0.0-beta.10) (2026-03-23)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.10
+
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.8...@videojs/icons@10.0.0-beta.9) (2026-03-23)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.9
+
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.7...@videojs/icons@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.8
+
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.6...@videojs/icons@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* **skin:** add pip-enter and pip-exit icons ([#1015](https://github.com/videojs/v10/issues/1015)) ([81781ca](https://github.com/videojs/v10/commit/81781ca5854f4943b533073b1875b127308a5419))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.5...@videojs/icons@10.0.0-beta.6) (2026-03-15)
 
 

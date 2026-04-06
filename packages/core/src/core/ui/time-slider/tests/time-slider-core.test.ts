@@ -42,7 +42,7 @@ describe('TimeSliderCore', () => {
         value: 0,
         min: 0,
         max: 100,
-        commitThrottle: 100,
+        changeThrottle: 100,
       });
     });
   });

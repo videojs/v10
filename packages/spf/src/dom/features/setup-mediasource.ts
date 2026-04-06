@@ -1,8 +1,7 @@
-import { isNil } from '@videojs/utils/predicate';
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
-import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../media/mediasource-setup';
+import { attachMediaSource, createMediaSource, observeMediaSourceReadyState } from '../media/mediasource-setup';
 
 /**
  * State shape required for MediaSource setup.
@@ -17,22 +16,8 @@ export interface MediaSourceState {
 export interface MediaSourceOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
-}
-
-/**
- * Check if we have the minimum requirements to create MediaSource.
- */
-export function canSetup(state: MediaSourceState, owners: MediaSourceOwners): boolean {
-  return !isNil(owners.mediaElement) && !isNil(state.presentation?.url);
-}
-
-/**
- * Check if we should proceed with MediaSource creation.
- * Placeholder for future conditions (e.g., checking if already created).
- */
-export function shouldSetup(_state: MediaSourceState, owners: MediaSourceOwners): boolean {
-  // Don't create if we already have one
-  return isNil(owners.mediaSource);
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
 }
 
 /**
@@ -44,46 +29,52 @@ export function shouldSetup(_state: MediaSourceState, owners: MediaSourceOwners)
  *
  * Updates owners.mediaSource after successful setup.
  */
-export function setupMediaSource({
+export function setupMediaSource<S extends MediaSourceState, O extends MediaSourceOwners>({
   state,
   owners,
 }: {
-  state: WritableState<MediaSourceState>;
-  owners: WritableState<MediaSourceOwners>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
-  let settingUp = false;
-  let abortController: AbortController | null = null;
+  const abortController = new AbortController();
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [MediaSourceState, MediaSourceOwners]) => {
-      if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
+  // Get the latest mediaElement (even if nullish)
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  // Get the latest presentationUrl (even if nullish)
+  const presentationUrlSignal = computed(() => state.get().presentation?.url);
 
-      try {
-        settingUp = true;
-        abortController = new AbortController();
+  const canSetupSignal = computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
 
-        // Prefer ManagedMediaSource when available (Safari 17+). attachMediaSource
-        // handles the srcObject path and sets disableRemotePlayback automatically.
-        const mediaSource = createMediaSource({ preferManaged: true });
+  const mediaElementSrcSignal = computed(() => mediaElementSignal.get()?.src);
+  const mediaSourceSignal = computed(() => owners.get().mediaSource);
+  const shouldSetupSignal = computed(() => !mediaElementSrcSignal.get());
 
-        // Attach to element
-        attachMediaSource(mediaSource, currentOwners.mediaElement!);
+  // NOTE: This should be cleaner and less brittle if/when Reactors have their own internal finite state. This is planned as followup work.
+  // (here, e.g. something like: "preconditions_unmet"|"pending"|"setting_up"|"tearing_down"|"set_up")
+  // This should also avoid needing nested effect().
+  const cleanupEffect = effect(() => {
+    if (!canSetupSignal.get() || !shouldSetupSignal.get()) return;
+    const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
+    const { signal } = abortController;
 
-        // Wait for sourceopen — aborted if destroy() is called before it fires
-        await waitForSourceOpen(mediaSource, abortController.signal);
+    const mediaSource = createMediaSource({ preferManaged: true });
+    // NOTE: Consider making MediaSource an Actor and using this in it.
+    const mediaSourceReadyState = observeMediaSourceReadyState(mediaSource, signal);
+    attachMediaSource(mediaSource, mediaElement);
 
-        owners.patch({ mediaSource });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-        throw error;
-      } finally {
-        settingUp = false;
-      }
-    }
-  );
+    const cleanupOwnersUpdateEffect = effect(() => {
+      // If we already have a MediaSource or the *internal* mediaSource is not yet fully attached, wait to add it to owners;
+      if (!!mediaSourceSignal.get() || mediaSourceReadyState.get() !== 'open') return;
+      owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState }) as O);
+    });
+
+    return () => {
+      cleanupOwnersUpdateEffect();
+    };
+  });
 
   return () => {
     abortController?.abort();
-    unsubscribe();
+    cleanupEffect();
   };
 }

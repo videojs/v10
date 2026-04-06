@@ -104,6 +104,21 @@ describe('playbackFeature', () => {
       expect(store.state.ended).toBe(true);
     });
 
+    it('clears ended state on seeked event', () => {
+      const video = createMockVideo({ ended: true });
+
+      const store = createStore<PlayerTarget>()(playbackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.ended).toBe(true);
+
+      // Simulate seeking: browser clears ended when user seeks
+      Object.defineProperty(video, 'ended', { value: false, writable: false, configurable: true });
+      video.dispatchEvent(new Event('seeked'));
+
+      expect(store.state.ended).toBe(false);
+    });
+
     it('stops listening when store is destroyed', () => {
       const video = createMockVideo({});
 

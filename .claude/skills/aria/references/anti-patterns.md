@@ -215,6 +215,22 @@ Information must not rely on color alone (WCAG 1.4.1).
 
 ### No Reduced Motion Support
 
+It's not always required to completely nuke transitions/animations. Sometimes we can instead reduce their duration and delay. People enabling reduced motion often still benefit from some transition - it helps orientation and avoids jarring state changes.
+
+```css
+--transition-duration: 200ms;
+--animation-duration: 200ms;
+
+@media (prefers-reduced-motion: reduce) {
+  .popup {
+    --transition-duration: 50ms;
+    --animation-duration: 50ms;
+  }
+}
+```
+
+Remove non-essential motion - e.g. parallax, large transforms, bouncing, zooming, auto-playing animations.
+
 ```css
 .element {
   animation: bounce 1s infinite;

@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Poster Image
+   ========================================================================== */
+
+.media-default-skin media-poster,
+.media-default-skin > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.media-default-skin media-poster:not([data-visible]),
+.media-default-skin > img:not([data-visible]) {
+  opacity: 0;
+}
+.media-default-skin media-poster ::slotted(img),
+.media-default-skin media-poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+  border-radius: var(--media-video-border-radius);
+}
+.media-default-skin > img {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+  border-radius: inherit;
+}
+
+.media-default-skin:fullscreen media-poster ::slotted(img),
+.media-default-skin:fullscreen media-poster img,
+.media-default-skin:fullscreen > img {
+  object-fit: contain;
+}

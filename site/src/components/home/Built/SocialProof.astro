@@ -1,19 +1,17 @@
 ---
 import clsx from 'clsx';
-import {
-  AdobeLogo,
-  AmazonLogo,
-  AwgeLogo,
-  CNNLogo,
-  ConsumerReports,
-  CourseraLogo,
-  DropboxLogo,
-  LinkedinLogo,
-  SAPLogo,
-  TheOnionLogo,
-  UdemyLogo,
-  ZoomLogo,
-} from '../../icons/SocialProofLogos';
+import AdobeLogo from '@/assets/logos/adobe.svg?react';
+import AmazonLogo from '@/assets/logos/amazon.svg?react';
+import AwgeLogo from '@/assets/logos/awge.svg?react';
+import CNNLogo from '@/assets/logos/cnn.svg?react';
+import ConsumerReports from '@/assets/logos/consumer-reports.svg?react';
+import CourseraLogo from '@/assets/logos/coursera.svg?react';
+import DropboxLogo from '@/assets/logos/dropbox.svg?react';
+import LinkedinLogo from '@/assets/logos/linkedin.svg?react';
+import SAPLogo from '@/assets/logos/sap.svg?react';
+import TheOnionLogo from '@/assets/logos/the-onion.svg?react';
+import UdemyLogo from '@/assets/logos/udemy.svg?react';
+import ZoomLogo from '@/assets/logos/zoom.svg?react';
 import Marquee from './Marquee.astro';
 
 const LOGOS = [
@@ -49,7 +47,7 @@ const LOGOS = [
             index >= 10 ? "hidden md:flex" : "flex",
           )}
         >
-          <logo.Logo width="6" />
+          <logo.Logo width="6rem" />
         </div>
       ))
     }

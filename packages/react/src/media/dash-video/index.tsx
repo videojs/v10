@@ -1,25 +1,22 @@
-import { DashMedia } from '@videojs/core/dom/media/dash';
+import type { InferDelegateProps } from '@videojs/core';
+import { DashMedia, DashMediaDelegate } from '@videojs/core/dom/media/dash';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
-import { forwardRef, useMemo } from 'react';
-import { useMediaRegistration } from '../../player/context';
+import { forwardRef } from 'react';
 import { attachMediaElement } from '../../utils/attach-media-element';
 import { mediaProps } from '../../utils/media-props';
 import { useComposedRefs } from '../../utils/use-composed-refs';
-import { useDestroy } from '../../utils/use-destroy';
+import { useMediaInstance } from '../../utils/use-media-instance';
 
-export type DashVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>>;
+export type DashVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
+  InferDelegateProps<typeof DashMediaDelegate>;
 
 export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ children, ...props }, ref) => {
-  const mediaApi = useMemo(() => new DashMedia(), []);
-  const setMedia = useMediaRegistration();
-
-  useDestroy(mediaApi, () => {
-    setMedia?.(mediaApi);
-  });
+  const mediaApi = useMediaInstance(DashMedia);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, props)}>
+    <video ref={composedRef} {...mediaProps(mediaApi, DashMediaDelegate, props)}>
       {children}
     </video>
   );

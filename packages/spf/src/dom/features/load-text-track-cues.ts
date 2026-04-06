@@ -1,32 +1,26 @@
 import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 import type { Presentation, Segment, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
 
-function isDuplicateCue(cue: VTTCue, textTrack: globalThis.TextTrack): boolean {
-  const { cues } = textTrack;
-  if (!cues) return false;
-  for (let i = 0; i < cues.length; i++) {
-    const existing = cues[i] as VTTCue;
-    if (existing.startTime === cue.startTime && existing.endTime === cue.endTime && existing.text === cue.text) {
-      return true;
-    }
-  }
-  return false;
+const CueKeys = ['startTime', 'endTime', 'text'] as const;
+function isDuplicateCue(cue: VTTCue, existingCues: globalThis.TextTrack['cues']): boolean {
+  return Array.prototype.some.call(existingCues ?? [], (existingCue) => {
+    return CueKeys.every((k) => existingCue[k] === cue[k]);
+  });
 }
 
 const loadVttSegmentTask = async (
   { segment }: { segment: Segment },
-  context: { textTrack: globalThis.TextTrack }
+  { textTrack }: { textTrack: globalThis.TextTrack }
 ): Promise<void> => {
   const cues = await parseVttSegment(segment.url);
-  for (const cue of cues) {
-    if (!isDuplicateCue(cue, context.textTrack)) {
-      context.textTrack.addCue(cue);
-    }
-  }
+  cues.forEach((cue) => {
+    if (isDuplicateCue(cue, textTrack.cues)) return;
+    textTrack.addCue(cue);
+  });
 };
 
 // ============================================================================
@@ -36,12 +30,12 @@ const loadVttSegmentTask = async (
 /**
  * Load text track cues task (composite - orchestrates VTT segment subtasks).
  */
-const loadTextTrackCuesTask = async (
-  { currentState }: { currentState: TextTrackCueLoadingState },
+const loadTextTrackCuesTask = async <S extends TextTrackCueLoadingState>(
+  { currentState }: { currentState: S },
   context: {
     signal: AbortSignal;
     textTrack: globalThis.TextTrack;
-    state: WritableState<TextTrackCueLoadingState>;
+    state: Signal<S>;
   }
 ): Promise<void> => {
   const track = findSelectedTextTrack(currentState);
@@ -72,14 +66,16 @@ const loadTextTrackCuesTask = async (
 
       // Record the loaded segment in shared state — mirrors bufferState for
       // audio/video and supports N text tracks keyed by track ID.
-      const latest = context.state.current.textBufferState ?? {};
+      const latestState = context.state.get();
+      const latest = latestState.textBufferState ?? {};
       const trackState = latest[trackId] ?? { segments: [] };
-      context.state.patch({
+      context.state.set({
+        ...latestState,
         textBufferState: {
           ...latest,
           [trackId]: { segments: [...trackState.segments, { id: segment.id }] },
         },
-      });
+      } as S);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') break;
       console.error('Failed to load VTT segment:', error);
@@ -236,47 +232,49 @@ export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners:
  * @example
  * const cleanup = loadTextTrackCues({ state, owners });
  */
-export function loadTextTrackCues({
+export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends TextTrackCueLoadingOwners>({
   state,
   owners,
 }: {
-  state: WritableState<TextTrackCueLoadingState>;
-  owners: WritableState<TextTrackCueLoadingOwners>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
   let lastTrackId: string | undefined;
 
-  const cleanup = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
-      // Abort any in-progress task when the selected track changes.
-      // The new track's textBufferState entry will be empty, so the task
-      // naturally starts fresh without needing any explicit reset.
-      if (currentState.selectedTextTrackId !== lastTrackId) {
-        lastTrackId = currentState.selectedTextTrackId;
-        abortController?.abort();
-        currentTask = null;
-      }
+  const selectedTrackId = computed(() => state.get().selectedTextTrackId);
 
-      if (currentTask) return; // Task already in progress
-      if (!shouldLoadTextTrackCues(currentState, currentOwners)) return;
+  const cleanupEffect = effect(() => {
+    const s = state.get();
+    const o = owners.get();
 
-      const textTrack = getSelectedTextTrackFromOwners(currentState, currentOwners);
-      if (!textTrack) return;
-
-      // Create abort controller and invoke task
-      abortController = new AbortController();
-      currentTask = loadTextTrackCuesTask(
-        { currentState },
-        { signal: abortController.signal, textTrack, state }
-      ).finally(() => {
-        currentTask = null;
-      });
+    // Abort any in-progress task when the selected track changes.
+    // The new track's textBufferState entry will be empty, so the task
+    // naturally starts fresh without needing any explicit reset.
+    if (selectedTrackId.get() !== lastTrackId) {
+      lastTrackId = selectedTrackId.get();
+      abortController?.abort();
+      currentTask = null;
     }
-  );
+
+    if (currentTask) return;
+    if (!shouldLoadTextTrackCues(s, o)) return;
+
+    const textTrack = getSelectedTextTrackFromOwners(s, o);
+    if (!textTrack) return;
+
+    abortController = new AbortController();
+    currentTask = loadTextTrackCuesTask(
+      { currentState: s },
+      { signal: abortController.signal, textTrack, state }
+    ).finally(() => {
+      currentTask = null;
+    });
+  });
 
   return () => {
     abortController?.abort();
-    cleanup();
+    cleanupEffect();
   };
 }

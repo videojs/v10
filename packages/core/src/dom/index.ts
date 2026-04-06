@@ -1,4 +1,5 @@
 export * from './feature';
+export * from './media/proxy';
 export * from './media/types';
 export * from './store/features';
 export * from './store/selectors';
@@ -13,4 +14,5 @@ export * from './ui/slider-css-vars';
 export * from './ui/thumbnail';
 export * from './ui/tooltip/tooltip';
 export * from './ui/transition';
+export * from './ui/wheel-step';
 export * from './utils';

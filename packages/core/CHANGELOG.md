@@ -1,5 +1,182 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15) (2026-04-03)
+
+
+### Bug Fixes
+
+* **core:** enable default tracks for chapters and metadata ([#1216](https://github.com/videojs/v10/issues/1216)) ([9317c04](https://github.com/videojs/v10/commit/9317c0433c911d8807f5924ab4c813c046265078))
+* **site:** remove default attr from storyboard track elements ([#1211](https://github.com/videojs/v10/issues/1211)) ([5734c4a](https://github.com/videojs/v10/commit/5734c4ad3c3a33e2b3a8aa06fbe908157e6b934e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.15
+    * @videojs/store bumped to 10.0.0-beta.15
+    * @videojs/utils bumped to 10.0.0-beta.15
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.13...@videojs/core@10.0.0-beta.14) (2026-04-03)
+
+
+### Features
+
+* **core:** add native hls error handling ([#1190](https://github.com/videojs/v10/issues/1190)) ([5239b9b](https://github.com/videojs/v10/commit/5239b9b834ff882e63f258852b307cdc5f5c5090))
+* **packages:** volume slider scroll support ([#1175](https://github.com/videojs/v10/issues/1175)) ([390b004](https://github.com/videojs/v10/commit/390b004d809272fd453b8a73e1969c59410c3620))
+
+
+### Bug Fixes
+
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+* **react:** thumbnails broken when using hls media ([#1210](https://github.com/videojs/v10/issues/1210)) ([8b571f5](https://github.com/videojs/v10/commit/8b571f5f05566f52deea866f4a64a7408d6c2c21))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.14
+    * @videojs/store bumped to 10.0.0-beta.14
+    * @videojs/utils bumped to 10.0.0-beta.14
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.12...@videojs/core@10.0.0-beta.13) (2026-04-01)
+
+
+### Bug Fixes
+
+* **core:** fix media proxy for React ([#1169](https://github.com/videojs/v10/issues/1169)) ([c0a3277](https://github.com/videojs/v10/commit/c0a3277f4cbc7f2abafa1b4f166049d57bdb1ee5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.13
+    * @videojs/store bumped to 10.0.0-beta.13
+    * @videojs/utils bumped to 10.0.0-beta.13
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.11...@videojs/core@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+* **core:** add error handling to Hls.js media ([#1164](https://github.com/videojs/v10/issues/1164)) ([9e2ede6](https://github.com/videojs/v10/commit/9e2ede6ddc37622152e1ca90406c72dd580c855b))
+* **core:** implement preload for HLS media ([#1125](https://github.com/videojs/v10/issues/1125)) ([9142841](https://github.com/videojs/v10/commit/9142841d34f091107db4753a8cac0ca6ef5e99ab))
+* **packages:** error dialog component ([#1077](https://github.com/videojs/v10/issues/1077)) ([3430fe1](https://github.com/videojs/v10/commit/3430fe1a493e4bee34f03112206a0cb3cf9d88cf))
+
+
+### Bug Fixes
+
+* **core:** fix Mux data initialization ([#1162](https://github.com/videojs/v10/issues/1162)) ([2946560](https://github.com/videojs/v10/commit/29465609c54526b45d59168384fb2d502feed07a))
+* isolate preload mixin for hls delegate ([#1150](https://github.com/videojs/v10/issues/1150)) ([a96aad7](https://github.com/videojs/v10/commit/a96aad7558f777868b6cf1b77c55a7baf05b32c2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.12
+    * @videojs/store bumped to 10.0.0-beta.12
+    * @videojs/utils bumped to 10.0.0-beta.12
+
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.10...@videojs/core@10.0.0-beta.11) (2026-03-24)
+
+
+### Features
+
+* **packages:** export media component building blocks ([#1098](https://github.com/videojs/v10/issues/1098)) ([bc2929e](https://github.com/videojs/v10/commit/bc2929ef4fc7ed021c91d96b96498870ecf5e4e5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.11
+    * @videojs/store bumped to 10.0.0-beta.11
+    * @videojs/utils bumped to 10.0.0-beta.11
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.9...@videojs/core@10.0.0-beta.10) (2026-03-23)
+
+
+### Bug Fixes
+
+* **core:** prevent sprite tile bleeding in thumbnail component ([#1053](https://github.com/videojs/v10/issues/1053)) ([07b1c87](https://github.com/videojs/v10/commit/07b1c872625353c23d7ea076a47638abb2798a03))
+* **react:** add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/issues/1096)) ([1792bae](https://github.com/videojs/v10/commit/1792bae3b4cad5cbb89038e3fa10212f24b49e6b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.10
+    * @videojs/store bumped to 10.0.0-beta.10
+    * @videojs/utils bumped to 10.0.0-beta.10
+
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.8...@videojs/core@10.0.0-beta.9) (2026-03-23)
+
+
+### Features
+
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.9
+    * @videojs/store bumped to 10.0.0-beta.9
+    * @videojs/utils bumped to 10.0.0-beta.9
+
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...@videojs/core@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/core:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.8
+    * @videojs/store bumped to 10.0.0-beta.8
+    * @videojs/utils bumped to 10.0.0-beta.8
+
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.6...@videojs/core@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* add DashVideo media element (html, react) with sandbox support ([#940](https://github.com/videojs/v10/issues/940)) ([5bdbbec](https://github.com/videojs/v10/commit/5bdbbec8a0f69b4be89600287c63a04746b7ba49))
+* **html:** add data-availability to volume slider ([#1001](https://github.com/videojs/v10/issues/1001)) ([c95e134](https://github.com/videojs/v10/commit/c95e1343e16c8667f6b7f5560d12ec5f36f1acd8))
+
+
+### Bug Fixes
+
+* **core:** improve fullscreen and pip webkit fallback handling ([#999](https://github.com/videojs/v10/issues/999)) ([a05e8f2](https://github.com/videojs/v10/commit/a05e8f20af4fcc4e506f461fb0244acf24564e13))
+* **core:** prevent slider thumb jump on pointer release ([#990](https://github.com/videojs/v10/issues/990)) ([b9bada9](https://github.com/videojs/v10/commit/b9bada95675f09b7c7d6859dcd213be7a0408bb7))
+* **core:** rename MediaDelegateMixin and MediaProxyMixin ([#976](https://github.com/videojs/v10/issues/976)) ([561d03e](https://github.com/videojs/v10/commit/561d03eb5ae87aa3ba2bb5d4d68987ef4067e90e))
+* **core:** round thumbnail dimensions to prevent sub-pixel gaps ([#995](https://github.com/videojs/v10/issues/995)) ([636ccd4](https://github.com/videojs/v10/commit/636ccd45daab5e2726f26b6412b72b2725ff6373))
+* **core:** stub pointer:fine in tooltip touch suppression tests ([#998](https://github.com/videojs/v10/issues/998)) ([fc62ea1](https://github.com/videojs/v10/commit/fc62ea1c0ae20e53468b8a2ec57dc11f8e021b17))
+* **core:** suppress tooltip hover on touch pointer events ([#933](https://github.com/videojs/v10/issues/933)) ([324ea2f](https://github.com/videojs/v10/commit/324ea2fd3b0410f5c64ae6761aebaf6b7db29a47))
+* **core:** sync playback feature state on seeked event ([#1000](https://github.com/videojs/v10/issues/1000)) ([12f582e](https://github.com/videojs/v10/commit/12f582ec1a7819e38c800664dd05c687c77fff6c))
+* correct popup fallback positioning offsets ([#981](https://github.com/videojs/v10/issues/981)) ([82ede77](https://github.com/videojs/v10/commit/82ede77322204500d7ca0adc5cb24d4f068af462))
+* **skin:** add subtle control transitions on touch devices ([#985](https://github.com/videojs/v10/issues/985)) ([7e0827c](https://github.com/videojs/v10/commit/7e0827c330dc796aa0375cd5839fc4fc1661f055))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.7
+    * @videojs/store bumped to 10.0.0-beta.7
+    * @videojs/utils bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.5...@videojs/core@10.0.0-beta.6) (2026-03-15)
 
 

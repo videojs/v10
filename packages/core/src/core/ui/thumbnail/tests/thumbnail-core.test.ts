@@ -221,15 +221,15 @@ describe('ThumbnailCore', () => {
         maxHeight: Infinity,
       });
 
-      // scale = 128/256 = 0.5
+      // scale = 128/256 = 0.5, inset = 1 (scale !== 1)
       expect(result).toEqual({
         scale: 0.5,
-        containerWidth: 128,
-        containerHeight: 80,
+        containerWidth: 126,
+        containerHeight: 78,
         imageWidth: 1280,
         imageHeight: 800,
-        offsetX: 256,
-        offsetY: 160,
+        offsetX: 257,
+        offsetY: 161,
       });
     });
 
@@ -249,6 +249,128 @@ describe('ThumbnailCore', () => {
         offsetX: 0,
         offsetY: 0,
       });
+    });
+
+    it('rounds fractional pixel dimensions to integers', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      // maxWidth 177 / tileWidth 256 = scale 0.69140625 → fractional dimensions
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = 177 / 256;
+      const inset = 1; // scale !== 1
+
+      expect(result).toEqual({
+        scale,
+        containerWidth: Math.floor(256 * scale) - inset * 2,
+        containerHeight: Math.floor(160 * scale) - inset * 2,
+        imageWidth: Math.ceil(2560 * scale),
+        imageHeight: Math.ceil(1600 * scale),
+        offsetX: Math.ceil(512 * scale) + inset,
+        offsetY: Math.ceil(320 * scale) + inset,
+      });
+
+      // Verify all pixel values are integers (no sub-pixel rendering gaps).
+      for (const key of ['containerWidth', 'containerHeight', 'imageWidth', 'imageHeight', 'offsetX', 'offsetY']) {
+        expect(Number.isInteger(result![key as keyof typeof result])).toBe(true);
+      }
+    });
+
+    it('container never exceeds scaled tile dimensions', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      expect(result!.containerWidth).toBeLessThanOrEqual(256 * scale);
+      expect(result!.containerHeight).toBeLessThanOrEqual(160 * scale);
+      expect(result!.imageWidth).toBeGreaterThanOrEqual(result!.containerWidth);
+      expect(result!.imageHeight).toBeGreaterThanOrEqual(result!.containerHeight);
+    });
+
+    it('offsets never undershoot the tile origin (prevents top/left bleed)', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      expect(result!.offsetX).toBeGreaterThanOrEqual(512 * scale);
+      expect(result!.offsetY).toBeGreaterThanOrEqual(320 * scale);
+    });
+
+    it('visible edges do not extend past tile boundary', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      const nextTileX = (512 + 256) * scale;
+      const nextTileY = (320 + 160) * scale;
+      expect(result!.offsetX + result!.containerWidth).toBeLessThanOrEqual(nextTileX);
+      expect(result!.offsetY + result!.containerHeight).toBeLessThanOrEqual(nextTileY);
+    });
+
+    it('container dimensions are stable across different tile positions', () => {
+      const core = new ThumbnailCore();
+      const positions = [
+        { x: 0, y: 0 },
+        { x: 256, y: 0 },
+        { x: 512, y: 0 },
+        { x: 768, y: 0 },
+        { x: 0, y: 160 },
+        { x: 256, y: 160 },
+        { x: 512, y: 320 },
+        { x: 768, y: 480 },
+      ];
+
+      const constraints = { minWidth: 0, maxWidth: 177, minHeight: 0, maxHeight: Infinity };
+      const results = positions.map((coords) => core.resize(createImage({ coords }), 2560, 1600, constraints));
+
+      const widths = new Set(results.map((r) => r!.containerWidth));
+      const heights = new Set(results.map((r) => r!.containerHeight));
+
+      expect(widths.size).toBe(1);
+      expect(heights.size).toBe(1);
+    });
+
+    it('clamps container dimensions to zero at extreme scales', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage();
+
+      // maxWidth 3 / tileWidth 256 → scale so small that floor(h*s) - 2 would be negative.
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 3,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      expect(result!.containerWidth).toBeGreaterThanOrEqual(0);
+      expect(result!.containerHeight).toBeGreaterThanOrEqual(0);
     });
 
     it('returns undefined when dimensions are unavailable', () => {

@@ -4,9 +4,9 @@ export const slider = {
   root: cn(
     'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none cursor-pointer',
     // Horizontal
-    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-5',
+    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-8',
     // Vertical
-    'data-[orientation=vertical]:w-5 data-[orientation=vertical]:h-20'
+    'data-[orientation=vertical]:w-8 data-[orientation=vertical]:h-20'
   ),
   track: cn(
     'relative isolate overflow-hidden rounded-[inherit] select-none',

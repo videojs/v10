@@ -4,7 +4,7 @@ Full writing style guidelines for Video.js documentation.
 
 ## Voice
 
-Direct. Confident. Friendly but not chatty. Write like you are talking to a peer — helpful, not formal or distant.
+Direct. Confident. Friendly but not chatty. Write like you are talking to a peer. Helpful, not formal or distant.
 
 ```markdown
 // ❌ Wordy
@@ -20,10 +20,12 @@ const player = createPlayer({ src: 'video.mp4' });
 ## Quick Rules
 
 - **Sentence case for headings** — capitalize only the first word and proper nouns (e.g., "Choose your JS framework", not "Choose Your JS Framework")
-- Active voice, second person ("you")
+- Active voice
+- Second person ("you")
 - Short sentences
 - No filler ("In order to", "basically", "simply")
-- No hedging ("might", "could", "perhaps")
+- Minimize hedging ("might", "could", "perhaps")
+- Go easy on emdashes; prefer commas, colons, or semicolons
 - Code does the heavy lifting
 
 ## Guidelines
@@ -34,9 +36,18 @@ Write like you are talking to a peer. Friendly and helpful, not formal or distan
 
 ### Use simple words
 
-> "Don't use a five-dollar word when a fifty-cent word will do." — Mark Twain
+> "Don't use a five-dollar word when a fifty-cent word will do." — Mark Twain, maybe
 
-Simplify hard concepts into something easy to understand. If a piece of jargon is unavoidable, define it on first use.
+Simplify hard concepts into something easy to understand. Our readers are competent developers, but they may have no experience in the media space or with Video.js. Every guide is an educational opportunity.
+
+### Avoid jargon
+
+Prefer accessible terminology over specialized jargon. When jargon is necessary:
+
+- **Video.js terms** (e.g., "the container", "features"): link to the concept or reference page that defines it. If no such page exists, define inline and propose one (open an issue or create the page if it's in scope).
+- **External terms** (e.g., "ABR", "manifest"): link to a definition, define inline, or use plainer language.
+
+Reference pages are naturally more technical than concepts and how-to guides. They still benefit from links and inline definitions, but spend less effort avoiding jargon there.
 
 ### Cut to the point
 
@@ -80,6 +91,10 @@ Make claims as strong as possible without becoming false. Vague qualifications (
 
 Simple writing exposes unclear thinking. If you cannot explain something simply, you may not understand it well enough yet. Complexity should come from the ideas, not the language.
 
+### Use judgment when applying these rules
+
+Do not sacrifice accuracy for this style guide. There may be exceptions to the rule. For example, sometimes emdashes _are_ the right choice. Sometimes, hedging is appropriate when instructions doesn't apply to all cases (though provide guidance for making such decisions.)
+
 ## Words to avoid
 
 | Avoid | Use instead |
@@ -90,11 +105,16 @@ Simple writing exposes unclear thinking. If you cannot explain something simply,
 | "Just" | (delete) |
 | "Very" | (delete) |
 | "Actually" | (delete) |
-| "You might want to" | "Use" |
 | "It should be noted that" | (delete, say it directly) |
 | "Please note that" | (delete, say it directly) |
 | "As you can see" | (delete) |
 | "Obviously" / "Clearly" | (delete) |
+| "Here's why" / "Here's the thing" | (delete, explain directly) |
+| "At its core" / "Fundamentally" / "In essence" | (delete) |
+| "Let's dive in" / "Let's get started" | Just start |
+| "Excited to share" / "Thrilled to announce" | Just share it |
+| "It's not X, it's Y" | Rephrase — say what it *is* |
+| "It's worth noting that" / "It's important to remember" | (delete, say it directly) |
 
 ## Sentence patterns
 
@@ -128,7 +148,9 @@ const unsubscribe = store.subscribe(callback);
 unsubscribe();
 ```
 
-### Linking concepts
+### Linking guides
+
+When a page mentions another API or concept by name, link to it. Readers exploring one guide often need context from related guides. Link the first prose mention per page — don't link inside code blocks.
 
 ```markdown
 // ✅ Natural
@@ -137,10 +159,6 @@ See <DocsLink slug="concepts/events">Events</DocsLink> for the full list.
 // ❌ Awkward
 For more information about events, please refer to the Events page.
 ```
-
-### Cross-link reference pages generously
-
-When a reference page mentions another API by name, link to it. Readers exploring one API often need context from related APIs. Link the first prose mention per page — don't link inside code blocks.
 
 ```markdown
 // ✅ Linked

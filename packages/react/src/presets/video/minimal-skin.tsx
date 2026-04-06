@@ -4,7 +4,8 @@ import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
-  PipIcon,
+  PipEnterIcon,
+  PipExitIcon,
   PlayIcon,
   RestartIcon,
   SeekIcon,
@@ -13,73 +14,83 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/icons/react/minimal';
+import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
+import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import type { BaseSkinProps } from '../types';
-import { ErrorDialog } from './error-dialog';
+import { isRenderProp } from '@/utils/use-render';
+import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
 
-export type MinimalVideoSkinProps = BaseSkinProps;
+export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
-  return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn('media-button media-button--subtle media-button--icon', className)}
+      {...props}
+    />
+  );
 });
 
-const errorClasses = {
-  root: 'media-error',
-  dialog: 'media-error__dialog',
-  content: 'media-error__content',
-  title: 'media-error__title',
-  description: 'media-error__description',
-  actions: 'media-error__actions',
-  close: 'media-button',
-};
+function VolumePopover(): ReactNode {
+  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
-function PlayLabel(): ReactNode {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return <>Replay</>;
-  return paused ? <>Play</> : <>Pause</>;
-}
+  const muteButton = (
+    <MuteButton className="media-button--mute" render={<Button />}>
+      <VolumeOffIcon className="media-icon media-icon--volume-off" />
+      <VolumeLowIcon className="media-icon media-icon--volume-low" />
+      <VolumeHighIcon className="media-icon media-icon--volume-high" />
+    </MuteButton>
+  );
 
-function CaptionsLabel(): ReactNode {
-  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? <>Disable captions</> : <>Enable captions</>;
-}
+  if (volumeUnsupported) return muteButton;
 
-function PiPLabel(): ReactNode {
-  const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
-}
-
-function FullscreenLabel(): ReactNode {
-  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+      <Popover.Trigger render={muteButton} />
+      <Popover.Popup className="media-popover media-popover--volume">
+        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+          <VolumeSlider.Track className="media-slider__track">
+            <VolumeSlider.Fill className="media-slider__fill" />
+          </VolumeSlider.Track>
+          <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+        </VolumeSlider.Root>
+      </Popover.Popup>
+    </Popover.Root>
+  );
 }
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, poster, ...rest } = props;
 
   return (
     <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
       {children}
+
+      {poster && (
+        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
+      )}
 
       <BufferingIndicator
         render={(props) => (
@@ -89,7 +100,19 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog classes={errorClasses} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className="media-error">
+          <div className="media-error__dialog">
+            <div className="media-error__content">
+              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className="media-error__description" />
+            </div>
+            <div className="media-error__actions">
+              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <Controls.Root className="media-controls">
         <Tooltip.Provider>
@@ -97,36 +120,25 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PlayButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--play">
-                        <RestartIcon className="media-icon media-icon--restart" />
-                        <PlayIcon className="media-icon media-icon--play" />
-                        <PauseIcon className="media-icon media-icon--pause" />
-                      </Button>
-                    )}
-                  />
+                  <PlayButton className="media-button--play" render={<Button />}>
+                    <RestartIcon className="media-icon media-icon--restart" />
+                    <PlayIcon className="media-icon media-icon--play" />
+                    <PauseIcon className="media-icon media-icon--pause" />
+                  </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton
-                    seconds={-SEEK_TIME}
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--seek">
-                        <span className="media-icon__container">
-                          <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                          <span className="media-icon__label">{SEEK_TIME}</span>
-                        </span>
-                      </Button>
-                    )}
-                  />
+                  <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
                 }
               />
               <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
@@ -135,17 +147,12 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton
-                    seconds={SEEK_TIME}
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--seek">
-                        <span className="media-icon__container">
-                          <SeekIcon className="media-icon media-icon--seek" />
-                          <span className="media-icon__label">{SEEK_TIME}</span>
-                        </span>
-                      </Button>
-                    )}
-                  />
+                  <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
                 }
               />
               <Tooltip.Popup className="media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
@@ -153,10 +160,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-time-controls">
-            <Time.Group className="media-time">
-              <Time.Value type="current" className="media-time__value media-time__value--current" />
-              <Time.Separator className="media-time__separator" />
-              <Time.Value type="duration" className="media-time__value media-time__value--duration" />
+            <Time.Group className="media-time-group">
+              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Separator className="media-time-separator" />
+              <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>
 
             <TimeSlider.Root className="media-slider">
@@ -170,7 +177,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <div className="media-preview__thumbnail-wrapper">
                   <Slider.Thumbnail className="media-preview__thumbnail" />
                 </div>
-                <TimeSlider.Value type="pointer" className="media-preview__timestamp" />
+                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
                 <SpinnerIcon className="media-preview__spinner media-icon" />
               </div>
             </TimeSlider.Root>
@@ -179,90 +186,47 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           <div className="media-button-group">
             <Tooltip.Root side="top">
               <Tooltip.Trigger
-                render={
-                  <PlaybackRateButton
-                    render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
-                  />
-                }
+                render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
               />
               <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--mute">
-                        <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                        <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                        <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className="media-popover media-popover--volume">
-                <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                  <VolumeSlider.Track className="media-slider__track">
-                    <VolumeSlider.Fill className="media-slider__fill" />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            <VolumePopover />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <CaptionsButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--captions">
-                        <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                        <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                      </Button>
-                    )}
-                  />
+                  <CaptionsButton className="media-button--captions" render={<Button />}>
+                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+                  </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <CaptionsLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PiPButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon">
-                        <PipIcon className="media-icon" />
-                      </Button>
-                    )}
-                  />
+                  <PiPButton className="media-button--pip" render={<Button />}>
+                    <PipEnterIcon className="media-icon media-icon--pip-enter" />
+                    <PipExitIcon className="media-icon media-icon--pip-exit" />
+                  </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <PiPLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <FullscreenButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--fullscreen">
-                        <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
-                        <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
-                      </Button>
-                    )}
-                  />
+                  <FullscreenButton className="media-button--fullscreen" render={<Button />}>
+                    <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+                    <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+                  </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <FullscreenLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

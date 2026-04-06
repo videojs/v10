@@ -16,6 +16,7 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
 function createState(overrides: Partial<PlaybackRateButtonState> = {}): PlaybackRateButtonState {
   return {
     rate: 1,
+    label: '',
     ...overrides,
   };
 }

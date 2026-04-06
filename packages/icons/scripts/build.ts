@@ -23,7 +23,6 @@ const SVGO_CONFIG: Config = {
       name: 'preset-default',
       params: {
         overrides: {
-          removeViewBox: false,
           convertColors: {
             currentColor: /^black$/,
           },
@@ -314,12 +313,9 @@ function debounce(fn: () => void, ms: number): () => void {
 }
 
 async function main(): Promise<void> {
-  console.log('Building icons...\n');
-  cleanDist();
-  await build();
-  console.log('\nBuild complete!');
-
   if (isWatch) {
+    console.log('Watching icons for changes...\n');
+
     const rebuild = debounce(() => {
       console.log('\nRebuilding icons...\n');
       build()
@@ -333,8 +329,11 @@ async function main(): Promise<void> {
         rebuild();
       }
     });
-
-    console.log('\nWatching for changes...');
+  } else {
+    console.log('Building icons...\n');
+    cleanDist();
+    await build();
+    console.log('\nBuild complete!');
   }
 }
 

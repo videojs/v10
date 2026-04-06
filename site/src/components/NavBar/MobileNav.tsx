@@ -1,8 +1,9 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
+import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import Logo from '../icons/logo.svg?react';
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
@@ -49,7 +50,11 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
           {/* Header with close button */}
           <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <Logo width="10rem" />
+            <a href="/" className="flex h-7 items-center gap-3 lg:gap-4 lg:h-10">
+              <Logo height="100%" />
+              <span className="sr-only">Video.js video player</span>
+              <BetaPill className="hidden sm:inline-flex" />
+            </a>
             <Dialog.Close
               className={clsx(
                 'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'

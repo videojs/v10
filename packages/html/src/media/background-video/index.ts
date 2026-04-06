@@ -1,4 +1,6 @@
+import type { Media } from '@videojs/core/dom';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
@@ -22,7 +24,7 @@ function getTemplateHTML(attrs: Record<string, string>) {
 }
 
 // Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
-export class BackgroundVideo extends HTMLElement {
+export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static getTemplateHTML = getTemplateHTML;
   static get observedAttributes() {
@@ -52,6 +54,11 @@ export class BackgroundVideo extends HTMLElement {
     // after using document.createElement.
     // Get around this by setting the muted property manually.
     this.target!.muted = !this.hasAttribute('nomuted');
+  }
+
+  // Register the inner <video> (not `this`) with the provider.
+  getMediaTarget(): Media | null {
+    return this.target;
   }
 
   attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {

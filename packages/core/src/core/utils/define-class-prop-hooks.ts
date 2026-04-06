@@ -2,7 +2,7 @@ import type { Constructor } from '@videojs/utils/types';
 
 export function defineClassPropHooks<T extends Constructor<any>>(Class: T, BaseClassProto: PropertyDescriptorMap) {
   for (const prop of Object.getOwnPropertyNames(BaseClassProto)) {
-    if (prop in Class.prototype) continue;
+    if (prop in Class.prototype || prop.startsWith('_')) continue;
 
     const descriptor = Object.getOwnPropertyDescriptor(BaseClassProto, prop);
     if (!descriptor) continue;

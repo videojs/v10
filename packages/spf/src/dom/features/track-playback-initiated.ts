@@ -1,15 +1,14 @@
 import { listen } from '@videojs/utils/dom';
-import type { EventStream } from '../../core/events/create-event-stream';
-import type { PresentationAction } from '../../core/features/resolve-presentation';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal, signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
  */
 export interface PlaybackInitiatedState {
-  /** True once the user has initiated playback (play event fired). */
+  /** True once play has been requested for the current presentation URL. */
   playbackInitiated?: boolean;
-  /** Current presentation — watched for URL changes to reset playbackInitiated. */
+  /** Current presentation — URL is used to detect source changes. */
   presentation?: { url?: string };
 }
 
@@ -21,70 +20,78 @@ export interface PlaybackInitiatedOwners {
 }
 
 /**
- * Track whether playback has been initiated by the user.
+ * Track whether playback has been initiated for the current presentation URL.
  *
- * Sets `state.playbackInitiated = true` when the media element fires a `play`
- * event (via `element.play()`, native controls, or autoplay) and simultaneously
- * dispatches `{ type: 'play' }` to the event stream so `resolvePresentation`
- * can react.
+ * Uses a local intermediate signal written by two effect streams:
+ * - false stream: resets on URL change
+ * - true stream: sets on play event
  *
- * Resets `state.playbackInitiated = false` when `presentation.url` changes,
- * so a new source with `preload="none"` won't load segments until play is
- * triggered again.
- *
- * This flag is used by `shouldLoadSegments` to allow segment loading after
- * play is initiated regardless of the initial `preload` setting — `preload`
- * is a startup hint, not a runtime gate.
+ * A third merge effect reads the local signal and writes to state, reading
+ * `state.get()` at merge time so the spread uses the up-to-date value after
+ * the async forward bridge has run.
  *
  * @example
  * const cleanup = trackPlaybackInitiated({ state, owners, events });
  */
-export function trackPlaybackInitiated({
+export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
   state,
   owners,
-  events,
 }: {
-  state: WritableState<PlaybackInitiatedState>;
-  owners: WritableState<PlaybackInitiatedOwners>;
-  events: EventStream<PresentationAction>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
-  let lastPresentationUrl: string | undefined;
+  const presentationUrl = computed(() => state.get().presentation?.url);
+  const mediaElement = computed(() => owners.get().mediaElement);
 
-  // Watch for presentation URL changes to reset playbackInitiated
-  const unsubscribeState = state.subscribe((currentState) => {
-    const url = currentState.presentation?.url;
-    if (url !== lastPresentationUrl) {
-      if (lastPresentationUrl !== undefined) {
-        // URL changed to a new value — reset so new source requires play again
-        state.patch({ playbackInitiated: false });
-      }
-      lastPresentationUrl = url;
+  // Local signal: written by the URL effect (false) and the play listener (true).
+  // undefined = not yet initialized (suppresses the merge effect on startup).
+  const playbackInitiated = signal<boolean | undefined>(undefined);
+
+  let lastPresentationUrl: string | undefined;
+  let lastMediaElement: HTMLMediaElement | undefined;
+
+  // False stream: reset on URL change or element swap.
+  const cleanupResetEffect = effect(() => {
+    const url = presentationUrl.get();
+    const el = mediaElement.get();
+
+    const urlChanged = url !== lastPresentationUrl;
+    const elChanged = el !== lastMediaElement;
+
+    if ((urlChanged && lastPresentationUrl !== undefined) || (elChanged && lastMediaElement !== undefined)) {
+      playbackInitiated.set(false);
     }
+
+    lastPresentationUrl = url;
+    lastMediaElement = el;
   });
 
-  // Bridge media element play event → state flag + event stream
-  const unsubscribeOwners = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
-
-    if (mediaElement === lastMediaElement) return;
-
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    removeListener = listen(mediaElement, 'play', () => {
-      state.patch({ playbackInitiated: true });
-      events.dispatch({ type: 'play' });
+  // True stream: set on play event. Cleanup return removes the listener on element swap.
+  const cleanupPlayEffect = effect(() => {
+    const el = mediaElement.get();
+    if (!el) return;
+    return listen(el, 'play', () => {
+      playbackInitiated.set(true);
     });
   });
 
+  // Merge effect: bridge local signal → state.
+  // Reads state.get() at merge time (after the async forward bridge has flushed)
+  // so the spread captures the current value rather than a stale event-time snapshot.
+  // The guard makes the write idempotent.
+  const cleanupMergeEffect = effect(() => {
+    const pi = playbackInitiated.get();
+    if (pi === undefined) return;
+    const current = state.get();
+    if (current.playbackInitiated !== pi) {
+      const patch: Partial<PlaybackInitiatedState> = { playbackInitiated: pi };
+      update(state, patch);
+    }
+  });
+
   return () => {
-    removeListener?.();
-    unsubscribeState();
-    unsubscribeOwners();
+    cleanupResetEffect();
+    cleanupPlayEffect();
+    cleanupMergeEffect();
   };
 }

@@ -117,14 +117,24 @@ export class ThumbnailCore {
 
     const scale = this.calculateScale(tileWidth, tileHeight, constraints);
 
+    const coordX = thumbnail.coords?.x ?? 0;
+    const coordY = thumbnail.coords?.y ?? 0;
+
+    // Inset by 1px to eat the interpolation fringe the browser introduces when
+    // scaling the sprite sheet (bilinear filtering blends across tile boundaries).
+    const inset = scale !== 1 ? 1 : 0;
+
     return {
       scale,
-      containerWidth: tileWidth * scale,
-      containerHeight: tileHeight * scale,
-      imageWidth: imgNaturalWidth * scale,
-      imageHeight: imgNaturalHeight * scale,
-      offsetX: (thumbnail.coords?.x ?? 0) * scale,
-      offsetY: (thumbnail.coords?.y ?? 0) * scale,
+      // Floor container so it never extends past the tile boundary.
+      containerWidth: Math.max(0, Math.floor(tileWidth * scale) - inset * 2),
+      containerHeight: Math.max(0, Math.floor(tileHeight * scale) - inset * 2),
+      // Ceil image so the sprite sheet always fills the container.
+      imageWidth: Math.ceil(imgNaturalWidth * scale),
+      imageHeight: Math.ceil(imgNaturalHeight * scale),
+      // Ceil offset so it never undershoots the tile origin (prevents top/left bleed).
+      offsetX: Math.ceil(coordX * scale) + inset,
+      offsetY: Math.ceil(coordY * scale) + inset,
     };
   }
 

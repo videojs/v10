@@ -33,6 +33,7 @@ describe('VolumeSliderCore', () => {
         label: 'Volume',
         step: 1,
         largeStep: 10,
+        wheelStep: 5,
         orientation: 'horizontal',
         disabled: false,
         thumbAlignment: 'center',
@@ -114,6 +115,20 @@ describe('VolumeSliderCore', () => {
 
       expect(state.muted).toBe(true);
       expect(state.fillPercent).toBe(0);
+    });
+
+    it('projects availability from volumeAvailability', () => {
+      const core = new VolumeSliderCore();
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ volumeAvailability: 'unsupported' }));
+      expect(core.getState().availability).toBe('unsupported');
+    });
+
+    it('reflects available availability', () => {
+      const core = new VolumeSliderCore();
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ volumeAvailability: 'available' }));
+      expect(core.getState().availability).toBe('available');
     });
   });
 

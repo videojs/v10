@@ -109,4 +109,40 @@ describe('useDestroy', () => {
     // Setup should only run once — the re-mount skips it
     expect(setup).toHaveBeenCalledOnce();
   });
+
+  it('calls teardown before destroy on unmount', () => {
+    const order: string[] = [];
+    const instance = { destroy: vi.fn(() => order.push('destroy')) };
+    const teardown = vi.fn(() => order.push('teardown'));
+
+    const { unmount } = renderHook(() => useDestroy(instance, undefined, teardown));
+
+    unmount();
+    vi.runAllTimers();
+
+    expect(teardown).toHaveBeenCalledOnce();
+    expect(instance.destroy).toHaveBeenCalledOnce();
+    expect(order).toEqual(['teardown', 'destroy']);
+  });
+
+  it('does not call teardown in StrictMode double-mount', () => {
+    const instance = { destroy: vi.fn() };
+    const teardown = vi.fn();
+
+    function TestComponent() {
+      useDestroy(instance, undefined, teardown);
+      return null;
+    }
+
+    render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>
+    );
+
+    vi.runAllTimers();
+
+    expect(teardown).not.toHaveBeenCalled();
+    expect(instance.destroy).not.toHaveBeenCalled();
+  });
 });

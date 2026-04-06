@@ -65,6 +65,42 @@ import { Button } from '@lib/button';
 
 ---
 
+## Unnecessary Render Function Wrappers
+
+```tsx
+// BAD: Function wrapper just passes props through
+<PlayButton
+  render={(props) => (
+    <Button {...props} className="play-btn">
+      <PlayIcon />
+    </Button>
+  )}
+/>
+
+// BAD: Trivial passthrough
+<TimeSlider.Root render={(props) => <SliderRoot {...props} />} />
+
+// BAD: Passing component reference directly — breaks hooks reconciliation
+<PlayButton render={Button} />
+
+// GOOD: Element form — className and children on the headless component
+<PlayButton className="play-btn" render={<Button />}>
+  <PlayIcon />
+</PlayButton>
+
+// GOOD: Element form for passthrough
+<TimeSlider.Root render={<SliderRoot />} />
+
+// GOOD: Element form with extra props on render target
+<PlayButton className="play-btn" render={<Button variant="icon" />}>
+  <PlayIcon />
+</PlayButton>
+```
+
+**Why it fails:** Function wrappers add indirection, noise, and implicit `any` on `props` parameter. Component references (`render={Component}`) bypass React's reconciliation — components are called as plain functions, breaking hooks. Use element form (`render={<Component />}`) or function form only when rendering a different element type or accessing component state.
+
+---
+
 ## The `as` Prop
 
 ```tsx
@@ -273,6 +309,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ children, ...props 
 - [ ] State styled via data attributes, not inline
 - [ ] No CSS shipped in component package
 - [ ] Polymorphism via `render` or `asChild`, not `as`
+- [ ] No unnecessary render function wrappers (`render={<Component />}` over `render={(props) => <Component {...props} />}`)
 - [ ] Both controlled and uncontrolled modes
 - [ ] Nested instances don't interfere
 - [ ] Exit animations possible

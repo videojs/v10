@@ -11,9 +11,10 @@ export function isFullscreenEnabled(): boolean {
     return true;
   }
 
-  // iOS Safari: check for webkitSupportsFullscreen on a test video
+  // iOS Safari: check for webkitEnterFullscreen on a test video.
+  // Unlike webkitSupportsFullscreen, this is available on detached elements.
   const video = document.createElement('video') as WebKitVideoElement;
-  return video.webkitSupportsFullscreen === true;
+  return isFunction(video.webkitEnterFullscreen);
 }
 
 /** Get the current fullscreen element from the document. */
@@ -55,10 +56,12 @@ export function isFullscreenElement(container: HTMLElement | null, media: HTMLMe
  * for platforms that only support video fullscreen (iOS Safari).
  */
 export async function requestFullscreen(container: HTMLElement | null, media: HTMLMediaElement): Promise<void> {
+  const doc = document as WebKitDocument;
   const video = media as WebKitVideoElement;
 
-  // Try container first (standard and WebKit APIs)
-  if (container) {
+  // Try container first, but only if the platform supports element-level fullscreen.
+  // iOS Safari has requestFullscreen on Element.prototype but it silently fails.
+  if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
     const el = container as WebKitFullscreenElement;
 
     if (isFunction(el.requestFullscreen)) {
@@ -67,10 +70,6 @@ export async function requestFullscreen(container: HTMLElement | null, media: HT
 
     if (isFunction(el.webkitRequestFullscreen)) {
       return el.webkitRequestFullscreen();
-    }
-
-    if (isFunction(el.webkitRequestFullScreen)) {
-      return el.webkitRequestFullScreen();
     }
   }
 
@@ -89,29 +88,26 @@ export async function requestFullscreen(container: HTMLElement | null, media: HT
 }
 
 /** Exit fullscreen mode. */
-export async function exitFullscreen(): Promise<void> {
+export async function exitFullscreen(media?: HTMLMediaElement): Promise<void> {
   const doc = document as WebKitDocument;
-  const video = getFullscreenElement() as WebKitVideoElement | null;
 
-  // Try standard API
+  // iOS Safari: use video element WebKit API first when it's actively in fullscreen.
+  if (media) {
+    const video = media as WebKitVideoElement;
+    if (isFunction(video.webkitExitFullscreen) && video.webkitDisplayingFullscreen) {
+      video.webkitExitFullscreen();
+      return;
+    }
+  }
+
+  // Standard API
   if (isFunction(doc.exitFullscreen)) {
     return doc.exitFullscreen();
   }
 
-  // Try WebKit API
+  // WebKit document API (desktop Safari)
   if (isFunction(doc.webkitExitFullscreen)) {
     return doc.webkitExitFullscreen();
-  }
-
-  // Try older WebKit API
-  if (isFunction(doc.webkitCancelFullScreen)) {
-    return doc.webkitCancelFullScreen();
-  }
-
-  // iOS Safari video fullscreen
-  if (video && isFunction(video.webkitExitFullscreen)) {
-    video.webkitExitFullscreen();
-    return;
   }
 
   // No-op if not in fullscreen (matches browser behavior)

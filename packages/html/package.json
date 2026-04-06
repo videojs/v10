@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.6",
+  "version": "10.0.0-beta.15",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -13,7 +13,8 @@
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
-    "./dist/*/define/**/*.js"
+    "./dist/*/define/**/*.js",
+    "./cdn/**/*.js"
   ],
   "files": [
     "dist",
@@ -73,6 +74,16 @@
       "development": "./dist/dev/define/media/*.js",
       "default": "./dist/default/define/media/*.js"
     },
+    "./cdn/media/*": {
+      "types": "./cdn/media/*.dev.d.ts",
+      "development": "./cdn/media/*.dev.js",
+      "default": "./cdn/media/*.js"
+    },
+    "./cdn/*": {
+      "types": "./cdn/*.dev.d.ts",
+      "development": "./cdn/*.dev.js",
+      "default": "./cdn/*.js"
+    },
     "./*.css": "./dist/default/define/*.css",
     "./*": {
       "types": "./dist/dev/define/*.d.ts",
@@ -82,16 +93,16 @@
   },
   "scripts": {
     "build": "tsdown",
-    "build:cdn": "tsdown --config tsdown.cdn.config.ts && node scripts/cdn-copy-css.js",
+    "build:cdn": "tsdown --config tsdown.cdn.config.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rm -rf dist cdn types"
+    "clean": "rimraf --glob dist cdn types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/spf": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
+    "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
@@ -100,9 +111,9 @@
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^18.0.1",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "tsdown": "^0.21.4",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.0"
   },
   "publishConfig": {
     "access": "public"

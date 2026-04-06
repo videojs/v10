@@ -3,25 +3,26 @@
    ========================================================================== */
 
 .media-minimal-skin {
-  --media-caption-track-duration: 150ms;
-  --media-caption-track-delay: 600ms;
+  --media-caption-track-duration: var(--media-controls-transition-duration);
+  --media-caption-track-delay: 25ms;
   --media-caption-track-y: -0.5rem;
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-delay: 25ms;
-    --media-caption-track-y: -3rem;
+    --media-caption-track-y: -5rem;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    --media-caption-track-duration: 50ms;
+  @container media-root (width > 42rem) {
+    &:has(.media-controls[data-visible]) > * {
+      --media-caption-track-y: -3rem;
+    }
   }
 }
 
 .media-minimal-skin video::-webkit-media-text-track-container {
-  /* NOTE: The delay must account for the controls delay/duration */
-  transition: transform var(--media-caption-track-duration) ease-out;
+  transition: translate var(--media-caption-track-duration) ease-out;
   transition-delay: var(--media-caption-track-delay);
-  transform: translateY(var(--media-caption-track-y)) scale(0.98);
+  translate: 0 var(--media-caption-track-y);
+  scale: 0.98;
   z-index: 1;
   font-family: inherit;
 }

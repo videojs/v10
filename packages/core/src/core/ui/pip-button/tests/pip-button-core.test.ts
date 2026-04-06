@@ -18,6 +18,7 @@ function createState(overrides: Partial<PiPButtonState> = {}): PiPButtonState {
   return {
     pip: false,
     availability: 'available',
+    label: '',
     ...overrides,
   };
 }

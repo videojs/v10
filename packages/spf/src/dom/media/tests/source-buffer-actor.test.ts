@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { effect } from '../../../core/signals/effect';
 import { createSourceBufferActor, SourceBufferActorError } from '../source-buffer-actor';
 
 // ---------------------------------------------------------------------------
@@ -118,11 +119,11 @@ describe('createSourceBufferActor', () => {
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
-    expect(actor.snapshot.status).toBe('idle');
+    expect(actor.snapshot.get().status).toBe('idle');
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted);
 
-    expect(actor.snapshot.context.initTrackId).toBe('track-2');
+    expect(actor.snapshot.get().context.initTrackId).toBe('track-2');
     actor.destroy();
   });
 
@@ -146,8 +147,8 @@ describe('createSourceBufferActor', () => {
     await actor.batch(messages, neverAborted);
 
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(2);
-    expect(actor.snapshot.context.initTrackId).toBe('track-1');
-    expect(actor.snapshot.context.segments).toHaveLength(1);
+    expect(actor.snapshot.get().context.initTrackId).toBe('track-1');
+    expect(actor.snapshot.get().context.segments).toHaveLength(1);
 
     actor.destroy();
   });
@@ -173,10 +174,10 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    const ids = actor.snapshot.context.segments.map((s) => s.id);
+    const ids = actor.snapshot.get().context.segments.map((s) => s.id);
     expect(ids).not.toContain('s1-low');
     expect(ids).toContain('s1-high');
-    expect(actor.snapshot.context.segments).toHaveLength(1);
+    expect(actor.snapshot.get().context.segments).toHaveLength(1);
 
     actor.destroy();
   });
@@ -186,7 +187,9 @@ describe('createSourceBufferActor', () => {
     const actor = createSourceBufferActor(sourceBuffer);
 
     const statusValues: string[] = [];
-    const unsub = actor.subscribe((s) => statusValues.push(s.status));
+    const cleanup = effect(() => {
+      statusValues.push(actor.snapshot.get().status);
+    });
 
     await actor.batch(
       [
@@ -200,7 +203,7 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    unsub();
+    cleanup();
 
     // Initial idle (immediate subscribe fire) → updating → idle
     // No intermediate context-update-while-updating snapshots
@@ -250,14 +253,15 @@ describe('createSourceBufferActor', () => {
       },
     ];
 
-    const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
+    const mockedAppend = vi.mocked(sourceBuffer.appendBuffer);
+    const origAppend = mockedAppend.getMockImplementation();
     let firstCall = true;
-    (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementation((...args: unknown[]) => {
+    mockedAppend.mockImplementation((data: BufferSource) => {
       if (firstCall) {
         firstCall = false;
         controller.abort();
       }
-      return origAppend?.(...args);
+      return origAppend?.(data);
     });
 
     await actor.batch(messages, controller.signal);
@@ -277,8 +281,8 @@ describe('createSourceBufferActor', () => {
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
-    expect(actor.snapshot.context.initTrackId).toBe('track-1');
-    expect(actor.snapshot.status).toBe('idle');
+    expect(actor.snapshot.get().context.initTrackId).toBe('track-1');
+    expect(actor.snapshot.get().status).toBe('idle');
 
     actor.destroy();
   });
@@ -300,14 +304,14 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    expect(actor.snapshot.context.segments).toHaveLength(1);
-    expect(actor.snapshot.context.segments[0]).toMatchObject({
+    expect(actor.snapshot.get().context.segments).toHaveLength(1);
+    expect(actor.snapshot.get().context.segments[0]).toMatchObject({
       id: 's1',
       startTime: 0,
       duration: 10,
       trackId: 'track-1',
     });
-    expect(actor.snapshot.status).toBe('idle');
+    expect(actor.snapshot.get().status).toBe('idle');
 
     actor.destroy();
   });
@@ -338,10 +342,10 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    const ids = actor.snapshot.context.segments.map((s) => s.id);
+    const ids = actor.snapshot.get().context.segments.map((s) => s.id);
     expect(ids).not.toContain('s1-low');
     expect(ids).toContain('s1-high');
-    expect(actor.snapshot.context.segments).toHaveLength(1);
+    expect(actor.snapshot.get().context.segments).toHaveLength(1);
 
     actor.destroy();
   });
@@ -384,11 +388,11 @@ describe('createSourceBufferActor', () => {
     await actor.send({ type: 'remove', start: 0, end: 20 }, neverAborted);
 
     expect(sourceBuffer.remove).toHaveBeenCalledWith(0, 20);
-    const ids = actor.snapshot.context.segments.map((s) => s.id);
+    const ids = actor.snapshot.get().context.segments.map((s) => s.id);
     expect(ids).not.toContain('s1');
     expect(ids).not.toContain('s2');
     expect(ids).toContain('s3');
-    expect(actor.snapshot.status).toBe('idle');
+    expect(actor.snapshot.get().status).toBe('idle');
 
     actor.destroy();
   });
@@ -402,11 +406,13 @@ describe('createSourceBufferActor', () => {
     const actor = createSourceBufferActor(sourceBuffer);
 
     const statusValues: string[] = [];
-    const unsub = actor.subscribe((snapshot) => statusValues.push(snapshot.status));
+    const cleanup = effect(() => {
+      statusValues.push(actor.snapshot.get().status);
+    });
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
-    unsub();
+    cleanup();
 
     // Initial 'idle' (from immediate subscribe fire) → 'updating' → 'idle'
     expect(statusValues).toContain('updating');
@@ -419,17 +425,12 @@ describe('createSourceBufferActor', () => {
   // subscribe
   // ---------------------------------------------------------------------------
 
-  it('fires subscriber immediately with current snapshot', () => {
+  it('snapshot.get() returns the current snapshot', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const snapshots: unknown[] = [];
-    const unsub = actor.subscribe((s) => snapshots.push(s));
+    expect(actor.snapshot.get()).toMatchObject({ status: 'idle', context: { segments: [], bufferedRanges: [] } });
 
-    expect(snapshots).toHaveLength(1);
-    expect(snapshots[0]).toMatchObject({ status: 'idle', context: { segments: [], bufferedRanges: [] } });
-
-    unsub();
     actor.destroy();
   });
 
@@ -445,8 +446,10 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer([[0, 10]]);
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const snapshots: (typeof actor.snapshot)[] = [];
-    const unsub = actor.subscribe((s) => snapshots.push(s));
+    const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
+    const cleanup = effect(() => {
+      snapshots.push(actor.snapshot.get());
+    });
 
     await actor.send(
       {
@@ -456,7 +459,7 @@ describe('createSourceBufferActor', () => {
       },
       neverAborted
     );
-    unsub();
+    cleanup();
 
     const hadPartial = snapshots.some((s) => s.context.segments.some((seg) => seg.partial));
     expect(hadPartial).toBe(false);
@@ -468,10 +471,11 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer([[0, 10]]);
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const snapshots: (typeof actor.snapshot)[] = [];
-    const unsub = actor.subscribe((s) =>
-      snapshots.push({ ...s, context: { ...s.context, segments: [...s.context.segments] } })
-    );
+    const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
+    const cleanup = effect(() => {
+      const s = actor.snapshot.get();
+      snapshots.push({ ...s, context: { ...s.context, segments: [...s.context.segments] } });
+    });
 
     async function* twoChunks() {
       yield new Uint8Array(4);
@@ -482,7 +486,7 @@ describe('createSourceBufferActor', () => {
       { type: 'append-segment', data: twoChunks(), meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' } },
       neverAborted
     );
-    unsub();
+    cleanup();
 
     const partialSnapshot = snapshots.find((s) =>
       s.context.segments.some((seg) => seg.id === 's1' && seg.partial === true)
@@ -505,7 +509,7 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    const seg = actor.snapshot.context.segments.find((s) => s.id === 's1');
+    const seg = actor.snapshot.get().context.segments.find((s) => s.id === 's1');
     expect(seg).toBeDefined();
     expect(seg?.partial).toBeUndefined();
 
@@ -544,7 +548,7 @@ describe('createSourceBufferActor', () => {
 
     // Wait until partial state is emitted (first chunk queued)
     await vi.waitFor(() => {
-      expect(actor.snapshot.context.segments.some((s) => s.id === 's1' && s.partial === true)).toBe(true);
+      expect(actor.snapshot.get().context.segments.some((s) => s.id === 's1' && s.partial === true)).toBe(true);
     });
 
     // Abort — the stream is paused waiting for resolveFirst
@@ -555,7 +559,7 @@ describe('createSourceBufferActor', () => {
     await pending.catch(() => {});
 
     // partial: true entry should remain — accurately reflects data in SourceBuffer
-    const seg = actor.snapshot.context.segments.find((s) => s.id === 's1');
+    const seg = actor.snapshot.get().context.segments.find((s) => s.id === 's1');
     expect(seg).toBeDefined();
     expect(seg?.partial).toBe(true);
 
@@ -581,7 +585,7 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    const seg = actorWithPartial.snapshot.context.segments.find((s) => s.id === 's1');
+    const seg = actorWithPartial.snapshot.get().context.segments.find((s) => s.id === 's1');
     expect(seg).toBeDefined();
     expect(seg?.partial).toBeUndefined();
 
@@ -592,11 +596,6 @@ describe('createSourceBufferActor', () => {
   it('destroy() aborts the in-progress operation', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
-
-    const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
-    (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementationOnce((...args: unknown[]) => {
-      return origAppend?.(...args);
-    });
 
     const p = actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 

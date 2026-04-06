@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react';
-import { createPlayer, Poster } from '@videojs/react';
+import { createPlayer } from '@videojs/react';
 import { HlsVideo } from '@videojs/react/media/hls-video';
 import { MinimalVideoSkin, VideoSkin, videoFeatures } from '@videojs/react/video';
 import { VJS10_DEMO_VIDEO } from '@/consts';
@@ -32,9 +32,16 @@ export default function HeroVideo({
             ...style,
           } as React.CSSProperties
         }
+        poster={poster}
       >
-        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline />
-        <Poster src={poster} />
+        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline crossOrigin="anonymous">
+          <track
+            kind="metadata"
+            label="thumbnails"
+            src={`https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.vtt`}
+            default
+          />
+        </HlsVideo>
       </SkinComponent>
     </Player.Provider>
   );

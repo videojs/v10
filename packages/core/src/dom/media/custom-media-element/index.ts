@@ -106,9 +106,10 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
       }
 
       video::-webkit-media-text-track-container {
-        transition: transform var(--media-caption-track-duration, 0) ease-out;
+        transition: translate var(--media-caption-track-duration, 0) ease-out;
         transition-delay: var(--media-caption-track-delay, 0);
-        transform: translateY(var(--media-caption-track-y, 0)) scale(0.98);
+        translate: 0 var(--media-caption-track-y, 0);
+        scale: 0.98;
         z-index: 1;
         font-family: inherit;
       }
@@ -336,16 +337,23 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       this.shadowRoot!.addEventListener('slotchange', () => this.#syncMediaChildren());
       this.#syncMediaChildren();
 
+      // Media element events don't bubble so we need to capture them on the shadow root.
       for (const type of (this.constructor as typeof CustomMedia).Events) {
-        this.shadowRoot!.addEventListener(type, this, true);
+        this.shadowRoot!.addEventListener(type, this.#deferForwardEvent, true);
       }
     }
 
-    handleEvent(event: Event): void {
-      if (event.target === this.target) {
-        this.dispatchEvent(new CustomEvent(event.type, { detail: (event as CustomEvent).detail }));
+    #deferForwardEvent = (event: Event) => {
+      if (this.target && this.target === event.target) {
+        // Add an event listener on the bubbling phase that forwards the event
+        // so consumers can still stop propagation of the event.
+        this.target.addEventListener(event.type, this.#forwardEvent, { once: true });
       }
-    }
+    };
+
+    #forwardEvent = (event: Event) => {
+      this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    };
 
     #syncMediaChildren(): void {
       const removeNativeChildren = new Map(this.#childMap);
@@ -387,7 +395,8 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     }
 
     #enableDefaultTrack(trackEl: HTMLTrackElement): void {
-      // Enable default text tracks for chapters or metadata
+      // Browsers don't honor the `default` attribute if a track is added via JS.
+      // Enable default tracks for chapters or metadata.
       if (
         trackEl &&
         trackEl.localName === 'track' &&

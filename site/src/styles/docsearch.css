@@ -1,0 +1,282 @@
+@import "@docsearch/css/dist/style.css";
+/* ── Light theme ── */
+:root {
+  --docsearch-primary-color: var(--color-gold);
+  --docsearch-text-color: var(--color-faded-black);
+  --docsearch-secondary-text-color: var(--color-soot);
+  --docsearch-background-color: var(--color-manila-50);
+  --docsearch-modal-background: var(--color-manila-50);
+  --docsearch-modal-shadow:
+    0 calc(var(--spacing) * 3) calc(var(--spacing) * 7) color-mix(in srgb, var(--color-faded-black) 15%, transparent),
+    0 calc(var(--spacing) / 2) var(--spacing) color-mix(in srgb, var(--color-faded-black) 8%, transparent);
+  --docsearch-searchbox-background: var(--color-manila-light);
+  --docsearch-searchbox-focus-background: var(--color-manila-light);
+  --docsearch-hit-background: var(--color-manila-light);
+  --docsearch-hit-color: var(--color-faded-black);
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 15%, var(--color-manila-light));
+  --docsearch-highlight-color: var(--color-orange);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-focus-color: var(--color-gold);
+  --docsearch-subtle-color: var(--color-manila-75);
+  --docsearch-muted-color: var(--color-manila-dark);
+  --docsearch-icon-color: var(--color-soot);
+  --docsearch-container-background: color-mix(in srgb, var(--color-faded-black) 20%, transparent);
+  --docsearch-key-background: var(--color-manila-75);
+  --docsearch-key-color: var(--color-faded-black);
+  --docsearch-key-pressed-shadow: inset 0 calc(var(--spacing) / 2) var(--spacing)
+    color-mix(in srgb, var(--color-faded-black) 15%, transparent);
+  --docsearch-footer-background: var(--color-manila-light);
+  --docsearch-footer-shadow: 0 -1px 0 0 var(--color-manila-75); /* 1px hairline */
+  --docsearch-logo-color: currentColor;
+  --docsearch-border-radius: var(--radius-xs);
+  --docsearch-spacing: calc(var(--spacing) * 4);
+  --docsearch-searchbox-height: calc(var(--spacing) * 14);
+  --docsearch-searchbox-initial-height: calc(var(--spacing) * 14);
+  --docsearch-hit-height: calc(var(--spacing) * 14);
+  --docsearch-actions-height: calc(var(--spacing) * 11);
+  --docsearch-footer-height: calc(var(--spacing) * 13);
+  --docsearch-icon-stroke-width: 2;
+  --docsearch-search-button-background: transparent;
+  --docsearch-search-button-text-color: var(--color-faded-black);
+}
+
+/* ── Dark theme ── */
+.dark {
+  --docsearch-text-color: var(--color-manila-light);
+  --docsearch-secondary-text-color: var(--color-manila-dark);
+  --docsearch-background-color: var(--color-warm-gray);
+  --docsearch-modal-background: var(--color-faded-black);
+  --docsearch-modal-shadow:
+    inset 1px 1px 0 0 var(--color-warm-gray),
+    0 calc(var(--spacing) * 0.75) calc(var(--spacing) * 2) color-mix(in srgb, var(--color-black) 50%, transparent);
+  --docsearch-searchbox-background: var(--color-soot);
+  --docsearch-searchbox-focus-background: var(--color-soot);
+  --docsearch-hit-background: var(--color-warm-gray);
+  --docsearch-hit-color: var(--color-manila-light);
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 10%, var(--color-warm-gray));
+  --docsearch-highlight-color: var(--color-gold);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-focus-color: var(--color-gold);
+  --docsearch-subtle-color: var(--color-warm-gray);
+  --docsearch-muted-color: var(--color-manila-dark);
+  --docsearch-icon-color: var(--color-manila-dark);
+  --docsearch-container-background: color-mix(in srgb, var(--color-faded-black) 60%, transparent);
+  --docsearch-key-background: var(--color-soot);
+  --docsearch-key-color: var(--color-manila-light);
+  --docsearch-key-pressed-shadow: inset 0 calc(var(--spacing) / 2) var(--spacing)
+    color-mix(in srgb, var(--color-black) 40%, transparent);
+  --docsearch-footer-background: var(--color-soot);
+  --docsearch-footer-shadow: 0 -1px 0 0 var(--color-warm-gray); /* 1px hairline */
+  --docsearch-logo-color: currentColor;
+  --docsearch-search-button-background: transparent;
+  --docsearch-search-button-text-color: var(--color-manila-light);
+}
+
+/* ── Trigger button — match rounded-pill navbar style ── */
+.DocSearch-Button {
+  box-sizing: border-box;
+  border-radius: 9999px;
+  border: none;
+  padding: 0 calc(var(--spacing) * 2);
+  gap: calc(var(--spacing) * 2);
+  height: auto;
+  min-height: calc(var(--spacing) * 6);
+  margin: 0;
+  font-family: inherit;
+}
+
+.DocSearch-Button:hover,
+.DocSearch-Button:focus-within {
+  box-shadow: none;
+}
+
+.DocSearch-Button .DocSearch-Search-Icon {
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
+}
+
+.DocSearch-Search-Icon circle,
+.DocSearch-Search-Icon path {
+  stroke-width: var(--docsearch-icon-stroke-width);
+}
+
+.DocSearch-Button .DocSearch-Search-Icon circle,
+.DocSearch-Button .DocSearch-Search-Icon path {
+  stroke-width: calc(var(--docsearch-icon-stroke-width) * 2);
+}
+
+/* Hide button label text on small screens, keep icon + keyboard shortcut */
+.DocSearch-Button-Placeholder {
+  display: none;
+}
+
+.DocSearch-Button-Keys {
+  display: none;
+  min-width: 0;
+  gap: 0;
+}
+
+.DocSearch-Button-Keys:has(.DocSearch-Button-Key--ctrl) {
+  gap: var(--spacing);
+}
+
+.DocSearch-Button .DocSearch-Button-Key {
+  background: none;
+  border: none;
+  box-shadow: none !important;
+  color: inherit;
+  width: auto;
+  height: auto;
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  letter-spacing: var(--text-h4--letter-spacing);
+  font-weight: var(--font-weight-bold);
+  padding: 0;
+  margin: 0;
+}
+
+@media (width >= 40rem) {
+  .DocSearch-Button {
+    border: 1px solid var(--color-faded-black);
+    width: calc(var(--spacing) * 16.5);
+  }
+
+  .DocSearch-Button:has(.DocSearch-Button-Key--ctrl) {
+    width: calc(var(--spacing) * 25);
+  }
+
+  .dark .DocSearch-Button {
+    border-color: var(--color-manila-dark);
+  }
+
+  .DocSearch-Button:hover,
+  .DocSearch-Button:focus-within {
+    border-color: var(--color-manila-dark);
+  }
+
+  .dark .DocSearch-Button:hover,
+  .dark .DocSearch-Button:focus-within {
+    border-color: var(--color-warm-gray);
+  }
+
+  .DocSearch-Button-Keys {
+    display: flex;
+  }
+
+  .DocSearch-Button .DocSearch-Search-Icon {
+    width: calc(var(--spacing) * 3);
+    height: calc(var(--spacing) * 3);
+  }
+}
+
+/* ── Modal backdrop ── */
+.DocSearch-Container {
+  backdrop-filter: blur(calc(var(--spacing) / 2));
+}
+
+/* ── Consistent border-radius — DocSearch hardcodes 4px on these ── */
+.DocSearch-Modal {
+  border-radius: var(--radius-xs);
+}
+
+.DocSearch-Form {
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}
+
+.DocSearch-Footer {
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+  border-block-start: none;
+}
+
+.DocSearch-Dropdown + .DocSearch-Footer {
+  border-block-start: 1px solid var(--docsearch-subtle-color);
+}
+
+.DocSearch-Hit a {
+  border-radius: var(--radius-xs);
+}
+
+/* ── Typography — full text-token treatment (size + leading + tracking + weight) ── */
+.DocSearch-Modal {
+  font-family: var(--font-sans);
+  font-size: var(--text-p2);
+  line-height: var(--text-p2--line-height);
+  letter-spacing: var(--text-p2--letter-spacing);
+  font-weight: var(--text-p2--font-weight);
+  text-underline-offset: 0.25em;
+}
+
+.DocSearch-Input {
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--text-p1--font-weight);
+}
+
+.DocSearch-Button-Key,
+.DocSearch-Escape-Key {
+  font-family: var(--font-mono);
+  font-size: var(--text-code);
+  line-height: var(--text-code--line-height);
+  letter-spacing: var(--text-code--letter-spacing);
+  font-weight: var(--text-code--font-weight);
+  font-variant-ligatures: none;
+  text-underline-offset: 0.125em;
+}
+
+.DocSearch-Hit-source {
+  font-size: var(--text-p2);
+  line-height: var(--text-p2--line-height);
+  letter-spacing: var(--text-p2--letter-spacing);
+  font-weight: var(--font-weight-bold);
+  padding-block-start: calc(var(--spacing) * 4);
+  padding-block-end: calc(var(--spacing) * 2);
+}
+
+.DocSearch-Hit-title {
+  font-size: var(--text-p2);
+  line-height: var(--text-p2--line-height);
+  letter-spacing: var(--text-p2--letter-spacing);
+}
+
+.DocSearch-Hit-path {
+  font-size: var(--text-p3);
+  line-height: var(--text-p3--line-height);
+  letter-spacing: var(--text-p3--letter-spacing);
+  font-weight: var(--text-p3--font-weight);
+}
+
+.DocSearch-Label,
+.DocSearch-Help,
+.DocSearch-NoResults-Help {
+  font-size: var(--text-p3);
+  line-height: var(--text-p3--line-height);
+  letter-spacing: var(--text-p3--letter-spacing);
+  font-weight: var(--text-p3--font-weight);
+}
+
+.DocSearch-Clear {
+  font-size: var(--text-p3);
+  font-weight: var(--text-p3--font-weight);
+}
+
+.DocSearch-Title strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── Hit spacing — more breathing room, tighter title/path gap ── */
+.DocSearch-Hit-content-wrapper {
+  gap: 0;
+}
+
+/* ── Algolia logo — SVG paths hardcode blue fills via .cls-1/.cls-2 ── */
+.DocSearch-Logo svg .cls-1,
+.DocSearch-Logo svg .cls-2 {
+  fill: var(--docsearch-logo-color);
+}
+
+/* ── Text match highlight — keep readable in all states ── */
+.DocSearch-Hit mark,
+.DocSearch-Hit[aria-selected="true"] mark {
+  text-decoration-color: var(--color-gold);
+  color: currentColor;
+}

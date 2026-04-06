@@ -203,6 +203,25 @@ describe('SliderCore', () => {
     });
   });
 
+  describe('rawValueFromPercent', () => {
+    it('converts percent to value without step rounding', () => {
+      const core = new SliderCore({ step: 5 });
+      expect(core.rawValueFromPercent(53)).toBe(53);
+      expect(core.rawValueFromPercent(47)).toBe(47);
+    });
+
+    it('clamps to range', () => {
+      const core = new SliderCore();
+      expect(core.rawValueFromPercent(-10)).toBe(0);
+      expect(core.rawValueFromPercent(110)).toBe(100);
+    });
+
+    it('respects custom min/max', () => {
+      const core = new SliderCore({ min: 10, max: 20 });
+      expect(core.rawValueFromPercent(50)).toBe(15);
+    });
+  });
+
   describe('percentFromValue', () => {
     it('returns 0 at min', () => {
       const core = new SliderCore();

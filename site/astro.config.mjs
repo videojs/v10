@@ -11,7 +11,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
-import pagefind from './integrations/pagefind';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
 import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
@@ -77,7 +76,6 @@ export default defineConfig({
         `${SITE_URL}/docs/framework/react/llms.txt`,
       ],
     }),
-    pagefind(),
     llmsMarkdown(),
     react({
       babel: {
@@ -117,6 +115,9 @@ export default defineConfig({
   },
 
   vite: {
+    // SVG → React component transform. We use SVGR instead of Astro's
+    // experimental svg feature because: (1) React islands need React
+    // components, and (2) SVGR runs SVGO for automatic SVG optimization.
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],

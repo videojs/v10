@@ -1,5 +1,75 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.14...@videojs/utils@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.13...@videojs/utils@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.12...@videojs/utils@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.11...@videojs/utils@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+
+
+### Bug Fixes
+
+* **utils:** polyfill AbortSignal.any for Chromium ≤115 ([#1142](https://github.com/videojs/v10/issues/1142)) ([c3641c8](https://github.com/videojs/v10/commit/c3641c888c9630b2780cdda556431512d9ca5b81))
+
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.10...@videojs/utils@10.0.0-beta.11) (2026-03-24)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.9...@videojs/utils@10.0.0-beta.10) (2026-03-23)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.8...@videojs/utils@10.0.0-beta.9) (2026-03-23)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.7...@videojs/utils@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.6...@videojs/utils@10.0.0-beta.7) (2026-03-19)
+
+
+### Bug Fixes
+
+* correct popup fallback positioning offsets ([#981](https://github.com/videojs/v10/issues/981)) ([82ede77](https://github.com/videojs/v10/commit/82ede77322204500d7ca0adc5cb24d4f068af462))
+* **utils:** handle missing media.querySelectorAll for HLS ([#986](https://github.com/videojs/v10/issues/986)) ([7bacb1b](https://github.com/videojs/v10/commit/7bacb1b2ae3151fc58ca5526a1f9713c188df2cf))
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.5...@videojs/utils@10.0.0-beta.6) (2026-03-15)
 
 

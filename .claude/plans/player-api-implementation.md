@@ -708,8 +708,8 @@ export function useMedia(): Media | null {
   return media;
 }
 
-/** Register a media element (for Video/Audio primitives). Returns undefined if outside provider (standalone media). */
-export function useMediaRegistration(): Dispatch<SetStateAction<Media | null>> | undefined {
+/** Access the media attach setter for connecting a media element to the player. */
+export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
   return ctx?.setMedia;
 }
@@ -725,7 +725,7 @@ Factory that creates typed provider and hooks. Update existing Video component t
 
 ```
 packages/react/src/player/create-player.tsx (new)
-packages/react/src/media/video.tsx (update - use useMediaRegistration)
+packages/react/src/media/video.tsx (update - use useMediaAttach)
 packages/react/src/index.ts
 packages/react/src/player/tests/create-player.test.tsx (new)
 ```
@@ -809,14 +809,14 @@ export function createPlayer<const Features extends AnyFeature<PlayerTarget>[]>(
 import type { Ref, VideoHTMLAttributes } from 'react';
 import { useCallback } from 'react';
 import { useComposedRefs } from '../utils/use-composed-refs';
-import { useMediaRegistration } from '../player/context';
+import { useMediaAttach } from '../player/context';
 
 export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
   ref?: Ref<HTMLVideoElement> | React.RefObject<HTMLVideoElement>;
 }
 
 export function Video({ children, ref: refProp, ...props }: VideoProps): React.JSX.Element {
-  const setMedia = useMediaRegistration();
+  const setMedia = useMediaAttach();
 
   const attachRef = useCallback(
     (el: HTMLVideoElement): (() => void) | void => {
@@ -1303,7 +1303,7 @@ UI primitives (PlayButton, VolumeSlider, etc.) need store access without knowing
 - `usePlayer()` — returns current state snapshot (untyped `Record<string, unknown>`)
 - `usePlayer(selector)` — returns selected state via selector
 - `useMedia()` — returns current media element
-- `useMediaRegistration()` — for Video/Audio primitives to register
+- `useMediaAttach()` — for Video/Audio primitives to attach
 
 `createPlayer()` wraps this base with typed hooks for app code.
 

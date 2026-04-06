@@ -51,8 +51,8 @@ export function AlertDialogRoot({
     return instance;
   });
 
-  const titleId = useSafeId('alert-dialog-title-');
-  const descriptionId = useSafeId('alert-dialog-desc-');
+  const titleId = useSafeId('alert-dialog-title');
+  const descriptionId = useSafeId('alert-dialog-desc');
 
   core.setTitleId(titleId);
   core.setDescriptionId(descriptionId);

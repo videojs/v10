@@ -1,3 +1,4 @@
+import { update } from '../../core/signals/primitives';
 import type { PlaybackEngineConfig } from './engine';
 import { createPlaybackEngine, type PlaybackEngine } from './engine';
 
@@ -26,6 +27,7 @@ import { createPlaybackEngine, type PlaybackEngine } from './engine';
 export class SpfMedia {
   #engine: PlaybackEngine;
   #config: PlaybackEngineConfig;
+  #preload: '' | 'none' | 'metadata' | 'auto' = '';
 
   /** Pending loadstart listener from a deferred play() retry, if any. */
   #loadstartListener: (() => void) | null = null;
@@ -44,17 +46,35 @@ export class SpfMedia {
   // ---------------------------------------------------------------------------
 
   attach(mediaElement: HTMLMediaElement): void {
-    this.#engine.owners.patch({ mediaElement });
+    update(this.#engine.owners, { mediaElement });
   }
 
   detach(): void {
     this.#cancelPendingPlay();
-    this.#engine.owners.patch({ mediaElement: undefined });
+    update(this.#engine.owners, { mediaElement: undefined });
   }
 
   destroy(): void {
     this.#cancelPendingPlay();
     this.#engine.destroy();
+  }
+
+  // ---------------------------------------------------------------------------
+  // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
+  // ---------------------------------------------------------------------------
+
+  get preload(): '' | 'none' | 'metadata' | 'auto' {
+    return this.#preload;
+  }
+
+  set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    this.#preload = value;
+    if (value) {
+      update(this.#engine.state, { preload: value });
+    }
+    // value = '' clears #preload (so the next engine recreation won't re-apply
+    // an explicit value) but does not patch current state — the existing preload
+    // stays in effect until the next src change creates a fresh engine.
   }
 
   // ---------------------------------------------------------------------------
@@ -64,22 +84,28 @@ export class SpfMedia {
   // ---------------------------------------------------------------------------
 
   get src(): string {
-    return this.#engine.state.current.presentation?.url ?? '';
+    return this.#engine.state.get().presentation?.url ?? '';
   }
 
   set src(value: string) {
-    const prevMediaElement = this.#engine.owners.current.mediaElement;
+    const prevMediaElement = this.#engine.owners.get().mediaElement;
 
     this.#cancelPendingPlay();
     this.#engine.destroy();
     this.#engine = createPlaybackEngine(this.#config);
 
+    // Apply explicit preload before setting owners so syncPreloadAttribute skips
+    // element inference and the explicit value is preserved across src changes.
+    if (this.#preload) {
+      update(this.#engine.state, { preload: this.#preload });
+    }
+
     if (prevMediaElement) {
-      this.#engine.owners.patch({ mediaElement: prevMediaElement });
+      update(this.#engine.owners, { mediaElement: prevMediaElement });
     }
 
     if (value) {
-      this.#engine.state.patch({ presentation: { url: value } });
+      update(this.#engine.state, { presentation: { url: value } });
     }
   }
 
@@ -89,13 +115,13 @@ export class SpfMedia {
   // ---------------------------------------------------------------------------
 
   play(): Promise<void> {
-    const { mediaElement } = this.#engine.owners.current;
+    const { mediaElement } = this.#engine.owners.get();
     if (!mediaElement) {
       return Promise.reject(new Error('SpfMedia: no media element attached'));
     }
 
     // Signal play intent — enables loading even with preload="none"
-    this.#engine.state.patch({ playbackInitiated: true });
+    update(this.#engine.state, { playbackInitiated: true });
 
     return mediaElement.play().catch((err: unknown) => {
       // If we have a pending HLS source, the rejection may be because MSE
@@ -121,7 +147,7 @@ export class SpfMedia {
 
   #cancelPendingPlay(): void {
     if (!this.#loadstartListener) return;
-    const { mediaElement } = this.#engine.owners.current;
+    const { mediaElement } = this.#engine.owners.get();
     mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
     this.#loadstartListener = null;
   }

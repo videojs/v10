@@ -4,9 +4,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "declarationDir": "types"
   },

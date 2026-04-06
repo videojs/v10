@@ -1,6 +1,7 @@
 'use client';
 
 // Core
+export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store
@@ -13,12 +14,14 @@ export {
   Container,
   type ContainerProps,
   type PlayerContextValue,
+  useContainer,
+  useContainerAttach,
   useMedia,
-  useMediaRegistration,
+  useMediaAttach,
+  useOptionalPlayer,
   usePlayer,
   usePlayerContext,
 } from './player/context';
-
 // Player API
 export {
   type CreatePlayerConfig,
@@ -34,6 +37,7 @@ export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/c
 export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
+export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
@@ -58,7 +62,14 @@ export { TimeSlider } from './ui/time-slider';
 export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeSlider } from './ui/volume-slider';
 
+// Media utilities
+export { attachMediaElement } from './utils/attach-media-element';
+export { mediaProps } from './utils/media-props';
 // Utilities
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
+export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
+export { useDestroy } from './utils/use-destroy';
+export { useLatestRef } from './utils/use-latest-ref';
+export { useMediaInstance } from './utils/use-media-instance';
 export { renderElement } from './utils/use-render';

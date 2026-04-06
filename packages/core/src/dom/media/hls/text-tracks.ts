@@ -5,8 +5,7 @@ import Hls from 'hls.js';
 
 interface HlsEngineHost {
   readonly engine: Hls | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
+  readonly target: HTMLMediaElement | null;
 }
 
 /**
@@ -19,33 +18,33 @@ interface HlsEngineHost {
  * forwards cues into them. It also syncs user track-mode changes back to
  * hls.js via `engine.subtitleTrack`.
  */
-export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
-    #target: HTMLMediaElement | null = null;
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#target = target as HTMLMediaElement;
-      this.#connect();
+    constructor(...args: any[]) {
+      super(...args);
+
+      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
+      this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
     }
 
-    detach(): void {
+    #destroy(): void {
       this.#disconnect?.abort();
       this.#disconnect = null;
-      this.#target = null;
-      super.detach?.();
     }
 
-    #connect(): void {
+    #init(): void {
       this.#disconnect?.abort();
       this.#disconnect = new AbortController();
 
       const { signal } = this.#disconnect;
       const { engine } = this;
-      if (!engine) return;
+      if (!engine || !this.target) return;
 
-      const media = this.#target!;
+      const media = this.target;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {
         this.#clearTracks();
@@ -141,12 +140,12 @@ export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>
     }
 
     #clearTracks(): void {
-      const trackEls = this.#target!.querySelectorAll('track[data-removeondestroy]');
+      const trackEls = this.target?.querySelectorAll?.('track[data-removeondestroy]') ?? [];
       trackEls.forEach((trackEl) => trackEl.remove());
     }
   }
 
-  return HlsMediaTextTracks as unknown as Base;
+  return HlsJsMediaTextTracks as unknown as Base;
 }
 
 function addTextTrack(

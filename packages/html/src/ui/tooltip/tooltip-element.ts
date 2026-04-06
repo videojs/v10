@@ -1,4 +1,4 @@
-import { TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
+import { type ButtonState, TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -13,11 +13,21 @@ import {
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 import { tooltipGroupContext } from './context';
+
+type TriggerElement = HTMLElement & {
+  getLabel(): string | undefined;
+  $state: State<ButtonState>;
+};
+
+function isLabelTrigger(el: HTMLElement): el is TriggerElement {
+  return '$state' in el;
+}
 
 export class TooltipElement extends MediaElement {
   static readonly tagName = 'media-tooltip';
@@ -150,9 +160,8 @@ export class TooltipElement extends MediaElement {
       tryHidePopover(this);
     }
 
-    // Apply trigger ARIA and anchor-name to the discovered trigger.
+    // Apply anchor-name to the discovered trigger for CSS positioning.
     if (this.#currentTrigger) {
-      applyElementProps(this.#currentTrigger, this.#core.getTriggerAttrs(state, this.id));
       applyStyles(this.#currentTrigger, getAnchorNameStyle(this.id));
     }
 
@@ -205,15 +214,22 @@ export class TooltipElement extends MediaElement {
     if (triggerEl && this.#tooltip) {
       this.#triggerAbort = new AbortController();
       applyElementProps(triggerEl, this.#tooltip.triggerProps, { signal: this.#triggerAbort.signal });
+
+      if (isLabelTrigger(triggerEl)) {
+        this.#syncContent(triggerEl);
+        triggerEl.$state.subscribe(() => this.#syncContent(triggerEl), {
+          signal: this.#triggerAbort.signal,
+        });
+      }
     }
+  }
+
+  #syncContent(triggerEl: TriggerElement): void {
+    this.textContent = triggerEl.getLabel() ?? '';
   }
 
   #cleanupTrigger(): void {
     if (this.#currentTrigger) {
-      // Remove ARIA attributes and anchor-name style from the old trigger.
-      applyElementProps(this.#currentTrigger, {
-        'aria-describedby': undefined,
-      });
       this.#currentTrigger.style.removeProperty('anchor-name');
     }
 

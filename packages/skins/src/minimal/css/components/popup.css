@@ -8,13 +8,14 @@
   border: 0;
   color: inherit;
   overflow: visible;
-  transition-property: transform, scale, opacity, filter;
-  transition-duration: 150ms;
+  transition-property: scale, opacity, filter;
+  transition-duration: var(--media-popup-transition-duration);
+  transition-timing-function: var(--media-popup-transition-timing-function);
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    transform: scale(0.5);
+    scale: 0.5;
     filter: blur(8px);
   }
 
@@ -80,15 +81,16 @@
 
 .media-minimal-skin .media-tooltip {
   padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  background-color: oklch(1 0 0 / 0.1);
-  backdrop-filter: blur(16px) saturate(1.5);
+  border-radius: 0.5rem;
+  background-color: var(--media-tooltip-background-color);
+  backdrop-filter: var(--media-tooltip-backdrop-filter);
   box-shadow:
+    0 0 0 1px var(--media-tooltip-border-color),
     0 4px 6px -1px oklch(0 0 0 / 0.1),
     0 2px 4px -2px oklch(0 0 0 / 0.1);
-  font-size: 0.75rem;
+  color: var(--media-tooltip-text-color);
+  font-size: 0.75rem; /* 12px at 100% font size */
   white-space: nowrap;
-  --media-tooltip-side-offset: 0.75rem;
 
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {
@@ -98,12 +100,8 @@
   &[data-side="right"]::before {
     width: var(--media-tooltip-side-offset);
   }
+}
 
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: oklch(0 0 0 / 0.7);
-  }
-
-  @media (prefers-contrast: more) {
-    background-color: oklch(0 0 0 / 0.9);
-  }
+.media-minimal-skin .media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+  display: none;
 }

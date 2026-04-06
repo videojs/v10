@@ -5,7 +5,8 @@ export const root = cn(
   'block relative isolate @container/media-root',
   // Appearance
   'rounded-(--media-border-radius,0.75rem)',
-  'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] text-[0.8125rem] leading-normal subpixel-antialiased',
+  'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] leading-normal subpixel-antialiased',
+  '[&>*]:text-xs @3xl/media-root:[&>*]:text-sm',
   // Resets
   '**:box-border',
   '[&_button]:font-[inherit]',
