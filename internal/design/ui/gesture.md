@@ -26,8 +26,8 @@ The component accepts additional props as needed (e.g. `value` for seek offset, 
 <media-gesture type="doubletap" action="seek" value="10" region="right"></media-gesture>
 
 <!-- Pointer filtering — different actions for touch vs mouse -->
-<media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
-<media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+<media-gesture pointer="touch" type="tap" action="toggleControls"></media-gesture>
+<media-gesture pointer="mouse" type="tap" action="togglePaused"></media-gesture>
 ```
 
 #### React
@@ -43,8 +43,8 @@ The component accepts additional props as needed (e.g. `value` for seek offset, 
 <MediaGesture type="doubletap" action="seek" value={10} region="right" />
 
 {/* Pointer filtering */}
-<MediaGesture type="tap" action="toggleControls" pointer="touch" />
-<MediaGesture type="tap" action="togglePaused" pointer="mouse" />
+<MediaGesture pointer="touch" type="tap" action="toggleControls" />
+<MediaGesture pointer="mouse" type="tap" action="togglePaused" />
 
 {/* Callback region — full control over hit testing */}
 <MediaGesture
@@ -96,10 +96,10 @@ Filters the gesture by pointer type. Maps directly to `PointerEvent.pointerType`
 
 ```html
 <!-- Touch: tap toggles controls visibility (mobile pattern) -->
-<media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+<media-gesture pointer="touch" type="tap" action="toggleControls"></media-gesture>
 
 <!-- Mouse: tap toggles play/pause (desktop pattern) -->
-<media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+<media-gesture pointer="mouse" type="tap" action="togglePaused"></media-gesture>
 ```
 
 This solves the common conflict where the same gesture type needs different behavior on mobile vs desktop — without media queries or JS-toggled `disabled` props.
@@ -110,11 +110,11 @@ Values: `mouse`, `touch`, `pen`.
 
 | Prop | Applies to | Description |
 |---|---|---|
+| `pointer` | all | Filters by pointer type: `mouse`, `touch`, `pen`. Omit for all pointer types. |
 | `type` | all | Gesture type: `tap`, `doubletap`, `swipe` |
 | `action` | all | Player action to trigger. Typed to all store actions for HTML (does not guarantee the action exists at runtime). |
 | `value` | action-specific | Action parameter (e.g. seek offset) |
 | `region` | all | Gesture zone within the container. String: `left`, `center`, `right` — divided equally by active region count. In React, also accepts a `(state) => boolean` callback for custom hit testing. Omit for full surface. |
-| `pointer` | all | Filters by pointer type: `mouse`, `touch`, `pen`. Omit for all pointer types. |
 | `axis` | swipe | Constrain to `x` or `y` |
 | `threshold` | swipe | Minimum displacement (px) before the gesture fires |
 | `disabled` | all | Disables the gesture |
