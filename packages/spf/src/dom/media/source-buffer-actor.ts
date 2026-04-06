@@ -240,59 +240,50 @@ export function createSourceBufferActor(
     states: {
       idle: {
         on: {
-          'append-init': (msg, { transition, setContext, runner, context }) => {
+          'append-init': (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
             const task = appendInitTask(msg, {
               signal: msg.signal,
-              getCtx: () => context,
+              getCtx: getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
-          'append-segment': (msg, { transition, setContext, runner, context }) => {
+          'append-segment': (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
             const task = appendSegmentTask(msg, {
               signal: msg.signal,
-              getCtx: () => context,
+              getCtx: getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
-          remove: (msg, { transition, setContext, runner, context }) => {
+          remove: (msg, { transition, setContext, getContext, runner }) => {
             transition('updating');
             const task = removeTask(msg, {
               signal: msg.signal,
-              getCtx: () => context,
+              getCtx: getContext,
               sourceBuffer,
               onPartialContext: setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
-          batch: (msg, { transition, setContext, runner, context }) => {
+          batch: (msg, { transition, setContext, getContext, runner }) => {
             const { messages, signal } = msg;
             if (messages.length === 0) return;
 
             transition('updating');
-            let workingCtx = context;
 
-            for (const [i, subMsg] of messages.entries()) {
-              const isLast = i === messages.length - 1;
+            for (const subMsg of messages) {
               const task = messageToTask(subMsg, {
                 signal,
-                getCtx: () => workingCtx,
+                getCtx: getContext,
                 sourceBuffer,
                 onPartialContext: setContext,
               });
-              const p = runner.schedule(task);
-              if (isLast) {
-                p.then(setContext, handleError);
-              } else {
-                p.then((ctx) => {
-                  workingCtx = ctx;
-                }, handleError);
-              }
+              runner.schedule(task).then(setContext, handleError);
             }
           },
         },

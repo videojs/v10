@@ -32,7 +32,15 @@ export type HandlerContext<
   RunnerFactory extends (() => RunnerLike) | undefined,
 > = {
   transition: (to: UserState) => void;
+  /** Context snapshot captured at dispatch time. Stale after any `setContext` call. */
   context: Context;
+  /**
+   * Live untracked read of the current context. Use in async task closures that
+   * execute after the handler returns — e.g. `getCtx: getContext` passed to tasks
+   * scheduled on the runner, so each task reads the context committed by the
+   * previous task rather than the stale snapshot from dispatch time.
+   */
+  getContext: () => Context;
   setContext: (next: Context) => void;
 } & (RunnerFactory extends () => infer R ? { runner: R } : object);
 
@@ -182,6 +190,7 @@ export function createActor<
       if (!handler) return;
       handler(message, {
         context: getContext(),
+        getContext,
         transition: (to: UserState) => transition(to as FullState),
         setContext,
         ...(runner ? { runner } : {}),

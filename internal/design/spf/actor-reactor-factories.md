@@ -449,7 +449,12 @@ implementation map later. The migration path is additive — no existing definit
 
 The second argument to Actor message handlers is:
 ```typescript
-{ transition: (to: UserState) => void; context: Context; setContext: (next: Context) => void }
+{
+  transition: (to: UserState) => void;
+  context: Context;      // snapshot at dispatch time — stale after any setContext call
+  getContext: () => Context; // live untracked read — always current
+  setContext: (next: Context) => void;
+}
   & (RunnerFactory extends () => infer R ? { runner: R } : {})
 ```
 
@@ -457,6 +462,13 @@ The second argument to Actor message handlers is:
 declares a `runner` factory. When no runner is declared, `runner` is absent from the type
 entirely (not `undefined` — it simply doesn't exist). This is enforced at the type level via
 conditional intersection.
+
+`context` vs `getContext`: use `context` for synchronous logic that runs in the handler body
+itself (dispatch time). Use `getContext` when passing `getCtx` to tasks scheduled on the
+runner — async tasks execute after the handler returns, by which point `context` may be stale
+(e.g. a previous task in a batch has already called `setContext`). Passing `getCtx: getContext`
+ensures each task reads the context committed by the task before it, making `workingCtx`
+threading unnecessary for sequential operations.
 
 ---
 
