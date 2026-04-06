@@ -7,35 +7,16 @@
  * holds arbitrary non-finite data.
  */
 
-import type { ReadonlySignal } from './signals/primitives';
+import type { Machine, MachineSnapshot } from './machine';
 
-/** Complete actor snapshot: finite state + non-finite context. */
-export interface ActorSnapshot<State extends string, Context> {
-  value: State;
+/**
+ * Complete actor snapshot: finite state + non-finite context.
+ * Extends `MachineSnapshot` with context — the non-finite data managed by the actor.
+ */
+export interface ActorSnapshot<State extends string, Context extends object> extends MachineSnapshot<State> {
   context: Context;
 }
 
-/** Generic actor interface: owns its snapshot and notifies observers. */
-export interface Actor<State extends string, Context> {
-  /** Current snapshot. */
-  readonly snapshot: ActorSnapshot<State, Context>;
-
-  /**
-   * Subscribe to snapshot changes. Fires immediately with the current
-   * snapshot, then on every subsequent change.
-   *
-   * @returns Unsubscribe function.
-   */
-  subscribe(listener: (snapshot: ActorSnapshot<State, Context>) => void): () => void;
-
-  /** Tear down the actor. */
-  destroy(): void;
-}
-
-/** Generic actor interface: owns its snapshot and notifies observers. */
-export interface SignalActor<State extends string, Context> {
-  /** Current snapshot. Readable and reactive; not writable by consumers. */
-  readonly snapshot: ReadonlySignal<ActorSnapshot<State, Context>>;
-  /** Tear down the actor. */
-  destroy(): void;
-}
+/** Generic actor interface: owns its snapshot as a reactive signal. */
+export interface SignalActor<State extends string, Context extends object>
+  extends Machine<ActorSnapshot<State, Context>> {}

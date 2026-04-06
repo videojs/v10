@@ -1,6 +1,7 @@
+import type { Machine, MachineSnapshot } from './machine';
+import { createMachineCore } from './machine';
 import { effect } from './signals/effect';
-import type { ReadonlySignal } from './signals/primitives';
-import { signal, untrack, update } from './signals/primitives';
+import { untrack } from './signals/primitives';
 
 // =============================================================================
 // Definition types
@@ -70,10 +71,7 @@ export type ReactorDefinition<State extends string> = {
 // =============================================================================
 
 /** Live reactor instance returned by `createReactor`. */
-export type Reactor<State extends string> = {
-  readonly snapshot: ReadonlySignal<{ value: State }>;
-  destroy(): void;
-};
+export type Reactor<State extends string> = Machine<MachineSnapshot<State>>;
 
 // =============================================================================
 // Implementation helpers
@@ -118,15 +116,9 @@ export function createReactor<State extends string>(
 ): Reactor<State | 'destroying' | 'destroyed'> {
   type FullState = State | 'destroying' | 'destroyed';
 
-  const snapshotSignal = signal<{ value: FullState }>({
+  const { snapshotSignal, getState, transition } = createMachineCore<FullState, MachineSnapshot<FullState>>({
     value: def.initial as FullState,
   });
-
-  const getState = (): FullState => untrack(() => snapshotSignal.get().value);
-
-  const transition = (to: FullState): void => {
-    update(snapshotSignal, { value: to });
-  };
 
   const effectDisposals: Array<() => void> = [];
 

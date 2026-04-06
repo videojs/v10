@@ -458,13 +458,4 @@ conditional intersection.
 
 ## Open Questions
 
-### `settled` on `ConcurrentRunner`
-
-`SerialRunner` exposes `.whenSettled()`. `ConcurrentRunner` does not. `onSettled` at the
-state level implies the runner has a way to signal completion.
-
-Options:
-- Add `whenSettled()` to `ConcurrentRunner` (triggers when `#pending` map empties)
-- Define a `SettledRunner` interface and make `onSettled` only valid for runners that implement it
-
-Leaning toward the former: `whenSettled` is a generally useful concept for any runner.
+_No open questions._

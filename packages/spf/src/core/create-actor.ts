@@ -1,5 +1,6 @@
 import type { ActorSnapshot, SignalActor } from './actor';
-import { signal, untrack, update } from './signals/primitives';
+import { createMachineCore } from './machine';
+import { untrack, update } from './signals/primitives';
 import type { TaskLike } from './task';
 
 // =============================================================================
@@ -155,17 +156,12 @@ export function createActor<
   type FullState = UserState | 'destroyed';
 
   const runner = def.runner?.() as RunnerLike | undefined;
-  const snapshotSignal = signal<ActorSnapshot<FullState, Context>>({
+  const { snapshotSignal, getState, transition } = createMachineCore<FullState, ActorSnapshot<FullState, Context>>({
     value: def.initial as FullState,
     context: def.context,
   });
 
-  const getState = (): FullState => untrack(() => snapshotSignal.get().value);
   const getContext = (): Context => untrack(() => snapshotSignal.get().context);
-
-  const transition = (to: FullState): void => {
-    update(snapshotSignal, { value: to });
-  };
 
   const setContext = (context: Context): void => {
     update(snapshotSignal, { context });

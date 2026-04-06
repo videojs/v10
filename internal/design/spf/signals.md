@@ -66,7 +66,7 @@ via the `Signal.subtle.Watcher` API, leaving scheduling entirely to the caller. 
 `effect()` uses `queueMicrotask` as its scheduler — effects are deferred to the next
 microtask checkpoint, batching all synchronous writes made in a single turn.
 
-This scheduling control is what makes the `always`-before-state ordering guarantee in
+This scheduling control is what makes the `monitor`-before-state ordering guarantee in
 `createReactor` possible. The effect scheduler drains pending computeds in an
 insertion-ordered `Set`, so registration order determines execution order.
 
