@@ -18,11 +18,11 @@ function meta(trackId: string, id: string, startTime = 0, duration = 10): CueSeg
 }
 
 describe('TextTracksActor', () => {
-  it('starts with idle status and empty context', () => {
+  it('starts with active status and empty context', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
 
-    expect(actor.snapshot.get().value).toBe('idle');
+    expect(actor.snapshot.get().value).toBe('active');
     expect(actor.snapshot.get().context.loaded).toEqual({});
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
