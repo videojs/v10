@@ -3,7 +3,6 @@ import * as path from 'node:path';
 import { generateComponentReferences } from './pipeline.js';
 import { ComponentReferenceSchema } from './types.js';
 import { generateUtilReferences } from './util-handler.js';
-import { sortProps } from './utils.js';
 
 // Magenta prefix - visible on both light and dark terminals
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';

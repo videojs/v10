@@ -266,7 +266,10 @@ describe('Component pipeline (end-to-end)', () => {
       const fill = findComponent('Gauge')!.reference.parts!.fill!;
 
       expect(fill.name).toBe('Fill');
-      expect(fill.props).toEqual({});
+      // Sub-part custom React props: extracted from `FillProps` interface.
+      // `children` is auto-excluded by the builder.
+      expect(fill.props.color).toMatchObject({ type: 'string' });
+      expect(fill.props.children).toBeUndefined();
       expect(fill.state).toEqual({});
 
       // Fill's React source references `stateAttrMap`, so it gets the
@@ -392,7 +395,7 @@ describe('Component pipeline (end-to-end)', () => {
   describe('Cross-cutting conventions', () => {
     it('all components are discovered from core/ui directories', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(expect.arrayContaining(['Gauge', 'Slider', 'ToggleButton', 'VolumeSlider']));
+      expect(names).toEqual(expect.arrayContaining(['Gauge', 'PiPButton', 'Slider', 'ToggleButton', 'VolumeSlider']));
     });
 
     it('kebab name matches directory name', () => {
@@ -400,6 +403,19 @@ describe('Component pipeline (end-to-end)', () => {
       expect(findComponent('Gauge')!.kebab).toBe('gauge');
       expect(findComponent('Slider')!.kebab).toBe('slider');
       expect(findComponent('VolumeSlider')!.kebab).toBe('volume-slider');
+    });
+
+    it('NAME_OVERRIDES: pip-button → PiPButton (not PipButton)', () => {
+      // The NAME_OVERRIDES map handles cases where standard kebab-to-PascalCase
+      // conversion is wrong. "pip-button" would normally become "PipButton",
+      // but the override maps it to "PiPButton".
+      const pip = findComponent('PiPButton');
+      expect(pip).toBeDefined();
+      expect(pip!.kebab).toBe('pip-button');
+      expect(pip!.reference.name).toBe('PiPButton');
+      // Props use the overridden name for interface lookup (PiPButtonProps)
+      expect(pip!.reference.props.disabled).toBeDefined();
+      expect(pip!.reference.state.active).toBeDefined();
     });
 
     it('primary part appears first in parts record (sorted by isPrimary)', () => {
@@ -411,8 +427,8 @@ describe('Component pipeline (end-to-end)', () => {
     });
 
     it('props are sorted: required first, then alphabetical', () => {
-      // ToggleButton has no required props (all have defaults or are optional)
-      // so they should be purely alphabetical
+      // All ToggleButton props are required (non-optional in the interface),
+      // so they should be purely alphabetical within the required group.
       const toggleProps = Object.keys(findComponent('ToggleButton')!.reference.props);
       const sorted = [...toggleProps].sort((a, b) => a.localeCompare(b));
       expect(toggleProps).toEqual(sorted);
