@@ -76,6 +76,8 @@ region="left" + region="center" + region="right"    → thirds
  │  left  │ center  │ right  │
  │ (33%)  │  (34%)  │ (33%)  │
  └────────┴─────────┴────────┘
+```
+
 When omitted, the gesture covers the full container surface. Full-surface gestures and region gestures of the same `type` can coexist — region gestures take priority within their zone, the full-surface gesture handles everything else.
 
 In React, `region` also accepts a callback that receives the gesture state and returns `true` or `false`. This gives full programmatic control over hit testing for custom zones that don't fit the `left` / `center` / `right` model:
