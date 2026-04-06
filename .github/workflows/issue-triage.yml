@@ -45,8 +45,16 @@ jobs:
               ${{ github.event.issue.body }}
 
             Triage responsibilities:
-            1. Set issue type:
-            - Assign the correct GitHub issue type: Bug, Enhancement, or Task.
+            1. Ensure title prefix:
+            - Every issue title must start with a type prefix. If the prefix is missing or wrong, fix the title. Preserve the rest of the title as-is.
+            - Use Title Case for the description after the prefix (e.g., "Bug: Playback Stalls on iOS Safari").
+            - Prefixes:
+              - `Feature:` — New capability or behavior
+              - `Bug:` — Something broken or not working as expected
+              - `Docs:` — Documentation additions or improvements
+              - `Architecture:` — Internal structure, design patterns, core refactoring
+              - `Chore:` — Maintenance, deps, tooling, CI
+              - `Design:` — Design docs, component specs, visual design
             2. Classify and label:
             - Determine best-fit labels from issue content and template sections.
             - Review labels used on related/cross-referenced issues before deciding.

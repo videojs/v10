@@ -30,20 +30,7 @@ $ARGUMENTS
 
 ### Title Format
 
-**`Type: Title Case Description`**
-
-Use Title Case for the description portion. The type prefix is followed by a colon and space.
-
-| Prefix           | When to Use                                           | Example                                          |
-| ---------------- | ----------------------------------------------------- | ------------------------------------------------ |
-| `Feature:`       | New capability or behavior                            | Feature: Add OAuth Support                       |
-| `Bug:`           | Something broken or not working as expected           | Bug: Playback Stalls on iOS Safari               |
-| `Docs:`          | Documentation additions or improvements               | Docs: Add Getting Started Guide                  |
-| `Architecture:`  | Internal structure, design patterns, core refactoring | Architecture: Redesign State Management Layer    |
-| `Chore:`         | Maintenance, deps, tooling, CI                        | Chore: Upgrade Vitest to v3                      |
-| `Design:`        | Design docs, component specs, visual design           | Design: Component Spec for Slider                |
-
-**Not** conventional commit prefixes (`feat:`, `fix:`, `docs:`) -- those are for commits only.
+Use Title Case. The triage bot will add the appropriate type prefix (`Bug:`, `Feature:`, etc.) automatically.
 
 ### Labels
 
@@ -118,15 +105,14 @@ When creating **Feature**, **Architecture**, or **Design** issues, research how 
 ### Step 1: Gather Information
 
 If $ARGUMENTS provides enough detail, extract:
-1. **Type** -- Which prefix applies (Feature, Bug, Docs, Architecture, Chore, Design)
-2. **Title** -- Short, descriptive, Title Case
-3. **Description** -- The what and why
+1. **Title** -- Short, descriptive, Title Case
+2. **Description** -- The what and why
 
 If details are missing, use the `question` tool to ask the user.
 
 ### Step 2: Format Title
 
-Construct the title as `Type: Title Case Description`.
+Construct the title in Title Case (no type prefix — the triage bot adds that).
 
 **Title Case rules:**
 - Capitalize the first and last word
@@ -159,7 +145,7 @@ Ask for confirmation using the `question` tool.
 
 ```bash
 gh issue create --repo videojs/v10 \
-  --title "Type: Title Case Description" \
+  --title "Title Case Description" \
   --body "body content"
 ```
 
@@ -167,7 +153,7 @@ Use a HEREDOC for the body to preserve formatting:
 
 ```bash
 gh issue create --repo videojs/v10 \
-  --title "Feature: Add OAuth Support" \
+  --title "Add OAuth Support" \
   --body "$(cat <<'EOF'
 Description text here.
 
