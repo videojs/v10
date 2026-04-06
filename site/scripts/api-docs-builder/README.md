@@ -64,15 +64,8 @@ site/scripts/api-docs-builder/
     ├── util-handler.ts        # Extracts util params/return from store/react packages
     └── tests/
         ├── e2e.test.ts        # ★ E2E spec — the living specification
-        ├── test-utils.ts
-        ├── fixtures/          # Mock monorepo for E2E + unit tests
-        ├── core-handler.test.ts
-        ├── data-attrs-handler.test.ts
-        ├── formatter.test.ts
-        ├── html-handler.test.ts
-        ├── parts-handler.test.ts
-        ├── util-handler.test.ts
-        └── utils.test.ts
+        ├── formatter.test.ts  # Type abbreviation/formatting edge cases
+        └── fixtures/          # Mock monorepo for E2E tests
 
 site/src/
 ├── content/generated-component-reference/  # Generated component JSON (gitignored)
