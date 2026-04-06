@@ -82,13 +82,7 @@ interface MessageTaskOptions {
   signal: AbortSignal;
   getContext: () => SourceBufferActorContext;
   sourceBuffer: SourceBuffer;
-  /**
-   * Called when a streaming append transitions to a partial state — i.e.
-   * the first chunk of an AsyncIterable has been committed and the segment
-   * now has data in the SourceBuffer but is not yet complete. Not called for
-   * full ArrayBuffer appends (which are atomic).
-   */
-  onPartialContext: (ctx: SourceBufferActorContext) => void;
+  setContext: (ctx: SourceBufferActorContext) => void;
 }
 
 function appendInitTask(
@@ -110,7 +104,7 @@ function appendInitTask(
 
 function appendSegmentTask(
   message: AppendSegmentMessage,
-  { signal, getContext, sourceBuffer, onPartialContext }: MessageTaskOptions
+  { signal, getContext, sourceBuffer, setContext }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   return new Task(
     async (taskSignal) => {
@@ -130,7 +124,7 @@ function appendSegmentTask(
       // incomplete. ArrayBuffer appends are atomic so no partial state is
       // needed — context is updated once at task completion.
       if (!(message.data instanceof ArrayBuffer)) {
-        onPartialContext({
+        setContext({
           ...ctx,
           segments: [
             ...filtered,
@@ -246,7 +240,7 @@ export function createSourceBufferActor(
               signal: msg.signal,
               getContext,
               sourceBuffer,
-              onPartialContext: setContext,
+              setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
@@ -256,7 +250,7 @@ export function createSourceBufferActor(
               signal: msg.signal,
               getContext,
               sourceBuffer,
-              onPartialContext: setContext,
+              setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
@@ -266,7 +260,7 @@ export function createSourceBufferActor(
               signal: msg.signal,
               getContext,
               sourceBuffer,
-              onPartialContext: setContext,
+              setContext,
             });
             runner.schedule(task).then(setContext, handleError);
           },
@@ -281,7 +275,7 @@ export function createSourceBufferActor(
                 signal,
                 getContext,
                 sourceBuffer,
-                onPartialContext: setContext,
+                setContext,
               });
               runner.schedule(task).then(setContext, handleError);
             }
