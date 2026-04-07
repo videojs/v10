@@ -45,6 +45,8 @@
  *   presets.ts   — Feature bundles. Exercises: plural *Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
+ *   feature.parts.ts — Short aliases (playbackFeature as playback, etc.).
+ *                  Exercises: namespace re-export filtering (export * as features).
  *   index.ts     — Re-export barrel. Exercises: feature discovery filtering
  *                  (singular *Feature only, not *Features or namespaces).
  *
@@ -699,6 +701,11 @@ describe('Feature pipeline (end-to-end)', () => {
       const names = results.map((r) => r.name);
       expect(names).not.toContain('videoFeatures');
       expect(names).not.toContain('audioFeatures');
+    });
+
+    it('excludes namespace re-exports (export * as features)', () => {
+      const names = results.map((r) => r.name);
+      expect(names).not.toContain('features');
     });
 
     it('produces one result per feature', () => {
