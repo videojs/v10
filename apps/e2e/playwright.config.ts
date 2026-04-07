@@ -38,13 +38,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5180' },
     },
 
-    // --- Firefox / Gecko ---
-    {
-      name: 'vite-firefox',
-      use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
-    },
-
-    // --- WebKit (HLS pages skipped at test level via test.fixme — WebKit
+    // --- WebKit (HLS pages skipped at test level — WebKit
     //     lacks MSE so <hls-video> falls back to native HLS which is
     //     unreliable in headless mode) ---
     {

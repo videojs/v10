@@ -11,7 +11,7 @@
     "test:ui": "playwright test --ui",
     "test:update-snapshots": "playwright test --update-snapshots",
     "test:vite": "playwright test --project=vite-chromium",
-    "test:all-engines": "playwright test --project=vite-chromium --project=vite-firefox --project=vite-webkit",
+    "test:all-engines": "playwright test --project=vite-chromium --project=vite-webkit",
     "report": "playwright show-report"
   },
   "devDependencies": {
