@@ -13,7 +13,7 @@ jobs:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.52.0-noble
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
     timeout-minutes: 15
     strategy:
       fail-fast: false
