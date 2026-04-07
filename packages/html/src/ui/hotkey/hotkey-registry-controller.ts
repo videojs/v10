@@ -1,15 +1,17 @@
 import { findHotkeyCoordinator } from '@videojs/core/dom';
-import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+import type { ReactiveController } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
+import type { ContainerContext } from '../../player/context';
 import { containerContext } from '../../player/context';
+import type { PlayerControllerHost } from '../../player/player-controller';
 
 /** Provides `aria-keyshortcuts` for a given hotkey action name. */
 export class HotkeyRegistryController implements ReactiveController {
   #action: string;
-  #container: ContextConsumer<typeof containerContext, ReactiveControllerHost & HTMLElement>;
+  #container: ContextConsumer<ContainerContext, PlayerControllerHost>;
 
-  constructor(host: ReactiveControllerHost & HTMLElement, action: string) {
+  constructor(host: PlayerControllerHost, action: string) {
     this.#action = action;
     this.#container = new ContextConsumer(host, { context: containerContext, subscribe: true });
     host.addController(this);
