@@ -118,9 +118,10 @@ export class PlayerPage {
 
   /** Click pause and wait for the paused attribute to appear. */
   async pause(): Promise<void> {
-    // Controls may hide after play starts (especially audio in Firefox).
-    // Force-click bypasses Playwright's visibility check.
-    await this.playButton.click({ force: true });
+    // In Firefox headless (especially audio), controls may hide after play
+    // starts and force-click doesn't reliably dispatch to Shadow DOM buttons.
+    // Fall back to dispatching click via JS, then verify UI state.
+    await this.playButton.dispatchEvent('click');
     await expect(this.playButton).toHaveAttribute('data-paused', '', { timeout: 5_000 });
   }
 
