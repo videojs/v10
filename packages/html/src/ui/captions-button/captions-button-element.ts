@@ -8,10 +8,10 @@ import { MediaButtonElement } from '../media-button-element';
 export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore> {
   static readonly tagName = 'media-captions-button';
 
-  protected override readonly hotkeyAction = 'toggleSubtitles';
   protected readonly core = new CaptionsButtonCore();
   protected readonly stateAttrMap = CaptionsButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectTextTrack);
+  protected override readonly hotkeyAction = 'toggleSubtitles';
 
   protected activate(state: MediaTextTrackState): void {
     this.core.toggle(state);

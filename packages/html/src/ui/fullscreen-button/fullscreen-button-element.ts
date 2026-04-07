@@ -8,10 +8,10 @@ import { MediaButtonElement } from '../media-button-element';
 export class FullscreenButtonElement extends MediaButtonElement<FullscreenButtonCore> {
   static readonly tagName = 'media-fullscreen-button';
 
-  protected override readonly hotkeyAction = 'toggleFullscreen';
   protected readonly core = new FullscreenButtonCore();
   protected readonly stateAttrMap = FullscreenButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectFullscreen);
+  protected override readonly hotkeyAction = 'toggleFullscreen';
 
   protected activate(state: MediaFullscreenState): void {
     this.core.toggle(state);

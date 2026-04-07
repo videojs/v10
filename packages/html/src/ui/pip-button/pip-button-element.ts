@@ -8,10 +8,10 @@ import { MediaButtonElement } from '../media-button-element';
 export class PiPButtonElement extends MediaButtonElement<PiPButtonCore> {
   static readonly tagName = 'media-pip-button';
 
-  protected override readonly hotkeyAction = 'togglePiP';
   protected readonly core = new PiPButtonCore();
   protected readonly stateAttrMap = PiPButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectPiP);
+  protected override readonly hotkeyAction = 'togglePiP';
 
   protected activate(state: MediaPictureInPictureState): void {
     this.core.toggle(state);
