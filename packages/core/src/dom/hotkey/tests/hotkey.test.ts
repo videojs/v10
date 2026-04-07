@@ -54,10 +54,10 @@ describe('parseKeyPattern', () => {
     expect(result[0]!.originalKey).toBe('ArrowRight');
   });
 
-  it('parses Space as a key', () => {
+  it('parses Space to literal space character', () => {
     const result = parseKeyPattern('Space');
 
-    expect(result[0]!.key).toBe('space');
+    expect(result[0]!.key).toBe(' ');
     expect(result[0]!.originalKey).toBe('Space');
   });
 
@@ -81,6 +81,11 @@ describe('matchesEvent', () => {
   it('matches a simple key', () => {
     const binding = parseKeyPattern('k')[0]!;
     expect(matchesEvent(binding, createEvent('k'))).toBe(true);
+  });
+
+  it('matches Space pattern against literal space event', () => {
+    const binding = parseKeyPattern('Space')[0]!;
+    expect(matchesEvent(binding, createEvent(' '))).toBe(true);
   });
 
   it('matches case-insensitively', () => {

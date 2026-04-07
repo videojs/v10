@@ -64,7 +64,10 @@ export function parseKeyPattern(pattern: string): ParsedKeyBinding[] {
     }
   }
 
-  return [{ modifiers, key: rawKey.toLowerCase(), originalKey: rawKey }];
+  // "Space" is the readable name but KeyboardEvent.key is " ".
+  const key = rawKey === 'Space' ? ' ' : rawKey.toLowerCase();
+
+  return [{ modifiers, key, originalKey: rawKey }];
 }
 
 /** Whether a parsed binding matches a keyboard event. */
