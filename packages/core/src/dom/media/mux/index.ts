@@ -182,9 +182,9 @@ export const toMuxVideoURL = ({
    *
    * */
   if (token || url.searchParams.has('token')) {
-    url.searchParams.forEach((_, key) => {
+    for (const key of Array.from(url.searchParams.keys())) {
       if (key !== 'token') url.searchParams.delete(key);
-    });
+    }
     if (token) url.searchParams.set('token', token);
   } else {
     if (maxResolution) {
@@ -205,16 +205,16 @@ export const toMuxVideoURL = ({
     if (renditionOrder) {
       url.searchParams.set('rendition_order', renditionOrder);
     }
-    if (programStartTime) {
+    if (programStartTime != null) {
       url.searchParams.set('program_start_time', `${programStartTime}`);
     }
-    if (programEndTime) {
+    if (programEndTime != null) {
       url.searchParams.set('program_end_time', `${programEndTime}`);
     }
-    if (assetStartTime) {
+    if (assetStartTime != null) {
       url.searchParams.set('asset_start_time', `${assetStartTime}`);
     }
-    if (assetEndTime) {
+    if (assetEndTime != null) {
       url.searchParams.set('asset_end_time', `${assetEndTime}`);
     }
     Object.entries(extraSourceParams).forEach(([k, v]) => {

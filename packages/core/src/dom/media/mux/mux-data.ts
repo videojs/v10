@@ -5,6 +5,8 @@ import { Hls, type HlsMediaDelegate } from '../hls';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
+const MUX_VIDEO_DOMAIN = 'mux.com';
+
 export interface MuxDataMediaHost {
   readonly target: HTMLMediaElement | null;
   readonly debug: boolean;
@@ -167,8 +169,6 @@ export function MuxDataMediaMixin<Base extends Constructor<MuxDataMediaHost>>(Ba
 
   return MuxDataMedia as unknown as Base;
 }
-
-const MUX_VIDEO_DOMAIN = 'mux.com';
 
 export type MuxVideoIdProps = {
   playbackId: string | null;
