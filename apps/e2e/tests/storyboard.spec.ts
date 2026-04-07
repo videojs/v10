@@ -6,9 +6,7 @@ for (const { name, path, media } of STORYBOARD_PAGES) {
   test.describe(`Storyboard — ${name}`, () => {
     let player: PlayerPage;
 
-    test.beforeEach(async ({ page, browserName }) => {
-      test.skip(browserName === 'webkit' && media === 'hls', 'WebKit native HLS is unreliable in headless mode');
-
+    test.beforeEach(async ({ page }) => {
       player = new PlayerPage(page);
       await page.goto(path);
       await player.waitForMediaReady();

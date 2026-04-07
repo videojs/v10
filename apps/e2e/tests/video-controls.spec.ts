@@ -6,11 +6,7 @@ for (const { name, path, media } of ALL_VIDEO_PAGES) {
   test.describe(`Video Controls — ${name}`, () => {
     let player: PlayerPage;
 
-    test.beforeEach(async ({ page, browserName }) => {
-      // WebKit lacks MSE — <hls-video> falls back to native HLS which is
-      // unreliable in headless Playwright. Skip all HLS tests on WebKit.
-      test.skip(browserName === 'webkit' && media === 'hls', 'WebKit native HLS is unreliable in headless mode');
-
+    test.beforeEach(async ({ page }) => {
       player = new PlayerPage(page);
       await page.goto(path);
       await player.waitForMediaReady();
@@ -50,7 +46,10 @@ for (const { name, path, media } of ALL_VIDEO_PAGES) {
 
     // --- Time Slider ---
 
-    test('time slider allows seeking', async ({ page }) => {
+    test('time slider allows seeking', async ({ page, browserName }) => {
+      // WebKit native HLS seek via slider is unreliable in headless mode.
+      test.skip(browserName === 'webkit' && media === 'hls', 'WebKit HLS seek unreliable');
+
       await player.seekTo(50);
 
       await expect
