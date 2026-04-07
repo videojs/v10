@@ -31,6 +31,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
       else await import('@videojs/html/cdn/video');
       break;
     case 'audio':
+    case 'mux-audio':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
       break;
@@ -47,6 +48,9 @@ async function loadCdnMedia(preset: Preset) {
       break;
     case 'mux-video':
       await import('@videojs/html/cdn/media/mux-video');
+      break;
+    case 'mux-audio':
+      await import('@videojs/html/cdn/media/mux-audio');
       break;
     case 'native-hls-video':
       await import('@videojs/html/cdn/media/native-hls-video');
@@ -66,13 +70,13 @@ async function loadCdnMedia(preset: Preset) {
 
 function getPlayerTag(preset: Preset): string {
   if (preset === 'background-video') return 'background-video-player';
-  if (preset === 'audio') return 'audio-player';
+  if (preset === 'audio' || preset === 'mux-audio') return 'audio-player';
   return 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin): string {
   if (preset === 'background-video') return 'background-video-skin';
-  if (preset === 'audio') return CSS_SKIN_TAGS[skin].audio;
+  if (preset === 'audio' || preset === 'mux-audio') return CSS_SKIN_TAGS[skin].audio;
   return CSS_SKIN_TAGS[skin].video;
 }
 
@@ -80,6 +84,7 @@ function getMediaTag(preset: Preset): string {
   const tags: Partial<Record<Preset, string>> = {
     'hls-video': 'hls-video',
     'mux-video': 'mux-video',
+    'mux-audio': 'mux-audio',
     'native-hls-video': 'native-hls-video',
     'simple-hls-video': 'simple-hls-video',
     'dash-video': 'dash-video',
@@ -91,7 +96,7 @@ function getMediaTag(preset: Preset): string {
 }
 
 function loadStylesheets(preset: Preset, skin: Skin) {
-  if (preset === 'audio') loadAudioStylesheets(skin);
+  if (preset === 'audio' || preset === 'mux-audio') loadAudioStylesheets(skin);
   else if (preset !== 'background-video') loadVideoStylesheets(skin);
   // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
@@ -126,7 +131,7 @@ async function render() {
   const sourceAttr =
     preset === 'background-video'
       ? `src="${BACKGROUND_VIDEO_SRC}"`
-      : preset === 'mux-video' && source.type !== 'mp4'
+      : (preset === 'mux-video' || preset === 'mux-audio') && source.type !== 'mp4'
         ? `playback-id="${source.playbackId}"`
         : `src="${source.url}"`;
 
@@ -147,7 +152,7 @@ async function render() {
     return;
   }
 
-  if (preset === 'audio') {
+  if (preset === 'audio' || preset === 'mux-audio') {
     root.innerHTML = html`
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>
