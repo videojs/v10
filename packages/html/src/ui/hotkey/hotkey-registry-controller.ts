@@ -1,4 +1,4 @@
-import { findCoordinator } from '@videojs/core/dom';
+import { findHotkeyCoordinator } from '@videojs/core/dom';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 
 /** Provides `aria-keyshortcuts` for a given hotkey action name. */
@@ -15,7 +15,7 @@ export class HotkeyRegistryController implements ReactiveController {
   get value(): string | undefined {
     const container = this.#host.closest('media-container');
     if (!container) return undefined;
-    return findCoordinator(container as HTMLElement)?.getAriaKeys(this.#action);
+    return findHotkeyCoordinator(container as HTMLElement)?.getAriaKeys(this.#action);
   }
 
   hostConnected(): void {}

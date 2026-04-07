@@ -1,4 +1,4 @@
-import { createHotkey, type HotkeyActionName, isToggleAction, resolveAction } from '@videojs/core/dom';
+import { createHotkey, type HotkeyActionName, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
@@ -51,7 +51,7 @@ export class HotkeyElement extends MediaElement {
     const container = this.closest('media-container');
     if (!this.keys || !this.action || !store || !container) return;
 
-    const resolver = resolveAction(this.action);
+    const resolver = resolveHotkeyAction(this.action);
     if (!resolver) return;
 
     const { value, action } = this;
@@ -61,7 +61,7 @@ export class HotkeyElement extends MediaElement {
       action,
       target: this.target,
       disabled: this.disabled,
-      allowRepeat: !isToggleAction(action),
+      allowRepeat: !isHotkeyToggleAction(action),
       onActivate: (_event, key) => {
         resolver({ store, key, ...(value !== undefined && { value }) });
       },

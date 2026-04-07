@@ -1,27 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { HotkeyActionContext } from '../actions';
-import { isToggleAction, resolveAction } from '../actions';
+import { isHotkeyToggleAction, resolveHotkeyAction } from '../actions';
 
 function mockStore(state: Record<string, unknown>) {
   return { state } as HotkeyActionContext['store'];
 }
 
-describe('resolveAction', () => {
+describe('resolveHotkeyAction', () => {
   it('returns resolver for known actions', () => {
-    expect(resolveAction('togglePaused')).toBeTypeOf('function');
-    expect(resolveAction('seekStep')).toBeTypeOf('function');
-    expect(resolveAction('seekToPercent')).toBeTypeOf('function');
+    expect(resolveHotkeyAction('togglePaused')).toBeTypeOf('function');
+    expect(resolveHotkeyAction('seekStep')).toBeTypeOf('function');
+    expect(resolveHotkeyAction('seekToPercent')).toBeTypeOf('function');
   });
 
   it('returns undefined for unknown actions', () => {
-    expect(resolveAction('nonexistent')).toBeUndefined();
+    expect(resolveHotkeyAction('nonexistent')).toBeUndefined();
   });
 
   it('warns in __DEV__ for unknown actions', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    resolveAction('nonexistent');
+    resolveHotkeyAction('nonexistent');
 
     expect(spy).toHaveBeenCalledOnce();
     expect(spy.mock.calls[0]![0]).toContain('Unknown action');
@@ -30,20 +30,20 @@ describe('resolveAction', () => {
   });
 });
 
-describe('isToggleAction', () => {
+describe('isHotkeyToggleAction', () => {
   it('returns true for toggle actions', () => {
-    expect(isToggleAction('togglePaused')).toBe(true);
-    expect(isToggleAction('toggleMuted')).toBe(true);
-    expect(isToggleAction('toggleFullscreen')).toBe(true);
-    expect(isToggleAction('toggleSubtitles')).toBe(true);
-    expect(isToggleAction('togglePiP')).toBe(true);
+    expect(isHotkeyToggleAction('togglePaused')).toBe(true);
+    expect(isHotkeyToggleAction('toggleMuted')).toBe(true);
+    expect(isHotkeyToggleAction('toggleFullscreen')).toBe(true);
+    expect(isHotkeyToggleAction('toggleSubtitles')).toBe(true);
+    expect(isHotkeyToggleAction('togglePiP')).toBe(true);
   });
 
   it('returns false for non-toggle actions', () => {
-    expect(isToggleAction('seekStep')).toBe(false);
-    expect(isToggleAction('volumeStep')).toBe(false);
-    expect(isToggleAction('speedUp')).toBe(false);
-    expect(isToggleAction('seekToPercent')).toBe(false);
+    expect(isHotkeyToggleAction('seekStep')).toBe(false);
+    expect(isHotkeyToggleAction('volumeStep')).toBe(false);
+    expect(isHotkeyToggleAction('speedUp')).toBe(false);
+    expect(isHotkeyToggleAction('seekToPercent')).toBe(false);
   });
 });
 
@@ -52,7 +52,7 @@ describe('togglePaused', () => {
     const play = vi.fn();
     const store = mockStore({ paused: true, ended: false, started: false, waiting: false, play, pause: vi.fn() });
 
-    resolveAction('togglePaused')!({ store, key: '' });
+    resolveHotkeyAction('togglePaused')!({ store, key: '' });
 
     expect(play).toHaveBeenCalledOnce();
   });
@@ -61,7 +61,7 @@ describe('togglePaused', () => {
     const pause = vi.fn();
     const store = mockStore({ paused: false, ended: false, started: true, waiting: false, play: vi.fn(), pause });
 
-    resolveAction('togglePaused')!({ store, key: '' });
+    resolveHotkeyAction('togglePaused')!({ store, key: '' });
 
     expect(pause).toHaveBeenCalledOnce();
   });
@@ -78,7 +78,7 @@ describe('toggleMuted', () => {
       toggleMuted,
     });
 
-    resolveAction('toggleMuted')!({ store, key: '' });
+    resolveHotkeyAction('toggleMuted')!({ store, key: '' });
 
     expect(toggleMuted).toHaveBeenCalledOnce();
   });
@@ -94,7 +94,7 @@ describe('toggleFullscreen', () => {
       exitFullscreen: vi.fn(),
     });
 
-    resolveAction('toggleFullscreen')!({ store, key: '' });
+    resolveHotkeyAction('toggleFullscreen')!({ store, key: '' });
 
     expect(requestFullscreen).toHaveBeenCalledOnce();
   });
@@ -108,7 +108,7 @@ describe('toggleFullscreen', () => {
       exitFullscreen,
     });
 
-    resolveAction('toggleFullscreen')!({ store, key: '' });
+    resolveHotkeyAction('toggleFullscreen')!({ store, key: '' });
 
     expect(exitFullscreen).toHaveBeenCalledOnce();
   });
@@ -119,7 +119,7 @@ describe('seekStep', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
 
-    resolveAction('seekStep')!({ store, value: 5, key: '' });
+    resolveHotkeyAction('seekStep')!({ store, value: 5, key: '' });
 
     expect(seek).toHaveBeenCalledWith(15);
   });
@@ -128,7 +128,7 @@ describe('seekStep', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
 
-    resolveAction('seekStep')!({ store, value: -5, key: '' });
+    resolveHotkeyAction('seekStep')!({ store, value: -5, key: '' });
 
     expect(seek).toHaveBeenCalledWith(5);
   });
@@ -137,7 +137,7 @@ describe('seekStep', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
 
-    resolveAction('seekStep')!({ store, key: '' });
+    resolveHotkeyAction('seekStep')!({ store, key: '' });
 
     expect(seek).not.toHaveBeenCalled();
   });
@@ -154,7 +154,7 @@ describe('volumeStep', () => {
       toggleMuted: vi.fn(),
     });
 
-    resolveAction('volumeStep')!({ store, value: 0.05, key: '' });
+    resolveHotkeyAction('volumeStep')!({ store, value: 0.05, key: '' });
 
     expect(setVolume).toHaveBeenCalledWith(0.55);
   });
@@ -169,7 +169,7 @@ describe('volumeStep', () => {
       toggleMuted: vi.fn(),
     });
 
-    resolveAction('volumeStep')!({ store, value: -0.05, key: '' });
+    resolveHotkeyAction('volumeStep')!({ store, value: -0.05, key: '' });
 
     expect(setVolume).toHaveBeenCalledWith(0.45);
   });
@@ -180,7 +180,7 @@ describe('speedUp', () => {
     const setPlaybackRate = vi.fn();
     const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
 
-    resolveAction('speedUp')!({ store, key: '' });
+    resolveHotkeyAction('speedUp')!({ store, key: '' });
 
     expect(setPlaybackRate).toHaveBeenCalledWith(1.5);
   });
@@ -189,7 +189,7 @@ describe('speedUp', () => {
     const setPlaybackRate = vi.fn();
     const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 2, setPlaybackRate });
 
-    resolveAction('speedUp')!({ store, key: '' });
+    resolveHotkeyAction('speedUp')!({ store, key: '' });
 
     expect(setPlaybackRate).toHaveBeenCalledWith(1);
   });
@@ -200,7 +200,7 @@ describe('speedDown', () => {
     const setPlaybackRate = vi.fn();
     const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1.5, setPlaybackRate });
 
-    resolveAction('speedDown')!({ store, key: '' });
+    resolveHotkeyAction('speedDown')!({ store, key: '' });
 
     expect(setPlaybackRate).toHaveBeenCalledWith(1);
   });
@@ -209,7 +209,7 @@ describe('speedDown', () => {
     const setPlaybackRate = vi.fn();
     const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
 
-    resolveAction('speedDown')!({ store, key: '' });
+    resolveHotkeyAction('speedDown')!({ store, key: '' });
 
     expect(setPlaybackRate).toHaveBeenCalledWith(2);
   });
@@ -220,7 +220,7 @@ describe('seekToPercent', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
 
-    resolveAction('seekToPercent')!({ store, value: 50, key: '' });
+    resolveHotkeyAction('seekToPercent')!({ store, value: 50, key: '' });
 
     expect(seek).toHaveBeenCalledWith(100);
   });
@@ -229,7 +229,7 @@ describe('seekToPercent', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
 
-    resolveAction('seekToPercent')!({ store, key: '3' });
+    resolveHotkeyAction('seekToPercent')!({ store, key: '3' });
 
     expect(seek).toHaveBeenCalledWith(60);
   });
@@ -238,7 +238,7 @@ describe('seekToPercent', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
 
-    resolveAction('seekToPercent')!({ store, key: 'k' });
+    resolveHotkeyAction('seekToPercent')!({ store, key: 'k' });
 
     expect(seek).not.toHaveBeenCalled();
   });
@@ -247,7 +247,7 @@ describe('seekToPercent', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 0, duration: 0, seeking: false, seek });
 
-    resolveAction('seekToPercent')!({ store, value: 50, key: '' });
+    resolveHotkeyAction('seekToPercent')!({ store, value: 50, key: '' });
 
     expect(seek).not.toHaveBeenCalled();
   });
