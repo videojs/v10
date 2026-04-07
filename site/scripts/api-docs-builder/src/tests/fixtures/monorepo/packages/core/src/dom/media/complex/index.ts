@@ -9,7 +9,7 @@ export class ComplexDelegate {
   #src: string = '';
   #type: string | undefined;
   #preferPlayback: string | undefined = 'mse';
-  #config: Record<string, any> = {};
+  #config: Record<string, unknown> = {};
   #debug: boolean = false;
   #preload: string = 'metadata';
   #engine: object | null = null;
@@ -40,11 +40,11 @@ export class ComplexDelegate {
     this.#preferPlayback = value;
   }
 
-  get config(): Record<string, any> {
+  get config(): Record<string, unknown> {
     return this.#config;
   }
 
-  set config(value: Record<string, any>) {
+  set config(value: Record<string, unknown>) {
     this.#config = value;
   }
 

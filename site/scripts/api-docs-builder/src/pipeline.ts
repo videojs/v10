@@ -584,7 +584,6 @@ export interface DelegatePropertyDef {
 export interface MediaElementReference {
   name: string;
   tagName: string;
-  description?: string;
   delegateProperties: Record<string, DelegatePropertyDef>;
   nativeAttributes: string[];
   events: string[];

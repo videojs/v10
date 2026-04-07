@@ -69,8 +69,14 @@
  *                   descriptions, multiple property types (string, boolean,
  *                   Record), delegate-vs-native attribute deduplication
  *                   (src, preload in delegate → omitted from nativeAttributes).
+ *   extending-video — Extending media element. Exercises: delegate inheritance
+ *                   (ExtendingDelegate extends ComplexDelegate). Builder must
+ *                   walk the extends chain to include inherited properties.
+ *                   Child overrides (debug) replace parent definitions.
  *   container.ts  — Exclusion case. Not a media element — re-exports an
  *                   existing class instead of declaring one inline.
+ *   background-video.ts — Exclusion case. Uses MediaAttachMixin(HTMLElement)
+ *                   without MediaPropsMixin. API reference manually maintained.
  */
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -996,7 +1002,9 @@ describe('Preset pipeline (end-to-end)', () => {
 //
 // Key behaviors:
 //   - Discovery: files in define/media/ with an inline class declaration + static tagName
-//   - Exclusion: container.ts is excluded (re-exports, doesn't declare inline)
+//   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
+//     (no MediaPropsMixin — uses MediaAttachMixin(HTMLElement) directly)
+//   - Delegate inheritance: child delegate extends parent, builder walks the chain
 //   - Deduplication: properties in the delegate that overlap with native Attributes
 //     (e.g., src, preload) appear in delegateProperties and are omitted from nativeAttributes
 
@@ -1014,7 +1022,7 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers media elements from define/media/ files', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['ComplexVideo', 'SimpleVideo']);
+      expect(names).toEqual(['ComplexVideo', 'ExtendingVideo', 'SimpleVideo']);
     });
 
     it('excludes container (re-export, not inline class declaration)', () => {
@@ -1022,8 +1030,13 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(findElement('MediaContainerElement')).toBeUndefined();
     });
 
+    it('excludes background-video (no MediaPropsMixin, manually maintained)', () => {
+      expect(findElement('BackgroundVideo')).toBeUndefined();
+      expect(findElement('BackgroundVideoElement')).toBeUndefined();
+    });
+
     it('produces one result per media element', () => {
-      expect(results.length).toBe(2);
+      expect(results.length).toBe(3);
     });
   });
 
@@ -1173,6 +1186,59 @@ describe('Media element pipeline (end-to-end)', () => {
       // Other native attrs remain
       expect(ref.nativeAttributes).toContain('autoplay');
       expect(ref.nativeAttributes).toContain('controls');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // EXTENDING MEDIA ELEMENT: ExtendingVideo
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // A media element whose delegate extends another delegate (mirrors
+  // MuxMediaDelegate extending HlsMediaDelegate). The builder must
+  // walk the extends chain to include inherited properties. Child
+  // properties override parent definitions.
+
+  describe('ExtendingVideo (delegate inheritance)', () => {
+    it('extracts the tag name', () => {
+      const ref = findElement('ExtendingVideo')!.reference;
+      expect(ref.tagName).toBe('extending-video');
+    });
+
+    it('includes own properties from ExtendingDelegate', () => {
+      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
+      expect(props.playbackId).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'The playback ID for the video.',
+      });
+      expect(props.customDomain).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'Custom domain for asset delivery.',
+      });
+    });
+
+    it('includes inherited properties from ComplexDelegate', () => {
+      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
+      // These are inherited from ComplexDelegate
+      expect(props.src).toBeDefined();
+      expect(props.type).toBeDefined();
+      expect(props.preferPlayback).toBeDefined();
+      expect(props.config).toBeDefined();
+      expect(props.preload).toBeDefined();
+      expect(props.engine).toBeDefined();
+    });
+
+    it('child overrides replace parent definitions', () => {
+      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
+      // ExtendingDelegate overrides debug with different JSDoc
+      expect(props.debug.description).toBe('Overrides parent debug — adds network logging.');
+    });
+
+    it('inherited readonly flags are preserved', () => {
+      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
+      // engine is readonly in ComplexDelegate and not overridden
+      expect(props.engine.readonly).toBe(true);
     });
   });
 });
