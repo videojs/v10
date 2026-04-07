@@ -370,7 +370,7 @@ Not shipped as a preset — documented as the standard set for users to compose:
 
 | Feature | Reason |
 |---|---|
-| Hold-for-speed (`repeat` prop) | YouTube-style hold-Space-for-2x. Two bindings on the same key: `<media-hotkey keys="Space" action="togglePaused">` + `<media-hotkey keys="Space" action="holdSpeed" repeat>`. The `repeat` binding fires on `event.repeat` keydowns. When a `repeat` binding exists on the same key, the coordinator defers the non-repeat sibling to `keyup` — fires only if no repeat occurred. Adds coordinator complexity (keyup tracking, deferred dispatch). Factory function escape hatch covers this today. |
+| Hold-for-speed (`repeat` prop) | YouTube-style hold-Space-for-2x. Two bindings on the same key: `<media-hotkey keys="Space" action="togglePaused">` + `<media-hotkey keys="Space" action="speedBoost" repeat>`. The `repeat` binding fires on `event.repeat` keydowns. When a `repeat` binding exists on the same key, the coordinator defers the non-repeat sibling to `keyup` — fires only if no repeat occurred. Adds coordinator complexity (keyup tracking, deferred dispatch). Factory function escape hatch covers this today. |
 | Key sequences (`g` then `i`) | No media player precedent. Complex state machine for minimal value. |
 | Visual shortcut overlay | UI component concern, not hotkey system. |
 | `onActivate` callback on component | Factory function covers this. |
