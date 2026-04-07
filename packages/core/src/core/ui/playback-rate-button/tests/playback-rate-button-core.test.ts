@@ -6,7 +6,7 @@ import { PlaybackRateButtonCore } from '../playback-rate-button-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): MediaPlaybackRateState {
   return {
-    playbackRates: [0.25, 0.5, 0.75, 1, 1.2, 1.5, 1.7, 2],
+    playbackRates: [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2],
     playbackRate: 1,
     setPlaybackRate: vi.fn(),
     ...overrides,
@@ -96,7 +96,7 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore();
       const media = createMediaState({ playbackRate: 2 });
       core.cycle(media);
-      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.25);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.2);
     });
 
     it('advances through the middle of the list', () => {
@@ -124,12 +124,12 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore();
       const media = createMediaState({ playbackRate: 3 });
       core.cycle(media);
-      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.25);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.2);
     });
 
     it('cycles through sub-1x rates', () => {
       const core = new PlaybackRateButtonCore();
-      const media = createMediaState({ playbackRate: 0.25 });
+      const media = createMediaState({ playbackRate: 0.2 });
       core.cycle(media);
       expect(media.setPlaybackRate).toHaveBeenCalledWith(0.5);
     });
