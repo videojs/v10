@@ -2,10 +2,10 @@ import { isMacOS } from '@videojs/utils/dom';
 
 import { HotkeyCoordinator } from './coordinator';
 
-export type ModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';
+export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';
 
-export interface ParsedKeyBinding {
-  modifiers: Set<ModifierKey>;
+export interface ParsedHotkeyBinding {
+  modifiers: Set<HotkeyModifierKey>;
   /** Lowercased key for matching. */
   key: string;
   /** Original casing preserved for ARIA formatting. */
@@ -31,18 +31,18 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  *
  * @example
  * ```ts
- * parseKeyPattern('Shift+>');
+ * parseHotkeyPattern('Shift+>');
  * // [{ modifiers: Set('shift'), key: '>', originalKey: '>' }]
  *
- * parseKeyPattern('0-9');
+ * parseHotkeyPattern('0-9');
  * // 10 bindings, one per digit
  * ```
  */
-export function parseKeyPattern(pattern: string): ParsedKeyBinding[] {
+export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   // Range expansion: "0-9" → individual digit bindings.
   if (pattern === '0-9') {
     return Array.from({ length: 10 }, (_, i) => ({
-      modifiers: new Set<ModifierKey>(),
+      modifiers: new Set<HotkeyModifierKey>(),
       key: String(i),
       originalKey: String(i),
     }));
@@ -50,7 +50,7 @@ export function parseKeyPattern(pattern: string): ParsedKeyBinding[] {
 
   const segments = pattern.split('+');
   const rawKey = segments.pop()!;
-  const modifiers = new Set<ModifierKey>();
+  const modifiers = new Set<HotkeyModifierKey>();
 
   for (const seg of segments) {
     const lower = seg.toLowerCase();
@@ -58,7 +58,7 @@ export function parseKeyPattern(pattern: string): ParsedKeyBinding[] {
     if (lower === 'mod') {
       modifiers.add(isMacOS() ? 'meta' : 'ctrl');
     } else if (MODIFIER_KEYS.has(lower)) {
-      modifiers.add(lower as ModifierKey);
+      modifiers.add(lower as HotkeyModifierKey);
     } else if (__DEV__) {
       console.warn(`[vjs-hotkey] Unknown modifier: "${seg}" in pattern "${pattern}"`);
     }
@@ -71,7 +71,7 @@ export function parseKeyPattern(pattern: string): ParsedKeyBinding[] {
 }
 
 /** Whether a parsed binding matches a keyboard event. */
-export function matchesEvent(binding: ParsedKeyBinding, event: KeyboardEvent): boolean {
+export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: KeyboardEvent): boolean {
   // IME composition filtering.
   if (event.key === 'Unidentified') return false;
 
@@ -90,6 +90,11 @@ export function matchesEvent(binding: ParsedKeyBinding, event: KeyboardEvent): b
 // --- Coordinator management ---
 
 const coordinators = new WeakMap<HTMLElement, HotkeyCoordinator>();
+
+/** Look up the coordinator for a target element, if one exists. */
+export function findHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator | undefined {
+  return coordinators.get(target);
+}
 
 function getCoordinator(target: HTMLElement): HotkeyCoordinator {
   let coordinator = coordinators.get(target);

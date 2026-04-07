@@ -1,8 +1,8 @@
 import { isEditableTarget, listen, resolveEventTarget } from '@videojs/utils/dom';
 
 import { toAriaKeyShortcut } from './aria';
-import type { HotkeyOptions, ParsedKeyBinding } from './hotkey';
-import { matchesEvent, parseKeyPattern } from './hotkey';
+import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
+import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
 
 const ACTIVATION_KEYS = new Set([' ', 'Enter']);
 
@@ -19,7 +19,7 @@ function isInteractiveActivation(event: KeyboardEvent): boolean {
 }
 
 interface HotkeyBinding {
-  parsed: ParsedKeyBinding[];
+  parsed: ParsedHotkeyBinding[];
   options: HotkeyOptions;
   /** Registration order for DOM-order tie-breaking. */
   id: number;
@@ -32,7 +32,7 @@ export class HotkeyCoordinator {
   #disconnect: AbortController | null = null;
   #docDisconnect: AbortController | null = null;
   /** Action name → bound keys. Controls query this to set `aria-keyshortcuts`. */
-  #ariaRegistry = new Map<string, ParsedKeyBinding[]>();
+  #ariaRegistry = new Map<string, ParsedHotkeyBinding[]>();
   #destroyed = false;
 
   constructor(target: HTMLElement) {
@@ -40,7 +40,7 @@ export class HotkeyCoordinator {
   }
 
   add(options: HotkeyOptions): () => void {
-    const parsed = parseKeyPattern(options.keys);
+    const parsed = parseHotkeyPattern(options.keys);
     const binding: HotkeyBinding = { parsed, options, id: this.#nextId++ };
 
     this.#bindings.push(binding);
@@ -150,7 +150,7 @@ export class HotkeyCoordinator {
       if (isDocBinding !== isDocEvent) continue;
 
       for (const p of parsed) {
-        if (!matchesEvent(p, event)) continue;
+        if (!matchesHotkeyEvent(p, event)) continue;
 
         // Input safety: single-key shortcuts suppressed in editable fields.
         if (editable && p.modifiers.size === 0) continue;
@@ -162,7 +162,7 @@ export class HotkeyCoordinator {
     }
   };
 
-  #addToAriaRegistry(action: string, bindings: ParsedKeyBinding[]): void {
+  #addToAriaRegistry(action: string, bindings: ParsedHotkeyBinding[]): void {
     let existing = this.#ariaRegistry.get(action);
     if (!existing) {
       existing = [];
@@ -171,7 +171,7 @@ export class HotkeyCoordinator {
     existing.push(...bindings);
   }
 
-  #removeFromAriaRegistry(action: string, bindings: ParsedKeyBinding[]): void {
+  #removeFromAriaRegistry(action: string, bindings: ParsedHotkeyBinding[]): void {
     const existing = this.#ariaRegistry.get(action);
     if (!existing) return;
 

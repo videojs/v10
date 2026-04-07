@@ -32,7 +32,7 @@ export interface HotkeyActionContext {
 
 export type HotkeyActionResolver = (context: HotkeyActionContext) => void;
 
-export function isToggleAction(action: string): boolean {
+export function isHotkeyToggleAction(action: string): boolean {
   return action.startsWith('toggle');
 }
 
@@ -113,7 +113,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   },
 };
 
-export function resolveAction(name: string): HotkeyActionResolver | undefined {
+export function resolveHotkeyAction(name: string): HotkeyActionResolver | undefined {
   const resolver = HOTKEY_ACTIONS[name as HotkeyActionName];
 
   if (__DEV__ && !resolver) {
