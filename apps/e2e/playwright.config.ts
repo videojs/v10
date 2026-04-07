@@ -63,7 +63,7 @@ export default defineConfig({
 
   webServer: [
     {
-      command: 'pnpm vite --port 5180',
+      command: 'npx vite --port 5180',
       cwd: './apps/vite',
       port: 5180,
       reuseExistingServer: !CI,

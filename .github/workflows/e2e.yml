@@ -9,57 +9,8 @@ on:
       - 'rfc/**'
 
 jobs:
-  # Shared build step — packages, CDN, and ejected skins only need to be
-  # built once. The matrix jobs restore from cache.
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache turbo build
-        uses: actions/cache/save@v5
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-e2e-${{ github.sha }}
-
-      - name: Build packages
-        run: pnpm build:packages
-
-      - name: Build CDN bundles
-        run: pnpm build:cdn
-
-      - name: Build ejected skins
-        run: pnpm -F site ejected-skins
-
-      # Upload built artifacts for matrix jobs
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-build
-          path: |
-            packages/*/dist/
-            packages/*/cdn/
-            packages/*/types/
-            site/src/content/ejected-skins.json
-          retention-days: 1
-
   e2e:
-    needs: build
+    name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -81,19 +32,31 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile
 
-      # Restore built packages from the build job
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Cache turbo build
+        uses: actions/cache@v5
         with:
-          name: e2e-build
+          path: .turbo
+          key: ${{ runner.os }}-turbo-e2e-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-e2e-
+            ${{ runner.os }}-turbo-
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Build CDN bundles
+        run: pnpm build:cdn
+
+      - name: Build ejected skins
+        run: pnpm -F site ejected-skins
 
       - name: Get Playwright version
         id: playwright-version
         run: echo "PLAYWRIGHT_VERSION=$(pnpm --dir apps/e2e exec playwright --version | tr -d ' ')" >> $GITHUB_ENV
 
-      - name: Cache Playwright browsers
+      - name: Cache Playwright browser
         id: playwright-cache
         uses: actions/cache@v5
         with:
@@ -107,7 +70,7 @@ jobs:
       - name: Install Playwright OS dependencies
         run: pnpm --dir apps/e2e exec playwright install-deps ${{ matrix.browser }}
 
-      - name: Run E2E tests (${{ matrix.browser }})
+      - name: Run E2E tests
         run: pnpm --dir apps/e2e exec playwright test --project=vite-${{ matrix.browser }}
 
       - name: Upload test report
@@ -117,14 +80,6 @@ jobs:
           name: playwright-report-${{ matrix.browser }}
           path: apps/e2e/playwright-report/
           retention-days: 14
-
-      - name: Upload blob report (for merging)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: blob-report-${{ matrix.browser }}
-          path: apps/e2e/blob-report/
-          retention-days: 1
 
       - name: Upload test traces
         if: failure()

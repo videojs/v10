@@ -15,6 +15,9 @@ import { PlayerPage } from '../../page-objects/player';
 const VISUAL_PAGES = [
   { name: 'HTML', path: '/html-video-mp4.html' },
   { name: 'React', path: '/react-video-mp4.html' },
+  { name: 'Ejected-HTML', path: '/ejected-html-video-mp4.html' },
+  { name: 'Ejected-React', path: '/ejected-react-video-mp4.html' },
+  { name: 'CDN', path: '/cdn-video-mp4.html' },
 ];
 
 for (const { name, path } of VISUAL_PAGES) {
