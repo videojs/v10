@@ -1,7 +1,9 @@
+import type { MediaContainer } from '@videojs/core/dom';
 import { createHotkey, type HotkeyActionName, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
 
-import { playerContext } from '../../player/context';
+import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
@@ -23,7 +25,19 @@ export class HotkeyElement extends MediaElement {
   target: 'player' | 'document' = 'player';
 
   readonly #player = new PlayerController(this, playerContext);
+  #container: MediaContainer | null = null;
   #cleanup: (() => void) | null = null;
+
+  constructor() {
+    super();
+    new ContextConsumer(this, {
+      context: containerContext,
+      callback: (value) => {
+        this.#container = value?.container ?? null;
+      },
+      subscribe: true,
+    });
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -48,7 +62,7 @@ export class HotkeyElement extends MediaElement {
 
   #register(): void {
     const store = this.#player.value;
-    const container = this.closest('media-container');
+    const container = this.#container;
     if (!this.keys || !this.action || !store || !container) return;
 
     const resolver = resolveHotkeyAction(this.action);

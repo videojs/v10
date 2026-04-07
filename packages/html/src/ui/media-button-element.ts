@@ -85,14 +85,10 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
     this.core.setMedia(media);
     const state = this.core.getState();
-    applyElementProps(this, this.core.getAttrs?.(state) ?? {});
+    applyElementProps(this, {
+      ...this.core.getAttrs?.(state),
+      'aria-keyshortcuts': this.#hotkeyRegistry?.value,
+    });
     applyStateDataAttrs(this, state, this.stateAttrMap);
-
-    const shortcuts = this.#hotkeyRegistry?.value;
-    if (shortcuts) {
-      this.setAttribute('aria-keyshortcuts', shortcuts);
-    } else {
-      this.removeAttribute('aria-keyshortcuts');
-    }
   }
 }
