@@ -4,9 +4,10 @@ const CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: './tests',
-  // Visual snapshots require platform-specific baselines (darwin vs linux).
-  // Skip them in CI until Linux baselines are generated via Docker.
-  testIgnore: CI ? /visual\// : undefined,
+  // Strip the OS suffix from snapshot paths so one set of baselines works
+  // on both macOS (local) and Linux (CI). The generous thresholds below
+  // absorb minor cross-platform rendering differences.
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   timeout: 60_000,
   retries: CI ? 2 : 0,
   workers: CI ? 2 : undefined,
