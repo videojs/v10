@@ -7,7 +7,7 @@ import { containerContext } from '../../player/context';
 import type { PlayerControllerHost } from '../../player/player-controller';
 
 /** Provides `aria-keyshortcuts` for a given hotkey action name. */
-export class HotkeyRegistryController implements ReactiveController {
+export class AriaKeyShortcutsController implements ReactiveController {
   #action: string;
   #container: ContainerContextConsumer;
 
@@ -20,7 +20,7 @@ export class HotkeyRegistryController implements ReactiveController {
   get value(): string | undefined {
     const container = this.#container.value?.container;
     if (!container) return undefined;
-    return findHotkeyCoordinator(container as HTMLElement)?.getAriaKeys(this.#action);
+    return findHotkeyCoordinator(container)?.getAriaKeys(this.#action);
   }
 
   hostConnected(): void {}

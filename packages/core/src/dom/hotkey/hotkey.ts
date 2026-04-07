@@ -16,12 +16,12 @@ export interface HotkeyOptions {
   keys: string;
   onActivate: (event: KeyboardEvent, key: string) => void;
   /** Where to listen — `'player'` (container) or `'document'`. */
-  target?: 'player' | 'document';
+  target?: 'player' | 'document' | undefined;
   /** Whether `event.repeat` should fire the callback. */
-  allowRepeat?: boolean;
-  disabled?: boolean;
+  repeatable?: boolean | undefined;
+  disabled?: boolean | undefined;
   /** Action name for the ARIA registry. */
-  action?: string;
+  action?: string | undefined;
 }
 
 const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);

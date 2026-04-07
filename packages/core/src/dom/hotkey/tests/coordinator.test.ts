@@ -200,20 +200,20 @@ describe('HotkeyCoordinator', () => {
   });
 
   describe('repeat handling', () => {
-    it('ignores repeat events when allowRepeat is false', () => {
+    it('ignores repeat events when repeat is false', () => {
       const c = setup();
       const onActivate = vi.fn();
-      c.add({ keys: 'k', onActivate, allowRepeat: false });
+      c.add({ keys: 'k', onActivate, repeatable: false });
 
       keydown(container, 'k', { repeat: true });
 
       expect(onActivate).not.toHaveBeenCalled();
     });
 
-    it('fires repeat events when allowRepeat is true', () => {
+    it('fires repeat events when repeatable is true', () => {
       const c = setup();
       const onActivate = vi.fn();
-      c.add({ keys: 'k', onActivate, allowRepeat: true });
+      c.add({ keys: 'k', onActivate, repeatable: true });
 
       keydown(container, 'k', { repeat: true });
 

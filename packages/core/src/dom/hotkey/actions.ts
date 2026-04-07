@@ -25,7 +25,7 @@ export type HotkeyActionName =
 
 export interface HotkeyActionContext {
   store: AnyPlayerStore;
-  value?: number;
+  value?: number | undefined;
   /** The matched key character (used by `seekToPercent` to derive digit). */
   key: string;
 }

@@ -27,8 +27,8 @@ export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
-export { HotkeyRegistryController } from './ui/hotkey/hotkey-registry-controller';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';

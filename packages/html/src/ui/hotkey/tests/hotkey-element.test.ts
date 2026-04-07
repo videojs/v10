@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-
+import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';
 import { HotkeyElement } from '../hotkey-element';
-import { HotkeyRegistryController } from '../hotkey-registry-controller';
 
 let tagCounter = 0;
 
@@ -42,12 +41,12 @@ describe('HotkeyElement', () => {
   });
 });
 
-describe('HotkeyRegistryController', () => {
+describe('AriaKeyShortcutsController', () => {
   it('returns undefined when no coordinator exists', () => {
     const el = createElement(HotkeyElement);
     document.body.appendChild(el);
 
-    const controller = new HotkeyRegistryController(el, 'togglePaused');
+    const controller = new AriaKeyShortcutsController(el, 'togglePaused');
 
     expect(controller.value).toBeUndefined();
   });

@@ -10,7 +10,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
 import type { PlayerController } from '../player/player-controller';
-import { HotkeyRegistryController } from './hotkey/hotkey-registry-controller';
+import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that render a media-control button. */
@@ -37,13 +37,13 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   }
 
   #disconnect: AbortController | null = null;
-  #hotkeyRegistry: HotkeyRegistryController | null = null;
+  #hotkeyRegistry: AriaKeyShortcutsController | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
 
     if (this.hotkeyAction && !this.#hotkeyRegistry) {
-      this.#hotkeyRegistry = new HotkeyRegistryController(this, this.hotkeyAction);
+      this.#hotkeyRegistry = new AriaKeyShortcutsController(this, this.hotkeyAction);
     }
 
     this.#disconnect = new AbortController();

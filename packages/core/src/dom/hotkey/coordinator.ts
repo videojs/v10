@@ -142,7 +142,7 @@ export class HotkeyCoordinator {
       const { options, parsed } = binding;
 
       if (options.disabled) continue;
-      if (event.repeat && options.allowRepeat === false) continue;
+      if (event.repeat && options.repeatable === false) continue;
 
       // Only consider bindings matching the event's target scope.
       const isDocBinding = options.target === 'document';

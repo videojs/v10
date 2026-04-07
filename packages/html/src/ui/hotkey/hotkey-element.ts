@@ -58,14 +58,14 @@ export class HotkeyElement extends MediaElement {
 
     const { value, action } = this;
 
-    this.#cleanup = createHotkey(container as HTMLElement, {
+    this.#cleanup = createHotkey(container, {
       keys: this.keys,
       action,
       target: this.target,
       disabled: this.disabled,
-      allowRepeat: !isHotkeyToggleAction(action),
+      repeatable: !isHotkeyToggleAction(action),
       onActivate: (_event, key) => {
-        resolver({ store, key, ...(value !== undefined && { value }) });
+        resolver({ store, key, value });
       },
     });
   }
