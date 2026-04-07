@@ -509,3 +509,80 @@ export function generateComponentReferences(monorepoRoot: string): ComponentResu
 
   return results;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// FEATURE REFERENCE PIPELINE
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface FeatureStateDef {
+  type: string;
+  detailedType?: string;
+  description?: string;
+}
+
+export interface FeatureActionDef {
+  type: string;
+  detailedType?: string;
+  description?: string;
+}
+
+export interface FeatureReference {
+  name: string;
+  slug: string;
+  description?: string;
+  state: Record<string, FeatureStateDef>;
+  actions: Record<string, FeatureActionDef>;
+}
+
+export interface FeatureResult {
+  name: string;
+  slug: string;
+  reference: FeatureReference;
+}
+
+/**
+ * Discover features from the features index and extract state/action
+ * definitions from their state interfaces.
+ *
+ * Stub — implementation in #1245.
+ */
+export function generateFeatureReferences(_monorepoRoot: string): FeatureResult[] {
+  return [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PRESET REFERENCE PIPELINE
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface PresetSkinDef {
+  name: string;
+  tagName?: string;
+}
+
+export interface PresetReference {
+  name: string;
+  featureBundle: string;
+  features: string[];
+  html: {
+    skins: PresetSkinDef[];
+  };
+  react: {
+    skins: PresetSkinDef[];
+    mediaElement: string;
+  };
+}
+
+export interface PresetResult {
+  name: string;
+  reference: PresetReference;
+}
+
+/**
+ * Discover presets from preset directories and extract feature bundles,
+ * skins, and media elements.
+ *
+ * Stub — implementation in #1245.
+ */
+export function generatePresetReferences(_monorepoRoot: string): PresetResult[] {
+  return [];
+}

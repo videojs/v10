@@ -35,10 +35,38 @@
  *   create* factory, mixin display name stripping, selector discovery,
  *   @label overloads, slug collision (react vs html create-player),
  *   framework assignment.
+ *
+ * Features (packages/core/src/dom/store/features/):
+ *   playback.ts  — Simple feature. Exercises: boolean state properties,
+ *                  void/Promise action methods, JSDoc description extraction.
+ *   volume.ts    — Complex feature. Exercises: numeric state, type alias
+ *                  (MediaFeatureAvailability), methods with params + returns,
+ *                  interface-level JSDoc → feature description.
+ *   presets.ts   — Feature bundles. Exercises: plural *Features naming
+ *                  (filtered out of feature discovery), array resolution
+ *                  for preset feature lists.
+ *   index.ts     — Re-export barrel. Exercises: feature discovery filtering
+ *                  (singular *Feature only, not *Features or namespaces).
+ *
+ * Presets:
+ *   HTML (packages/html/src/presets/):
+ *     video.ts   — Exercises: feature bundle export, multiple HTML skins
+ *                  (SkinElement inheritance), tailwind skin exclusion.
+ *     audio.ts   — Exercises: single skin, subset of features.
+ *   React (packages/react/src/presets/):
+ *     video/     — Exercises: feature bundle, React skins (*Skin naming),
+ *                  media element export, tailwind skin exclusion.
+ *     audio/     — Exercises: single skin, different media element.
  */
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { generateComponentReferences } from '../pipeline';
+import {
+  type FeatureResult,
+  generateComponentReferences,
+  generateFeatureReferences,
+  generatePresetReferences,
+  type PresetResult,
+} from '../pipeline';
 import { getUtilEntries, type UtilEntry } from '../util-handler';
 
 const FIXTURE_ROOT = path.resolve(import.meta.dirname, 'fixtures/monorepo');
@@ -626,6 +654,304 @@ describe('Util pipeline (end-to-end)', () => {
       const overload = sel!.data.overloads[0]!;
       expect(Object.keys(overload.parameters).length).toBeGreaterThan(0);
       expect(overload.returnValue.type).toBeDefined();
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// FEATURE PIPELINE
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Features are defined via `definePlayerFeature()` and discovered from
+// the features index. Each feature's state interface is split into two
+// records: `state` (non-method properties) and `actions` (methods).
+//
+// Key behaviors:
+//   - Discovery: singular *Feature exports from the features index
+//   - Filtering: plural *Features (feature bundles) are excluded
+//   - State extraction: interface properties → state record
+//   - Action extraction: interface methods → actions record
+//   - JSDoc: member descriptions flow through, interface-level JSDoc
+//     becomes the feature description
+//   - Type aliases: expanded in the output (MediaFeatureAvailability →
+//     'available' | 'unavailable' | 'unsupported')
+//   - Slug: derived from feature name, used for cross-linking from presets
+
+describe('Feature pipeline (end-to-end)', () => {
+  const results = generateFeatureReferences(FIXTURE_ROOT);
+
+  function findFeature(name: string): FeatureResult | undefined {
+    return results.find((r) => r.name === name);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // DISCOVERY
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('Discovery', () => {
+    it('discovers features from the features index', () => {
+      const names = results.map((r) => r.name);
+      expect(names).toContain('playback');
+      expect(names).toContain('volume');
+    });
+
+    it('excludes feature bundles (plural *Features)', () => {
+      const names = results.map((r) => r.name);
+      expect(names).not.toContain('videoFeatures');
+      expect(names).not.toContain('audioFeatures');
+    });
+
+    it('produces one result per feature', () => {
+      expect(results.length).toBe(2);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // PLAYBACK FEATURE (simple: booleans + void methods)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // MediaPlaybackState has:
+  //   - paused: boolean (state)
+  //   - ended: boolean (state)
+  //   - play(): Promise<void> (action)
+  //   - pause(): void (action)
+  // No interface-level JSDoc → no feature description.
+
+  describe('playback (simple feature)', () => {
+    it('has name and slug', () => {
+      const playback = findFeature('playback');
+      expect(playback).toBeDefined();
+      expect(playback!.slug).toBe('playback');
+      expect(playback!.reference.name).toBe('playback');
+      expect(playback!.reference.slug).toBe('playback');
+    });
+
+    it('has no description (no interface-level JSDoc)', () => {
+      const ref = findFeature('playback')!.reference;
+      expect(ref.description).toBeUndefined();
+    });
+
+    it('extracts boolean properties as state', () => {
+      const state = findFeature('playback')!.reference.state;
+      expect(state.paused).toEqual({
+        type: 'boolean',
+        description: 'Whether playback is paused.',
+      });
+      expect(state.ended).toEqual({
+        type: 'boolean',
+        description: 'Whether playback has reached the end.',
+      });
+    });
+
+    it('extracts methods as actions', () => {
+      const actions = findFeature('playback')!.reference.actions;
+
+      expect(actions.play).toBeDefined();
+      expect(actions.play!.type).toContain('Promise');
+      expect(actions.play!.description).toBe('Start playback.');
+
+      expect(actions.pause).toBeDefined();
+      expect(actions.pause!.type).toContain('void');
+      expect(actions.pause!.description).toBe('Pause playback.');
+    });
+
+    it('does not mix state and actions', () => {
+      const ref = findFeature('playback')!.reference;
+      // Methods should not appear in state
+      expect(ref.state['play' as keyof typeof ref.state]).toBeUndefined();
+      expect(ref.state['pause' as keyof typeof ref.state]).toBeUndefined();
+      // Properties should not appear in actions
+      expect(ref.actions['paused' as keyof typeof ref.actions]).toBeUndefined();
+      expect(ref.actions['ended' as keyof typeof ref.actions]).toBeUndefined();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // VOLUME FEATURE (complex: types, params, returns, description)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // MediaVolumeState has interface-level JSDoc → feature description.
+  //   - volume: number (state)
+  //   - muted: boolean (state)
+  //   - volumeAvailability: MediaFeatureAvailability (state, type alias)
+  //   - setVolume(volume: number): number (action with param + return)
+  //   - toggleMuted(): boolean (action with return)
+
+  describe('volume (complex feature)', () => {
+    it('has description from interface-level JSDoc', () => {
+      const ref = findFeature('volume')!.reference;
+      expect(ref.description).toBe('Controls audio volume and mute state.');
+    });
+
+    it('extracts state with various types', () => {
+      const state = findFeature('volume')!.reference.state;
+
+      expect(state.volume).toMatchObject({
+        type: 'number',
+        description: 'Volume level from 0 (silent) to 1 (max).',
+      });
+
+      expect(state.muted).toMatchObject({
+        type: 'boolean',
+        description: 'Whether audio is muted.',
+      });
+    });
+
+    it('expands type aliases in state', () => {
+      const state = findFeature('volume')!.reference.state;
+      // MediaFeatureAvailability should be expanded to the union
+      const avail = state.volumeAvailability!;
+      expect(avail.type).toContain("'available'");
+      expect(avail.type).toContain("'unavailable'");
+      expect(avail.type).toContain("'unsupported'");
+    });
+
+    it('extracts actions with parameters and return types', () => {
+      const actions = findFeature('volume')!.reference.actions;
+
+      // setVolume has a parameter and returns a number
+      expect(actions.setVolume).toBeDefined();
+      expect(actions.setVolume!.type).toContain('number');
+      expect(actions.setVolume!.description).toBe('Set volume (clamped 0-1). Returns the clamped value.');
+
+      // toggleMuted returns a boolean
+      expect(actions.toggleMuted).toBeDefined();
+      expect(actions.toggleMuted!.type).toContain('boolean');
+      expect(actions.toggleMuted!.description).toBe('Toggle mute state. Returns the new muted value.');
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// PRESET PIPELINE
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Presets bundle features, skins, and media elements for a specific use
+// case. They are discovered from directories under packages/{html,react}/
+// src/presets/.
+//
+// Key behaviors:
+//   - Discovery: directories under both HTML and React preset paths
+//   - Feature bundle: *Features export → resolved to list of feature names
+//   - HTML skins: classes extending SkinElement, with tagName
+//   - React skins: exports matching *Skin naming
+//   - Media element: React exports that aren't bundles or skins
+//   - Tailwind exclusion: .tailwind files/exports are filtered out
+//   - HTML media element: implied by preset name (video → <video>)
+
+describe('Preset pipeline (end-to-end)', () => {
+  const results = generatePresetReferences(FIXTURE_ROOT);
+
+  function findPreset(name: string): PresetResult | undefined {
+    return results.find((r) => r.name === name);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // DISCOVERY
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('Discovery', () => {
+    it('discovers presets from preset directories', () => {
+      const names = results.map((r) => r.name).sort();
+      expect(names).toEqual(['audio', 'video']);
+    });
+
+    it('produces one result per preset', () => {
+      expect(results.length).toBe(2);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // VIDEO PRESET (full: multiple skins, tailwind exclusion)
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('video preset', () => {
+    it('identifies the feature bundle', () => {
+      const ref = findPreset('video')!.reference;
+      expect(ref.featureBundle).toBe('videoFeatures');
+    });
+
+    it('resolves feature names from the bundle', () => {
+      const ref = findPreset('video')!.reference;
+      expect(ref.features).toEqual(expect.arrayContaining(['playback', 'volume']));
+      expect(ref.features.length).toBe(2);
+    });
+
+    it('detects HTML skins with tagNames', () => {
+      const skins = findPreset('video')!.reference.html.skins;
+      expect(skins).toEqual(
+        expect.arrayContaining([
+          { name: 'VideoSkinElement', tagName: 'video-skin' },
+          { name: 'MinimalVideoSkinElement', tagName: 'video-minimal-skin' },
+        ])
+      );
+    });
+
+    it('excludes HTML tailwind skins', () => {
+      const skinNames = findPreset('video')!.reference.html.skins.map((s) => s.name);
+      expect(skinNames).not.toContain('VideoSkinTailwindElement');
+    });
+
+    it('detects React skins', () => {
+      const skins = findPreset('video')!.reference.react.skins;
+      expect(skins).toEqual(expect.arrayContaining([{ name: 'VideoSkin' }, { name: 'MinimalVideoSkin' }]));
+    });
+
+    it('excludes React tailwind skins', () => {
+      const skinNames = findPreset('video')!.reference.react.skins.map((s) => s.name);
+      expect(skinNames).not.toContain('VideoSkinTailwind');
+    });
+
+    it('detects React media element', () => {
+      const ref = findPreset('video')!.reference;
+      expect(ref.react.mediaElement).toBe('Video');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // AUDIO PRESET (minimal: single skin, subset of features)
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('audio preset', () => {
+    it('identifies the feature bundle', () => {
+      const ref = findPreset('audio')!.reference;
+      expect(ref.featureBundle).toBe('audioFeatures');
+    });
+
+    it('resolves feature names (subset of video)', () => {
+      const ref = findPreset('audio')!.reference;
+      expect(ref.features).toEqual(['playback']);
+    });
+
+    it('detects single HTML skin', () => {
+      const skins = findPreset('audio')!.reference.html.skins;
+      expect(skins).toEqual([{ name: 'AudioSkinElement', tagName: 'audio-skin' }]);
+    });
+
+    it('detects single React skin', () => {
+      const skins = findPreset('audio')!.reference.react.skins;
+      expect(skins).toEqual([{ name: 'AudioSkin' }]);
+    });
+
+    it('detects React media element', () => {
+      const ref = findPreset('audio')!.reference;
+      expect(ref.react.mediaElement).toBe('Audio');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CROSS-CUTTING: feature links
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('Cross-cutting', () => {
+    it('feature names in presets match feature reference slugs', () => {
+      const featureResults = generateFeatureReferences(FIXTURE_ROOT);
+      const featureSlugs = featureResults.map((r) => r.slug);
+
+      const videoPreset = findPreset('video')!.reference;
+      for (const featureName of videoPreset.features) {
+        expect(featureSlugs).toContain(featureName);
+      }
     });
   });
 });
