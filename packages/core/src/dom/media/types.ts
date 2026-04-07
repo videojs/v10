@@ -20,7 +20,7 @@ export type MediaBaseApi = {
   paused: boolean;
 };
 
-export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
+export type MediaApi = WithOptional<MediaBaseApi, HTMLMediaElement>;
 
 export type Media = HTMLMediaElement | HTMLAudioElement | HTMLVideoElement;
 

@@ -17,6 +17,7 @@ type NavbarProps = {
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
   isMuxVideo: boolean;
+  isMuxAudio: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -36,6 +37,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'hls-video': 'HLS Video',
   'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
+  'mux-audio': 'Mux Audio',
   'simple-hls-video': 'Simple HLS Video',
   'dash-video': 'DASH Video',
   audio: 'Audio',
@@ -57,6 +59,7 @@ export function Navbar({
   isBackgroundVideo,
   isSimpleHlsVideo,
   isMuxVideo,
+  isMuxAudio,
   platforms,
   stylings,
   presets,
@@ -111,7 +114,7 @@ export function Navbar({
           options={availableSources
             .filter((id) => {
               if (isSimpleHlsVideo) return sources[id].subType === 'mp4';
-              if (isMuxVideo) return sources[id].type !== 'dash';
+              if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })
             .map((id) => ({ value: id, label: sources[id].label }))}

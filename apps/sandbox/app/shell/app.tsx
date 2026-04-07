@@ -78,9 +78,9 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain source to Mux playbackId sources when switching to mux-video
+  // Constrain source to Mux playbackId sources when switching to mux-video / mux-audio
   useEffect(() => {
-    if (preset === 'mux-video' && !SOURCES[source].playbackId) {
+    if ((preset === 'mux-video' || preset === 'mux-audio') && !SOURCES[source].playbackId) {
       setSource(DEFAULT_SOURCE);
     }
   }, [preset, source, setSource]);
@@ -97,7 +97,7 @@ export function App() {
       ? MP4_SOURCE_IDS
       : preset === 'dash-video'
         ? DASH_SOURCE_IDS
-        : preset === 'mux-video'
+        : preset === 'mux-video' || preset === 'mux-audio'
           ? MUX_SOURCE_IDS
           : NON_DASH_SOURCE_IDS;
 
@@ -120,6 +120,7 @@ export function App() {
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
         isMuxVideo={preset === 'mux-video'}
+        isMuxAudio={preset === 'mux-audio'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
