@@ -1,0 +1,82 @@
+import { expect, test } from '@playwright/test';
+import { AUDIO_PAGES } from '../fixtures/media';
+import { PlayerPage } from '../page-objects/player';
+
+for (const { name, path } of AUDIO_PAGES) {
+  test.describe(`Audio Controls — ${name}`, () => {
+    let player: PlayerPage;
+
+    test.beforeEach(async ({ page }) => {
+      player = new PlayerPage(page);
+      await page.goto(path);
+      await player.waitForMediaReady();
+    });
+
+    // --- Play / Pause ---
+
+    test('play button starts playback', async () => {
+      await expect(player.playButton).toHaveAttribute('data-paused', '');
+      await player.play();
+      await expect(player.playButton).not.toHaveAttribute('data-paused');
+    });
+
+    test('play button pauses playback', async () => {
+      await player.play();
+      await player.pause();
+      await expect(player.playButton).toHaveAttribute('data-paused', '');
+    });
+
+    // --- Seek Buttons ---
+
+    test('seek forward button is present', async () => {
+      await expect(player.seekForward).toBeAttached();
+    });
+
+    test('seek backward button is present', async () => {
+      await expect(player.seekBackward).toBeAttached();
+    });
+
+    // --- Time Slider ---
+
+    test('time slider allows seeking', async ({ page }) => {
+      await player.seekTo(50);
+
+      const currentTime = await page.evaluate(() => {
+        const el = document.querySelector('video, audio, hls-video, dash-video');
+        const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
+        return media?.currentTime ?? 0;
+      });
+
+      expect(currentTime).toBeGreaterThan(0);
+    });
+
+    // --- Mute / Volume ---
+
+    test('mute button toggles mute', async () => {
+      await expect(player.muteButton).not.toHaveAttribute('data-muted');
+      await player.muteButton.click();
+      await expect(player.muteButton).toHaveAttribute('data-muted', '');
+      await player.muteButton.click();
+      await expect(player.muteButton).not.toHaveAttribute('data-muted');
+    });
+
+    test('mute button shows volume level', async () => {
+      await expect(player.muteButton).toHaveAttribute('data-volume-level');
+    });
+
+    // --- Playback Rate ---
+
+    test('playback rate button cycles rates', async () => {
+      const rateBtn = player.playbackRateButton;
+      const initialRate = await rateBtn.getAttribute('data-rate');
+
+      await rateBtn.click();
+      await player.page.waitForTimeout(200);
+
+      const newRate = await rateBtn.getAttribute('data-rate');
+      expect(newRate).not.toBe(initialRate);
+    });
+
+    // Audio skin does NOT have: fullscreen, PiP, captions, poster, storyboard
+  });
+}
