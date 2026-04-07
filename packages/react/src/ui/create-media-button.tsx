@@ -10,6 +10,7 @@ import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
+import { useAriaKeyShortcuts } from './hotkey/use-aria-key-shortcuts';
 import { useOptionalTooltipContext } from './tooltip/context';
 
 interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
@@ -18,13 +19,14 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void;
+  hotkeyAction?: string;
 }
 
 /** Creates a media button React component from a core class and config. */
 export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
   config: MediaButtonConfig<Core>
 ): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
-  const { displayName, core: CoreClass, stateAttrMap, selector, action } = config;
+  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
@@ -48,6 +50,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const tooltipCtx = useOptionalTooltipContext();
     const feature = usePlayer(selector);
+    const shortcuts = useAriaKeyShortcuts(hotkeyAction);
 
     const [core] = useState(() => new CoreClass());
     core.setProps(coreProps);
@@ -77,7 +80,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return null;
     }
 
-    const attrs = core.getAttrs(state);
+    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcuts };
 
     return renderElement(
       'button',

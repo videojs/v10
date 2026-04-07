@@ -62,6 +62,25 @@ export const Attributes = [
   'src',
 ] as const;
 
+/** CSS custom property names for video elements. */
+export const VideoCSSVars = {
+  /** Border radius of the video element. */
+  borderRadius: '--media-video-border-radius',
+  /** Object fit for the video. */
+  objectFit: '--media-object-fit',
+  /** Object position for the video. */
+  objectPosition: '--media-object-position',
+  /** Duration of the caption track transition. */
+  captionTrackDuration: '--media-caption-track-duration',
+  /** Delay before the caption track transition. */
+  captionTrackDelay: '--media-caption-track-delay',
+  /** Vertical offset of the caption track. */
+  captionTrackY: '--media-caption-track-y',
+} as const;
+
+/** CSS custom property names for audio elements. */
+export const AudioCSSVars = {} as const;
+
 /**
  * Helper function to generate the HTML template for audio elements.
  */
@@ -100,15 +119,15 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
         display: block;
         width: 100%;
         height: 100%;
-        border-radius: var(--media-video-border-radius);
-        object-fit: var(--media-object-fit, contain);
-        object-position: var(--media-object-position, center);
+        border-radius: var(${VideoCSSVars.borderRadius});
+        object-fit: var(${VideoCSSVars.objectFit}, contain);
+        object-position: var(${VideoCSSVars.objectPosition}, center);
       }
 
       video::-webkit-media-text-track-container {
-        transition: translate var(--media-caption-track-duration, 0) ease-out;
-        transition-delay: var(--media-caption-track-delay, 0);
-        translate: 0 var(--media-caption-track-y, 0);
+        transition: translate var(${VideoCSSVars.captionTrackDuration}, 0) ease-out;
+        transition-delay: var(${VideoCSSVars.captionTrackDelay}, 0);
+        translate: 0 var(${VideoCSSVars.captionTrackY}, 0);
         scale: 0.98;
         z-index: 1;
         font-family: inherit;
