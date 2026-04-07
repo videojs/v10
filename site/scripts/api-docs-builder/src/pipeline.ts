@@ -516,11 +516,13 @@ export function generateComponentReferences(monorepoRoot: string): ComponentResu
 
 export interface FeatureStateDef {
   type: string;
+  detailedType?: string;
   description?: string;
 }
 
 export interface FeatureActionDef {
   type: string;
+  detailedType?: string;
   description?: string;
 }
 
