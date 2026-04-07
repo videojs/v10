@@ -1101,15 +1101,12 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes CSS custom properties from VideoCSSVars', () => {
       const css = findElement('SimpleVideo')!.reference.cssCustomProperties;
-      expect(css['--media-object-fit']).toMatchObject({
+      expect(css['--media-object-fit']).toEqual({
         description: 'Object fit for the video.',
-        default: 'contain',
       });
-      expect(css['--media-video-border-radius']).toMatchObject({
+      expect(css['--media-video-border-radius']).toEqual({
         description: 'Border radius of the video element.',
       });
-      // No default → field should be undefined
-      expect(css['--media-video-border-radius'].default).toBeUndefined();
     });
 
     it('includes slots from VideoSlots', () => {

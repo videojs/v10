@@ -33,17 +33,25 @@ export const Attributes = [
 ] as const;
 
 export const VideoCSSVars = {
-  '--media-video-border-radius': { description: 'Border radius of the video element.' },
-  '--media-object-fit': { description: 'Object fit for the video.', default: 'contain' },
-  '--media-object-position': { description: 'Object position for the video.', default: 'center' },
-  '--media-caption-track-duration': { description: 'Duration of the caption track transition.' },
-  '--media-caption-track-delay': { description: 'Delay before the caption track transition.' },
-  '--media-caption-track-y': { description: 'Vertical offset of the caption track.' },
+  /** Border radius of the video element. */
+  borderRadius: '--media-video-border-radius',
+  /** Object fit for the video. */
+  objectFit: '--media-object-fit',
+  /** Object position for the video. */
+  objectPosition: '--media-object-position',
+  /** Duration of the caption track transition. */
+  captionTrackDuration: '--media-caption-track-duration',
+  /** Delay before the caption track transition. */
+  captionTrackDelay: '--media-caption-track-delay',
+  /** Vertical offset of the caption track. */
+  captionTrackY: '--media-caption-track-y',
 } as const;
 
 export const AudioCSSVars = {
-  '--media-object-fit': { description: 'Object fit for the audio.', default: 'contain' },
-  '--media-object-position': { description: 'Object position for the audio.', default: 'center' },
+  /** Object fit for the audio. */
+  objectFit: '--media-object-fit',
+  /** Object position for the audio. */
+  objectPosition: '--media-object-position',
 } as const;
 
 export const VideoSlots = ['media', ''] as const;
