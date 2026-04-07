@@ -42,7 +42,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (this.hotkeyAction) {
+    if (this.hotkeyAction && !this.#hotkeyRegistry) {
       this.#hotkeyRegistry = new HotkeyRegistryController(this, this.hotkeyAction);
     }
 
