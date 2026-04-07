@@ -10,6 +10,7 @@ export const PresetSkinDefSchema = z.object({
 
 export const PresetReferenceSchema = z.object({
   name: z.string(),
+  description: z.string().optional(),
   featureBundle: z.string(),
   features: z.array(z.string()),
   html: z.object({

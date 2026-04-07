@@ -208,6 +208,26 @@ function discoverPresetNames(htmlPresetsDir: string, reactPresetsDir: string): s
   return [...names].sort();
 }
 
+// ─── Description Extraction ──────────────────────────────────────
+
+function extractFileDescription(filePath: string): string | undefined {
+  if (!fs.existsSync(filePath)) return undefined;
+
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
+  // File-level JSDoc attaches to the first statement
+  const firstStatement = sourceFile.statements[0];
+  if (!firstStatement) return undefined;
+
+  const jsDocNodes = (firstStatement as { jsDoc?: ts.JSDoc[] }).jsDoc;
+  if (!jsDocNodes || jsDocNodes.length === 0) return undefined;
+
+  const doc = jsDocNodes[0]!;
+  if (typeof doc.comment === 'string') return doc.comment;
+  return undefined;
+}
+
 // ─── Preset Reference Building ────────────────────────────────────
 
 function buildPresetReference(
@@ -259,6 +279,9 @@ function buildPresetReference(
     }
   }
 
+  // Extract description from file-level JSDoc (try React first, fall back to HTML)
+  const description = extractFileDescription(reactPresetFile) ?? extractFileDescription(htmlPresetFile);
+
   const ref: PresetReference = {
     name: presetName,
     featureBundle: bundleExport.name,
@@ -266,6 +289,8 @@ function buildPresetReference(
     html: { skins: htmlSkins },
     react: { skins: reactSkins, mediaElement: reactMediaElement ?? '' },
   };
+
+  if (description) ref.description = description;
 
   return { name: presetName, reference: ref };
 }

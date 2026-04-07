@@ -1,5 +1,6 @@
 ---
-import { getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import clsx from 'clsx';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
@@ -8,24 +9,17 @@ import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
-import type { PresetReference } from '@/types/preset-reference';
+import type { PresetReference as PresetReferenceType } from '@/types/preset-reference';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
+import InlineMarkdown from './InlineMarkdown.astro';
 
-interface Props {
-  preset: string;
-}
-
-const { preset } = Astro.props;
-
-const entry = await getEntry('presetReference', preset);
-const ref: PresetReference | null = entry?.data ?? null;
-if (!ref) return;
+const entries = await getCollection('presetReference');
+const presets: PresetReferenceType[] = entries.map((e) => e.data).sort((a, b) => a.name.localeCompare(b.name));
 
 /**
  * Feature slug overrides for cases where kebabCase(featureName) doesn't
- * match the docs page slug. The feature pipeline uses the name from
- * definePlayerFeature(), which may differ from the docs filename.
+ * match the docs page slug.
  */
 const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
   textTrack: 'text-tracks',
@@ -34,96 +28,141 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
   if (override) return `reference/feature-${override}`;
-  // Simple camelCase → kebab: insert hyphen before uppercase letters
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
   return `reference/feature-${kebab}`;
 }
 ---
 
 <ContentWidth>
-  <FrameworkCase frameworks={["react"]}>
-    <Table maxWidth={false} outerClass="my-6">
-      <Thead>
-        <Tr>
-          <Th>Property</Th>
-          <Th>Value</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        <Tr>
-          <Td>Feature bundle</Td>
-          <Td><MarkdownCode>{ref.featureBundle}</MarkdownCode></Td>
-        </Tr>
-        <Tr>
-          <Td>Features</Td>
-          <Td>
-            {
-              ref.features.map((f, i) => (
-                <>
-                  {i > 0 && ", "}
-                  <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
-                </>
-              ))
-            }
-          </Td>
-        </Tr>
-        <Tr>
-          <Td>Skins</Td>
-          <Td>
-            {
-              ref.react.skins.map((skin, i) => (
-                <>
-                  {i > 0 && ", "}
-                  <MarkdownCode>{`<${skin.name}>`}</MarkdownCode>
-                </>
-              ))
-            }
-          </Td>
-        </Tr>
-        <Tr>
-          <Td>Default media element</Td>
-          <Td><MarkdownCode>{`<${ref.react.mediaElement}>`}</MarkdownCode></Td>
-        </Tr>
-      </Tbody>
-    </Table>
-  </FrameworkCase>
+  <Table maxWidth={false} outerClass="my-6">
+    <Thead>
+      <Tr>
+        <Th>Preset</Th>
+        <Th>Description</Th>
+        <Th><span class="sr-only">Details</span></Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      {
+        presets.map((preset) => {
+          const id = `preset-${preset.name}`;
+          return (
+            <>
+              <Tr
+                id={id}
+                data-detail-row
+                class="group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot"
+              >
+                <Td class="align-top font-bold">
+                  <MarkdownCode>{`/${preset.name}`}</MarkdownCode>
+                </Td>
+                <Td class="align-top">
+                  {preset.description && (
+                    <InlineMarkdown content={preset.description} />
+                  )}
+                </Td>
+                <Td class="align-top">
+                  <button
+                    aria-expanded="false"
+                    aria-controls={`${id}-detail`}
+                    aria-label={`Details for ${preset.name} preset`}
+                    data-detail-toggle
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="inline-block group-data-expanded:rotate-90"
+                    >
+                      ▸
+                    </span>
+                  </button>
+                </Td>
+              </Tr>
+              <Tr id={`${id}-detail`} hidden>
+                <Td colspan="3" class="p-0">
+                  <div class="px-6 py-4">
+                    <dl
+                      class="grid grid-cols-(--cols) gap-x-6 gap-y-3"
+                      style="--cols: auto 1fr"
+                    >
+                      <FrameworkCase frameworks={["react"]}>
+                        <dt class="font-bold">Feature bundle</dt>
+                        <dd>
+                          <MarkdownCode>{preset.featureBundle}</MarkdownCode>
+                        </dd>
+                      </FrameworkCase>
 
-  <FrameworkCase frameworks={["html"]}>
-    <Table maxWidth={false} outerClass="my-6">
-      <Thead>
-        <Tr>
-          <Th>Property</Th>
-          <Th>Value</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        <Tr>
-          <Td>Features</Td>
-          <Td>
-            {
-              ref.features.map((f, i) => (
-                <>
-                  {i > 0 && ", "}
-                  <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
-                </>
-              ))
-            }
-          </Td>
-        </Tr>
-        <Tr>
-          <Td>Skins</Td>
-          <Td>
-            {
-              ref.html.skins.map((skin, i) => (
-                <>
-                  {i > 0 && ", "}
-                  <MarkdownCode>{`<${skin.tagName}>`}</MarkdownCode>
-                </>
-              ))
-            }
-          </Td>
-        </Tr>
-      </Tbody>
-    </Table>
-  </FrameworkCase>
+                      <dt class="font-bold">Features</dt>
+                      <dd>
+                        {preset.features.map((f, i) => (
+                          <>
+                            {i > 0 && ", "}
+                            <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
+                          </>
+                        ))}
+                      </dd>
+
+                      <dt class="font-bold">Skins</dt>
+                      <dd>
+                        <FrameworkCase frameworks={["react"]}>
+                          {preset.react.skins.map((skin, i) => (
+                            <>
+                              {i > 0 && ", "}
+                              <MarkdownCode>{`<${skin.name}>`}</MarkdownCode>
+                            </>
+                          ))}
+                        </FrameworkCase>
+                        <FrameworkCase frameworks={["html"]}>
+                          {preset.html.skins.map((skin, i) => (
+                            <>
+                              {i > 0 && ", "}
+                              <MarkdownCode>{`<${skin.tagName}>`}</MarkdownCode>
+                            </>
+                          ))}
+                        </FrameworkCase>
+                      </dd>
+
+                      <FrameworkCase frameworks={["react"]}>
+                        <dt class="font-bold">Default media element</dt>
+                        <dd>
+                          <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>
+                        </dd>
+                      </FrameworkCase>
+                    </dl>
+                  </div>
+                </Td>
+              </Tr>
+            </>
+          );
+        })
+      }
+    </Tbody>
+  </Table>
 </ContentWidth>
+
+<script>
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        button.setAttribute("aria-expanded", String(!expanded));
+
+        const row = button.closest<HTMLTableRowElement>("[data-detail-row]");
+        if (row) row.toggleAttribute("data-expanded", !expanded);
+
+        const detail = document.getElementById(
+          button.getAttribute("aria-controls")!,
+        );
+        if (detail) detail.hidden = expanded;
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
+    .forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if ((e.target as Element).closest("a, button")) return;
+        row.querySelector<HTMLButtonElement>("[data-detail-toggle]")?.click();
+      });
+    });
+</script>

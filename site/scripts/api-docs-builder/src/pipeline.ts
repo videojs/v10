@@ -553,6 +553,7 @@ export interface PresetSkinDef {
 
 export interface PresetReference {
   name: string;
+  description?: string;
   featureBundle: string;
   features: string[];
   html: {
