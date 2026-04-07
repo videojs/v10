@@ -91,6 +91,11 @@ export function matchesEvent(binding: ParsedKeyBinding, event: KeyboardEvent): b
 
 const coordinators = new WeakMap<HTMLElement, HotkeyCoordinator>();
 
+/** Look up the coordinator for a target element, if one exists. */
+export function findCoordinator(target: HTMLElement): HotkeyCoordinator | undefined {
+  return coordinators.get(target);
+}
+
 function getCoordinator(target: HTMLElement): HotkeyCoordinator {
   let coordinator = coordinators.get(target);
   if (!coordinator) {

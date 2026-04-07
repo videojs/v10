@@ -8,6 +8,7 @@ import { MediaButtonElement } from '../media-button-element';
 export class PlayButtonElement extends MediaButtonElement<PlayButtonCore> {
   static readonly tagName = 'media-play-button';
 
+  protected override readonly hotkeyAction = 'togglePaused';
   protected readonly core = new PlayButtonCore();
   protected readonly stateAttrMap = PlayButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectPlayback);

@@ -8,6 +8,7 @@ import { MediaButtonElement } from '../media-button-element';
 export class MuteButtonElement extends MediaButtonElement<MuteButtonCore> {
   static readonly tagName = 'media-mute-button';
 
+  protected override readonly hotkeyAction = 'toggleMuted';
   protected readonly core = new MuteButtonCore();
   protected readonly stateAttrMap = MuteButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectVolume);
