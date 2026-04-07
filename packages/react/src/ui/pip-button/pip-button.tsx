@@ -15,6 +15,7 @@ export const PiPButton = createMediaButton<PiPButtonCore, PiPButtonProps>({
   stateAttrMap: PiPButtonDataAttrs,
   selector: selectPiP,
   action: (core, state) => core.toggle(state),
+  hotkeyAction: 'togglePiP',
 });
 
 export namespace PiPButton {
