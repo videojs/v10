@@ -370,6 +370,7 @@ Not shipped as a preset — documented as the standard set for users to compose:
 
 | Feature | Reason |
 |---|---|
+| Hold-for-speed (`holdAction`) | YouTube-style hold-Space-for-2x. Requires deferring the primary action to `keyup` — on `keydown` the coordinator waits, on `event.repeat` it enters hold mode (sets 2x speed), on `keyup` it either restores speed (if held) or fires the deferred toggle (if short press). Adds coordinator complexity (keyup tracking, deferred dispatch). Factory function escape hatch covers this today. |
 | Key sequences (`g` then `i`) | No media player precedent. Complex state machine for minimal value. |
 | Visual shortcut overlay | UI component concern, not hotkey system. |
 | `onActivate` callback on component | Factory function covers this. |
