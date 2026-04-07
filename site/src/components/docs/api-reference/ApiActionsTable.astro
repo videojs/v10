@@ -1,0 +1,41 @@
+---
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { FeatureActionDef } from '@/types/feature-reference';
+import StateRow from './StateRow.astro';
+
+interface Props {
+  actions: Record<string, FeatureActionDef>;
+  featureName: string;
+}
+
+const { actions, featureName } = Astro.props;
+
+const actionEntries = Object.entries(actions);
+---
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Action</Th>
+      <Th>Type</Th>
+      <Th>Details</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      actionEntries.map(([name, def]) => (
+        <StateRow
+          name={name}
+          type={def.type}
+          detailedType={def.detailedType}
+          description={def.description}
+          componentName={featureName}
+        />
+      ))
+    }
+  </Tbody>
+</Table>

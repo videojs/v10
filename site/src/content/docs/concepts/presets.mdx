@@ -3,6 +3,7 @@ title: Presets
 description: Pre-packaged player configurations that bundle state management, skins, and media elements for specific use cases.
 ---
 
+import PresetReference from '@/components/docs/api-reference/PresetReference.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -49,24 +50,9 @@ function Hero() {
 
 The default presets are `/video` and `/audio`. These cover the baseline controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases — the `/background` preset, for example, needs layout but not controls. Over time we'll add more: short-form players, podcast players, TV streaming players, and others.
 
-<FrameworkCase frameworks={["react"]}>
-
-| Preset | Feature bundle | Skins | Default media element |
-|--------|---------------|-------|-----------------------|
-| `/video` | `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `<Video>` |
-| `/audio` | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `<Audio>` |
-| `/background` | `backgroundFeatures` | `<BackgroundVideoSkin>` | `<BackgroundVideo>` |
-
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-
-| Preset | Skins | Default media element |
-|--------|-------|-----------------------|
-| `/video` | `<video-skin>`, `<video-minimal-skin>` | `<video>` |
-| `/audio` | `<audio-skin>`, `<audio-minimal-skin>` | `<audio>` |
-| `/background` | `<background-video-skin>` | `<background-video>` |
-
-</FrameworkCase>
+<PresetReference preset="video" />
+<PresetReference preset="audio" />
+<PresetReference preset="background" />
 
 ## What's in a preset
 

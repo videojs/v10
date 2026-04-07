@@ -1,0 +1,129 @@
+---
+import { getEntry } from 'astro:content';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { PresetReference } from '@/types/preset-reference';
+import DocsLink from '../DocsLink.astro';
+import FrameworkCase from '../FrameworkCase.astro';
+
+interface Props {
+  preset: string;
+}
+
+const { preset } = Astro.props;
+
+const entry = await getEntry('presetReference', preset);
+const ref: PresetReference | null = entry?.data ?? null;
+if (!ref) return;
+
+/**
+ * Feature slug overrides for cases where kebabCase(featureName) doesn't
+ * match the docs page slug. The feature pipeline uses the name from
+ * definePlayerFeature(), which may differ from the docs filename.
+ */
+const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
+  textTrack: 'text-tracks',
+};
+
+function featureDocsSlug(featureName: string): string {
+  const override = FEATURE_SLUG_OVERRIDES[featureName];
+  if (override) return `reference/feature-${override}`;
+  // Simple camelCase → kebab: insert hyphen before uppercase letters
+  const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+  return `reference/feature-${kebab}`;
+}
+---
+
+<ContentWidth>
+  <FrameworkCase frameworks={["react"]}>
+    <Table maxWidth={false} outerClass="my-6">
+      <Thead>
+        <Tr>
+          <Th>Property</Th>
+          <Th>Value</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        <Tr>
+          <Td>Feature bundle</Td>
+          <Td><MarkdownCode>{ref.featureBundle}</MarkdownCode></Td>
+        </Tr>
+        <Tr>
+          <Td>Features</Td>
+          <Td>
+            {
+              ref.features.map((f, i) => (
+                <>
+                  {i > 0 && ", "}
+                  <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
+                </>
+              ))
+            }
+          </Td>
+        </Tr>
+        <Tr>
+          <Td>Skins</Td>
+          <Td>
+            {
+              ref.react.skins.map((skin, i) => (
+                <>
+                  {i > 0 && ", "}
+                  <MarkdownCode>{`<${skin.name}>`}</MarkdownCode>
+                </>
+              ))
+            }
+          </Td>
+        </Tr>
+        <Tr>
+          <Td>Default media element</Td>
+          <Td><MarkdownCode>{`<${ref.react.mediaElement}>`}</MarkdownCode></Td>
+        </Tr>
+      </Tbody>
+    </Table>
+  </FrameworkCase>
+
+  <FrameworkCase frameworks={["html"]}>
+    <Table maxWidth={false} outerClass="my-6">
+      <Thead>
+        <Tr>
+          <Th>Property</Th>
+          <Th>Value</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        <Tr>
+          <Td>Features</Td>
+          <Td>
+            {
+              ref.features.map((f, i) => (
+                <>
+                  {i > 0 && ", "}
+                  <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
+                </>
+              ))
+            }
+          </Td>
+        </Tr>
+        <Tr>
+          <Td>Skins</Td>
+          <Td>
+            {
+              ref.html.skins.map((skin, i) => (
+                <>
+                  {i > 0 && ", "}
+                  <MarkdownCode>{`<${skin.tagName}>`}</MarkdownCode>
+                </>
+              ))
+            }
+          </Td>
+        </Tr>
+      </Tbody>
+    </Table>
+  </FrameworkCase>
+</ContentWidth>

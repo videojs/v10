@@ -45,11 +45,63 @@ function parseNamedExports(filePath: string): ExportInfo[] {
         if (element.isTypeOnly) continue;
         exports.push({ name: element.name.text, sourceSpecifier });
       }
+    } else if (!node.exportClause) {
+      // `export * from './skin'` — resolve the source and extract value exports
+      const dir = path.dirname(filePath);
+      const resolved = resolveModulePath(dir, sourceSpecifier);
+      if (resolved) {
+        const starExports = extractValueExports(resolved);
+        for (const name of starExports) {
+          exports.push({ name, sourceSpecifier });
+        }
+      }
     }
-    // Note: `export * from` (namespace re-exports) are skipped — we only handle named exports
   });
 
   return exports;
+}
+
+function resolveModulePath(dir: string, specifier: string): string | undefined {
+  for (const ext of ['.ts', '.tsx']) {
+    const candidate = path.join(dir, `${specifier}${ext}`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return undefined;
+}
+
+function extractValueExports(filePath: string): string[] {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const names: string[] = [];
+
+  ts.forEachChild(sourceFile, (node) => {
+    // export function Foo() {}
+    if (
+      ts.isFunctionDeclaration(node) &&
+      node.name &&
+      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+    ) {
+      names.push(node.name.text);
+    }
+    // export const Foo = ...
+    if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
+      for (const decl of node.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name)) {
+          names.push(decl.name.text);
+        }
+      }
+    }
+    // export class Foo {}
+    if (
+      ts.isClassDeclaration(node) &&
+      node.name &&
+      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+    ) {
+      names.push(node.name.text);
+    }
+  });
+
+  return names;
 }
 
 // ─── Export Classification ────────────────────────────────────────
