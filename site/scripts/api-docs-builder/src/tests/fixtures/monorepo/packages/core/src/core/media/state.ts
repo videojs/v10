@@ -1,4 +1,4 @@
-/**
+/*
  * Feature state interface fixtures.
  *
  * Exercises: property extraction (state), method extraction (actions),

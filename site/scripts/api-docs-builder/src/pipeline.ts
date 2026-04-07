@@ -540,15 +540,7 @@ export interface FeatureResult {
   reference: FeatureReference;
 }
 
-/**
- * Discover features from the features index and extract state/action
- * definitions from their state interfaces.
- *
- * Stub — implementation in #1245.
- */
-export function generateFeatureReferences(_monorepoRoot: string): FeatureResult[] {
-  return [];
-}
+export { generateFeatureReferences } from './feature-handler.js';
 
 // ═══════════════════════════════════════════════════════════════════════
 // PRESET REFERENCE PIPELINE
@@ -577,12 +569,4 @@ export interface PresetResult {
   reference: PresetReference;
 }
 
-/**
- * Discover presets from preset directories and extract feature bundles,
- * skins, and media elements.
- *
- * Stub — implementation in #1245.
- */
-export function generatePresetReferences(_monorepoRoot: string): PresetResult[] {
-  return [];
-}
+export { generatePresetReferences } from './preset-handler.js';
