@@ -81,9 +81,6 @@ export const VideoCSSVars = {
 /** CSS custom property names for audio elements. */
 export const AudioCSSVars = {} as const;
 
-export const VideoSlots = ['media', ''] as const;
-export const AudioSlots = ['media', ''] as const;
-
 /**
  * Helper function to generate the HTML template for audio elements.
  */
