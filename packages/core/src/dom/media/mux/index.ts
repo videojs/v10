@@ -1,28 +1,29 @@
-import Mux from 'mux-embed';
-
+import { shallowEqual } from '@videojs/utils/object';
 import { DelegateMixin } from '../../../core/media/delegate';
+import type { InferDelegateProps } from '../../../core/media/types';
 import { CustomAudioElement, CustomVideoElement } from '../custom-media-element';
-import { Hls, HlsMediaDelegate } from '../hls';
+import { HlsMediaDelegate } from '../hls';
 import { AudioProxy, VideoProxy } from '../proxy';
-import { getPlayerVersion } from './env';
-import type { MuxDataSdk } from './types';
+import { MuxDataMediaMixin } from './mux-data';
+import type { MaxResolutionValue, MinResolutionValue, RenditionOrderValue, Tokens } from './types';
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export class MuxMediaDelegate extends HlsMediaDelegate {
+export class MuxMediaDelegate extends MuxDataMediaMixin(HlsMediaDelegate) {
   static PLAYER_SOFTWARE_NAME = '';
 
-  #MuxDataSdk: MuxDataSdk | undefined = Mux;
-  #MuxDataSdkInitializedBefore: boolean = false;
   #playbackId: string | null = null;
   #customDomain: string = MUX_VIDEO_DOMAIN;
-  #beaconCollectionDomain: string | undefined;
-  #disableCookies: boolean = false;
-  #metadata: Record<string, any> | undefined;
-  #envKey: string | undefined;
-  #playerSoftwareName: string | undefined = (this.constructor as typeof MuxMediaDelegate).PLAYER_SOFTWARE_NAME;
-  #playerSoftwareVersion: string | undefined = getPlayerVersion();
-  #playerInitTime: number | undefined = this.#generatePlayerInitTime();
+  #maxResolution: MaxResolutionValue | undefined;
+  #minResolution: MinResolutionValue | undefined;
+  #renditionOrder: RenditionOrderValue | undefined;
+  #programStartTime: number | undefined;
+  #programEndTime: number | undefined;
+  #assetStartTime: number | undefined;
+  #assetEndTime: number | undefined;
+  #playbackToken: string | undefined;
+  #tokens: Tokens | undefined;
+  #extraSourceParams: Record<string, any> | undefined;
 
   get playbackId() {
     return this.#playbackId;
@@ -45,180 +46,192 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
     this.#syncSrc();
   }
 
-  get MuxDataSdk() {
-    return this.#MuxDataSdk;
+  get maxResolution(): MaxResolutionValue | undefined {
+    return this.#maxResolution;
   }
 
-  set MuxDataSdk(value) {
-    this.#MuxDataSdk = value;
+  set maxResolution(value: MaxResolutionValue | undefined) {
+    if (this.#maxResolution === value) return;
+    this.#maxResolution = value;
+    this.#syncSrc();
   }
 
-  get beaconCollectionDomain(): string | undefined {
-    return this.#beaconCollectionDomain;
+  get minResolution(): MinResolutionValue | undefined {
+    return this.#minResolution;
   }
 
-  set beaconCollectionDomain(value: string | undefined) {
-    this.#beaconCollectionDomain = value;
+  set minResolution(value: MinResolutionValue | undefined) {
+    if (this.#minResolution === value) return;
+    this.#minResolution = value;
+    this.#syncSrc();
   }
 
-  get disableCookies(): boolean {
-    return this.#disableCookies;
+  get renditionOrder(): RenditionOrderValue | undefined {
+    return this.#renditionOrder;
   }
 
-  set disableCookies(value: boolean) {
-    this.#disableCookies = value;
+  set renditionOrder(value: RenditionOrderValue | undefined) {
+    if (this.#renditionOrder === value) return;
+    this.#renditionOrder = value;
+    this.#syncSrc();
   }
 
-  get envKey(): string | undefined {
-    return this.#envKey;
+  get programStartTime(): number | undefined {
+    return this.#programStartTime;
   }
 
-  set envKey(value: string | undefined) {
-    this.#envKey = value;
+  set programStartTime(value: number | undefined) {
+    if (this.#programStartTime === value) return;
+    this.#programStartTime = value;
+    this.#syncSrc();
   }
 
-  get playerSoftwareName(): string | undefined {
-    return this.#playerSoftwareName;
+  get programEndTime(): number | undefined {
+    return this.#programEndTime;
   }
 
-  set playerSoftwareName(value: string | undefined) {
-    this.#playerSoftwareName = value;
+  set programEndTime(value: number | undefined) {
+    if (this.#programEndTime === value) return;
+    this.#programEndTime = value;
+    this.#syncSrc();
   }
 
-  get playerSoftwareVersion(): string | undefined {
-    return this.#playerSoftwareVersion;
+  get assetStartTime(): number | undefined {
+    return this.#assetStartTime;
   }
 
-  set playerSoftwareVersion(value: string | undefined) {
-    this.#playerSoftwareVersion = value;
+  set assetStartTime(value: number | undefined) {
+    if (this.#assetStartTime === value) return;
+    this.#assetStartTime = value;
+    this.#syncSrc();
   }
 
-  get playerInitTime(): number | undefined {
-    return this.#playerInitTime;
+  get assetEndTime(): number | undefined {
+    return this.#assetEndTime;
   }
 
-  set playerInitTime(value: number | undefined) {
-    this.#playerInitTime = value;
+  set assetEndTime(value: number | undefined) {
+    if (this.#assetEndTime === value) return;
+    this.#assetEndTime = value;
+    this.#syncSrc();
   }
 
-  get metadata(): Record<string, any> | undefined {
-    return this.#metadata;
+  get playbackToken(): string | undefined {
+    return this.#playbackToken;
   }
 
-  set metadata(value: Record<string, any> | undefined) {
-    this.#metadata = value;
+  set playbackToken(value: string | undefined) {
+    if (this.#playbackToken === value) return;
+    this.#playbackToken = value;
+    this.#syncSrc();
   }
 
-  attach(target: HTMLMediaElement): void {
-    super.attach(target);
+  get tokens(): Tokens | undefined {
+    return this.#tokens;
+  }
 
-    // Only initialize Mux Data SDK if it was already initialized before in attach,
-    // the first initializeMuxDataSdk call should be done in the deferred load hook
-    // so all the properties are set before the Mux Data SDK is initialized.
-    if (this.#MuxDataSdkInitializedBefore) {
-      this.#initializeMuxDataSdk();
+  set tokens(value: Tokens | undefined) {
+    if (this.#tokens !== undefined && value !== undefined && shallowEqual(this.#tokens, value)) {
+      return;
     }
+    this.#tokens = value;
+    this.#syncSrc();
   }
 
-  detach(): void {
-    if (this.target?.mux) {
-      this.target.mux.destroy();
-      delete this.target.mux;
+  get extraSourceParams(): Record<string, any> | undefined {
+    return this.#extraSourceParams;
+  }
+
+  set extraSourceParams(value: Record<string, any> | undefined) {
+    if (this.#extraSourceParams === value) return;
+    if (this.#extraSourceParams !== undefined && value !== undefined && shallowEqual(this.#extraSourceParams, value)) {
+      return;
     }
-    super.detach();
-  }
-
-  load(): void {
-    super.load();
-    this.#initializeMuxDataSdk();
+    this.#extraSourceParams = value;
+    this.#syncSrc();
   }
 
   #syncSrc(): void {
-    this.src = this.#playbackId ? toSrc(this.#playbackId, this.#customDomain) : '';
+    this.src = this.playbackId ? (toMuxVideoURL(this) ?? '') : '';
   }
+}
 
-  #initializeMuxDataSdk(): void {
-    const target = this.target as HTMLMediaElement;
-
-    if (!this.MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
-
-    this.#MuxDataSdkInitializedBefore = true;
-
-    const {
-      debug,
-      beaconCollectionDomain,
-      disableCookies,
-      engine: hlsjs,
-      envKey: env_key,
-      playerSoftwareName: player_software_name,
-      playerSoftwareVersion: player_software_version,
-      playerInitTime: player_init_time,
-      metadata = {},
-    } = this;
-
-    const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
-    const video_id = toVideoId(this);
-    metadata.view_session_id = view_session_id;
-    metadata.video_id = video_id;
-
-    this.MuxDataSdk?.monitor(target, {
-      debug,
-      ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
-      ...(disableCookies ? { disableCookies } : {}),
-      ...(hlsjs ? { hlsjs } : {}),
-      Hls,
-      data: {
-        ...(env_key ? { env_key } : {}),
-        ...(player_software_name ? { player_software_name } : {}),
-        // NOTE: Adding this because there appears to be some instability on whether
-        // player_software_name or player_software "wins" for Mux Data (CJP)
-        ...(player_software_name ? { player_software: player_software_name } : {}),
-        ...(player_software_version ? { player_software_version } : {}),
-        ...(player_init_time ? { player_init_time } : {}),
-        // Use any metadata passed in programmatically (which may override the defaults above)
-        ...metadata,
-      },
+export const toMuxVideoURL = ({
+  playbackId: playbackIdWithParams,
+  customDomain: domain = MUX_VIDEO_DOMAIN,
+  maxResolution,
+  minResolution,
+  renditionOrder,
+  programStartTime,
+  programEndTime,
+  assetStartTime,
+  assetEndTime,
+  // Normalizes different ways of providing playback token
+  playbackToken,
+  tokens: { playback: token = playbackToken } = {},
+  extraSourceParams = {},
+}: InferDelegateProps<typeof MuxMediaDelegate> = {}) => {
+  if (!playbackIdWithParams) return undefined;
+  // Normalizes different ways of providing playback id
+  const [playbackId, queryPart = ''] = toPlaybackIdParts(playbackIdWithParams);
+  const url = new URL(`https://stream.${domain}/${playbackId}.m3u8${queryPart}`);
+  /*
+   * All identified query params here can only be added to public
+   * playback IDs. In order to use these features with signed URLs
+   * the query param must be added to the signing token.
+   *
+   * */
+  if (token || url.searchParams.has('token')) {
+    url.searchParams.forEach((_, key) => {
+      if (key !== 'token') url.searchParams.delete(key);
+    });
+    if (token) url.searchParams.set('token', token);
+  } else {
+    if (maxResolution) {
+      url.searchParams.set('max_resolution', maxResolution);
+    }
+    if (minResolution) {
+      url.searchParams.set('min_resolution', minResolution);
+      if (maxResolution && +maxResolution.slice(0, -1) < +minResolution.slice(0, -1)) {
+        console.error(
+          'minResolution must be <= maxResolution',
+          'minResolution',
+          minResolution,
+          'maxResolution',
+          maxResolution
+        );
+      }
+    }
+    if (renditionOrder) {
+      url.searchParams.set('rendition_order', renditionOrder);
+    }
+    if (programStartTime) {
+      url.searchParams.set('program_start_time', `${programStartTime}`);
+    }
+    if (programEndTime) {
+      url.searchParams.set('program_end_time', `${programEndTime}`);
+    }
+    if (assetStartTime) {
+      url.searchParams.set('asset_start_time', `${assetStartTime}`);
+    }
+    if (assetEndTime) {
+      url.searchParams.set('asset_end_time', `${assetEndTime}`);
+    }
+    Object.entries(extraSourceParams).forEach(([k, v]) => {
+      if (v == null) return;
+      url.searchParams.set(k, `${v}`);
     });
   }
+  return url.toString();
+};
 
-  #generatePlayerInitTime(): number | undefined {
-    if (!this.MuxDataSdk) return undefined;
-    return this.MuxDataSdk.utils.now();
-  }
-}
-
-function toSrc(playbackId: string, customDomain: string): string {
-  return `https://stream.${customDomain}/${playbackId}.m3u8`;
-}
-
-type MuxSrcProps = Pick<MuxMediaDelegate, 'playbackId' | 'src' | 'customDomain'>;
-
-export function toVideoId(props: MuxSrcProps & Pick<MuxMediaDelegate, 'metadata'>): string | undefined {
-  if (props.metadata?.video_id) return props.metadata.video_id;
-  if (!isMuxVideoSrc(props)) return props.src;
-  return toPlaybackIdFromParameterized(props.playbackId) ?? toPlaybackIdFromSrc(props.src) ?? props.src;
-}
-
-function toPlaybackIdFromParameterized(playbackId: MuxMediaDelegate['playbackId']): string | undefined {
-  if (!playbackId) return undefined;
-  const [id] = playbackId.split('?');
-  return id || undefined;
-}
-
-export function toPlaybackIdFromSrc(src: MuxMediaDelegate['src']): string | undefined {
-  if (!src || !src.startsWith('https://stream.')) return undefined;
-  const [playbackId] = new URL(src).pathname.slice(1).split(/\.m3u8|\//);
-  return playbackId || undefined;
-}
-
-export function isMuxVideoSrc({ playbackId, src, customDomain }: MuxSrcProps): boolean {
-  if (playbackId) return true;
-  if (typeof src !== 'string') return false;
-  const base = window?.location.href;
-  const hostname = new URL(src, base).hostname.toLocaleLowerCase();
-
-  return hostname.includes(MUX_VIDEO_DOMAIN) || (!!customDomain && hostname.includes(customDomain.toLocaleLowerCase()));
-}
+export const toPlaybackIdParts = (playbackIdWithOptionalParams: string): [string, string?] => {
+  const qIndex = playbackIdWithOptionalParams.indexOf('?');
+  if (qIndex < 0) return [playbackIdWithOptionalParams];
+  const idPart = playbackIdWithOptionalParams.slice(0, qIndex);
+  const queryPart = playbackIdWithOptionalParams.slice(qIndex);
+  return [idPart, queryPart];
+};
 
 export class MuxVideoDelegate extends MuxMediaDelegate {
   static PLAYER_SOFTWARE_NAME = 'mux-video';
