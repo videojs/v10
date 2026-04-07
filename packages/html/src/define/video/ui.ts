@@ -8,6 +8,7 @@ import '../ui/captions-button';
 import '../ui/controls';
 import '../ui/error-dialog';
 import '../ui/fullscreen-button';
+import '../ui/hotkey';
 import '../ui/mute-button';
 import '../ui/pip-button';
 import '../ui/play-button';

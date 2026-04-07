@@ -23,6 +23,7 @@ import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { MediaHotkey } from '@/ui/hotkey/media-hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -229,6 +230,25 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      {/* Hotkeys */}
+      <MediaHotkey keys="Space" action="togglePaused" />
+      <MediaHotkey keys="k" action="togglePaused" />
+      <MediaHotkey keys="m" action="toggleMuted" />
+      <MediaHotkey keys="f" action="toggleFullscreen" />
+      <MediaHotkey keys="c" action="toggleSubtitles" />
+      <MediaHotkey keys="i" action="togglePiP" />
+      <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
+      <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <MediaHotkey keys="l" action="seekStep" value={10} />
+      <MediaHotkey keys="j" action="seekStep" value={-10} />
+      <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <MediaHotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <MediaHotkey keys="0-9" action="seekToPercent" />
+      <MediaHotkey keys="Home" action="seekToPercent" value={0} />
+      <MediaHotkey keys="End" action="seekToPercent" value={100} />
+      <MediaHotkey keys="Shift+>" action="speedUp" />
+      <MediaHotkey keys="Shift+<" action="speedDown" />
     </Container>
   );
 }

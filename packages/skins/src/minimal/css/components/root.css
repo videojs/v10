@@ -10,6 +10,12 @@
   height: 100%;
   width: 100%;
   border-radius: var(--media-border-radius, 0.75rem);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+
+  &:focus-visible {
+    outline-color: currentColor;
+  }
   font-family:
     Inter Variable,
     Inter,

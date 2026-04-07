@@ -4,6 +4,7 @@
 import './player';
 
 import '../ui/error-dialog';
+import '../ui/hotkey';
 import '../ui/mute-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
