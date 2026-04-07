@@ -570,3 +570,31 @@ export interface PresetResult {
 }
 
 export { generatePresetReferences } from './preset-handler.js';
+
+// ═══════════════════════════════════════════════════════════════════════
+// MEDIA ELEMENT REFERENCE PIPELINE
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface DelegatePropertyDef {
+  type: string;
+  description?: string;
+  readonly: boolean;
+}
+
+export interface MediaElementReference {
+  name: string;
+  tagName: string;
+  description?: string;
+  delegateProperties: Record<string, DelegatePropertyDef>;
+  nativeAttributes: string[];
+  events: string[];
+  cssCustomProperties: Record<string, { description: string }>;
+  slots: string[];
+}
+
+export interface MediaElementResult {
+  name: string;
+  reference: MediaElementReference;
+}
+
+export { generateMediaElementReferences } from './media-element-handler.js';
