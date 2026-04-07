@@ -1,6 +1,5 @@
 ---
 import { getCollection } from 'astro:content';
-import clsx from 'clsx';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
@@ -9,6 +8,7 @@ import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
+import { isValidFramework } from '@/types/docs';
 import type { PresetReference as PresetReferenceType } from '@/types/preset-reference';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
@@ -16,6 +16,9 @@ import InlineMarkdown from './InlineMarkdown.astro';
 
 const entries = await getCollection('presetReference');
 const presets: PresetReferenceType[] = entries.map((e) => e.data).sort((a, b) => a.name.localeCompare(b.name));
+
+const { framework } = Astro.params;
+const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
 
 /**
  * Feature slug overrides for cases where kebabCase(featureName) doesn't
@@ -37,7 +40,7 @@ function featureDocsSlug(featureName: string): string {
   <Table maxWidth={false} outerClass="my-6">
     <Thead>
       <Tr>
-        <Th>Preset</Th>
+        <Th>Import</Th>
         <Th>Description</Th>
         <Th><span class="sr-only">Details</span></Th>
       </Tr>
@@ -53,8 +56,8 @@ function featureDocsSlug(featureName: string): string {
                 data-detail-row
                 class="group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot"
               >
-                <Td class="align-top font-bold">
-                  <MarkdownCode>{`/${preset.name}`}</MarkdownCode>
+                <Td class="align-top">
+                  <MarkdownCode>{`${pkg}/${preset.name}`}</MarkdownCode>
                 </Td>
                 <Td class="align-top">
                   {preset.description && (
@@ -93,12 +96,16 @@ function featureDocsSlug(featureName: string): string {
 
                       <dt class="font-bold">Features</dt>
                       <dd>
-                        {preset.features.map((f, i) => (
-                          <>
-                            {i > 0 && ", "}
-                            <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
-                          </>
-                        ))}
+                        {preset.features.length > 0
+                          ? preset.features.map((f, i) => (
+                              <>
+                                {i > 0 && ", "}
+                                <DocsLink slug={featureDocsSlug(f)}>
+                                  {f}
+                                </DocsLink>
+                              </>
+                            ))
+                          : "–"}
                       </dd>
 
                       <dt class="font-bold">Skins</dt>
