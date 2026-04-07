@@ -534,9 +534,10 @@ it's load-bearing discipline rather than a model guarantee.
 
 **Lifecycle scoping.** In XState, when the machine leaves `updating` for any reason (a
 `cancel` event, `destroy()`, etc.), the invoked service is cancelled automatically. In SPF, the
-runner outlives any particular state. Cancellation must be threaded manually via abort signals.
-This is non-trivial — `SegmentLoaderActor` has ~50 lines of abort signal management that
-XState's state-scoped invocation would eliminate.
+runner outlives any particular state. Cancellation is handled explicitly — via
+`runner.abortAll()` / `runner.abortPending()` in message handlers and a first-class `cancel`
+message on `SourceBufferActor`. `SegmentLoaderActor`'s `loading.on.load` handler encodes the
+preempt/continue decision explicitly rather than through automatic state-exit cleanup.
 
 **Partial / streaming updates.** SPF calls `setContext` — a closure callback that writes
 context directly from inside the task, bypassing the event system. XState's equivalent is the
