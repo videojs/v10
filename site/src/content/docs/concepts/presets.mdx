@@ -10,9 +10,9 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
 
-For example, the `/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
-
 <FrameworkCase frameworks={["react"]}>
+For example, the `@videojs/react/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
+
 ```tsx title="App.tsx"
 import { createPlayer } from '@videojs/react';
 import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
@@ -31,6 +31,8 @@ function Hero() {
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+For example, the `@videojs/html/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
+    
 ```html title="index.html"
 <script type="module">
   import '@videojs/html/background/player';
