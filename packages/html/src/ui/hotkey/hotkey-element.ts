@@ -24,7 +24,7 @@ export class HotkeyElement extends MediaElement {
   target: 'player' | 'document' = 'player';
 
   readonly #player = new PlayerController(this, playerContext);
-  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
   #cleanup: (() => void) | null = null;
 
   override connectedCallback(): void {
@@ -50,7 +50,7 @@ export class HotkeyElement extends MediaElement {
 
   #register(): void {
     const store = this.#player.value;
-    const container = this.#containerCtx.value?.container;
+    const container = this.#container.value?.container;
     if (!this.keys || !this.action || !store || !container) return;
 
     const resolver = resolveHotkeyAction(this.action);
