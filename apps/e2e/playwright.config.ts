@@ -4,6 +4,9 @@ const CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: './tests',
+  // Visual snapshots require platform-specific baselines (darwin vs linux).
+  // Skip them in CI until Linux baselines are generated via Docker.
+  testIgnore: CI ? /visual\// : undefined,
   timeout: 60_000,
   retries: CI ? 2 : 0,
   workers: CI ? 2 : undefined,
