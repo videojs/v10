@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { STORYBOARD_PAGES } from '../fixtures/media';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path, media } of STORYBOARD_PAGES) {
+for (const { name, path } of STORYBOARD_PAGES) {
   test.describe(`Storyboard — ${name}`, () => {
     let player: PlayerPage;
 
@@ -12,31 +12,21 @@ for (const { name, path, media } of STORYBOARD_PAGES) {
       await player.waitForMediaReady();
     });
 
-    test('thumbnail appears on time slider hover', async ({ page }) => {
-      // Hover over the middle of the time slider
+    test('thumbnail renders on time slider hover', async ({ page }) => {
       await player.hoverTimeSlider(50);
 
-      // The thumbnail element should exist and eventually not be hidden
       const thumbnail = player.thumbnail;
-      await expect(thumbnail).toBeAttached({ timeout: 10_000 });
 
-      // Wait for thumbnail to load (not in loading or error state)
+      // Thumbnail should be attached and not in error/hidden state
+      await expect(thumbnail).toBeAttached({ timeout: 10_000 });
       await expect(thumbnail).not.toHaveAttribute('data-error', { timeout: 10_000 });
-    });
+      await expect(thumbnail).not.toHaveAttribute('data-hidden');
 
-    test('thumbnail changes position when hovering different points', async ({ page }) => {
-      // Hover at 25%
-      await player.hoverTimeSlider(25);
-      await player.page.waitForTimeout(500);
-
-      const thumbnail = player.thumbnail;
-      await expect(thumbnail).toBeAttached({ timeout: 10_000 });
-
-      // Hover at 75% — thumbnail should still be present
-      await player.hoverTimeSlider(75);
-      await player.page.waitForTimeout(500);
-
-      await expect(thumbnail).toBeAttached();
+      // Verify the thumbnail has non-zero dimensions (image actually loaded)
+      const box = await thumbnail.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThan(0);
+      expect(box!.height).toBeGreaterThan(0);
     });
   });
 }
