@@ -12,11 +12,15 @@ jobs:
   e2e:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.52.0-noble
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, webkit]
+        # PRs: Chromium only for fast feedback (~2 min).
+        # Push to main: Chromium + WebKit for full coverage.
+        browser: ${{ github.event_name == 'push' && fromJson('["chromium","webkit"]') || fromJson('["chromium"]') }}
 
     steps:
       - name: Checkout code
@@ -51,24 +55,6 @@ jobs:
 
       - name: Build ejected skins
         run: pnpm -F site ejected-skins
-
-      - name: Get Playwright version
-        id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(pnpm --dir apps/e2e exec playwright --version | tr -d ' ')" >> $GITHUB_ENV
-
-      - name: Cache Playwright browser
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ env.PLAYWRIGHT_VERSION }}
-
-      - name: Install Playwright browser
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --dir apps/e2e exec playwright install ${{ matrix.browser }}
-
-      - name: Install Playwright OS dependencies
-        run: pnpm --dir apps/e2e exec playwright install-deps ${{ matrix.browser }}
 
       - name: Run E2E tests
         run: pnpm --dir apps/e2e exec playwright test --project=vite-${{ matrix.browser }}
