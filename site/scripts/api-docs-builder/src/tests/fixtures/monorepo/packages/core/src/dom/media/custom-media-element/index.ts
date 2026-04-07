@@ -1,12 +1,12 @@
 /**
  * Mock custom media element infrastructure.
  *
- * Exercises: shared Events, Attributes, CSS vars, and slots arrays/objects
- * that the builder reads to populate media element references.
+ * Exercises: shared Events, Attributes, and CSS vars that the builder reads
+ * to populate media element references. Slots are parsed from the template
+ * HTML (getVideoTemplateHTML / getAudioTemplateHTML), not from exported arrays.
  *
- * VideoCSSVars/AudioCSSVars and VideoSlots/AudioSlots are structured objects
- * that serve as the single source of truth — consumed by both the template
- * rendering and the api-docs builder.
+ * VideoCSSVars/AudioCSSVars follow the `{ camelKey: '--var-name' }` pattern
+ * with JSDoc descriptions, matching UI component css-vars files.
  */
 
 export const Events = [
@@ -32,6 +32,7 @@ export const Attributes = [
   'src',
 ] as const;
 
+/** CSS custom property names for video elements. */
 export const VideoCSSVars = {
   /** Border radius of the video element. */
   borderRadius: '--media-video-border-radius',
@@ -47,20 +48,46 @@ export const VideoCSSVars = {
   captionTrackY: '--media-caption-track-y',
 } as const;
 
-export const AudioCSSVars = {
-  /** Object fit for the audio. */
-  objectFit: '--media-object-fit',
-  /** Object position for the audio. */
-  objectPosition: '--media-object-position',
-} as const;
+/** CSS custom property names for audio elements. */
+export const AudioCSSVars = {} as const;
 
-export const VideoSlots = ['media', ''] as const;
-export const AudioSlots = ['media', ''] as const;
+// Minimal template stubs — the builder parses <slot> elements from these.
+function getVideoTemplateHTML(attrs: Record<string, string>): string {
+  return /*html*/ `
+    <style>
+      video {
+        border-radius: var(${VideoCSSVars.borderRadius});
+        object-fit: var(${VideoCSSVars.objectFit}, contain);
+        object-position: var(${VideoCSSVars.objectPosition}, center);
+      }
+    </style>
+    <slot name="media">
+      <video></video>
+    </slot>
+    <slot></slot>
+  `;
+}
+
+function getAudioTemplateHTML(attrs: Record<string, string>): string {
+  return /*html*/ `
+    <style>
+      audio { width: 100%; }
+    </style>
+    <slot name="media">
+      <audio></audio>
+    </slot>
+    <slot></slot>
+  `;
+}
 
 // Minimal stubs — the builder only needs to detect these by name, not run them.
 export function CustomMediaMixin(base: any, _opts: any) {
   return base;
 }
 
-export const CustomVideoElement = class {};
-export const CustomAudioElement = class {};
+export const CustomVideoElement = class {
+  static getTemplateHTML = getVideoTemplateHTML;
+};
+export const CustomAudioElement = class {
+  static getTemplateHTML = getAudioTemplateHTML;
+};

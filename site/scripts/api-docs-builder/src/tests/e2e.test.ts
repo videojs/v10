@@ -63,8 +63,8 @@
  * Media elements (packages/html/src/define/media/ + packages/core/src/dom/media/):
  *   simple-video  — Simple media element. Exercises: discovery via static
  *                   tagName in define/media/*.ts, minimal delegate (src rw,
- *                   engine readonly), shared Attributes/Events/CSS vars/slots
- *                   from custom-media-element.
+ *                   engine readonly), shared Attributes/Events/CSS vars
+ *                   from custom-media-element, slots parsed from template HTML.
  *   complex-video — Complex media element. Exercises: delegate with JSDoc
  *                   descriptions, multiple property types (string, boolean,
  *                   Record), delegate-vs-native attribute deduplication
@@ -990,7 +990,8 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Tag name from the element class's static tagName
 //   - Delegate properties by following the mixin chain to the delegate class
 //     and walking its getter/setter pairs (mirrors MediaPropsMixin at runtime)
-//   - Shared native attributes, events, CSS vars, and slots from custom-media-element
+//   - Shared native attributes, events, and CSS vars from custom-media-element
+//   - Slots parsed from the template HTML (getVideoTemplateHTML / getAudioTemplateHTML)
 //   - JSDoc descriptions from delegate getter/setter pairs
 //
 // Key behaviors:
@@ -1109,7 +1110,7 @@ describe('Media element pipeline (end-to-end)', () => {
       });
     });
 
-    it('includes slots from VideoSlots', () => {
+    it('includes slots parsed from the video template HTML', () => {
       const ref = findElement('SimpleVideo')!.reference;
       expect(ref.slots).toEqual(expect.arrayContaining(['media', '']));
     });
