@@ -10,7 +10,6 @@ export default defineConfig({
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   timeout: 60_000,
   retries: CI ? 2 : 0,
-  workers: CI ? 2 : undefined,
   fullyParallel: true,
 
   reporter: CI ? [['html', { open: 'never' }], ['github'], ['blob']] : [['html', { open: 'on-failure' }]],
