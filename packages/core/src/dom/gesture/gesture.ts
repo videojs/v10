@@ -29,9 +29,10 @@ function getEntry(target: HTMLElement): CoordinatorEntry {
           const current = coordinator.matchBindings('tap', event.pointerType, event.clientX);
           current[0]?.onActivate(event);
         },
-        // onDoubleTap
+        // onDoubleTap — re-match at fire time, same as tap.
         () => {
-          doubletapMatches[0]?.onActivate(event);
+          const current = coordinator.matchBindings('doubletap', event.pointerType, event.clientX);
+          current[0]?.onActivate(event);
         }
       );
     });

@@ -31,10 +31,15 @@ export function resolveRegion(
     return 'right';
   }
 
-  // Single region or partial combinations — match the first one that contains the pointer.
+  // Single region or partial combinations — each region covers its natural zone.
+  // Pointer outside all zones returns null (full-surface gesture handles it).
   if (activeRegions.has('left') && ratio < 0.5) return 'left';
   if (activeRegions.has('right') && ratio >= 0.5) return 'right';
-  if (activeRegions.has('center')) return 'center';
+  // Center covers the middle third when alone, full width when it's the only zone.
+  if (activeRegions.has('center')) {
+    if (activeRegions.size === 1) return 'center';
+    if (ratio >= 1 / 3 && ratio < 2 / 3) return 'center';
+  }
 
   return null;
 }
