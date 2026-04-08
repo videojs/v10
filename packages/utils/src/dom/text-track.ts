@@ -12,5 +12,5 @@ export function getTextTrackList(media: HTMLMediaElement, filterPred: (textTrack
 }
 
 function sortByTextTrackKind(a: TextTrack, b: TextTrack): number {
-  return a.kind >= b.kind ? 1 : -1;
+  return a.kind > b.kind ? 1 : a.kind < b.kind ? -1 : 0;
 }
