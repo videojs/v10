@@ -31,6 +31,36 @@ const reactor = createMachineReactor(reactorDefinition);
 
 Both return instances that implement `SignalActor` and expose `snapshot` and `destroy()`.
 
+A third factory, `createTransitionActor`, handles actors with observable context but no
+FSM. Lightweight callback actors implement the `CallbackActor` interface directly.
+
+### Actor and Reactor Types
+
+| Factory | States | Observable? | Runner | Use when |
+|---|---|---|---|---|
+| `createMachineActor` | User-defined FSM | Yes (`snapshot`) | Optional | Per-state message dispatch, `onSettled`, async work |
+| `createTransitionActor` | `active` / `destroyed` | Yes (`snapshot`) | No | Observable context via reducer, no FSM needed |
+| `CallbackActor` (manual) | None | No | Manual | Fire-and-forget messages, minimal overhead |
+| `createMachineReactor` | User-defined FSM | Yes (`snapshot`) | No | Signal-driven transitions, per-state effects |
+
+**Actors** (message-driven):
+- **`MessageActor`** — returned by `createMachineActor`. Has finite states, per-state
+  handlers, optional runner, and observable `snapshot` with `value` + `context`.
+  Used by: `SourceBufferActor`, `SegmentLoaderActor`.
+- **`TransitionActor`** — returned by `createTransitionActor`. Pure reducer model:
+  `(context, message) => context`. No finite states — `snapshot.value` is always
+  `'active' | 'destroyed'`. Observable context for downstream consumers.
+  Used by: `TextTracksActor`.
+- **`CallbackActor`** — manual implementation. `send()` + `destroy()`, no snapshot.
+  Used when the actor needs no observable state and the overhead of a factory isn't
+  warranted. Used by: `TextTrackSegmentLoaderActor`.
+
+**Reactors** (signal-driven):
+- **`Reactor`** — returned by `createMachineReactor`. Has finite states, `monitor` for
+  state derivation, and `entry`/`reactions` per-state effects. No `send()` — driven
+  entirely by signal observation.
+  Used by: `syncTextTracks`, `loadTextTrackCues`, `resolvePresentation`, `trackPlaybackInitiated`.
+
 ---
 
 ## Actor Definition
@@ -62,66 +92,99 @@ type ActorDefinition<
 // When omitted, runner is absent from the type entirely (not undefined).
 type HandlerContext<UserState, Context, RunnerFactory> = {
   transition: (to: UserState) => void;
-  context: Context;
+  context: Context;          // snapshot at dispatch time — stale after any setContext call
+  getContext: () => Context; // live untracked read — always current
   setContext: (next: Context) => void;
 } & (RunnerFactory extends () => infer R ? { runner: R } : object);
 ```
 
-### Example — `TextTrackSegmentLoaderActor`
+### Example — `SourceBufferActor`
+
+Serializes SourceBuffer operations. Shows `onSettled` for auto-return, an `onMessage`
+helper to deduplicate handlers, `batch` for atomic multi-message dispatch, and `cancel`
+in the work state. Tasks return the next context — `getContext` threading ensures each
+task reads the context committed by the previous task.
 
 ```typescript
-import { SerialRunner, Task } from '../../core/task';
-import { parseVttSegment } from '../text/parse-vtt-segment';
+const onMessage = (msg: IndividualSourceBufferMessage, { transition, setContext, getContext, runner }: Ctx): void => {
+  transition('updating');
+  const task = messageToTask(msg, { getContext, sourceBuffer, setContext });
+  runner.schedule(task).then(setContext, handleError);
+};
 
-const textTrackSegmentLoaderDef = {
+return createMachineActor<UserState, SourceBufferActorContext, SourceBufferMessage, () => SerialRunner>({
   runner: () => new SerialRunner(),
-  initial: 'idle' as const,
-  context: {} as Record<string, never>,
+  initial: 'idle',
+  context: { segments: [], bufferedRanges: [], initTrackId: undefined },
   states: {
     idle: {
       on: {
-        load: (msg, { transition, runner }) => {
-          const segments = plan(msg);
-          if (!segments.length) return;
-          segments.forEach(s => runner.schedule(new Task(async (signal) => {
-            const cues = await parseVttSegment(s.url);
-            if (!signal.aborted) textTracksActor.send({ type: 'add-cues', ... });
-          })));
-          transition('loading');
-        }
-      }
+        'append-init': onMessage,
+        'append-segment': onMessage,
+        remove: onMessage,
+        batch: (msg, { transition, setContext, getContext, runner }) => {
+          if (msg.messages.length === 0) return;
+          transition('updating');
+          msg.messages.forEach((m) => {
+            const task = messageToTask(m, { getContext, sourceBuffer, setContext });
+            runner.schedule(task).then(setContext, handleError);
+          });
+        },
+      },
+    },
+    updating: {
+      onSettled: 'idle',
+      on: {
+        cancel: (_, { runner }) => { runner.abortAll(); },
+      },
+    },
+  },
+});
+```
+
+### Example — `SegmentLoaderActor`
+
+Plans and executes segment fetches. Shows context threading (`inFlightInitTrackId`,
+`inFlightSegmentId`), continue/preempt decision in the `loading` handler, and
+`abortPending()` vs `abortAll()` for fine-grained runner control.
+
+```typescript
+return createMachineActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
+  runner: () => new SerialRunner(),
+  initial: 'idle',
+  context: { inFlightInitTrackId: null, inFlightSegmentId: null },
+  states: {
+    idle: {
+      on: {
+        load: (msg, ctx) => {
+          const allTasks = planTasks(msg);
+          if (allTasks.length === 0) return;
+          ctx.transition('loading');
+          scheduleAll(allTasks, ctx);
+        },
+      },
     },
     loading: {
       onSettled: 'idle',
       on: {
-        load: (msg, { runner }) => {
-          runner.abortAll();
-          plan(msg).forEach(s => runner.schedule(new Task(...)));
-          // stays 'loading' — onSettled handles → 'idle'
-        }
-      }
-    }
-  }
-};
-```
+        load: (msg, ctx) => {
+          const { context, runner } = ctx;
+          const allTasks = planTasks(msg);
+          const inFlightStillNeeded = /* check context against new plan */;
 
-### Example — `TextTracksActor` (no runner, synchronous)
-
-```typescript
-const textTracksActorDef = {
-  // runner: omitted — no async work
-  initial: 'idle' as const,
-  context: { loaded: {}, segments: {} } as TextTracksActorContext,
-  states: {
-    idle: {
-      on: {
-        'add-cues': (msg, { context, setContext }) => {
-          setContext(applyAddCues(context, msg));
-        }
-      }
-    }
-  }
-};
+          if (inFlightStillNeeded) {
+            runner.abortPending();                        // continue in-flight
+            scheduleAll(excludeInFlight(allTasks), ctx);  // schedule remainder
+          } else {
+            runner.abortAll();                            // preempt everything
+            sourceBufferActor.send({ type: 'cancel' });
+            scheduleAll(allTasks, ctx);
+          }
+        },
+      },
+    },
+  },
+});
 ```
 
 ---
@@ -398,10 +461,10 @@ explicit and inspectable from the definition alone — no need to trace imperati
 (all scheduled tasks have completed) while the actor is in that state, the framework automatically
 transitions to `targetState`.
 
-**Rationale:** This replaces the manual `runner.settled` reference-equality pattern in
-`TextTrackSegmentLoaderActor`. The framework owns the generation-token logic — re-subscribing to
-`runner.settled` each time tasks are scheduled so that `abortAll()` + reschedule correctly
-cancels the previous settled callback.
+**Rationale:** The framework owns the generation-token logic — re-subscribing to
+`runner.whenSettled()` each time the handler returns so that `abortAll()` + reschedule
+correctly supersedes the previous settled callback. Both `SourceBufferActor` and
+`SegmentLoaderActor` use `onSettled: 'idle'` to auto-return from their work states.
 
 ---
 

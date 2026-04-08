@@ -73,7 +73,7 @@ any state ──── destroy() ────→ 'destroying' ────→ 'd
 - Effect 2 — syncs `mode` on entry (reactive: re-runs when `selectedTextTrackId`
   changes) + attaches `'change'` listener to bridge DOM back to state
 
-**`'preconditions-unmet'`** has no effects — the `always` monitor handles the
+**`'preconditions-unmet'`** has no effects — the `monitor` handles the
 exit transition.
 
 ---
@@ -103,7 +103,7 @@ State effects:
 - **`'pending'`** — no effects (neutral waiting state)
 - **`'monitoring-for-loads'`** — reactive effect: re-runs on `currentTime` / `selectedTrack` changes, sends `load` to `segmentLoaderActor`
 
-All transitions are driven by a single `always` monitor that evaluates a `deriveStatus()`
+All transitions are driven by a single `monitor` that evaluates a `deriveState()`
 computed signal.
 
 ---
@@ -112,18 +112,10 @@ computed signal.
 
 Fetches VTT segments and delegates cue management to `TextTracksActor`.
 
-```
-'idle' ──── load (segments to fetch) ────→ 'loading'
-  ↑                                            │
-  └──── onSettled (runner chain empties) ───────┘
-  ↑
-  └──── load (nothing to fetch) — stays idle
-```
-
-Both states handle `load`. The `idle` handler transitions to `'loading'`;
-the `loading` handler stays `loading` (re-plans in place by aborting + rescheduling).
-`onSettled: 'idle'` in the `loading` state definition handles the auto-return once
-all tasks complete.
+A lightweight `CallbackActor` — no FSM states, no `createMachineActor`. Receives
+`load` messages, plans which segments to fetch (skipping those already recorded in
+`TextTracksActor`'s context), and schedules fetches on a `SerialRunner`. Each new
+`load` preempts in-flight work via `abortAll()` before scheduling fresh tasks.
 
 Uses a `SerialRunner` — segments are fetched one at a time.
 
@@ -135,40 +127,37 @@ Wraps a `HTMLMediaElement`'s `textTracks`, owns cue deduplication and
 the cue record snapshot.
 
 ```
-'idle' ──── add-cues ────→ 'idle'  (single state; all messages synchronous)
+'active' ──── add-cues ────→ 'active'  (reducer; context updated per message)
 ```
 
-No runner — all message handling is synchronous. `'destroyed'` is the only
-other state (implicit, added by `createMachineActor`).
+Uses `createTransitionActor` — a reducer-style factory with no FSM states.
+`snapshot.value` is `'active' | 'destroyed'`; the interesting state is entirely
+in the context (`loaded` cues and `segments` records). No runner — all message
+handling is synchronous.
 
 ---
 
 ## Key Patterns
 
-### 1. `deriveStatus` + `always` monitor
+### 1. `deriveState` + `monitor`
 
 Complex multi-condition transition logic lives in a pure function that is memoized
-into a `computed()` signal *outside* any effect body. The `always` monitor reads
-the signal and drives the transition:
+into a `computed()` signal *outside* any effect body. The `monitor` field reads
+the signal — the framework compares to the current state and drives the transition:
 
 ```typescript
 // Hoist outside the reactor — computed() inside an effect creates a new node
 // on every re-run with no memoization.
-const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
+const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
 
 createMachineReactor({
-  always: [
-    ({ status, transition }) => {
-      const target = derivedStatusSignal.get();
-      if (target !== status) transition(target);
-    }
-  ],
-  // ...
+  monitor: () => derivedStateSignal.get(),
+  states: { ... },
 });
 ```
 
-`deriveStatus` is a plain function, independently testable. The `always` effect is
-kept to one comparison and one transition call — no logic lives there.
+`deriveState` is a plain function, independently testable. The `monitor` returns the
+target state — the framework handles the comparison and transition call.
 
 ---
 
@@ -188,11 +177,13 @@ function teardownActors(owners: Signal<TextTrackCueLoadingOwners>) {
 }
 
 // Called in BOTH reset states:
-'preconditions-unmet': [() => { teardownActors(owners); }],
-'setting-up': [() => {
-  teardownActors(owners);  // defensive — same guard
-  // ... create fresh actors
-}],
+'preconditions-unmet': { entry: () => { teardownActors(owners); } },
+'setting-up': {
+  entry: () => {
+    teardownActors(owners);  // defensive — same guard
+    // ... create fresh actors
+  },
+},
 ```
 
 The duplication is intentional: both states are entry points from which actors might
@@ -233,32 +224,38 @@ reactor.destroy();
 When an effect must read a signal value *without* creating a reactive dependency,
 wrap the read with `untrack()`. The two main cases:
 
-**Enter-once setup** — reading `owners` or `state` in an enter-once effect. Without
-`untrack()`, a change to `owners.mediaElement` would re-run an effect that was only
-meant to run once on state entry:
+**Entry effects are automatically untracked** — reading `owners` or `state` in an
+`entry` effect does not create reactive dependencies. No `untrack()` wrapper needed:
 
 ```typescript
-'setting-up': [() => {
-  // untrack: mediaElement might change later; we only need it at setup time.
-  const mediaElement = untrack(() => owners.get().mediaElement!);
-  const textTracksActor = createTextTracksActor(mediaElement);
-  // ...
-}],
+'setting-up': {
+  // entry is automatically untracked — no need for untrack() here.
+  entry: () => {
+    const mediaElement = owners.get().mediaElement!;
+    const textTracksActor = createTextTracksActor(mediaElement);
+    // ...
+  },
+},
 ```
 
-**Preventing feedback loops** — reading actor snapshot in a monitoring effect.
-`segmentLoaderActor.snapshot` changes every time the actor processes a message.
-Without `untrack()`, the monitoring effect would re-run on every snapshot change,
+**Preventing feedback loops in `reactions`** — reading actor snapshot in a reactive
+effect. `segmentLoaderActor.snapshot` changes every time the actor processes a message.
+Without `untrack()`, the reactive effect would re-run on every snapshot change,
 creating a tight feedback loop:
 
 ```typescript
-'monitoring-for-loads': [() => {
-  const currentTime = currentTimeSignal.get();  // tracked intentionally
-  const track = selectedTrackSignal.get()!;     // tracked intentionally
-  // untrack: actor snapshot changes must not re-trigger this effect.
-  const { segmentLoaderActor } = untrack(() => owners.get());
-  segmentLoaderActor!.send({ type: 'load', track, currentTime });
-}],
+'monitoring-for-loads': {
+  // reactions: re-runs whenever currentTime or selectedTrack changes.
+  // owners is read with untrack() — actor presence is guaranteed by
+  // deriveState when in this state; actor snapshot changes must not
+  // re-trigger this effect.
+  reactions: () => {
+    const currentTime = currentTimeSignal.get();  // tracked
+    const track = selectedTrackSignal.get()!;     // tracked
+    const { segmentLoaderActor } = untrack(() => owners.get());
+    segmentLoaderActor!.send({ type: 'load', track, currentTime });
+  },
+},
 ```
 
 ---
@@ -332,12 +329,11 @@ Evaluated against the goals from videojs/v10#1158:
 - **Reactor actor lifecycle is implicit**, not self-contained. Actors live in `owners`, and
   destruction depends on the engine's generic loop. Callers using these reactors outside the
   engine must manage actor destruction explicitly.
-- **The `always`-before-state ordering guarantee** requires care — it's an implementation
+- **The monitor-before-state ordering guarantee** requires care — it's an implementation
   guarantee of `createMachineReactor`, not a formal TC39 Signals guarantee. It cannot be assumed
   outside `createMachineReactor`.
-- **Entry vs. reactive effect intent is invisible in the definition shape.** `untrack()` is
-  a convention, not API enforcement. An enter-once effect that accidentally tracks a signal
-  produces no error — just unexpected re-runs.
+- **Entry vs. reactive effect intent** was initially invisible in the definition shape —
+  addressed by the `entry` / `reactions` split adopted after the spike.
 
 ---
 
@@ -352,27 +348,32 @@ effect body. This is easy to miss because the code looks correct:
 ```typescript
 // WRONG — new Computed on every re-run, no memoization
 states: {
-  'monitoring-for-loads': [() => {
-    const trackSignal = computed(() => findSelectedTrack(state.get())); // new node each time!
-    const track = trackSignal.get();
-    segmentLoaderActor.send({ type: 'load', track, currentTime });
-  }]
+  'monitoring-for-loads': {
+    reactions: () => {
+      const trackSignal = computed(() => findSelectedTrack(state.get())); // new node each time!
+      const track = trackSignal.get();
+      segmentLoaderActor.send({ type: 'load', track, currentTime });
+    },
+  }
 }
 
 // CORRECT — hoist outside createMachineReactor()
 const trackSignal = computed(() => findSelectedTrack(state.get()));
-createMachineReactor({ states: { 'monitoring-for-loads': [() => {
-  const track = trackSignal.get();
-  segmentLoaderActor.send({ type: 'load', track, currentTime });
-}] } });
+createMachineReactor({ states: { 'monitoring-for-loads': {
+  reactions: () => {
+    const track = trackSignal.get();
+    segmentLoaderActor.send({ type: 'load', track, currentTime });
+  },
+} } });
 ```
 
-### `untrack()` — convention without enforcement
+### `untrack()` in `reactions` effects
 
-Nothing in the API prevents an enter-once effect from tracking signals it shouldn't.
-The author must know to use `untrack()` for reads that are setup-only. Missing it
-produces unexpected re-runs when the read signal changes, which can cause duplicate
-DOM mutations or redundant actor messages.
+The `entry` / `reactions` split eliminated the most common footgun (accidental tracking
+in enter-once effects). However, `reactions` effects still require `untrack()` for reads
+that should not create reactive dependencies. Missing it produces unexpected re-runs when
+the read signal changes. The discipline is narrower now — only needed in `reactions`, not
+in all effects — but it remains a convention rather than API enforcement.
 
 ### Actor lifecycle ownership split
 
@@ -401,24 +402,11 @@ not explored during the spike.
 
 ## Possible Future Improvements
 
-### `entry` vs. `reactive` distinction in the definition shape
+### ~~`entry` vs. `reactive` distinction in the definition shape~~ (Implemented)
 
-The `untrack()` convention for enter-once effects is a footgun. A future definition shape
-might distinguish:
-
-```typescript
-states: {
-  'set-up': {
-    entry: [/* automatically untracked, run once */],
-    reactive: [/* re-run when tracked signals change */]
-  }
-}
-```
-
-This would make intent explicit and eliminate the class of bugs where an enter-once effect
-accidentally tracks a signal. The `always` array already provides the primary reactive
-mechanism for cross-cutting monitors; `reactive` within-state effects are a secondary but
-real use case. Worth revisiting as more examples accumulate.
+Adopted as `entry` / `reactions` in the `createMachineReactor` definition shape. `entry`
+effects are automatically untracked; `reactions` effects re-run when tracked signals change.
+See [actor-reactor-factories.md](actor-reactor-factories.md) for the decided design.
 
 ### Self-contained actor lifecycle in Reactor
 
@@ -442,16 +430,13 @@ One way to express this: state `exit` callbacks alongside effect cleanup:
 This is speculative — the entry-reset pattern works today and the cost of the split
 ownership is manageable. Revisit if the pattern spreads to video/audio.
 
-### Formal `context` field usage on Reactor
+### Formal `context` field on Reactor
 
-`createMachineReactor` accepts `context` + `setContext`, but `loadTextTrackCues` and
-`syncTextTracks` both use `context: {}` throughout — reactor non-finite state is held in
-closure variables and the `owners` signal instead.
-
-The tradeoff: `owners` is externally visible (other features can observe actor state);
-closure variables are not inspectable from outside; Reactor `context` would be observable
-via `snapshot` but adds API surface. The right answer likely depends on what debugging
-and testing patterns emerge as more Reactors are written.
+Reactors do not have a `context` field — non-finite state is held in closures and the
+`owners` signal. `owners` is externally visible (other features can observe actor state);
+closure variables are not inspectable from outside. Whether a formal Reactor `context`
+(observable via `snapshot`) would be worthwhile depends on what debugging and testing
+patterns emerge as more Reactors are written.
 
 ### Cue deduplication: open design question in `TextTracksActor`
 
@@ -471,17 +456,17 @@ that constitutes a recoverable error or a programming bug.
 
 ## Still Open Questions
 
-### `always`-before-state ordering: guarantee or implementation detail?
+### Monitor-before-state ordering: guarantee or implementation detail?
 
 The ordering relies on `Signal.subtle.Watcher`'s `getPending()` returning computeds in
 insertion order. This is the behavior of the TC39 `signal-polyfill`, but it is not a
 formal guarantee of the TC39 Signals proposal specification. If a future implementation
-changes this ordering (e.g., for optimization), FSMs built on the `always`-before-state
+changes this ordering (e.g., for optimization), FSMs built on the monitor-before-state
 pattern would silently break.
 
 Options: (a) document it as a polyfill-specific implementation guarantee and accept the
-risk, (b) add an explicit mechanism to enforce ordering (e.g., `always` effects check
-`status` and no-op if already transitioning), or (c) redesign to not rely on ordering
+risk, (b) add an explicit mechanism to enforce ordering (e.g., `monitor` effects check
+state and no-op if already transitioning), or (c) redesign to not rely on ordering
 (e.g., per-state effects always re-check conditions themselves).
 
 ### Effect scheduling: what happens under compound state changes?
@@ -509,16 +494,16 @@ closed). No general policy has been established.
 The text track spike establishes patterns that apply directly to the video/audio path:
 
 **`loadSegments` → reactor migration**: `loadSegments` currently uses a `loadingInputsEq`
-equality function to gate re-runs — the `deriveStatus` + `always` pattern is the direct
+equality function to gate re-runs — the `deriveState` + `monitor` pattern is the direct
 equivalent. The equality function's conditions map to the FSM's state conditions.
 
 **`prevState` tracking**: `loadSegments` detects track switches by comparing
 `prevState.track.id !== curState.track.id`. In the reactor model, the reactor
 re-entering a state IS the "previous state" signal — state entry is the transition event.
 
-**`SourceBufferActor`**: Already a proper actor with observable snapshot, `SerialRunner`,
-and a well-defined message interface. It predates `createMachineActor` and has not been migrated
-to the factory, but the behavioral contract is equivalent. Migration would be additive.
+**`SourceBufferActor`**: Now uses `createMachineActor` with `idle`/`updating` states,
+`onSettled`, and a `cancel` message. `SegmentLoaderActor` also uses `createMachineActor`
+with the continue/preempt pattern proved out by the text track spike.
 
 **Actors in owners**: The video/audio actors should follow the same actors-in-owners
 pattern — reactors create them, engine destroys them generically. `videoBufferActor` and

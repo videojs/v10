@@ -19,15 +19,16 @@ the full reference implementation and assessment.
 
 ---
 
-### `always`-before-state ordering as a load-bearing guarantee
+### `monitor`-before-state ordering as a load-bearing guarantee
 
-**Decision:** `always` effects in `createMachineReactor` always run before per-state effects.
+**Decision:** `monitor` effects in `createMachineReactor` always run before per-state effects.
 This ordering guarantee is documented in `createMachineReactor`'s source and must be preserved.
 
-**Rationale:** Per-state effects rely on invariants established by `always` monitors.
-When an `always` monitor calls `transition(newState)`, the snapshot updates before any
-per-state effect fires — so per-state effects that no-op when `status !== expectedState`
-do so correctly without needing to re-check conditions themselves.
+**Rationale:** Per-state effects rely on invariants established by `monitor` functions.
+When a `monitor` function returns a new state, the framework calls `transition()` and the
+snapshot updates before any per-state effect fires — so per-state effects that no-op when
+`snapshot.value !== expectedState` do so correctly without needing to re-check conditions
+themselves.
 
 **Caveat:** The guarantee is specific to `createMachineReactor`'s registration order. It depends
 on the TC39 `signal-polyfill`'s `Watcher` preserving insertion order in `getPending()` —
@@ -35,15 +36,16 @@ not a formal guarantee of the TC39 Signals proposal.
 
 ---
 
-### `deriveStatus` pattern for transition logic
+### `deriveState` pattern for transition logic
 
-**Decision:** Transition conditions live in a pure `deriveStatus` function, wrapped in a
-`computed()` signal outside any effect body, consumed by the `always` monitor to drive
-transitions. The `always` effect contains only: read the computed, compare, call `transition`.
+**Decision:** Transition conditions live in a pure `deriveState` function, wrapped in a
+`computed()` signal outside any effect body, consumed by the `monitor` field to drive
+transitions. The `monitor` function returns the target state; the framework handles the
+comparison and transition.
 
-**Rationale:** Keeps `always` minimal and machine-readable; makes transition conditions
-independently testable as a plain function; prevents the inline computed anti-pattern
-(see [actor-reactor-factories.md](actor-reactor-factories.md)).
+**Rationale:** Keeps the `monitor` function minimal and machine-readable; makes transition
+conditions independently testable as a plain function; prevents the inline computed
+anti-pattern (see [actor-reactor-factories.md](actor-reactor-factories.md)).
 
 ---
 

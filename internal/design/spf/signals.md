@@ -66,7 +66,7 @@ via the `Signal.subtle.Watcher` API, leaving scheduling entirely to the caller. 
 `effect()` uses `queueMicrotask` as its scheduler — effects are deferred to the next
 microtask checkpoint, batching all synchronous writes made in a single turn.
 
-This scheduling control is what makes the `monitor`-before-state ordering guarantee in
+This scheduling control is what makes the monitor-before-state ordering guarantee in
 `createMachineReactor` possible. The effect scheduler drains pending computeds in an
 insertion-ordered `Set`, so registration order determines execution order.
 
@@ -163,11 +163,11 @@ core/signals/    signal(), computed(), effect(), untrack(), update()
    PlaybackEngineOwners — signal<O>  (mediaElement, actors, buffers, ...)
 
 2. Reactor execution model
-   createMachineReactor() — always[] and states[][] each become effect() calls
-   Transitions fire when a computed signal changes and an always monitor detects it
+   createMachineReactor() — monitor, entry, and reactions each become effect() calls
+   Transitions fire when a monitor fn returns a new state from observed signals
 
 3. Actor observability
-   createMachineActor() — snapshot is a signal<{ status, context }>
+   createMachineActor() — snapshot is a signal<{ value, context }>
    Reactors and the engine observe Actor state without polling or callbacks
 ```
 
@@ -457,8 +457,8 @@ a predictable execution order: effects registered first run first. But that is a
 of the polyfill's `Watcher` implementation and the scheduler's use of `Set` — not
 something the TC39 proposal guarantees.
 
-`createMachineReactor` takes a load-bearing dependency on this property. The `always`-before-state
-ordering guarantee — that `always` effects always run before per-state effects — is an
+`createMachineReactor` takes a load-bearing dependency on this property. The monitor-before-state
+ordering guarantee — that `monitor` effects always run before per-state effects — is an
 explicit guarantee of `createMachineReactor`'s own API, documented in source and tested in
 practice. But it depends on the underlying scheduler preserving insertion order. A future
 polyfill version or native implementation that reordered effects for optimization would
@@ -480,24 +480,21 @@ The ambient reactive context concern — and the `untrack()` discipline it requi
 property of direct signal usage. Abstractions built on signals have an additional option:
 encode reactive intent in their API surface, removing the burden from callers.
 
-An abstraction that distinguishes "run once on entry" from "re-run reactively" in its
-definition shape makes reactive participation a declaration rather than a runtime property
-of call-site context:
+`createMachineReactor` implements this principle via `entry` and `reactions` per-state
+effect keys:
 
 ```typescript
-// Hypothetical: intent encoded in definition shape
 states: {
   'set-up': {
-    entry: [/* automatically untracked — run once */],
-    reactive: [/* tracked — re-run when dependencies change */],
+    entry: [/* automatically untracked — run once on state entry */],
+    reactions: [/* tracked — re-run when dependencies change */],
   }
 }
 ```
 
-For `createMachineReactor`, this would make `untrack()` unnecessary in the common case of
-enter-once effects, eliminate the class of bugs where accidental tracking causes unexpected
-re-runs, and make the author's intent visible in the definition rather than in `untrack()`
-calls buried inside effect bodies.
+`entry` effects are automatically untracked — no `untrack()` needed for reads that are
+setup-only. `reactions` effects re-run when tracked signals change; `untrack()` is only
+needed for reads within `reactions` that should not create dependencies.
 
 The principle generalizes: any abstraction built on signals can choose to make reactive
 context explicit at its API boundary, trading more surface area for fewer footguns and more

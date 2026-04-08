@@ -99,7 +99,7 @@ An Actor:
 
 The snapshot is observable: other things (Reactors, `endOfStream`, the engine) can subscribe to Actor state changes without polling.
 
-Actors should be **classes**. The current bespoke-closure approach makes it difficult to test, subclass, or inspect Actors in isolation. A class with a defined interface makes the contract explicit.
+Actors are created via **factory functions** (`createMachineActor`, `createTransitionActor`) that take a declarative definition object. The factory owns all mechanics (snapshot signal, runner lifecycle, `'destroyed'` guard); the definition owns behavior.
 
 ### Relationship to Reactors
 
@@ -112,8 +112,10 @@ Actors define state, context, message handlers per state, and an optional runner
 a definition object. The factory manages the snapshot signal, runner lifecycle, and
 `'destroyed'` terminal state. See [actor-reactor-factories.md](actor-reactor-factories.md).
 
-The existing `SourceBufferActor` predates `createMachineActor` and has not been migrated — the
-behavioral contract is equivalent, but the factory pattern is not yet used there.
+`SourceBufferActor` and `SegmentLoaderActor` both use `createMachineActor`. Actors without
+FSM states (e.g., `TextTracksActor`) use `createTransitionActor` — a reducer-style factory
+with observable context but no per-state behavior. Lightweight callback actors (e.g.,
+`TextTrackSegmentLoaderActor`) implement the `CallbackActor` interface directly.
 
 ### Decided
 
@@ -165,15 +167,15 @@ function-based with no formal status or snapshot — they remain to be migrated.
 - **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status, context }>`.
 - **Factory function, not base class** — `createMachineReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
-- **`always` effects for cross-cutting monitors** — a dedicated `always` array runs before per-state effects in every flush. The primary use case is condition monitoring that drives transitions from one place. See the ordering guarantee in [actor-reactor-factories.md](actor-reactor-factories.md).
-- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. A formal `context` field in `createMachineReactor` has been prototyped but is tracked as a future improvement, not current practice.
+- **`monitor` for cross-cutting state derivation** — a `monitor` function (or array) returns the target state; the framework drives the transition. Registered before per-state effects — the ordering guarantee ensures transitions fire before per-state effects re-evaluate. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **`entry` / `reactions` per-state effect split** — `entry` effects run once on state entry, automatically untracked. `reactions` effects re-run when tracked signals change. This makes reactive intent explicit in the definition shape rather than relying on `untrack()` conventions.
+- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. Reactors do not have a formal `context` field — non-finite state is held in closures and the `owners` signal.
 
 ### Open questions
 
 - **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? The current implementation defers via `queueMicrotask`; the exact semantics under compound state changes are not fully characterized.
 - **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose.
-- **Reactor context — what belongs where** — see the "Reactor `context`" open question in [actor-reactor-factories.md](actor-reactor-factories.md).
-- **Entry vs. reactive per-state effect distinction** — currently a `untrack()` convention rather than an API distinction. A future `entry` / `reactive` split in the definition shape would make intent explicit. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Reactor context — what belongs where** — non-finite state is held in closures and `owners`, not in a formal Reactor `context` field. The right answer depends on what debugging and testing patterns emerge.
 
 ---
 
