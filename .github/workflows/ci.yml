@@ -89,7 +89,6 @@ jobs:
           - '@videojs/store'
           - '@videojs/utils'
           - '@videojs/element'
-          - '@videojs/spf'
           - '@videojs/html'
           - '@videojs/react'
 
@@ -118,12 +117,32 @@ jobs:
             ${{ runner.os }}-turbo-test-
             ${{ runner.os }}-turbo-
 
-      - name: Install Playwright browsers
-        if: matrix.package == '@videojs/spf'
-        run: pnpm -F @videojs/spf exec playwright install chromium
-
       - name: Test package
         run: pnpm turbo run test --filter="${{ matrix.package }}"
+
+  test-spf:
+    name: Test (@videojs/spf)
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test SPF
+        run: pnpm turbo run test --filter="@videojs/spf"
 
   build:
     needs: install
