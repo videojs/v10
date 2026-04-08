@@ -17,13 +17,9 @@ export interface GestureOptions {
   disabled?: boolean | undefined;
 }
 
-interface GestureBinding {
-  options: GestureOptions;
-}
-
 export class GestureCoordinator {
   #target: HTMLElement;
-  #bindings: GestureBinding[] = [];
+  #bindings: GestureOptions[] = [];
   #disconnect: AbortController | null = null;
   #destroyed = false;
 
@@ -41,9 +37,7 @@ export class GestureCoordinator {
   }
 
   add(options: GestureOptions): () => void {
-    const binding: GestureBinding = { options };
-
-    this.#bindings.push(binding);
+    this.#bindings.push(options);
     this.#connect();
 
     let removed = false;
@@ -51,7 +45,7 @@ export class GestureCoordinator {
       if (removed) return;
       removed = true;
 
-      const idx = this.#bindings.indexOf(binding);
+      const idx = this.#bindings.indexOf(options);
       if (idx !== -1) this.#bindings.splice(idx, 1);
 
       this.#maybeDisconnect();
@@ -109,13 +103,13 @@ export class GestureCoordinator {
     const doubletapRegion = doubletapRegions.size > 0 ? resolveRegion(event.clientX, rect, doubletapRegions) : null;
 
     // Find matching bindings for this pointer event.
-    const tapBindings = this.#matchBindings('tap', pointerType, tapRegion);
-    const doubletapBindings = this.#matchBindings('doubletap', pointerType, doubletapRegion);
+    const tapMatches = this.#matchBindings('tap', pointerType, tapRegion);
+    const doubletapMatches = this.#matchBindings('doubletap', pointerType, doubletapRegion);
 
-    if (tapBindings.length === 0 && doubletapBindings.length === 0) return;
+    if (tapMatches.length === 0 && doubletapMatches.length === 0) return;
 
     // If doubletap bindings exist, check for doubletap first.
-    if (doubletapBindings.length > 0) {
+    if (doubletapMatches.length > 0) {
       const now = Date.now();
       const isDoubleTap =
         now - this.#lastTapTime < DOUBLETAP_WINDOW &&
@@ -126,7 +120,7 @@ export class GestureCoordinator {
         // Doubletap detected — cancel pending tap timer, fire doubletap.
         this.#clearTapTimer();
         this.#lastTapTime = 0;
-        this.#fireFirst(doubletapBindings, event);
+        this.#fireFirst(doubletapMatches, event);
         return;
       }
 
@@ -135,7 +129,7 @@ export class GestureCoordinator {
       this.#lastTapRegion = doubletapRegion;
       this.#lastTapPointerType = pointerType;
 
-      if (tapBindings.length > 0) {
+      if (tapMatches.length > 0) {
         // Delay tap to wait for potential second tap.
         // Re-match bindings when the timer fires to avoid stale closures
         // over bindings that may have been removed during the delay.
@@ -155,21 +149,16 @@ export class GestureCoordinator {
     }
 
     // No doubletap bindings — fire tap immediately.
-    this.#fireFirst(tapBindings, event);
+    this.#fireFirst(tapMatches, event);
   };
 
-  /** Fire the first matching binding (registration order). */
-  #fireFirst(bindings: GestureBinding[], event: PointerEvent): void {
-    const binding = bindings[0];
-    if (binding) {
-      binding.options.onActivate(event);
-    }
+  #fireFirst(matches: GestureOptions[], event: PointerEvent): void {
+    matches[0]?.onActivate(event);
   }
 
-  /** Get all named regions that have active bindings for a gesture type and pointer type. */
   #getActiveRegions(type: GestureType, pointerType: string): Set<GestureRegion> {
     const regions = new Set<GestureRegion>();
-    for (const { options } of this.#bindings) {
+    for (const options of this.#bindings) {
       if (options.disabled) continue;
       if (options.type !== type) continue;
       if (options.pointer && options.pointer !== pointerType) continue;
@@ -178,13 +167,10 @@ export class GestureCoordinator {
     return regions;
   }
 
-  /** Find bindings matching a gesture type, pointer, and region. */
-  #matchBindings(type: GestureType, pointerType: string, region: GestureRegion | null): GestureBinding[] {
-    const matches: GestureBinding[] = [];
+  #matchBindings(type: GestureType, pointerType: string, region: GestureRegion | null): GestureOptions[] {
+    const matches: GestureOptions[] = [];
 
-    for (const binding of this.#bindings) {
-      const { options } = binding;
-
+    for (const options of this.#bindings) {
       if (options.disabled) continue;
       if (options.type !== type) continue;
       if (options.pointer && options.pointer !== pointerType) continue;
@@ -197,7 +183,7 @@ export class GestureCoordinator {
         continue;
       }
 
-      matches.push(binding);
+      matches.push(options);
     }
 
     return matches;
