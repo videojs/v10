@@ -9,20 +9,16 @@ const TAP_THRESHOLD = 250;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
-  state: ({ set }): MediaControlsState => {
-    let userActive = true;
-
-    return {
-      userActive,
-      controlsVisible: true,
-      toggleControls() {
-        // Fallback before attach — no idle timer, just flip state.
-        userActive = !userActive;
-        set({ userActive, controlsVisible: userActive });
-        return userActive;
-      },
-    };
-  },
+  state: ({ get, set }): MediaControlsState => ({
+    userActive: true,
+    controlsVisible: true,
+    toggleControls() {
+      // Fallback before attach — no idle timer, just flip state.
+      const next = !get().userActive;
+      set({ userActive: next, controlsVisible: next });
+      return next as boolean;
+    },
+  }),
 
   attach({ target, signal, get, set }) {
     const { media, container } = target;
