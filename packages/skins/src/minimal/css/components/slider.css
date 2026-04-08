@@ -132,10 +132,10 @@
   background-color: currentColor;
 
   &[data-orientation="horizontal"] {
-    width: var(--media-slider-fill);
+    width: var(--media-slider-preview, var(--media-slider-fill));
   }
 
   &[data-orientation="vertical"] {
-    height: var(--media-slider-fill);
+    height: var(--media-slider-preview, var(--media-slider-fill));
   }
 }

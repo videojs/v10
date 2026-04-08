@@ -318,11 +318,22 @@ export function createSlider(options: SliderOptions): SliderApi {
     const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
     const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
 
-    return {
+    const adjusted: S = {
       ...state,
       fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
       pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
     };
+
+    // Adjust previewPercent when present (e.g. TimeSliderState).
+    if ('previewPercent' in adjusted && typeof adjusted.previewPercent === 'number') {
+      (adjusted as Record<string, unknown>).previewPercent = options.adjustPercent(
+        adjusted.previewPercent,
+        thumbSize,
+        trackSize
+      );
+    }
+
+    return adjusted;
   }
 
   let resizeObserver: ResizeObserver | null = null;
