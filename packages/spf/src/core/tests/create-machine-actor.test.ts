@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActor } from '../create-actor';
+import { createMachineActor } from '../create-machine-actor';
 import { SerialRunner, Task } from '../task';
 
 // =============================================================================
@@ -7,8 +7,12 @@ import { SerialRunner, Task } from '../task';
 // =============================================================================
 
 function makeCounter() {
-  return createActor({
-    initial: 'idle' as const,
+  return createMachineActor<
+    'idle' | 'running',
+    { count: number },
+    { type: 'increment' } | { type: 'start' } | { type: 'stop' }
+  >({
+    initial: 'idle',
     context: { count: 0 },
     states: {
       idle: {
@@ -27,10 +31,10 @@ function makeCounter() {
 }
 
 // =============================================================================
-// createActor — core behavior
+// createMachineActor — core behavior
 // =============================================================================
 
-describe('createActor', () => {
+describe('createMachineActor', () => {
   it('starts with the initial status and context', () => {
     const actor = makeCounter();
 
@@ -42,7 +46,7 @@ describe('createActor', () => {
 
   it('dispatches messages to the correct state handler', () => {
     const handler = vi.fn();
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: {},
       states: {
@@ -58,7 +62,7 @@ describe('createActor', () => {
 
   it('passes message, context, transition, and setContext to handlers', () => {
     let captured: { msg: unknown; ctx: unknown } | undefined;
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: { value: 42 },
       states: {
@@ -106,7 +110,7 @@ describe('createActor', () => {
 
   it('handler receives context value at dispatch time', () => {
     const observed: number[] = [];
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: { count: 0 },
       states: {
@@ -142,7 +146,7 @@ describe('createActor', () => {
   });
 
   it('drops messages when the state has no on map', () => {
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: {},
       states: {
@@ -173,10 +177,10 @@ describe('createActor', () => {
 });
 
 // =============================================================================
-// createActor — destroy
+// createMachineActor — destroy
 // =============================================================================
 
-describe('createActor — destroy', () => {
+describe('createMachineActor — destroy', () => {
   it('transitions to destroyed on destroy()', () => {
     const actor = makeCounter();
 
@@ -195,7 +199,7 @@ describe('createActor — destroy', () => {
 
   it('drops send() after destroy()', () => {
     const handler = vi.fn();
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: {},
       states: { idle: { on: { ping: handler } } },
@@ -211,7 +215,7 @@ describe('createActor — destroy', () => {
     const runner = new SerialRunner();
     const destroySpy = vi.spyOn(runner, 'destroy');
 
-    const actor = createActor({
+    const actor = createMachineActor({
       runner: () => runner,
       initial: 'idle' as const,
       context: {},
@@ -225,13 +229,13 @@ describe('createActor — destroy', () => {
 });
 
 // =============================================================================
-// createActor — runner and onSettled
+// createMachineActor — runner and onSettled
 // =============================================================================
 
-describe('createActor — runner', () => {
+describe('createMachineActor — runner', () => {
   it('provides the runner to handlers when a runner factory is given', () => {
     let capturedRunner: unknown;
-    const actor = createActor({
+    const actor = createMachineActor({
       runner: () => new SerialRunner(),
       initial: 'idle' as const,
       context: {},
@@ -257,7 +261,7 @@ describe('createActor — runner', () => {
 
   it('omits runner from handler context when no runner factory is given', () => {
     let capturedCtx: Record<string, unknown> | undefined;
-    const actor = createActor({
+    const actor = createMachineActor({
       initial: 'idle' as const,
       context: {},
       states: {
@@ -279,9 +283,9 @@ describe('createActor — runner', () => {
   });
 
   it('transitions to onSettled state when the runner settles', async () => {
-    const actor = createActor({
+    const actor = createMachineActor<'idle' | 'loading', Record<string, never>, { type: 'load' }, () => SerialRunner>({
       runner: () => new SerialRunner(),
-      initial: 'idle' as const,
+      initial: 'idle',
       context: {},
       states: {
         idle: {
@@ -310,9 +314,14 @@ describe('createActor — runner', () => {
 
   it('onSettled is a no-op when the state changes before the runner settles', async () => {
     let resolveTask!: () => void;
-    const actor = createActor({
+    const actor = createMachineActor<
+      'idle' | 'loading' | 'cancelled',
+      Record<string, never>,
+      { type: 'load' } | { type: 'cancel' },
+      () => SerialRunner
+    >({
       runner: () => new SerialRunner(),
-      initial: 'idle' as const,
+      initial: 'idle',
       context: {},
       states: {
         idle: {
@@ -358,9 +367,9 @@ describe('createActor — runner', () => {
   it('onSettled generation-token: rescheduling supersedes the stale callback', async () => {
     let resolveFirst!: () => void;
 
-    const actor = createActor({
+    const actor = createMachineActor<'idle' | 'loading', Record<string, never>, { type: 'load' }, () => SerialRunner>({
       runner: () => new SerialRunner(),
-      initial: 'idle' as const,
+      initial: 'idle',
       context: {},
       states: {
         idle: {

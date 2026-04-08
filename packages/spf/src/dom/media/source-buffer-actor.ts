@@ -1,4 +1,4 @@
-import { createActor, type HandlerContext, type MessageActor } from '../../core/create-actor';
+import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/create-machine-actor';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -222,7 +222,7 @@ export function createSourceBufferActor(
     runner.schedule(task).then(setContext, handleError);
   };
 
-  return createActor<UserState, SourceBufferActorContext, SourceBufferMessage, () => SerialRunner>({
+  return createMachineActor<UserState, SourceBufferActorContext, SourceBufferMessage, () => SerialRunner>({
     runner: () => new SerialRunner(),
     initial: 'idle',
     context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },

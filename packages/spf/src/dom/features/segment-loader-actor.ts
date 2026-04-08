@@ -1,6 +1,6 @@
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
-import { createActor, type HandlerContext, type MessageActor } from '../../core/create-actor';
+import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/create-machine-actor';
 import { effect } from '../../core/signals/effect';
 import { SerialRunner, Task } from '../../core/task';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
@@ -342,7 +342,7 @@ export function createSegmentLoaderActor(
     });
   };
 
-  return createActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
+  return createMachineActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
     runner: () => new SerialRunner(),
     initial: 'idle',
     context: { inFlightInitTrackId: null, inFlightSegmentId: null },

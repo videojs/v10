@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import type { Reactor } from '../../core/create-reactor';
-import { createReactor } from '../../core/create-reactor';
+import type { Reactor } from '../../core/create-machine-reactor';
+import { createMachineReactor } from '../../core/create-machine-reactor';
 import { computed, type Signal, update } from '../../core/signals/primitives';
 
 /**
@@ -69,7 +69,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   const urlSignal = computed(() => state.get().presentation?.url);
 
-  return createReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
+  return createMachineReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {

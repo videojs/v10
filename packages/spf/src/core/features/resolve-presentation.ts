@@ -1,6 +1,6 @@
 import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
-import type { Reactor } from '../create-reactor';
-import { createReactor } from '../create-reactor';
+import type { Reactor } from '../create-machine-reactor';
+import { createMachineReactor } from '../create-machine-reactor';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
 import { computed, type Signal, update } from '../signals/primitives';
 import type { AddressableObject, Presentation } from '../types';
@@ -93,7 +93,7 @@ export function resolvePresentation<S extends PresentationState>({
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(state.get()));
 
-  return createReactor<ResolvePresentationState>({
+  return createMachineReactor<ResolvePresentationState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {

@@ -6,7 +6,7 @@ date: 2026-04-02
 # Text Track Architecture
 
 The text track implementation is the **reference implementation** for the
-`createActor` / `createReactor` factories in SPF. It was built as part of a
+`createMachineActor` / `createMachineReactor` factories in SPF. It was built as part of a
 deliberate spike (videojs/v10#1158) to prove out the Actor/Reactor primitives
 described in [primitives.md](primitives.md) and [actor-reactor-factories.md](actor-reactor-factories.md).
 
@@ -139,7 +139,7 @@ the cue record snapshot.
 ```
 
 No runner — all message handling is synchronous. `'destroyed'` is the only
-other state (implicit, added by `createActor`).
+other state (implicit, added by `createMachineActor`).
 
 ---
 
@@ -156,7 +156,7 @@ the signal and drives the transition:
 // on every re-run with no memoization.
 const derivedStatusSignal = computed(() => deriveStatus(state.get(), owners.get()));
 
-createReactor({
+createMachineReactor({
   always: [
     ({ status, transition }) => {
       const target = derivedStatusSignal.get();
@@ -320,10 +320,10 @@ Evaluated against the goals from videojs/v10#1158:
 
 | Goal | Result | Notes |
 |------|--------|-------|
-| **Finite state machine** | ✓ | Both `createReactor` and `createActor` produce explicit FSMs with named states |
+| **Finite state machine** | ✓ | Both `createMachineReactor` and `createMachineActor` produce explicit FSMs with named states |
 | **Non-finite context** | ✓ | `TextTracksActor.context` holds unbounded `loaded` + `segments` maps; observable via snapshot |
 | **Teardown / abort propagation** | ✓ | `destroy()` fires effect cleanups; `SerialRunner.abortAll()` aborts in-flight Tasks; actors in owners destroyed by engine |
-| **Message → task IoC** | ✓ | `createActor` decouples message dispatch from task execution; `SerialRunner` handles scheduling |
+| **Message → task IoC** | ✓ | `createMachineActor` decouples message dispatch from task execution; `SerialRunner` handles scheduling |
 | **Observable snapshots** | ✓ | Both factories expose `snapshot: ReadonlySignal<{ status, context }>` |
 | **Bidirectional sync** | ✓ | `syncTextTracks` Effect 2 bridges `TextTrackList` `'change'` events back to state |
 
@@ -333,8 +333,8 @@ Evaluated against the goals from videojs/v10#1158:
   destruction depends on the engine's generic loop. Callers using these reactors outside the
   engine must manage actor destruction explicitly.
 - **The `always`-before-state ordering guarantee** requires care — it's an implementation
-  guarantee of `createReactor`, not a formal TC39 Signals guarantee. It cannot be assumed
-  outside `createReactor`.
+  guarantee of `createMachineReactor`, not a formal TC39 Signals guarantee. It cannot be assumed
+  outside `createMachineReactor`.
 - **Entry vs. reactive effect intent is invisible in the definition shape.** `untrack()` is
   a convention, not API enforcement. An enter-once effect that accidentally tracks a signal
   produces no error — just unexpected re-runs.
@@ -359,9 +359,9 @@ states: {
   }]
 }
 
-// CORRECT — hoist outside createReactor()
+// CORRECT — hoist outside createMachineReactor()
 const trackSignal = computed(() => findSelectedTrack(state.get()));
-createReactor({ states: { 'monitoring-for-loads': [() => {
+createMachineReactor({ states: { 'monitoring-for-loads': [() => {
   const track = trackSignal.get();
   segmentLoaderActor.send({ type: 'load', track, currentTime });
 }] } });
@@ -444,7 +444,7 @@ ownership is manageable. Revisit if the pattern spreads to video/audio.
 
 ### Formal `context` field usage on Reactor
 
-`createReactor` accepts `context` + `setContext`, but `loadTextTrackCues` and
+`createMachineReactor` accepts `context` + `setContext`, but `loadTextTrackCues` and
 `syncTextTracks` both use `context: {}` throughout — reactor non-finite state is held in
 closure variables and the `owners` signal instead.
 
@@ -517,7 +517,7 @@ equivalent. The equality function's conditions map to the FSM's state conditions
 re-entering a state IS the "previous state" signal — state entry is the transition event.
 
 **`SourceBufferActor`**: Already a proper actor with observable snapshot, `SerialRunner`,
-and a well-defined message interface. It predates `createActor` and has not been migrated
+and a well-defined message interface. It predates `createMachineActor` and has not been migrated
 to the factory, but the behavioral contract is equivalent. Migration would be additive.
 
 **Actors in owners**: The video/audio actors should follow the same actors-in-owners

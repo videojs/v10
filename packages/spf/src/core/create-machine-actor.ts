@@ -8,7 +8,7 @@ import type { TaskLike } from './task';
 // =============================================================================
 
 /**
- * Minimal interface for any runner that can be used with createActor.
+ * Minimal interface for any runner that can be used with createMachineActor.
  */
 export interface RunnerLike {
   schedule<Value = void, Err = unknown>(task: TaskLike<Value, Err>): Promise<Value>;
@@ -70,7 +70,7 @@ export type ActorStateDefinition<
 };
 
 /**
- * Full actor definition passed to `createActor`.
+ * Full actor definition passed to `createMachineActor`.
  *
  * `UserState` is the set of domain-meaningful states. `'destroyed'` is always
  * added by the framework as the implicit terminal state — do not include it here.
@@ -82,7 +82,7 @@ export type ActorDefinition<
   RunnerFactory extends (() => RunnerLike) | undefined = undefined,
 > = {
   /**
-   * Runner factory — called once at `createActor()` time.
+   * Runner factory — called once at `createMachineActor()` time.
    * The runner lives for the full actor lifetime and is destroyed with it.
    *
    * @example
@@ -104,7 +104,7 @@ export type ActorDefinition<
 // Live actor interface
 // =============================================================================
 
-/** Live actor instance returned by `createActor`. */
+/** Live actor instance returned by `createMachineActor`. */
 export interface MessageActor<State extends string, Context extends object, Message extends { type: string }>
   extends SignalActor<State, Context> {
   send(message: Message): void;
@@ -128,7 +128,7 @@ export interface MessageActor<State extends string, Context extends object, Mess
  * automatically superseded.
  *
  * @example
- * const actor = createActor({
+ * const actor = createMachineActor({
  *   runner: () => new SerialRunner(),
  *   initial: 'idle',
  *   context: {},
@@ -153,7 +153,7 @@ export interface MessageActor<State extends string, Context extends object, Mess
  *   }
  * });
  */
-export function createActor<
+export function createMachineActor<
   UserState extends string,
   Context extends object,
   Message extends { type: string },

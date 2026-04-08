@@ -34,7 +34,7 @@ export interface Machine<Snapshot extends MachineSnapshot<string>> {
  * Provisions the shared mechanics for all machine-like primitives: a snapshot
  * signal, an untracked state reader, and a transition function.
  *
- * Internal — consumed by `createActor` and `createReactor`. Not part of the
+ * Internal — consumed by `createMachineActor` and `createMachineReactor`. Not part of the
  * public API.
  */
 export function createMachineCore<FullState extends string, Snapshot extends MachineSnapshot<FullState>>(

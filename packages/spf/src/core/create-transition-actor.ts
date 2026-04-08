@@ -16,7 +16,7 @@ import { untrack, update } from './signals/primitives';
  *
  * Use this when the actor has context that needs to be observable but no
  * meaningful state machine (e.g., a message-driven model with DOM side
- * effects). For actors that need per-state behavior, use `createActor`.
+ * effects). For actors that need per-state behavior, use `createMachineActor`.
  */
 export interface TransitionActor<Context extends object, Message extends { type: string }>
   extends Machine<ActorSnapshot<'active' | 'destroyed', Context>> {

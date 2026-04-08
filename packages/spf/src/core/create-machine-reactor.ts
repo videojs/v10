@@ -43,7 +43,7 @@ export type ReactorStateDefinition = {
 };
 
 /**
- * Full reactor definition passed to `createReactor`.
+ * Full reactor definition passed to `createMachineReactor`.
  *
  * `State` is the set of domain-meaningful states. `'destroying'` and
  * `'destroyed'` are always added by the framework as implicit terminal states —
@@ -70,7 +70,7 @@ export type ReactorDefinition<State extends string> = {
 // Live reactor interface
 // =============================================================================
 
-/** Live reactor instance returned by `createReactor`. */
+/** Live reactor instance returned by `createMachineReactor`. */
 export type Reactor<State extends string> = Machine<MachineSnapshot<State>>;
 
 // =============================================================================
@@ -97,7 +97,7 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  * for the synchronous base case. Active effect cleanups fire via disposal.
  *
  * @example
- * const reactor = createReactor({
+ * const reactor = createMachineReactor({
  *   initial: 'waiting',
  *   monitor: () => srcSignal.get() ? 'active' : 'waiting',
  *   states: {
@@ -111,7 +111,7 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  *   }
  * });
  */
-export function createReactor<State extends string>(
+export function createMachineReactor<State extends string>(
   def: ReactorDefinition<State>
 ): Reactor<State | 'destroying' | 'destroyed'> {
   type FullState = State | 'destroying' | 'destroyed';

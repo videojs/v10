@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import type { Reactor } from '../../core/create-reactor';
-import { createReactor } from '../../core/create-reactor';
+import type { Reactor } from '../../core/create-machine-reactor';
+import { createMachineReactor } from '../../core/create-machine-reactor';
 import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
 import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
 
@@ -106,7 +106,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
   const selectedTextTrackIdSignal = computed(() => state.get().selectedTextTrackId);
   const preconditionsMetSignal = computed(() => !!mediaElementSignal.get() && !!modelTextTracksSignal.get()?.length);
 
-  return createReactor<'preconditions-unmet' | 'set-up'>({
+  return createMachineReactor<'preconditions-unmet' | 'set-up'>({
     initial: 'preconditions-unmet',
     monitor: () => (preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet'),
     states: {

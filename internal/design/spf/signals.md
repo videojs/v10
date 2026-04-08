@@ -67,7 +67,7 @@ via the `Signal.subtle.Watcher` API, leaving scheduling entirely to the caller. 
 microtask checkpoint, batching all synchronous writes made in a single turn.
 
 This scheduling control is what makes the `monitor`-before-state ordering guarantee in
-`createReactor` possible. The effect scheduler drains pending computeds in an
+`createMachineReactor` possible. The effect scheduler drains pending computeds in an
 insertion-ordered `Set`, so registration order determines execution order.
 
 ### Lower barrier to entry
@@ -163,11 +163,11 @@ core/signals/    signal(), computed(), effect(), untrack(), update()
    PlaybackEngineOwners — signal<O>  (mediaElement, actors, buffers, ...)
 
 2. Reactor execution model
-   createReactor() — always[] and states[][] each become effect() calls
+   createMachineReactor() — always[] and states[][] each become effect() calls
    Transitions fire when a computed signal changes and an always monitor detects it
 
 3. Actor observability
-   createActor() — snapshot is a signal<{ status, context }>
+   createMachineActor() — snapshot is a signal<{ status, context }>
    Reactors and the engine observe Actor state without polling or callbacks
 ```
 
@@ -223,7 +223,7 @@ distinguishes "run once on entry" from "re-run reactively" in its definition sha
 encodes the intent structurally, removing the need for `untrack()` in the common case.
 The tradeoff is more API surface in exchange for fewer footguns. See
 [actor-reactor-factories.md](actor-reactor-factories.md) for how this applies to
-`createReactor` specifically.
+`createMachineReactor` specifically.
 
 ---
 
@@ -258,7 +258,7 @@ creates extra upstream subscriptions — a more visible correctness failure, eas
 in review.
 
 Abstractions built on signals compound this subtly. When an abstraction hides the effect
-boundary — as `createReactor` does, where each array entry in `states[S]` becomes an
+boundary — as `createMachineReactor` does, where each array entry in `states[S]` becomes an
 `effect()` — the author does not see the `effect(() => { ... })` wrapper at the call site.
 The anti-pattern is easier to miss when the reactive boundary is implicit in a definition
 shape rather than explicit at the point of use.
@@ -457,9 +457,9 @@ a predictable execution order: effects registered first run first. But that is a
 of the polyfill's `Watcher` implementation and the scheduler's use of `Set` — not
 something the TC39 proposal guarantees.
 
-`createReactor` takes a load-bearing dependency on this property. The `always`-before-state
+`createMachineReactor` takes a load-bearing dependency on this property. The `always`-before-state
 ordering guarantee — that `always` effects always run before per-state effects — is an
-explicit guarantee of `createReactor`'s own API, documented in source and tested in
+explicit guarantee of `createMachineReactor`'s own API, documented in source and tested in
 practice. But it depends on the underlying scheduler preserving insertion order. A future
 polyfill version or native implementation that reordered effects for optimization would
 silently break every Reactor FSM that relies on this ordering.
@@ -494,7 +494,7 @@ states: {
 }
 ```
 
-For `createReactor`, this would make `untrack()` unnecessary in the common case of
+For `createMachineReactor`, this would make `untrack()` unnecessary in the common case of
 enter-once effects, eliminate the class of bugs where accidental tracking causes unexpected
 re-runs, and make the author's intent visible in the definition rather than in `untrack()`
 calls buried inside effect bodies.

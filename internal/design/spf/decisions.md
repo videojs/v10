@@ -21,15 +21,15 @@ the full reference implementation and assessment.
 
 ### `always`-before-state ordering as a load-bearing guarantee
 
-**Decision:** `always` effects in `createReactor` always run before per-state effects.
-This ordering guarantee is documented in `createReactor`'s source and must be preserved.
+**Decision:** `always` effects in `createMachineReactor` always run before per-state effects.
+This ordering guarantee is documented in `createMachineReactor`'s source and must be preserved.
 
 **Rationale:** Per-state effects rely on invariants established by `always` monitors.
 When an `always` monitor calls `transition(newState)`, the snapshot updates before any
 per-state effect fires — so per-state effects that no-op when `status !== expectedState`
 do so correctly without needing to re-check conditions themselves.
 
-**Caveat:** The guarantee is specific to `createReactor`'s registration order. It depends
+**Caveat:** The guarantee is specific to `createMachineReactor`'s registration order. It depends
 on the TC39 `signal-polyfill`'s `Watcher` preserving insertion order in `getPending()` —
 not a formal guarantee of the TC39 Signals proposal.
 

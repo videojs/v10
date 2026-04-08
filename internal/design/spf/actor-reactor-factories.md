@@ -5,11 +5,11 @@ date: 2026-04-03
 
 # Actor and Reactor Factories
 
-Design for `createActor` and `createReactor` — the declarative factory functions that replace
+Design for `createMachineActor` and `createMachineReactor` — the declarative factory functions that replace
 bespoke Actor classes and function-based Reactors in SPF.
 
 Motivated by the text track architecture spike (videojs/v10#1158), which produced the first
-`createActor` / `createReactor`-based implementations in SPF and surfaced the need for
+`createMachineActor` / `createMachineReactor`-based implementations in SPF and surfaced the need for
 shared, principled primitives. See [text-track-architecture.md](text-track-architecture.md)
 for the reference implementation and spike assessment.
 
@@ -25,8 +25,8 @@ mechanics.
 Two separate factories:
 
 ```typescript
-const actor = createActor(actorDefinition);
-const reactor = createReactor(reactorDefinition);
+const actor = createMachineActor(actorDefinition);
+const reactor = createMachineReactor(reactorDefinition);
 ```
 
 Both return instances that implement `SignalActor` and expose `snapshot` and `destroy()`.
@@ -44,7 +44,7 @@ type ActorDefinition<
   Message extends { type: string },
   RunnerFactory extends (() => RunnerLike) | undefined = undefined,
 > = {
-  runner?: RunnerFactory;    // factory — called once at createActor() time
+  runner?: RunnerFactory;    // factory — called once at createMachineActor() time
   initial: UserState;
   context: Context;
   states: Partial<Record<UserState, {
@@ -174,7 +174,7 @@ Two states (`preconditions-unmet` ↔ `set-up`), one `monitor`, and one `entry` 
 `reactions` effect in `set-up` with independent tracking and cleanup.
 
 ```typescript
-const reactor = createReactor<'preconditions-unmet' | 'set-up'>({
+const reactor = createMachineReactor<'preconditions-unmet' | 'set-up'>({
   initial: 'preconditions-unmet',
   // monitor returns the target state; framework drives the transition.
   monitor: () => preconditionsMetSignal.get() ? 'set-up' : 'preconditions-unmet',
@@ -220,7 +220,7 @@ const derivedStateSignal = computed(() => deriveState(state.get(), owners.get())
 const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
 const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
 
-const reactor = createReactor<LoadTextTrackCuesState>({
+const reactor = createMachineReactor<LoadTextTrackCuesState>({
   initial: 'preconditions-unmet',
   monitor: () => derivedStateSignal.get(),
   states: {
@@ -265,7 +265,7 @@ const reactor = createReactor<LoadTextTrackCuesState>({
 
 ### Factory functions, not base classes
 
-**Decision:** `createActor(def)` and `createReactor(def)` rather than `extends BaseActor` /
+**Decision:** `createMachineActor(def)` and `createMachineReactor(def)` rather than `extends BaseActor` /
 `extends Reactor`.
 
 **Alternatives considered:**
@@ -282,7 +282,7 @@ door open for a future definition-vs-implementation separation (see below).
 
 ---
 
-### Separate `createActor` and `createReactor`
+### Separate `createMachineActor` and `createMachineReactor`
 
 **Decision:** Two distinct factories with distinct definition shapes.
 
@@ -323,7 +323,7 @@ domain-meaningful states.
 ### Runner as a factory function, actor-lifetime scope
 
 **Decision:** `runner: () => new SerialRunner()` — a factory function called once when
-`createActor()` is called. The runner lives for the actor's full lifetime and is destroyed
+`createMachineActor()` is called. The runner lives for the actor's full lifetime and is destroyed
 when the actor is destroyed.
 
 **Alternatives considered:**
@@ -348,7 +348,7 @@ stale one) is handled by the framework internally rather than by runner scope.
 
 ### `monitor`-before-state ordering guarantee
 
-**Decision:** `monitor` effects are registered before per-state effects in `createReactor`.
+**Decision:** `monitor` effects are registered before per-state effects in `createMachineReactor`.
 This ordering is **load-bearing**: per-state effects can rely on invariants established by
 `monitor` having already run.
 
@@ -356,16 +356,16 @@ This ordering is **load-bearing**: per-state effects can rely on invariants esta
 `Set` before executing them. Because `monitor` effects are registered first, they are
 guaranteed to execute before per-state effects in every flush.
 
-**What this enables:** When a `monitor` fn returns a new state, `createReactor` calls
+**What this enables:** When a `monitor` fn returns a new state, `createMachineReactor` calls
 `transition()` immediately and updates the snapshot signal. By the time per-state effects run,
 the reactor is already in the new state — so a per-state effect gated on
 `snapshot.value !== state` correctly no-ops without needing to re-check conditions that the
 `monitor` just resolved.
 
-**Important caveat:** This guarantee is specific to `createReactor`'s registration order.
+**Important caveat:** This guarantee is specific to `createMachineReactor`'s registration order.
 It is not a formal guarantee of the TC39 Signals proposal — it depends on the polyfill's
 `Watcher` implementation preserving insertion order in `getPending()`. Do not assume this
-ordering holds outside of `createReactor`. See [signals.md § Effect Execution Order](signals.md)
+ordering holds outside of `createMachineReactor`. See [signals.md § Effect Execution Order](signals.md)
 for the general principle.
 
 ---
@@ -421,7 +421,7 @@ Signal reads inside `entry` are automatically untracked — the fn body runs ins
 
 **Inline computed anti-pattern:** `computed()` inside an effect body creates a new `Computed`
 node on every re-run with no memoization. `Computed`s that gate effect re-runs must be hoisted
-*outside* the effect body (typically at the factory function scope, before `createReactor()`).
+*outside* the effect body (typically at the factory function scope, before `createMachineReactor()`).
 
 ---
 
@@ -437,7 +437,7 @@ type, initial state) and behavior (handler functions). XState v5 separates these
 const def = setup({ actors: { fetcher: fetchActor } }).createMachine({ ... });
 
 // Implementation — runtime wiring
-const actor = createActor(def, { input: { ... } });
+const actor = createMachineActor(def, { input: { ... } });
 ```
 
 This separation enables serialization, visualization, and testing the definition without

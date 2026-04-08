@@ -1,5 +1,5 @@
-import type { Reactor } from '../../core/create-reactor';
-import { createReactor } from '../../core/create-reactor';
+import type { Reactor } from '../../core/create-machine-reactor';
+import { createMachineReactor } from '../../core/create-machine-reactor';
 import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
 import type { Presentation, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
@@ -141,7 +141,7 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
   const currentTimeSignal = computed(() => state.get().currentTime ?? 0);
   const selectedTrackSignal = computed(() => findSelectedTrack(state.get()));
 
-  return createReactor<LoadTextTrackCuesState>({
+  return createMachineReactor<LoadTextTrackCuesState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {

@@ -45,7 +45,7 @@ A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute
 
 `core/task.ts` — thin wrapper around a function with an `AbortController`. The shape is approximately right; the question is how much structure to add.
 
-> **See also:** [actor-reactor-factories.md](actor-reactor-factories.md) — decided design for `createActor` / `createReactor`, including how runners are declared and lifecycle-managed.
+> **See also:** [actor-reactor-factories.md](actor-reactor-factories.md) — decided design for `createMachineActor` / `createMachineReactor`, including how runners are declared and lifecycle-managed.
 
 ### Open questions
 
@@ -107,19 +107,19 @@ An Actor does not know about state outside itself. It receives messages and prod
 
 ### Current approach
 
-`createActor` in `core/create-actor.ts` — a declarative factory replacing bespoke closures.
+`createMachineActor` in `core/create-machine-actor.ts` — a declarative factory replacing bespoke closures.
 Actors define state, context, message handlers per state, and an optional runner factory in
 a definition object. The factory manages the snapshot signal, runner lifecycle, and
 `'destroyed'` terminal state. See [actor-reactor-factories.md](actor-reactor-factories.md).
 
-The existing `SourceBufferActor` predates `createActor` and has not been migrated — the
+The existing `SourceBufferActor` predates `createMachineActor` and has not been migrated — the
 behavioral contract is equivalent, but the factory pattern is not yet used there.
 
 ### Decided
 
 - **Snapshot as signal** — Actors expose `snapshot` as a `ReadonlySignal`, making current state synchronously readable and tracked in reactive contexts without polling.
 - **Message validity per state** — Actors define valid messages per state via a per-state `on` map in the definition. Messages sent in a state with no handler for that type are silently dropped. `'destroyed'` always drops all messages.
-- **Factory function, not base class** — `createActor(definition)` rather than `extends BaseActor`. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Factory function, not base class** — `createMachineActor(definition)` rather than `extends BaseActor`. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **`'destroyed'` is always implicit** — the framework adds it as the terminal state; user status types never include it.
 - **Actor dependencies are explicit** — Actors receive dependencies at construction time (via the factory call site) and interact with peer Actors via `send()`. No global state access.
 
@@ -152,7 +152,7 @@ A Reactor is typically the bridge between observable state and one or more Actor
 
 ### Current approach
 
-`createReactor` in `core/create-reactor.ts` — a declarative factory. The first Reactor
+`createMachineReactor` in `core/create-machine-reactor.ts` — a declarative factory. The first Reactor
 implementations are in `dom/features/` as part of the text track spike (videojs/v10#1158):
 `syncTextTracks` and `loadTextTrackCues`. See [text-track-architecture.md](text-track-architecture.md)
 for the reference implementation.
@@ -163,10 +163,10 @@ function-based with no formal status or snapshot — they remain to be migrated.
 ### Decided
 
 - **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status, context }>`.
-- **Factory function, not base class** — `createReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Factory function, not base class** — `createMachineReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
 - **`always` effects for cross-cutting monitors** — a dedicated `always` array runs before per-state effects in every flush. The primary use case is condition monitoring that drives transitions from one place. See the ordering guarantee in [actor-reactor-factories.md](actor-reactor-factories.md).
-- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. A formal `context` field in `createReactor` has been prototyped but is tracked as a future improvement, not current practice.
+- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. A formal `context` field in `createMachineReactor` has been prototyped but is tracked as a future improvement, not current practice.
 
 ### Open questions
 
@@ -273,7 +273,7 @@ points of friction, and future directions.
   with `AbortController` or signal-scoped lifetimes could reduce boilerplate.
 - **Reading outside reactive context** — is this a discipline problem or a design problem?
   Currently discipline (`untrack()` conventions). The `entry`/`reactive` split in
-  `createReactor` would address the most common case structurally.
+  `createMachineReactor` would address the most common case structurally.
 
 ---
 
