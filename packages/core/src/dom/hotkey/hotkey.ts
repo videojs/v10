@@ -70,6 +70,16 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   return [{ modifiers, key, originalKey: rawKey }];
 }
 
+/**
+ * Single non-letter character — Shift was used to produce the character itself,
+ * not as a deliberate modifier (e.g. Shift+. → ">", Shift+/ → "?").
+ * Letters excluded because Shift changes case intentionally (k vs K).
+ * Named keys excluded because event.key.length > 1 (ArrowLeft, Tab, etc.).
+ */
+function isImplicitShift(key: string): boolean {
+  return key.length === 1 && !/[a-z]/i.test(key);
+}
+
 /** Whether a parsed binding matches a keyboard event. */
 export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: KeyboardEvent): boolean {
   // IME composition filtering.
@@ -78,8 +88,16 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
   // Case-insensitive key comparison.
   if (event.key.toLowerCase() !== binding.key) return false;
 
-  // Exact modifier matching — all four must agree.
-  if (event.shiftKey !== binding.modifiers.has('shift')) return false;
+  // Shift: relax for inherently-shifted characters (>, <, ?, !, etc.).
+  if (isImplicitShift(event.key)) {
+    // Binding requires Shift explicitly → event must have Shift held.
+    if (binding.modifiers.has('shift') && !event.shiftKey) return false;
+  } else {
+    // Letters and named keys: exact Shift matching.
+    if (event.shiftKey !== binding.modifiers.has('shift')) return false;
+  }
+
+  // Exact matching for Ctrl, Alt, Meta — these are always intentional.
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
   if (event.altKey !== binding.modifiers.has('alt')) return false;
   if (event.metaKey !== binding.modifiers.has('meta')) return false;

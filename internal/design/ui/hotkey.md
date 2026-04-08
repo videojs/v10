@@ -166,6 +166,7 @@ Only `0-9` is supported. Arbitrary ranges (e.g., `a-z`) are not — there's no u
 - Patterns are parsed into `{ modifiers, key }` at registration time — no parsing per event.
 - `event.key` is compared case-insensitively.
 - **Exact modifier matching** — all specified modifiers must be active, all unspecified must be inactive. `k` does not fire when Ctrl+K is pressed.
+- **Implicit Shift** — For single non-letter character keys (`>`, `<`, `?`, `!`, etc.), `shiftKey` is ignored during matching. These characters require Shift on some layouts but not others. Explicitly specifying `Shift+>` still requires Shift to be held.
 - `Mod` resolves at parse time based on platform detection (`navigator.userAgentData?.platform` with `navigator.platform` fallback).
 - IME composition input is filtered — events where `event.key === 'Unidentified'` are skipped.
 

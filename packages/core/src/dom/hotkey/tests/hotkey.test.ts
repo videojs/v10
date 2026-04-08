@@ -120,6 +120,60 @@ describe('matchesHotkeyEvent', () => {
     const binding = parseHotkeyPattern('k')[0]!;
     expect(matchesHotkeyEvent(binding, createEvent('j'))).toBe(false);
   });
+
+  describe('implicit shift for non-letter characters', () => {
+    it('matches > when Shift is held (US keyboard: Shift+. produces >)', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { shiftKey: true }))).toBe(true);
+    });
+
+    it('matches < when Shift is held (US keyboard: Shift+, produces <)', () => {
+      const binding = parseHotkeyPattern('<')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('<', { shiftKey: true }))).toBe(true);
+    });
+
+    it('matches > when Shift is NOT held (European keyboard: > is unshifted)', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>'))).toBe(true);
+    });
+
+    it('matches ? when Shift is held', () => {
+      const binding = parseHotkeyPattern('?')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('?', { shiftKey: true }))).toBe(true);
+    });
+
+    it('matches Ctrl+> with Ctrl and Shift held', () => {
+      const binding = parseHotkeyPattern('Ctrl+>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { ctrlKey: true, shiftKey: true }))).toBe(true);
+    });
+
+    it('rejects Ctrl+> when only Shift is held (no Ctrl)', () => {
+      const binding = parseHotkeyPattern('Ctrl+>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { shiftKey: true }))).toBe(false);
+    });
+
+    it('rejects letter k when Shift is held (Shift changes letter case)', () => {
+      const binding = parseHotkeyPattern('k')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('K', { shiftKey: true }))).toBe(false);
+    });
+
+    it('requires exact Shift for named keys', () => {
+      const binding = parseHotkeyPattern('Shift+ArrowLeft')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('ArrowLeft', { shiftKey: true }))).toBe(true);
+      expect(matchesHotkeyEvent(binding, createEvent('ArrowLeft'))).toBe(false);
+    });
+
+    it('rejects ArrowLeft when Shift is held but binding has no Shift', () => {
+      const binding = parseHotkeyPattern('ArrowLeft')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('ArrowLeft', { shiftKey: true }))).toBe(false);
+    });
+
+    it('Shift+> binding requires Shift held', () => {
+      const binding = parseHotkeyPattern('Shift+>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { shiftKey: true }))).toBe(true);
+      expect(matchesHotkeyEvent(binding, createEvent('>'))).toBe(false);
+    });
+  });
 });
 
 describe('createHotkey', () => {
