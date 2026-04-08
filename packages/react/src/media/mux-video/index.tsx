@@ -1,7 +1,7 @@
 'use client';
 
-import type { InferDelegateProps } from '@videojs/core';
-import { MuxMediaDelegate, MuxVideo as MuxVideoApi } from '@videojs/core/dom/media/mux';
+import type { InferClassProps } from '@videojs/core';
+import { MuxVideo as MuxVideoApi, MuxVideoBase } from '@videojs/core/dom/media/mux';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { attachMediaElement } from '../../utils/attach-media-element';
@@ -10,7 +10,7 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 
 export type MuxVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
-  InferDelegateProps<typeof MuxMediaDelegate>;
+  InferClassProps<typeof MuxVideoBase>;
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
   const mediaApi = useMediaInstance(MuxVideoApi);
@@ -18,7 +18,7 @@ export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function Mux
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, MuxMediaDelegate, props)}>
+    <video ref={composedRef} {...mediaProps(mediaApi, MuxVideoBase, props)}>
       {children}
     </video>
   );

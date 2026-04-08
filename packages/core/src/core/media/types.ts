@@ -11,6 +11,6 @@ type SettableKeys<T> = {
 
 type ExcludeInternal<K> = K extends `_${string}` ? never : K;
 
-export type InferDelegateProps<D extends abstract new (...args: any[]) => any> = Partial<
+export type InferClassProps<D extends abstract new (...args: any[]) => any> = Partial<
   Pick<InstanceType<D>, ExcludeInternal<SettableKeys<InstanceType<D>>>>
 >;

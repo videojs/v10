@@ -10,6 +10,9 @@ export type AnyConstructor<T, Arguments extends unknown[] = any[]> =
 
 export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & Constructor<Result>;
 
+export type MixinReturn<Base extends AnyConstructor<any>, Props> = Constructor<InstanceType<Base> & Props> &
+  Omit<Base, 'prototype'>;
+
 export type Falsy<T> = T | false | null | undefined;
 
 export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;

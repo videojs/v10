@@ -1,76 +1,76 @@
 import { describe, expect, it } from 'vitest';
-import { MuxMediaDelegate } from '..';
+import { MuxMediaBase } from '..';
 
-describe('MuxMediaDelegate', () => {
+describe('MuxMediaBase', () => {
   it('defaults playbackId to null', () => {
-    const delegate = new MuxMediaDelegate();
-    expect(delegate.playbackId).toBeNull();
+    const base = new MuxMediaBase();
+    expect(base.playbackId).toBeNull();
   });
 
   it('defaults customDomain to mux.com', () => {
-    const delegate = new MuxMediaDelegate();
-    expect(delegate.customDomain).toBe('mux.com');
+    const base = new MuxMediaBase();
+    expect(base.customDomain).toBe('mux.com');
   });
 
   it('sets src when playbackId is set', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.playbackId = 'abc123';
+    const base = new MuxMediaBase();
+    base.playbackId = 'abc123';
 
-    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+    expect(base.src).toBe('https://stream.mux.com/abc123.m3u8');
   });
 
   it('uses customDomain in the generated src', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.customDomain = 'example.com';
-    delegate.playbackId = 'abc123';
+    const base = new MuxMediaBase();
+    base.customDomain = 'example.com';
+    base.playbackId = 'abc123';
 
-    expect(delegate.src).toBe('https://stream.example.com/abc123.m3u8');
+    expect(base.src).toBe('https://stream.example.com/abc123.m3u8');
   });
 
   it('updates src when customDomain changes after playbackId', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.playbackId = 'abc123';
-    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+    const base = new MuxMediaBase();
+    base.playbackId = 'abc123';
+    expect(base.src).toBe('https://stream.mux.com/abc123.m3u8');
 
-    delegate.customDomain = 'custom.tv';
-    expect(delegate.src).toBe('https://stream.custom.tv/abc123.m3u8');
+    base.customDomain = 'custom.tv';
+    expect(base.src).toBe('https://stream.custom.tv/abc123.m3u8');
   });
 
   it('falls back to default domain when customDomain is set to empty', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.customDomain = 'custom.tv';
-    delegate.playbackId = 'abc123';
-    expect(delegate.src).toBe('https://stream.custom.tv/abc123.m3u8');
+    const base = new MuxMediaBase();
+    base.customDomain = 'custom.tv';
+    base.playbackId = 'abc123';
+    expect(base.src).toBe('https://stream.custom.tv/abc123.m3u8');
 
-    delegate.customDomain = '';
-    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+    base.customDomain = '';
+    expect(base.src).toBe('https://stream.mux.com/abc123.m3u8');
   });
 
   it('does not update src when playbackId is set to the same value', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.playbackId = 'abc123';
-    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+    const base = new MuxMediaBase();
+    base.playbackId = 'abc123';
+    expect(base.src).toBe('https://stream.mux.com/abc123.m3u8');
 
-    delegate.src = 'https://override.example.com/video.m3u8';
-    delegate.playbackId = 'abc123';
-    expect(delegate.src).toBe('https://override.example.com/video.m3u8');
+    base.src = 'https://override.example.com/video.m3u8';
+    base.playbackId = 'abc123';
+    expect(base.src).toBe('https://override.example.com/video.m3u8');
   });
 
   it('does not trigger syncSrc when customDomain is set to empty while already default', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.playbackId = 'abc123';
-    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+    const base = new MuxMediaBase();
+    base.playbackId = 'abc123';
+    expect(base.src).toBe('https://stream.mux.com/abc123.m3u8');
 
-    delegate.src = 'https://override.example.com/video.m3u8';
-    delegate.customDomain = '';
-    expect(delegate.src).toBe('https://override.example.com/video.m3u8');
+    base.src = 'https://override.example.com/video.m3u8';
+    base.customDomain = '';
+    expect(base.src).toBe('https://override.example.com/video.m3u8');
   });
 
   it('clears src when playbackId is null and customDomain changes', () => {
-    const delegate = new MuxMediaDelegate();
-    delegate.src = 'https://manual.example.com/video.m3u8';
-    delegate.customDomain = 'custom.tv';
+    const base = new MuxMediaBase();
+    base.src = 'https://manual.example.com/video.m3u8';
+    base.customDomain = 'custom.tv';
 
-    expect(delegate.src).toBe('');
+    expect(base.src).toBe('');
   });
 });

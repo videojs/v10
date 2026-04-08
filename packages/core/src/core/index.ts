@@ -1,4 +1,3 @@
-export * from './media/delegate';
 export * from './media/proxy';
 export * from './media/state';
 export * from './media/types';

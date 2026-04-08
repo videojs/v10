@@ -1,8 +1,8 @@
-import { MuxCustomVideo, MuxMediaDelegate } from '@videojs/core/dom/media/mux';
+import { MuxCustomVideo, MuxVideoBase } from '@videojs/core/dom/media/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { MediaPropsMixin } from '../../utils/media-props-mixin';
 
-export class MuxVideo extends MediaPropsMixin(MediaAttachMixin(MuxCustomVideo), MuxMediaDelegate) {
+export class MuxVideo extends MediaPropsMixin(MediaAttachMixin(MuxCustomVideo), MuxVideoBase) {
   constructor() {
     super();
     this.attach(this.target);

@@ -1,47 +1,62 @@
+import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
 import * as dashjs from 'dashjs';
 
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 
-export class DashMediaDelegate implements Delegate {
-  #engine: dashjs.MediaPlayerClass;
-  #src: string = '';
-
-  constructor() {
-    this.#engine = dashjs.MediaPlayer().create();
-    this.#engine.initialize(undefined, undefined, false);
-  }
-
-  get engine(): dashjs.MediaPlayerClass {
-    return this.#engine;
-  }
-
-  attach(target: EventTarget): void {
-    this.#engine.attachView(target as HTMLMediaElement);
-  }
-
-  detach(): void {
-    // dash.js types don't reflect null support, but null is valid for detaching
-    this.#engine.attachView(null as unknown as HTMLMediaElement);
-  }
-
-  destroy(): void {
-    this.#engine.destroy();
-  }
-
-  set src(src: string) {
-    this.#src = src;
-    this.#engine.attachSource(src);
-  }
-
-  get src(): string {
-    return this.#src;
-  }
+export interface DashMediaProps {
+  readonly engine: dashjs.MediaPlayerClass;
+  src: string;
+  attach(target: EventTarget): void;
+  detach(): void;
+  destroy(): void;
 }
 
-// This is used by the web component because it needs to extend HTMLElement!
-export class DashCustomMedia extends DelegateMixin(CustomVideoElement, DashMediaDelegate) {}
+export function DashMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
+  class DashMediaImpl extends (BaseClass as AnyConstructor<any>) {
+    #engine: dashjs.MediaPlayerClass;
+    #src: string = '';
 
-// This is used by the React component.
-export class DashMedia extends DelegateMixin(VideoProxy, DashMediaDelegate) {}
+    constructor(...args: any[]) {
+      super(...args);
+      this.#engine = dashjs.MediaPlayer().create();
+      this.#engine.initialize(undefined, undefined, false);
+    }
+
+    get engine(): dashjs.MediaPlayerClass {
+      return this.#engine;
+    }
+
+    get src(): string {
+      return this.#src;
+    }
+
+    set src(src: string) {
+      this.#src = src;
+      this.#engine.attachSource(src);
+    }
+
+    attach(target: EventTarget): void {
+      this.#engine.attachView(target as HTMLMediaElement);
+      (super.attach as any)?.(target);
+    }
+
+    detach(): void {
+      // dash.js types don't reflect null support, but null is valid for detaching
+      this.#engine.attachView(null as unknown as HTMLMediaElement);
+      (super.detach as any)?.();
+    }
+
+    destroy(): void {
+      this.#engine.destroy();
+    }
+  }
+
+  return DashMediaImpl as unknown as MixinReturn<Base, DashMediaProps>;
+}
+
+export class DashMediaBase extends DashMediaMixin(class {}) {}
+
+export class DashCustomMedia extends DashMediaMixin(CustomVideoElement) {}
+
+export class DashMedia extends DashMediaMixin(VideoProxy) {}
