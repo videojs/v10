@@ -56,10 +56,10 @@
   },
   "devDependencies": {
     "@vitest/browser": "^4.1.0",
-    "@vitest/browser-playwright": "4.1.0",
+    "@vitest/browser-playwright": "4.1.2",
     "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^26.1.0",
-    "playwright": "^1.58.1",
+    "playwright": "^1.59.1",
     "tsdown": "^0.21.4",
     "typescript": "^6.0.2",
     "vitest": "^4.1.0"
