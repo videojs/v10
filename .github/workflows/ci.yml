@@ -89,6 +89,7 @@ jobs:
           - '@videojs/store'
           - '@videojs/utils'
           - '@videojs/element'
+          - '@videojs/spf'
           - '@videojs/html'
           - '@videojs/react'
 

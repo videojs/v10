@@ -16,6 +16,7 @@
     "spf",
     "videojs"
   ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",

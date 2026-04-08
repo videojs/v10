@@ -12,11 +12,15 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | Package Path            | Purpose                                                             |
 | ----------------------- | ------------------------------------------------------------------- |
 | `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).         |
-| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
+| `packages/element`      | Custom element base class for web components.                       |
 | `packages/store`        | State management (`/html`, `/react` subpaths for platforms).        |
+| `packages/spf`          | Stream Processing Framework (`/dom` subpath for DOM bindings).      |
+| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
+| `packages/icons`        | SVG icon library (private, consumed by html and react).             |
+| `packages/skins`        | Shared skin CSS and Tailwind tokens (private).                      |
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
-| `packages/react-native` | React Native player integration layer.                              |
+| `packages/react-native` | React Native player (planned, not yet implemented).                 |
 | `apps/sandbox`          | Vite‑based dev playground (private, not published).                  |
 | `site/`                 | Astro‑based docs and website.                                       |
 
@@ -26,21 +30,30 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 utils/*         ← shared utilities
 utils/dom       ← DOM-specific helpers
 
+element         ← custom element base
+
 store           ← state management
-store/dom       ← DOM platform APIs
 store/html      ← HTML bindings (controllers, mixins)
 store/react     ← React bindings
+
+spf             ← stream processing framework
+spf/dom         ← DOM bindings for SPF
 
 core            ← runtime-agnostic logic
 core/dom        ← DOM bindings
 
+icons           ← SVG icon library (private)
+skins           ← shared skin CSS (private)
+
 html            ← Web player (DOM/Browser)
 react           ← React player
-react-native    ← React Native player
+react-native    ← React Native player (planned, not yet implemented)
 ```
 
 ```text
-utils ← store ← core ← html / react / react-native
+utils ← element
+utils ← store ← core ← html / react
+utils ← spf ← core
 ```
 
 ## Workspace
