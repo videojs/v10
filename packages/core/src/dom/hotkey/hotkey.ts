@@ -31,8 +31,8 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  *
  * @example
  * ```ts
- * parseHotkeyPattern('Shift+>');
- * // [{ modifiers: Set('shift'), key: '>', originalKey: '>' }]
+ * parseHotkeyPattern('>');
+ * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
  *
  * parseHotkeyPattern('0-9');
  * // 10 bindings, one per digit

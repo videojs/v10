@@ -13,10 +13,10 @@ describe('parseHotkeyPattern', () => {
   });
 
   it('parses Shift modifier', () => {
-    const result = parseHotkeyPattern('Shift+>');
+    const result = parseHotkeyPattern('Shift+ArrowLeft');
 
     expect(result).toHaveLength(1);
-    expect(result[0]!.key).toBe('>');
+    expect(result[0]!.key).toBe('arrowleft');
     expect(result[0]!.modifiers.has('shift')).toBe(true);
     expect(result[0]!.modifiers.size).toBe(1);
   });
