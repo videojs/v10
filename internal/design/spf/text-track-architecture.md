@@ -238,18 +238,18 @@ wrap the read with `untrack()`. The two main cases:
 },
 ```
 
-**Preventing feedback loops in `reactions`** — reading actor snapshot in a reactive
+**Preventing feedback loops in `effects`** — reading actor snapshot in a reactive
 effect. `segmentLoaderActor.snapshot` changes every time the actor processes a message.
 Without `untrack()`, the reactive effect would re-run on every snapshot change,
 creating a tight feedback loop:
 
 ```typescript
 'monitoring-for-loads': {
-  // reactions: re-runs whenever currentTime or selectedTrack changes.
+  // effects: re-runs whenever currentTime or selectedTrack changes.
   // owners is read with untrack() — actor presence is guaranteed by
   // deriveState when in this state; actor snapshot changes must not
   // re-trigger this effect.
-  reactions: () => {
+  effects: () => {
     const currentTime = currentTimeSignal.get();  // tracked
     const track = selectedTrackSignal.get()!;     // tracked
     const { segmentLoaderActor } = untrack(() => owners.get());
@@ -333,7 +333,7 @@ Evaluated against the goals from videojs/v10#1158:
   guarantee of `createMachineReactor`, not a formal TC39 Signals guarantee. It cannot be assumed
   outside `createMachineReactor`.
 - **Entry vs. reactive effect intent** was initially invisible in the definition shape —
-  addressed by the `entry` / `reactions` split adopted after the spike.
+  addressed by the `entry` / `effects` split adopted after the spike.
 
 ---
 
@@ -349,7 +349,7 @@ effect body. This is easy to miss because the code looks correct:
 // WRONG — new Computed on every re-run, no memoization
 states: {
   'monitoring-for-loads': {
-    reactions: () => {
+    effects: () => {
       const trackSignal = computed(() => findSelectedTrack(state.get())); // new node each time!
       const track = trackSignal.get();
       segmentLoaderActor.send({ type: 'load', track, currentTime });
@@ -360,19 +360,19 @@ states: {
 // CORRECT — hoist outside createMachineReactor()
 const trackSignal = computed(() => findSelectedTrack(state.get()));
 createMachineReactor({ states: { 'monitoring-for-loads': {
-  reactions: () => {
+  effects: () => {
     const track = trackSignal.get();
     segmentLoaderActor.send({ type: 'load', track, currentTime });
   },
 } } });
 ```
 
-### `untrack()` in `reactions` effects
+### `untrack()` in `effects`
 
-The `entry` / `reactions` split eliminated the most common footgun (accidental tracking
-in enter-once effects). However, `reactions` effects still require `untrack()` for reads
+The `entry` / `effects` split eliminated the most common footgun (accidental tracking
+in enter-once effects). However, `effects` still require `untrack()` for reads
 that should not create reactive dependencies. Missing it produces unexpected re-runs when
-the read signal changes. The discipline is narrower now — only needed in `reactions`, not
+the read signal changes. The discipline is narrower now — only needed in `effects`, not
 in all effects — but it remains a convention rather than API enforcement.
 
 ### Actor lifecycle ownership split
@@ -404,8 +404,8 @@ not explored during the spike.
 
 ### ~~`entry` vs. `reactive` distinction in the definition shape~~ (Implemented)
 
-Adopted as `entry` / `reactions` in the `createMachineReactor` definition shape. `entry`
-effects are automatically untracked; `reactions` effects re-run when tracked signals change.
+Adopted as `entry` / `effects` in the `createMachineReactor` definition shape. `entry`
+effects are automatically untracked; `effects` re-run when tracked signals change.
 See [actor-reactor-factories.md](actor-reactor-factories.md) for the decided design.
 
 ### Self-contained actor lifecycle in Reactor

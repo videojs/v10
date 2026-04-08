@@ -163,7 +163,7 @@ core/signals/    signal(), computed(), effect(), untrack(), update()
    PlaybackEngineOwners — signal<O>  (mediaElement, actors, buffers, ...)
 
 2. Reactor execution model
-   createMachineReactor() — monitor, entry, and reactions each become effect() calls
+   createMachineReactor() — monitor, entry, and effects each become effect() calls
    Transitions fire when a monitor fn returns a new state from observed signals
 
 3. Actor observability
@@ -480,21 +480,21 @@ The ambient reactive context concern — and the `untrack()` discipline it requi
 property of direct signal usage. Abstractions built on signals have an additional option:
 encode reactive intent in their API surface, removing the burden from callers.
 
-`createMachineReactor` implements this principle via `entry` and `reactions` per-state
+`createMachineReactor` implements this principle via `entry` and `effects` per-state
 effect keys:
 
 ```typescript
 states: {
   'set-up': {
     entry: [/* automatically untracked — run once on state entry */],
-    reactions: [/* tracked — re-run when dependencies change */],
+    effects: [/* tracked — re-run when dependencies change */],
   }
 }
 ```
 
 `entry` effects are automatically untracked — no `untrack()` needed for reads that are
-setup-only. `reactions` effects re-run when tracked signals change; `untrack()` is only
-needed for reads within `reactions` that should not create dependencies.
+setup-only. `effects` re-run when tracked signals change; `untrack()` is only needed
+for reads within `effects` that should not create dependencies.
 
 The principle generalizes: any abstraction built on signals can choose to make reactive
 context explicit at its API boundary, trading more surface area for fewer footguns and more

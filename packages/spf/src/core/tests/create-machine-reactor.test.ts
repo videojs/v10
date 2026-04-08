@@ -35,7 +35,7 @@ describe('createMachineReactor', () => {
     const fn = vi.fn();
     createMachineReactor({
       initial: 'idle' as const,
-      states: { idle: { reactions: [fn] } },
+      states: { idle: { effects: [fn] } },
     }).destroy();
 
     expect(fn).toHaveBeenCalledOnce();
@@ -126,7 +126,7 @@ describe('createMachineReactor', () => {
 
     const reactor = createMachineReactor({
       initial: 'idle' as const,
-      states: { idle: { reactions: [fn1, fn2] } },
+      states: { idle: { effects: [fn1, fn2] } },
     });
 
     expect(fn1).toHaveBeenCalledOnce();
@@ -228,7 +228,7 @@ describe('createMachineReactor — cleanup', () => {
       initial: 'idle' as const,
       states: {
         idle: {
-          reactions: [
+          effects: [
             () => {
               src.get();
               return cleanup;
@@ -257,7 +257,7 @@ describe('createMachineReactor — cleanup', () => {
       states: {
         idle: {
           entry: [() => entryCleanup],
-          reactions: [() => reactionCleanup],
+          effects: [() => reactionCleanup],
         },
       },
     });
@@ -423,7 +423,7 @@ describe('createMachineReactor — destroy', () => {
     expect(reactor.snapshot.get().value).toBe('destroyed');
   });
 
-  it('does not run reactions after destroy()', async () => {
+  it('does not run effects after destroy()', async () => {
     const src = signal(0);
     const fn = vi.fn(() => {
       src.get();
@@ -431,7 +431,7 @@ describe('createMachineReactor — destroy', () => {
 
     const reactor = createMachineReactor({
       initial: 'idle' as const,
-      states: { idle: { reactions: [fn] } },
+      states: { idle: { effects: [fn] } },
     });
 
     reactor.destroy();

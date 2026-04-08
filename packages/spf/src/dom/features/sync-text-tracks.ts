@@ -131,7 +131,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
         // Reaction: mode sync + DOM change listener; re-runs when selectedId changes.
         // mediaElement is read with untrack() since element changes go through the
         // always monitor (preconditions-unmet path), not this effect.
-        reactions: () => {
+        effects: () => {
           const mediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
           const selectedId = selectedTextTrackIdSignal.get();
 

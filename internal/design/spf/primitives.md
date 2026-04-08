@@ -168,7 +168,7 @@ function-based with no formal status or snapshot — they remain to be migrated.
 - **Factory function, not base class** — `createMachineReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
 - **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
 - **`monitor` for cross-cutting state derivation** — a `monitor` function (or array) returns the target state; the framework drives the transition. Registered before per-state effects — the ordering guarantee ensures transitions fire before per-state effects re-evaluate. See [actor-reactor-factories.md](actor-reactor-factories.md).
-- **`entry` / `reactions` per-state effect split** — `entry` effects run once on state entry, automatically untracked. `reactions` effects re-run when tracked signals change. This makes reactive intent explicit in the definition shape rather than relying on `untrack()` conventions.
+- **`entry` / `effects` per-state split** — `entry` runs once on state entry, automatically untracked. `effects` re-run when tracked signals change. This makes reactive intent explicit in the definition shape rather than relying on `untrack()` conventions.
 - **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. Reactors do not have a formal `context` field — non-finite state is held in closures and the `owners` signal.
 
 ### Open questions

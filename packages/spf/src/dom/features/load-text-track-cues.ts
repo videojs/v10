@@ -170,7 +170,7 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
         // Reaction: re-runs whenever currentTime or selectedTrack changes, dispatching
         // a load message to the segment loader. owners is read with untrack() since
         // actor presence is guaranteed by deriveState when in this state.
-        reactions: () => {
+        effects: () => {
           const currentTime = currentTimeSignal.get();
           const track = selectedTrackSignal.get()!;
           // deriveState guarantees segmentLoaderActor is in owners and findSelectedTrack

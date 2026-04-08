@@ -18,7 +18,7 @@ import { untrack } from './signals/primitives';
 export type ReactorDeriveFn<State extends string> = () => State;
 
 /**
- * An effect function used in reactor `entry` and `reactions` blocks.
+ * An effect function used in reactor `entry` and `effects` blocks.
  *
  * May return a cleanup function that runs before each re-evaluation and on
  * state exit (including destroy).
@@ -31,15 +31,15 @@ export type ReactorEffectFn = () => (() => void) | { abort(): void } | void;
  * - `entry` effects run once on state entry. The fn body is automatically
  *   untracked — no `untrack()` calls are needed inside. Use this for
  *   one-time setup: reading current values, attaching event listeners, etc.
- * - `reactions` effects run on state entry and re-run whenever a signal read
- *   inside the fn body changes. Use `untrack()` for reads you do not want to
- *   track. Use this for work that must stay in sync with reactive state.
+ * - `effects` run on state entry and re-run whenever a signal read inside
+ *   the fn body changes. Use `untrack()` for reads you do not want to track.
+ *   Use this for work that must stay in sync with reactive state.
  *
  * Both are optional; pass `{}` for states with no effects.
  */
 export type ReactorStateDefinition = {
   entry?: ReactorEffectFn | ReactorEffectFn[];
-  reactions?: ReactorEffectFn | ReactorEffectFn[];
+  effects?: ReactorEffectFn | ReactorEffectFn[];
 };
 
 /**
@@ -60,7 +60,7 @@ export type ReactorDefinition<State extends string> = {
   monitor?: ReactorDeriveFn<State> | ReactorDeriveFn<State>[];
   /**
    * Per-state effect groupings. Every valid state must be declared — pass `{}`
-   * for states with no effects. `entry` and `reactions` each become independent
+   * for states with no effects. `entry` and `effects` each become independent
    * `effect()` calls gated on that state, with their own cleanup lifecycles.
    */
   states: Record<State, ReactorStateDefinition>;
@@ -104,8 +104,8 @@ const toArray = <T>(x: T | T[] | undefined): T[] => (x === undefined ? [] : Arra
  *     active: {
  *       // entry: runs once on state entry; fn body is automatically untracked.
  *       entry: () => listen(el, 'play', handler),
- *       // reactions: re-runs whenever tracked signals change.
- *       reactions: () => { currentTimeSignal.get(); return cleanup; },
+ *       // effects: re-runs whenever tracked signals change.
+ *       effects: () => { currentTimeSignal.get(); return cleanup; },
  *     },
  *     waiting: {},
  *   }
@@ -157,7 +157,7 @@ export function createMachineReactor<State extends string>(
       const isNotState = (snapshot: { value: FullState }) => snapshot.value !== state;
       return [
         ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
-        ...toArray(stateDef.reactions).map((fn) => ({ fn, shouldSkip: isNotState })),
+        ...toArray(stateDef.effects).map((fn) => ({ fn, shouldSkip: isNotState })),
       ];
     }),
   ];

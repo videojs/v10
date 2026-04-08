@@ -57,7 +57,7 @@ FSM. Lightweight callback actors implement the `CallbackActor` interface directl
 
 **Reactors** (signal-driven):
 - **`Reactor`** — returned by `createMachineReactor`. Has finite states, `monitor` for
-  state derivation, and `entry`/`reactions` per-state effects. No `send()` — driven
+  state derivation, and `entry`/`effects` per-state effects. No `send()` — driven
   entirely by signal observation.
   Used by: `syncTextTracks`, `loadTextTrackCues`, `resolvePresentation`, `trackPlaybackInitiated`.
 
@@ -225,7 +225,7 @@ type ReactorStateDefinition = {
    * this state is active. Return a cleanup to run before each re-run
    * and on state exit.
    */
-  reactions?: ReactorEffectFn | ReactorEffectFn[];
+  effects?: ReactorEffectFn | ReactorEffectFn[];
 };
 
 type ReactorEffectFn = () => (() => void) | { abort(): void } | void;
@@ -234,7 +234,7 @@ type ReactorEffectFn = () => (() => void) | { abort(): void } | void;
 ### Example — `syncTextTracks`
 
 Two states (`preconditions-unmet` ↔ `set-up`), one `monitor`, and one `entry` + one
-`reactions` effect in `set-up` with independent tracking and cleanup.
+`effects` effect in `set-up` with independent tracking and cleanup.
 
 ```typescript
 const reactor = createMachineReactor<'preconditions-unmet' | 'set-up'>({
@@ -257,9 +257,9 @@ const reactor = createMachineReactor<'preconditions-unmet' | 'set-up'>({
         };
       },
 
-      // reactions: re-runs when selectedId changes. el is read with untrack()
+      // effects: re-runs when selectedId changes. el is read with untrack()
       // since element changes go through the monitor (preconditions-unmet path).
-      reactions: () => {
+      effects: () => {
         const el = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
         const selectedId = selectedIdSignal.get(); // tracked — re-run on change
         syncModes(el.textTracks, selectedId);
@@ -307,11 +307,11 @@ const reactor = createMachineReactor<LoadTextTrackCuesState>({
     pending: {},  // neutral waiting state — no effects
 
     'monitoring-for-loads': {
-      // reactions: re-runs whenever currentTime or selectedTrack changes.
+      // effects: re-runs whenever currentTime or selectedTrack changes.
       // owners is read with untrack() — actor presence is guaranteed by
       // deriveState when in this state; actor snapshot changes must not
       // re-trigger this effect.
-      reactions: () => {
+      effects: () => {
         const currentTime = currentTimeSignal.get();  // tracked
         const track = selectedTrackSignal.get()!;     // tracked
         const { segmentLoaderActor } = untrack(() => owners.get());
@@ -468,7 +468,7 @@ correctly supersedes the previous settled callback. Both `SourceBufferActor` and
 
 ---
 
-### `entry` vs `reactions` per-state effects
+### `entry` vs `effects` per-state effects
 
 Per-state effects fall into two distinct categories, each with its own key in the state definition:
 
@@ -476,10 +476,10 @@ Per-state effects fall into two distinct categories, each with its own key in th
   the fn body. Use for one-time setup: creating DOM elements, reading `owners`, starting a fetch.
   Return a cleanup function or `AbortController` to run on state exit (or re-entry if the effect
   runs again).
-- **`reactions`** — intentionally re-run when a tracked signal changes while the state is active.
+- **`effects`** — intentionally re-run when a tracked signal changes while the state is active.
   Use for effects that must stay in sync with reactive data: mode sync, message dispatch.
 
-Signals that should not trigger re-runs in a `reactions` effect must be wrapped with `untrack()`.
+Signals that should not trigger re-runs in a `effects` effect must be wrapped with `untrack()`.
 Signal reads inside `entry` are automatically untracked — the fn body runs inside `untrack()`.
 
 **Inline computed anti-pattern:** `computed()` inside an effect body creates a new `Computed`

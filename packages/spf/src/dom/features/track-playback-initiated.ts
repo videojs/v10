@@ -97,7 +97,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
         // which also triggers a deriveState → 'preconditions-unmet' transition)
         // and the URL-change / element-swap path (preconditions still met but
         // values changed, handled entirely by this effect's cleanup).
-        reactions: () => {
+        effects: () => {
           mediaElementSignal.get(); // tracked — re-run on element change
           urlSignal.get(); // tracked — re-run on URL change
           return () => update(state, { playbackInitiated: false } as Partial<S>);
