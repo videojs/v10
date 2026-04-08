@@ -22,6 +22,7 @@ export class BufferingIndicatorElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
 
