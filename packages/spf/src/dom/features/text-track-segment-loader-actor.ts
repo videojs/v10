@@ -33,9 +33,11 @@ export type TextTrackSegmentLoaderActor = CallbackActor<TextTrackSegmentLoaderMe
  */
 export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksActor): TextTrackSegmentLoaderActor {
   const runner = new SerialRunner();
+  let destroyed = false;
 
   return {
     send({ track, currentTime }: TextTrackSegmentLoaderMessage): void {
+      if (destroyed) return;
       const trackId = track.id;
       const bufferedSegments = untrack(() => textTracksActor.snapshot.get().context.segments[trackId] ?? []);
       const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
@@ -63,6 +65,8 @@ export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksAct
     },
 
     destroy(): void {
+      if (destroyed) return;
+      destroyed = true;
       runner.destroy();
     },
   };
