@@ -1,3 +1,5 @@
+'use client';
+
 import type { InferDelegateProps } from '@videojs/core';
 import { DashMedia, DashMediaDelegate } from '@videojs/core/dom/media/dash';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
@@ -10,7 +12,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 export type DashVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
   InferDelegateProps<typeof DashMediaDelegate>;
 
-export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ children, ...props }, ref) => {
+export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
   const mediaApi = useMediaInstance(DashMedia);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
@@ -22,4 +24,6 @@ export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ childre
   );
 });
 
-export default DashVideo;
+export namespace DashVideo {
+  export type Props = DashVideoProps;
+}
