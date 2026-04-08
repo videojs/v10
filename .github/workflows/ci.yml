@@ -144,7 +144,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test SPF
-        run: pnpm turbo run test --filter="@videojs/spf"
+        run: pnpm turbo run test --filter="@videojs/spf" --env-mode=loose
 
   build:
     needs: install
