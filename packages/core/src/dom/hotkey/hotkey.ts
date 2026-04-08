@@ -88,15 +88,13 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
   // Case-insensitive key comparison.
   if (event.key.toLowerCase() !== binding.key) return false;
 
+  // Implicit Shift: non-letter character keys (>, <, ?, !) may require Shift to produce
+  // on some layouts but not others. Treat Shift as present only when the event has it,
+  // but ignore extra shiftKey when the binding doesn't ask for it.
+  const shiftKey = isImplicitShift(event.key) ? event.shiftKey && binding.modifiers.has('shift') : event.shiftKey;
+
   // Exact modifier matching — all four must agree.
-  if (event.shiftKey !== binding.modifiers.has('shift')) {
-    // Implicit Shift: non-letter character keys (>, <, ?, !) may require Shift
-    // to produce on some layouts but not others. Allow shiftKey mismatch unless
-    // the binding explicitly requires Shift and it's not held.
-    if (!isImplicitShift(event.key) || (binding.modifiers.has('shift') && !event.shiftKey)) {
-      return false;
-    }
-  }
+  if (shiftKey !== binding.modifiers.has('shift')) return false;
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
   if (event.altKey !== binding.modifiers.has('alt')) return false;
   if (event.metaKey !== binding.modifiers.has('meta')) return false;
