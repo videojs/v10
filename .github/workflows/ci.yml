@@ -146,6 +146,29 @@ jobs:
       - name: Test SPF
         run: pnpm turbo run test --filter="@videojs/spf" --env-mode=loose
 
+  workspace:
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Check workspace consistency
+        run: pnpm check:workspace
+
   build:
     needs: install
     runs-on: ubuntu-latest
