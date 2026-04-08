@@ -38,6 +38,7 @@ export function createStore<Target = unknown>(): <State>(
         return target!;
       },
       signals,
+      get: () => state.current as Readonly<Record<string, unknown>>,
       set: (partial) => state.patch(partial as Partial<State>),
     } satisfies StateContext<Target>);
 

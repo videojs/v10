@@ -40,6 +40,8 @@ export interface StateContext<Target> {
    *   (e.g., loading a new source cancels pending seeks).
    */
   signals: AbortControllerRegistry;
+  /** Read current slice state. Safe to use inside action closures (not during `state()` init). */
+  get: () => Readonly<Record<string, unknown>>;
   /** Patch the slice state. Safe to use inside action closures (not during `state()` init). */
   set: (partial: Record<string, unknown>) => void;
 }
