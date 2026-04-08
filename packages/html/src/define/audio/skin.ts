@@ -110,6 +110,7 @@ function getTemplateHTML() {
       <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
       <media-hotkey keys="Shift+>" action="speedUp"></media-hotkey>
       <media-hotkey keys="Shift+<" action="speedDown"></media-hotkey>
+      <media-hotkey keys="Space" action="speedBoost" value="2"></media-hotkey>
     </media-container>
   `;
 }

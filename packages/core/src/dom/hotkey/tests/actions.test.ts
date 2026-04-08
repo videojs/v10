@@ -175,6 +175,30 @@ describe('volumeStep', () => {
   });
 });
 
+describe('speedBoost', () => {
+  it('sets rate to value and returns cleanup to restore', () => {
+    const setPlaybackRate = vi.fn();
+    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
+
+    const cleanup = resolveHotkeyAction('speedBoost')!({ store, value: 2, key: '' });
+
+    expect(setPlaybackRate).toHaveBeenCalledWith(2);
+    expect(cleanup).toBeTypeOf('function');
+
+    (cleanup as () => void)();
+    expect(setPlaybackRate).toHaveBeenCalledWith(1);
+  });
+
+  it('defaults to 2x when no value provided', () => {
+    const setPlaybackRate = vi.fn();
+    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
+
+    resolveHotkeyAction('speedBoost')!({ store, key: '' });
+
+    expect(setPlaybackRate).toHaveBeenCalledWith(2);
+  });
+});
+
 describe('speedUp', () => {
   it('steps to next rate', () => {
     const setPlaybackRate = vi.fn();

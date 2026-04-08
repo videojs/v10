@@ -25,6 +25,12 @@ interface HotkeyBinding {
   id: number;
 }
 
+interface ActiveHold {
+  key: string;
+  cleanup: () => void;
+  repeated: boolean;
+}
+
 export class HotkeyCoordinator {
   #target: HTMLElement;
   #bindings: HotkeyBinding[] = [];
@@ -33,6 +39,7 @@ export class HotkeyCoordinator {
   #docDisconnect: AbortController | null = null;
   /** Action name → bound keys. Controls query this to set `aria-keyshortcuts`. */
   #ariaRegistry = new Map<string, ParsedHotkeyBinding[]>();
+  #activeHold: ActiveHold | null = null;
   #destroyed = false;
 
   constructor(target: HTMLElement) {
@@ -82,6 +89,8 @@ export class HotkeyCoordinator {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
+    this.#activeHold?.cleanup();
+    this.#activeHold = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
     this.#docDisconnect?.abort();
@@ -97,6 +106,10 @@ export class HotkeyCoordinator {
       // Higher specificity (more modifiers) first.
       const specDiff = b.parsed[0]!.modifiers.size - a.parsed[0]!.modifiers.size;
       if (specDiff !== 0) return specDiff;
+      // Repeatable before non-repeatable (hold bindings take priority).
+      const aRepeatable = a.options.repeatable !== false ? 1 : 0;
+      const bRepeatable = b.options.repeatable !== false ? 1 : 0;
+      if (bRepeatable !== aRepeatable) return bRepeatable - aRepeatable;
       // Then registration order.
       return a.id - b.id;
     });
@@ -105,13 +118,17 @@ export class HotkeyCoordinator {
   #connect(): void {
     if (this.#disconnect) return;
     this.#disconnect = new AbortController();
-    listen(this.#target, 'keydown', this.#handleEvent, { signal: this.#disconnect.signal });
+    const signal = this.#disconnect.signal;
+    listen(this.#target, 'keydown', this.#handleKeyDown, { signal });
+    listen(this.#target, 'keyup', this.#handleKeyUp, { signal });
   }
 
   #connectDocument(): void {
     if (this.#docDisconnect) return;
     this.#docDisconnect = new AbortController();
-    listen(document, 'keydown', this.#handleEvent, { signal: this.#docDisconnect.signal });
+    const signal = this.#docDisconnect.signal;
+    listen(document, 'keydown', this.#handleKeyDown, { signal });
+    listen(document, 'keyup', this.#handleKeyUp, { signal });
   }
 
   #maybeDisconnect(): void {
@@ -129,12 +146,16 @@ export class HotkeyCoordinator {
     }
   }
 
-  #handleEvent = (event: KeyboardEvent): void => {
-    // IME composition filtering.
+  #handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Unidentified') return;
-
-    // Let interactive elements handle their own activation keys.
     if (isInteractiveActivation(event)) return;
+
+    // If a hold is active and this is a repeat of the same key, just prevent default.
+    if (this.#activeHold && event.repeat && event.key.toLowerCase() === this.#activeHold.key) {
+      this.#activeHold.repeated = true;
+      event.preventDefault();
+      return;
+    }
 
     const editable = isEditableTarget(event);
 
@@ -144,23 +165,61 @@ export class HotkeyCoordinator {
       if (options.disabled) continue;
       if (event.repeat && options.repeatable === false) continue;
 
-      // Only consider bindings matching the event's target scope.
       const isDocBinding = options.target === 'document';
       const isDocEvent = event.currentTarget === document;
       if (isDocBinding !== isDocEvent) continue;
 
       for (const p of parsed) {
         if (!matchesHotkeyEvent(p, event)) continue;
-
-        // Input safety: single-key shortcuts suppressed in editable fields.
         if (editable && p.modifiers.size === 0) continue;
 
         event.preventDefault();
-        options.onActivate(event, p.originalKey);
+        const cleanup = options.onActivate(event, p.originalKey);
+
+        // If onActivate returned a cleanup, this is a hold action.
+        if (typeof cleanup === 'function') {
+          this.#activeHold = { key: p.key, cleanup, repeated: false };
+        }
+
         return;
       }
     }
   };
+
+  #handleKeyUp = (event: KeyboardEvent): void => {
+    const hold = this.#activeHold;
+    if (!hold || event.key.toLowerCase() !== hold.key) return;
+
+    hold.cleanup();
+
+    // Tap (no repeat) → dispatch deferred non-repeatable bindings.
+    if (!hold.repeated) {
+      this.#dispatchDeferred(event);
+    }
+
+    this.#activeHold = null;
+  };
+
+  /** Dispatch the first matching non-repeatable binding (e.g. togglePaused on tap). */
+  #dispatchDeferred(event: KeyboardEvent): void {
+    const editable = isEditableTarget(event);
+
+    for (const binding of this.#bindings) {
+      const { options, parsed } = binding;
+      if (options.disabled || options.repeatable !== false) continue;
+
+      const isDocBinding = options.target === 'document';
+      const isDocEvent = event.currentTarget === document;
+      if (isDocBinding !== isDocEvent) continue;
+
+      for (const p of parsed) {
+        if (!matchesHotkeyEvent(p, event)) continue;
+        if (editable && p.modifiers.size === 0) continue;
+        options.onActivate(event, p.originalKey);
+        return;
+      }
+    }
+  }
 
   #addToAriaRegistry(action: string, bindings: ParsedHotkeyBinding[]): void {
     let existing = this.#ariaRegistry.get(action);

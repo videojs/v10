@@ -68,9 +68,7 @@ export class HotkeyElement extends MediaElement {
       target: this.target,
       disabled: this.disabled,
       repeatable: !isHotkeyToggleAction(action),
-      onActivate: (_event, key) => {
-        resolver({ store, key, value });
-      },
+      onActivate: (_event, key) => resolver({ store, key, value }),
     });
   }
 

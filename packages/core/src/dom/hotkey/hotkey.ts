@@ -14,7 +14,7 @@ export interface ParsedHotkeyBinding {
 
 export interface HotkeyOptions {
   keys: string;
-  onActivate: (event: KeyboardEvent, key: string) => void;
+  onActivate: (event: KeyboardEvent, key: string) => void | (() => void);
   /** Where to listen — `'player'` (container) or `'document'`. */
   target?: 'player' | 'document' | undefined;
   /** Whether `event.repeat` should fire the callback. */

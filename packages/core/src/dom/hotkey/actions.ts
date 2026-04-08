@@ -19,6 +19,7 @@ export type HotkeyActionName =
   | 'togglePiP'
   | 'seekStep'
   | 'volumeStep'
+  | 'speedBoost'
   | 'speedUp'
   | 'speedDown'
   | 'seekToPercent';
@@ -30,7 +31,7 @@ export interface HotkeyActionContext {
   key: string;
 }
 
-export type HotkeyActionResolver = (context: HotkeyActionContext) => void;
+export type HotkeyActionResolver = (context: HotkeyActionContext) => void | (() => void);
 
 export function isHotkeyToggleAction(action: string): boolean {
   return action.startsWith('toggle');
@@ -75,6 +76,14 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
     const vol = selectVolume(store.state);
     if (!vol) return;
     vol.setVolume(vol.volume + value);
+  },
+
+  speedBoost({ store, value }) {
+    const rate = selectPlaybackRate(store.state);
+    if (!rate) return;
+    const previousRate = rate.playbackRate;
+    rate.setPlaybackRate(value ?? 2);
+    return () => rate.setPlaybackRate(previousRate);
   },
 
   speedUp({ store }) {
