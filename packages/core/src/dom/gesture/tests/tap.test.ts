@@ -16,22 +16,9 @@ describe('TapRecognizer', () => {
       const recognizer = new TapRecognizer();
       const onTap = vi.fn();
 
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(false, onTap, null);
 
       expect(onTap).toHaveBeenCalledOnce();
-    });
-
-    it('does not fire on long press', () => {
-      const recognizer = new TapRecognizer();
-      const onTap = vi.fn();
-
-      recognizer.down();
-      vi.advanceTimersByTime(300);
-      recognizer.up(false, onTap, null);
-
-      expect(onTap).not.toHaveBeenCalled();
     });
   });
 
@@ -41,8 +28,6 @@ describe('TapRecognizer', () => {
       const onTap = vi.fn();
       const onDoubleTap = vi.fn();
 
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, onDoubleTap);
 
       // Not fired yet — waiting for doubletap window.
@@ -59,14 +44,10 @@ describe('TapRecognizer', () => {
       const onDoubleTap = vi.fn();
 
       // First tap
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, onDoubleTap);
 
       // Second tap within window
       vi.advanceTimersByTime(100);
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, onDoubleTap);
 
       expect(onDoubleTap).toHaveBeenCalledOnce();
@@ -83,8 +64,6 @@ describe('TapRecognizer', () => {
       const onDoubleTap = vi.fn();
 
       // First tap
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, onDoubleTap);
 
       // Wait for doubletap window to expire (tap fires).
@@ -93,8 +72,6 @@ describe('TapRecognizer', () => {
 
       // Second tap outside window — new deferred tap, not doubletap.
       vi.advanceTimersByTime(100);
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, onDoubleTap);
 
       expect(onDoubleTap).not.toHaveBeenCalled();
@@ -106,8 +83,6 @@ describe('TapRecognizer', () => {
       const recognizer = new TapRecognizer();
       const onTap = vi.fn();
 
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, onTap, null);
 
       recognizer.reset();
@@ -121,15 +96,11 @@ describe('TapRecognizer', () => {
       const onDoubleTap = vi.fn();
 
       // First tap
-      recognizer.down();
-      vi.advanceTimersByTime(50);
       recognizer.up(true, null, onDoubleTap);
 
       recognizer.reset();
 
       // Second tap after reset — should not count as doubletap.
-      vi.advanceTimersByTime(50);
-      recognizer.down();
       vi.advanceTimersByTime(50);
       recognizer.up(true, null, onDoubleTap);
 

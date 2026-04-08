@@ -1,38 +1,24 @@
-const TAP_THRESHOLD = 250;
 const DOUBLETAP_WINDOW = 300;
 
-export interface TapResult {
-  type: 'tap' | 'doubletap';
-}
-
 /**
- * Recognizes tap and doubletap gestures from pointer events.
+ * Recognizes tap vs doubletap from quick pointer-up events.
  *
- * Stateful recognizer — tracks pointer timing, tap count, and
- * doubletap disambiguation. Does not know about bindings, regions,
- * or pointer filtering — those are the coordinator's concern.
+ * Stateful recognizer — tracks tap count and doubletap timing.
+ * The coordinator handles pointer-down timing (tap threshold) and
+ * calls `up()` only for quick taps that passed the threshold check.
  */
 export class TapRecognizer {
-  #pointerDownTime = 0;
   #lastTapTime = 0;
   #tapTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /** Record pointer down timestamp. Call on every pointerdown. */
-  down(): void {
-    this.#pointerDownTime = Date.now();
-  }
-
   /**
-   * Process a pointer up event.
+   * Process a confirmed quick tap.
    *
    * @param hasDoubletap - Whether doubletap bindings exist for this context.
    * @param onTap - Called when a tap is confirmed (immediately or after doubletap window).
    * @param onDoubleTap - Called when a doubletap is detected.
    */
   up(hasDoubletap: boolean, onTap: (() => void) | null, onDoubleTap: (() => void) | null): void {
-    // Not a quick tap — ignore.
-    if (Date.now() - this.#pointerDownTime > TAP_THRESHOLD) return;
-
     if (hasDoubletap) {
       const now = Date.now();
 
@@ -73,6 +59,5 @@ export class TapRecognizer {
   reset(): void {
     this.#clearTimer();
     this.#lastTapTime = 0;
-    this.#pointerDownTime = 0;
   }
 }

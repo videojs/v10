@@ -1,23 +1,44 @@
 import type { GestureCoordinator, GesturePointerType } from './coordinator';
 import { GestureCoordinator as Coordinator } from './coordinator';
 import type { GestureRegion } from './region';
+import { TapRecognizer } from './tap';
 
 // --- Coordinator management ---
 
-const coordinators = new WeakMap<HTMLElement, GestureCoordinator>();
+interface CoordinatorEntry {
+  coordinator: GestureCoordinator;
+  recognizer: TapRecognizer;
+}
+
+const coordinators = new WeakMap<HTMLElement, CoordinatorEntry>();
 
 /** Look up the coordinator for a target element, if one exists. */
 export function findGestureCoordinator(target: HTMLElement): GestureCoordinator | undefined {
-  return coordinators.get(target);
+  return coordinators.get(target)?.coordinator;
 }
 
-function getCoordinator(target: HTMLElement): GestureCoordinator {
-  let coordinator = coordinators.get(target);
-  if (!coordinator) {
-    coordinator = new Coordinator(target);
-    coordinators.set(target, coordinator);
+function getEntry(target: HTMLElement): CoordinatorEntry {
+  let entry = coordinators.get(target);
+  if (!entry) {
+    const recognizer = new TapRecognizer();
+    const coordinator = new Coordinator(target, (event, tapMatches, doubletapMatches) => {
+      recognizer.up(
+        doubletapMatches.length > 0,
+        // onTap — re-match at fire time to avoid stale closures over removed bindings.
+        () => {
+          const current = coordinator.matchBindings('tap', event.pointerType, event.clientX);
+          current[0]?.onActivate(event);
+        },
+        // onDoubleTap
+        () => {
+          doubletapMatches[0]?.onActivate(event);
+        }
+      );
+    });
+    entry = { coordinator, recognizer };
+    coordinators.set(target, entry);
   }
-  return coordinator;
+  return entry;
 }
 
 // --- Factory options ---
@@ -51,7 +72,7 @@ export function createTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: TapGestureOptions
 ): () => void {
-  const coordinator = getCoordinator(target);
+  const { coordinator } = getEntry(target);
   return coordinator.add({
     type: 'tap',
     onActivate,
@@ -76,7 +97,7 @@ export function createDoubleTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: DoubleTapGestureOptions
 ): () => void {
-  const coordinator = getCoordinator(target);
+  const { coordinator } = getEntry(target);
   return coordinator.add({
     type: 'doubletap',
     onActivate,

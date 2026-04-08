@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { GestureHandler, GestureOptions } from '../coordinator';
 import { GestureCoordinator } from '../coordinator';
 
 const TAP_THRESHOLD = 250;
-const DOUBLETAP_WINDOW = 300;
 
 describe('GestureCoordinator', () => {
   let container: HTMLElement;
+  let handler: ReturnType<typeof vi.fn<GestureHandler>>;
 
   beforeEach(() => {
     vi.useFakeTimers();
     container = document.createElement('div');
-    // Give the container a width for region testing.
     vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
       left: 0,
       right: 300,
@@ -23,18 +23,17 @@ describe('GestureCoordinator', () => {
       y: 0,
       toJSON: () => {},
     });
+    handler = vi.fn<GestureHandler>();
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  describe('tap', () => {
-    it('fires on quick pointer down + up', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler });
+  describe('tap threshold', () => {
+    it('calls handler on quick pointer down + up', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      coordinator.add({ type: 'tap', onActivate: vi.fn() });
 
       pointerDown(container);
       vi.advanceTimersByTime(100);
@@ -43,11 +42,9 @@ describe('GestureCoordinator', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
-    it('does not fire on long press', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler });
+    it('does not call handler on long press', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      coordinator.add({ type: 'tap', onActivate: vi.fn() });
 
       pointerDown(container);
       vi.advanceTimersByTime(TAP_THRESHOLD + 50);
@@ -56,254 +53,152 @@ describe('GestureCoordinator', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('does not fire when disabled', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler, disabled: true });
+    it('does not call handler when disabled', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      coordinator.add({ type: 'tap', onActivate: vi.fn(), disabled: true });
 
       pointerDown(container);
       vi.advanceTimersByTime(100);
       pointerUp(container, { pointerType: 'mouse', clientX: 150 });
 
       expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('fires immediately when no doubletap bindings exist', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler });
-
-      pointerDown(container);
-      vi.advanceTimersByTime(100);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Fires immediately — no delay.
-      expect(handler).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('doubletap', () => {
-    it('fires on two quick taps', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'doubletap', onActivate: handler });
-
-      // First tap
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Second tap within window
-      vi.advanceTimersByTime(100);
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it('does not fire on single tap', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'doubletap', onActivate: handler });
-
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      vi.advanceTimersByTime(DOUBLETAP_WINDOW + 50);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('does not fire when taps are too far apart', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'doubletap', onActivate: handler });
-
-      // First tap
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Second tap outside window
-      vi.advanceTimersByTime(DOUBLETAP_WINDOW + 50);
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('tap/doubletap disambiguation', () => {
-    it('delays tap when doubletap bindings exist', () => {
-      const coordinator = new GestureCoordinator(container);
-      const tapHandler = vi.fn();
-      const doubletapHandler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: tapHandler });
-      coordinator.add({ type: 'doubletap', onActivate: doubletapHandler });
-
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Tap should NOT fire immediately.
-      expect(tapHandler).not.toHaveBeenCalled();
-
-      // After doubletap window, tap fires.
-      vi.advanceTimersByTime(DOUBLETAP_WINDOW);
-      expect(tapHandler).toHaveBeenCalledOnce();
-      expect(doubletapHandler).not.toHaveBeenCalled();
-    });
-
-    it('cancels pending tap on doubletap', () => {
-      const coordinator = new GestureCoordinator(container);
-      const tapHandler = vi.fn();
-      const doubletapHandler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: tapHandler });
-      coordinator.add({ type: 'doubletap', onActivate: doubletapHandler });
-
-      // First tap
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Second tap (doubletap)
-      vi.advanceTimersByTime(100);
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      expect(doubletapHandler).toHaveBeenCalledOnce();
-      expect(tapHandler).not.toHaveBeenCalled();
-
-      // Even after timeout, tap should not fire.
-      vi.advanceTimersByTime(DOUBLETAP_WINDOW);
-      expect(tapHandler).not.toHaveBeenCalled();
     });
   });
 
   describe('pointer filtering', () => {
-    it('only fires for matching pointer type', () => {
-      const coordinator = new GestureCoordinator(container);
-      const touchHandler = vi.fn();
-      const mouseHandler = vi.fn();
+    it('only matches bindings for the event pointer type', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const touchBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), pointer: 'touch' };
+      const mouseBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), pointer: 'mouse' };
 
-      coordinator.add({ type: 'tap', onActivate: touchHandler, pointer: 'touch' });
-      coordinator.add({ type: 'tap', onActivate: mouseHandler, pointer: 'mouse' });
-
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'touch', clientX: 150 });
-
-      expect(touchHandler).toHaveBeenCalledOnce();
-      expect(mouseHandler).not.toHaveBeenCalled();
-    });
-
-    it('fires for all pointer types when no filter set', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler });
+      coordinator.add(touchBinding);
+      coordinator.add(mouseBinding);
 
       pointerDown(container);
       vi.advanceTimersByTime(50);
       pointerUp(container, { pointerType: 'touch', clientX: 150 });
 
       expect(handler).toHaveBeenCalledOnce();
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toHaveLength(1);
+      expect(tapMatches[0]).toBe(touchBinding);
+    });
+
+    it('matches all pointer types when no filter set', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const binding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+
+      coordinator.add(binding);
+
+      pointerDown(container);
+      vi.advanceTimersByTime(50);
+      pointerUp(container, { pointerType: 'pen', clientX: 150 });
+
+      expect(handler).toHaveBeenCalledOnce();
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toContain(binding);
     });
   });
 
   describe('regions', () => {
-    it('fires region binding in its zone', () => {
-      const coordinator = new GestureCoordinator(container);
-      const leftHandler = vi.fn();
-      const rightHandler = vi.fn();
+    it('matches region binding in its zone', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const leftBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), region: 'left' };
+      const rightBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), region: 'right' };
 
-      coordinator.add({ type: 'tap', onActivate: leftHandler, region: 'left' });
-      coordinator.add({ type: 'tap', onActivate: rightHandler, region: 'right' });
+      coordinator.add(leftBinding);
+      coordinator.add(rightBinding);
 
       // Tap in left half
       pointerDown(container);
       vi.advanceTimersByTime(50);
       pointerUp(container, { pointerType: 'mouse', clientX: 50 });
 
-      expect(leftHandler).toHaveBeenCalledOnce();
-      expect(rightHandler).not.toHaveBeenCalled();
+      expect(handler).toHaveBeenCalledOnce();
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toEqual([leftBinding]);
     });
 
-    it('region binding takes priority over full-surface', () => {
-      const coordinator = new GestureCoordinator(container);
-      const regionHandler = vi.fn();
-      const fullHandler = vi.fn();
+    it('region takes priority over full-surface', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const fullBinding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+      const regionBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), region: 'left' };
 
-      coordinator.add({ type: 'tap', onActivate: fullHandler });
-      coordinator.add({ type: 'tap', onActivate: regionHandler, region: 'left' });
+      coordinator.add(fullBinding);
+      coordinator.add(regionBinding);
 
       // Tap in left region
       pointerDown(container);
       vi.advanceTimersByTime(50);
       pointerUp(container, { pointerType: 'mouse', clientX: 50 });
 
-      expect(regionHandler).toHaveBeenCalledOnce();
-      expect(fullHandler).not.toHaveBeenCalled();
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toEqual([regionBinding]);
     });
 
-    it('full-surface tap fires alongside doubletap regions', () => {
-      const coordinator = new GestureCoordinator(container);
-      const tapHandler = vi.fn();
-      const doubletapLeft = vi.fn();
-      const doubletapRight = vi.fn();
+    it('full-surface matches outside named regions', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const fullBinding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+      const regionBinding: GestureOptions = { type: 'tap', onActivate: vi.fn(), region: 'left' };
 
-      coordinator.add({ type: 'tap', onActivate: tapHandler });
-      coordinator.add({ type: 'doubletap', onActivate: doubletapLeft, region: 'left' });
-      coordinator.add({ type: 'doubletap', onActivate: doubletapRight, region: 'right' });
+      coordinator.add(fullBinding);
+      coordinator.add(regionBinding);
 
-      // Single tap in center — doubletap regions don't suppress full-surface tap.
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Tap is deferred because doubletap bindings exist.
-      vi.advanceTimersByTime(300);
-      expect(tapHandler).toHaveBeenCalledOnce();
-      expect(doubletapLeft).not.toHaveBeenCalled();
-      expect(doubletapRight).not.toHaveBeenCalled();
-    });
-
-    it('full-surface fires outside named regions', () => {
-      const coordinator = new GestureCoordinator(container);
-      const regionHandler = vi.fn();
-      const fullHandler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: fullHandler });
-      coordinator.add({ type: 'tap', onActivate: regionHandler, region: 'left' });
-
-      // Tap in right half (no region binding there — only left exists,
-      // so right side has no named region match → full-surface fires).
+      // Tap in right half — no region binding there.
       pointerDown(container);
       vi.advanceTimersByTime(50);
       pointerUp(container, { pointerType: 'mouse', clientX: 250 });
 
-      expect(fullHandler).toHaveBeenCalledOnce();
-      expect(regionHandler).not.toHaveBeenCalled();
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toEqual([fullBinding]);
+    });
+
+    it('doubletap regions do not suppress full-surface taps', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const tapBinding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+      const dtLeftBinding: GestureOptions = { type: 'doubletap', onActivate: vi.fn(), region: 'left' };
+      const dtRightBinding: GestureOptions = { type: 'doubletap', onActivate: vi.fn(), region: 'right' };
+
+      coordinator.add(tapBinding);
+      coordinator.add(dtLeftBinding);
+      coordinator.add(dtRightBinding);
+
+      pointerDown(container);
+      vi.advanceTimersByTime(50);
+      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+      const [, tapMatches] = handler.mock.calls[0]!;
+      expect(tapMatches).toContain(tapBinding);
+    });
+  });
+
+  describe('matchBindings', () => {
+    it('re-matches current bindings', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const binding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+
+      coordinator.add(binding);
+
+      const matches = coordinator.matchBindings('tap', 'mouse', 150);
+      expect(matches).toEqual([binding]);
+    });
+
+    it('excludes removed bindings', () => {
+      const coordinator = new GestureCoordinator(container, handler);
+      const binding: GestureOptions = { type: 'tap', onActivate: vi.fn() };
+
+      const cleanup = coordinator.add(binding);
+      cleanup();
+
+      const matches = coordinator.matchBindings('tap', 'mouse', 150);
+      expect(matches).toEqual([]);
     });
   });
 
   describe('cleanup', () => {
     it('removes binding on cleanup', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      const cleanup = coordinator.add({ type: 'tap', onActivate: handler });
+      const coordinator = new GestureCoordinator(container, handler);
+      const cleanup = coordinator.add({ type: 'tap', onActivate: vi.fn() });
       cleanup();
 
       pointerDown(container);
@@ -314,40 +209,15 @@ describe('GestureCoordinator', () => {
     });
 
     it('double cleanup is safe', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      const cleanup = coordinator.add({ type: 'tap', onActivate: handler });
+      const coordinator = new GestureCoordinator(container, handler);
+      const cleanup = coordinator.add({ type: 'tap', onActivate: vi.fn() });
       cleanup();
       cleanup(); // Should not throw.
     });
 
-    it('deferred tap does not fire after binding cleanup', () => {
-      const coordinator = new GestureCoordinator(container);
-      const tapHandler = vi.fn();
-      const doubletapHandler = vi.fn();
-
-      const tapCleanup = coordinator.add({ type: 'tap', onActivate: tapHandler });
-      coordinator.add({ type: 'doubletap', onActivate: doubletapHandler });
-
-      // Start a deferred tap.
-      pointerDown(container);
-      vi.advanceTimersByTime(50);
-      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
-
-      // Remove tap binding before timer fires.
-      tapCleanup();
-
-      // Timer fires — should NOT call the removed handler.
-      vi.advanceTimersByTime(300);
-      expect(tapHandler).not.toHaveBeenCalled();
-    });
-
     it('destroy clears all bindings', () => {
-      const coordinator = new GestureCoordinator(container);
-      const handler = vi.fn();
-
-      coordinator.add({ type: 'tap', onActivate: handler });
+      const coordinator = new GestureCoordinator(container, handler);
+      coordinator.add({ type: 'tap', onActivate: vi.fn() });
       coordinator.destroy();
 
       pointerDown(container);
@@ -368,10 +238,7 @@ function pointerDown(target: HTMLElement): void {
 }
 
 function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: number }): void {
-  const event = new Event('pointerup', { bubbles: true }) as Event & {
-    pointerType: string;
-    clientX: number;
-  };
+  const event = new Event('pointerup', { bubbles: true });
   Object.defineProperty(event, 'pointerType', { value: init.pointerType });
   Object.defineProperty(event, 'clientX', { value: init.clientX });
   target.dispatchEvent(event);
