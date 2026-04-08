@@ -159,7 +159,7 @@ describe('createMachineActor', () => {
     actor.destroy();
   });
 
-  it('snapshot is reactive — status and context changes are observable', () => {
+  it('snapshot is reactive — status and context changes are tracked', () => {
     const actor = makeCounter();
 
     const before = actor.snapshot.get();

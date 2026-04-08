@@ -22,7 +22,7 @@ export interface SignalActor<State extends string, Context extends object>
   extends Machine<ActorSnapshot<State, Context>> {}
 
 /**
- * A message-driven actor with no observable snapshot.
+ * A message-driven actor with no reactive snapshot.
  *
  * Use for actors that coordinate async work but have no state that external
  * consumers need to observe. Analogous to XState's `fromCallback`.

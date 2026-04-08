@@ -12,9 +12,9 @@ import { untrack, update } from './signals/primitives';
  *
  * No finite states — the snapshot carries `value: 'active' | 'destroyed'`
  * as a universal lifecycle marker rather than domain state. The interesting
- * state is entirely in the context, which is observable via `snapshot`.
+ * state is entirely in the context, which is reactive via `snapshot`.
  *
- * Use this when the actor has context that needs to be observable but no
+ * Use this when the actor has context that needs to be reactive but no
  * meaningful state machine (e.g., a message-driven model with DOM side
  * effects). For actors that need per-state behavior, use `createMachineActor`.
  */

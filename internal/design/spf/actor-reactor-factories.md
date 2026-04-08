@@ -31,28 +31,28 @@ const reactor = createMachineReactor(reactorDefinition);
 
 Both return instances that implement `SignalActor` and expose `snapshot` and `destroy()`.
 
-A third factory, `createTransitionActor`, handles actors with observable context but no
+A third factory, `createTransitionActor`, handles actors with reactive context but no
 FSM. Lightweight callback actors implement the `CallbackActor` interface directly.
 
 ### Actor and Reactor Types
 
-| Factory | States | Observable? | Runner | Use when |
+| Factory | States | Reactive? | Runner | Use when |
 |---|---|---|---|---|
 | `createMachineActor` | User-defined FSM | Yes (`snapshot`) | Optional | Per-state message dispatch, `onSettled`, async work |
-| `createTransitionActor` | `active` / `destroyed` | Yes (`snapshot`) | No | Observable context via reducer, no FSM needed |
+| `createTransitionActor` | `active` / `destroyed` | Yes (`snapshot`) | No | Reactive context via reducer, no FSM needed |
 | `CallbackActor` (manual) | None | No | Manual | Fire-and-forget messages, minimal overhead |
 | `createMachineReactor` | User-defined FSM | Yes (`snapshot`) | No | Signal-driven transitions, per-state effects |
 
 **Actors** (message-driven):
 - **`MessageActor`** — returned by `createMachineActor`. Has finite states, per-state
-  handlers, optional runner, and observable `snapshot` with `value` + `context`.
+  handlers, optional runner, and reactive `snapshot` with `value` + `context`.
   Used by: `SourceBufferActor`, `SegmentLoaderActor`.
 - **`TransitionActor`** — returned by `createTransitionActor`. Pure reducer model:
   `(context, message) => context`. No finite states — `snapshot.value` is always
-  `'active' | 'destroyed'`. Observable context for downstream consumers.
+  `'active' | 'destroyed'`. Reactive context for downstream consumers.
   Used by: `TextTracksActor`.
 - **`CallbackActor`** — manual implementation. `send()` + `destroy()`, no snapshot.
-  Used when the actor needs no observable state and the overhead of a factory isn't
+  Used when the actor needs no reactive state and the overhead of a factory isn't
   warranted. Used by: `TextTrackSegmentLoaderActor`.
 
 **Reactors** (signal-driven):
@@ -662,7 +662,7 @@ than convention:
   runner factory, and the framework to wire them up on state entry and exit. That's a meaningful
   framework change, not a convention.
 - **Context as side channel is awkward.** Task inputs (message payloads) traveling through
-  observable actor context leaks internal scheduling details into the public snapshot.
+  reactive actor context leaks internal scheduling details into the public snapshot.
 
 **Decision:** Keep actor-lifetime runners for now. The generation-token problem is already
 handled by the framework. The cancellation gap (work outliving its state) is real but not

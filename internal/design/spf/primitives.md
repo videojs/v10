@@ -39,7 +39,7 @@ A Task is ephemeral: once it reaches a terminal state, it stays there. It is not
 
 ### Relationship to Actors
 
-A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute Tasks; they don't expose Tasks externally. A Task's status may or may not be part of the Actor's observable snapshot — that's a design choice for the Actor, not the Task.
+A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute Tasks; they don't expose Tasks externally. A Task's status may or may not be part of the Actor's reactive snapshot — that's a design choice for the Actor, not the Task.
 
 ### Current approach
 
@@ -79,7 +79,7 @@ Runners are internal to Actors and Reactors. An Actor may own one or more Runner
 
 ### Open questions
 
-- **Runner state modeling and observability** — should a Runner formally model its pending and running Tasks (beyond just tracking them internally for `abortAll`)? If so, should that state be observable — and if observable, does it belong on the Runner itself or only surfaced via the owning Actor's snapshot? A related sub-question: should a Task briefly remain visible in a terminal state (`done` or `error`) before being removed, giving subscribers a notification window? Or are terminal Tasks removed immediately, with callers expected to observe results through other means (e.g., the Task's own `value`/`error`, or the Actor's snapshot)?
+- **Runner state modeling and observability** — should a Runner formally model its pending and running Tasks (beyond just tracking them internally for `abortAll`)? If so, should that state be reactive — and if reactive, does it belong on the Runner itself or only surfaced via the owning Actor's snapshot? A related sub-question: should a Task briefly remain visible in a terminal state (`done` or `error`) before being removed, giving subscribers a notification window? Or are terminal Tasks removed immediately, with callers expected to observe results through other means (e.g., the Task's own `value`/`error`, or the Actor's snapshot)?
 - **Runner composition** — can Runners be nested (a serial Runner of concurrent Runners)? Probably not needed now, but worth keeping in mind.
 
 ---
@@ -92,12 +92,12 @@ Long-lived instances that own state over time, receive messages, and use Tasks a
 
 An Actor:
 
-- Has an observable **snapshot** — a typed record of its current context (what's been buffered, what track is loaded, etc.) plus a **status** drawn from a finite state machine
+- Has a reactive **snapshot** — a typed record of its current context (what's been buffered, what track is loaded, etc.) plus a **status** drawn from a finite state machine
 - Receives **messages** via an explicit `send(message)` method — imperative input
 - Executes work in response to messages using Tasks and Runners
 - Is the sole owner and writer of its own state — reads and writes flow through the Actor's own snapshot; external state is not directly accessed
 
-The snapshot is observable: other things (Reactors, `endOfStream`, the engine) can subscribe to Actor state changes without polling.
+The snapshot is reactive: other things (Reactors, `endOfStream`, the engine) can subscribe to Actor state changes without polling.
 
 Actors are created via **factory functions** (`createMachineActor`, `createTransitionActor`) that take a declarative definition object. The factory owns all mechanics (snapshot signal, runner lifecycle, `'destroyed'` guard); the definition owns behavior.
 
@@ -114,7 +114,7 @@ a definition object. The factory manages the snapshot signal, runner lifecycle, 
 
 `SourceBufferActor` and `SegmentLoaderActor` both use `createMachineActor`. Actors without
 FSM states (e.g., `TextTracksActor`) use `createTransitionActor` — a reducer-style factory
-with observable context but no per-state behavior. Lightweight callback actors (e.g.,
+with reactive context but no per-state behavior. Lightweight callback actors (e.g.,
 `TextTrackSegmentLoaderActor`) implement the `CallbackActor` interface directly.
 
 ### Decided
@@ -133,24 +133,24 @@ with observable context but no per-state behavior. Lightweight callback actors (
 
 ## 4. Reactors
 
-Long-lived instances that *react* to observable state changes rather than receiving explicit messages. Like Actors, they have an observable snapshot with status and use Tasks and Runners for async work.
+Long-lived instances that *react* to reactive state changes rather than receiving explicit messages. Like Actors, they have a reactive snapshot with status and use Tasks and Runners for async work.
 
 ### Concept
 
 A Reactor:
 
-- Has an observable **snapshot** with **status** (same structure as an Actor)
+- Has a reactive **snapshot** with **status** (same structure as an Actor)
 - Is **driven by subscriptions** to external state — when observed state changes in a relevant way, the Reactor decides whether and how to respond
 - Uses Tasks and Runners to execute work, just like an Actor
 - Has **no `send()` method** — it cannot receive imperative messages
 
-The key distinction from a plain effect or subscription: a Reactor has its own state machine and is a first-class observable thing. Other parts of the system can observe a Reactor's status ("is the segment loader currently loading?") without coupling to its internals.
+The key distinction from a plain effect or subscription: a Reactor has its own state machine and is a first-class reactive entity. Other parts of the system can observe a Reactor's status ("is the segment loader currently loading?") without coupling to its internals.
 
 Most of what currently lives in `dom/features/` as top-level functions are conceptually Reactors — they subscribe to state, do async work, and produce side effects. The missing piece is the formal status/snapshot structure.
 
 ### Relationship to Actors
 
-A Reactor is typically the bridge between observable state and one or more Actors. It observes state, decides what message to send, and calls `actor.send(message)`. The Actor handles execution; the Reactor handles coordination.
+A Reactor is typically the bridge between reactive state and one or more Actors. It observes state, decides what message to send, and calls `actor.send(message)`. The Actor handles execution; the Reactor handles coordination.
 
 ### Current approach
 
@@ -179,7 +179,7 @@ function-based with no formal status or snapshot — they remain to be migrated.
 
 ---
 
-## 5. Observable State
+## 5. Reactive State
 
 The reactive primitive that drives everything. State that can be observed over time, derived
 from other state, and composed in complex ways.
@@ -191,7 +191,7 @@ context; the "Current approach" and "Open questions" sections reflect the curren
 
 ### Concept
 
-Observable state needs to support:
+Reactive state needs to support:
 
 - **(a) Mapping, filtering, distinctness** — deriving new state from existing state; only propagating when the value meaningfully changed
 - **(b) Composition** — combining multiple state sources into derived state; expressing complex conditions as first-class values
@@ -286,7 +286,7 @@ How the five primitives fit together and the cross-cutting concerns that don't b
 ### The dependency graph
 
 ```
-Observable State
+Reactive State
       ↑ reads/subscribes
   Reactors ──send()──→ Actors
       ↑ both use         ↑ both use
@@ -295,9 +295,9 @@ Observable State
 
 - **Tasks** have no dependencies on the other primitives — they're pure async work units.
 - **TaskRunners** depend only on Tasks.
-- **Actors** depend on TaskRunners and Tasks. They may expose their snapshot via Observable State (signal or subscribable).
-- **Reactors** depend on Observable State (they subscribe to it) and on Actors (they send messages to them). They also use TaskRunners and Tasks for their own async work.
-- **Observable State** is the substrate — everything else either reads from it, writes to it, or both.
+- **Actors** depend on TaskRunners and Tasks. They may expose their snapshot via Reactive State (signal or subscribable).
+- **Reactors** depend on Reactive State (they subscribe to it) and on Actors (they send messages to them). They also use TaskRunners and Tasks for their own async work.
+- **Reactive State** is the substrate — everything else either reads from it, writes to it, or both.
 
 ### Lifecycle ownership
 

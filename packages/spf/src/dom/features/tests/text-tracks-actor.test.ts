@@ -173,7 +173,7 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it('snapshot is reactive — updates are observable via signal', () => {
+  it('snapshot is reactive — updates are tracked via signal', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;

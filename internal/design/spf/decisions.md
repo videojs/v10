@@ -290,7 +290,7 @@ an actor-alive state?" — the entry effect is always safe to run.
 
 **Decision:** `loadSegments` maintains local `throughput` state per track and syncs it to `state.bandwidthState` after each sample.
 
-**Context:** This is a migration artifact. The long-term design has ABR read directly from a throughput observable rather than going through the global state. The bridge exists to decouple the refactor from the feature work.
+**Context:** This is a migration artifact. The long-term design has ABR read directly from a reactive throughput source rather than going through the global state. The bridge exists to decouple the refactor from the feature work.
 
 **Status: temporary.** Remove once ABR reads from `throughput` directly. See [Open Questions](#abr-throughput).
 
@@ -325,7 +325,7 @@ This lets the UI show "currently manual at 720p, ABR would choose 1080p" without
 
 ### ABR Throughput Direct Read {#abr-throughput}
 
-The bandwidth bridge (`loadSegments` → `state.bandwidthState` → `switchQuality`) introduces a round-trip through global state. ABR should eventually read from a throughput observable owned by the network layer, removing the bridge.
+The bandwidth bridge (`loadSegments` → `state.bandwidthState` → `switchQuality`) introduces a round-trip through global state. ABR should eventually read from a reactive throughput source owned by the network layer, removing the bridge.
 
 **Open:** Requires defining the throughput API in `core/` and wiring it through `dom/`.
 

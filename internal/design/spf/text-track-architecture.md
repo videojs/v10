@@ -318,10 +318,10 @@ Evaluated against the goals from videojs/v10#1158:
 | Goal | Result | Notes |
 |------|--------|-------|
 | **Finite state machine** | ✓ | Both `createMachineReactor` and `createMachineActor` produce explicit FSMs with named states |
-| **Non-finite context** | ✓ | `TextTracksActor.context` holds unbounded `loaded` + `segments` maps; observable via snapshot |
+| **Non-finite context** | ✓ | `TextTracksActor.context` holds unbounded `loaded` + `segments` maps; reactive via snapshot |
 | **Teardown / abort propagation** | ✓ | `destroy()` fires effect cleanups; `SerialRunner.abortAll()` aborts in-flight Tasks; actors in owners destroyed by engine |
 | **Message → task IoC** | ✓ | `createMachineActor` decouples message dispatch from task execution; `SerialRunner` handles scheduling |
-| **Observable snapshots** | ✓ | Both factories expose `snapshot: ReadonlySignal<{ status, context }>` |
+| **Reactive snapshots** | ✓ | Both factories expose `snapshot: ReadonlySignal<{ status, context }>` |
 | **Bidirectional sync** | ✓ | `syncTextTracks` Effect 2 bridges `TextTrackList` `'change'` events back to state |
 
 **What was harder than expected:**
@@ -435,7 +435,7 @@ ownership is manageable. Revisit if the pattern spreads to video/audio.
 Reactors do not have a `context` field — non-finite state is held in closures and the
 `owners` signal. `owners` is externally visible (other features can observe actor state);
 closure variables are not inspectable from outside. Whether a formal Reactor `context`
-(observable via `snapshot`) would be worthwhile depends on what debugging and testing
+(reactive via `snapshot`) would be worthwhile depends on what debugging and testing
 patterns emerge as more Reactors are written.
 
 ### Cue deduplication: open design question in `TextTracksActor`

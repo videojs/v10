@@ -3,7 +3,7 @@ status: draft
 date: 2026-04-02
 ---
 
-# Observable State: Signals
+# Reactive State: Signals
 
 Signals are the reactive substrate of SPF — the primitive on which Actors, Reactors, and
 the shared state layer are all built. This document records the decision to adopt signals,
