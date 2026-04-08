@@ -2,9 +2,7 @@ import { listen } from '@videojs/utils/dom';
 
 import type { GestureRegion } from './region';
 import { resolveRegion } from './region';
-
-const TAP_THRESHOLD = 250;
-const DOUBLETAP_WINDOW = 300;
+import { TapRecognizer } from './tap';
 
 export type GestureType = 'tap' | 'doubletap';
 export type GesturePointerType = 'mouse' | 'touch' | 'pen';
@@ -22,15 +20,7 @@ export class GestureCoordinator {
   #bindings: GestureOptions[] = [];
   #disconnect: AbortController | null = null;
   #destroyed = false;
-
-  // Tap detection state
-  #pointerDownTime = 0;
-
-  // Doubletap disambiguation
-  #tapTimer: ReturnType<typeof setTimeout> | null = null;
-  #lastTapTime = 0;
-  #lastTapRegion: GestureRegion | null = null;
-  #lastTapPointerType = '';
+  #tap = new TapRecognizer();
 
   constructor(target: HTMLElement) {
     this.#target = target;
@@ -55,7 +45,7 @@ export class GestureCoordinator {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
-    this.#clearTapTimer();
+    this.#tap.reset();
     this.#disconnect?.abort();
     this.#disconnect = null;
     this.#bindings = [];
@@ -74,87 +64,39 @@ export class GestureCoordinator {
 
   #maybeDisconnect(): void {
     if (this.#bindings.length > 0) return;
-    this.#clearTapTimer();
+    this.#tap.reset();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
-  #clearTapTimer(): void {
-    if (this.#tapTimer !== null) {
-      clearTimeout(this.#tapTimer);
-      this.#tapTimer = null;
-    }
-  }
-
   #onPointerDown = (): void => {
-    this.#pointerDownTime = Date.now();
+    this.#tap.down();
   };
 
   #onPointerUp = (event: PointerEvent): void => {
-    // Not a quick tap — ignore.
-    if (Date.now() - this.#pointerDownTime > TAP_THRESHOLD) return;
-
     const pointerType = event.pointerType;
     const rect = this.#target.getBoundingClientRect();
+
     // Resolve regions per gesture type — doubletap regions must not suppress full-surface taps.
-    const tapRegions = this.#getActiveRegions('tap', pointerType);
-    const tapRegion = tapRegions.size > 0 ? resolveRegion(event.clientX, rect, tapRegions) : null;
     const doubletapRegions = this.#getActiveRegions('doubletap', pointerType);
     const doubletapRegion = doubletapRegions.size > 0 ? resolveRegion(event.clientX, rect, doubletapRegions) : null;
-
-    // Find matching bindings for this pointer event.
-    const tapMatches = this.#matchBindings('tap', pointerType, tapRegion);
     const doubletapMatches = this.#matchBindings('doubletap', pointerType, doubletapRegion);
 
-    if (tapMatches.length === 0 && doubletapMatches.length === 0) return;
-
-    // If doubletap bindings exist, check for doubletap first.
-    if (doubletapMatches.length > 0) {
-      const now = Date.now();
-      const isDoubleTap =
-        now - this.#lastTapTime < DOUBLETAP_WINDOW &&
-        this.#lastTapPointerType === pointerType &&
-        this.#lastTapRegion === doubletapRegion;
-
-      if (isDoubleTap) {
-        // Doubletap detected — cancel pending tap timer, fire doubletap.
-        this.#clearTapTimer();
-        this.#lastTapTime = 0;
-        this.#fireFirst(doubletapMatches, event);
-        return;
+    this.#tap.up(
+      doubletapMatches.length > 0,
+      // onTap — re-match at fire time to avoid stale closures over removed bindings.
+      () => {
+        const tapRegions = this.#getActiveRegions('tap', pointerType);
+        const tapRegion = tapRegions.size > 0 ? resolveRegion(event.clientX, rect, tapRegions) : null;
+        const tapMatches = this.#matchBindings('tap', pointerType, tapRegion);
+        tapMatches[0]?.onActivate(event);
+      },
+      // onDoubleTap
+      () => {
+        doubletapMatches[0]?.onActivate(event);
       }
-
-      // First tap — defer to allow doubletap window.
-      this.#lastTapTime = now;
-      this.#lastTapRegion = doubletapRegion;
-      this.#lastTapPointerType = pointerType;
-
-      if (tapMatches.length > 0) {
-        // Delay tap to wait for potential second tap.
-        // Re-match bindings when the timer fires to avoid stale closures
-        // over bindings that may have been removed during the delay.
-        this.#clearTapTimer();
-        this.#tapTimer = setTimeout(() => {
-          this.#tapTimer = null;
-          this.#lastTapTime = 0;
-          const currentTapRegions = this.#getActiveRegions('tap', pointerType);
-          const currentTapRegion =
-            currentTapRegions.size > 0 ? resolveRegion(event.clientX, rect, currentTapRegions) : null;
-          const currentTapBindings = this.#matchBindings('tap', pointerType, currentTapRegion);
-          this.#fireFirst(currentTapBindings, event);
-        }, DOUBLETAP_WINDOW);
-      }
-
-      return;
-    }
-
-    // No doubletap bindings — fire tap immediately.
-    this.#fireFirst(tapMatches, event);
+    );
   };
-
-  #fireFirst(matches: GestureOptions[], event: PointerEvent): void {
-    matches[0]?.onActivate(event);
-  }
 
   #getActiveRegions(type: GestureType, pointerType: string): Set<GestureRegion> {
     const regions = new Set<GestureRegion>();
