@@ -73,7 +73,8 @@ function NativeHlsMediaBaseMixin<Base extends AnyConstructor<any>>(BaseClass: Ba
     }
 
     destroy() {
-      (super.detach as any)?.();
+      (super.destroy as any)?.();
+      this.#target = null;
     }
   }
 
