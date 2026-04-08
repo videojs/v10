@@ -249,6 +249,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <MediaHotkey keys="End" action="seekToPercent" value={100} />
       <MediaHotkey keys="Shift+>" action="speedUp" />
       <MediaHotkey keys="Shift+<" action="speedDown" />
+      <MediaHotkey keys="Space" action="speedBoost" value={2} />
     </Container>
   );
 }

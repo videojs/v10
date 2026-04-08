@@ -8,6 +8,12 @@ function keydown(target: EventTarget, key: string, mods?: Partial<KeyboardEventI
   return event;
 }
 
+function keyup(target: EventTarget, key: string, mods?: Partial<KeyboardEventInit>): KeyboardEvent {
+  const event = new KeyboardEvent('keyup', { key, bubbles: true, cancelable: true, ...mods });
+  target.dispatchEvent(event);
+  return event;
+}
+
 describe('HotkeyCoordinator', () => {
   let container: HTMLElement;
   let coordinator: HotkeyCoordinator;
@@ -353,6 +359,71 @@ describe('HotkeyCoordinator', () => {
       remove();
 
       expect(c.getAriaKeys('togglePaused')).toBeUndefined();
+    });
+  });
+
+  describe('hold (speed boost)', () => {
+    it('calls cleanup on keyup when onActivate returns a function', () => {
+      const c = setup();
+      const cleanup = vi.fn();
+      c.add({ keys: 'k', onActivate: () => cleanup });
+
+      keydown(container, 'k');
+      expect(cleanup).not.toHaveBeenCalled();
+
+      keyup(container, 'k');
+      expect(cleanup).toHaveBeenCalledOnce();
+    });
+
+    it('defers non-repeatable sibling to keyup on tap (no repeat)', () => {
+      const c = setup();
+      const toggle = vi.fn();
+      const cleanup = vi.fn();
+
+      c.add({ keys: 'Space', onActivate: toggle, repeatable: false });
+      c.add({ keys: 'Space', onActivate: () => cleanup });
+
+      // First keydown — hold action fires, toggle deferred.
+      keydown(container, ' ');
+      expect(toggle).not.toHaveBeenCalled();
+
+      // Keyup with no repeat — tap. Deferred toggle fires.
+      keyup(container, ' ');
+      expect(cleanup).toHaveBeenCalledOnce();
+      expect(toggle).toHaveBeenCalledOnce();
+    });
+
+    it('skips deferred on keyup after repeat (hold)', () => {
+      const c = setup();
+      const toggle = vi.fn();
+      const cleanup = vi.fn();
+
+      c.add({ keys: 'Space', onActivate: toggle, repeatable: false });
+      c.add({ keys: 'Space', onActivate: () => cleanup });
+
+      // First keydown — hold starts.
+      keydown(container, ' ');
+
+      // Repeat keydowns — holding.
+      keydown(container, ' ', { repeat: true });
+      keydown(container, ' ', { repeat: true });
+
+      // Keyup after repeat — cleanup fires, toggle does NOT.
+      keyup(container, ' ');
+      expect(cleanup).toHaveBeenCalledOnce();
+      expect(toggle).not.toHaveBeenCalled();
+    });
+
+    it('does not track hold when onActivate returns void', () => {
+      const c = setup();
+      const onActivate = vi.fn();
+      c.add({ keys: 'k', onActivate });
+
+      keydown(container, 'k');
+      keyup(container, 'k');
+
+      // No hold behavior — just fires normally.
+      expect(onActivate).toHaveBeenCalledOnce();
     });
   });
 });

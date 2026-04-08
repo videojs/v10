@@ -36,9 +36,7 @@ export function MediaHotkey({ keys, action, value, disabled, target }: MediaHotk
       target,
       disabled,
       repeatable: !isHotkeyToggleAction(action),
-      onActivate: (_event, key) => {
-        resolver({ store, key, value });
-      },
+      onActivate: (_event, key) => resolver({ store, key, value }),
     });
   }, [container, store, keys, action, value, disabled, target]);
 
