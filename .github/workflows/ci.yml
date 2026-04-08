@@ -118,6 +118,10 @@ jobs:
             ${{ runner.os }}-turbo-test-
             ${{ runner.os }}-turbo-
 
+      - name: Install Playwright browsers
+        if: matrix.package == '@videojs/spf'
+        run: pnpm -F @videojs/spf exec playwright install chromium
+
       - name: Test package
         run: pnpm turbo run test --filter="${{ matrix.package }}"
 
