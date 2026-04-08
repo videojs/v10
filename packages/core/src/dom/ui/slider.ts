@@ -76,9 +76,6 @@ export interface SliderApi {
   destroy: () => void;
 }
 
-/** Intentional drag threshold — number of pointermove events before drag starts. */
-const DRAG_THRESHOLD = 2;
-
 export function createSlider(options: SliderOptions): SliderApi {
   const input = createState<SliderInput>({
     pointerPercent: 0,
@@ -92,7 +89,6 @@ export function createSlider(options: SliderOptions): SliderApi {
   const changeThrottleMs = options.changeThrottle ?? 0;
 
   let isDragging = false,
-    moveCount = 0,
     cachedRTL = false,
     cachedRect: DOMRect | null = null,
     capturedPointerId: number | null = null,
@@ -165,7 +161,6 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       cachedRect = el.getBoundingClientRect();
       cachedRTL = options.isRTL();
-      moveCount = 0;
       committedOnRelease = false;
 
       releaseCapture();
@@ -174,8 +169,10 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
 
+      isDragging = true;
       lastDragPercent = percent;
-      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
+      input.patch({ pointing: true, dragging: true, pointerPercent: percent, dragPercent: percent });
+      options.onDragStart?.();
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -188,7 +185,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     onPointerMove(event) {
       if (options.isDisabled()) return;
 
-      // Pointer is captured — this is a drag-related move.
+      // Pointer is captured — this is a drag move.
       if (!isNull(capturedPointerId)) {
         // Stale drag safety: if buttons === 0 for non-touch, browser lost the pointerup.
         if (event.pointerType !== 'touch' && event.buttons === 0) {
@@ -196,24 +193,11 @@ export function createSlider(options: SliderOptions): SliderApi {
           return;
         }
 
-        moveCount++;
-
         const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 
-        if (!isDragging && moveCount >= DRAG_THRESHOLD) {
-          isDragging = true;
-          lastDragPercent = percent;
-          input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
-          options.onDragStart?.();
-          fireChange(percent, true);
-        } else if (isDragging) {
-          lastDragPercent = percent;
-          input.patch({ dragPercent: percent, pointerPercent: percent });
-          fireChange(percent, true);
-        } else {
-          // Below drag threshold — update hover preview only.
-          input.patch({ pointerPercent: percent });
-        }
+        lastDragPercent = percent;
+        input.patch({ dragPercent: percent, pointerPercent: percent });
+        fireChange(percent, true);
 
         return;
       }

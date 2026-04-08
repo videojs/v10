@@ -60,25 +60,27 @@ describe('TimeSliderCore', () => {
       expect(state.fillPercent).toBe(30); // 90/300 * 100
     });
 
-    it('uses drag percent for value when dragging', () => {
+    it('value stays at currentTime during drag, previewPercent tracks drag', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
 
-      expect(state.value).toBe(150); // 50% of 300
+      expect(state.value).toBe(90); // still currentTime
+      expect(state.fillPercent).toBe(30); // 90/300 * 100
+      expect(state.previewPercent).toBe(50); // drag position
       expect(state.dragging).toBe(true);
-      expect(state.currentTime).toBe(90); // unchanged
+      expect(state.currentTime).toBe(90);
     });
 
-    it('uses raw precision during drag for smooth scrubbing', () => {
+    it('previewPercent equals fillPercent when not dragging', () => {
       const core = new TimeSliderCore();
-      core.setInput(createInput({ dragging: true, dragPercent: 33.333 }));
-      core.setMedia(createMediaState({ currentTime: 0, duration: 10 }));
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
 
-      // 33.333% of 10 = 3.3333, NOT snapped to step (which would be 3)
-      expect(state.value).toBeCloseTo(3.3333, 3);
+      expect(state.previewPercent).toBe(state.fillPercent);
+      expect(state.previewPercent).toBe(30); // 90/300 * 100
     });
 
     it('computes buffer percent from buffered ranges', () => {
@@ -189,14 +191,15 @@ describe('TimeSliderCore', () => {
       expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
     });
 
-    it('includes dragged value in valuetext', () => {
+    it('announces preview position in valuetext during drag', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      // value is 150 (50% of 300) → "2 minutes, 30 seconds of 5 minutes"
+      // previewPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
+      expect(attrs['aria-valuenow']).toBe(150);
       expect(attrs['aria-valuetext']).toBe('2 minutes, 30 seconds of 5 minutes');
     });
   });

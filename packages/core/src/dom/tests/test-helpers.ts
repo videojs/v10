@@ -104,6 +104,7 @@ export function createTimeSliderState(overrides: Partial<TimeSliderState> = {}):
     duration: 60,
     seeking: false,
     bufferPercent: 75,
+    previewPercent: 50,
     ...overrides,
   };
 }

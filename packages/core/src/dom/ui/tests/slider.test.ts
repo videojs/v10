@@ -215,29 +215,21 @@ describe('createSlider', () => {
   });
 
   describe('pointer: drag', () => {
-    it('starts drag after threshold pointermove events', () => {
+    it('starts drag immediately on pointerdown', () => {
       const onDragStart = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragStart }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-
-      // First move — below threshold
-      firePointerMove(slider, { clientX: 60 });
       flush();
-      expect(slider.input.current.dragging).toBe(false);
-      expect(onDragStart).not.toHaveBeenCalled();
 
-      // Second move — meets threshold
-      firePointerMove(slider, { clientX: 80 });
-      flush();
       expect(slider.input.current.dragging).toBe(true);
       expect(onDragStart).toHaveBeenCalledOnce();
 
       slider.destroy();
     });
 
-    it('calls onValueChange only after drag threshold is reached', () => {
+    it('calls onValueChange on every pointermove during drag', () => {
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onValueChange }));
@@ -245,17 +237,14 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Move 1: below threshold — no onValueChange
       firePointerMove(slider, { clientX: 60 });
-      expect(onValueChange).not.toHaveBeenCalled();
-
-      // Move 2: meets threshold — onValueChange fires
-      firePointerMove(slider, { clientX: 80 });
       expect(onValueChange).toHaveBeenCalledTimes(1);
 
-      // Move 3: during drag — onValueChange fires
-      firePointerMove(slider, { clientX: 100 });
+      firePointerMove(slider, { clientX: 80 });
       expect(onValueChange).toHaveBeenCalledTimes(2);
+
+      firePointerMove(slider, { clientX: 100 });
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
     });
@@ -335,20 +324,22 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('resets pointing state when no drag occurred', () => {
+    it('resets dragging and pointing on lostpointercapture after pointerdown', () => {
+      const onDragEnd = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el }));
+      const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
+      expect(slider.input.current.dragging).toBe(true);
       expect(slider.input.current.pointing).toBe(true);
 
-      // Lost capture without crossing drag threshold.
       fireLostPointerCapture(slider);
       flush();
 
+      expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(false);
-      expect(slider.input.current.pointerPercent).toBe(25);
+      expect(onDragEnd).toHaveBeenCalledOnce();
 
       slider.destroy();
     });
@@ -977,7 +968,7 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('does not fire onValueCommit on lostpointercapture without drag', () => {
+    it('fires onValueCommit on lostpointercapture if pointerup was missed', () => {
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
@@ -985,10 +976,11 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
 
-      // Lost capture before drag threshold was reached.
+      // Lost capture without pointerup — endDrag fires commit as fallback.
       fireLostPointerCapture(slider);
 
-      expect(onValueCommit).not.toHaveBeenCalled();
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(25);
 
       slider.destroy();
     });
@@ -1005,12 +997,15 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Pass drag threshold — first drag move fires immediately (leading edge).
+      // First move fires immediately (leading edge).
       firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
 
       expect(onValueChange).toHaveBeenCalledOnce();
-      expect(onValueChange).toHaveBeenCalledWith(40);
+      expect(onValueChange).toHaveBeenCalledWith(30);
+
+      // Second move during cooldown — throttled.
+      firePointerMove(slider, { clientX: 80 });
+      expect(onValueChange).toHaveBeenCalledOnce();
 
       slider.destroy();
       vi.useRealTimers();
@@ -1026,9 +1021,8 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Pass threshold — leading fires.
+      // First move — leading fires.
       firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
       expect(onValueChange).toHaveBeenCalledOnce();
 
       // More moves during cooldown.
@@ -1061,7 +1055,7 @@ describe('createSlider', () => {
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 100 });
 
-      expect(onValueChange).toHaveBeenCalledTimes(2);
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
     });
@@ -1076,7 +1070,7 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Pass threshold (leading fires) and more moves.
+      // First move (leading fires) and more moves during cooldown.
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 120 });
@@ -1084,7 +1078,7 @@ describe('createSlider', () => {
       // Release before trailing fires.
       firePointerUp(slider, { clientX: 150 });
 
-      // Leading (threshold) + unthrottled pointerup. The coalesced moves were cancelled.
+      // Leading + unthrottled pointerup. The coalesced moves were cancelled.
       expect(onValueChange).toHaveBeenCalledTimes(2);
       expect(onValueChange).toHaveBeenLastCalledWith(75);
 
@@ -1106,10 +1100,9 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Pass threshold (leading fires).
+      // First move (leading fires), more moves pending.
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
-      // More moves pending.
       firePointerMove(slider, { clientX: 120 });
 
       slider.destroy();
@@ -1146,7 +1139,7 @@ describe('createSlider', () => {
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 100 });
 
-      expect(onValueChange).toHaveBeenCalledTimes(2);
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
     });

@@ -6,4 +6,6 @@ export const SliderCSSVars = {
   pointer: '--media-slider-pointer',
   /** Buffer level percentage (0–100). */
   buffer: '--media-slider-buffer',
+  /** Drag preview position percentage (0–100). */
+  preview: '--media-slider-preview',
 } as const;
