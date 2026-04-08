@@ -55,7 +55,7 @@
 
 .html-time-slider-parts__thumb {
   position: absolute;
-  left: var(--media-slider-fill);
+  left: var(--media-slider-preview, var(--media-slider-fill));
   width: 14px;
   height: 14px;
   background: white;

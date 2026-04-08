@@ -66,12 +66,12 @@
 
   &[data-orientation="horizontal"] {
     top: 50%;
-    left: var(--media-slider-fill);
+    left: var(--media-slider-preview, var(--media-slider-fill));
   }
 
   &[data-orientation="vertical"] {
     left: 50%;
-    top: calc(100% - var(--media-slider-fill));
+    top: calc(100% - var(--media-slider-preview, var(--media-slider-fill)));
   }
 
   &:hover,
