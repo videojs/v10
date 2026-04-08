@@ -13,7 +13,7 @@ describe('toAriaKeyShortcut', () => {
   });
 
   it('maps shift to Shift', () => {
-    expect(toAriaKeyShortcut(parseHotkeyPattern('Shift+>'))).toBe('Shift+>');
+    expect(toAriaKeyShortcut(parseHotkeyPattern('Shift+ArrowLeft'))).toBe('Shift+ArrowLeft');
   });
 
   it('formats multiple modifiers in consistent order', () => {

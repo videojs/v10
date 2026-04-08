@@ -170,8 +170,8 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
       <MediaHotkey keys="0-9" action="seekToPercent" />
       <MediaHotkey keys="Home" action="seekToPercent" value={0} />
       <MediaHotkey keys="End" action="seekToPercent" value={100} />
-      <MediaHotkey keys="Shift+>" action="speedUp" />
-      <MediaHotkey keys="Shift+<" action="speedDown" />
+      <MediaHotkey keys=">" action="speedUp" />
+      <MediaHotkey keys="<" action="speedDown" />
     </Container>
   );
 }

@@ -31,8 +31,8 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  *
  * @example
  * ```ts
- * parseHotkeyPattern('Shift+>');
- * // [{ modifiers: Set('shift'), key: '>', originalKey: '>' }]
+ * parseHotkeyPattern('>');
+ * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
  *
  * parseHotkeyPattern('0-9');
  * // 10 bindings, one per digit
@@ -70,6 +70,16 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   return [{ modifiers, key, originalKey: rawKey }];
 }
 
+/**
+ * Single non-letter character — Shift was used to produce the character itself,
+ * not as a deliberate modifier (e.g. Shift+. → ">", Shift+/ → "?").
+ * Letters excluded because Shift changes case intentionally (k vs K).
+ * Named keys excluded because event.key.length > 1 (ArrowLeft, Tab, etc.).
+ */
+function isImplicitShift(key: string): boolean {
+  return key.length === 1 && !/[a-z]/i.test(key);
+}
+
 /** Whether a parsed binding matches a keyboard event. */
 export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: KeyboardEvent): boolean {
   // IME composition filtering.
@@ -78,8 +88,13 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
   // Case-insensitive key comparison.
   if (event.key.toLowerCase() !== binding.key) return false;
 
+  // Implicit Shift: non-letter character keys (>, <, ?, !) may require Shift to produce
+  // on some layouts but not others. Treat Shift as present only when the event has it,
+  // but ignore extra shiftKey when the binding doesn't ask for it.
+  const shiftKey = isImplicitShift(event.key) ? event.shiftKey && binding.modifiers.has('shift') : event.shiftKey;
+
   // Exact modifier matching — all four must agree.
-  if (event.shiftKey !== binding.modifiers.has('shift')) return false;
+  if (shiftKey !== binding.modifiers.has('shift')) return false;
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
   if (event.altKey !== binding.modifiers.has('alt')) return false;
   if (event.metaKey !== binding.modifiers.has('meta')) return false;
