@@ -257,6 +257,28 @@ describe('GestureCoordinator', () => {
       expect(fullHandler).not.toHaveBeenCalled();
     });
 
+    it('full-surface tap fires alongside doubletap regions', () => {
+      const coordinator = new GestureCoordinator(container);
+      const tapHandler = vi.fn();
+      const doubletapLeft = vi.fn();
+      const doubletapRight = vi.fn();
+
+      coordinator.add({ type: 'tap', onActivate: tapHandler });
+      coordinator.add({ type: 'doubletap', onActivate: doubletapLeft, region: 'left' });
+      coordinator.add({ type: 'doubletap', onActivate: doubletapRight, region: 'right' });
+
+      // Single tap in center — doubletap regions don't suppress full-surface tap.
+      pointerDown(container);
+      vi.advanceTimersByTime(50);
+      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+      // Tap is deferred because doubletap bindings exist.
+      vi.advanceTimersByTime(300);
+      expect(tapHandler).toHaveBeenCalledOnce();
+      expect(doubletapLeft).not.toHaveBeenCalled();
+      expect(doubletapRight).not.toHaveBeenCalled();
+    });
+
     it('full-surface fires outside named regions', () => {
       const coordinator = new GestureCoordinator(container);
       const regionHandler = vi.fn();
@@ -298,6 +320,27 @@ describe('GestureCoordinator', () => {
       const cleanup = coordinator.add({ type: 'tap', onActivate: handler });
       cleanup();
       cleanup(); // Should not throw.
+    });
+
+    it('deferred tap does not fire after binding cleanup', () => {
+      const coordinator = new GestureCoordinator(container);
+      const tapHandler = vi.fn();
+      const doubletapHandler = vi.fn();
+
+      const tapCleanup = coordinator.add({ type: 'tap', onActivate: tapHandler });
+      coordinator.add({ type: 'doubletap', onActivate: doubletapHandler });
+
+      // Start a deferred tap.
+      pointerDown(container);
+      vi.advanceTimersByTime(50);
+      pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+      // Remove tap binding before timer fires.
+      tapCleanup();
+
+      // Timer fires — should NOT call the removed handler.
+      vi.advanceTimersByTime(300);
+      expect(tapHandler).not.toHaveBeenCalled();
     });
 
     it('destroy clears all bindings', () => {

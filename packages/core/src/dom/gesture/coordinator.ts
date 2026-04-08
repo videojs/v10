@@ -19,14 +19,11 @@ export interface GestureOptions {
 
 interface GestureBinding {
   options: GestureOptions;
-  /** Registration order for tie-breaking. */
-  id: number;
 }
 
 export class GestureCoordinator {
   #target: HTMLElement;
   #bindings: GestureBinding[] = [];
-  #nextId = 0;
   #disconnect: AbortController | null = null;
   #destroyed = false;
 
@@ -44,7 +41,7 @@ export class GestureCoordinator {
   }
 
   add(options: GestureOptions): () => void {
-    const binding: GestureBinding = { options, id: this.#nextId++ };
+    const binding: GestureBinding = { options };
 
     this.#bindings.push(binding);
     this.#connect();
@@ -105,12 +102,15 @@ export class GestureCoordinator {
 
     const pointerType = event.pointerType;
     const rect = this.#target.getBoundingClientRect();
-    const activeRegions = this.#getActiveRegions(pointerType);
-    const region = activeRegions.size > 0 ? resolveRegion(event.clientX, rect, activeRegions) : null;
+    // Resolve regions per gesture type — doubletap regions must not suppress full-surface taps.
+    const tapRegions = this.#getActiveRegions('tap', pointerType);
+    const tapRegion = tapRegions.size > 0 ? resolveRegion(event.clientX, rect, tapRegions) : null;
+    const doubletapRegions = this.#getActiveRegions('doubletap', pointerType);
+    const doubletapRegion = doubletapRegions.size > 0 ? resolveRegion(event.clientX, rect, doubletapRegions) : null;
 
     // Find matching bindings for this pointer event.
-    const tapBindings = this.#matchBindings('tap', pointerType, region);
-    const doubletapBindings = this.#matchBindings('doubletap', pointerType, region);
+    const tapBindings = this.#matchBindings('tap', pointerType, tapRegion);
+    const doubletapBindings = this.#matchBindings('doubletap', pointerType, doubletapRegion);
 
     if (tapBindings.length === 0 && doubletapBindings.length === 0) return;
 
@@ -120,7 +120,7 @@ export class GestureCoordinator {
       const isDoubleTap =
         now - this.#lastTapTime < DOUBLETAP_WINDOW &&
         this.#lastTapPointerType === pointerType &&
-        this.#lastTapRegion === region;
+        this.#lastTapRegion === doubletapRegion;
 
       if (isDoubleTap) {
         // Doubletap detected — cancel pending tap timer, fire doubletap.
@@ -132,16 +132,22 @@ export class GestureCoordinator {
 
       // First tap — defer to allow doubletap window.
       this.#lastTapTime = now;
-      this.#lastTapRegion = region;
+      this.#lastTapRegion = doubletapRegion;
       this.#lastTapPointerType = pointerType;
 
       if (tapBindings.length > 0) {
         // Delay tap to wait for potential second tap.
+        // Re-match bindings when the timer fires to avoid stale closures
+        // over bindings that may have been removed during the delay.
         this.#clearTapTimer();
         this.#tapTimer = setTimeout(() => {
           this.#tapTimer = null;
           this.#lastTapTime = 0;
-          this.#fireFirst(tapBindings, event);
+          const currentTapRegions = this.#getActiveRegions('tap', pointerType);
+          const currentTapRegion =
+            currentTapRegions.size > 0 ? resolveRegion(event.clientX, rect, currentTapRegions) : null;
+          const currentTapBindings = this.#matchBindings('tap', pointerType, currentTapRegion);
+          this.#fireFirst(currentTapBindings, event);
         }, DOUBLETAP_WINDOW);
       }
 
@@ -160,11 +166,12 @@ export class GestureCoordinator {
     }
   }
 
-  /** Get all named regions that have active bindings for a pointer type. */
-  #getActiveRegions(pointerType: string): Set<GestureRegion> {
+  /** Get all named regions that have active bindings for a gesture type and pointer type. */
+  #getActiveRegions(type: GestureType, pointerType: string): Set<GestureRegion> {
     const regions = new Set<GestureRegion>();
     for (const { options } of this.#bindings) {
       if (options.disabled) continue;
+      if (options.type !== type) continue;
       if (options.pointer && options.pointer !== pointerType) continue;
       if (options.region) regions.add(options.region);
     }
