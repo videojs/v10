@@ -43,7 +43,7 @@
   },
   "peerDependencies": {
     "@videojs/element": "workspace:*",
-    "react": "^18.0.0 || ^19.0.0"
+    "react": ">=16.8.0"
   },
   "peerDependenciesMeta": {
     "@videojs/element": {
@@ -58,11 +58,11 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.14",
     "@videojs/element": "workspace:*",
     "jsdom": "^26.1.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "tsdown": "^0.21.4",
     "typescript": "^6.0.2",
     "vitest": "^4.1.0"
