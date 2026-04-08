@@ -2,64 +2,63 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { combine } from '../combine';
 import { defineSlice } from '../slice';
+import { createStore } from '../store';
 
-interface Target {
-  value: number;
+class MockTarget extends EventTarget {
+  value = 0;
 }
 
-const createSlice = defineSlice<Target>();
+const slice = defineSlice<MockTarget>();
 
 describe('combine', () => {
   it('merges state from multiple slices', () => {
-    const a = createSlice({ state: () => ({ count: 0 }) });
-    const b = createSlice({ state: () => ({ label: 'hello' }) });
+    const a = slice({ state: () => ({ count: 0 }) });
+    const b = slice({ state: () => ({ label: 'hello' }) });
 
-    const combined = combine(a, b);
-    const state = combined.state({ target: () => ({ value: 1 }), signals: {} } as any);
+    const store = createStore<MockTarget>()(combine(a, b));
 
-    expect(state).toEqual({ count: 0, label: 'hello' });
+    expect(store.state).toMatchObject({ count: 0, label: 'hello' });
   });
 
   it('calls attach for each slice', () => {
     const attachA = vi.fn();
     const attachB = vi.fn();
 
-    const a = createSlice({ state: () => ({ count: 0 }), attach: attachA });
-    const b = createSlice({ state: () => ({ label: '' }), attach: attachB });
+    const a = slice({ state: () => ({ count: 0 }), attach: attachA });
+    const b = slice({ state: () => ({ label: '' }), attach: attachB });
 
-    const combined = combine(a, b);
-    const ctx = { reportError: vi.fn() } as any;
-    combined.attach?.(ctx);
+    const store = createStore<MockTarget>()(combine(a, b));
+    store.attach(new MockTarget());
 
     expect(attachA).toHaveBeenCalledOnce();
     expect(attachB).toHaveBeenCalledOnce();
   });
 
-  it('catches and reports errors from attach', () => {
+  it('catches and reports attach errors via onError callback', () => {
     const error = new Error('attach failed');
-    const a = createSlice({
+    const onError = vi.fn();
+
+    const a = slice({
       state: () => ({ count: 0 }),
       attach: () => {
         throw error;
       },
     });
-    const b = createSlice({ state: () => ({ label: '' }) });
+    const b = slice({ state: () => ({ label: '' }) });
 
-    const combined = combine(a, b);
-    const reportError = vi.fn();
-    combined.attach?.({ reportError } as any);
+    const store = createStore<MockTarget>()(combine(a, b), { onError });
+    store.attach(new MockTarget());
 
-    expect(reportError).toHaveBeenCalledWith(error);
+    expect(onError).toHaveBeenCalled();
   });
 
   it('warns on duplicate state keys in __DEV__ mode', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const a = createSlice({ state: () => ({ count: 0 }) });
-    const b = createSlice({ state: () => ({ count: 1 }) });
+    const a = slice({ state: () => ({ count: 0 }) });
+    const b = slice({ state: () => ({ count: 1 }) });
 
-    const combined = combine(a, b);
-    combined.state({ target: () => ({ value: 1 }), signals: {} } as any);
+    createStore<MockTarget>()(combine(a, b));
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('duplicate state key "count"'));
 
