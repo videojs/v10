@@ -60,27 +60,17 @@ describe('TimeSliderCore', () => {
       expect(state.fillPercent).toBe(30); // 90/300 * 100
     });
 
-    it('value stays at currentTime during drag, previewPercent tracks drag', () => {
+    it('fill stays at currentTime during drag, pointerPercent tracks drag', () => {
       const core = new TimeSliderCore();
-      core.setInput(createInput({ dragging: true, dragPercent: 50 }));
+      core.setInput(createInput({ dragging: true, dragPercent: 50, pointerPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
 
       expect(state.value).toBe(90); // still currentTime
       expect(state.fillPercent).toBe(30); // 90/300 * 100
-      expect(state.previewPercent).toBe(50); // drag position
+      expect(state.pointerPercent).toBe(50); // drag position
       expect(state.dragging).toBe(true);
       expect(state.currentTime).toBe(90);
-    });
-
-    it('previewPercent equals fillPercent when not dragging', () => {
-      const core = new TimeSliderCore();
-      core.setInput(createInput());
-      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
-      const state = core.getState();
-
-      expect(state.previewPercent).toBe(state.fillPercent);
-      expect(state.previewPercent).toBe(30); // 90/300 * 100
     });
 
     it('computes buffer percent from buffered ranges', () => {
@@ -191,14 +181,14 @@ describe('TimeSliderCore', () => {
       expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
     });
 
-    it('announces preview position in valuetext during drag', () => {
+    it('announces drag position in valuetext during drag', () => {
       const core = new TimeSliderCore();
-      core.setInput(createInput({ dragging: true, dragPercent: 50 }));
+      core.setInput(createInput({ dragging: true, dragPercent: 50, pointerPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      // previewPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
+      // pointerPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
       expect(attrs['aria-valuenow']).toBe(150);
       expect(attrs['aria-valuetext']).toBe('2 minutes, 30 seconds of 5 minutes');
     });

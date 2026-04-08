@@ -19,8 +19,6 @@ export interface TimeSliderProps extends SliderProps {
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
   /** Buffered amount as a percentage of duration (0–100). */
   bufferPercent: number;
-  /** Drag preview position as a percentage (0–100). Equals `fillPercent` when not dragging. */
-  previewPercent: number;
 }
 
 /** Time-domain slider: maps media time/buffer state to slider state. */
@@ -51,16 +49,11 @@ export class TimeSliderCore extends SliderCore {
   getState(): TimeSliderState {
     const media = this.#media!;
     const { duration, currentTime, seeking, buffered } = media;
-    const { dragging, dragPercent } = this.input;
 
     // Override min/max for time domain, forwarding all user props so disabled/thumbAlignment aren't lost.
     super.setProps({ ...this.#props, min: 0, max: duration });
 
-    // Fill always tracks actual playback position. During drag a separate
-    // `previewPercent` shows where the user would seek on release.
     const base = super.getSliderState(currentTime);
-
-    const previewPercent = dragging ? dragPercent : base.fillPercent;
 
     // Use end of the furthest buffered range
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
@@ -72,7 +65,6 @@ export class TimeSliderCore extends SliderCore {
       duration,
       seeking,
       bufferPercent,
-      previewPercent,
     };
   }
 
@@ -83,8 +75,8 @@ export class TimeSliderCore extends SliderCore {
   override getAttrs(state: TimeSliderState) {
     const base = super.getAttrs(state);
 
-    // During drag, announce the preview position the user would seek to.
-    const announceValue = state.dragging ? this.rawValueFromPercent(state.previewPercent) : state.value;
+    // During drag, announce the pointer position the user would seek to.
+    const announceValue = state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
     const currentPhrase = formatTimeAsPhrase(announceValue);
     const durationPhrase = formatTimeAsPhrase(state.duration);
     const valuetext = durationPhrase ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;

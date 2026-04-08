@@ -33,15 +33,14 @@ describe('getSliderCSSVars', () => {
 });
 
 describe('getTimeSliderCSSVars', () => {
-  it('includes fill, pointer, buffer, and preview CSS vars', () => {
+  it('includes fill, pointer, and buffer CSS vars', () => {
     const vars = getTimeSliderCSSVars(
-      createTimeSliderState({ fillPercent: 50, pointerPercent: 30, bufferPercent: 75, previewPercent: 60 })
+      createTimeSliderState({ fillPercent: 50, pointerPercent: 30, bufferPercent: 75 })
     );
 
     expect(vars['--media-slider-fill']).toBe('50.000%');
     expect(vars['--media-slider-pointer']).toBe('30.000%');
     expect(vars['--media-slider-buffer']).toBe('75.000%');
-    expect(vars['--media-slider-preview']).toBe('60.000%');
   });
 
   it('formats buffer zero correctly', () => {

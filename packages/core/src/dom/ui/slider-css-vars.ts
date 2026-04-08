@@ -13,7 +13,6 @@ export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, str
   return {
     ...getSliderCSSVars(state),
     [SliderCSSVars.buffer]: `${state.bufferPercent.toFixed(3)}%`,
-    [SliderCSSVars.preview]: `${state.previewPercent.toFixed(3)}%`,
   };
 }
 

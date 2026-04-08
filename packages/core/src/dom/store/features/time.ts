@@ -52,11 +52,7 @@ export const timeFeature = definePlayerFeature({
     // the time-slider back to the old position, so skip `currentTime` sync
     // from `timeupdate` while the store indicates an active seek.
     const onTimeUpdate = () => {
-      if (get().seeking) {
-        set({ duration: Number.isFinite(media.duration) ? media.duration : 0 });
-        return;
-      }
-
+      if (get().seeking) return;
       sync();
     };
 

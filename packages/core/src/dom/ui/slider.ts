@@ -324,15 +324,6 @@ export function createSlider(options: SliderOptions): SliderApi {
       pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
     };
 
-    // Adjust previewPercent when present (e.g. TimeSliderState).
-    if ('previewPercent' in adjusted && typeof adjusted.previewPercent === 'number') {
-      (adjusted as Record<string, unknown>).previewPercent = options.adjustPercent(
-        adjusted.previewPercent,
-        thumbSize,
-        trackSize
-      );
-    }
-
     return adjusted;
   }
 
