@@ -21,7 +21,7 @@ function getEntry(target: HTMLElement): CoordinatorEntry {
   let entry = coordinators.get(target);
   if (!entry) {
     const recognizer = new TapRecognizer();
-    const coordinator = new Coordinator(target, (event, tapMatches, doubletapMatches) => {
+    const coordinator = new Coordinator(target, (event, _tapMatches, doubletapMatches) => {
       recognizer.up(
         doubletapMatches.length > 0,
         // onTap — re-match at fire time to avoid stale closures over removed bindings.
