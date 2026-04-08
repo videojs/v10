@@ -42,6 +42,6 @@ export function createMachineCore<FullState extends string, Snapshot extends Mac
 ) {
   const snapshotSignal = signal(initialSnapshot);
   const getState = (): FullState => untrack(() => snapshotSignal.get().value);
-  const transition = (to: FullState): void => update(snapshotSignal, { value: to });
+  const transition = (to: FullState): void => update(snapshotSignal, (current) => ({ ...current, value: to }));
   return { snapshotSignal, getState, transition };
 }

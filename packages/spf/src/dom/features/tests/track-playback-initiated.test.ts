@@ -129,7 +129,7 @@ describe('trackPlaybackInitiated', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(state.get().playbackInitiated).toBe(true);
 
-    state.set({ ...state.get(), presentation: { url: undefined } });
+    state.set({ ...state.get(), presentation: {} });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.get().playbackInitiated).toBe(false);
