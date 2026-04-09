@@ -326,13 +326,13 @@ interface TextTrackListEvents {
   modechange: EventLike;
 }
 
-interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> {
+interface TextTrackListLike {
   readonly length: number;
   [Symbol.iterator](): Iterator<TextTrackLike>;
   getTrackById?(id: string): TextTrackLike | null;
 }
 
-interface MediaTextTrackCapability {
+interface MediaTextTrackCapability extends EventTargetLike<TextTrackListEvents> {
   readonly textTracks: TextTrackListLike;
 }
 ```
