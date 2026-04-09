@@ -192,7 +192,6 @@ interface MediaPauseCapability {
   pause(): void;
   readonly paused: boolean;
   readonly ended: boolean;
-  getPauseAvailability?(): Promise<MediaFeatureAvailability>;
 }
 ```
 
