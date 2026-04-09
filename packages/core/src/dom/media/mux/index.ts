@@ -7,53 +7,16 @@ import { MuxDataMediaMixin, type MuxDataMediaProps } from './mux-data';
 
 export { isMuxVideoSrc, toPlaybackIdFromSrc, toVideoId } from './mux-data';
 
-const MUX_VIDEO_DOMAIN = 'mux.com';
-
-export interface MuxMediaProps extends HlsMediaProps, MuxDataMediaProps {
-  playbackId: string | null;
-  customDomain: string;
-}
+export interface MuxMediaProps extends HlsMediaProps, MuxDataMediaProps {}
 
 export function MuxMediaMixin<Base extends Constructor<EventTarget>>(BaseClass: Base) {
   const MuxDataBase = MuxDataMediaMixin(HlsMediaMixin(BaseClass));
 
   class MuxMediaImpl extends (MuxDataBase as Constructor<HlsMediaProps & MuxDataMediaProps>) {
     static PLAYER_SOFTWARE_NAME = '';
-
-    #playbackId: string | null = null;
-    #customDomain = MUX_VIDEO_DOMAIN;
-
-    get playbackId() {
-      return this.#playbackId;
-    }
-
-    set playbackId(value) {
-      if (this.#playbackId === value) return;
-      this.#playbackId = value;
-      this.#syncSrc();
-    }
-
-    get customDomain() {
-      return this.#customDomain;
-    }
-
-    set customDomain(value) {
-      const normalized = value || MUX_VIDEO_DOMAIN;
-      if (this.#customDomain === normalized) return;
-      this.#customDomain = normalized;
-      this.#syncSrc();
-    }
-
-    #syncSrc() {
-      this.src = this.#playbackId ? toSrc(this.#playbackId, this.#customDomain) : '';
-    }
   }
 
   return MuxMediaImpl as unknown as MixinReturn<Base, MuxMediaProps> & { PLAYER_SOFTWARE_NAME: string };
-}
-
-function toSrc(playbackId: string, customDomain: string) {
-  return `https://stream.${customDomain}/${playbackId}.m3u8`;
 }
 
 // These are used to infer the props from.

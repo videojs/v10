@@ -182,22 +182,14 @@ export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (Ba
 };
 
 export type MuxVideoIdProps = {
-  playbackId: string | null;
   src: string;
-  customDomain: string;
   metadata?: Record<string, any>;
 };
 
 export function toVideoId(props: MuxVideoIdProps): string | undefined {
   if (props.metadata?.video_id) return props.metadata.video_id;
   if (!isMuxVideoSrc(props)) return props.src;
-  return toPlaybackIdFromParameterized(props.playbackId) ?? toPlaybackIdFromSrc(props.src) ?? props.src;
-}
-
-function toPlaybackIdFromParameterized(playbackId: string | null): string | undefined {
-  if (!playbackId) return undefined;
-  const [id] = playbackId.split('?');
-  return id || undefined;
+  return toPlaybackIdFromSrc(props.src) ?? props.src;
 }
 
 export function toPlaybackIdFromSrc(src: string): string | undefined {
@@ -206,11 +198,9 @@ export function toPlaybackIdFromSrc(src: string): string | undefined {
   return playbackId || undefined;
 }
 
-export function isMuxVideoSrc({ playbackId, src, customDomain }: MuxVideoIdProps): boolean {
-  if (playbackId) return true;
+export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
   if (typeof src !== 'string') return false;
   const base = window?.location.href;
   const hostname = new URL(src, base).hostname.toLocaleLowerCase();
-
-  return hostname.includes(MUX_VIDEO_DOMAIN) || (!!customDomain && hostname.includes(customDomain.toLocaleLowerCase()));
+  return hostname.includes(MUX_VIDEO_DOMAIN);
 }
