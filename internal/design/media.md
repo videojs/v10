@@ -322,8 +322,8 @@ interface TextTrackLike {
 interface TextTrackListEvents {
   addtrack: EventLike;
   removetrack: EventLike;
-  change: EventLike;
-  modechange: EventLike;
+  changetrack: EventLike;
+  trackmodechange: EventLike;
 }
 
 interface TextTrackListLike {
