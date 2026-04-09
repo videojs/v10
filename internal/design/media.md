@@ -152,8 +152,7 @@ are independent — a media implementation picks the ones it supports.
 
 ### MediaPlaybackCapability
 
-The base contract. If it can play, it's media. Pause is not optional —
-every implementation that can play can also pause.
+The base contract. If it can play, it's media.
 
 ```ts
 interface MediaPlaybackEvents {
