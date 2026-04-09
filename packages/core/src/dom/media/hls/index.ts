@@ -1,5 +1,5 @@
 import { shallowEqual } from '@videojs/utils/object';
-import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
+import type { Mixin } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { CustomVideoElement } from '../custom-media-element';
@@ -40,14 +40,20 @@ export interface HlsMediaProps {
   destroy(): void;
 }
 
-export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
-  class HlsMediaImpl extends (BaseClass as AnyConstructor<any>) {
+interface HlsMediaHost extends EventTarget {
+  readonly target?: EventTarget | null;
+  attach?(target: EventTarget): void;
+  detach?(): void;
+}
+
+export const HlsMediaMixin: Mixin<HlsMediaHost, HlsMediaProps> = (BaseClass) => {
+  class HlsMediaImpl extends BaseClass {
     #delegate: HlsJsMediaBase | NativeHlsMediaBase | null = null;
-    #src: string = '';
+    #src = '';
     #type: SourceType | undefined;
     #preferPlayback: PlaybackType | undefined = 'mse';
     #config: Record<string, any> = {};
-    #debug: boolean = false;
+    #debug = false;
     #preload: PreloadType = 'metadata';
     #loadRequested?: Promise<void> | null;
     #prevEngineProps?: Record<string, any> | null;
@@ -70,7 +76,7 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     }
 
     /** Explicit source type. When unset, inferred from the source URL extension. */
-    get type(): SourceType | undefined {
+    get type() {
       return this.#type ?? inferSourceType(this.src);
     }
 
@@ -80,11 +86,11 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     }
 
     /** Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS. */
-    get preferPlayback(): PlaybackType | undefined {
+    get preferPlayback() {
       return this.#preferPlayback;
     }
 
-    set preferPlayback(value: PlaybackType | undefined) {
+    set preferPlayback(value) {
       this.#preferPlayback = value;
       this.#requestLoad();
     }
@@ -93,7 +99,7 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       return this.#config;
     }
 
-    set config(config: Record<string, any>) {
+    set config(config) {
       this.#config = config;
       this.#requestLoad();
     }
@@ -102,7 +108,7 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       return this.#debug;
     }
 
-    set debug(debug: boolean) {
+    set debug(debug) {
       this.#debug = debug;
       this.#requestLoad();
     }
@@ -111,7 +117,7 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       return this.#preload;
     }
 
-    set preload(value: PreloadType) {
+    set preload(value) {
       this.#preload = value;
       if (this.#delegate) {
         this.#delegate.preload = value;
@@ -120,12 +126,12 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
 
     attach(target: HTMLMediaElement) {
       this.#delegate?.attach(target);
-      (super.attach as any)?.(target);
+      super.attach?.(target);
     }
 
     detach() {
       this.#delegate?.detach();
-      (super.detach as any)?.();
+      super.detach?.();
     }
 
     destroy() {
@@ -147,10 +153,10 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
           ? new HlsJsMediaBase({ config: { ...this.config, debug: this.debug } })
           : new NativeHlsMediaBase();
 
-        bridgeEvents(this.#delegate, this as unknown as EventTarget);
+        bridgeEvents(this.#delegate, this);
 
-        if ((this as any).target) {
-          this.#delegate.attach((this as any).target as HTMLMediaElement);
+        if (this.target) {
+          this.#delegate.attach(this.target as HTMLMediaElement);
         }
 
         this.#delegate.preload = this.preload;
@@ -181,7 +187,7 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       };
     }
 
-    #engineDestroy(): void {
+    #engineDestroy() {
       this.#delegate?.destroy();
       this.#delegate = null;
       this.#prevEngineProps = null;
@@ -189,8 +195,8 @@ export function HlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     }
   }
 
-  return HlsMediaImpl as unknown as MixinReturn<Base, HlsMediaProps>;
-}
+  return HlsMediaImpl as any;
+};
 
 function inferSourceType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';

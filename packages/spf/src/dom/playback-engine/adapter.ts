@@ -1,4 +1,4 @@
-import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
+import type { Mixin } from '@videojs/utils/types';
 import { update } from '../../core/signals/primitives';
 import type { PlaybackEngineConfig } from './engine';
 import { createPlaybackEngine, type PlaybackEngine } from './engine';
@@ -19,8 +19,13 @@ export interface SpfMediaProps {
  * Use this to compose SPF into a class hierarchy (e.g., with VideoProxy
  * or CustomVideoElement) instead of using the standalone `SpfMedia` class.
  */
-export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
-  class SpfMediaImpl extends (BaseClass as AnyConstructor<any>) {
+interface SpfMediaHost extends EventTarget {
+  attach?(target: EventTarget): void;
+  detach?(): void;
+}
+
+export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => {
+  class SpfMediaImpl extends BaseClass {
     #engine: PlaybackEngine;
     #config: PlaybackEngineConfig;
     #preload: '' | 'none' | 'metadata' | 'auto' = '';
@@ -32,7 +37,7 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       this.#engine = createPlaybackEngine({});
     }
 
-    get engine(): PlaybackEngine {
+    get engine() {
       return this.#engine;
     }
 
@@ -40,18 +45,18 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     // Media element lifecycle
     // ---------------------------------------------------------------------------
 
-    attach(mediaElement: HTMLMediaElement): void {
+    attach(mediaElement: HTMLMediaElement) {
       update(this.#engine.owners, { mediaElement });
-      (super.attach as any)?.(mediaElement);
+      super.attach?.(mediaElement);
     }
 
-    detach(): void {
+    detach() {
       this.#cancelPendingPlay();
       update(this.#engine.owners, { mediaElement: undefined });
-      (super.detach as any)?.();
+      super.detach?.();
     }
 
-    destroy(): void {
+    destroy() {
       this.#cancelPendingPlay();
       this.#engine.destroy();
     }
@@ -60,11 +65,11 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
     // ---------------------------------------------------------------------------
 
-    get preload(): '' | 'none' | 'metadata' | 'auto' {
+    get preload() {
       return this.#preload;
     }
 
-    set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    set preload(value) {
       this.#preload = value;
       if (value) {
         update(this.#engine.state, { preload: value });
@@ -80,7 +85,7 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     // as the browser's load algorithm resets all media element state on src change.
     // ---------------------------------------------------------------------------
 
-    get src(): string {
+    get src() {
       return this.#engine.state.get().presentation?.url ?? '';
     }
 
@@ -111,7 +116,7 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     // Delegates to the attached media element's native play().
     // ---------------------------------------------------------------------------
 
-    play(): Promise<void> {
+    play() {
       const { mediaElement } = this.#engine.owners.get();
       if (!mediaElement) {
         return Promise.reject(new Error('SpfMedia: no media element attached'));
@@ -120,7 +125,7 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
       // Signal play intent — enables loading even with preload="none"
       update(this.#engine.state, { playbackInitiated: true });
 
-      return mediaElement.play().catch((err: unknown) => {
+      return mediaElement.play().catch((err) => {
         // If we have a pending HLS source, the rejection may be because MSE
         // hasn't attached a blob URL yet. Wait for loadstart (src assigned
         // by MSE setup) and retry once.
@@ -142,7 +147,7 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     // Private
     // ---------------------------------------------------------------------------
 
-    #cancelPendingPlay(): void {
+    #cancelPendingPlay() {
       if (!this.#loadstartListener) return;
       const { mediaElement } = this.#engine.owners.get();
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
@@ -150,8 +155,8 @@ export function SpfMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base)
     }
   }
 
-  return SpfMediaImpl as unknown as MixinReturn<Base, SpfMediaProps>;
-}
+  return SpfMediaImpl as any;
+};
 
 /**
  * HTMLMediaElement-compatible adapter for the SPF playback engine.

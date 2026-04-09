@@ -1,4 +1,4 @@
-import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
+import type { Constructor, Mixin } from '@videojs/utils/types';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 import { NativeHlsMediaErrorsMixin } from './errors';
@@ -15,15 +15,21 @@ export interface NativeHlsMediaProps {
   destroy(): void;
 }
 
-function NativeHlsMediaBaseMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
-  class NativeHlsMediaBaseImpl extends (BaseClass as AnyConstructor<any>) {
+interface NativeHlsMediaHost extends EventTarget {
+  readonly target?: EventTarget | null;
+  attach?(target: EventTarget): void;
+  detach?(): void;
+}
+
+const NativeHlsMediaBaseMixin: Mixin<NativeHlsMediaHost, NativeHlsMediaProps> = (BaseClass) => {
+  class NativeHlsMediaBaseImpl extends BaseClass {
     #target: HTMLMediaElement | null = null;
 
     get target() {
-      return this.#target ?? super.target;
+      return this.#target ?? super.target ?? null;
     }
 
-    #src: string = '';
+    #src = '';
     #preload: PreloadType = 'metadata';
 
     get engine() {
@@ -37,8 +43,8 @@ function NativeHlsMediaBaseMixin<Base extends AnyConstructor<any>>(BaseClass: Ba
     set src(src: string) {
       this.#src = src;
 
-      if (this.target) {
-        this.target.src = src;
+      if (this.#target) {
+        this.#target.src = src;
       }
     }
 
@@ -49,39 +55,38 @@ function NativeHlsMediaBaseMixin<Base extends AnyConstructor<any>>(BaseClass: Ba
     set preload(value: PreloadType) {
       this.#preload = value;
 
-      if (this.target) {
-        this.target.preload = value;
+      if (this.#target) {
+        this.#target.preload = value;
       }
     }
 
     attach(target: HTMLMediaElement) {
-      (super.attach as any)?.(target);
+      super.attach?.(target);
       this.#target = target;
 
-      if (this.target && this.preload !== this.target.preload) {
-        this.target.preload = this.preload;
+      if (this.preload !== this.#target.preload) {
+        this.#target.preload = this.preload;
       }
 
-      if (this.target && this.src !== this.target.src) {
-        this.target.src = this.src;
+      if (this.src !== this.#target.src) {
+        this.#target.src = this.src;
       }
     }
 
     detach() {
-      (super.detach as any)?.();
+      super.detach?.();
       this.#target = null;
     }
 
     destroy() {
-      (super.destroy as any)?.();
       this.#target = null;
     }
   }
 
-  return NativeHlsMediaBaseImpl as unknown as MixinReturn<Base, NativeHlsMediaProps>;
-}
+  return NativeHlsMediaBaseImpl as any;
+};
 
-export function NativeHlsMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
+export function NativeHlsMediaMixin<Base extends Constructor<EventTarget>>(BaseClass: Base) {
   return NativeHlsMediaErrorsMixin(NativeHlsMediaBaseMixin(BaseClass));
 }
 

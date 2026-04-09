@@ -1,4 +1,4 @@
-import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
+import type { Mixin } from '@videojs/utils/types';
 import * as dashjs from 'dashjs';
 
 import { CustomVideoElement } from '../custom-media-element';
@@ -12,10 +12,15 @@ export interface DashMediaProps {
   destroy(): void;
 }
 
-export function DashMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base) {
-  class DashMediaImpl extends (BaseClass as AnyConstructor<any>) {
+interface DashMediaHost extends EventTarget {
+  attach?(target: EventTarget): void;
+  detach?(): void;
+}
+
+export const DashMediaMixin: Mixin<DashMediaHost, DashMediaProps> = (BaseClass) => {
+  class DashMediaImpl extends BaseClass {
     #engine: dashjs.MediaPlayerClass;
-    #src: string = '';
+    #src = '';
 
     constructor(...args: any[]) {
       super(...args);
@@ -23,39 +28,39 @@ export function DashMediaMixin<Base extends AnyConstructor<any>>(BaseClass: Base
       this.#engine.initialize(undefined, undefined, false);
     }
 
-    get engine(): dashjs.MediaPlayerClass {
+    get engine() {
       return this.#engine;
     }
 
-    get src(): string {
+    get src() {
       return this.#src;
     }
 
-    set src(src: string) {
+    set src(src) {
       this.#src = src;
       this.#engine.attachSource(src);
     }
 
-    attach(target: EventTarget): void {
+    attach(target: EventTarget) {
       this.#engine.attachView(target as HTMLMediaElement);
-      (super.attach as any)?.(target);
+      super.attach?.(target);
     }
 
-    detach(): void {
+    detach() {
       // dash.js types don't reflect null support, but null is valid for detaching
       this.#engine.attachView(null as unknown as HTMLMediaElement);
-      (super.detach as any)?.();
+      super.detach?.();
     }
 
-    destroy(): void {
+    destroy() {
       this.#engine.destroy();
     }
   }
 
-  return DashMediaImpl as unknown as MixinReturn<Base, DashMediaProps>;
-}
+  return DashMediaImpl as any;
+};
 
-export class DashMediaBase extends DashMediaMixin(class {}) {}
+export class DashMediaBase extends DashMediaMixin(EventTarget) {}
 
 export class DashCustomMedia extends DashMediaMixin(CustomVideoElement) {}
 
