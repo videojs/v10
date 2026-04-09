@@ -34,6 +34,15 @@ const coloredLogo = logoSvg
   .replace(/currentColor/g, LOGO_FILL)
   .replace(/<svg /, `<svg width="${logoW}" height="${logoH}" `);
 
+// Optical centering: nudge the logo left by ¼ the rendered "V" width.
+// The "V" spans 0–66.14 in the 381-unit viewBox → ~167 px at logoW.
+// ¼ of that ≈ 42 px.
+const vWidthPx = (66.14 / logoNativeW) * logoW;
+const nudgeLeft = Math.round(vWidthPx / 4);
+
+const centreLeft = Math.round((WIDTH - logoW) / 2);
+const centreTop = Math.round((HEIGHT - logoH) / 2);
+
 const image = sharp({
   create: {
     width: WIDTH,
@@ -45,7 +54,8 @@ const image = sharp({
   .composite([
     {
       input: Buffer.from(coloredLogo),
-      gravity: 'centre',
+      left: centreLeft - nudgeLeft,
+      top: centreTop,
     },
   ])
   .png();
