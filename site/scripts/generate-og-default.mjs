@@ -34,11 +34,8 @@ const coloredLogo = logoSvg
   .replace(/currentColor/g, LOGO_FILL)
   .replace(/<svg /, `<svg width="${logoW}" height="${logoH}" `);
 
-// Optical centering: nudge the logo left by ⅛ the rendered "V" width.
-// The "V" spans 0–66.14 in the 381-unit viewBox → ~167 px at logoW.
-// ⅛ of that ≈ 21 px.
-const vWidthPx = (66.14 / logoNativeW) * logoW;
-const nudgeLeft = Math.round(vWidthPx / 8);
+// Optical centering: nudge the logo 10 px left of mathematical centre.
+const nudgeLeft = 10;
 
 const centreLeft = Math.round((WIDTH - logoW) / 2);
 const centreTop = Math.round((HEIGHT - logoH) / 2);
