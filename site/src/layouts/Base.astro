@@ -31,6 +31,7 @@ function resolveImageUrl(img: ImageMetadata | string): string {
   return new URL(img.src, Astro.url).toString();
 }
 
+const defaultOgImage = new URL('/og-default.png', Astro.site).toString();
 const resolvedTwitterImage = twitterImage ?? image;
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
@@ -113,7 +114,10 @@ const fullTitle =
     />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={resolveImageUrl(image)} />}
+    <meta
+      property="og:image"
+      content={image ? resolveImageUrl(image) : defaultOgImage}
+    />
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
@@ -123,14 +127,12 @@ const fullTitle =
     />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    {
-      resolvedTwitterImage && (
-        <meta
-          property="twitter:image"
-          content={resolveImageUrl(resolvedTwitterImage)}
-        />
-      )
-    }
+    <meta
+      property="twitter:image"
+      content={resolvedTwitterImage
+        ? resolveImageUrl(resolvedTwitterImage)
+        : defaultOgImage}
+    />
 
     {/* Whatever else */}
     <slot name="head" />
