@@ -127,15 +127,17 @@ export class PlayerPage {
 
   /** Click at a percentage position on the time slider. */
   async seekTo(percent: number): Promise<void> {
-    // Wait for the media element to have a non-zero duration (seekable).
-    // HLS streams can take longer to report duration.
-    // Query includes custom elements like <hls-video>, <dash-video>.
+    // Wait for the media element to have metadata loaded (readyState >= 1)
+    // and a non-zero duration. HLS streams report duration from the manifest
+    // before any media data is buffered (readyState 0). On WebKit, seeking
+    // with no buffered data resolves to currentTime 0 instead of the
+    // requested position, so we wait for at least HAVE_METADATA.
     await this.page.waitForFunction(
       () => {
         const media = document.querySelector('video, audio, hls-video, dash-video') as HTMLMediaElement | null;
         // Custom elements may wrap the actual <video>, check the inner element too
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
-        return actual && actual.duration > 0 && Number.isFinite(actual.duration);
+        return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
       { timeout: 30_000 }
     );

@@ -46,12 +46,7 @@ for (const { name, path, media } of ALL_VIDEO_PAGES) {
 
     // --- Time Slider ---
 
-    test('time slider allows seeking', async ({ page, browserName }) => {
-      // WebKit + hls.js: slider click triggers seek but currentTime doesn't
-      // update within the poll timeout. Likely a buffer-append timing issue
-      // in WebKit's MSE implementation.
-      test.skip(browserName === 'webkit' && media === 'hls', 'WebKit hls.js seek timing');
-
+    test('time slider allows seeking', async ({ page }) => {
       await player.seekTo(50);
 
       await expect
