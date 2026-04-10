@@ -32,7 +32,7 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify({
-    devFeatures: { images: false },
+    devFeatures: { images: false, environmentVariables: true },
   }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
@@ -130,30 +130,28 @@ export default defineConfig({
     },
   },
 
-  experimental: {
-    fonts: [
-      {
-        provider: fontProviders.google(),
-        name: 'Instrument Sans',
-        cssVariable: '--font-instrument-sans',
-        weights: ['400 600'],
-        styles: ['normal', 'italic'],
-        subsets: ['latin'],
-        fallbacks: ['sans-serif'],
-        optimizedFallbacks: true,
-        display: 'swap',
-      },
-      {
-        provider: fontProviders.google(),
-        name: 'IBM Plex Mono',
-        cssVariable: '--font-ibm-plex-mono',
-        weights: ['600', '400'],
-        styles: ['normal'],
-        subsets: ['latin'],
-        fallbacks: ['monospace'],
-        optimizedFallbacks: true,
-        display: 'swap',
-      },
-    ],
-  },
+  fonts: [
+    {
+      provider: fontProviders.google(),
+      name: 'Instrument Sans',
+      cssVariable: '--font-instrument-sans',
+      weights: ['400 600'],
+      styles: ['normal', 'italic'],
+      subsets: ['latin'],
+      fallbacks: ['sans-serif'],
+      optimizedFallbacks: true,
+      display: 'swap',
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'IBM Plex Mono',
+      cssVariable: '--font-ibm-plex-mono',
+      weights: ['600', '400'],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['monospace'],
+      optimizedFallbacks: true,
+      display: 'swap',
+    },
+  ],
 });

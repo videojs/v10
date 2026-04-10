@@ -23,9 +23,6 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   clean: true,
   hash: false,
   unbundle: true,
-  alias: {
-    '@': new URL('./src/core', import.meta.url).pathname,
-  },
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',

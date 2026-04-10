@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.15] - 2026-04-03
+
+### 🐛 Bug Fixes
+- *(site)* Remove default attr from storyboard track elements ([#1211](https://github.com/videojs/v10/pull/1211)) by [@mihar-22](https://github.com/mihar-22)
+- *(ci)* Prevent non-fast-forward push in release-pr workflow ([#1213](https://github.com/videojs/v10/pull/1213)) by [@luwes](https://github.com/luwes)
+- *(core)* Enable default tracks for chapters and metadata ([#1216](https://github.com/videojs/v10/pull/1216)) by [@luwes](https://github.com/luwes)
+
+### ⚙️ Miscellaneous Tasks
+- *(ci)* Update workflows for new triage system ([#1217](https://github.com/videojs/v10/pull/1217)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-beta.14] - 2026-04-03
 
 ### 🚀 Features
@@ -1107,6 +1117,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.15]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15
 [@videojs/core@10.0.0-beta.14]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.13...@videojs/core@10.0.0-beta.14
 [@videojs/core@10.0.0-beta.13]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.12...@videojs/core@10.0.0-beta.13
 [@videojs/core@10.0.0-beta.12]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.11...@videojs/core@10.0.0-beta.12

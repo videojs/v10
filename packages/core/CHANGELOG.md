@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15) (2026-04-03)
+
+
+### Bug Fixes
+
+* **core:** enable default tracks for chapters and metadata ([#1216](https://github.com/videojs/v10/issues/1216)) ([9317c04](https://github.com/videojs/v10/commit/9317c0433c911d8807f5924ab4c813c046265078))
+* **site:** remove default attr from storyboard track elements ([#1211](https://github.com/videojs/v10/issues/1211)) ([5734c4a](https://github.com/videojs/v10/commit/5734c4ad3c3a33e2b3a8aa06fbe908157e6b934e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.15
+    * @videojs/store bumped to 10.0.0-beta.15
+    * @videojs/utils bumped to 10.0.0-beta.15
+
 ## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.13...@videojs/core@10.0.0-beta.14) (2026-04-03)
 
 

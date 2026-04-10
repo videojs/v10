@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.14...@videojs/skins@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+
 ## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.13...@videojs/skins@10.0.0-beta.14) (2026-04-03)
 
 

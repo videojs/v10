@@ -9,9 +9,15 @@ const TAP_THRESHOLD = 250;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
-  state: (): MediaControlsState => ({
+  state: ({ get, set }): MediaControlsState => ({
     userActive: true,
     controlsVisible: true,
+    toggleControls() {
+      // Fallback before attach — no idle timer, just flip state.
+      const next = !get().userActive;
+      set({ userActive: next, controlsVisible: next });
+      return next as boolean;
+    },
   }),
 
   attach({ target, signal, get, set }) {
@@ -52,6 +58,18 @@ export const controlsFeature = definePlayerFeature({
       clearIdle();
       set({ userActive: false, controlsVisible: computeVisible(false) });
     }
+
+    // Expose toggleControls with access to idle timer.
+    set({
+      toggleControls() {
+        if (get().controlsVisible) {
+          setInactive();
+        } else {
+          setActive();
+        }
+        return get().controlsVisible;
+      },
+    });
 
     // Touch tap-to-toggle
     let pointerDownTime = 0;

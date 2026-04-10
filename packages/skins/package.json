@@ -1,7 +1,7 @@
 {
   "name": "@videojs/skins",
   "type": "module",
-  "version": "10.0.0-beta.14",
+  "version": "10.0.0-beta.15",
   "private": true,
   "description": "Shared skin CSS and Tailwind classname tokens for Video.js",
   "license": "Apache-2.0",

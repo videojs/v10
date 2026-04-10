@@ -6,7 +6,7 @@ import { PlaybackRateButtonCore } from '../playback-rate-button-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): MediaPlaybackRateState {
   return {
-    playbackRates: [1, 1.2, 1.5, 1.7, 2],
+    playbackRates: [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2],
     playbackRate: 1,
     setPlaybackRate: vi.fn(),
     ...overrides,
@@ -96,7 +96,7 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore();
       const media = createMediaState({ playbackRate: 2 });
       core.cycle(media);
-      expect(media.setPlaybackRate).toHaveBeenCalledWith(1);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.2);
     });
 
     it('advances through the middle of the list', () => {
@@ -108,9 +108,9 @@ describe('PlaybackRateButtonCore', () => {
 
     it('finds the first rate greater than current when not in list', () => {
       const core = new PlaybackRateButtonCore();
-      const media = createMediaState({ playbackRate: 0.75 });
+      const media = createMediaState({ playbackRate: 0.3 });
       core.cycle(media);
-      expect(media.setPlaybackRate).toHaveBeenCalledWith(1);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.5);
     });
 
     it('finds the next greater rate when between list values', () => {
@@ -124,7 +124,14 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore();
       const media = createMediaState({ playbackRate: 3 });
       core.cycle(media);
-      expect(media.setPlaybackRate).toHaveBeenCalledWith(1);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.2);
+    });
+
+    it('cycles through sub-1x rates', () => {
+      const core = new PlaybackRateButtonCore();
+      const media = createMediaState({ playbackRate: 0.2 });
+      core.cycle(media);
+      expect(media.setPlaybackRate).toHaveBeenCalledWith(0.5);
     });
 
     it('does nothing when disabled', () => {

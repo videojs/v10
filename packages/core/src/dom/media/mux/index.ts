@@ -1,9 +1,9 @@
 import Mux from 'mux-embed';
 
 import { DelegateMixin } from '../../../core/media/delegate';
-import { CustomVideoElement } from '../custom-media-element';
+import { CustomAudioElement, CustomVideoElement } from '../custom-media-element';
 import { Hls, HlsMediaDelegate } from '../hls';
-import { VideoProxy } from '../proxy';
+import { AudioProxy, VideoProxy } from '../proxy';
 import { getPlayerVersion } from './env';
 import type { MuxDataSdk } from './types';
 
@@ -235,3 +235,7 @@ export class MuxMedia extends DelegateMixin(VideoProxy, MuxMediaDelegate) {}
 export class MuxCustomVideo extends DelegateMixin(CustomVideoElement, MuxVideoDelegate) {}
 
 export class MuxVideo extends DelegateMixin(VideoProxy, MuxVideoDelegate) {}
+
+export class MuxCustomAudio extends DelegateMixin(CustomAudioElement, MuxAudioDelegate) {}
+
+export class MuxAudio extends DelegateMixin(AudioProxy, MuxAudioDelegate) {}

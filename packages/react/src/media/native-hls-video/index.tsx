@@ -1,3 +1,5 @@
+'use client';
+
 import type { InferDelegateProps } from '@videojs/core';
 import { NativeHlsMedia, NativeHlsMediaDelegate } from '@videojs/core/dom/media/native-hls';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
@@ -10,7 +12,10 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 export type NativeHlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
   InferDelegateProps<typeof NativeHlsMediaDelegate>;
 
-export const NativeHlsVideo = forwardRef<HTMLVideoElement, NativeHlsVideoProps>(({ children, ...props }, ref) => {
+export const NativeHlsVideo = forwardRef<HTMLVideoElement, NativeHlsVideoProps>(function NativeHlsVideo(
+  { children, ...props },
+  ref
+) {
   const mediaApi = useMediaInstance(NativeHlsMedia);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
@@ -22,4 +27,6 @@ export const NativeHlsVideo = forwardRef<HTMLVideoElement, NativeHlsVideoProps>(
   );
 });
 
-export default NativeHlsVideo;
+export namespace NativeHlsVideo {
+  export type Props = NativeHlsVideoProps;
+}

@@ -1,5 +1,6 @@
 import type { AnyPlayerStore, Media, MediaContainer, PlayerStore } from '@videojs/core/dom';
-import { type Context, createContext } from '@videojs/element/context';
+import type { ReactiveControllerHost } from '@videojs/element';
+import { type Context, type ContextConsumer, createContext } from '@videojs/element/context';
 
 // ----------------------------------------
 // Player Context
@@ -48,6 +49,8 @@ export interface ContainerContextValue {
 }
 
 export type ContainerContext = Context<typeof CONTAINER_CONTEXT_KEY, ContainerContextValue>;
+
+export type ContainerContextConsumer = ContextConsumer<ContainerContext, ReactiveControllerHost & HTMLElement>;
 
 export const containerContext = createContext<ContainerContextValue, typeof CONTAINER_CONTEXT_KEY>(
   CONTAINER_CONTEXT_KEY

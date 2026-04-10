@@ -14,10 +14,24 @@
  *
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SpfMedia } from '../adapter';
 
 describe('SpfMedia', () => {
+  // Prevent real network calls from engines that auto-trigger resolution
+  // (e.g. when a media element with default preload="auto" is attached alongside a src).
+  // A never-settling promise avoids unhandled rejections without affecting test assertions.
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => {}))
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   // ---------------------------------------------------------------------------
   // src — synchronous IDL attribute reflection (WHATWG §4.8.11.2)
   // ---------------------------------------------------------------------------

@@ -17,7 +17,7 @@ export default function TextTrackUsage() {
           playsInline
           crossOrigin="anonymous"
         >
-          <track kind="metadata" label="thumbnails" src="/docs/demos/thumbnail/basic.vtt" />
+          <track kind="metadata" label="thumbnails" src="/docs/demos/thumbnail/basic.vtt" default />
         </Video>
         <Thumbnail className="react-thumbnail-text-track__thumbnail" time={12} />
       </Player.Container>

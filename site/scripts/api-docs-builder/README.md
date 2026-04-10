@@ -2,9 +2,9 @@
 
 Generates API reference JSON from TypeScript sources for Video.js 10 components and utilities.
 
-> **Spec:** [`internal/design/site/api-docs-builder.md`](../../../internal/design/site/api-docs-builder.md)
-> is the ground-truth for discovery conventions, extraction rules, JSON schemas, the reference model,
-> and rendered output. When implementation diverges from the spec, the spec wins.
+> **Spec:** The E2E test suite at [`src/tests/e2e.test.ts`](src/tests/e2e.test.ts) is the living
+> specification for the builder pipeline. It exercises every input pattern against a mock monorepo
+> and asserts the expected JSON output. Read the test to understand how the builder works.
 
 ## Architecture
 
@@ -51,25 +51,21 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 site/scripts/api-docs-builder/
 ├── README.md                  # This file
 └── src/
-    ├── index.ts               # Main entry point, orchestrates handlers
+    ├── index.ts               # CLI entry point
+    ├── pipeline.ts            # Testable pipeline functions (discovery, extraction, building)
     ├── types.ts               # TypeScript interfaces
     ├── formatter.ts           # Type formatting utilities
     ├── utils.ts               # Utility functions (naming helpers)
     ├── core-handler.ts        # Extracts Props/State from core packages
     ├── data-attrs-handler.ts  # Extracts data attributes
+    ├── css-vars-handler.ts    # Extracts CSS custom properties
     ├── html-handler.ts        # Extracts Lit element info
     ├── parts-handler.ts       # Parses index.parts.ts for multi-part components
     ├── util-handler.ts        # Extracts util params/return from store/react packages
     └── tests/
-        ├── test-utils.ts
-        ├── fixtures/          # Monorepo fixtures for integration tests
-        ├── core-handler.test.ts
-        ├── data-attrs-handler.test.ts
-        ├── formatter.test.ts
-        ├── html-handler.test.ts
-        ├── parts-handler.test.ts
-        ├── util-handler.test.ts
-        └── utils.test.ts
+        ├── e2e.test.ts        # ★ E2E spec — the living specification
+        ├── formatter.test.ts  # Type abbreviation/formatting edge cases
+        └── fixtures/          # Mock monorepo for E2E tests
 
 site/src/
 ├── content/generated-component-reference/  # Generated component JSON (gitignored)

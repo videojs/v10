@@ -560,9 +560,11 @@ vi.mock('@/types/docs', async () => {
 
 ## API Reference Generation
 
-> **Source of truth:** [`internal/design/site/api-docs-builder.md`](../internal/design/site/api-docs-builder.md)
+> **Source of truth:** [`scripts/api-docs-builder/src/tests/e2e.test.ts`](scripts/api-docs-builder/src/tests/e2e.test.ts)
 >
-> The design spec is the ground-truth for the entire pipeline — discovery, extraction, JSON schemas, reference model, and rendered output. **Any changes to the api-docs-builder must be reflected in the spec.** When implementation diverges from the spec, the spec wins.
+> The E2E test suite is the living specification for the builder pipeline. It exercises every input
+> pattern against a mock monorepo and asserts the expected JSON output. Read the test to understand
+> how the builder works. **Any changes to the api-docs-builder must keep the E2E tests passing.**
 
 The builder (`scripts/api-docs-builder/`) extracts type information from TypeScript sources and generates JSON for two kinds of reference:
 

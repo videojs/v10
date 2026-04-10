@@ -11,6 +11,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { MediaHotkey } from '@/ui/hotkey/media-hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -155,6 +156,22 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <MediaHotkey keys="Space" action="togglePaused" />
+      <MediaHotkey keys="k" action="togglePaused" />
+      <MediaHotkey keys="m" action="toggleMuted" />
+      <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
+      <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <MediaHotkey keys="l" action="seekStep" value={10} />
+      <MediaHotkey keys="j" action="seekStep" value={-10} />
+      <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <MediaHotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <MediaHotkey keys="0-9" action="seekToPercent" />
+      <MediaHotkey keys="Home" action="seekToPercent" value={0} />
+      <MediaHotkey keys="End" action="seekToPercent" value={100} />
+      <MediaHotkey keys=">" action="speedUp" />
+      <MediaHotkey keys="<" action="speedDown" />
     </Container>
   );
 }

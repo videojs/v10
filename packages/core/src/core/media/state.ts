@@ -168,6 +168,8 @@ export interface MediaControlsState {
   userActive: boolean;
   /** Whether controls should be visible (userActive || paused). */
   controlsVisible: boolean;
+  /** Toggle controls visibility. Returns the new `controlsVisible` value. */
+  toggleControls(): boolean;
 }
 
 export interface MediaPlaybackRateState {

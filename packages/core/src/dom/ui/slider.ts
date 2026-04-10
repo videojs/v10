@@ -25,14 +25,17 @@ export interface SliderOptions {
   getLargeStepPercent: () => number;
 
   /**
-   * Trailing-edge throttle (ms) for `onValueCommit` during drag. When `> 0`,
-   * `onValueCommit` fires periodically while dragging, then a final unthrottled
-   * commit fires on pointer release. `0` (default) disables — commits only on release.
+   * Leading+trailing throttle (ms) for `onValueChange` during drag. When
+   * `> 0`, `onValueChange` fires immediately on the first drag move (leading
+   * edge), then at most once per window during subsequent moves. `0` (default)
+   * disables throttling — `onValueChange` fires on every pointermove.
    */
-  commitThrottle?: number | undefined;
+  changeThrottle?: number | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
   adjustPercent?: ((rawPercent: number, thumbSize: number, trackSize: number) => number) | undefined;
+  /** Fires continuously as the value changes (every pointermove during drag, keyboard steps). */
   onValueChange?: ((percent: number) => void) | undefined;
+  /** Fires once when the user commits the value (pointer release, keyboard step). */
   onValueCommit?: ((percent: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
@@ -73,9 +76,6 @@ export interface SliderApi {
   destroy: () => void;
 }
 
-/** Intentional drag threshold — number of pointermove events before drag starts. */
-const DRAG_THRESHOLD = 2;
-
 export function createSlider(options: SliderOptions): SliderApi {
   const input = createState<SliderInput>({
     pointerPercent: 0,
@@ -86,16 +86,28 @@ export function createSlider(options: SliderOptions): SliderApi {
   });
 
   const abort = new AbortController();
-  const commitThrottleMs = options.commitThrottle ?? 0;
+  const changeThrottleMs = options.changeThrottle ?? 0;
 
   let isDragging = false,
-    moveCount = 0,
     cachedRTL = false,
     cachedRect: DOMRect | null = null,
-    capturedPointerId: number | null = null;
+    capturedPointerId: number | null = null,
+    lastDragPercent = 0,
+    committedOnRelease = false;
 
-  const throttledCommit =
-    commitThrottleMs > 0 ? throttle((percent: number) => options.onValueCommit?.(percent), commitThrottleMs) : null;
+  const throttledChange =
+    changeThrottleMs > 0
+      ? throttle((percent: number) => options.onValueChange?.(percent), changeThrottleMs, { leading: true })
+      : null;
+
+  /** Fire `onValueChange` — throttled during drag when `changeThrottle > 0`. */
+  function fireChange(percent: number, duringDrag: boolean): void {
+    if (duringDrag && throttledChange) {
+      throttledChange(percent);
+    } else {
+      options.onValueChange?.(percent);
+    }
+  }
 
   function releaseCapture(): void {
     if (isNull(capturedPointerId)) return;
@@ -114,16 +126,22 @@ export function createSlider(options: SliderOptions): SliderApi {
     if (!isDragging) {
       input.patch({ pointing: false });
     } else {
+      // Fire a final commit if pointerup didn't already handle it.
+      if (!committedOnRelease) {
+        options.onValueCommit?.(lastDragPercent);
+      }
+
       isDragging = false;
       input.patch({ dragging: false, pointing: false });
       options.onDragEnd?.();
     }
 
+    committedOnRelease = false;
     cleanup();
   }
 
   function cleanup() {
-    throttledCommit?.cancel();
+    throttledChange?.cancel();
     capturedPointerId = null;
     cachedRect = null;
   }
@@ -143,7 +161,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       cachedRect = el.getBoundingClientRect();
       cachedRTL = options.isRTL();
-      moveCount = 0;
+      committedOnRelease = false;
 
       releaseCapture();
       capturedPointerId = event.pointerId;
@@ -151,7 +169,10 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
 
-      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
+      isDragging = true;
+      lastDragPercent = percent;
+      input.patch({ pointing: true, dragging: true, pointerPercent: percent, dragPercent: percent });
+      options.onDragStart?.();
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -164,7 +185,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     onPointerMove(event) {
       if (options.isDisabled()) return;
 
-      // Pointer is captured — this is a drag-related move.
+      // Pointer is captured — this is a drag move.
       if (!isNull(capturedPointerId)) {
         // Stale drag safety: if buttons === 0 for non-touch, browser lost the pointerup.
         if (event.pointerType !== 'touch' && event.buttons === 0) {
@@ -172,24 +193,11 @@ export function createSlider(options: SliderOptions): SliderApi {
           return;
         }
 
-        moveCount++;
-
         const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 
-        if (!isDragging && moveCount >= DRAG_THRESHOLD) {
-          isDragging = true;
-          input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
-          options.onDragStart?.();
-          options.onValueChange?.(percent);
-          throttledCommit?.(percent);
-        } else if (isDragging) {
-          input.patch({ dragPercent: percent, pointerPercent: percent });
-          options.onValueChange?.(percent);
-          throttledCommit?.(percent);
-        } else {
-          // Below drag threshold — update hover preview only.
-          input.patch({ pointerPercent: percent });
-        }
+        lastDragPercent = percent;
+        input.patch({ dragPercent: percent, pointerPercent: percent });
+        fireChange(percent, true);
 
         return;
       }
@@ -207,9 +215,11 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 
-      // Cancel pending throttled commit before the final unthrottled one.
-      throttledCommit?.cancel();
+      // Cancel any pending throttled change before the final unthrottled pair.
+      throttledChange?.cancel();
+      options.onValueChange?.(percent);
       options.onValueCommit?.(percent);
+      committedOnRelease = true;
     },
 
     onPointerLeave() {
@@ -308,11 +318,13 @@ export function createSlider(options: SliderOptions): SliderApi {
     const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
     const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
 
-    return {
+    const adjusted: S = {
       ...state,
       fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
       pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
     };
+
+    return adjusted;
   }
 
   let resizeObserver: ResizeObserver | null = null;

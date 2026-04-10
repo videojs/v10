@@ -41,6 +41,9 @@ export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
+export { MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/media-hotkey';
+export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
+export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';

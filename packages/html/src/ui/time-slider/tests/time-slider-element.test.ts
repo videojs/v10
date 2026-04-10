@@ -28,7 +28,7 @@ describe('TimeSliderElement', () => {
   it('initializes with default property values', () => {
     const slider = createElement(TimeSliderElement);
     expect(slider.label).toBe('Seek');
-    expect(slider.commitThrottle).toBe(100);
+    expect(slider.changeThrottle).toBe(100);
     expect(slider.step).toBe(1);
     expect(slider.largeStep).toBe(10);
     expect(slider.orientation).toBe('horizontal');

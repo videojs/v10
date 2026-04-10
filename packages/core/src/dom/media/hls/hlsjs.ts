@@ -1,6 +1,7 @@
 import Hls, { type HlsConfig } from 'hls.js';
 import type { Delegate } from '../../../core/media/delegate';
 import { HlsJsMediaErrorsMixin } from './errors';
+import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
 import { HlsJsMediaTextTracksMixin } from './text-tracks';
 
@@ -55,5 +56,5 @@ class HlsJsMediaDelegateBase extends EventTarget implements Delegate {
 }
 
 export class HlsJsMediaDelegate extends HlsJsMediaPreloadMixin(
-  HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaDelegateBase))
+  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaDelegateBase)))
 ) {}

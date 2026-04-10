@@ -1,3 +1,5 @@
+'use client';
+
 import type { InferDelegateProps } from '@videojs/core';
 import { HlsMedia, HlsMediaDelegate } from '@videojs/core/dom/media/hls';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
@@ -10,7 +12,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 export type HlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
   InferDelegateProps<typeof HlsMediaDelegate>;
 
-export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(({ children, ...props }, ref) => {
+export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(function HlsVideo({ children, ...props }, ref) {
   const mediaApi = useMediaInstance(HlsMedia);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
@@ -22,4 +24,6 @@ export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(({ children,
   );
 });
 
-export default HlsVideo;
+export namespace HlsVideo {
+  export type Props = HlsVideoProps;
+}

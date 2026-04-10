@@ -18,6 +18,7 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
+import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
 
 type TriggerElement = HTMLElement & {
@@ -54,6 +55,7 @@ export class TooltipElement extends MediaElement {
 
   readonly #core = new TooltipCore();
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
+  readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
 
@@ -61,13 +63,11 @@ export class TooltipElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
-  #positionAbort: AbortController | null = null;
-  #positionFrame = 0;
-  #resizeObserver: ResizeObserver | null = null;
-  #positionTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
+
     this.#disconnect = new AbortController();
 
     this.#tooltip = createTooltip({
@@ -110,7 +110,6 @@ export class TooltipElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupPositioning();
     this.#cleanupTrigger();
     this.#tooltip?.destroy();
     this.#tooltip = null;
@@ -140,7 +139,7 @@ export class TooltipElement extends MediaElement {
     if (!this.#tooltip) return;
 
     // Discover trigger via commandfor linkage.
-    const triggerEl = this.#findTrigger();
+    const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
 
     // Derive state from core + input.
@@ -167,7 +166,7 @@ export class TooltipElement extends MediaElement {
 
     // Skip positioning when closed — no rects to measure.
     if (!state.open) {
-      this.#cleanupPositioning();
+      this.#position.cleanup();
       return;
     }
 
@@ -192,21 +191,15 @@ export class TooltipElement extends MediaElement {
       );
     }
 
-    this.#syncPositioning();
+    this.#position.sync(this.#currentTrigger);
   }
 
-  // --- Trigger discovery ---
-
-  #findTrigger(): HTMLElement | null {
-    if (!this.id) return null;
-    const root = this.getRootNode() as Document | ShadowRoot;
-    return root.querySelector<HTMLElement>(`[commandfor="${this.id}"]`);
-  }
+  // --- Trigger management ---
 
   #syncTrigger(triggerEl: HTMLElement | null): void {
     if (triggerEl === this.#currentTrigger) return;
 
-    this.#cleanupPositioning();
+    this.#position.cleanup();
     this.#cleanupTrigger();
     this.#currentTrigger = triggerEl;
     this.#tooltip?.setTriggerElement(triggerEl);
@@ -236,50 +229,5 @@ export class TooltipElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
-  }
-
-  #syncPositioning(): void {
-    if (supportsAnchorPositioning()) return;
-
-    const triggerEl = this.#currentTrigger;
-
-    if (!triggerEl) return;
-    if (this.#positionAbort && this.#positionTrigger === triggerEl) return;
-
-    this.#cleanupPositioning();
-    this.#positionAbort = new AbortController();
-    this.#positionTrigger = triggerEl;
-    const { signal } = this.#positionAbort;
-
-    const reposition = () => {
-      cancelAnimationFrame(this.#positionFrame);
-      this.#positionFrame = requestAnimationFrame(() => {
-        if (signal.aborted) return;
-        this.requestUpdate();
-      });
-    };
-
-    window.addEventListener('scroll', reposition, { capture: true, passive: true, signal });
-    window.addEventListener('resize', reposition, { signal });
-
-    if (typeof ResizeObserver === 'function') {
-      this.#resizeObserver = new ResizeObserver(() => {
-        reposition();
-      });
-      this.#resizeObserver.observe(triggerEl);
-      this.#resizeObserver.observe(this);
-    }
-
-    reposition();
-  }
-
-  #cleanupPositioning(): void {
-    this.#positionAbort?.abort();
-    this.#positionAbort = null;
-    this.#positionTrigger = null;
-    cancelAnimationFrame(this.#positionFrame);
-    this.#positionFrame = 0;
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
   }
 }
