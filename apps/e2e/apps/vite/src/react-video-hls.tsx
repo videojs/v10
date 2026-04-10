@@ -10,9 +10,9 @@ const Player = createPlayer({ features: videoFeatures });
 function App() {
   return (
     <Player.Provider>
-      <VideoSkin poster={MEDIA.hls.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
-        <HlsVideo src={MEDIA.hls.url} playsInline crossOrigin="anonymous">
-          <track kind="metadata" label="thumbnails" src={MEDIA.hls.storyboard} default />
+      <VideoSkin poster={MEDIA.hlsTs.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
+        <HlsVideo src={MEDIA.hlsTs.url} playsInline crossOrigin="anonymous">
+          <track kind="metadata" label="thumbnails" src={MEDIA.hlsTs.storyboard} default />
         </HlsVideo>
       </VideoSkin>
     </Player.Provider>

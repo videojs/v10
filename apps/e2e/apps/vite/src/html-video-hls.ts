@@ -8,10 +8,10 @@ const html = String.raw;
 document.getElementById('root')!.innerHTML = html`
   <video-player>
     <video-skin style="max-width: 800px; aspect-ratio: 16/9">
-      <hls-video src="${MEDIA.hls.url}" playsinline crossorigin="anonymous">
-        <track kind="metadata" label="thumbnails" src="${MEDIA.hls.storyboard}" default />
+      <hls-video src="${MEDIA.hlsTs.url}" playsinline crossorigin="anonymous">
+        <track kind="metadata" label="thumbnails" src="${MEDIA.hlsTs.storyboard}" default />
       </hls-video>
-      <img slot="poster" src="${MEDIA.hls.poster}" alt="Video poster" />
+      <img slot="poster" src="${MEDIA.hlsTs.poster}" alt="Video poster" />
     </video-skin>
   </video-player>
 `;
