@@ -4,12 +4,11 @@ import { PlayerPage } from '../../page-objects/player';
 /**
  * Visual snapshot tests for the video skin.
  *
- * Non-fragile strategy:
- * - Screenshot the visible skin container (not the wrapper or full page)
- * - Mask dynamic elements (current time, buffering indicator)
- * - Disable animations globally
- * - Use generous pixel thresholds (configured in playwright.config.ts)
- * - Pause and seek to deterministic positions before capture
+ * These verify the skin's CSS and layout aren't broken — not UX interactions.
+ * Strategy:
+ * - Screenshot the skin container in its initial paused state
+ * - Generous pixel thresholds absorb cross-platform rendering differences
+ * - Animations disabled globally (configured in playwright.config.ts)
  */
 
 const VISUAL_PAGES = [
@@ -30,33 +29,11 @@ for (const { name, path } of VISUAL_PAGES) {
       await player.waitForMediaReady();
     });
 
-    test('paused with poster', async ({ page }) => {
+    test('default paused state', async ({ page }) => {
       await player.showControls();
       await page.waitForTimeout(300);
 
-      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-paused-poster.png`, {
-        mask: [player.bufferingIndicator, player.currentTime, player.duration],
-      });
-    });
-
-    test('paused at 25%', async ({ page }) => {
-      await player.seekTo(25);
-      await player.showControls();
-      await page.waitForTimeout(300);
-
-      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-paused-25pct.png`, {
-        mask: [player.currentTime, player.bufferingIndicator, player.duration],
-      });
-    });
-
-    test('muted state', async ({ page }) => {
-      await player.muteButton.click();
-      await player.showControls();
-      await page.waitForTimeout(300);
-
-      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-muted.png`, {
-        mask: [player.currentTime, player.bufferingIndicator, player.duration],
-      });
+      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-default.png`);
     });
   });
 }

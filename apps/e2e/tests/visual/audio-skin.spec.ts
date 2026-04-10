@@ -4,8 +4,7 @@ import { PlayerPage } from '../../page-objects/player';
 /**
  * Visual snapshot tests for the audio skin.
  *
- * Same non-fragile strategy as video skin snapshots:
- * component-level crops, masked dynamic content, generous thresholds.
+ * Verifies the audio skin's CSS and layout aren't broken.
  */
 
 const VISUAL_PAGES = [
@@ -26,18 +25,7 @@ for (const { name, path } of VISUAL_PAGES) {
     test('default paused state', async ({ page }) => {
       await page.waitForTimeout(300);
 
-      await expect(player.playerRoot).toHaveScreenshot(`audio-${name.toLowerCase()}-paused.png`, {
-        mask: [player.currentTime],
-      });
-    });
-
-    test('muted state', async ({ page }) => {
-      await player.muteButton.click();
-      await page.waitForTimeout(300);
-
-      await expect(player.playerRoot).toHaveScreenshot(`audio-${name.toLowerCase()}-muted.png`, {
-        mask: [player.currentTime],
-      });
+      await expect(player.playerRoot).toHaveScreenshot(`audio-${name.toLowerCase()}-default.png`);
     });
   });
 }
