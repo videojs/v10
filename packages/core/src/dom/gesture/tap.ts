@@ -1,24 +1,21 @@
+import type { GestureMatchResult, GestureRecognizer } from './gesture';
+
 const DOUBLETAP_WINDOW = 300;
 
 /**
  * Recognizes tap vs doubletap from quick pointer-up events.
  *
  * Stateful recognizer — tracks tap count and doubletap timing.
- * The caller handles pointer-down timing (tap threshold) and
- * calls `up()` only for quick taps that passed the threshold check.
+ * The coordinator handles pointer-down timing (tap threshold) and
+ * calls `handleUp()` only for quick taps that passed the threshold check.
  */
-export class TapRecognizer {
+export class TapRecognizer implements GestureRecognizer {
   #lastTapTime = 0;
   #tapTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /**
-   * Process a confirmed quick tap.
-   *
-   * @param hasDoubletap - Whether doubletap bindings exist for this context.
-   * @param onTap - Called when a tap is confirmed (immediately or after doubletap window).
-   * @param onDoubleTap - Called when a doubletap is detected.
-   */
-  up(hasDoubletap: boolean, onTap: (() => void) | null, onDoubleTap: (() => void) | null): void {
+  handleUp(matches: GestureMatchResult, event: PointerEvent): void {
+    const hasDoubletap = matches.resolve('doubletap').length > 0;
+
     if (hasDoubletap) {
       const now = Date.now();
 
@@ -26,27 +23,26 @@ export class TapRecognizer {
         // Second tap within window — doubletap.
         this.#clearTimer();
         this.#lastTapTime = 0;
-        onDoubleTap?.();
+        // Re-resolve at fire time so removed bindings between taps are respected.
+        matches.resolve('doubletap')[0]?.onActivate(event);
         return;
       }
 
       // First tap — defer to allow doubletap window.
       this.#lastTapTime = now;
-
-      if (onTap) {
-        this.#clearTimer();
-        this.#tapTimer = setTimeout(() => {
-          this.#tapTimer = null;
-          this.#lastTapTime = 0;
-          onTap();
-        }, DOUBLETAP_WINDOW);
-      }
+      this.#clearTimer();
+      this.#tapTimer = setTimeout(() => {
+        this.#tapTimer = null;
+        this.#lastTapTime = 0;
+        // Re-resolve at fire time so cleanup between pointerup and timeout is respected.
+        matches.resolve('tap')[0]?.onActivate(event);
+      }, DOUBLETAP_WINDOW);
 
       return;
     }
 
     // No doubletap bindings — fire tap immediately.
-    onTap?.();
+    matches.resolve('tap')[0]?.onActivate(event);
   }
 
   #clearTimer(): void {

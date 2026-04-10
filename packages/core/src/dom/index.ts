@@ -1,4 +1,5 @@
 export * from './feature';
+export * from './gesture/coordinator';
 export * from './gesture/create-tap-gesture';
 export * from './gesture/gesture';
 export * from './hotkey/actions';
