@@ -1,16 +1,7 @@
-import { isUndefined } from '@videojs/utils/predicate';
+import { isFunction, isUndefined } from '@videojs/utils/predicate';
 
 import type { AnyPlayerStore } from '../media/types';
-import {
-  selectControls,
-  selectFullscreen,
-  selectPiP,
-  selectPlayback,
-  selectPlaybackRate,
-  selectTextTrack,
-  selectTime,
-  selectVolume,
-} from '../store/selectors';
+import { selectPlaybackRate, selectTime, selectVolume } from '../store/selectors';
 
 export type GestureActionName =
   | 'togglePaused'
@@ -32,37 +23,8 @@ export interface GestureActionContext {
 
 export type GestureActionResolver = (context: GestureActionContext) => void;
 
-const GESTURE_ACTIONS: Record<GestureActionName, GestureActionResolver> = {
-  togglePaused({ store }) {
-    const playback = selectPlayback(store.state);
-    if (!playback) return;
-    playback.paused ? playback.play() : playback.pause();
-  },
-
-  toggleMuted({ store }) {
-    selectVolume(store.state)?.toggleMuted();
-  },
-
-  toggleFullscreen({ store }) {
-    const fs = selectFullscreen(store.state);
-    if (!fs) return;
-    fs.fullscreen ? fs.exitFullscreen() : fs.requestFullscreen();
-  },
-
-  toggleSubtitles({ store }) {
-    selectTextTrack(store.state)?.toggleSubtitles();
-  },
-
-  togglePiP({ store }) {
-    const pip = selectPiP(store.state);
-    if (!pip) return;
-    pip.pip ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
-  },
-
-  toggleControls({ store }) {
-    selectControls(store.state)?.toggleControls();
-  },
-
+/** Actions that need custom logic beyond `store.state[action]()`. */
+const GESTURE_ACTION_OVERRIDES: Partial<Record<GestureActionName, GestureActionResolver>> = {
   seekStep({ store, value }) {
     if (isUndefined(value)) return;
     const time = selectTime(store.state);
@@ -97,11 +59,13 @@ const GESTURE_ACTIONS: Record<GestureActionName, GestureActionResolver> = {
 };
 
 export function resolveGestureAction(name: string): GestureActionResolver | undefined {
-  const resolver = GESTURE_ACTIONS[name as GestureActionName];
+  const override = GESTURE_ACTION_OVERRIDES[name as GestureActionName];
+  if (override) return override;
 
-  if (__DEV__ && !resolver) {
-    console.warn(`[vjs-gesture] Unknown action: "${name}"`);
-  }
-
-  return resolver;
+  // Direct store method call — togglePaused, toggleMuted, toggleFullscreen, etc.
+  return ({ store }) => {
+    const method = (store.state as Record<string, unknown>)[name];
+    if (isFunction(method)) method();
+    else if (__DEV__) console.warn(`[vjs-gesture] Unknown action: "${name}"`);
+  };
 }
