@@ -332,7 +332,7 @@ interface TextTrackListLike {
   getTrackById?(id: string): TextTrackLike | null;
 }
 
-interface MediaTextTrackCapability extends EventTargetLike<TextTrackListEvents> {
+interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
 }
 ```
