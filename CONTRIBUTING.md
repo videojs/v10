@@ -133,10 +133,10 @@ pnpm -F core test:watch      # watch core package
 
 We use [Playwright](https://playwright.dev) for end-to-end testing. The E2E tests live in `apps/e2e/` and run against a Vite-based test app that hosts the player in multiple configurations (HTML, React, ejected skins, CDN bundles).
 
-**First-time setup** — install the Playwright browsers:
+Playwright browsers and system dependencies are installed automatically during `pnpm install`. On Linux without sudo, browsers will install but system deps will be skipped with a note. If e2e tests fail due to missing system dependencies, install them manually:
 
 ```sh
-pnpm test:e2e:install
+sudo pnpm test:e2e:install
 ```
 
 **Running tests:**
