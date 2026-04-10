@@ -533,12 +533,12 @@ class HlsVideo extends HTMLVideoElementHost<HlsVideoEvents>
 ### HTML (`@videojs/html`)
 
 ```ts
-abstract class CustomVideoElement extends MediaElementMixin(HTMLElement) {
+abstract class VideoElement extends MediaElementMixin(HTMLElement) {
   abstract readonly media: Video;
   // shadow DOM, <video> template, slots, attribute forwarding, events
 }
 
-abstract class CustomAudioElement extends MediaElementMixin(HTMLElement) {
+abstract class AudioElement extends MediaElementMixin(HTMLElement) {
   abstract readonly media: Audio;
   // shadow DOM, <audio> template, slots, attribute forwarding, events
 }
@@ -551,7 +551,7 @@ walking.
 Subclasses provide the core media host:
 
 ```ts
-export class HlsVideoElement extends CustomVideoElement {
+export class HlsVideoElement extends VideoElement {
   static readonly tagName = 'hls-video';
   readonly media = new HlsVideo();
 }
@@ -563,7 +563,7 @@ export class HlsVideoElement extends CustomVideoElement {
 - Implement `MediaEngineHost` for engine lifecycle
 - Override `attachEngine()`, `detachEngine()`, `destroyEngine()`
 - Override `src` and any getters that route through their engine
-- Extend `CustomVideoElement` or `CustomAudioElement` in HTML package, provide the host instance
+- Extend `VideoElement` or `AudioElement` in HTML package, provide the host instance
 
 ---
 
@@ -662,8 +662,8 @@ isHTMLVideoElementHost(media)          // → media is HTMLVideoElementHost
 isHTMLAudioElementHost(media)          // → media is HTMLAudioElementHost
 
 // HTML custom elements
-isCustomVideoElement(media)            // → media is CustomVideoElement
-isCustomAudioElement(media)            // → media is CustomAudioElement
+isVideoElement(media)            // → media is VideoElement
+isAudioElement(media)            // → media is AudioElement
 
 // Specific implementations
 isHlsVideo(media)                      // → media is HlsVideo
@@ -751,7 +751,7 @@ class HlsVideo extends HTMLVideoElementHost<HlsVideoEvents>
 </script>
 ```
 
-`CustomVideoElement` forwards native video attributes (`playsinline`,
+`VideoElement` forwards native video attributes (`playsinline`,
 `poster`, `crossorigin`, `loop`, `autoplay`, `muted`, `preload`) to
 the inner `<video>`. These are element configuration, not media
 capabilities.
@@ -765,7 +765,7 @@ capabilities.
 ```
 
 The slotted `<video>` replaces the default shadow DOM `<video>`.
-`CustomMediaElement` detects it via the `media` slot and uses it as
+`VideoElement` detects it via the `media` slot and uses it as
 the engine target. The media contract still works.
 
 ### Store integration — unchanged
@@ -796,7 +796,7 @@ it as a custom element:
 
 ```ts
 // packages/html/src/media/hls-video/index.ts
-export class HlsVideoElement extends CustomVideoElement {
+export class HlsVideoElement extends VideoElement {
   static readonly tagName = 'hls-video';
   readonly media = new HlsVideo();
 }
@@ -804,7 +804,7 @@ export class HlsVideoElement extends CustomVideoElement {
 safeDefine(HlsVideoElement);
 ```
 
-`CustomVideoElement` creates the shadow DOM with a `<video>` template,
+`VideoElement` creates the shadow DOM with a `<video>` template,
 resolves the video target (default or slotted), calls `attachElement(video)`
 on the media host, forwards contract events and attributes, and handles
 store context registration.
@@ -824,6 +824,6 @@ The split:
 | `@videojs/core/dom` | `HTMLAudioElementHost implements Audio` | Full `Audio` contract + typed `AudioEventTarget` |
 | `@videojs/core/dom` | `HlsVideo extends HTMLVideoElementHost` | HLS engine + contract overrides |
 | `@videojs/html` | `MediaElementMixin` | Store context registration |
-| `@videojs/html` | `CustomVideoElement` (abstract) | Shadow DOM, video template, slots, attributes, events, store context |
-| `@videojs/html` | `CustomAudioElement` (abstract) | Shadow DOM, audio template, slots, attributes, events, store context |
-| `@videojs/html` | `HlsVideoElement extends CustomVideoElement` | Provides `HlsVideo` host, registered as `<hls-video>` |
+| `@videojs/html` | `VideoElement` (abstract) | Shadow DOM, video template, slots, attributes, events, store context |
+| `@videojs/html` | `AudioElement` (abstract) | Shadow DOM, audio template, slots, attributes, events, store context |
+| `@videojs/html` | `HlsVideoElement extends VideoElement` | Provides `HlsVideo` host, registered as `<hls-video>` |
