@@ -9,12 +9,8 @@ export default function ReactUsageCodeBlock() {
   const $sourceUrl = useStore(sourceUrl);
 
   const result = generateReactUsageCode({
-    framework: 'react',
-    useCase: 'default-video',
-    skin: 'video',
     renderer: $renderer,
     sourceUrl: $sourceUrl,
-    installMethod: 'npm',
   });
 
   return (

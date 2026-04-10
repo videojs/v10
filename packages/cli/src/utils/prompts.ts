@@ -2,8 +2,7 @@ import * as p from '@clack/prompts';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import { VALID_RENDERERS } from '@/utils/installation/types';
-
-type Framework = 'html' | 'react';
+import type { Framework } from './config.js';
 
 export async function promptFramework(): Promise<Framework> {
   const value = await p.select({

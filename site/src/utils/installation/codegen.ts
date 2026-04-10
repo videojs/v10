@@ -64,7 +64,7 @@ function getMediaImportSubpath(renderer: Renderer): string | null {
 // ---------------------------------------------------------------------------
 
 export function generateHTMLInstallCode(
-  opts: InstallationOptions
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
 ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
   return {
     cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer),
@@ -79,7 +79,7 @@ export function generateHTMLInstallCode(
 // React Install
 // ---------------------------------------------------------------------------
 
-export function generateReactInstallCode(_opts: InstallationOptions): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
   return {
     npm: 'npm install @videojs/react',
     pnpm: 'pnpm add @videojs/react',
@@ -168,7 +168,9 @@ import '@videojs/html/background/video';${mediaImport}`;
 import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 }
 
-export function generateHTMLUsageCode(opts: InstallationOptions): { html: string; js?: string } {
+export function generateHTMLUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+): { html: string; js?: string } {
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
   return { html, js };
@@ -218,7 +220,9 @@ function getRendererMediaSubpath(renderer: Renderer): string {
   return map[renderer] ?? renderer;
 }
 
-export function generateReactCreateCode(opts: InstallationOptions): Record<'MyPlayer.tsx', string> {
+export function generateReactCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): Record<'MyPlayer.tsx', string> {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const featureType = getUseCaseFeatures(useCase);
@@ -279,7 +283,9 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
 // React Usage
 // ---------------------------------------------------------------------------
 
-export function generateReactUsageCode(opts: InstallationOptions): Record<'App.tsx', string> {
+export function generateReactUsageCode(
+  opts: Pick<InstallationOptions, 'renderer' | 'sourceUrl'>
+): Record<'App.tsx', string> {
   const source = resolveSourceUrl(opts.sourceUrl, opts.renderer);
 
   return {

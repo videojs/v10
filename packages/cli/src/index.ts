@@ -10,8 +10,6 @@ const parsed = parse(process.argv.slice(2), {
 
 const [command, ...rest] = parsed._ as string[];
 
-declare const __CLI_VERSION__: string;
-
 if (parsed.version) {
   console.log(`@videojs/cli v${__CLI_VERSION__}`);
   process.exit(0);
@@ -32,7 +30,7 @@ Installation flags:
   --skin <default|minimal>                  Skin (default: default)
   --media <html5-video|html5-audio|hls|background-video>  Media type
   --source-url <url>                        Media source URL
-  --install-method <cdn|npm|pnpm|yarn|bun>  Install method (default: npm)
+  --install-method <cdn|npm|pnpm|yarn|bun>  Install method (default: cdn for html, npm for react)
 
 Options:
   -v, --version  Show version

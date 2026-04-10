@@ -90,7 +90,7 @@ describe('generateHTMLInstallCode', () => {
 
 describe('generateReactInstallCode', () => {
   it('returns install commands for all methods', () => {
-    const result = generateReactInstallCode(baseReact);
+    const result = generateReactInstallCode();
     expect(result.npm).toBe('npm install @videojs/react');
     expect(result.pnpm).toBe('pnpm add @videojs/react');
     expect(result.yarn).toBe('yarn add @videojs/react');

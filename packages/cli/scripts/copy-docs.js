@@ -3,7 +3,18 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SITE_DIST = join(__dirname, '..', '..', '..', 'site', 'dist');
+
+function findWorkspaceRoot(start) {
+  let dir = start;
+  while (dir !== dirname(dir)) {
+    if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return dir;
+    dir = dirname(dir);
+  }
+  throw new Error('Could not find pnpm-workspace.yaml — is this script running inside the monorepo?');
+}
+
+const WORKSPACE_ROOT = findWorkspaceRoot(__dirname);
+const SITE_DIST = join(WORKSPACE_ROOT, 'site', 'dist');
 const CLI_DOCS = join(__dirname, '..', 'docs');
 
 if (!existsSync(SITE_DIST)) {

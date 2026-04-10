@@ -3,13 +3,12 @@ import { type InstallationOptions, validateInstallationOptions } from '@/utils/i
 import { detectRenderer } from '@/utils/installation/detect-renderer';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import { VALID_RENDERERS } from '@/utils/installation/types';
+import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
 import { promptAllInstallOptions, promptFramework } from '../utils/prompts.js';
 import { replaceMarker } from '../utils/replace.js';
-
-type Framework = 'html' | 'react';
 
 interface ParsedFlags {
   framework?: string;
@@ -20,8 +19,6 @@ interface ParsedFlags {
   'source-url'?: string;
   'install-method'?: string;
 }
-
-declare const __CLI_VERSION__: string;
 
 function printVersionHeader(): void {
   console.log(`@videojs/cli v${__CLI_VERSION__}\n`);

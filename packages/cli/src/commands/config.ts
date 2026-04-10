@@ -9,7 +9,12 @@ export function handleConfig(args: string[]): void {
         console.error('Usage: @videojs/cli config set <key> <value>');
         process.exit(1);
       }
-      setConfigValue(key, value);
+      try {
+        setConfigValue(key, value);
+      } catch (error) {
+        console.error((error as Error).message);
+        process.exit(1);
+      }
       console.log(`Set ${key} = ${value}`);
       break;
     }
@@ -18,11 +23,16 @@ export function handleConfig(args: string[]): void {
         console.error('Usage: @videojs/cli config get <key>');
         process.exit(1);
       }
-      const val = getConfigValue(key);
-      if (val !== undefined) {
-        console.log(val);
-      } else {
-        console.error(`No value set for "${key}"`);
+      try {
+        const val = getConfigValue(key);
+        if (val !== undefined) {
+          console.log(val);
+        } else {
+          console.error(`No value set for "${key}"`);
+          process.exit(1);
+        }
+      } catch (error) {
+        console.error((error as Error).message);
         process.exit(1);
       }
       break;

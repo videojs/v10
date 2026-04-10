@@ -1,17 +1,14 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-// Mock the config file path to use a temp directory
 const testDir = join(tmpdir(), 'videojs-cli-test-' + Date.now());
-const testConfigFile = join(testDir, 'config.json');
 
 vi.mock('node:os', async () => {
   const actual = await vi.importActual<typeof import('node:os')>('node:os');
   return {
     ...actual,
-    homedir: () => join(tmpdir(), 'videojs-cli-test-' + Date.now()),
+    homedir: () => testDir,
   };
 });
 
@@ -43,5 +40,17 @@ describe('config', () => {
     setConfigValue('framework', 'html');
     const config = listConfig();
     expect(config).toHaveProperty('framework', 'html');
+  });
+
+  it('rejects unknown config key on set', () => {
+    expect(() => setConfigValue('foo', 'bar')).toThrow('Unknown config key: "foo"');
+  });
+
+  it('rejects invalid value for known key on set', () => {
+    expect(() => setConfigValue('framework', 'vue')).toThrow('Invalid value "vue" for "framework"');
+  });
+
+  it('rejects unknown config key on get', () => {
+    expect(() => getConfigValue('foo')).toThrow('Unknown config key: "foo"');
   });
 });

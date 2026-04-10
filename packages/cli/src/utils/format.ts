@@ -38,13 +38,17 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
 }
 
 function formatReactInstallation(opts: InstallationOptions): string {
-  const install = generateReactInstallCode(opts);
+  const install = generateReactInstallCode();
   const create = generateReactCreateCode(opts);
   const usage = generateReactUsageCode(opts);
   const sections: string[] = [];
 
+  if (opts.installMethod === 'cdn') {
+    throw new Error('CDN install method is not supported for React');
+  }
+
   sections.push('## Install Video.js\n');
-  sections.push(`\`\`\`bash\n${install[opts.installMethod as keyof typeof install]}\n\`\`\``);
+  sections.push(`\`\`\`bash\n${install[opts.installMethod]}\n\`\`\``);
 
   sections.push('\n## Create your player\n');
   sections.push('Add to `./components/player/index.tsx`:\n');

@@ -12,7 +12,6 @@ export default function HTMLUsageCodeBlock() {
   const $sourceUrl = useStore(sourceUrl);
 
   const result = generateHTMLUsageCode({
-    framework: 'html',
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,

@@ -10,12 +10,9 @@ export default function ReactCreateCodeBlock() {
   const $renderer = useStore(renderer);
 
   const result = generateReactCreateCode({
-    framework: 'react',
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,
-    sourceUrl: '',
-    installMethod: 'npm',
   });
 
   return (
