@@ -382,9 +382,9 @@ interface Media extends
 }
 ```
 
-That's it — `play()`, `pause()`, `paused`, `readyState`, and optional
-untyped references to engine and native element. A native `HTMLVideoElement`
-satisfies this. So does a bare-bones custom implementation.
+That's it — `play()`, `readyState`, and optional untyped references to
+engine and native element. A native `HTMLVideoElement` satisfies this.
+So does a bare-bones custom implementation.
 
 Everything else is opt-in via capabilities. `Video` and `Audio` are the
 standard full contracts — each extends `EventTargetLike` once with a
