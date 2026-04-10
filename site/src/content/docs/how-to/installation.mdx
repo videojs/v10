@@ -33,17 +33,19 @@ Video.js is an **HTML video player built on custom elements** &mdash; lightweigh
 
 <LLMCase>
 <div data-cli-replace="installation">
-<p>Run <code>npx @videojs/cli docs how-to/installation</code> to generate installation code for your setup.</p>
 
-<p><strong>Flags:</strong></p>
-<ul>
-<li><code>--framework &lt;html|react&gt;</code> — JS framework</li>
-<li><code>--preset &lt;video|audio|background-video&gt;</code> — player preset (default: video)</li>
-<li><code>--skin &lt;default|minimal&gt;</code> — skin (default: default)</li>
-<li><code>--media &lt;html5-video|html5-audio|hls|background-video&gt;</code> — media type (default: per preset)</li>
-<li><code>--source-url &lt;url&gt;</code> — media URL (default: demo URL per media type)</li>
-<li><code>--install-method &lt;cdn|npm|pnpm|yarn|bun&gt;</code> — install method (default: npm)</li>
-</ul>
+Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
+
+```bash
+npx @videojs/cli docs how-to/installation \
+  --framework <html|react> \
+  --preset <video|audio|background-video> \
+  --skin <default|minimal> \
+  --media <html5-video|html5-audio|hls|background-video> \
+  --source-url <url> \
+  --install-method <cdn|npm|pnpm|yarn|bun>
+```
+
 </div>
 </LLMCase>
 

@@ -46,7 +46,7 @@ export function setConfigValue(key: string, value: string): void {
     throw new Error(`Invalid value "${value}" for "${key}". Valid values: ${validValues.join(', ')}`);
   }
   const config = readConfig();
-  config[key as keyof CliConfig] = value as CliConfig[keyof CliConfig];
+  (config as Record<string, string>)[key] = value;
   writeConfig(config);
 }
 

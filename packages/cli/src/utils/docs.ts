@@ -11,14 +11,25 @@ function safePath(...segments: string[]): string | null {
   return resolved;
 }
 
+export function docExistsInAnyFramework(slug: string): boolean {
+  return ['html', 'react'].some((fw) => {
+    const mdPath = safePath(fw, `${slug}.md`);
+    return mdPath !== null && existsSync(mdPath);
+  });
+}
+
+function stripLlmsFooter(content: string): string {
+  return content.replace(/\n---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
+}
+
 export function readBundledDoc(framework: string, slug: string): string | null {
   const mdPath = safePath(framework, `${slug}.md`);
   if (!mdPath || !existsSync(mdPath)) return null;
-  return readFileSync(mdPath, 'utf-8');
+  return stripLlmsFooter(readFileSync(mdPath, 'utf-8'));
 }
 
 export function readLlmsTxt(framework: string): string | null {
   const txtPath = safePath(framework, 'llms.txt');
   if (!txtPath || !existsSync(txtPath)) return null;
-  return readFileSync(txtPath, 'utf-8');
+  return stripLlmsFooter(readFileSync(txtPath, 'utf-8'));
 }

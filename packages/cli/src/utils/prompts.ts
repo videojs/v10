@@ -1,5 +1,6 @@
 import * as p from '@clack/prompts';
 import type { InstallationOptions } from '@/utils/installation/codegen';
+import { detectRenderer } from '@/utils/installation/detect-renderer';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from './config.js';
@@ -61,43 +62,108 @@ function installMethodOptions(framework: Framework): Array<{ value: InstallMetho
   return options;
 }
 
-export async function promptAllInstallOptions(framework: Framework): Promise<InstallationOptions> {
-  const useCase = await p.select({
-    message: 'Preset',
-    options: PRESET_OPTIONS,
-  });
-  if (p.isCancel(useCase)) process.exit(0);
+export interface PartialInstallFlags {
+  preset?: UseCase;
+  skin?: Skin;
+  rawSkin?: string;
+  sourceUrl?: string;
+  media?: Renderer;
+  installMethod?: InstallMethod;
+}
 
-  const skin = await p.select({
-    message: 'Skin',
-    options: skinOptionsForUseCase(useCase),
-  });
-  if (p.isCancel(skin)) process.exit(0);
+function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
+  const isAudio = useCase === 'default-audio';
+  const map: Record<string, Skin> = {
+    default: isAudio ? 'audio' : 'video',
+    minimal: isAudio ? 'minimal-audio' : 'minimal-video',
+  };
+  const result = map[skinFlag];
+  if (!result) {
+    console.error(`Invalid skin: "${skinFlag}". Must be "default" or "minimal".`);
+    process.exit(1);
+  }
+  return result;
+}
 
-  const media = await p.select({
-    message: 'Media source type',
-    options: mediaOptionsForUseCase(useCase),
-  });
-  if (p.isCancel(media)) process.exit(0);
+export async function promptInstallOptions(
+  framework: Framework,
+  flags: PartialInstallFlags
+): Promise<InstallationOptions> {
+  const useCase =
+    flags.preset ??
+    (await (async () => {
+      const value = await p.select({
+        message: 'Preset',
+        options: PRESET_OPTIONS,
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value;
+    })());
 
-  const sourceUrl = await p.text({
-    message: 'Source URL (leave blank for demo)',
-    defaultValue: '',
-  });
-  if (p.isCancel(sourceUrl)) process.exit(0);
+  // Resolve raw --skin flag now that useCase is known
+  const resolvedSkin = flags.rawSkin ? mapRawSkin(flags.rawSkin, useCase) : flags.skin;
 
-  const installMethodValue = await p.select({
-    message: 'Install method',
-    options: installMethodOptions(framework),
-  });
-  if (p.isCancel(installMethodValue)) process.exit(0);
+  const skin =
+    resolvedSkin ??
+    (await (async () => {
+      const value = await p.select({
+        message: 'Skin',
+        options: skinOptionsForUseCase(useCase),
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value;
+    })());
+
+  const sourceUrl =
+    flags.sourceUrl ??
+    (await (async () => {
+      const value = await p.text({
+        message: 'Source URL (leave blank for demo)',
+        defaultValue: '',
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value ?? '';
+    })());
+
+  // Detect media type from URL when not explicitly provided
+  const detected = sourceUrl ? detectRenderer(sourceUrl, useCase) : null;
+
+  const media =
+    flags.media ??
+    (await (async () => {
+      const options = mediaOptionsForUseCase(useCase);
+
+      // Skip prompt if there's only one valid option
+      if (options.length === 1) return options[0]!.value;
+
+      const message = detected ? `Media source type (detected ${detected.label} from URL)` : 'Media source type';
+
+      const value = await p.select({
+        message,
+        options,
+        initialValue: detected?.renderer,
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value as Renderer;
+    })());
+
+  const installMethod =
+    flags.installMethod ??
+    (await (async () => {
+      const value = await p.select({
+        message: 'Install method',
+        options: installMethodOptions(framework),
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value;
+    })());
 
   return {
     framework,
     useCase,
     skin,
     renderer: media,
-    sourceUrl: sourceUrl ?? '',
-    installMethod: installMethodValue,
+    sourceUrl,
+    installMethod,
   };
 }

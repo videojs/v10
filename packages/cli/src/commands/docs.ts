@@ -1,18 +1,17 @@
 import * as p from '@clack/prompts';
-import { type InstallationOptions, validateInstallationOptions } from '@/utils/installation/codegen';
-import { detectRenderer } from '@/utils/installation/detect-renderer';
+import { validateInstallationOptions } from '@/utils/installation/codegen';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
-import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
-import { readBundledDoc, readLlmsTxt } from '../utils/docs.js';
+import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
-import { promptAllInstallOptions, promptFramework } from '../utils/prompts.js';
+import { type PartialInstallFlags, promptFramework, promptInstallOptions } from '../utils/prompts.js';
 import { replaceMarker } from '../utils/replace.js';
 
 interface ParsedFlags {
   framework?: string;
   list?: boolean;
+  help?: boolean;
   preset?: string;
   skin?: string;
   media?: string;
@@ -67,58 +66,71 @@ function mapSkinFlag(skinFlag: string, preset: string): Skin {
   return result;
 }
 
-function getDefaultRenderer(useCase: UseCase): Renderer {
-  return VALID_RENDERERS[useCase][0]!;
+const ALL_RENDERERS: Renderer[] = ['html5-video', 'html5-audio', 'hls', 'background-video'];
+
+function validateMedia(media: string): Renderer {
+  if (!ALL_RENDERERS.includes(media as Renderer)) {
+    console.error(`Invalid media type: "${media}". Valid options: ${ALL_RENDERERS.join(', ')}`);
+    process.exit(1);
+  }
+  return media as Renderer;
 }
 
-function getDefaultInstallMethod(framework: Framework): InstallMethod {
-  return framework === 'html' ? 'cdn' : 'npm';
+function validateInstallMethod(method: string, framework: Framework): InstallMethod {
+  const valid = framework === 'html' ? ['cdn', 'npm', 'pnpm', 'yarn', 'bun'] : ['npm', 'pnpm', 'yarn', 'bun'];
+  if (!valid.includes(method)) {
+    console.error(`Invalid install method: "${method}". Valid options: ${valid.join(', ')}`);
+    process.exit(1);
+  }
+  return method as InstallMethod;
 }
 
-function resolveMedia(flags: ParsedFlags, useCase: UseCase): Renderer {
-  if (flags.media) {
-    const media = flags.media as Renderer;
-    if (!VALID_RENDERERS[useCase].includes(media)) {
-      console.error(
-        `Media type "${media}" is not valid for preset. Valid options: ${VALID_RENDERERS[useCase].join(', ')}`
-      );
-      process.exit(1);
+function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialInstallFlags {
+  const partial: PartialInstallFlags = {};
+
+  if (flags.preset) {
+    partial.preset = mapPresetToUseCase(flags.preset);
+  }
+
+  if (flags.skin) {
+    if (flags.preset) {
+      partial.skin = mapSkinFlag(flags.skin, flags.preset);
+    } else {
+      partial.rawSkin = flags.skin;
     }
-    return media;
   }
 
-  // Auto-detect from source URL
-  if (flags['source-url']) {
-    const detected = detectRenderer(flags['source-url'], useCase);
-    if (detected) return detected.renderer;
+  if (flags['source-url'] !== undefined) {
+    partial.sourceUrl = flags['source-url'];
   }
 
-  return getDefaultRenderer(useCase);
+  if (flags.media) {
+    partial.media = validateMedia(flags.media);
+  }
+
+  if (flags['install-method']) {
+    partial.installMethod = validateInstallMethod(flags['install-method'], framework);
+  }
+
+  return partial;
 }
 
-async function resolveInstallationOptions(flags: ParsedFlags, framework: Framework): Promise<InstallationOptions> {
-  const hasAnyInstallFlag = flags.preset || flags.skin || flags.media || flags['source-url'] || flags['install-method'];
+const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
+       @videojs/cli docs --list [--framework <html|react>]
 
-  // --framework only: prompt for install options
-  if (!hasAnyInstallFlag) {
-    return promptAllInstallOptions(framework);
-  }
-
-  // --framework + install flags: defaults for the rest
-  const preset = flags.preset ?? 'video';
-  const useCase = mapPresetToUseCase(preset);
-
-  return {
-    framework,
-    useCase,
-    skin: mapSkinFlag(flags.skin ?? 'default', preset),
-    renderer: resolveMedia(flags, useCase),
-    sourceUrl: flags['source-url'] ?? '',
-    installMethod: (flags['install-method'] ?? getDefaultInstallMethod(framework)) as InstallMethod,
-  };
-}
+Installation flags (for docs how-to/installation):
+  --preset <video|audio|background-video>
+  --skin <default|minimal>
+  --source-url <url>
+  --media <html5-video|html5-audio|hls|background-video>
+  --install-method <cdn|npm|pnpm|yarn|bun>`;
 
 export async function handleDocs(flags: ParsedFlags, positionals: string[]): Promise<void> {
+  if (flags.help) {
+    console.log(DOCS_HELP);
+    process.exit(0);
+  }
+
   // --list: print llms.txt
   if (flags.list) {
     const framework = await resolveFramework(flags);
@@ -133,8 +145,14 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
 
   const slug = positionals[0];
   if (!slug) {
-    console.error('Usage: @videojs/cli docs <slug> [--framework <html|react>]');
-    console.error('       @videojs/cli docs --list [--framework <html|react>]');
+    console.error(DOCS_HELP);
+    process.exit(1);
+  }
+
+  // Bail early if the doc doesn't exist in either framework
+  if (!docExistsInAnyFramework(slug)) {
+    console.error(`Doc not found: "${slug}".`);
+    console.error('Run `@videojs/cli docs --list` to see available pages.');
     process.exit(1);
   }
 
@@ -149,17 +167,22 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
 
   // Installation page: generate code and replace markers
   if (slug === 'how-to/installation') {
-    // Determine interactive mode based on whether --framework came from the flag
-    const hasFrameworkFlag = flags.framework === 'html' || flags.framework === 'react';
+    const partial = buildPartialFlags(flags, framework);
+    const needsPrompting =
+      !partial.preset ||
+      (!partial.skin && !partial.rawSkin) ||
+      partial.sourceUrl === undefined ||
+      !partial.media ||
+      !partial.installMethod;
 
-    let opts: InstallationOptions;
-    if (!hasFrameworkFlag) {
-      // Zero flags (framework was prompted or from config): prompt for everything
+    if (needsPrompting) {
       p.intro('Video.js Installation');
-      opts = await promptAllInstallOptions(framework);
+    }
+
+    const opts = await promptInstallOptions(framework, partial);
+
+    if (needsPrompting) {
       p.outro('');
-    } else {
-      opts = await resolveInstallationOptions(flags, framework);
     }
 
     const validation = validateInstallationOptions(opts);

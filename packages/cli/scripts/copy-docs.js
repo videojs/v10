@@ -19,7 +19,7 @@ const CLI_DOCS = join(__dirname, '..', 'docs');
 
 if (!existsSync(SITE_DIST)) {
   console.warn('⚠ site/dist not found — skipping docs copy. Build the site first.');
-  process.exit(0);
+  process.exit(1);
 }
 
 // Clean and recreate docs dir

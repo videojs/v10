@@ -15,35 +15,25 @@ if (parsed.version) {
   process.exit(0);
 }
 
-if (parsed.help || !command) {
-  console.log(`@videojs/cli — Video.js documentation CLI
+if (!command) {
+  console.log(`@videojs/cli — Video.js 10 CLI
 
-Usage:
-  @videojs/cli docs <slug> [--framework <html|react>]
-  @videojs/cli docs --list [--framework <html|react>]
-  @videojs/cli docs how-to/installation [flags]
-  @videojs/cli config <set|get|list> [key] [value]
-
-Installation flags:
-  --framework <html|react>                  JS framework
-  --preset <video|audio|background-video>   Player preset (default: video)
-  --skin <default|minimal>                  Skin (default: default)
-  --media <html5-video|html5-audio|hls|background-video>  Media type
-  --source-url <url>                        Media source URL
-  --install-method <cdn|npm|pnpm|yarn|bun>  Install method (default: cdn for html, npm for react)
+Commands:
+  docs <slug> [options]                Read a doc page
+  docs --list [--framework]            List available docs
+  config <set|get|list> [key] [value]  Manage preferences
 
 Options:
-  -v, --version  Show version
-  -h, --help     Show help
-  -l, --list     List available docs
-  -f, --framework  Set framework`);
+  -f, --framework <html|react>  JS framework
+  -v, --version                 Show version
+  -h, --help                    Show help`);
   process.exit(0);
 }
 
 if (command === 'docs') {
   await handleDocs(parsed, rest);
 } else if (command === 'config') {
-  handleConfig(rest);
+  handleConfig(rest, { help: parsed.help });
 } else {
   console.error(`Unknown command: "${command}". Run with --help for usage.`);
   process.exit(1);

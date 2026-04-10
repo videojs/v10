@@ -1,7 +1,17 @@
 import { getConfigValue, listConfig, setConfigValue } from '../utils/config.js';
 
-export function handleConfig(args: string[]): void {
+const CONFIG_HELP = `Usage: @videojs/cli config <set|get|list>
+
+Keys:
+  framework <html|react>   JS framework for docs`;
+
+export function handleConfig(args: string[], flags?: { help?: boolean }): void {
   const [subcommand, key, value] = args;
+
+  if (flags?.help) {
+    console.log(CONFIG_HELP);
+    process.exit(0);
+  }
 
   switch (subcommand) {
     case 'set': {
@@ -50,7 +60,7 @@ export function handleConfig(args: string[]): void {
       break;
     }
     default:
-      console.error('Usage: @videojs/cli config <set|get|list>');
+      console.error(CONFIG_HELP);
       process.exit(1);
   }
 }

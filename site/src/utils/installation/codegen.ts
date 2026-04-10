@@ -1,7 +1,6 @@
 import { VJS10_DEMO_VIDEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
-import { VALID_RENDERERS } from '@/utils/installation/types';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -17,14 +16,6 @@ type ValidationResult = { valid: true } | { valid: false; reason: string };
 export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
   if (opts.framework === 'react' && opts.installMethod === 'cdn') {
     return { valid: false, reason: 'CDN installation is not supported for React. Use npm, pnpm, yarn, or bun.' };
-  }
-
-  const validRenderers = VALID_RENDERERS[opts.useCase];
-  if (!validRenderers.includes(opts.renderer)) {
-    return {
-      valid: false,
-      reason: `Media type "${opts.renderer}" is not valid for the "${opts.useCase}" preset. Valid options: ${validRenderers.join(', ')}`,
-    };
   }
 
   return { valid: true };

@@ -44,26 +44,10 @@ describe('validateInstallationOptions', () => {
     }
   });
 
-  it('rejects invalid renderer for use case', () => {
-    const result = validateInstallationOptions({ ...baseHTML, useCase: 'default-audio', renderer: 'hls' });
-    expect(result.valid).toBe(false);
-    if (!result.valid) {
-      expect(result.reason).toContain('hls');
-      expect(result.reason).toContain('default-audio');
-    }
-  });
-
-  it('accepts HLS for default-video', () => {
-    expect(validateInstallationOptions({ ...baseHTML, renderer: 'hls' })).toEqual({ valid: true });
-  });
-
-  it('accepts background-video renderer for background-video use case', () => {
-    const opts: InstallationOptions = {
-      ...baseHTML,
-      useCase: 'background-video',
-      renderer: 'background-video',
-    };
-    expect(validateInstallationOptions(opts)).toEqual({ valid: true });
+  it('accepts any renderer regardless of use case', () => {
+    expect(validateInstallationOptions({ ...baseHTML, useCase: 'default-audio', renderer: 'hls' })).toEqual({
+      valid: true,
+    });
   });
 });
 
