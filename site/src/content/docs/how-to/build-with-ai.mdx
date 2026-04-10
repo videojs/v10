@@ -3,6 +3,7 @@ title: 'Build with AI'
 description: 'How to give AI tools the context they need to build Video.js players alongside you'
 ---
 
+import ContentWidth from '@/components/frames/ContentWidth.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
 import Img from '@/components/typography/Img.astro';
@@ -25,7 +26,7 @@ Every doc page is available as markdown, so you can provide your model with focu
 
 2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML.
 
-   <Img src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" class="max-w-md" />
+   <ContentWidth><Img src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" class="max-w-md" /></ContentWidth>
 3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/react/reference/play-button.md`](https://videojs.org/docs/framework/react/reference/play-button.md).
 </FrameworkCase>
 
@@ -36,7 +37,7 @@ Every doc page is available as markdown, so you can provide your model with focu
 
 2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML.
 
-   <Img src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" class="max-w-md" />
+   <ContentWidth><Img src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" class="max-w-md" /></ContentWidth>
 3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/html/reference/play-button.md`](https://videojs.org/docs/framework/html/reference/play-button.md).
 </FrameworkCase>
 
