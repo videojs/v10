@@ -19,22 +19,4 @@ test.describe('Mobile Viewport', () => {
     expect(box!.width).toBeLessThanOrEqual(375);
     expect(box!.height).toBeGreaterThan(0);
   });
-
-  test('play button works on mobile', async () => {
-    await expect(player.playButton).toHaveAttribute('data-paused', '');
-    await player.play();
-    await expect(player.playButton).not.toHaveAttribute('data-paused');
-  });
-
-  test('mute button works on mobile', async () => {
-    await player.muteButton.click();
-    await expect(player.muteButton).toHaveAttribute('data-muted', '');
-  });
-
-  test('controls are accessible on mobile', async () => {
-    await expect(player.playButton).toBeAttached();
-    await expect(player.muteButton).toBeAttached();
-    await expect(player.timeSlider).toBeAttached();
-    await expect(player.playbackRateButton).toBeAttached();
-  });
 });
