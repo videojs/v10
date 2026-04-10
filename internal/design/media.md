@@ -163,18 +163,7 @@ interface MediaPlaybackEvents {
 
 interface MediaPlaybackCapability {
   play(): Promise<void>;
-  readonly readyState: MediaReadyStateValue;
 }
-
-const MediaReadyState = {
-  HAVE_NOTHING: 0,
-  HAVE_METADATA: 1,
-  HAVE_CURRENT_DATA: 2,
-  HAVE_FUTURE_DATA: 3,
-  HAVE_ENOUGH_DATA: 4,
-} as const;
-
-type MediaReadyStateValue = typeof MediaReadyState[keyof typeof MediaReadyState];
 ```
 
 ### MediaPauseCapability
@@ -232,8 +221,19 @@ interface MediaSourceEvents {
 interface MediaSourceCapability {
   src: string;
   readonly currentSrc: string;
+  readonly readyState: MediaReadyStateValue;
   load(): void;
 }
+
+const MediaReadyState = {
+  HAVE_NOTHING: 0,
+  HAVE_METADATA: 1,
+  HAVE_CURRENT_DATA: 2,
+  HAVE_FUTURE_DATA: 3,
+  HAVE_ENOUGH_DATA: 4,
+} as const;
+
+type MediaReadyStateValue = typeof MediaReadyState[keyof typeof MediaReadyState];
 ```
 
 ### MediaVolumeCapability
@@ -382,9 +382,9 @@ interface Media extends
 }
 ```
 
-That's it — `play()`, `readyState`, and optional untyped references to
-engine and native element. A native `HTMLVideoElement` satisfies this.
-So does a bare-bones custom implementation.
+That's it — `play()` and optional untyped references to engine and native
+element. A native `HTMLVideoElement` satisfies this. So does a bare-bones
+custom implementation.
 
 Everything else is opt-in via capabilities. `Video` and `Audio` are the
 standard full contracts — each extends `EventTargetLike` once with a
@@ -434,8 +434,8 @@ emitter, clean composition.
 ### In the store
 
 `PlayerTarget.media` is typed as `Media` — the minimal contract. Store
-features can only access playback state and `engine?` by default.
-Everything else requires a type guard.
+features can only access `play()` and `engine?` by default. Everything
+else — including `readyState` — requires a type guard.
 
 ```ts
 interface PlayerTarget {
@@ -450,8 +450,10 @@ Features that need optional capabilities use type guards:
 attach({ target, signal, set }) {
   const { media } = target;
 
-  // readyState is on MediaPlayCapability — always available
-  const waiting = media.readyState < MediaReadyState.HAVE_FUTURE_DATA && !media.paused;
+  // Source capability includes readyState — guard first
+  if (isMediaSourceCapable(media)) {
+    const waiting = media.readyState < MediaReadyState.HAVE_FUTURE_DATA;
+  }
 
   // Volume is optional — guard first
   if (isMediaVolumeCapable(media)) {
@@ -643,6 +645,7 @@ Duck-typing — `isObject(value) && 'propName' in value`.
 
 ```ts
 isMediaPauseCapable(value)             // → value is MediaPauseCapability
+isMediaSourceCapable(value)            // → value is MediaSourceCapability
 isMediaSeekCapable(value)              // → value is MediaSeekCapability
 isMediaVolumeCapable(value)            // → value is MediaVolumeCapability
 isMediaBufferCapable(value)            // → value is MediaBufferCapability
