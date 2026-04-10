@@ -73,7 +73,6 @@ export const STORYBOARD_PAGES = [
   { name: 'React Video MP4', path: '/react-video-mp4.html', media: 'mp4' },
   { name: 'HTML Video HLS', path: '/html-video-hls.html', media: 'hls' },
   { name: 'React Video HLS', path: '/react-video-hls.html', media: 'hls' },
-  { name: 'Ejected React Video MP4', path: '/ejected-react-video-mp4.html', media: 'mp4' },
   { name: 'CDN Video MP4', path: '/cdn-video-mp4.html', media: 'mp4' },
   { name: 'CDN Video HLS', path: '/cdn-video-hls.html', media: 'hls' },
 ] as const;

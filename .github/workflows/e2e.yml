@@ -56,6 +56,9 @@ jobs:
       - name: Build ejected skins
         run: pnpm -F site ejected-skins
 
+      - name: Sync ejected skins to E2E app
+        run: pnpm --dir apps/e2e sync-ejected-skins
+
       - name: Run E2E tests
         run: pnpm --dir apps/e2e exec playwright test --project=vite-${{ matrix.browser }}
 

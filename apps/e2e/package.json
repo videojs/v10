@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "sync-ejected-skins": "tsx scripts/sync-ejected-skins.ts",
     "e2e": "playwright test",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
