@@ -4,7 +4,7 @@ const DOUBLETAP_WINDOW = 300;
  * Recognizes tap vs doubletap from quick pointer-up events.
  *
  * Stateful recognizer — tracks tap count and doubletap timing.
- * The coordinator handles pointer-down timing (tap threshold) and
+ * The caller handles pointer-down timing (tap threshold) and
  * calls `up()` only for quick taps that passed the threshold check.
  */
 export class TapRecognizer {

@@ -1,4 +1,4 @@
-export type GestureRegion = 'left' | 'center' | 'right';
+import type { GestureRegion } from './gesture';
 
 /**
  * Determine which named region a pointer position falls into.
@@ -6,6 +6,11 @@ export type GestureRegion = 'left' | 'center' | 'right';
  * Regions divide the container width equally based on how many are active:
  * - `left` + `right` → halves (50% / 50%)
  * - `left` + `center` + `right` → thirds (33% / 34% / 33%)
+ *
+ * Single region: `left` covers the left half, `right` the right half,
+ * and `center` covers the full surface. Partial two-region combos
+ * (e.g. `left` + `center`) use the same natural zones — positions outside
+ * all active zones return `null` so full-surface gestures can handle them.
  */
 export function resolveRegion(
   clientX: number,
@@ -32,10 +37,11 @@ export function resolveRegion(
   }
 
   // Single region or partial combinations — each region covers its natural zone.
-  // Pointer outside all zones returns null (full-surface gesture handles it).
+  // Pointer outside all active zones returns null (full-surface gesture handles it).
+  // Note: with `left` + `center`, left covers 0–50% and center covers 33–66%.
+  // Overlap at 33–50% resolves to `left` (checked first).
   if (activeRegions.has('left') && ratio < 0.5) return 'left';
   if (activeRegions.has('right') && ratio >= 0.5) return 'right';
-  // Center covers the middle third when alone, full width when it's the only zone.
   if (activeRegions.has('center')) {
     if (activeRegions.size === 1) return 'center';
     if (ratio >= 1 / 3 && ratio < 2 / 3) return 'center';

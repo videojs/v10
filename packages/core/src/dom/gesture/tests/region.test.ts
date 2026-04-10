@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GestureRegion } from '../region';
+import type { GestureRegion } from '../gesture';
 import { resolveRegion } from '../region';
 
 describe('resolveRegion', () => {

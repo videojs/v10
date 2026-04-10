@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDoubleTapGesture, createTapGesture } from '../gesture';
+import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
 const DOUBLETAP_WINDOW = 300;
 
@@ -92,6 +92,42 @@ describe('createTapGesture', () => {
     cleanup();
     cleanup();
   });
+
+  it('first registered binding wins when multiple match', () => {
+    const container = setup();
+    const first = vi.fn();
+    const second = vi.fn();
+
+    createTapGesture(container, first);
+    createTapGesture(container, second);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(first).toHaveBeenCalledOnce();
+    expect(second).not.toHaveBeenCalled();
+  });
+
+  it('re-registers after all bindings cleaned up', () => {
+    const container = setup();
+    const first = vi.fn();
+    const second = vi.fn();
+
+    // Register and immediately clean up.
+    const cleanup = createTapGesture(container, first);
+    cleanup();
+
+    // Re-register on the same element — should re-attach pointer listeners.
+    createTapGesture(container, second);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledOnce();
+  });
 });
 
 describe('createDoubleTapGesture', () => {
@@ -139,6 +175,23 @@ describe('createDoubleTapGesture', () => {
     pointerUp(container, { pointerType: 'mouse', clientX: 150 });
 
     vi.advanceTimersByTime(DOUBLETAP_WINDOW + 50);
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not fire when disabled', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createDoubleTapGesture(container, handler, { disabled: true });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    vi.advanceTimersByTime(100);
     pointerDown(container);
     vi.advanceTimersByTime(50);
     pointerUp(container, { pointerType: 'mouse', clientX: 150 });

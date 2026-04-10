@@ -1,6 +1,6 @@
 export * from './feature';
+export * from './gesture/create-tap-gesture';
 export * from './gesture/gesture';
-export * from './gesture/region';
 export * from './hotkey/actions';
 export * from './hotkey/aria';
 export * from './hotkey/coordinator';
