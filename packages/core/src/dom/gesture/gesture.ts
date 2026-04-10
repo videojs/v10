@@ -12,6 +12,7 @@ export interface GestureOptions {
 
 export interface GestureBinding {
   type: GestureType;
+  recognizer: GestureRecognizer;
   onActivate: (event: PointerEvent) => void;
   pointer?: GesturePointerType | undefined;
   region?: GestureRegion | undefined;

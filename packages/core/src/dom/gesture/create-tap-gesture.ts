@@ -1,16 +1,16 @@
-import { GestureCoordinator } from './coordinator';
+import { getGestureCoordinator } from './coordinator';
 import type { GestureOptions } from './gesture';
 import { TapRecognizer } from './tap';
 
-const coordinators = new WeakMap<HTMLElement, GestureCoordinator>();
+const recognizers = new WeakMap<HTMLElement, TapRecognizer>();
 
-function getCoordinator(target: HTMLElement): GestureCoordinator {
-  let coordinator = coordinators.get(target);
-  if (coordinator) return coordinator;
+function getRecognizer(target: HTMLElement): TapRecognizer {
+  let recognizer = recognizers.get(target);
+  if (recognizer) return recognizer;
 
-  coordinator = new GestureCoordinator(target, new TapRecognizer());
-  coordinators.set(target, coordinator);
-  return coordinator;
+  recognizer = new TapRecognizer();
+  recognizers.set(target, recognizer);
+  return recognizer;
 }
 
 /**
@@ -28,8 +28,9 @@ export function createTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: GestureOptions
 ): () => void {
-  return getCoordinator(target).add({
+  return getGestureCoordinator(target).add({
     type: 'tap',
+    recognizer: getRecognizer(target),
     onActivate,
     pointer: options?.pointer,
     region: options?.region,
@@ -52,8 +53,9 @@ export function createDoubleTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: GestureOptions
 ): () => void {
-  return getCoordinator(target).add({
+  return getGestureCoordinator(target).add({
     type: 'doubletap',
+    recognizer: getRecognizer(target),
     onActivate,
     pointer: options?.pointer,
     region: options?.region,

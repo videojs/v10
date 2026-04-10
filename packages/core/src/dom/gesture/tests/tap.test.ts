@@ -1,16 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { GestureBinding, GestureMatchResult, GestureType } from '../gesture';
+import type { GestureMatchResult, GestureType } from '../gesture';
 import { TapRecognizer } from '../tap';
 
 const DOUBLETAP_WINDOW = 300;
+
+const NOOP_RECOGNIZER = { handleUp: () => {}, reset: () => {} };
 
 function createMatches(handlers: Partial<Record<GestureType, (() => void) | null>>): GestureMatchResult {
   return {
     resolve(type) {
       const handler = handlers[type];
       if (!handler) return [];
-      return [{ type, onActivate: handler } as GestureBinding];
+      return [{ type, recognizer: NOOP_RECOGNIZER, onActivate: handler }];
     },
   };
 }

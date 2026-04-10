@@ -8,16 +8,16 @@ const TAP_THRESHOLD = 250;
 export class GestureCoordinator {
   #target: HTMLElement;
   #bindings: GestureBinding[] = [];
-  #recognizer: GestureRecognizer;
+  #recognizers = new Set<GestureRecognizer>();
   #disconnect: AbortController | null = null;
 
-  constructor(target: HTMLElement, recognizer: GestureRecognizer) {
+  constructor(target: HTMLElement) {
     this.#target = target;
-    this.#recognizer = recognizer;
   }
 
   add(binding: GestureBinding): () => void {
     this.#bindings.push(binding);
+    this.#recognizers.add(binding.recognizer);
     this.#connect();
 
     let removed = false;
@@ -65,7 +65,9 @@ export class GestureCoordinator {
           resolve: (type) => matchBindings(bindings, type, pointerType, clientX, target),
         };
 
-        this.#recognizer.handleUp(matches, event);
+        for (const recognizer of this.#recognizers) {
+          recognizer.handleUp(matches, event);
+        }
       },
       { signal }
     );
@@ -73,10 +75,31 @@ export class GestureCoordinator {
 
   #maybeDisconnect(): void {
     if (this.#bindings.length > 0) return;
-    this.#recognizer.reset();
+
+    for (const recognizer of this.#recognizers) {
+      recognizer.reset();
+    }
+
+    this.#recognizers.clear();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
+}
+
+const coordinators = new WeakMap<HTMLElement, GestureCoordinator>();
+
+/** Look up the gesture coordinator for a target element, if one exists. */
+export function findGestureCoordinator(target: HTMLElement): GestureCoordinator | undefined {
+  return coordinators.get(target);
+}
+
+export function getGestureCoordinator(target: HTMLElement): GestureCoordinator {
+  let coordinator = coordinators.get(target);
+  if (!coordinator) {
+    coordinator = new GestureCoordinator(target);
+    coordinators.set(target, coordinator);
+  }
+  return coordinator;
 }
 
 // --- Matching ---
