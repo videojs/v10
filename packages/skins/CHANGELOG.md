@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.15...@videojs/skins@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **packages:** add hotkey bindings to preset skins ([#1264](https://github.com/videojs/v10/issues/1264)) ([9912a8e](https://github.com/videojs/v10/commit/9912a8e7593dc9f26c6dfe5cd8ddca34ef89a8ef))
+
+
+### Bug Fixes
+
+* **packages:** time slider seek improvements ([#1291](https://github.com/videojs/v10/issues/1291)) ([b934c58](https://github.com/videojs/v10/commit/b934c589f824b0ed7338b19c2b3bad3160742e74))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.16
+
 ## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.14...@videojs/skins@10.0.0-beta.15) (2026-04-03)
 
 

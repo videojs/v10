@@ -1,5 +1,36 @@
 # Changelog
 
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.15...@videojs/react@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **packages:** add hotkey bindings to preset skins ([#1264](https://github.com/videojs/v10/issues/1264)) ([9912a8e](https://github.com/videojs/v10/commit/9912a8e7593dc9f26c6dfe5cd8ddca34ef89a8ef))
+* **packages:** add mux-audio element and react component ([#1259](https://github.com/videojs/v10/issues/1259)) ([9fac0fc](https://github.com/videojs/v10/commit/9fac0fca3d5af44c76c9845da37b5197dd8538df))
+* **react:** add hotkeys ([#1241](https://github.com/videojs/v10/issues/1241)) ([1cc4ec7](https://github.com/videojs/v10/commit/1cc4ec7f81acda2aa77590b2f327b2f76b823767))
+
+
+### Bug Fixes
+
+* **packages:** consistent react versions ([#1285](https://github.com/videojs/v10/issues/1285)) ([1c937da](https://github.com/videojs/v10/commit/1c937da4704d51c0c64e5085b6f235bb95a236eb))
+* **packages:** narrow react peer dependency to v18+ ([#1289](https://github.com/videojs/v10/issues/1289)) ([6fb6ab7](https://github.com/videojs/v10/commit/6fb6ab7dfb4ac2671bfac4269dfc5813ab76f0e8))
+* **packages:** remove redundant "Shift" modifier from playback rate hotkeys ([#1290](https://github.com/videojs/v10/issues/1290)) ([a0fd3cb](https://github.com/videojs/v10/commit/a0fd3cbda8101f47806e0e71c727fbf483a1de66))
+* **packages:** time slider seek improvements ([#1291](https://github.com/videojs/v10/issues/1291)) ([b934c58](https://github.com/videojs/v10/commit/b934c589f824b0ed7338b19c2b3bad3160742e74))
+* **react:** align media component conventions ([#1281](https://github.com/videojs/v10/issues/1281)) ([42abf88](https://github.com/videojs/v10/commit/42abf880955ec68d2c700eaa9bcf18b69c37471c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.16
+    * @videojs/spf bumped to 10.0.0-beta.16
+    * @videojs/store bumped to 10.0.0-beta.16
+    * @videojs/utils bumped to 10.0.0-beta.16
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.16
+    * @videojs/skins bumped to 10.0.0-beta.16
+
 ## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.14...@videojs/react@10.0.0-beta.15) (2026-04-03)
 
 

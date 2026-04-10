@@ -1,5 +1,38 @@
 # Changelog
 
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.15...@videojs/html@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **html:** add hotkeys ([#1239](https://github.com/videojs/v10/issues/1239)) ([d9d893b](https://github.com/videojs/v10/commit/d9d893b726e461721e73eeba9377c9d381de8951))
+* **packages:** add hotkey bindings to preset skins ([#1264](https://github.com/videojs/v10/issues/1264)) ([9912a8e](https://github.com/videojs/v10/commit/9912a8e7593dc9f26c6dfe5cd8ddca34ef89a8ef))
+* **packages:** add mux-audio element and react component ([#1259](https://github.com/videojs/v10/issues/1259)) ([9fac0fc](https://github.com/videojs/v10/commit/9fac0fca3d5af44c76c9845da37b5197dd8538df))
+
+
+### Bug Fixes
+
+* **core:** allow undefined hotkey options  ([#1242](https://github.com/videojs/v10/issues/1242)) ([d2c43db](https://github.com/videojs/v10/commit/d2c43db5506847f941260fd41cde2ecd33b74277))
+* **html:** add destroy guards to connectedCallback ([#1284](https://github.com/videojs/v10/issues/1284)) ([53fffe8](https://github.com/videojs/v10/commit/53fffe8e308b2f384460342e382a33f6319565f0))
+* **html:** create HotkeyRegistryController once in connectedCallback ([#1240](https://github.com/videojs/v10/issues/1240)) ([7c63d82](https://github.com/videojs/v10/commit/7c63d82f84dd224a5b13436e2edbfca51ca56cc0))
+* **html:** export SliderPreviewElement and ContextPartElement ([#1283](https://github.com/videojs/v10/issues/1283)) ([0dc7567](https://github.com/videojs/v10/commit/0dc7567e7a2beabc34ae85e277026e886afde7b0))
+* **packages:** remove redundant "Shift" modifier from playback rate hotkeys ([#1290](https://github.com/videojs/v10/issues/1290)) ([a0fd3cb](https://github.com/videojs/v10/commit/a0fd3cbda8101f47806e0e71c727fbf483a1de66))
+* **packages:** time slider seek improvements ([#1291](https://github.com/videojs/v10/issues/1291)) ([b934c58](https://github.com/videojs/v10/commit/b934c589f824b0ed7338b19c2b3bad3160742e74))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.16
+    * @videojs/element bumped to 10.0.0-beta.16
+    * @videojs/spf bumped to 10.0.0-beta.16
+    * @videojs/store bumped to 10.0.0-beta.16
+    * @videojs/utils bumped to 10.0.0-beta.16
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.16
+    * @videojs/skins bumped to 10.0.0-beta.16
+
 ## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.14...@videojs/html@10.0.0-beta.15) (2026-04-03)
 
 
