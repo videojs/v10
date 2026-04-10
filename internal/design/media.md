@@ -372,7 +372,7 @@ features call them once at attach time and cache the result.
 The minimum viable media is `MediaPlaybackCapability`:
 
 ```ts
-type MediaEvents = MediaPlaybackEvents;
+interface MediaEvents extends MediaPlaybackEvents {}
 
 interface Media extends
   MediaPlaybackCapability,
@@ -391,10 +391,10 @@ standard full contracts — each extends `EventTargetLike` once with a
 merged event map:
 
 ```ts
-type VideoEvents =
-  MediaPlaybackEvents & MediaPauseEvents & MediaSeekEvents & MediaSourceEvents &
-  MediaVolumeEvents & MediaPlaybackRateEvents & MediaBufferEvents &
-  MediaErrorEvents & TextTrackListEvents;
+interface VideoEvents extends
+  MediaPlaybackEvents, MediaPauseEvents, MediaSeekEvents, MediaSourceEvents,
+  MediaVolumeEvents, MediaPlaybackRateEvents, MediaBufferEvents,
+  MediaErrorEvents, TextTrackListEvents {}
 
 interface Video extends
   Media,
@@ -410,10 +410,10 @@ interface Video extends
   MediaPictureInPictureCapability,
   EventTargetLike<VideoEvents> {}
 
-type AudioEvents =
-  MediaPlaybackEvents & MediaPauseEvents & MediaSeekEvents & MediaSourceEvents &
-  MediaVolumeEvents & MediaPlaybackRateEvents & MediaBufferEvents &
-  MediaErrorEvents;
+interface AudioEvents extends
+  MediaPlaybackEvents, MediaPauseEvents, MediaSeekEvents, MediaSourceEvents,
+  MediaVolumeEvents, MediaPlaybackRateEvents, MediaBufferEvents,
+  MediaErrorEvents {}
 
 interface Audio extends
   Media,
@@ -512,9 +512,9 @@ class HTMLAudioElementHost<Events extends AudioEvents = AudioEvents>
 Media implementations extend these and add engine support:
 
 ```ts
-type HlsVideoEvents = VideoEvents & {
+interface HlsVideoEvents extends VideoEvents {
   hlserror: EventLike<{ fatal: boolean; details: string }>;
-};
+}
 
 class HlsVideo extends HTMLVideoElementHost<HlsVideoEvents>
   implements MediaEngineHost<Hls, HTMLVideoElement> {
