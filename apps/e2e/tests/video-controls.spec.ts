@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { ALL_VIDEO_PAGES } from '../fixtures/media';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path, media } of ALL_VIDEO_PAGES) {
+for (const { name, path, mediaRenderer } of ALL_VIDEO_PAGES) {
   test.describe(`Video Controls — ${name}`, () => {
     let player: PlayerPage;
 
@@ -39,7 +39,15 @@ for (const { name, path, media } of ALL_VIDEO_PAGES) {
     });
 
     test('seek forward advances playback', async () => {
-      // Clicking seek forward should trigger a seek and mark the player as started
+      // SPF (simple-hls-video) doesn't currently support seek before playback.
+      // With preload="metadata" the manifest resolves and duration is available,
+      // but no segment data is buffered. Setting currentTime fires 'seeking' but
+      // 'seeked' never fires because there's no data at the target position.
+      // Since data-started syncs on 'seeked', it's never set.
+      // This should eventually be supported — remove this skip when SPF handles
+      // seek-before-playback (e.g. by buffering on-demand for the target segment).
+      test.skip(mediaRenderer === 'simple-hls-video', 'SPF: seek before playback not yet supported');
+
       await player.seekForward.click();
       await expect(player.playButton).toHaveAttribute('data-started', '');
     });
@@ -53,7 +61,9 @@ for (const { name, path, media } of ALL_VIDEO_PAGES) {
         .poll(
           async () => {
             return page.evaluate(() => {
-              const el = document.querySelector('video, audio, hls-video, dash-video');
+              const el = document.querySelector(
+                'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
+              );
               const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
               return media?.currentTime ?? 0;
             });

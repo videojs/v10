@@ -42,7 +42,7 @@ for (const { name, path } of AUDIO_PAGES) {
       await player.seekTo(50);
 
       const currentTime = await page.evaluate(() => {
-        const el = document.querySelector('video, audio, hls-video, dash-video');
+        const el = document.querySelector('video, audio, hls-video, simple-hls-video, native-hls-video, dash-video');
         const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
         return media?.currentTime ?? 0;
       });

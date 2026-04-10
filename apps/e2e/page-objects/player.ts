@@ -108,6 +108,20 @@ export class PlayerPage {
   /** Wait for the player to load media and show controls. */
   async waitForMediaReady(): Promise<void> {
     await this.playButton.waitFor({ state: 'attached', timeout: 20_000 });
+
+    // Wait for the media element to have at least metadata loaded.
+    // SPF-based renderers (simple-hls-video) with preload="metadata" need
+    // time to resolve the manifest before seeks or other interactions work.
+    await this.page.waitForFunction(
+      () => {
+        const media = document.querySelector(
+          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
+        ) as HTMLMediaElement | null;
+        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        return actual && actual.readyState >= 1;
+      },
+      { timeout: 20_000 }
+    );
   }
 
   /** Click play and wait for the paused attribute to be removed. */
@@ -127,15 +141,14 @@ export class PlayerPage {
 
   /** Click at a percentage position on the time slider. */
   async seekTo(percent: number): Promise<void> {
-    // Wait for the media element to have metadata loaded (readyState >= 1)
-    // and a non-zero duration. HLS streams report duration from the manifest
-    // before any media data is buffered (readyState 0). On WebKit, seeking
-    // with no buffered data resolves to currentTime 0 instead of the
-    // requested position, so we wait for at least HAVE_METADATA.
+    // Wait for readyState >= 1 (HAVE_METADATA) and a non-zero duration.
+    // On WebKit, seeking with no buffered data resolves to currentTime 0
+    // instead of the requested position.
     await this.page.waitForFunction(
       () => {
-        const media = document.querySelector('video, audio, hls-video, dash-video') as HTMLMediaElement | null;
-        // Custom elements may wrap the actual <video>, check the inner element too
+        const media = document.querySelector(
+          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
+        ) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
         return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
