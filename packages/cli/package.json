@@ -25,6 +25,9 @@
     "@bomb.sh/args": "^0.3.1",
     "@clack/prompts": "^0.10.1"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "site": "workspace:*",
     "tsdown": "^0.21.4",
