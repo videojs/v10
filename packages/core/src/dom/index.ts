@@ -1,6 +1,7 @@
 export * from './feature';
 export * from './gesture/gesture';
 export * from './gesture/region';
+export * from './gesture/shared';
 export * from './hotkey/actions';
 export * from './hotkey/aria';
 export * from './hotkey/coordinator';

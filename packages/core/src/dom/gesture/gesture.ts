@@ -1,10 +1,9 @@
-import { listen } from '@videojs/utils/dom';
-
 import type { GestureRegion } from './region';
-import { resolveRegion } from './region';
+import type { GesturePointerType } from './shared';
+import { addBinding, getState, matchBindings } from './shared';
 import { TapRecognizer } from './tap';
 
-export type GesturePointerType = 'mouse' | 'touch' | 'pen';
+export type { GesturePointerType } from './shared';
 
 export interface TapGestureOptions {
   pointer?: GesturePointerType | undefined;
@@ -18,67 +17,23 @@ export interface DoubleTapGestureOptions {
   disabled?: boolean | undefined;
 }
 
-// --- Binding types ---
+// --- Per-element recognizer (only created when tap/doubletap factories are used) ---
 
-interface GestureBinding {
-  type: 'tap' | 'doubletap';
-  onActivate: (event: PointerEvent) => void;
-  pointer?: GesturePointerType | undefined;
-  region?: GestureRegion | undefined;
-  disabled?: boolean | undefined;
-}
+const recognizers = new WeakMap<HTMLElement, TapRecognizer>();
 
-// --- Per-element shared state ---
+function ensureHandler(target: HTMLElement): TapRecognizer {
+  const state = getState(target);
+  let recognizer = recognizers.get(target);
 
-const TAP_THRESHOLD = 250;
+  if (!recognizer) {
+    recognizer = new TapRecognizer();
+    recognizers.set(target, recognizer);
 
-interface GestureState {
-  bindings: GestureBinding[];
-  recognizer: TapRecognizer;
-  disconnect: AbortController | null;
-}
-
-const states = new WeakMap<HTMLElement, GestureState>();
-
-function getState(target: HTMLElement): GestureState {
-  let state = states.get(target);
-  if (state) return state;
-
-  const recognizer = new TapRecognizer();
-  state = { bindings: [], recognizer, disconnect: null };
-  states.set(target, state);
-  return state;
-}
-
-function connect(target: HTMLElement, state: GestureState): void {
-  if (state.disconnect) return;
-  state.disconnect = new AbortController();
-  const { signal } = state.disconnect;
-
-  let pointerDownTime = 0;
-
-  listen(
-    target,
-    'pointerdown',
-    () => {
-      pointerDownTime = Date.now();
-    },
-    { signal }
-  );
-
-  listen(
-    target,
-    'pointerup',
-    ((event: PointerEvent) => {
-      if (Date.now() - pointerDownTime > TAP_THRESHOLD) return;
-
+    state.handler = (event, bindings, rect) => {
       const pointerType = event.pointerType;
-      const rect = target.getBoundingClientRect();
+      const doubletapMatches = matchBindings(bindings, 'doubletap', pointerType, event.clientX, rect);
 
-      // Match per type — doubletap regions must not suppress full-surface taps.
-      const doubletapMatches = matchBindings(state.bindings, 'doubletap', pointerType, event.clientX, rect);
-
-      state.recognizer.up(
+      recognizer!.up(
         doubletapMatches.length > 0,
         // onTap — re-match at fire time to avoid stale closures.
         () => {
@@ -91,62 +46,10 @@ function connect(target: HTMLElement, state: GestureState): void {
           current[0]?.onActivate(event);
         }
       );
-    }) as EventListener,
-    { signal }
-  );
-}
-
-function maybeDisconnect(state: GestureState): void {
-  if (state.bindings.length > 0) return;
-  state.recognizer.reset();
-  state.disconnect?.abort();
-  state.disconnect = null;
-}
-
-// --- Matching ---
-
-function matchBindings(
-  bindings: GestureBinding[],
-  type: 'tap' | 'doubletap',
-  pointerType: string,
-  clientX: number,
-  rect: DOMRect
-): GestureBinding[] {
-  const activeRegions = getActiveRegions(bindings, type, pointerType);
-  const region = activeRegions.size > 0 ? resolveRegion(clientX, rect, activeRegions) : null;
-
-  const matches: GestureBinding[] = [];
-
-  for (const binding of bindings) {
-    if (binding.disabled) continue;
-    if (binding.type !== type) continue;
-    if (binding.pointer && binding.pointer !== pointerType) continue;
-
-    if (binding.region) {
-      if (binding.region !== region) continue;
-    } else if (region !== null) {
-      continue;
-    }
-
-    matches.push(binding);
+    };
   }
 
-  return matches;
-}
-
-function getActiveRegions(
-  bindings: GestureBinding[],
-  type: 'tap' | 'doubletap',
-  pointerType: string
-): Set<GestureRegion> {
-  const regions = new Set<GestureRegion>();
-  for (const binding of bindings) {
-    if (binding.disabled) continue;
-    if (binding.type !== type) continue;
-    if (binding.pointer && binding.pointer !== pointerType) continue;
-    if (binding.region) regions.add(binding.region);
-  }
-  return regions;
+  return recognizer;
 }
 
 // --- Factory functions ---
@@ -166,28 +69,14 @@ export function createTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: TapGestureOptions
 ): () => void {
-  const state = getState(target);
-  const binding: GestureBinding = {
+  ensureHandler(target);
+  return addBinding(target, getState(target), {
     type: 'tap',
     onActivate,
     pointer: options?.pointer,
     region: options?.region,
     disabled: options?.disabled,
-  };
-
-  state.bindings.push(binding);
-  connect(target, state);
-
-  let removed = false;
-  return () => {
-    if (removed) return;
-    removed = true;
-
-    const idx = state.bindings.indexOf(binding);
-    if (idx !== -1) state.bindings.splice(idx, 1);
-
-    maybeDisconnect(state);
-  };
+  });
 }
 
 /**
@@ -205,26 +94,12 @@ export function createDoubleTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: DoubleTapGestureOptions
 ): () => void {
-  const state = getState(target);
-  const binding: GestureBinding = {
+  ensureHandler(target);
+  return addBinding(target, getState(target), {
     type: 'doubletap',
     onActivate,
     pointer: options?.pointer,
     region: options?.region,
     disabled: options?.disabled,
-  };
-
-  state.bindings.push(binding);
-  connect(target, state);
-
-  let removed = false;
-  return () => {
-    if (removed) return;
-    removed = true;
-
-    const idx = state.bindings.indexOf(binding);
-    if (idx !== -1) state.bindings.splice(idx, 1);
-
-    maybeDisconnect(state);
-  };
+  });
 }
