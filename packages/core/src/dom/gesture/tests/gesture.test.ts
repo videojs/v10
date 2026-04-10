@@ -1,39 +1,81 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDoubleTapGesture, createTapGesture, findGestureCoordinator } from '../gesture';
+import { createDoubleTapGesture, createTapGesture } from '../gesture';
+
+const DOUBLETAP_WINDOW = 300;
+
+function setup() {
+  const container = document.createElement('div');
+  vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    right: 300,
+    width: 300,
+    top: 0,
+    bottom: 200,
+    height: 200,
+    x: 0,
+    y: 0,
+    toJSON: () => {},
+  });
+  return container;
+}
 
 describe('createTapGesture', () => {
-  let container: HTMLElement;
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
 
-  beforeEach(() => {
-    vi.useFakeTimers();
-    container = document.createElement('div');
-    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
-      left: 0,
-      right: 300,
-      width: 300,
-      top: 0,
-      bottom: 200,
-      height: 200,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
-    });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('registers a tap gesture and returns cleanup', () => {
+  it('fires on quick pointer down + up', () => {
+    const container = setup();
     const handler = vi.fn();
-    const cleanup = createTapGesture(container, handler);
+    createTapGesture(container, handler);
 
     pointerDown(container);
     vi.advanceTimersByTime(50);
     pointerUp(container, { pointerType: 'mouse', clientX: 150 });
 
     expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('does not fire on long press', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(300);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not fire when disabled', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler, { disabled: true });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('fires immediately when no doubletap bindings exist', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('cleanup removes binding', () => {
+    const container = setup();
+    const handler = vi.fn();
+    const cleanup = createTapGesture(container, handler);
 
     cleanup();
 
@@ -41,60 +83,30 @@ describe('createTapGesture', () => {
     vi.advanceTimersByTime(50);
     pointerUp(container, { pointerType: 'mouse', clientX: 150 });
 
-    expect(handler).toHaveBeenCalledOnce(); // Still 1.
+    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('passes pointer and region options through', () => {
-    const handler = vi.fn();
-    createTapGesture(container, handler, { pointer: 'touch', region: 'left' });
-
-    // Mouse tap should not fire.
-    pointerDown(container);
-    vi.advanceTimersByTime(50);
-    pointerUp(container, { pointerType: 'mouse', clientX: 50 });
-    expect(handler).not.toHaveBeenCalled();
-
-    // Touch tap in left region should fire.
-    pointerDown(container);
-    vi.advanceTimersByTime(50);
-    pointerUp(container, { pointerType: 'touch', clientX: 50 });
-    expect(handler).toHaveBeenCalledOnce();
+  it('double cleanup is safe', () => {
+    const container = setup();
+    const cleanup = createTapGesture(container, vi.fn());
+    cleanup();
+    cleanup();
   });
 });
 
 describe('createDoubleTapGesture', () => {
-  let container: HTMLElement;
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
 
-  beforeEach(() => {
-    vi.useFakeTimers();
-    container = document.createElement('div');
-    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
-      left: 0,
-      right: 300,
-      width: 300,
-      top: 0,
-      bottom: 200,
-      height: 200,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
-    });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('registers a doubletap gesture', () => {
+  it('fires on two quick taps', () => {
+    const container = setup();
     const handler = vi.fn();
     createDoubleTapGesture(container, handler);
 
-    // First tap
     pointerDown(container);
     vi.advanceTimersByTime(50);
     pointerUp(container, { pointerType: 'mouse', clientX: 150 });
 
-    // Second tap
     vi.advanceTimersByTime(100);
     pointerDown(container);
     vi.advanceTimersByTime(50);
@@ -102,18 +114,208 @@ describe('createDoubleTapGesture', () => {
 
     expect(handler).toHaveBeenCalledOnce();
   });
-});
 
-describe('findGestureCoordinator', () => {
-  it('returns undefined when no gestures registered', () => {
-    const el = document.createElement('div');
-    expect(findGestureCoordinator(el)).toBeUndefined();
+  it('does not fire on single tap', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createDoubleTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW + 50);
+
+    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('returns coordinator after gesture registered', () => {
-    const el = document.createElement('div');
-    createTapGesture(el, () => {});
-    expect(findGestureCoordinator(el)).toBeDefined();
+  it('does not fire when taps are too far apart', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createDoubleTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW + 50);
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+});
+
+describe('tap/doubletap disambiguation', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('delays tap when doubletap bindings exist', () => {
+    const container = setup();
+    const tapHandler = vi.fn();
+    const doubletapHandler = vi.fn();
+
+    createTapGesture(container, tapHandler);
+    createDoubleTapGesture(container, doubletapHandler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(tapHandler).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW);
+    expect(tapHandler).toHaveBeenCalledOnce();
+    expect(doubletapHandler).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending tap on doubletap', () => {
+    const container = setup();
+    const tapHandler = vi.fn();
+    const doubletapHandler = vi.fn();
+
+    createTapGesture(container, tapHandler);
+    createDoubleTapGesture(container, doubletapHandler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    vi.advanceTimersByTime(100);
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(doubletapHandler).toHaveBeenCalledOnce();
+    expect(tapHandler).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW);
+    expect(tapHandler).not.toHaveBeenCalled();
+  });
+
+  it('deferred tap does not fire after binding cleanup', () => {
+    const container = setup();
+    const tapHandler = vi.fn();
+    const doubletapHandler = vi.fn();
+
+    const tapCleanup = createTapGesture(container, tapHandler);
+    createDoubleTapGesture(container, doubletapHandler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    tapCleanup();
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW);
+    expect(tapHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe('pointer filtering', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('only fires for matching pointer type', () => {
+    const container = setup();
+    const touchHandler = vi.fn();
+    const mouseHandler = vi.fn();
+
+    createTapGesture(container, touchHandler, { pointer: 'touch' });
+    createTapGesture(container, mouseHandler, { pointer: 'mouse' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'touch', clientX: 150 });
+
+    expect(touchHandler).toHaveBeenCalledOnce();
+    expect(mouseHandler).not.toHaveBeenCalled();
+  });
+
+  it('fires for all pointer types when no filter set', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'touch', clientX: 150 });
+
+    expect(handler).toHaveBeenCalledOnce();
+  });
+});
+
+describe('regions', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('fires region binding in its zone', () => {
+    const container = setup();
+    const leftHandler = vi.fn();
+    const rightHandler = vi.fn();
+
+    createTapGesture(container, leftHandler, { region: 'left' });
+    createTapGesture(container, rightHandler, { region: 'right' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 50 });
+
+    expect(leftHandler).toHaveBeenCalledOnce();
+    expect(rightHandler).not.toHaveBeenCalled();
+  });
+
+  it('region binding takes priority over full-surface', () => {
+    const container = setup();
+    const regionHandler = vi.fn();
+    const fullHandler = vi.fn();
+
+    createTapGesture(container, fullHandler);
+    createTapGesture(container, regionHandler, { region: 'left' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 50 });
+
+    expect(regionHandler).toHaveBeenCalledOnce();
+    expect(fullHandler).not.toHaveBeenCalled();
+  });
+
+  it('full-surface fires outside named regions', () => {
+    const container = setup();
+    const regionHandler = vi.fn();
+    const fullHandler = vi.fn();
+
+    createTapGesture(container, fullHandler);
+    createTapGesture(container, regionHandler, { region: 'left' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 250 });
+
+    expect(fullHandler).toHaveBeenCalledOnce();
+    expect(regionHandler).not.toHaveBeenCalled();
+  });
+
+  it('full-surface tap fires alongside doubletap regions', () => {
+    const container = setup();
+    const tapHandler = vi.fn();
+    const doubletapLeft = vi.fn();
+    const doubletapRight = vi.fn();
+
+    createTapGesture(container, tapHandler);
+    createDoubleTapGesture(container, doubletapLeft, { region: 'left' });
+    createDoubleTapGesture(container, doubletapRight, { region: 'right' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    vi.advanceTimersByTime(DOUBLETAP_WINDOW);
+    expect(tapHandler).toHaveBeenCalledOnce();
+    expect(doubletapLeft).not.toHaveBeenCalled();
+    expect(doubletapRight).not.toHaveBeenCalled();
   });
 });
 
