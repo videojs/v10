@@ -39,6 +39,7 @@
     "test:e2e": "pnpm --dir apps/e2e test:vite",
     "test:e2e:all": "pnpm --dir apps/e2e test:all-engines",
     "test:e2e:update-snapshots": "pnpm --dir apps/e2e test:update-snapshots",
+    "test:e2e:install": "pnpm --dir apps/e2e exec playwright install --with-deps",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
     "typecheck": "tsc --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",

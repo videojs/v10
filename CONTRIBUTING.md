@@ -129,6 +129,40 @@ pnpm -F core test            # just core package
 pnpm -F core test:watch      # watch core package
 ```
 
+#### E2E Tests
+
+We use [Playwright](https://playwright.dev) for end-to-end testing. The E2E tests live in `apps/e2e/` and run against a Vite-based test app that hosts the player in multiple configurations (HTML, React, ejected skins, CDN bundles).
+
+**First-time setup** — install the Playwright browsers:
+
+```sh
+pnpm test:e2e:install
+```
+
+**Running tests:**
+
+```sh
+pnpm test:e2e                    # Chromium only (fast feedback)
+pnpm test:e2e:all                # Chromium + WebKit
+```
+
+**Visual snapshot tests** verify that skin CSS and layout aren't broken. If a snapshot test fails, it means the rendered skin looks different from the baseline. This could mean:
+
+1. **You intentionally changed the skin** — update the baselines:
+   ```sh
+   pnpm test:e2e:update-snapshots
+   ```
+   Review the updated PNGs in `apps/e2e/tests/visual/` to confirm they look correct, then commit them.
+
+2. **You didn't intend to change the skin** — the failure caught a real regression. Inspect the diff in the Playwright HTML report:
+   ```sh
+   pnpm --dir apps/e2e report
+   ```
+   The report shows expected vs. actual vs. diff images side-by-side.
+
+> [!TIP]
+> Snapshot baselines are checked into git. When you update them, review the PNG diffs in your PR to make sure the visual changes are intentional.
+
 ### 📦 Dependencies
 
 To add a dependency to a specific package, you can use [`pnpm` filtering][pnpm-filtering] from the workspace root:
