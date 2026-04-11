@@ -146,6 +146,87 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('touch tap-to-toggle', () => {
+    it('hides controls on tap when visible and playing', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controls visible on tap when paused', () => {
+      const video = createMockVideo({ paused: true });
+      const { store, container } = createPlayerStore(video);
+
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      // userActive goes false but controlsVisible stays true (paused)
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('shows controls on tap when hidden', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // First tap to hide
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Second tap to show
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('does not toggle on long press', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(300);
+
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('does not toggle for mouse clicks', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'mouse' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+  });
+
   describe('playback state interaction', () => {
     it('shows controls when media pauses', () => {
       const video = createMockVideo({ paused: false });
@@ -207,25 +288,16 @@ describe('controlsFeature', () => {
   });
 
   describe('toggleControls', () => {
-    it('returns the new visibility synchronously', () => {
-      const video = createMockVideo({ paused: false });
-      const { store } = createPlayerStore(video);
-
-      expect(store.state.toggleControls()).toBe(false);
-      flushToggle();
-
-      expect(store.state.toggleControls()).toBe(true);
-    });
-
     it('hides controls when visible and playing', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
-      store.state.toggleControls();
-      flushToggle();
+      const result = store.state.toggleControls();
+      flush();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
+      expect(result).toBe(false);
     });
 
     it('shows controls when hidden', () => {
@@ -234,16 +306,17 @@ describe('controlsFeature', () => {
 
       // First toggle to hide
       store.state.toggleControls();
-      flushToggle();
+      flush();
 
       expect(store.state.controlsVisible).toBe(false);
 
       // Second toggle to show
-      store.state.toggleControls();
-      flushToggle();
+      const result = store.state.toggleControls();
+      flush();
 
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
+      expect(result).toBe(true);
     });
 
     it('reschedules idle timer when showing controls', () => {
@@ -252,11 +325,11 @@ describe('controlsFeature', () => {
 
       // Hide controls
       store.state.toggleControls();
-      flushToggle();
+      flush();
 
       // Show controls
       store.state.toggleControls();
-      flushToggle();
+      flush();
 
       expect(store.state.controlsVisible).toBe(true);
 
@@ -272,11 +345,12 @@ describe('controlsFeature', () => {
       const video = createMockVideo({ paused: true });
       const { store } = createPlayerStore(video);
 
-      store.state.toggleControls();
-      flushToggle();
+      const result = store.state.toggleControls();
+      flush();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(true);
+      expect(result).toBe(true);
     });
   });
 
@@ -356,14 +430,14 @@ describe('controlsFeature', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Flush the deferred rAF inside toggleControls + store batch. */
-function flushToggle(): void {
-  vi.advanceTimersToNextTimer();
-  flush();
-}
-
 function createContainer(): HTMLElement {
   return document.createElement('div');
+}
+
+function createPointerEvent(type: string, init?: { pointerType?: string }): Event {
+  const event = new Event(type, { bubbles: true });
+  (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
+  return event;
 }
 
 function createPlayerStore(video?: HTMLVideoElement, container?: HTMLElement | null) {

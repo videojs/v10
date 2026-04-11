@@ -5,6 +5,7 @@ import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 const IDLE_DELAY = 2000;
+const TAP_THRESHOLD = 250;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
@@ -46,12 +47,7 @@ export const controlsFeature = definePlayerFeature({
       idleTimer = setTimeout(setInactive, IDLE_DELAY);
     }
 
-    // When a toggle is pending, suppress activity tracking so setActive
-    // doesn't undo the toggle intent before the rAF fires.
-    let pendingToggle: number | null = null;
-
     function setActive() {
-      if (pendingToggle !== null) return;
       if (!get().userActive) {
         set({ userActive: true, controlsVisible: true });
       }
@@ -64,25 +60,37 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Expose toggleControls with access to idle timer.
-    // Deferred via rAF so all synchronous event handlers settle first.
-    // Only one toggle is queued at a time to avoid rapid double-toggles.
     set({
       toggleControls() {
-        const wasVisible = get().controlsVisible;
-
-        if (pendingToggle !== null) cancelAnimationFrame(pendingToggle);
-        pendingToggle = requestAnimationFrame(() => {
-          pendingToggle = null;
-          if (wasVisible) {
-            setInactive();
-          } else {
-            setActive();
-          }
-        });
-
-        return !wasVisible;
+        if (get().controlsVisible) {
+          setInactive();
+        } else {
+          setActive();
+        }
+        return get().controlsVisible;
       },
     });
+
+    // Touch tap-to-toggle
+    let pointerDownTime = 0;
+
+    function onPointerDown() {
+      pointerDownTime = Date.now();
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
+        // If the event target is in the controls don't set inactive because that sets pointer-events: none in CSS.
+        const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
+        if (get().controlsVisible && isMediaOrContainer) {
+          setInactive();
+        } else {
+          setActive();
+        }
+      } else {
+        setActive();
+      }
+    }
 
     // Recompute visibility when playback state changes.
     function onPlaybackChange() {
@@ -97,7 +105,8 @@ export const controlsFeature = definePlayerFeature({
 
     // Container event listeners
     listen(container, 'pointermove', setActive, { signal });
-    listen(container, 'pointerup', setActive, { signal });
+    listen(container, 'pointerdown', onPointerDown, { signal });
+    listen(container, 'pointerup', onPointerUp, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(container, 'focusin', setActive, { signal });
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.
