@@ -151,7 +151,8 @@ function getTemplateHTML() {
       <media-hotkey keys="<" action="speedDown"></media-hotkey>
 
       <!-- Gestures -->
-      <media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+      <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+      <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
       <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>

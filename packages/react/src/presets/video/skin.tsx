@@ -252,7 +252,8 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <MediaHotkey keys="<" action="speedDown" />
 
       {/* Gestures */}
-      <MediaGesture type="tap" action="togglePaused" pointer="mouse" />
+      <MediaGesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <MediaGesture type="tap" action="toggleControls" pointer="touch" />
       <MediaGesture type="doubletap" action="seekStep" value={-10} region="left" />
       <MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
       <MediaGesture type="doubletap" action="seekStep" value={10} region="right" />
