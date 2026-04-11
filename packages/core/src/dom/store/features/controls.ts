@@ -83,7 +83,16 @@ export const controlsFeature = definePlayerFeature({
 
     // Container event listeners
     listen(container, 'pointermove', setActive, { signal });
-    listen(container, 'pointerup', setActive, { signal });
+    listen(
+      container,
+      'pointerup',
+      (event: PointerEvent) => {
+        // Touch activity is handled by the gesture system (toggleControls).
+        // Only track mouse/pen pointer-up as activity here.
+        if (event.pointerType !== 'touch') setActive();
+      },
+      { signal }
+    );
     listen(container, 'keyup', setActive, { signal });
     listen(container, 'focusin', setActive, { signal });
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.

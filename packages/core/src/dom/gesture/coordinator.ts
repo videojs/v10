@@ -1,9 +1,17 @@
-import { listen } from '@videojs/utils/dom';
+import { listen, resolveEventTarget } from '@videojs/utils/dom';
 
 import type { GestureBinding, GestureMatchResult, GestureRecognizer, GestureRegion, GestureType } from './gesture';
 import { resolveRegion } from './region';
 
 const TAP_THRESHOLD = 250;
+const INTERACTIVE_SELECTOR = 'button, input, select, textarea, [role="button"], [role="slider"]';
+
+/** Whether the pointer event originated from an interactive control. */
+function isInteractiveTarget(event: PointerEvent): boolean {
+  const target = resolveEventTarget(event);
+  if (!(target instanceof Element)) return false;
+  return target.closest(INTERACTIVE_SELECTOR) !== null;
+}
 
 export class GestureCoordinator {
   #target: HTMLElement;
@@ -55,6 +63,7 @@ export class GestureCoordinator {
       'pointerup',
       (event) => {
         if (Date.now() - pointerDownTime > TAP_THRESHOLD) return;
+        if (isInteractiveTarget(event)) return;
 
         const pointerType = event.pointerType;
         const clientX = event.clientX;
