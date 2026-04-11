@@ -59,14 +59,21 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Expose toggleControls with access to idle timer.
+    // Deferred via microtask so activity tracking (setActive from pointerup) settles
+    // first within the same event. The toggle runs before the next paint, avoiding
+    // a visible flash. This ensures toggleControls has the final say when called from
+    // gestures that fire during the same pointer event.
     set({
       toggleControls() {
-        if (get().controlsVisible) {
-          setInactive();
-        } else {
-          setActive();
-        }
-        return get().controlsVisible;
+        const wasVisible = get().controlsVisible;
+        queueMicrotask(() => {
+          if (wasVisible) {
+            setInactive();
+          } else {
+            setActive();
+          }
+        });
+        return !wasVisible;
       },
     });
 
@@ -83,16 +90,7 @@ export const controlsFeature = definePlayerFeature({
 
     // Container event listeners
     listen(container, 'pointermove', setActive, { signal });
-    listen(
-      container,
-      'pointerup',
-      (event: PointerEvent) => {
-        // Touch activity is handled by the gesture system (toggleControls).
-        // Only track mouse/pen pointer-up as activity here.
-        if (event.pointerType !== 'touch') setActive();
-      },
-      { signal }
-    );
+    listen(container, 'pointerup', setActive, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(container, 'focusin', setActive, { signal });
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.
