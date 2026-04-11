@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.17] - 2026-04-11
+
+### 🚀 Features
+- *(html)* Add `<media-gesture>` element ([#1305](https://github.com/videojs/v10/pull/1305)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* Add gesture hooks and MediaGesture component ([#1309](https://github.com/videojs/v10/pull/1309)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Add gesture bindings to default skins and presets ([#1310](https://github.com/videojs/v10/pull/1310)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🐛 Bug Fixes
+- *(html)* Replace bare side-effect imports with explicit safeDefine() in define modules ([#1307](https://github.com/videojs/v10/pull/1307)) by [@mihar-22](https://github.com/mihar-22)
+
 ## [@videojs/core@10.0.0-beta.16] - 2026-04-10
 
 ### 🚀 Features
@@ -1174,6 +1184,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.17]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.16...@videojs/core@10.0.0-beta.17
 [@videojs/core@10.0.0-beta.16]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.15...@videojs/core@10.0.0-beta.16
 [@videojs/core@10.0.0-beta.15]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15
 [@videojs/core@10.0.0-beta.14]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.13...@videojs/core@10.0.0-beta.14
