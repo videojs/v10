@@ -2,141 +2,98 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createControlsActivity } from '../controls-activity';
 
-const IDLE_DELAY = 2000;
-
 describe('createControlsActivity', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  describe('idle timer', () => {
-    it('sets inactive after idle delay', () => {
-      const { setControls } = setup();
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-
-      expect(setControls).toHaveBeenCalledWith(false, false);
-    });
-
-    it('keeps controlsVisible true when paused', () => {
-      const { setControls } = setup({ paused: true });
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-
-      expect(setControls).toHaveBeenCalledWith(false, true);
-    });
-  });
-
   describe('pointer activity', () => {
-    it('resets idle on pointermove', () => {
-      const { container, setControls } = setup();
+    it('calls setUserActivity(true) on pointermove', () => {
+      const { container, setUserActivity } = setup();
 
-      vi.advanceTimersByTime(IDLE_DELAY - 500);
       container.dispatchEvent(new Event('pointermove'));
 
-      vi.advanceTimersByTime(500);
-      expect(setControls).not.toHaveBeenCalledWith(false, false);
-
-      vi.advanceTimersByTime(IDLE_DELAY - 500);
-      expect(setControls).toHaveBeenCalledWith(false, false);
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
 
-    it('sets active on mouse pointerup', () => {
-      const { container, setControls } = setup({ userActive: false });
+    it('calls setUserActivity(true) on mouse pointerup', () => {
+      const { container, setUserActivity } = setup();
 
       container.dispatchEvent(new Event('pointerdown'));
       vi.advanceTimersByTime(100);
       container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'mouse' }));
 
-      expect(setControls).toHaveBeenCalledWith(true, true);
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
 
-    it('sets active on keyup', () => {
-      const { container, setControls } = setup({ userActive: false });
+    it('calls setUserActivity(true) on keyup', () => {
+      const { container, setUserActivity } = setup();
 
       container.dispatchEvent(new Event('keyup'));
 
-      expect(setControls).toHaveBeenCalledWith(true, true);
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
 
-    it('sets active on focusin', () => {
-      const { container, setControls } = setup({ userActive: false });
+    it('calls setUserActivity(true) on focusin', () => {
+      const { container, setUserActivity } = setup();
 
       container.dispatchEvent(new Event('focusin'));
 
-      expect(setControls).toHaveBeenCalledWith(true, true);
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
 
-    it('sets inactive on mouseleave', () => {
-      const { container, setControls } = setup();
+    it('calls hideControls on mouseleave', () => {
+      const { container, hideControls } = setup();
 
       container.dispatchEvent(new Event('mouseleave'));
 
-      expect(setControls).toHaveBeenCalledWith(false, false);
+      expect(hideControls).toHaveBeenCalledOnce();
     });
   });
 
   describe('touch tap-to-toggle', () => {
-    it('toggles controls on touch tap', () => {
-      const { container, setControls, state } = setup({ controlsVisible: true });
+    it('calls toggleControls on touch tap', () => {
+      const { container, toggleControls } = setup();
 
       container.dispatchEvent(new Event('pointerdown'));
       vi.advanceTimersByTime(100);
-      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch', target: container }));
+      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
 
-      // Toggle: was visible → should hide
-      expect(setControls).toHaveBeenCalledWith(false, false);
-
-      // Now hidden → tap again to show
-      state.controlsVisible = false;
-      state.userActive = false;
-      container.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch', target: container }));
-
-      expect(setControls).toHaveBeenCalledWith(true, true);
+      expect(toggleControls).toHaveBeenCalledOnce();
     });
 
     it('does not toggle on long press', () => {
-      const { container, setControls } = setup();
+      const { container, toggleControls, setUserActivity } = setup();
 
       container.dispatchEvent(new Event('pointerdown'));
       vi.advanceTimersByTime(300);
-      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch', target: container }));
+      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
 
-      // Long press → treated as activity (setActive), not toggle.
-      // Since user is already active, setControls is not called — only idle timer resets.
-      expect(setControls).not.toHaveBeenCalledWith(false, false);
+      expect(toggleControls).not.toHaveBeenCalled();
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
-  });
 
-  describe('playback state', () => {
-    it('recomputes visibility when media pauses', () => {
-      const { media, setControls, state } = setup();
+    it('does not toggle for mouse clicks', () => {
+      const { container, toggleControls, setUserActivity } = setup();
 
-      // Become inactive first
-      vi.advanceTimersByTime(IDLE_DELAY);
-      setControls.mockClear();
-      state.userActive = false;
+      container.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'mouse' }));
 
-      // Pause
-      Object.defineProperty(media, 'paused', { value: true, configurable: true });
-      media.dispatchEvent(new Event('pause'));
-
-      expect(setControls).toHaveBeenCalledWith(false, true);
+      expect(toggleControls).not.toHaveBeenCalled();
+      expect(setUserActivity).toHaveBeenCalledWith(true);
     });
   });
 
   describe('cleanup', () => {
     it('stops tracking on destroy', () => {
-      const { activity, container, setControls } = setup();
+      const { activity, container, setUserActivity } = setup();
 
       activity.destroy();
-      setControls.mockClear();
+      setUserActivity.mockClear();
 
-      vi.advanceTimersByTime(IDLE_DELAY);
       container.dispatchEvent(new Event('pointermove'));
 
-      expect(setControls).not.toHaveBeenCalled();
+      expect(setUserActivity).not.toHaveBeenCalled();
     });
   });
 });
@@ -145,39 +102,23 @@ describe('createControlsActivity', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-interface SetupOptions {
-  paused?: boolean;
-  userActive?: boolean;
-  controlsVisible?: boolean;
-}
-
-function setup(options: SetupOptions = {}) {
+function setup() {
   const container = document.createElement('div');
-  const media = document.createElement('video') as HTMLVideoElement;
-  Object.defineProperty(media, 'paused', { value: options.paused ?? false, configurable: true });
 
-  const state = {
-    userActive: options.userActive ?? true,
-    controlsVisible: options.controlsVisible ?? true,
-  };
+  const setUserActivity = vi.fn();
+  const hideControls = vi.fn();
+  const toggleControls = vi.fn();
 
-  const setControls = vi.fn((userActive: boolean, controlsVisible: boolean) => {
-    state.userActive = userActive;
-    state.controlsVisible = controlsVisible;
+  const activity = createControlsActivity(container, {
+    setUserActivity,
+    hideControls,
+    toggleControls,
   });
 
-  const activity = createControlsActivity({
-    getContainer: () => container,
-    getMedia: () => media,
-    getControlsVisible: () => state.controlsVisible,
-    getUserActive: () => state.userActive,
-    setControls,
-  });
-
-  return { container, media, state, setControls, activity };
+  return { container, setUserActivity, hideControls, toggleControls, activity };
 }
 
-function createPointerEvent(type: string, init?: { pointerType?: string; target?: EventTarget }): Event {
+function createPointerEvent(type: string, init?: { pointerType?: string }): Event {
   const event = new Event(type, { bubbles: true });
   if (init?.pointerType) {
     Object.defineProperty(event, 'pointerType', { value: init.pointerType });

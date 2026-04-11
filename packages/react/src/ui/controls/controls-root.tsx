@@ -5,7 +5,7 @@ import { createControlsActivity, logMissingFeature, selectControls } from '@vide
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 
-import { useContainer, useMedia, usePlayer } from '../../player/context';
+import { useContainer, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { ControlsContextProvider } from './context';
@@ -23,24 +23,20 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
 
   const controls = usePlayer(selectControls);
   const container = useContainer();
-  const media = useMedia();
 
   const [core] = useState(() => new ControlsCore());
 
-  // Wire up activity tracking on the container.
   useEffect(() => {
-    if (!controls || !container || !media) return;
+    if (!controls || !container) return;
 
-    const activity = createControlsActivity({
-      getContainer: () => container as HTMLElement,
-      getMedia: () => media,
-      getControlsVisible: () => controls.controlsVisible,
-      getUserActive: () => controls.userActive,
-      setControls: (userActive, controlsVisible) => controls.setControls(userActive, controlsVisible),
+    const activity = createControlsActivity(container as HTMLElement, {
+      setUserActivity: (active) => controls.setUserActivity(active),
+      hideControls: () => controls.hideControls(),
+      toggleControls: () => controls.toggleControls(),
     });
 
     return () => activity.destroy();
-  }, [controls, container, media]);
+  }, [controls, container]);
 
   if (!controls) {
     if (__DEV__) logMissingFeature('Controls.Root', 'controls');

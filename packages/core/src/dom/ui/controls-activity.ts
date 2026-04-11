@@ -1,14 +1,11 @@
 import { isInteractiveTarget, listen } from '@videojs/utils/dom';
 
-const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 
 export interface ControlsActivityOptions {
-  getContainer: () => HTMLElement;
-  getMedia: () => HTMLMediaElement;
-  getControlsVisible: () => boolean;
-  getUserActive: () => boolean;
-  setControls: (userActive: boolean, controlsVisible: boolean) => void;
+  setUserActivity: (active: boolean) => void;
+  hideControls: () => void;
+  toggleControls: () => void;
 }
 
 export interface ControlsActivityApi {
@@ -18,103 +15,46 @@ export interface ControlsActivityApi {
 /**
  * Wire up controls activity tracking on a container element.
  *
- * Manages idle timer, pointer/keyboard activity detection, touch
- * tap-to-toggle, and playback state visibility recomputation.
+ * Maps DOM pointer/keyboard events to store methods. The store
+ * feature owns idle timer, visibility computation, and state.
  */
-export function createControlsActivity(options: ControlsActivityOptions): ControlsActivityApi {
-  const container = options.getContainer();
-  const media = options.getMedia();
+export function createControlsActivity(container: HTMLElement, options: ControlsActivityOptions): ControlsActivityApi {
   const disconnect = new AbortController();
   const { signal } = disconnect;
 
-  // Idle timer
-  let idleTimer: ReturnType<typeof setTimeout> | undefined;
-
-  function clearIdle() {
-    clearTimeout(idleTimer);
-    idleTimer = undefined;
-  }
-
-  function scheduleIdle() {
-    clearIdle();
-    idleTimer = setTimeout(setInactive, IDLE_DELAY);
-  }
-
-  function computeVisible(userActive: boolean): boolean {
-    return userActive || media.paused;
-  }
-
-  function setActive() {
-    if (!options.getUserActive()) {
-      options.setControls(true, true);
-    }
-    scheduleIdle();
-  }
-
-  function setInactive() {
-    clearIdle();
-    options.setControls(false, computeVisible(false));
-  }
-
-  function toggleControls() {
-    if (options.getControlsVisible()) {
-      setInactive();
-    } else {
-      setActive();
-    }
-  }
-
-  // Touch tap-to-toggle
   let pointerDownTime = 0;
 
-  function onPointerDown() {
-    pointerDownTime = Date.now();
-  }
+  listen(container, 'pointermove', () => options.setUserActivity(true), { signal });
+  listen(container, 'keyup', () => options.setUserActivity(true), { signal });
+  listen(container, 'focusin', () => options.setUserActivity(true), { signal });
 
-  function onPointerUp(event: PointerEvent) {
-    if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-      // Touch tap on interactive controls (buttons, sliders) — skip toggle.
-      if (isInteractiveTarget(event)) return;
+  listen(
+    container,
+    'pointerdown',
+    () => {
+      pointerDownTime = Date.now();
+    },
+    { signal }
+  );
 
-      toggleControls();
-      return;
-    }
+  listen(
+    container,
+    'pointerup',
+    ((event: PointerEvent) => {
+      if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
+        if (isInteractiveTarget(event)) return;
+        options.toggleControls();
+        return;
+      }
 
-    // Non-touch pointer up (mouse click, pen) — treat as activity.
-    setActive();
-  }
+      options.setUserActivity(true);
+    }) as EventListener,
+    { signal }
+  );
 
-  // Recompute visibility when playback state changes.
-  function onPlaybackChange() {
-    const userActive = options.getUserActive();
-    options.setControls(userActive, computeVisible(userActive));
-
-    // When playback starts, schedule idle if user is active.
-    if (!media.paused && userActive) {
-      scheduleIdle();
-    }
-  }
-
-  // Container event listeners
-  listen(container, 'pointermove', setActive, { signal });
-  listen(container, 'pointerdown', onPointerDown, { signal });
-  listen(container, 'pointerup', onPointerUp as EventListener, { signal });
-  listen(container, 'keyup', setActive, { signal });
-  listen(container, 'focusin', setActive, { signal });
-  // On touch devices pointerleave would fire after a pointerup event which hides the controls.
+  // On touch devices pointerleave fires after pointerup which would hide controls.
   // https://w3c.github.io/pointerevents/#dfn-pointerup
-  listen(container, 'mouseleave', setInactive, { signal });
-
-  // Media event listeners for playback state changes.
-  listen(media, 'play', onPlaybackChange, { signal });
-  listen(media, 'pause', onPlaybackChange, { signal });
-  listen(media, 'ended', onPlaybackChange, { signal });
-
-  // Clean up timer on signal abort.
-  signal.addEventListener('abort', clearIdle, { once: true });
-
-  // Schedule initial idle.
-  scheduleIdle();
+  listen(container, 'mouseleave', () => options.hideControls(), { signal });
 
   return {
     destroy() {

@@ -9,7 +9,7 @@ import {
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 
-import { containerContext, mediaContext, playerContext } from '../../player/context';
+import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { controlsContext } from './context';
@@ -22,11 +22,6 @@ export class ControlsElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: controlsContext });
   readonly #container = new ContextConsumer(this, {
     context: containerContext,
-    callback: () => this.#connectActivity(),
-    subscribe: true,
-  });
-  readonly #media = new ContextConsumer(this, {
-    context: mediaContext,
     callback: () => this.#connectActivity(),
     subscribe: true,
   });
@@ -72,15 +67,12 @@ export class ControlsElement extends MediaElement {
 
     const controls = this.#mediaState.value;
     const container = this.#container.value?.container;
-    const media = this.#media.value?.media;
-    if (!controls || !container || !media) return;
+    if (!controls || !container) return;
 
-    this.#activity = createControlsActivity({
-      getContainer: () => container as HTMLElement,
-      getMedia: () => media,
-      getControlsVisible: () => controls.controlsVisible,
-      getUserActive: () => controls.userActive,
-      setControls: (userActive, controlsVisible) => controls.setControls(userActive, controlsVisible),
+    this.#activity = createControlsActivity(container as HTMLElement, {
+      setUserActivity: (active) => controls.setUserActivity(active),
+      hideControls: () => controls.hideControls(),
+      toggleControls: () => controls.toggleControls(),
     });
   }
 }
