@@ -1,5 +1,54 @@
 # Changelog
 
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.16...@videojs/core@10.0.0-beta.17) (2026-04-11)
+
+
+### Features
+
+* **html:** add `<media-gesture>` element ([#1305](https://github.com/videojs/v10/issues/1305)) ([d2782f0](https://github.com/videojs/v10/commit/d2782f0c8d3e927fc2144a5286f4bc795a2ed4ac))
+* **packages:** add gesture bindings to default skins and presets ([#1310](https://github.com/videojs/v10/issues/1310)) ([1509a66](https://github.com/videojs/v10/commit/1509a66f60fc0598452f21af396c4b6f3569be5b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.17
+    * @videojs/store bumped to 10.0.0-beta.17
+    * @videojs/utils bumped to 10.0.0-beta.17
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.15...@videojs/core@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **core:** add gesture system ([#1287](https://github.com/videojs/v10/issues/1287)) ([08ebaed](https://github.com/videojs/v10/commit/08ebaed23fbc232053e197f2af73de0052138809))
+* **core:** add sub-1x playback rates to defaults ([#1231](https://github.com/videojs/v10/issues/1231)) ([c68c1a3](https://github.com/videojs/v10/commit/c68c1a3c8261919e1ffbbd2ea103d3a199e159de))
+* **core:** add toggleControls to controls feature ([#1280](https://github.com/videojs/v10/issues/1280)) ([11f3057](https://github.com/videojs/v10/commit/11f305713bba718d54944a57684e8c135fe4e0e1))
+* **html:** add hotkeys ([#1239](https://github.com/videojs/v10/issues/1239)) ([d9d893b](https://github.com/videojs/v10/commit/d9d893b726e461721e73eeba9377c9d381de8951))
+* **packages:** add hotkey system with coordinator, actions, and ARIA support ([#1238](https://github.com/videojs/v10/issues/1238)) ([627ea20](https://github.com/videojs/v10/commit/627ea204fcadb50d8cd0878ae816fabdaee470d0))
+* **packages:** add mux-audio element and react component ([#1259](https://github.com/videojs/v10/issues/1259)) ([9fac0fc](https://github.com/videojs/v10/commit/9fac0fca3d5af44c76c9845da37b5197dd8538df))
+
+
+### Bug Fixes
+
+* **core:** allow undefined hotkey options  ([#1242](https://github.com/videojs/v10/issues/1242)) ([d2c43db](https://github.com/videojs/v10/commit/d2c43db5506847f941260fd41cde2ecd33b74277))
+* **core:** treat Alt as implicit modifier for non-letter character hotkeys ([#1304](https://github.com/videojs/v10/issues/1304)) ([57259b3](https://github.com/videojs/v10/commit/57259b342a3cce577c9e1a3cb96ab278f559434c))
+* **core:** use 0.2 and 0.7 for default playback rates ([#1236](https://github.com/videojs/v10/issues/1236)) ([932949f](https://github.com/videojs/v10/commit/932949fdf1bdf3fcd62fcaa30257786d6bb9b92e))
+* **packages:** remove redundant "Shift" modifier from playback rate hotkeys ([#1290](https://github.com/videojs/v10/issues/1290)) ([a0fd3cb](https://github.com/videojs/v10/commit/a0fd3cbda8101f47806e0e71c727fbf483a1de66))
+* **packages:** time slider seek improvements ([#1291](https://github.com/videojs/v10/issues/1291)) ([b934c58](https://github.com/videojs/v10/commit/b934c589f824b0ed7338b19c2b3bad3160742e74))
+* **packages:** workspace drift ([#1270](https://github.com/videojs/v10/issues/1270)) ([b874dad](https://github.com/videojs/v10/commit/b874dad30652654e77b3693116edc497355fd725))
+* safari track bug, no playback ([#1226](https://github.com/videojs/v10/issues/1226)) ([b1ddda0](https://github.com/videojs/v10/commit/b1ddda05dec40669058a71064f0c3889972c7723))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.16
+    * @videojs/store bumped to 10.0.0-beta.16
+    * @videojs/utils bumped to 10.0.0-beta.16
+
 ## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15) (2026-04-03)
 
 

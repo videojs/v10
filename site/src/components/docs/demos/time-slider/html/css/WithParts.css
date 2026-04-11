@@ -70,7 +70,12 @@
 }
 
 .html-time-slider-parts__slider[data-dragging] .html-time-slider-parts__thumb {
+  left: var(--media-slider-pointer);
   transform: translateX(-50%) scale(1.1);
+}
+
+.html-time-slider-parts__slider[data-dragging] .html-time-slider-parts__fill {
+  width: var(--media-slider-pointer);
 }
 
 .html-time-slider-parts__value {

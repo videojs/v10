@@ -10,6 +10,7 @@ function createMediaState(overrides: Partial<MediaFullscreenState> = {}): MediaF
     fullscreenAvailability: 'available',
     requestFullscreen: vi.fn(async () => {}),
     exitFullscreen: vi.fn(async () => {}),
+    toggleFullscreen: vi.fn(async () => {}),
     ...overrides,
   };
 }

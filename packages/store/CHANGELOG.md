@@ -1,5 +1,47 @@
 # Changelog
 
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.16...@videojs/store@10.0.0-beta.17) (2026-04-11)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.17
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.17
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.17
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.15...@videojs/store@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **core:** add toggleControls to controls feature ([#1280](https://github.com/videojs/v10/issues/1280)) ([11f3057](https://github.com/videojs/v10/commit/11f305713bba718d54944a57684e8c135fe4e0e1))
+
+
+### Bug Fixes
+
+* **packages:** consistent react versions ([#1285](https://github.com/videojs/v10/issues/1285)) ([1c937da](https://github.com/videojs/v10/commit/1c937da4704d51c0c64e5085b6f235bb95a236eb))
+* **packages:** narrow react peer dependency to v18+ ([#1289](https://github.com/videojs/v10/issues/1289)) ([6fb6ab7](https://github.com/videojs/v10/commit/6fb6ab7dfb4ac2671bfac4269dfc5813ab76f0e8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.16
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.16
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.16
+
 ## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.14...@videojs/store@10.0.0-beta.15) (2026-04-03)
 
 

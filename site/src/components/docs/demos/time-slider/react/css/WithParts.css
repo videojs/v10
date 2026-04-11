@@ -68,7 +68,12 @@
 }
 
 .react-time-slider-parts__slider[data-dragging] .react-time-slider-parts__thumb {
+  left: var(--media-slider-pointer);
   transform: translateX(-50%) scale(1.1);
+}
+
+.react-time-slider-parts__slider[data-dragging] .react-time-slider-parts__fill {
+  width: var(--media-slider-pointer);
 }
 
 .react-time-slider-parts__value {

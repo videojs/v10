@@ -58,8 +58,8 @@ Each element declares one binding. To bind multiple keys to the same action, use
 <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
 
 <!-- Speed (steps through available playbackRates) -->
-<media-hotkey keys="Shift+>" action="speedUp"></media-hotkey>
-<media-hotkey keys="Shift+<" action="speedDown"></media-hotkey>
+<media-hotkey keys=">" action="speedUp"></media-hotkey>
+<media-hotkey keys="<" action="speedDown"></media-hotkey>
 
 <!-- Disabled -->
 <media-hotkey keys="k" action="togglePaused" disabled></media-hotkey>
@@ -75,7 +75,7 @@ Each element declares one binding. To bind multiple keys to the same action, use
 <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
 <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
 <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-<MediaHotkey keys="Shift+>" action="speedUp" />
+<MediaHotkey keys=">" action="speedUp" />
 ```
 
 `keys` (not `key`) avoids collision with React's reserved `key` prop.
@@ -141,7 +141,7 @@ Key patterns use `KeyboardEvent.key` values — layout-dependent, mnemonic ("K f
 | `Space` | Space bar |
 | `ArrowLeft` | Left arrow |
 | `0-9` | Any digit key (0 through 9) |
-| `Shift+>` | Shift + > (the shifted character, not the unshifted key) |
+| `>` | > key, no modifiers (on US keyboards, produced by Shift+.) |
 | `Mod+k` | Cmd+K on macOS, Ctrl+K elsewhere |
 | `Ctrl+Shift+f` | Ctrl + Shift + F |
 
@@ -166,6 +166,7 @@ Only `0-9` is supported. Arbitrary ranges (e.g., `a-z`) are not — there's no u
 - Patterns are parsed into `{ modifiers, key }` at registration time — no parsing per event.
 - `event.key` is compared case-insensitively.
 - **Exact modifier matching** — all specified modifiers must be active, all unspecified must be inactive. `k` does not fire when Ctrl+K is pressed.
+- **Implicit modifiers (Shift, Alt)** — For single non-letter character keys (`>`, `<`, `?`, `!`, etc.), `shiftKey` and `altKey` are ignored during matching. These characters require Shift on some layouts (US: `Shift+.` produces `>`), Alt/Option on others (some Mac layouts: `Option+Shift` produces `>`), or neither (some European layouts: `>` is an unshifted key). Explicitly specifying `Shift+>` or `Alt+>` still requires that modifier to be held. `ctrlKey` and `metaKey` remain strict — they are intentional modifier shortcuts, never layout artifacts.
 - `Mod` resolves at parse time based on platform detection (`navigator.userAgentData?.platform` with `navigator.platform` fallback).
 - IME composition input is filtered — events where `event.key === 'Unidentified'` are skipped.
 
@@ -312,7 +313,7 @@ Every major video player ships keyboard shortcuts. The bindings are remarkably c
 | Seek ±10s | `J` / `L` | YouTube, Vimeo, Media Chrome |
 | Percentage seek | `0`–`9` | YouTube, Netflix, Video.js 7 |
 | Captions | `C` | Vimeo, Media Chrome, Vidstack |
-| Speed | `Shift+>` / `Shift+<` | YouTube, VLC, Media Chrome, Vidstack |
+| Speed | `>` / `<` | YouTube, VLC, Media Chrome, Vidstack |
 | PiP | `I` or `P` | YouTube (`I`), Media Chrome (`P`) |
 | Help overlay | `Shift+?` | YouTube, Vimeo, Media Chrome |
 
@@ -351,8 +352,8 @@ Not shipped as a preset — documented as the standard set for users to compose:
 | `0-9` | `seekToPercent` | — | YouTube/Netflix. Each digit × 10%. |
 | `Home` | `seekToPercent` | `0` | Jump to start. |
 | `End` | `seekToPercent` | `100` | Jump to end. |
-| `Shift+>` | `speedUp` | — | YouTube/VLC. Steps through `playbackRates`. |
-| `Shift+<` | `speedDown` | — | YouTube/VLC. Steps through `playbackRates`. |
+| `>` | `speedUp` | — | YouTube/VLC. Steps through `playbackRates`. |
+| `<` | `speedDown` | — | YouTube/VLC. Steps through `playbackRates`. |
 
 ## Edge cases
 

@@ -33,6 +33,8 @@ export interface MediaPlaybackState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/pause
    */
   pause(): void;
+  /** Toggle play/pause. Returns `true` if playback started. */
+  togglePaused(): boolean;
 }
 
 import type { MediaFeatureAvailability } from './types';
@@ -160,6 +162,8 @@ export interface MediaFullscreenState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen
    */
   exitFullscreen(): Promise<void>;
+  /** Toggle fullscreen mode. */
+  toggleFullscreen(): Promise<void>;
 }
 
 export interface MediaControlsState {
@@ -295,4 +299,6 @@ export interface MediaPictureInPictureState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
   exitPictureInPicture(): Promise<void>;
+  /** Toggle picture-in-picture mode. */
+  togglePictureInPicture(): Promise<void>;
 }

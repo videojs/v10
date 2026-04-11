@@ -1,6 +1,7 @@
 import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
+import type { Reactor } from '../create-machine-reactor';
+import { createMachineReactor } from '../create-machine-reactor';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
-import { effect } from '../signals/effect';
 import { computed, type Signal, update } from '../signals/primitives';
 import type { AddressableObject, Presentation } from '../types';
 
@@ -55,59 +56,71 @@ export function shouldResolve(state: PresentationState): boolean {
   );
 }
 
+export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
+
+/**
+ * Derives the correct state from current state conditions.
+ *
+ * States are mutually exclusive and exhaustive:
+ * - `'preconditions-unmet'`: no presentation, or presentation has no URL
+ * - `'idle'`:     URL present, unresolved (no id), shouldResolve not met
+ * - `'resolving'`: URL present, unresolved (no id), shouldResolve met
+ * - `'resolved'`:  URL present, resolved (has id)
+ */
+function deriveState(state: PresentationState): ResolvePresentationState {
+  const { presentation } = state;
+  if (!presentation || !('url' in presentation)) return 'preconditions-unmet';
+  if ('id' in presentation) return 'resolved';
+  return shouldResolve(state) ? 'resolving' : 'idle';
+}
+
 /**
  * Resolves unresolved presentations using reactive composition.
  *
- * Triggers resolution when:
- * - State-driven: Unresolved presentation + preload allows (auto/metadata)
- * - Playback-driven: playbackInitiated is true
+ * FSM driven by `deriveState` — a single `always` monitor keeps the state in
+ * sync with conditions at all times. `'resolving'` additionally runs the fetch
+ * task and returns an AbortController so the framework aborts it on state exit.
  *
  * @example
- * ```ts
- * const state = signal({ presentation: undefined, preload: 'auto', playbackInitiated: false });
- *
- * const cleanup = resolvePresentation({ state });
- *
- * // State-driven: resolves immediately when preload allows
- * state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
- *
- * // Playback-driven: resolves when playbackInitiated is set
- * state.set({ ...state.get(), preload: 'none', presentation: { url: '...' }, playbackInitiated: true });
- * ```
+ * const reactor = resolvePresentation({ state });
+ * // later:
+ * reactor.destroy();
  */
-export function resolvePresentation<S extends PresentationState>({ state }: { state: Signal<S> }): () => void {
-  const canResolveSignal = computed(() => canResolve(state.get()));
-  const shouldResolveSignal = computed(() => shouldResolve(state.get()));
+export function resolvePresentation<S extends PresentationState>({
+  state,
+}: {
+  state: Signal<S>;
+}): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get()));
 
-  let resolving = false;
-  let abortController: AbortController | null = null;
+  return createMachineReactor<ResolvePresentationState>({
+    initial: 'preconditions-unmet',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      'preconditions-unmet': {},
+      idle: {},
+      resolving: {
+        // Entry: start fetch on state entry; return AbortController so the
+        // framework aborts the in-flight request on state exit.
+        entry: () => {
+          const presentation = state.get().presentation as UnresolvedPresentation;
+          const ac = new AbortController();
 
-  const cleanupEffect = effect(() => {
-    if (!canResolveSignal.get() || !shouldResolveSignal.get() || resolving) return;
+          fetchResolvable(presentation, { signal: ac.signal })
+            .then((response) => getResponseText(response))
+            .then((text) => {
+              const parsed = parseMultivariantPlaylist(text, presentation);
+              update(state, { presentation: parsed } as Partial<S>);
+            })
+            .catch((error) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
+              throw error;
+            });
 
-    const presentation = state.get().presentation as UnresolvedPresentation;
-    resolving = true;
-    abortController = new AbortController();
-
-    fetchResolvable(presentation, { signal: abortController.signal })
-      .then((response) => getResponseText(response))
-      .then((text) => {
-        const parsed = parseMultivariantPlaylist(text, presentation);
-        const patch: Partial<PresentationState> = { presentation: parsed };
-        update(state, patch);
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === 'AbortError') return;
-        throw error;
-      })
-      .finally(() => {
-        resolving = false;
-        abortController = null;
-      });
+          return ac;
+        },
+      },
+      resolved: {},
+    },
   });
-
-  return () => {
-    abortController?.abort();
-    cleanupEffect();
-  };
 }

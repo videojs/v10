@@ -4,18 +4,17 @@ import { SliderThumbElement } from '../../ui/slider/slider-thumb-element';
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
 import { SliderValueElement } from '../../ui/slider/slider-value-element';
 import { VolumeSliderElement } from '../../ui/volume-slider/volume-slider-element';
-import { safeDefine } from '../safe-define';
+import { defineVolumeSlider } from './compounds';
 
-// Parent slider first — sub-elements consume its context.
-safeDefine(VolumeSliderElement);
-safeDefine(SliderFillElement);
-safeDefine(SliderPreviewElement);
-safeDefine(SliderThumbElement);
-safeDefine(SliderTrackElement);
-safeDefine(SliderValueElement);
+defineVolumeSlider();
 
 declare global {
   interface HTMLElementTagNameMap {
     [VolumeSliderElement.tagName]: VolumeSliderElement;
+    [SliderFillElement.tagName]: SliderFillElement;
+    [SliderPreviewElement.tagName]: SliderPreviewElement;
+    [SliderThumbElement.tagName]: SliderThumbElement;
+    [SliderTrackElement.tagName]: SliderTrackElement;
+    [SliderValueElement.tagName]: SliderValueElement;
   }
 }

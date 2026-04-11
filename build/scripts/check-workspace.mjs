@@ -10,6 +10,7 @@
  * 3. Root tsconfig references — every composite project is referenced
  * 4. Package metadata — non-private packages have required fields
  * 5. Release-please config — every versioned package is registered
+ * 6. Define imports — no bare side-effect imports from relative paths
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -230,6 +231,64 @@ function checkReleasePleaseConfig() {
   return { ok: warnings.length === 0, warnings };
 }
 
+// ── Check 6: Define imports ──────────────────────────────────────────────────
+
+/**
+ * Bare side-effect imports from relative paths in the define directory cause
+ * non-deterministic registration order when loaded as native ESM in the
+ * browser. All registration must go through explicit safeDefine() calls.
+ */
+function checkDefineImports() {
+  const warnings = [];
+  const defineDir = join(PACKAGES_DIR, 'html/src/define');
+
+  if (!existsSync(defineDir)) {
+    return { ok: true, warnings: [] };
+  }
+
+  // Matches: import './foo';  import "../bar";  import './foo/bar';
+  // Ignores value imports: import { X } from './foo';  import X from './foo';
+  // Ignores CSS imports: import './foo.css';  import './foo.css?inline';
+  const sideEffectImportRe = /^import\s+['"](\.[^'"]+)['"]\s*;/gm;
+  const cssSpecifierRe = /\.css(?:\?|$)/;
+
+  function findTsFiles(dir, results = []) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === 'tests') continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        findTsFiles(full, results);
+      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
+        results.push(full);
+      }
+    }
+    return results;
+  }
+
+  for (const filePath of findTsFiles(defineDir)) {
+    const content = readText(filePath);
+    const relative = filePath.slice(ROOT.length + 1);
+
+    const sideEffects = [];
+    for (const match of content.matchAll(sideEffectImportRe)) {
+      const specifier = match[1];
+      if (cssSpecifierRe.test(specifier)) continue;
+      sideEffects.push(specifier);
+    }
+
+    // A single side-effect import (e.g. skin importing its ui module) is safe
+    // because ESM evaluates it synchronously before the importing module's body.
+    // Multiple side-effect imports are the problem — they race in the browser.
+    if (sideEffects.length > 1) {
+      for (const specifier of sideEffects) {
+        warnings.push(`${relative}: bare side-effect import "${specifier}" — use safeDefine() instead`);
+      }
+    }
+  }
+
+  return { ok: warnings.length === 0, warnings };
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
@@ -238,6 +297,7 @@ const checks = [
   { name: 'Root tsconfig references', fn: checkTsconfigReferences },
   { name: 'Package metadata', fn: checkPackageMetadata },
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
+  { name: 'Define imports', fn: checkDefineImports },
 ];
 
 let failed = 0;

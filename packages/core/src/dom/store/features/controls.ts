@@ -4,6 +4,7 @@ import { isNull } from '@videojs/utils/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaPauseCapable } from '../../media/predicate';
+import { findGestureCoordinator } from '../../gesture/coordinator';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -81,7 +82,17 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        // If the event target is in the controls don't set inactive because that sets pointer-events: none in CSS.
+        // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
+        const coordinator = findGestureCoordinator(container as HTMLElement);
+        if (
+          coordinator?.bindings.some(
+            (b) => b.type === 'tap' && b.action === 'toggleControls' && (!b.pointer || b.pointer === 'touch')
+          )
+        ) {
+          return;
+        }
+
+        // Inline touch tap-to-toggle for standalone use (no gestures).
         const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
