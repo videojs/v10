@@ -79,6 +79,7 @@ export class GestureElement extends MediaElement {
       pointer: this.pointer,
       region: this.region,
       disabled: this.disabled,
+      action: this.action,
     };
 
     if (this.type === 'doubletap') {

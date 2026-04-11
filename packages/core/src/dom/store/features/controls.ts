@@ -81,9 +81,13 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        // When a touch tap gesture is registered, it handles toggle — skip inline handler.
+        // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
         const coordinator = findGestureCoordinator(container as HTMLElement);
-        if (coordinator?.bindings.some((b) => b.type === 'tap' && (!b.pointer || b.pointer === 'touch'))) {
+        if (
+          coordinator?.bindings.some(
+            (b) => b.type === 'tap' && b.action === 'toggleControls' && (!b.pointer || b.pointer === 'touch')
+          )
+        ) {
           return;
         }
 

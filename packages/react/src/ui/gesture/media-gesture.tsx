@@ -37,7 +37,7 @@ export function MediaGesture({ type, action, value, pointer, region, disabled }:
       resolver({ store, value, event });
     };
 
-    const options = { pointer, region };
+    const options = { pointer, region, action };
 
     if (type === 'doubletap') {
       return createDoubleTapGesture(container, onActivate, options);

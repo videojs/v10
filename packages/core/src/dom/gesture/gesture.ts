@@ -8,6 +8,7 @@ export interface GestureOptions {
   pointer?: GesturePointerType | undefined;
   region?: GestureRegion | undefined;
   disabled?: boolean | undefined;
+  action?: string | undefined;
 }
 
 export interface GestureBinding {
@@ -17,6 +18,7 @@ export interface GestureBinding {
   pointer?: GesturePointerType | undefined;
   region?: GestureRegion | undefined;
   disabled?: boolean | undefined;
+  action?: string | undefined;
 }
 
 export interface GestureRecognizer {
