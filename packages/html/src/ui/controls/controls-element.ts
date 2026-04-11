@@ -1,9 +1,15 @@
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, attachControlsActivity, logMissingFeature, selectControls } from '@videojs/core/dom';
+import {
+  applyStateDataAttrs,
+  type ControlsActivityApi,
+  createControlsActivity,
+  logMissingFeature,
+  selectControls,
+} from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 
-import { containerContext, playerContext } from '../../player/context';
+import { containerContext, mediaContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { controlsContext } from './context';
@@ -19,8 +25,13 @@ export class ControlsElement extends MediaElement {
     callback: () => this.#connectActivity(),
     subscribe: true,
   });
+  readonly #media = new ContextConsumer(this, {
+    context: mediaContext,
+    callback: () => this.#connectActivity(),
+    subscribe: true,
+  });
 
-  #activityDisconnect: AbortController | null = null;
+  #activity: ControlsActivityApi | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -34,7 +45,8 @@ export class ControlsElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#disconnectActivity();
+    this.#activity?.destroy();
+    this.#activity = null;
   }
 
   protected override update(_changed: PropertyValues): void {
@@ -55,27 +67,20 @@ export class ControlsElement extends MediaElement {
   }
 
   #connectActivity(): void {
-    this.#disconnectActivity();
+    this.#activity?.destroy();
+    this.#activity = null;
 
     const controls = this.#mediaState.value;
     const container = this.#container.value?.container;
-    if (!controls || !container) return;
+    const media = this.#media.value?.media;
+    if (!controls || !container || !media) return;
 
-    this.#activityDisconnect = new AbortController();
-
-    attachControlsActivity(
-      container as HTMLElement,
-      {
-        setActive: () => controls.setActive(),
-        setInactive: () => controls.setInactive(),
-        toggleControls: () => controls.toggleControls(),
-      },
-      this.#activityDisconnect.signal
-    );
-  }
-
-  #disconnectActivity(): void {
-    this.#activityDisconnect?.abort();
-    this.#activityDisconnect = null;
+    this.#activity = createControlsActivity({
+      getContainer: () => container as HTMLElement,
+      getMedia: () => media,
+      getControlsVisible: () => controls.controlsVisible,
+      getUserActive: () => controls.userActive,
+      setControls: (userActive, controlsVisible) => controls.setControls(userActive, controlsVisible),
+    });
   }
 }

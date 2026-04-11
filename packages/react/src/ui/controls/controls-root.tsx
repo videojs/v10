@@ -1,11 +1,11 @@
 'use client';
 
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
-import { attachControlsActivity, logMissingFeature, selectControls } from '@videojs/core/dom';
+import { createControlsActivity, logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 
-import { useContainer, usePlayer } from '../../player/context';
+import { useContainer, useMedia, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { ControlsContextProvider } from './context';
@@ -23,27 +23,24 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
 
   const controls = usePlayer(selectControls);
   const container = useContainer();
+  const media = useMedia();
 
   const [core] = useState(() => new ControlsCore());
 
   // Wire up activity tracking on the container.
   useEffect(() => {
-    if (!controls || !container) return;
+    if (!controls || !container || !media) return;
 
-    const abort = new AbortController();
+    const activity = createControlsActivity({
+      getContainer: () => container as HTMLElement,
+      getMedia: () => media,
+      getControlsVisible: () => controls.controlsVisible,
+      getUserActive: () => controls.userActive,
+      setControls: (userActive, controlsVisible) => controls.setControls(userActive, controlsVisible),
+    });
 
-    attachControlsActivity(
-      container as HTMLElement,
-      {
-        setActive: () => controls.setActive(),
-        setInactive: () => controls.setInactive(),
-        toggleControls: () => controls.toggleControls(),
-      },
-      abort.signal
-    );
-
-    return () => abort.abort();
-  }, [controls, container]);
+    return () => activity.destroy();
+  }, [controls, container, media]);
 
   if (!controls) {
     if (__DEV__) logMissingFeature('Controls.Root', 'controls');
