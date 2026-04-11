@@ -207,62 +207,56 @@ describe('controlsFeature', () => {
   });
 
   describe('toggleControls', () => {
-    it('returns the new visibility synchronously', async () => {
+    it('returns the new visibility synchronously', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       expect(store.state.toggleControls()).toBe(false);
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.toggleControls()).toBe(true);
     });
 
-    it('hides controls when visible and playing', async () => {
+    it('hides controls when visible and playing', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
     });
 
-    it('shows controls when hidden', async () => {
+    it('shows controls when hidden', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       // First toggle to hide
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.controlsVisible).toBe(false);
 
       // Second toggle to show
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
     });
 
-    it('reschedules idle timer when showing controls', async () => {
+    it('reschedules idle timer when showing controls', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       // Hide controls
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       // Show controls
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.controlsVisible).toBe(true);
 
@@ -274,13 +268,12 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(false);
     });
 
-    it('keeps controlsVisible true when toggling off while paused', async () => {
+    it('keeps controlsVisible true when toggling off while paused', () => {
       const video = createMockVideo({ paused: true });
       const { store } = createPlayerStore(video);
 
       store.state.toggleControls();
-      await flushMicrotasks();
-      flush();
+      flushToggle();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(true);
@@ -363,8 +356,10 @@ describe('controlsFeature', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function flushMicrotasks(): Promise<void> {
-  return Promise.resolve();
+/** Flush the deferred rAF inside toggleControls + store batch. */
+function flushToggle(): void {
+  vi.advanceTimersToNextTimer();
+  flush();
 }
 
 function createContainer(): HTMLElement {

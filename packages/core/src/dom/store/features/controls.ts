@@ -59,20 +59,24 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Expose toggleControls with access to idle timer.
-    // Deferred via microtask so activity tracking (setActive from pointerup) settles
-    // first within the same event. The toggle runs before the next paint, avoiding
-    // a visible flash. This ensures toggleControls has the final say when called from
-    // gestures that fire during the same pointer event.
+    // Deferred via rAF so activity tracking (setActive from pointerup) settles first.
+    // Only one toggle is queued at a time to avoid rapid double-toggles.
+    let pendingToggle: number | null = null;
+
     set({
       toggleControls() {
         const wasVisible = get().controlsVisible;
-        queueMicrotask(() => {
+
+        if (pendingToggle !== null) cancelAnimationFrame(pendingToggle);
+        pendingToggle = requestAnimationFrame(() => {
+          pendingToggle = null;
           if (wasVisible) {
             setInactive();
           } else {
             setActive();
           }
         });
+
         return !wasVisible;
       },
     });
