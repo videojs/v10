@@ -12,6 +12,7 @@ export {
   isHTMLAudioElement,
   isHTMLMediaElement,
   isHTMLVideoElement,
+  isInteractiveTarget,
 } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export {
