@@ -2,6 +2,7 @@
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
+import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
@@ -28,6 +29,7 @@ defineVolumeSlider();
 defineTime();
 
 // Standalone elements.
+safeDefine(GestureElement);
 safeDefine(HotkeyElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);

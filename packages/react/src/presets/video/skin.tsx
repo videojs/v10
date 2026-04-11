@@ -23,6 +23,7 @@ import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { MediaGesture } from '@/ui/gesture/media-gesture';
 import { MediaHotkey } from '@/ui/hotkey/media-hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -249,6 +250,12 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <MediaHotkey keys="End" action="seekToPercent" value={100} />
       <MediaHotkey keys=">" action="speedUp" />
       <MediaHotkey keys="<" action="speedDown" />
+
+      {/* Gestures */}
+      <MediaGesture type="tap" action="togglePaused" pointer="mouse" />
+      <MediaGesture type="doubletap" action="seekStep" value={-10} region="left" />
+      <MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
+      <MediaGesture type="doubletap" action="seekStep" value={10} region="right" />
     </Container>
   );
 }

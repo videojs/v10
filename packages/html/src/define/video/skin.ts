@@ -149,6 +149,12 @@ function getTemplateHTML() {
       <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
       <media-hotkey keys=">" action="speedUp"></media-hotkey>
       <media-hotkey keys="<" action="speedDown"></media-hotkey>
+
+      <!-- Gestures -->
+      <media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+      <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
     </media-container>
   `;
 }
