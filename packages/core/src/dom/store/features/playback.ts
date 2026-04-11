@@ -20,6 +20,7 @@ export const playbackFeature = definePlayerFeature({
     },
     togglePaused() {
       const media = target().media;
+      if (!isMediaPauseCapable(media)) return false;
       if (media.paused) {
         media.play();
         return true;

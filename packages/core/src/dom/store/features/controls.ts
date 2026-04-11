@@ -3,8 +3,8 @@ import { isNull } from '@videojs/utils/predicate';
 
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaPauseCapable } from '../../media/predicate';
 import { findGestureCoordinator } from '../../gesture/coordinator';
+import { isMediaPauseCapable } from '../../media/predicate';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
