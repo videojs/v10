@@ -46,7 +46,12 @@ export const controlsFeature = definePlayerFeature({
       idleTimer = setTimeout(setInactive, IDLE_DELAY);
     }
 
+    // When a toggle is pending, suppress activity tracking so setActive
+    // doesn't undo the toggle intent before the rAF fires.
+    let pendingToggle: number | null = null;
+
     function setActive() {
+      if (pendingToggle !== null) return;
       if (!get().userActive) {
         set({ userActive: true, controlsVisible: true });
       }
@@ -59,10 +64,8 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Expose toggleControls with access to idle timer.
-    // Deferred via rAF so activity tracking (setActive from pointerup) settles first.
+    // Deferred via rAF so all synchronous event handlers settle first.
     // Only one toggle is queued at a time to avoid rapid double-toggles.
-    let pendingToggle: number | null = null;
-
     set({
       toggleControls() {
         const wasVisible = get().controlsVisible;
