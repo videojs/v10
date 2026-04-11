@@ -1,6 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import type { HlsEngineHost } from './preload';
+import type { HlsEngineHost } from './types';
 
 /**
  * Ensures user-authored metadata and chapters `<track>` elements stay loaded

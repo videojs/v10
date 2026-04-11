@@ -1,65 +1,26 @@
-/**
- * Custom Media Element
- * Based on https://github.com/muxinc/custom-video-element - Mux - MIT License
- *
- * The goal is to create an element that works just like the video element
- * but can be extended/sub-classed, because native elements cannot be
- * extended today across browsers.
- */
+import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
+import { kebabCase } from '@videojs/utils/string';
+import type { Constructor } from '@videojs/utils/types';
 
-// The onevent-like props are weirdly set on the HTMLElement prototype with other
-// generic events making it impossible to pick these specific to HTMLMediaElement.
-export const Events = [
-  'abort',
-  'canplay',
-  'canplaythrough',
-  'durationchange',
-  'emptied',
-  'encrypted',
-  'ended',
-  'error',
-  'loadeddata',
-  'loadedmetadata',
-  'loadstart',
-  'pause',
-  'play',
-  'playing',
-  'progress',
-  'ratechange',
-  'seeked',
-  'seeking',
-  'stalled',
-  'suspend',
-  'timeupdate',
-  'volumechange',
-  'waiting',
-  'waitingforkey',
-  'resize',
-  'enterpictureinpicture',
-  'leavepictureinpicture',
-  'webkitbeginfullscreen',
-  'webkitendfullscreen',
-  'webkitpresentationmodechanged',
-] as const;
-
-export type EventsMap = {
-  [key in (typeof Events)[number]]: CustomEvent;
-};
-
-export const Attributes = [
-  'autopictureinpicture',
-  'disablepictureinpicture',
+export const AudioAttributes = [
   'disableremoteplayback',
   'autoplay',
   'controls',
   'controlslist',
   'crossorigin',
+  'loading',
   'loop',
   'muted',
   'playsinline',
-  'poster',
   'preload',
   'src',
+] as const;
+
+export const VideoAttributes = [
+  ...AudioAttributes,
+  'autopictureinpicture',
+  'disablepictureinpicture',
+  'poster',
 ] as const;
 
 /** CSS custom property names for video elements. */
@@ -81,33 +42,7 @@ export const VideoCSSVars = {
 /** CSS custom property names for audio elements. */
 export const AudioCSSVars = {} as const;
 
-/**
- * Helper function to generate the HTML template for audio elements.
- */
-function getAudioTemplateHTML(attrs: Record<string, string>): string {
-  return /*html*/ `
-    <style>
-      :host {
-        display: inline-flex;
-        line-height: 0;
-        flex-direction: column;
-        justify-content: end;
-      }
-
-      audio {
-        width: 100%;
-      }
-    </style>
-    <slot name="media">
-      <audio${serializeAttributes(attrs)}></audio>
-    </slot>
-    <slot></slot>
-  `;
-}
-
-/**
- * Helper function to generate the HTML template for video elements.
- */
+/** Helper function to generate the HTML template for video elements. */
 function getVideoTemplateHTML(attrs: Record<string, string>): string {
   return /*html*/ `
     <style>
@@ -140,118 +75,80 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
   `;
 }
 
-type Constructor<T> = {
-  new (...args: any[]): T;
-};
+/** Helper function to generate the HTML template for other elements. */
+function getCommonTemplateHTML(tag: string) {
+  return (attrs: Record<string, string>) => {
+    return /*html*/ `
+      <style>
+        :host {
+          display: inline-flex;
+          line-height: 0;
+          flex-direction: column;
+          justify-content: end;
+        }
 
-type MediaChild = HTMLTrackElement | HTMLSourceElement;
-
-declare class CustomAudioElementClass extends HTMLAudioElement implements HTMLAudioElement {
-  static readonly observedAttributes: string[];
-  static getTemplateHTML: typeof getAudioTemplateHTML;
-  static shadowRootOptions: ShadowRootInit;
-  static Events: string[];
-  readonly target: HTMLAudioElement;
-  attributeChangedCallback(attrName: string, oldValue?: string | null, newValue?: string | null): void;
-  connectedCallback(): void;
-  disconnectedCallback(): void;
-  init(): void;
-  handleEvent(event: Event): void;
+        ${tag} {
+          width: 100%;
+        }
+      </style>
+      <slot name="media">
+        <${tag}${serializeAttributes(attrs)}></${tag}>
+      </slot>
+      <slot></slot>
+    `;
+  };
 }
 
-declare class CustomVideoElementClass extends HTMLVideoElement implements HTMLVideoElement {
-  static readonly observedAttributes: string[];
-  static getTemplateHTML: typeof getVideoTemplateHTML;
-  static shadowRootOptions: ShadowRootInit;
-  static Events: string[];
-  readonly target: HTMLVideoElement;
-  attributeChangedCallback(attrName: string, oldValue?: string | null, newValue?: string | null): void;
-  connectedCallback(): void;
-  disconnectedCallback(): void;
-  init(): void;
-  handleEvent(event: Event): void;
-}
+/** Properties that are excluded from the custom media element. */
+const excludedProperties = ['attach', 'detach', 'destroy'];
 
-type CustomMediaElementConstructor<T> = {
-  readonly observedAttributes: string[];
-  getTemplateHTML: typeof getVideoTemplateHTML | typeof getAudioTemplateHTML;
+export function CustomMediaElement<T extends Constructor<any>>(
+  tag: string,
+  MediaHost: T
+): Constructor<HTMLElement & InstanceType<T>> & {
+  readonly Attributes: readonly string[];
+  getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
-  Events: string[];
-  new (...args: any[]): T;
-};
+  readonly observedAttributes: string[];
+} {
+  const attrToProp = new Map<string, string>();
 
-export type CustomVideoElement = CustomMediaElementConstructor<CustomVideoElementClass>;
-export type CustomAudioElement = CustomMediaElementConstructor<CustomAudioElementClass>;
-
-/**
- * @see https://justinfagnani.com/2015/12/21/real-mixins-with-javascript-classes/
- */
-export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
-  superclass: T,
-  { tag, is }: { tag: 'video'; is?: string }
-): CustomVideoElement;
-export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
-  superclass: T,
-  { tag, is }: { tag: 'audio'; is?: string }
-): CustomAudioElement;
-export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
-  superclass: T,
-  { tag, is }: { tag: 'audio' | 'video'; is?: string }
-): any {
-  // `is` makes it possible to extend a custom built-in. e.g., castable-video
-  const nativeElTest = globalThis.document?.createElement?.(tag, { is } as any);
-  const nativeElProps = nativeElTest ? getNativeElProps(nativeElTest) : [];
-
-  return class CustomMedia extends superclass {
-    static getTemplateHTML = tag.endsWith('audio') ? getAudioTemplateHTML : getVideoTemplateHTML;
+  class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
+    static Attributes = tag.endsWith('video') ? VideoAttributes : tag.endsWith('audio') ? AudioAttributes : [];
+    static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
-    static Events = Events;
-    static #isDefined = false;
-    static #propsToAttrs: Set<string>;
 
     static get observedAttributes() {
       CustomMedia.#define();
-
-      // Include any attributes from the custom built-in.
-      // @ts-expect-error
-      const natAttrs = nativeElTest?.constructor?.observedAttributes ?? [];
-
-      return [...natAttrs, ...Attributes];
+      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+      const { Attributes } = this as typeof CustomMedia;
+      return [...new Set([...Attributes, ...attrToProp.keys()])];
     }
 
-    static #define(): void {
-      if (CustomMedia.#isDefined) return;
-      CustomMedia.#isDefined = true;
+    static #define() {
+      for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+        for (const prop of Object.getOwnPropertyNames(proto)) {
+          if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
 
-      CustomMedia.#propsToAttrs = new Set(CustomMedia.observedAttributes);
-      // defaultMuted maps to the muted attribute, handled manually below.
-      CustomMedia.#propsToAttrs.delete('muted');
+          const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
+          if (!descriptor) continue;
 
-      // Passthrough native element functions from the custom element to the native element
-      for (const prop of nativeElProps) {
-        if (prop in CustomMedia.prototype) continue;
-
-        if (typeof nativeElTest[prop] === 'function') {
-          // Function
-          // @ts-expect-error
-          CustomMedia.prototype[prop] = function (...args: any[]) {
-            this.#init();
-            return this.call(prop, ...args);
-          };
-        } else {
-          // Getter and setter configuration
-          const config: PropertyDescriptor = {
-            get(this: CustomMedia) {
-              this.#init();
-              return this.get(prop);
-            },
-          };
-
-          if (prop !== prop.toUpperCase()) {
-            config.set = function (this: CustomMedia, val: any) {
-              this.#init();
-              this.set(prop, val);
+          const config: PropertyDescriptor = {};
+          if (typeof descriptor.value === 'function') {
+            config.value = function (this: CustomMedia, ...args: any[]) {
+              return this.#mediaHost[prop](...args);
             };
+          } else if (descriptor.get) {
+            config.get = function (this: CustomMedia) {
+              return this.#mediaHost[prop];
+            };
+
+            if (descriptor.set) {
+              attrToProp.set(kebabCase(prop), prop);
+              config.set = function (this: CustomMedia, val: any) {
+                this.#mediaHost[prop] = val;
+              };
+            }
           }
 
           Object.defineProperty(CustomMedia.prototype, prop, config);
@@ -259,52 +156,25 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       }
     }
 
-    // Private fields
-    #isInit = false;
-    #target: HTMLVideoElement | HTMLAudioElement | null = null;
-    #childMap = new Map<MediaChild, MediaChild>();
-    #childObserver?: MutationObserver;
+    #mediaHost: InstanceType<T>;
 
-    get(prop: string): any {
-      const attr = prop.toLowerCase();
-      if (CustomMedia.#propsToAttrs.has(attr)) {
-        const val = this.getAttribute(attr);
-        return val === null ? false : val === '' ? true : val;
-      }
-      return this.target?.[prop as keyof typeof this.target];
-    }
+    constructor() {
+      super();
 
-    set(prop: string, val: any): void {
-      const attr = prop.toLowerCase();
-      if (CustomMedia.#propsToAttrs.has(attr)) {
-        if (val === true || val === false || val == null) {
-          this.toggleAttribute(attr, Boolean(val));
-        } else {
-          this.setAttribute(attr, val);
-        }
-        return;
+      if (!this.shadowRoot) {
+        this.attachShadow((this.constructor as typeof CustomMedia).shadowRootOptions);
+
+        const attrs = namedNodeMapToObject(this.attributes);
+        if (tag && !attrs.part) attrs.part = tag;
+        this.shadowRoot!.innerHTML = (this.constructor as typeof CustomMedia).getTemplateHTML(attrs);
       }
 
-      if (this.target) {
-        // @ts-expect-error
-        this.target[prop as keyof typeof this.target] = val;
-      }
+      this.#mediaHost = new MediaHost();
+      this.#mediaHost.attach(this.target);
     }
-
-    call(prop: string, ...args: any[]): any {
-      const nativeFn = this.target?.[prop as keyof typeof this.target] as ((...args: any[]) => any) | undefined;
-      return nativeFn?.apply(this.target, args);
-    }
-
-    // If the custom element is defined before the custom element's HTML is parsed
-    // no attributes will be available in the constructor (construction process).
-    // Wait until initializing in the attributeChangedCallback or
-    // connectedCallback or accessing any properties.
 
     get target() {
-      this.#init();
       return (
-        this.#target ??
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
         this.shadowRoot?.querySelector(tag) ??
@@ -312,141 +182,30 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       );
     }
 
-    set target(val: HTMLVideoElement | HTMLAudioElement | null) {
-      this.#target = val;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+      options?: boolean | AddEventListenerOptions
+    ) {
+      this.#mediaHost.addEventListener(type, listener, options);
     }
 
-    get defaultMuted() {
-      this.#init();
-      return this.get('muted');
-    }
-
-    set defaultMuted(val) {
-      this.#init();
-      this.set('muted', val);
-    }
-
-    #init(): void {
-      if (this.#isInit) return;
-      this.#isInit = true;
-      this.init();
-    }
-
-    init(): void {
-      if (!this.shadowRoot) {
-        this.attachShadow({ mode: 'open' });
-
-        const attrs = namedNodeMapToObject(this.attributes);
-        if (is) attrs.is = is;
-        if (tag) attrs.part = tag;
-        this.shadowRoot!.innerHTML = (this.constructor as typeof CustomMedia).getTemplateHTML(attrs);
-      }
-
-      // Neither Chrome or Firefox support setting the muted attribute
-      // after using document.createElement.
-      // Get around this by setting the muted property manually.
-      this.target!.muted = this.hasAttribute('muted');
-
-      for (const prop of nativeElProps) {
-        // @ts-expect-error
-        this.#upgradeProperty(prop);
-      }
-
-      this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
-      this.shadowRoot!.addEventListener('slotchange', () => this.#syncMediaChildren());
-      this.#syncMediaChildren();
-
-      // Media element events don't bubble so we need to capture them on the shadow root.
-      for (const type of (this.constructor as typeof CustomMedia).Events) {
-        this.shadowRoot!.addEventListener(type, this.#deferForwardEvent, true);
-      }
-    }
-
-    #deferForwardEvent = (event: Event) => {
-      if (this.target && this.target === event.target) {
-        // Add an event listener on the bubbling phase that forwards the event
-        // so consumers can still stop propagation of the event.
-        this.target.addEventListener(event.type, this.#forwardEvent, { once: true });
-      }
-    };
-
-    #forwardEvent = (event: Event) => {
-      this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
-    };
-
-    #syncMediaChildren(): void {
-      const removeNativeChildren = new Map(this.#childMap);
-      const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
-
-      const mediaChildren = defaultSlot
-        ?.assignedElements({ flatten: true })
-        .filter((el) => ['track', 'source'].includes(el.localName)) as MediaChild[];
-
-      mediaChildren.forEach((el) => {
-        removeNativeChildren.delete(el);
-        let clone = this.#childMap.get(el);
-        if (!clone) {
-          clone = el.cloneNode() as MediaChild;
-          this.#childMap.set(el, clone);
-          this.#childObserver?.observe(el, { attributes: true });
-        }
-        this.target?.append(clone);
-        this.#enableDefaultTrack(clone as HTMLTrackElement);
-      });
-
-      removeNativeChildren.forEach((clone, el) => {
-        clone.remove();
-        this.#childMap.delete(el);
-      });
-    }
-
-    #syncMediaChildAttribute(mutations: MutationRecord[]): void {
-      for (const mutation of mutations) {
-        if (mutation.type === 'attributes') {
-          const { target, attributeName } = mutation;
-          const clone = this.#childMap.get(target as MediaChild);
-          if (clone && attributeName) {
-            clone.setAttribute(attributeName, (target as MediaChild).getAttribute(attributeName) ?? '');
-            this.#enableDefaultTrack(clone as HTMLTrackElement);
-          }
-        }
-      }
-    }
-
-    #enableDefaultTrack(trackEl: HTMLTrackElement): void {
-      // Browsers don't honor the `default` attribute if a track is added via JS.
-      // Enable default tracks for chapters or metadata.
-      if (
-        trackEl &&
-        trackEl.localName === 'track' &&
-        trackEl.default &&
-        (trackEl.kind === 'chapters' || trackEl.kind === 'metadata') &&
-        trackEl.track.mode === 'disabled'
-      ) {
-        trackEl.track.mode = 'hidden';
-      }
-    }
-
-    #upgradeProperty(this: typeof nativeElTest, prop: keyof typeof nativeElTest) {
-      // Sets properties that are set before the custom element is upgraded.
-      // https://web.dev/custom-elements-best-practices/#make-properties-lazy
-      if (Object.hasOwn(this, prop)) {
-        const value = this[prop];
-        // Delete the set property from this instance.
-        delete this[prop];
-        // Set the value again via the (prototype) setter on this class.
-        // @ts-expect-error
-        this[prop] = value;
-      }
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+      options?: boolean | EventListenerOptions
+    ): void {
+      this.#mediaHost.removeEventListener(type, listener, options);
     }
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      this.#init();
-      this.#forwardAttribute(attrName, oldValue, newValue);
-    }
-
-    #forwardAttribute(attrName: string, _oldValue: string | null, newValue: string | null): void {
-      if (['id', 'class'].includes(attrName)) return;
+      const prop = attrToProp.get(attrName);
+      if (prop) {
+        if (oldValue !== newValue) {
+          (this as any)[prop] = typeof (this as any)[prop] === 'boolean' ? newValue !== null : (newValue ?? '');
+        }
+        return;
+      }
 
       if (
         !CustomMedia.observedAttributes.includes(attrName) &&
@@ -462,59 +221,12 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       }
     }
 
-    connectedCallback(): void {
-      this.#init();
+    disconnectedCallback(): void {
+      if (!this.hasAttribute('keep-alive')) {
+        this.#mediaHost.destroy();
+      }
     }
-  };
-}
-
-/**
- * Helper function to get all properties from a native media element's prototype.
- */
-function getNativeElProps(nativeElTest: HTMLVideoElement | HTMLAudioElement) {
-  const nativeElProps: (keyof typeof nativeElTest)[] = [];
-  for (
-    let proto = Object.getPrototypeOf(nativeElTest);
-    proto && proto !== HTMLElement.prototype;
-    proto = Object.getPrototypeOf(proto)
-  ) {
-    const props = Object.getOwnPropertyNames(proto) as (keyof typeof nativeElTest)[];
-    nativeElProps.push(...props);
   }
-  return nativeElProps;
+
+  return CustomMedia as any;
 }
-
-/**
- * Helper function to serialize attributes into a string.
- */
-function serializeAttributes(attrs: Record<string, string>): string {
-  let html = '';
-  for (const key in attrs) {
-    // Skip forwarding non native video attributes.
-    if (!Attributes.includes(key as (typeof Attributes)[number])) continue;
-
-    const value = attrs[key];
-    if (value === '') html += ` ${key}`;
-    else html += ` ${key}="${value}"`;
-  }
-  return html;
-}
-
-/**
- * Helper function to convert NamedNodeMap to a plain object.
- */
-function namedNodeMapToObject(namedNodeMap: NamedNodeMap): Record<string, string> {
-  const obj: Record<string, string> = {};
-  for (const attr of namedNodeMap) {
-    obj[attr.name] = attr.value;
-  }
-  return obj;
-}
-
-export const CustomVideoElement = CustomMediaMixin(globalThis.HTMLElement ?? class {}, {
-  tag: 'video',
-});
-
-export const CustomAudioElement = CustomMediaMixin(globalThis.HTMLElement ?? class {}, {
-  tag: 'audio',
-});

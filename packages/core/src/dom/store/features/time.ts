@@ -2,7 +2,7 @@ import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
 import type { MediaTimeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { hasMetadata } from '../../media/predicate';
+import { hasMetadata, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
@@ -15,18 +15,15 @@ export const timeFeature = definePlayerFeature({
       const { media } = target(),
         signal = signals.supersede(signalKeys.seek);
 
-      // If metadata isn't loaded, wait for it before seeking to avoid errors.
+      if (!isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return 0;
+
       if (!hasMetadata(media)) {
         const loaded = await onEvent(media, 'loadedmetadata', { signal }).catch(() => false);
         if (!loaded) return media.currentTime;
       }
 
-      // Perform the seek and wait for it to complete.
       const clampedTime = Math.max(0, Math.min(time, media.duration || Infinity));
 
-      // Optimistic update: reflect the target position immediately so UI consumers
-      // (e.g. time slider) don't snap back to the old currentTime while waiting
-      // for the browser's async seeking/seeked events.
       set({ currentTime: clampedTime, seeking: true });
 
       media.currentTime = clampedTime;
@@ -38,6 +35,8 @@ export const timeFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
+
+    if (!isMediaSeekCapable(media)) return;
 
     const sync = () =>
       set({

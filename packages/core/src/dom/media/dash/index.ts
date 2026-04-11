@@ -1,67 +1,45 @@
-import type { Mixin } from '@videojs/utils/types';
 import * as dashjs from 'dashjs';
+import type { MediaEngineHost } from '../../../core/media/types';
+import { HTMLVideoElementHost } from '../video-host';
 
-import { CustomVideoElement } from '../custom-media-element';
-import { VideoProxy } from '../proxy';
+export class DashMedia
+  extends HTMLVideoElementHost
+  implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>
+{
+  #engine: dashjs.MediaPlayerClass;
+  #src = '';
 
-export interface DashMediaProps {
-  readonly engine: dashjs.MediaPlayerClass;
-  src: string;
-  attach(target: EventTarget): void;
-  detach(): void;
-  destroy(): void;
-}
-
-interface DashMediaHost extends EventTarget {
-  attach?(target: EventTarget): void;
-  detach?(): void;
-}
-
-export const DashMediaMixin: Mixin<DashMediaHost, DashMediaProps> = (BaseClass) => {
-  class DashMediaImpl extends BaseClass {
-    #engine: dashjs.MediaPlayerClass;
-    #src = '';
-
-    constructor(...args: any[]) {
-      super(...args);
-      this.#engine = dashjs.MediaPlayer().create();
-      this.#engine.initialize(undefined, undefined, false);
-    }
-
-    get engine() {
-      return this.#engine;
-    }
-
-    get src() {
-      return this.#src;
-    }
-
-    set src(src) {
-      this.#src = src;
-      this.#engine.attachSource(src);
-    }
-
-    attach(target: EventTarget) {
-      this.#engine.attachView(target as HTMLMediaElement);
-      super.attach?.(target);
-    }
-
-    detach() {
-      // dash.js types don't reflect null support, but null is valid for detaching
-      this.#engine.attachView(null as unknown as HTMLMediaElement);
-      super.detach?.();
-    }
-
-    destroy() {
-      this.#engine.destroy();
-    }
+  constructor() {
+    super();
+    this.#engine = dashjs.MediaPlayer().create();
+    this.#engine.initialize(undefined, undefined, false);
   }
 
-  return DashMediaImpl as any;
-};
+  get engine() {
+    return this.#engine;
+  }
 
-export class DashMediaBase extends DashMediaMixin(EventTarget) {}
+  get src() {
+    return this.#src;
+  }
 
-export class DashCustomMedia extends DashMediaMixin(CustomVideoElement) {}
+  set src(src) {
+    this.#src = src;
+    this.#engine.attachSource(src);
+  }
 
-export class DashMedia extends DashMediaMixin(VideoProxy) {}
+  attach(target: HTMLVideoElement) {
+    super.attach(target);
+    this.#engine.attachView(target);
+  }
+
+  detach() {
+    super.detach();
+    // dash.js types don't reflect null support, but null is valid for detaching
+    this.#engine.attachView(null as unknown as HTMLVideoElement);
+  }
+
+  destroy() {
+    this.#engine.destroy();
+  }
+}

@@ -1,12 +1,45 @@
-import { SpfMediaMixin } from '@videojs/spf/dom';
-import { CustomVideoElement } from '../custom-media-element';
-import { VideoProxy } from '../proxy';
+import { SpfMedia } from '@videojs/spf/dom';
+import type { PlaybackEngine } from '@videojs/spf/playback-engine';
+import { HTMLVideoElementHost } from '../video-host';
 
-// This is used to infer the props from.
-export class SimpleHlsMediaBase extends SpfMediaMixin(EventTarget) {}
+export class SimpleHlsMedia extends HTMLVideoElementHost {
+  #spf = new SpfMedia();
 
-// This is used by the web component because it needs to extend HTMLElement!
-export class SimpleHlsCustomMedia extends SpfMediaMixin(CustomVideoElement) {}
+  get engine(): PlaybackEngine {
+    return this.#spf.engine;
+  }
 
-// This is used by the React component.
-export class SimpleHlsMedia extends SpfMediaMixin(VideoProxy) {}
+  get src() {
+    return this.#spf.src;
+  }
+
+  set src(value: string) {
+    this.#spf.src = value;
+  }
+
+  get preload() {
+    return this.#spf.preload;
+  }
+
+  set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    this.#spf.preload = value;
+  }
+
+  play() {
+    return this.#spf.play();
+  }
+
+  attach(target: HTMLVideoElement) {
+    super.attach(target);
+    this.#spf.attach(target);
+  }
+
+  detach() {
+    this.#spf.detach();
+    super.detach();
+  }
+
+  destroy() {
+    this.#spf.destroy();
+  }
+}

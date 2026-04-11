@@ -1,4 +1,6 @@
 import Hls, { type HlsConfig } from 'hls.js';
+import type { MediaEngineHost } from '../../../core/media/types';
+import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
@@ -13,7 +15,7 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
-class HlsJsMediaBaseImpl extends EventTarget {
+class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
 
   constructor(params: { config: Partial<HlsConfig> }) {
@@ -24,8 +26,8 @@ class HlsJsMediaBaseImpl extends EventTarget {
     });
   }
 
-  get target() {
-    return this.#engine?.media ?? null;
+  get target(): HTMLVideoElement | null {
+    return (this.#engine?.media as HTMLVideoElement | undefined) ?? null;
   }
 
   get engine() {
@@ -54,6 +56,6 @@ class HlsJsMediaBaseImpl extends EventTarget {
   }
 }
 
-export class HlsJsMediaBase extends HlsJsMediaPreloadMixin(
-  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBaseImpl)))
+export class HlsJsMedia extends HlsJsMediaPreloadMixin(
+  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
 ) {}

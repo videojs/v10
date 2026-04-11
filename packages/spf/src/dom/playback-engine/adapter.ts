@@ -16,8 +16,8 @@ export interface SpfMediaProps {
 /**
  * Mixin that adds SPF playback engine capabilities to any base class.
  *
- * Use this to compose SPF into a class hierarchy (e.g., with VideoProxy
- * or CustomVideoElement) instead of using the standalone `SpfMedia` class.
+ * Use this to compose SPF into a class hierarchy (e.g., with
+ * CustomVideoElement) instead of using the standalone `SpfMedia` class.
  */
 interface SpfMediaHost extends EventTarget {
   attach?(target: EventTarget): void;

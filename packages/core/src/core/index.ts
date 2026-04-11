@@ -1,4 +1,3 @@
-export * from './media/proxy';
 export * from './media/state';
 export * from './media/types';
 export * from './ui/alert-dialog/alert-dialog-core';

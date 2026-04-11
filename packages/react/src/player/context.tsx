@@ -1,6 +1,7 @@
 'use client';
 
-import type { Media, MediaContainer } from '@videojs/core/dom';
+import type { Media } from '@videojs/core';
+import type { MediaContainer } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';

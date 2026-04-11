@@ -12,6 +12,7 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
+import type { Media } from '../../core/media/types';
 
 type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
 
@@ -22,7 +23,7 @@ export type MediaBaseApi = {
 
 export type MediaApi = WithOptional<MediaBaseApi, HTMLMediaElement>;
 
-export type Media = HTMLMediaElement | HTMLAudioElement | HTMLVideoElement;
+export type { Media };
 
 export interface MediaContainer extends HTMLElement {}
 
@@ -31,7 +32,7 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export type { MediaFeatureAvailability } from '../../core/media/state';
+export type { MediaFeatureAvailability } from '../../core/media/types';
 
 export type PlayerFeature<State> = Slice<PlayerTarget, State>;
 

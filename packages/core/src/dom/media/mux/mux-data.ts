@@ -1,16 +1,14 @@
 import type { Mixin } from '@videojs/utils/types';
 import Mux from 'mux-embed';
-
-import { Hls, type HlsMediaBase } from '../hls';
+import type { MediaEngineHost } from '../../../core/media/types';
+import { Hls, type HlsMedia } from '../hls';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export interface MuxDataMediaHost {
-  readonly target: HTMLMediaElement | null;
+export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
   readonly debug: boolean;
-  readonly engine: HlsMediaBase['engine'];
   attach(target: HTMLMediaElement): void;
   detach(): void;
   load(): void;

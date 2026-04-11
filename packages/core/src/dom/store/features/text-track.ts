@@ -1,7 +1,9 @@
 import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
+import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
+import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
 
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
@@ -12,13 +14,16 @@ export const textTrackFeature = definePlayerFeature({
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles(forceShow?: boolean) {
+      const { media } = target();
+      if (!isMediaTextTrackCapable(media)) return false;
+
       const subtitlesTracks = getTextTrackList(
-        target().media,
+        media,
         (track) => track.kind === 'subtitles' || track.kind === 'captions'
       );
       if (!subtitlesTracks.length) return false;
 
-      const showing = subtitlesTracks.some((track: TextTrack) => track.mode === 'showing');
+      const showing = subtitlesTracks.some((track) => track.mode === 'showing');
       const nextShowing = forceShow ?? !showing;
 
       for (const track of subtitlesTracks) {
@@ -32,15 +37,17 @@ export const textTrackFeature = definePlayerFeature({
   attach({ target, signal, set }) {
     const { media } = target;
 
+    if (!isMediaTextTrackCapable(media)) return;
+
     let trackCleanup: AbortController | null = null;
 
-    function sync() {
+    const sync = () => {
       trackCleanup?.abort();
       trackCleanup = new AbortController();
 
-      let chaptersTrack: TextTrack | null = null;
-      let thumbnailTrack: TextTrack | null = null;
-      const textTrackList: MediaTextTrack<TextTrackKind>[] = [];
+      let chaptersTrack: TextTrackLike | null = null;
+      let thumbnailTrack: TextTrackLike | null = null;
+      const textTrackList: MediaTextTrack[] = [];
       let subtitlesShowing = false;
 
       for (let i = 0; i < media.textTracks.length; i++) {
@@ -49,7 +56,7 @@ export const textTrackFeature = definePlayerFeature({
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
 
         textTrackList.push({
-          kind: track.kind,
+          kind: track.kind as TextTrackKind,
           label: track.label,
           language: track.language,
           mode: track.mode,
@@ -78,9 +85,8 @@ export const textTrackFeature = definePlayerFeature({
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event
       // on the <track> element to know when cues are ready.
-      const tracks = media.querySelectorAll?.('track') ?? [];
-      // For a CustomMediaElement, the functional tracks are in the shadow root.
-      const shadowTracks = media.shadowRoot?.querySelectorAll?.('track') ?? [];
+      const tracks = (isQuerySelectorAllCapable<'track'>(media) && media.querySelectorAll('track')) || [];
+      const shadowTracks = (media instanceof HTMLElement && media.shadowRoot?.querySelectorAll('track')) || [];
 
       for (const trackEl of [...tracks, ...shadowTracks]) {
         if (!trackEl.track?.cues?.length) {
@@ -89,13 +95,16 @@ export const textTrackFeature = definePlayerFeature({
       }
 
       set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
-    }
+    };
 
     sync();
 
-    listen(media.textTracks, 'addtrack', sync, { signal });
-    listen(media.textTracks, 'removetrack', sync, { signal });
-    listen(media.textTracks, 'change', sync, { signal });
+    const textTracks = media.textTracks;
+    if (textTracks instanceof EventTarget) {
+      listen(textTracks, 'addtrack', sync, { signal });
+      listen(textTracks, 'removetrack', sync, { signal });
+      listen(textTracks, 'change', sync, { signal });
+    }
     listen(media, 'loadstart', sync, { signal });
 
     signal.addEventListener('abort', () => trackCleanup?.abort(), { once: true });
