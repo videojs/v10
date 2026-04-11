@@ -172,6 +172,10 @@ export interface MediaControlsState {
   userActive: boolean;
   /** Whether controls should be visible (userActive || paused). */
   controlsVisible: boolean;
+  /** Mark the user as active and reset the idle timer. */
+  setActive(): void;
+  /** Mark the user as inactive and clear the idle timer. */
+  setInactive(): void;
   /** Toggle controls visibility. Returns the new `controlsVisible` value. */
   toggleControls(): boolean;
 }

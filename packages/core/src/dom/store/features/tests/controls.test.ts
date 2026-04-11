@@ -48,181 +48,67 @@ describe('controlsFeature', () => {
     });
   });
 
-  describe('activity detection', () => {
-    it('resets idle timer on pointermove', () => {
+  describe('setActive', () => {
+    it('sets user as active', () => {
       const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
+      const { store } = createPlayerStore(video);
 
-      // Advance partway through idle delay
-      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
 
-      container!.dispatchEvent(new Event('pointermove'));
+      expect(store.state.userActive).toBe(false);
+
+      store.state.setActive();
       flush();
 
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
+    });
 
-      // Advance past original delay — still active since timer was reset
+    it('resets idle timer', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      // Advance partway through idle delay
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      store.state.setActive();
+      flush();
+
+      // Advance past original delay
       vi.advanceTimersByTime(500);
       flush();
 
       expect(store.state.userActive).toBe(true);
 
-      // Now wait full delay from the pointermove
+      // Now wait full delay from the setActive call
       vi.advanceTimersByTime(IDLE_DELAY - 500);
       flush();
 
       expect(store.state.userActive).toBe(false);
     });
-
-    it('sets active on keyup', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-      flush();
-
-      expect(store.state.userActive).toBe(false);
-
-      container!.dispatchEvent(new Event('keyup'));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-      expect(store.state.controlsVisible).toBe(true);
-    });
-
-    it('reactivates on pointermove after idle', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-      flush();
-
-      expect(store.state.userActive).toBe(false);
-      expect(store.state.controlsVisible).toBe(false);
-
-      container!.dispatchEvent(new Event('pointermove'));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-      expect(store.state.controlsVisible).toBe(true);
-    });
-
-    it('sets active on focusin', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-      flush();
-
-      expect(store.state.userActive).toBe(false);
-
-      container!.dispatchEvent(new Event('focusin'));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-    });
-
-    it('sets inactive immediately on mouseleave', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      container!.dispatchEvent(new Event('mouseleave'));
-      flush();
-
-      expect(store.state.userActive).toBe(false);
-      expect(store.state.controlsVisible).toBe(false);
-    });
-
-    it('keeps controlsVisible true on mouseleave when paused', () => {
-      const video = createMockVideo({ paused: true });
-      const { store, container } = createPlayerStore(video);
-
-      container!.dispatchEvent(new Event('mouseleave'));
-      flush();
-
-      expect(store.state.userActive).toBe(false);
-      expect(store.state.controlsVisible).toBe(true);
-    });
   });
 
-  describe('touch tap-to-toggle', () => {
-    it('hides controls on tap when visible and playing', () => {
+  describe('setInactive', () => {
+    it('sets user as inactive', () => {
       const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
+      const { store } = createPlayerStore(video);
 
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      store.state.setInactive();
       flush();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
     });
 
-    it('keeps controls visible on tap when paused', () => {
+    it('keeps controlsVisible true when paused', () => {
       const video = createMockVideo({ paused: true });
-      const { store, container } = createPlayerStore(video);
+      const { store } = createPlayerStore(video);
 
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      store.state.setInactive();
       flush();
 
-      // userActive goes false but controlsVisible stays true (paused)
       expect(store.state.userActive).toBe(false);
-      expect(store.state.controlsVisible).toBe(true);
-    });
-
-    it('shows controls on tap when hidden', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      // First tap to hide
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
-      flush();
-
-      expect(store.state.controlsVisible).toBe(false);
-
-      // Second tap to show
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-      expect(store.state.controlsVisible).toBe(true);
-    });
-
-    it('does not toggle on long press', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(300);
-
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-      expect(store.state.controlsVisible).toBe(true);
-    });
-
-    it('does not toggle for mouse clicks', () => {
-      const video = createMockVideo({ paused: false });
-      const { store, container } = createPlayerStore(video);
-
-      container!.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(100);
-
-      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'mouse' }));
-      flush();
-
-      expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
     });
   });
@@ -266,10 +152,10 @@ describe('controlsFeature', () => {
 
     it('schedules idle when playback resumes and user is active', () => {
       const video = createMockVideo({ paused: true });
-      const { store, container } = createPlayerStore(video);
+      const { store } = createPlayerStore(video);
 
-      // Trigger activity to keep user active
-      container!.dispatchEvent(new Event('pointermove'));
+      // Keep user active
+      store.state.setActive();
       flush();
 
       // Resume playback
@@ -432,12 +318,6 @@ describe('controlsFeature', () => {
 
 function createContainer(): HTMLElement {
   return document.createElement('div');
-}
-
-function createPointerEvent(type: string, init?: { pointerType?: string }): Event {
-  const event = new Event(type, { bubbles: true });
-  (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
-  return event;
 }
 
 function createPlayerStore(video?: HTMLVideoElement, container?: HTMLElement | null) {

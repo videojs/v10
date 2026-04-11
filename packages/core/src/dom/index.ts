@@ -13,6 +13,7 @@ export * from './store/features';
 export * from './store/selectors';
 export * from './ui/alert-dialog';
 export * from './ui/button';
+export * from './ui/controls-activity';
 export * from './ui/dismiss-layer';
 export * from './ui/event';
 export * from './ui/popover/popover';
