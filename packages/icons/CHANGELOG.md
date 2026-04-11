@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.16...@videojs/icons@10.0.0-beta.17) (2026-04-11)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.17
+
 ## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.15...@videojs/icons@10.0.0-beta.16) (2026-04-10)
 
 
