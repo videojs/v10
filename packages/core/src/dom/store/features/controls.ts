@@ -3,6 +3,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { findGestureCoordinator } from '../../gesture/coordinator';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -59,7 +60,7 @@ export const controlsFeature = definePlayerFeature({
       set({ userActive: false, controlsVisible: computeVisible(false) });
     }
 
-    // Expose toggleControls with access to idle timer.
+    // Replace toggleControls with version that has idle timer access.
     set({
       toggleControls() {
         if (get().controlsVisible) {
@@ -71,7 +72,9 @@ export const controlsFeature = definePlayerFeature({
       },
     });
 
-    // Touch tap-to-toggle
+    // Touch tap-to-toggle — only when no gesture coordinator is managing this container.
+    // When gestures are registered, a `<media-gesture type="tap" action="toggleControls">`
+    // handles touch taps instead, avoiding conflict with this handler.
     let pointerDownTime = 0;
 
     function onPointerDown() {
@@ -80,7 +83,12 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        // If the event target is in the controls don't set inactive because that sets pointer-events: none in CSS.
+        // If a gesture coordinator exists, gestures handle touch tap — skip.
+        if (findGestureCoordinator(container as HTMLElement)) {
+          return;
+        }
+
+        // Inline touch tap-to-toggle for standalone use (no gestures).
         const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
