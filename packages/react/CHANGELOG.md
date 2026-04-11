@@ -1,5 +1,27 @@
 # Changelog
 
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.16...@videojs/react@10.0.0-beta.17) (2026-04-11)
+
+
+### Features
+
+* **html:** add `<media-gesture>` element ([#1305](https://github.com/videojs/v10/issues/1305)) ([d2782f0](https://github.com/videojs/v10/commit/d2782f0c8d3e927fc2144a5286f4bc795a2ed4ac))
+* **packages:** add gesture bindings to default skins and presets ([#1310](https://github.com/videojs/v10/issues/1310)) ([1509a66](https://github.com/videojs/v10/commit/1509a66f60fc0598452f21af396c4b6f3569be5b))
+* **react:** add gesture hooks and MediaGesture component ([#1309](https://github.com/videojs/v10/issues/1309)) ([8566260](https://github.com/videojs/v10/commit/8566260872804b2504d9f6f303d87457c7420d66))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.17
+    * @videojs/spf bumped to 10.0.0-beta.17
+    * @videojs/store bumped to 10.0.0-beta.17
+    * @videojs/utils bumped to 10.0.0-beta.17
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.17
+    * @videojs/skins bumped to 10.0.0-beta.17
+
 ## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.15...@videojs/react@10.0.0-beta.16) (2026-04-10)
 
 
