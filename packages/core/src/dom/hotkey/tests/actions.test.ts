@@ -36,7 +36,7 @@ describe('isHotkeyToggleAction', () => {
     expect(isHotkeyToggleAction('toggleMuted')).toBe(true);
     expect(isHotkeyToggleAction('toggleFullscreen')).toBe(true);
     expect(isHotkeyToggleAction('toggleSubtitles')).toBe(true);
-    expect(isHotkeyToggleAction('togglePiP')).toBe(true);
+    expect(isHotkeyToggleAction('togglePictureInPicture')).toBe(true);
   });
 
   it('returns false for non-toggle actions', () => {

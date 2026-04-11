@@ -8,7 +8,7 @@ export type GestureActionName =
   | 'toggleMuted'
   | 'toggleFullscreen'
   | 'toggleSubtitles'
-  | 'togglePiP'
+  | 'togglePictureInPicture'
   | 'toggleControls'
   | 'seekStep'
   | 'volumeStep'

@@ -237,7 +237,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <MediaHotkey keys="m" action="toggleMuted" />
       <MediaHotkey keys="f" action="toggleFullscreen" />
       <MediaHotkey keys="c" action="toggleSubtitles" />
-      <MediaHotkey keys="i" action="togglePiP" />
+      <MediaHotkey keys="i" action="togglePictureInPicture" />
       <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
       <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
       <MediaHotkey keys="l" action="seekStep" value={10} />

@@ -137,7 +137,7 @@ function getTemplateHTML() {
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
       <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
       <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
-      <media-hotkey keys="i" action="togglePiP"></media-hotkey>
+      <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
       <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
       <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
       <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>

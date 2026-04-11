@@ -16,7 +16,7 @@ describe('resolveGestureAction', () => {
     expect(resolveGestureAction('toggleMuted')).toBeTypeOf('function');
     expect(resolveGestureAction('toggleFullscreen')).toBeTypeOf('function');
     expect(resolveGestureAction('toggleSubtitles')).toBeTypeOf('function');
-    expect(resolveGestureAction('togglePiP')).toBeTypeOf('function');
+    expect(resolveGestureAction('togglePictureInPicture')).toBeTypeOf('function');
     expect(resolveGestureAction('toggleControls')).toBeTypeOf('function');
   });
 
@@ -62,10 +62,10 @@ describe('direct store actions', () => {
     expect(toggleSubtitles).toHaveBeenCalledOnce();
   });
 
-  it('calls togglePiP on store state', () => {
-    const togglePiP = vi.fn();
-    resolveGestureAction('togglePiP')!(ctx({ togglePiP }));
-    expect(togglePiP).toHaveBeenCalledOnce();
+  it('calls togglePictureInPicture on store state', () => {
+    const togglePictureInPicture = vi.fn();
+    resolveGestureAction('togglePictureInPicture')!(ctx({ togglePictureInPicture }));
+    expect(togglePictureInPicture).toHaveBeenCalledOnce();
   });
 });
 

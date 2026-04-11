@@ -33,7 +33,7 @@ export const pipFeature = definePlayerFeature({
       return exitPictureInPicture(media);
     },
 
-    async togglePiP() {
+    async togglePictureInPicture() {
       const { media, container } = target();
 
       if (isPictureInPictureElement(media)) {

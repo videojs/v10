@@ -301,5 +301,5 @@ export interface MediaPictureInPictureState {
    */
   exitPictureInPicture(): Promise<void>;
   /** Toggle picture-in-picture mode. */
-  togglePiP(): Promise<void>;
+  togglePictureInPicture(): Promise<void>;
 }
