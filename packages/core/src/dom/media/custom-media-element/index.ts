@@ -1,4 +1,5 @@
 import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
+import { omit, pick } from '@videojs/utils/object';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
@@ -117,15 +118,19 @@ export function CustomMediaElement<T extends Constructor<any>>(
     static Attributes = tag.endsWith('video') ? VideoAttributes : tag.endsWith('audio') ? AudioAttributes : [];
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
+    static #isDefined = false;
 
     static get observedAttributes() {
       CustomMedia.#define();
       // biome-ignore lint/complexity/noThisInStatic: intentional use of this
       const { Attributes } = this as typeof CustomMedia;
-      return [...new Set([...Attributes, ...attrToProp.keys()])];
+      return [...Attributes, ...attrToProp.keys()];
     }
 
     static #define() {
+      if (CustomMedia.#isDefined) return;
+      CustomMedia.#isDefined = true;
+
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
@@ -162,11 +167,17 @@ export function CustomMediaElement<T extends Constructor<any>>(
       super();
 
       if (!this.shadowRoot) {
-        this.attachShadow((this.constructor as typeof CustomMedia).shadowRootOptions);
+        const ctor = this.constructor as typeof CustomMedia;
+        this.attachShadow(ctor.shadowRootOptions);
 
-        const attrs = namedNodeMapToObject(this.attributes);
+        const allowedKeys = ctor.Attributes as string[];
+        const disallowedKeys = [...attrToProp.keys()];
+        const attrs: Record<string, string> = omit(
+          pick(namedNodeMapToObject(this.attributes), allowedKeys),
+          disallowedKeys
+        );
         if (tag && !attrs.part) attrs.part = tag;
-        this.shadowRoot!.innerHTML = (this.constructor as typeof CustomMedia).getTemplateHTML(attrs);
+        this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
       this.#mediaHost = new MediaHost();

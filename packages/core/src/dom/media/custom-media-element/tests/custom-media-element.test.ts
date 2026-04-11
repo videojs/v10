@@ -375,5 +375,41 @@ describe('CustomMediaElement', () => {
       expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
       expect(video.getAttribute('crossorigin')).toBe('anonymous');
     });
+
+    it('excludes MediaHost setter props from the inner element template', () => {
+      const { tag } = defineVideoElement();
+
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} src="video.mp4" volume="0.5" current-time="10" playback-rate="2" muted poster="poster.jpg"></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const video = el.shadowRoot!.querySelector('video')!;
+
+      expect(video.hasAttribute('src')).toBe(false);
+      expect(video.hasAttribute('volume')).toBe(false);
+      expect(video.hasAttribute('current-time')).toBe(false);
+      expect(video.hasAttribute('playback-rate')).toBe(false);
+      expect(video.hasAttribute('muted')).toBe(false);
+
+      expect(video.getAttribute('poster')).toBe('poster.jpg');
+    });
+
+    it('excludes non-allowed attributes from the inner element template', () => {
+      const { tag } = defineVideoElement();
+
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} class="player" data-id="123" poster="poster.jpg" autoplay></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const video = el.shadowRoot!.querySelector('video')!;
+
+      expect(video.hasAttribute('class')).toBe(false);
+      expect(video.hasAttribute('data-id')).toBe(false);
+
+      expect(video.getAttribute('poster')).toBe('poster.jpg');
+      expect(video.hasAttribute('autoplay')).toBe(true);
+    });
   });
 });

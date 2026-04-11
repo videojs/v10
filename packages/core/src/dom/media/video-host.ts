@@ -23,11 +23,11 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
     return (this.target as unknown as WebKitVideoElement).webkitSetPresentationMode?.(mode);
   }
 
-  webkitDisplayingFullscreen() {
+  get webkitDisplayingFullscreen() {
     return (this.target as unknown as WebKitVideoElement).webkitDisplayingFullscreen ?? false;
   }
 
-  webkitPresentationMode() {
+  get webkitPresentationMode() {
     return (this.target as unknown as WebKitVideoElement).webkitPresentationMode ?? 'inline';
   }
 }
