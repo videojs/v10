@@ -15,6 +15,10 @@ export class GestureCoordinator {
     this.#target = target;
   }
 
+  get bindings(): readonly GestureBinding[] {
+    return this.#bindings;
+  }
+
   add(binding: GestureBinding): () => void {
     this.#bindings.push(binding);
     this.#recognizers.add(binding.recognizer);
