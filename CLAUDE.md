@@ -103,6 +103,9 @@ pnpm lint:fix:file <file>
 # Remove all dist and types outputs
 pnpm clean
 
+# Validate workspace consistency (CI coverage, scopes, define imports, etc.)
+pnpm check:workspace
+
 # Measure bundle size (SPF only)
 pnpm -F @videojs/spf size        # Public API (minified + gzipped)
 pnpm -F @videojs/spf size:all    # All exports (minified + gzipped)
@@ -118,8 +121,9 @@ pnpm -F @videojs/spf size:all    # All exports (minified + gzipped)
 4. Run test/s, fix all issues. If there are no tests add them.
 5. Lint file/s, fix all issues.
 6. Run build/s, fix all errors.
-7. Before creating a PR `pnpm test`.
-8. If your changes introduced new patterns or conventions, ask the user to run `/claude-update`.
+7. Run `pnpm check:workspace` — fix any consistency warnings.
+8. Before creating a PR `pnpm test`.
+9. If your changes introduced new patterns or conventions, ask the user to run `/claude-update`.
 
 Be efficient when running operations, see "Common Root Commands".
 
