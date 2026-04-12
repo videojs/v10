@@ -3,6 +3,23 @@
   publish = "site/dist"
   ignore = "pnpm turbo query affected --packages site --tasks build --exit-code"
 
+[build.environment]
+  # turbo query affected defaults to comparing against the merge-base with main.
+  # On the production branch (site/v10) and main itself, that merge-base is HEAD,
+  # so turbo finds zero changes and skips the build. HEAD~1 compares against the
+  # previous commit instead, which is correct for all deploy contexts.
+  TURBO_SCM_BASE = "HEAD~1"
+
+# Prevent search engines from indexing branch deploys (next.videojs.org).
+# Stable docs at videojs.org (production context) are not affected.
+[context.branch-deploy.environment]
+  X_ROBOTS_TAG = "noindex"
+
+[[context.branch-deploy.headers]]
+  for = "/*"
+  [context.branch-deploy.headers.values]
+    X-Robots-Tag = "noindex"
+
 # PostHog reverse proxy (ad-blocker bypass)
 [[redirects]]
   from = "/ph/static/*"

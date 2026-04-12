@@ -17,15 +17,20 @@ import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
 import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
-// On production deploys, use the custom domain — DEPLOY_PRIME_URL always returns
-// the Netlify subdomain (e.g. main--vjs10-site.netlify.app), not the custom
-// domain. On deploy previews, use DEPLOY_PRIME_URL so OG images point to a
-// reachable URL for crawlers.
+// Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
+// the correct site URL:
+//   - production (site/v10 branch)  → https://videojs.org
+//   - branch-deploy (main branch)   → https://next.videojs.org
+//   - deploy-preview (PR branches)  → DEPLOY_PRIME_URL (Netlify subdomain)
 //
 // For URLs that must always point to production regardless of deploy context
 // (e.g. canonical, JSON-LD), use PRODUCTION_URL from src/consts.ts instead.
 const SITE_URL =
-  process.env.CONTEXT === 'production' ? 'https://videojs.org' : process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
+  process.env.CONTEXT === 'production'
+    ? 'https://videojs.org'
+    : process.env.BRANCH === 'main'
+      ? 'https://next.videojs.org'
+      : process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
 
 // https://astro.build/config
 export default defineConfig({
