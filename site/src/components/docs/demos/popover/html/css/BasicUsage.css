@@ -1,10 +1,10 @@
-.media-container,
-.media-container media-container {
+.video-player,
+.video-player media-container {
   display: block;
   position: relative;
 }
 
-.media-container video {
+.video-player video {
   width: 100%;
 }
 

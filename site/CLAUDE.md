@@ -197,13 +197,12 @@ Demos use component-mapped class names scoped via CSS `@scope`. Class names map 
 
 | What | Class Name | Example |
 |------|-----------|---------|
-| Player container (`Player.Container` / `<media-container>`) | `.media-container` | Always when demo has a player |
+| Any element | Match its tag name | `.video-player`, `.media-container`, `.media-play-button` |
 | Root for non-player demos | `.demo` | Standalone slider, tooltip |
-| Component elements | Match tag name | `.media-play-button`, `.media-controls` |
 | Slider sub-parts | Match tag name | `.media-slider-track`, `.media-slider-fill` |
 | Generic wrappers | Short semantic names | `.controls`, `.button`, `.panel` |
 
-React `.css` and HTML `.css` files for the same demo should use **identical** class names.
+Class names always match the component/tag they style. In HTML demos the root is `<video-player class="video-player">`. In React demos `Player.Container` renders `<media-container>`, so it uses `className="media-container"`. This means HTML and React CSS files may differ on the root class but share all inner class names.
 
 **How scoping works:** `Demo.astro` reads the CSS from the `files` prop, generates a deterministic hash, wraps the CSS in `@scope ([data-demo-scope="demo-{hash}"])`, and injects it as an inline `<style>`. Demo authors write clean CSS — the scoping is invisible in source tabs.
 

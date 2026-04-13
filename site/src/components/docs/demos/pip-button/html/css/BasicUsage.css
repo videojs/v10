@@ -1,9 +1,9 @@
-.media-container {
+.video-player {
   display: block;
   position: relative;
 }
 
-.media-container video {
+.video-player video {
   width: 100%;
 }
 
