@@ -61,12 +61,13 @@ test.describe('Keyboard Navigation', () => {
 
   test('Space key toggles mute on mute button', async ({ page }) => {
     await player.muteButton.focus();
-    await expect(player.muteButton).not.toHaveAttribute('data-muted');
-
-    await page.keyboard.press('Space');
+    // Media starts muted (see PlayerPage.waitForMediaReady)
     await expect(player.muteButton).toHaveAttribute('data-muted', '');
 
     await page.keyboard.press('Space');
     await expect(player.muteButton).not.toHaveAttribute('data-muted');
+
+    await page.keyboard.press('Space');
+    await expect(player.muteButton).toHaveAttribute('data-muted', '');
   });
 });

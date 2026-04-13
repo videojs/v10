@@ -106,7 +106,7 @@ export class PlayerPage {
   // --- Actions ---
 
   /** Wait for the player to load media and show controls. */
-  async waitForMediaReady(): Promise<void> {
+  async waitForMediaReady({ muted = true }: { muted?: boolean } = {}): Promise<void> {
     await this.playButton.waitFor({ state: 'attached', timeout: 20_000 });
 
     // Wait for the media element to have at least metadata loaded.
@@ -122,6 +122,19 @@ export class PlayerPage {
       },
       { timeout: 20_000 }
     );
+
+    if (muted) {
+      // Mute the media element to prevent audio during test runs.
+      // Chromium supports --mute-audio but WebKit has no browser-level
+      // equivalent, so we mute the renderer directly for cross-browser silence.
+      await this.page.evaluate(() => {
+        const media = document.querySelector(
+          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
+        ) as HTMLMediaElement | null;
+        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        if (actual) actual.muted = true;
+      });
+    }
   }
 
   /** Click play and wait for the paused attribute to be removed. */

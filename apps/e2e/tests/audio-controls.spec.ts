@@ -53,11 +53,12 @@ for (const { name, path } of AUDIO_PAGES) {
     // --- Mute / Volume ---
 
     test('mute button toggles mute', async () => {
-      await expect(player.muteButton).not.toHaveAttribute('data-muted');
-      await player.muteButton.click();
+      // Media starts muted (see PlayerPage.waitForMediaReady)
       await expect(player.muteButton).toHaveAttribute('data-muted', '');
       await player.muteButton.click();
       await expect(player.muteButton).not.toHaveAttribute('data-muted');
+      await player.muteButton.click();
+      await expect(player.muteButton).toHaveAttribute('data-muted', '');
     });
 
     test('mute button shows volume level', async () => {
