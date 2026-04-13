@@ -11,15 +11,8 @@
 [context.production.environment]
   TURBO_SCM_BASE = "HEAD~1"
 
-# Prevent search engines from indexing branch deploys (next.videojs.org).
-# Stable docs at videojs.org (production context) are not affected.
 [context.branch-deploy.environment]
   TURBO_SCM_BASE = "HEAD~1"
-
-[[context.branch-deploy.headers]]
-  for = "/*"
-  [context.branch-deploy.headers.values]
-    X-Robots-Tag = "noindex"
 
 # PostHog reverse proxy (ad-blocker bypass)
 [[redirects]]
