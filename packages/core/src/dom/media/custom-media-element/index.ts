@@ -162,6 +162,7 @@ export function CustomMediaElement<T extends Constructor<any>>(
     }
 
     #mediaHost: InstanceType<T>;
+    #bridgedEventTypes = new Set<string>();
 
     constructor() {
       super();
@@ -198,7 +199,11 @@ export function CustomMediaElement<T extends Constructor<any>>(
       listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
       options?: boolean | AddEventListenerOptions
     ) {
-      this.#mediaHost.addEventListener(type, listener, options);
+      super.addEventListener(type, listener as EventListener, options);
+      if (!this.#bridgedEventTypes.has(type)) {
+        this.#bridgedEventTypes.add(type);
+        this.#mediaHost.addEventListener(type, this.#bridgeEvent);
+      }
     }
 
     removeEventListener(
@@ -206,14 +211,27 @@ export function CustomMediaElement<T extends Constructor<any>>(
       listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
       options?: boolean | EventListenerOptions
     ): void {
-      this.#mediaHost.removeEventListener(type, listener, options);
+      super.removeEventListener(type, listener as EventListener, options);
     }
+
+    #bridgeEvent = (event: Event) => {
+      if (!event.composed) {
+        this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+      }
+    };
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
       const prop = attrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
-          (this as any)[prop] = typeof (this as any)[prop] === 'boolean' ? newValue !== null : (newValue ?? '');
+          const current = (this as any)[prop];
+          const parsed =
+            typeof current === 'boolean'
+              ? newValue !== null
+              : typeof current === 'number'
+                ? Number(newValue)
+                : (newValue ?? '');
+          (this as any)[prop] = parsed;
         }
         return;
       }

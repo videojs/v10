@@ -321,7 +321,7 @@ describe('CustomMediaElement', () => {
   });
 
   describe('event delegation', () => {
-    it('forwards addEventListener to the MediaHost', () => {
+    it('forwards non-composed media events from the target to the host', () => {
       const el = create(defineVideoElement());
       const handler = vi.fn();
 
@@ -331,7 +331,7 @@ describe('CustomMediaElement', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
-    it('forwards removeEventListener to the MediaHost', () => {
+    it('removes forwarded listener via removeEventListener', () => {
       const el = create(defineVideoElement());
       const handler = vi.fn();
 
@@ -340,6 +340,36 @@ describe('CustomMediaElement', () => {
       el.target!.dispatchEvent(new Event('play'));
 
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('delivers DOM events dispatched directly on the host element', () => {
+      const el = create(defineVideoElement());
+      const handler = vi.fn();
+
+      el.addEventListener('click', handler);
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('delivers custom events dispatched on the host element', () => {
+      const el = create(defineVideoElement());
+      const handler = vi.fn();
+
+      el.addEventListener('my-custom-event', handler);
+      el.dispatchEvent(new CustomEvent('my-custom-event'));
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('does not double-fire composed events that originate on the target', () => {
+      const el = create(defineVideoElement());
+      const handler = vi.fn();
+
+      el.addEventListener('click', handler);
+      el.target!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+
+      expect(handler).toHaveBeenCalledOnce();
     });
   });
 

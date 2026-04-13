@@ -42,12 +42,14 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
     this.#engine?.loadSource(src);
   }
 
-  attach(target: HTMLMediaElement) {
+  attach(target: HTMLVideoElement) {
+    super.attach(target);
     this.#engine?.attachMedia(target);
   }
 
   detach() {
     this.#engine?.detachMedia();
+    super.detach();
   }
 
   destroy() {

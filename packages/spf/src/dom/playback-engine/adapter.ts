@@ -1,75 +1,83 @@
-import type { Mixin } from '@videojs/utils/types';
+import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import { update } from '../../core/signals/primitives';
 import type { PlaybackEngineConfig } from './engine';
 import { createPlaybackEngine, type PlaybackEngine } from './engine';
 
-export interface SpfMediaProps {
+export interface SpfMediaAPI {
   readonly engine: PlaybackEngine;
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
-  attach(target: EventTarget): void;
+  attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
-  play(): Promise<void>;
   destroy(): void;
+  play(): Promise<void>;
 }
 
 /**
- * Mixin that adds SPF playback engine capabilities to any base class.
+ * Mixin that adds SPF playback engine behavior to any base class.
  *
- * Use this to compose SPF into a class hierarchy (e.g., with
- * CustomVideoElement) instead of using the standalone `SpfMedia` class.
+ * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
+ * be used anywhere a media element API is expected.
+ *
+ * A new engine is created on every src assignment — this fully tears down all
+ * state, SourceBuffers, and in-flight requests from the previous source before
+ * the next one begins. The media element reference is preserved across src
+ * changes and re-applied to the new engine automatically.
+ *
+ * @example
+ * class SimpleHlsMedia extends SpfMediaMixin(HTMLVideoElementHost) {}
+ *
+ * const media = new SimpleHlsMedia();
+ * media.attach(document.querySelector('video'));
+ * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
-interface SpfMediaHost extends EventTarget {
-  attach?(target: EventTarget): void;
-  detach?(): void;
-}
-
-export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => {
+export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SpfMediaImpl extends BaseClass {
     #engine: PlaybackEngine;
-    #config: PlaybackEngineConfig;
+    #config: PlaybackEngineConfig = {};
     #preload: '' | 'none' | 'metadata' | 'auto' = '';
+
+    /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
 
     constructor(...args: any[]) {
       super(...args);
-      this.#config = {};
-      this.#engine = createPlaybackEngine({});
+      this.#engine = createPlaybackEngine(this.#config);
     }
 
-    get engine() {
+    get engine(): PlaybackEngine {
       return this.#engine;
     }
 
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Media element lifecycle
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
-    attach(mediaElement: HTMLMediaElement) {
-      update(this.#engine.owners, { mediaElement });
+    attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
+      update(this.#engine.owners, { mediaElement });
     }
 
-    detach() {
+    detach(): void {
       this.#cancelPendingPlay();
       update(this.#engine.owners, { mediaElement: undefined });
       super.detach?.();
     }
 
-    destroy() {
+    destroy(): void {
       this.#cancelPendingPlay();
       this.#engine.destroy();
     }
 
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
-    get preload() {
+    get preload(): '' | 'none' | 'metadata' | 'auto' {
       return this.#preload;
     }
 
-    set preload(value) {
+    set preload(value: '' | 'none' | 'metadata' | 'auto') {
       this.#preload = value;
       if (value) {
         update(this.#engine.state, { preload: value });
@@ -79,13 +87,13 @@ export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => 
       // stays in effect until the next src change creates a fresh engine.
     }
 
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
     // Each assignment destroys the current engine and starts a fresh one, exactly
     // as the browser's load algorithm resets all media element state on src change.
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
-    get src() {
+    get src(): string {
       return this.#engine.state.get().presentation?.url ?? '';
     }
 
@@ -111,12 +119,12 @@ export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => 
       }
     }
 
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // play() — WHATWG §4.8.11.8
     // Delegates to the attached media element's native play().
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
-    play() {
+    play(): Promise<void> {
       const { mediaElement } = this.#engine.owners.get();
       if (!mediaElement) {
         return Promise.reject(new Error('SpfMedia: no media element attached'));
@@ -125,7 +133,7 @@ export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => 
       // Signal play intent — enables loading even with preload="none"
       update(this.#engine.state, { playbackInitiated: true });
 
-      return mediaElement.play().catch((err) => {
+      return mediaElement.play().catch((err: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE
         // hasn't attached a blob URL yet. Wait for loadstart (src assigned
         // by MSE setup) and retry once.
@@ -143,11 +151,11 @@ export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => 
       });
     }
 
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Private
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
-    #cancelPendingPlay() {
+    #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
       const { mediaElement } = this.#engine.owners.get();
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
@@ -155,29 +163,8 @@ export const SpfMediaMixin: Mixin<SpfMediaHost, SpfMediaProps> = (BaseClass) => 
     }
   }
 
-  return SpfMediaImpl as any;
-};
+  return SpfMediaImpl as unknown as MixinReturn<Base, SpfMediaAPI>;
+}
 
-/**
- * HTMLMediaElement-compatible adapter for the SPF playback engine.
- *
- * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
- * be used anywhere a media element API is expected.
- *
- * A new engine is created on every src assignment — this fully tears down all
- * state, SourceBuffers, and in-flight requests from the previous source before
- * the next one begins. The media element reference is preserved across src
- * changes and re-applied to the new engine automatically.
- *
- * @example
- * const media = new SpfMedia({ preferredAudioLanguage: 'en' });
- * media.attach(document.querySelector('video'));
- * media.src = 'https://stream.mux.com/abc123.m3u8';
- *
- * // Change source — old engine is destroyed, new one starts clean:
- * media.src = 'https://stream.mux.com/xyz456.m3u8';
- *
- * // Explicit teardown:
- * media.destroy();
- */
-export class SpfMedia extends SpfMediaMixin(EventTarget) {}
+/** Standalone SPF media adapter with no base class. */
+export class SpfMedia extends SpfMediaMixin(class {}) {}
