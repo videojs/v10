@@ -8,6 +8,29 @@ The **Video.js v10 documentation site** is an Astro-based static site generator 
 
 Key architectural feature: **Multi-framework documentation** — the same content generates separate routes for different framework/style combinations (e.g., HTML + CSS, React + CSS), allowing framework-specific documentation from shared MDX sources.
 
+## Deployment
+
+The site deploys via Netlify from two branches:
+
+| Branch | Deploys to | Content |
+| --- | --- | --- |
+| `site/v10` (production) | **videojs.org** | Stable docs matching the latest release |
+| `main` (branch deploy) | **next.videojs.org** | Pre-release docs (may include unreleased APIs) |
+
+**On release:** The CD workflow (`.github/workflows/cd.yml`) publishes packages to npm, then force-pushes `main`'s HEAD to `site/v10`. This keeps the production docs in sync with the latest release.
+
+**Docs hotfixes between releases:** Fix the content on `main` first, then cherry-pick to `site/v10`:
+
+```bash
+git checkout site/v10
+git cherry-pick <sha-from-main>
+git push origin site/v10
+```
+
+The next release force-pushes `main` to `site/v10`, which already includes the cherry-picked commit (since it originated on `main`). All fixes must land on `main` first — the `site/v10` branch has branch protection that restricts direct pushes to the CD bot.
+
+**Branch deploys (next.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs.
+
 ## Commands
 
 From `site/` directory:
