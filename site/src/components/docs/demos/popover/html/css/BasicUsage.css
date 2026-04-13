@@ -1,20 +1,20 @@
-.html-popover-basic,
-.html-popover-basic media-container {
+.media-container,
+.media-container media-container {
   display: block;
   position: relative;
 }
 
-.html-popover-basic video {
+.media-container video {
   width: 100%;
 }
 
-.html-popover-basic__bar {
+.bar {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.html-popover-basic__trigger {
+.trigger {
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -24,7 +24,7 @@
   cursor: pointer;
 }
 
-.html-popover-basic__popover {
+.media-popover {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   color: white;

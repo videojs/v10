@@ -1,12 +1,12 @@
-.html-time-current-time {
+.media-container {
   position: relative;
 }
 
-.html-time-current-time video {
+.media-container video {
   width: 100%;
 }
 
-.html-time-current-time__value {
+.media-time {
   position: absolute;
   bottom: 10px;
   left: 10px;

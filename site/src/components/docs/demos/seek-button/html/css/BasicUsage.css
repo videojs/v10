@@ -1,12 +1,12 @@
-.html-seek-button-basic {
+.media-container {
   position: relative;
 }
 
-.html-seek-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.html-seek-button-basic__buttons {
+.buttons {
   display: flex;
   gap: 8px;
   position: absolute;
@@ -14,7 +14,7 @@
   left: 10px;
 }
 
-.html-seek-button-basic__button {
+.media-seek-button {
   padding-block: 8px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -26,15 +26,15 @@
   cursor: pointer;
 }
 
-.html-seek-button-basic__button .show-when-backward {
+.media-seek-button .show-when-backward {
   display: none;
 }
-.html-seek-button-basic__button .show-when-forward {
+.media-seek-button .show-when-forward {
   display: none;
 }
-.html-seek-button-basic__button[data-direction="backward"] .show-when-backward {
+.media-seek-button[data-direction="backward"] .show-when-backward {
   display: inline;
 }
-.html-seek-button-basic__button[data-direction="forward"] .show-when-forward {
+.media-seek-button[data-direction="forward"] .show-when-forward {
   display: inline;
 }

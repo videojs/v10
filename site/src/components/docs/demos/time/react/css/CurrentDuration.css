@@ -1,12 +1,12 @@
-.react-time-current-duration {
+.media-container {
   position: relative;
 }
 
-.react-time-current-duration video {
+.media-container video {
   width: 100%;
 }
 
-.react-time-current-duration__group {
+.time-group {
   display: flex;
   align-items: center;
   gap: 4px;

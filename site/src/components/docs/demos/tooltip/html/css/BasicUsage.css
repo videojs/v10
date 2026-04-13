@@ -1,11 +1,11 @@
-.html-tooltip-basic {
+.demo {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
 }
 
-.html-tooltip-basic__trigger {
+.trigger {
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -15,7 +15,7 @@
   cursor: pointer;
 }
 
-.html-tooltip-basic__popup {
+.media-tooltip {
   --media-tooltip-side-offset: 8px;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);

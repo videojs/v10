@@ -1,30 +1,30 @@
-.html-poster-basic {
+.media-container {
   display: block;
   position: relative;
 }
 
-.html-poster-basic video {
+.media-container video {
   width: 100%;
 }
 
-.html-poster-basic__poster {
+.media-poster {
   position: absolute;
   inset: 0;
   pointer-events: none;
   transition: opacity 0.25s;
 }
 
-.html-poster-basic__poster:not([data-visible]) {
+.media-poster:not([data-visible]) {
   opacity: 0;
 }
 
-.html-poster-basic__poster img {
+.media-poster img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.html-poster-basic__button {
+.media-play-button {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -38,15 +38,15 @@
   cursor: pointer;
 }
 
-.html-poster-basic__button .show-when-paused,
-.html-poster-basic__button .show-when-playing {
+.media-play-button .show-when-paused,
+.media-play-button .show-when-playing {
   display: none;
 }
 
-.html-poster-basic__button[data-paused] .show-when-paused {
+.media-play-button[data-paused] .show-when-paused {
   display: inline;
 }
 
-.html-poster-basic__button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .show-when-playing {
   display: inline;
 }

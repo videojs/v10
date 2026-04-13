@@ -1,12 +1,12 @@
-.react-use-player-selector {
+.media-container {
   position: relative;
 }
 
-.react-use-player-selector video {
+.media-container video {
   width: 100%;
 }
 
-.react-use-player-selector__state {
+.state-panel {
   display: flex;
   gap: 16px;
   padding: 12px;
@@ -16,16 +16,16 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.react-use-player-selector__state div {
+.state-panel div {
   display: flex;
   gap: 8px;
 }
 
-.react-use-player-selector__state dt {
+.state-panel dt {
   color: #6b7280;
 }
 
-.react-use-player-selector__state dd {
+.state-panel dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }

@@ -1,13 +1,13 @@
-.html-pip-button-basic {
+.media-container {
   display: block;
   position: relative;
 }
 
-.html-pip-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.html-pip-button-basic__button {
+.media-pip-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.html-pip-button-basic__button .show-when-pip {
+.media-pip-button .show-when-pip {
   display: none;
 }
-.html-pip-button-basic__button .show-when-not-pip {
+.media-pip-button .show-when-not-pip {
   display: none;
 }
-.html-pip-button-basic__button[data-pip] .show-when-pip {
+.media-pip-button[data-pip] .show-when-pip {
   display: inline;
 }
-.html-pip-button-basic__button:not([data-pip]) .show-when-not-pip {
+.media-pip-button:not([data-pip]) .show-when-not-pip {
   display: inline;
 }
