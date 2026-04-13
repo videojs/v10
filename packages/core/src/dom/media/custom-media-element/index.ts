@@ -163,6 +163,8 @@ export function CustomMediaElement<T extends Constructor<any>>(
 
     #mediaHost: InstanceType<T>;
     #bridgedEventTypes = new Set<string>();
+    #childMap = new Map<HTMLTrackElement | HTMLSourceElement, HTMLTrackElement | HTMLSourceElement>();
+    #childObserver?: MutationObserver;
 
     constructor() {
       super();
@@ -183,6 +185,10 @@ export function CustomMediaElement<T extends Constructor<any>>(
 
       this.#mediaHost = new MediaHost();
       this.#mediaHost.attach(this.target);
+
+      this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
+      this.shadowRoot!.addEventListener('slotchange', () => this.#syncMediaChildren());
+      this.#syncMediaChildren();
     }
 
     get target() {
@@ -253,6 +259,66 @@ export function CustomMediaElement<T extends Constructor<any>>(
     disconnectedCallback(): void {
       if (!this.hasAttribute('keep-alive')) {
         this.#mediaHost.destroy();
+      }
+    }
+
+    #syncMediaChildren(): void {
+      const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
+      const mediaChildren = new Set(
+        defaultSlot
+          ?.assignedElements({ flatten: true })
+          .filter((el) => el.localName === 'track' || el.localName === 'source') as (
+          | HTMLTrackElement
+          | HTMLSourceElement
+        )[]
+      );
+
+      for (const [el, clone] of this.#childMap) {
+        if (!mediaChildren.has(el)) {
+          clone.remove();
+          this.#childMap.delete(el);
+        }
+      }
+
+      for (const el of mediaChildren) {
+        let clone = this.#childMap.get(el);
+        if (!clone) {
+          clone = el.cloneNode() as HTMLTrackElement | HTMLSourceElement;
+          this.#childMap.set(el, clone);
+          this.#childObserver?.observe(el, { attributes: true });
+        }
+        this.target?.append(clone);
+        this.#enableDefaultTrack(clone as HTMLTrackElement);
+      }
+    }
+
+    #syncMediaChildAttribute(mutations: MutationRecord[]): void {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          const { target, attributeName } = mutation;
+          const clone = this.#childMap.get(target as HTMLTrackElement | HTMLSourceElement);
+          if (clone && attributeName) {
+            clone.setAttribute(
+              attributeName,
+              (target as HTMLTrackElement | HTMLSourceElement).getAttribute(attributeName) ?? ''
+            );
+            this.#enableDefaultTrack(clone as HTMLTrackElement);
+          }
+        }
+      }
+    }
+
+    #enableDefaultTrack(trackEl: HTMLTrackElement): void {
+      // Browsers don't honor the `default` attribute if a track is added via JS.
+      // Enable default tracks for chapters or metadata.
+      if (
+        trackEl &&
+        trackEl.localName === 'track' &&
+        trackEl.default &&
+        (trackEl.kind === 'chapters' || trackEl.kind === 'metadata') &&
+        trackEl.track.mode === 'disabled'
+      ) {
+        trackEl.track.mode = 'hidden';
       }
     }
   }
