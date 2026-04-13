@@ -43,6 +43,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'], baseURL: 'http://localhost:5180' },
     },
 
+    // --- Firefox ---
+    {
+      name: 'vite-firefox',
+      use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
+    },
+
     // --- Future: Next.js ---
     // {
     //   name: 'next-chromium',
