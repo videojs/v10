@@ -12,9 +12,17 @@ const isRemote = typeof src === 'string' && src.startsWith('http');
 
 {
   isRemote ? (
-    <img class={twMerge("my-8", className)} src={src} {...rest} />
+    <img
+      class={twMerge("my-8 h-auto max-w-full", className)}
+      src={src}
+      {...rest}
+    />
   ) : (
-    // @ts-expect-error tbh I don't know how to tell ts that inferSize is ok
-    <Image class={twMerge("my-8", className)} inferSize src={src} {...rest} />
+    <Image
+      class={twMerge("my-8 h-auto max-w-full", className)}
+      inferSize
+      src={src}
+      {...rest}
+    />
   )
 }
