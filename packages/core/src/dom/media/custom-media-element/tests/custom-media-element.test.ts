@@ -28,6 +28,47 @@ class TestVideoHost extends HTMLVideoElementHost {
   }
 }
 
+class TestVideoHostWithObjects extends HTMLVideoElementHost {
+  #src = '';
+  #config: Record<string, any> = {};
+  #metadata: Record<string, any> | undefined;
+  #debug = false;
+
+  get src() {
+    return this.#src;
+  }
+
+  set src(value: string) {
+    this.#src = value;
+  }
+
+  get config() {
+    return this.#config;
+  }
+
+  set config(value: Record<string, any>) {
+    this.#config = value;
+  }
+
+  get metadata() {
+    return this.#metadata;
+  }
+
+  set metadata(value: Record<string, any> | undefined) {
+    this.#metadata = value;
+  }
+
+  get debug() {
+    return this.#debug;
+  }
+
+  set debug(value: boolean) {
+    this.#debug = value;
+  }
+
+  destroy() {}
+}
+
 class TestAudioHost extends HTMLAudioElementHost {
   destroy() {}
 }
@@ -37,6 +78,13 @@ let tagCounter = 0;
 function defineVideoElement() {
   const tag = `test-video-${++tagCounter}`;
   const Ctor = CustomMediaElement('video', TestVideoHost);
+  customElements.define(tag, Ctor);
+  return { Ctor, tag };
+}
+
+function defineVideoElementWithObjects() {
+  const tag = `test-video-${++tagCounter}`;
+  const Ctor = CustomMediaElement('video', TestVideoHostWithObjects);
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -52,6 +100,69 @@ function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
   document.body.appendChild(el);
   return el;
+}
+
+class TrackingVideoHost extends HTMLVideoElementHost {
+  calls: string[] = [];
+  #src = '';
+  #volume = 1;
+  #muted = false;
+  #currentTime = 0;
+  #playbackRate = 1;
+
+  get src() {
+    return this.#src;
+  }
+
+  set src(value: string) {
+    this.calls.push(`set:src:${value}`);
+    this.#src = value;
+  }
+
+  override get volume() {
+    return this.#volume;
+  }
+
+  override set volume(value: number) {
+    this.calls.push(`set:volume:${value}`);
+    this.#volume = value;
+  }
+
+  override get muted() {
+    return this.#muted;
+  }
+
+  override set muted(value: boolean) {
+    this.calls.push(`set:muted:${value}`);
+    this.#muted = value;
+  }
+
+  override get currentTime() {
+    return this.#currentTime;
+  }
+
+  override set currentTime(value: number) {
+    this.calls.push(`set:currentTime:${value}`);
+    this.#currentTime = value;
+  }
+
+  override get playbackRate() {
+    return this.#playbackRate;
+  }
+
+  override set playbackRate(value: number) {
+    this.calls.push(`set:playbackRate:${value}`);
+    this.#playbackRate = value;
+  }
+
+  destroy() {}
+}
+
+function defineTrackingVideoElement() {
+  const tag = `test-video-${++tagCounter}`;
+  const Ctor = CustomMediaElement('video', TrackingVideoHost);
+  customElements.define(tag, Ctor);
+  return { Ctor, tag };
 }
 
 describe('CustomMediaElement', () => {
@@ -105,16 +216,16 @@ describe('CustomMediaElement', () => {
         expect(VideoAttributes).toContain(attr);
       }
       expect(VideoAttributes).toContain('poster');
-      expect(VideoAttributes).toContain('disablepictureinpicture');
-      expect(VideoAttributes).toContain('autopictureinpicture');
+      expect(VideoAttributes).toContain('disablePictureInPicture');
+      expect(VideoAttributes).toContain('autoPictureInPicture');
     });
   });
 
   describe('observedAttributes', () => {
-    it('includes all standard video attributes', () => {
+    it('includes all standard video attributes (lowercased)', () => {
       const { Ctor } = defineVideoElement();
       for (const attr of VideoAttributes) {
-        expect(Ctor.observedAttributes).toContain(attr);
+        expect(Ctor.observedAttributes).toContain(attr.toLowerCase());
       }
     });
 
@@ -262,6 +373,113 @@ describe('CustomMediaElement', () => {
     });
   });
 
+  describe('non-MediaHost attribute property accessors', () => {
+    it('boolean property getter returns false when attribute is absent', () => {
+      const el = create(defineVideoElement());
+      expect(el.autoplay).toBe(false);
+      expect(el.controls).toBe(false);
+      expect(el.loop).toBe(false);
+    });
+
+    it('boolean property getter returns true when attribute is present', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('autoplay', '');
+      el.setAttribute('controls', '');
+      el.setAttribute('loop', '');
+
+      expect(el.autoplay).toBe(true);
+      expect(el.controls).toBe(true);
+      expect(el.loop).toBe(true);
+    });
+
+    it('boolean property setter adds the attribute', () => {
+      const el = create(defineVideoElement());
+      el.autoplay = true;
+      expect(el.hasAttribute('autoplay')).toBe(true);
+      expect(el.target!.hasAttribute('autoplay')).toBe(true);
+    });
+
+    it('boolean property setter removes the attribute when set to false', () => {
+      const el = create(defineVideoElement());
+      el.autoplay = true;
+      el.autoplay = false;
+      expect(el.hasAttribute('autoplay')).toBe(false);
+      expect(el.target!.hasAttribute('autoplay')).toBe(false);
+    });
+
+    it('string property getter returns the attribute value', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('preload', 'auto');
+      expect(el.preload).toBe('auto');
+    });
+
+    it('string property getter returns false when attribute is absent', () => {
+      const el = create(defineVideoElement());
+      expect(el.poster).toBe(false);
+      expect(el.preload).toBe(false);
+    });
+
+    it('string property setter sets the attribute and forwards to target', () => {
+      const el = create(defineVideoElement());
+      el.poster = 'https://example.com/poster.jpg';
+      expect(el.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+      expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+    });
+
+    it('string property setter removes attribute when set to null', () => {
+      const el = create(defineVideoElement());
+      el.poster = 'https://example.com/poster.jpg';
+      el.poster = null;
+      expect(el.hasAttribute('poster')).toBe(false);
+    });
+
+    it('property accessors work for all non-MediaHost video attributes', () => {
+      const el = create(defineVideoElement());
+
+      el.controls = true;
+      expect(el.controls).toBe(true);
+      expect(el.hasAttribute('controls')).toBe(true);
+
+      el.loop = true;
+      expect(el.loop).toBe(true);
+      expect(el.hasAttribute('loop')).toBe(true);
+
+      el.playsinline = true;
+      expect(el.playsinline).toBe(true);
+      expect(el.hasAttribute('playsinline')).toBe(true);
+
+      el.poster = 'poster.jpg';
+      expect(el.poster).toBe('poster.jpg');
+      expect(el.getAttribute('poster')).toBe('poster.jpg');
+
+      el.preload = 'metadata';
+      expect(el.preload).toBe('metadata');
+      expect(el.getAttribute('preload')).toBe('metadata');
+
+      el.crossOrigin = 'anonymous';
+      expect(el.crossOrigin).toBe('anonymous');
+      expect(el.getAttribute('crossorigin')).toBe('anonymous');
+
+      el.loading = 'lazy';
+      expect(el.loading).toBe('lazy');
+      expect(el.getAttribute('loading')).toBe('lazy');
+    });
+
+    it('property accessors are defined on the prototype, not the constructor', () => {
+      const { Ctor } = defineVideoElement();
+      const proto = Ctor.prototype;
+
+      expect(Object.getOwnPropertyDescriptor(proto, 'autoplay')).toBeDefined();
+      expect(Object.getOwnPropertyDescriptor(proto, 'controls')).toBeDefined();
+      expect(Object.getOwnPropertyDescriptor(proto, 'loop')).toBeDefined();
+      expect(Object.getOwnPropertyDescriptor(proto, 'poster')).toBeDefined();
+      expect(Object.getOwnPropertyDescriptor(proto, 'preload')).toBeDefined();
+
+      expect(Object.getOwnPropertyDescriptor(Ctor, 'autoplay')).toBeUndefined();
+      expect(Object.getOwnPropertyDescriptor(Ctor, 'poster')).toBeUndefined();
+    });
+  });
+
   describe('setter attributes route through MediaHost property', () => {
     it('sets muted property via attribute', () => {
       const el = create(defineVideoElement());
@@ -388,6 +606,187 @@ describe('CustomMediaElement', () => {
 
       el.remove();
       expect(el.destroyed).toBe(false);
+    });
+  });
+
+  describe('object-typed properties are excluded from attribute observation', () => {
+    it('excludes object-typed properties from observedAttributes', () => {
+      const { Ctor } = defineVideoElementWithObjects();
+      const observed = Ctor.observedAttributes;
+      expect(observed).not.toContain('config');
+      expect(observed).toContain('debug');
+      expect(observed).toContain('src');
+    });
+
+    it('preserves object property when attribute is set', () => {
+      const el = create(defineVideoElementWithObjects());
+      const original = { startLevel: 2 };
+      el.config = original;
+
+      el.setAttribute('config', '{"startLevel": 5}');
+      expect(el.config).toBe(original);
+    });
+
+    it('still allows object properties to be set via JS', () => {
+      const el = create(defineVideoElementWithObjects());
+      const newConfig = { startLevel: 3, maxBufferLength: 60 };
+      el.config = newConfig;
+      expect(el.config).toBe(newConfig);
+    });
+
+    it('still observes primitive-typed properties as attributes', () => {
+      const el = create(defineVideoElementWithObjects());
+      el.setAttribute('debug', '');
+      expect(el.debug).toBe(true);
+    });
+  });
+
+  describe('property setters set attribute and delegate to MediaHost', () => {
+    it('string setter sets attribute on the custom element', () => {
+      const el = create(defineTrackingVideoElement());
+      el.src = 'https://example.com/video.mp4';
+      expect(el.getAttribute('src')).toBe('https://example.com/video.mp4');
+    });
+
+    it('string setter delegates value to the MediaHost via attributeChangedCallback', () => {
+      const el = create(defineTrackingVideoElement());
+      el.src = 'https://example.com/video.mp4';
+      expect(el.src).toBe('https://example.com/video.mp4');
+    });
+
+    it('number setter sets attribute on the custom element', () => {
+      const el = create(defineTrackingVideoElement());
+      el.volume = 0.5;
+      expect(el.getAttribute('volume')).toBe('0.5');
+    });
+
+    it('number setter delegates value to the MediaHost via attributeChangedCallback', () => {
+      const el = create(defineTrackingVideoElement());
+      el.volume = 0.5;
+      expect(el.volume).toBe(0.5);
+    });
+
+    it('boolean setter toggles attribute on the custom element', () => {
+      const el = create(defineTrackingVideoElement());
+      el.muted = true;
+      expect(el.hasAttribute('muted')).toBe(true);
+    });
+
+    it('boolean setter removes attribute when set to false', () => {
+      const el = create(defineTrackingVideoElement());
+      el.muted = true;
+      el.muted = false;
+      expect(el.hasAttribute('muted')).toBe(false);
+    });
+
+    it('boolean setter delegates value to the MediaHost via attributeChangedCallback', () => {
+      const el = create(defineTrackingVideoElement());
+      el.muted = true;
+      expect(el.muted).toBe(true);
+
+      el.muted = false;
+      expect(el.muted).toBe(false);
+    });
+
+    it('currentTime setter sets attribute and delegates number value', () => {
+      const el = create(defineTrackingVideoElement());
+      el.currentTime = 42;
+      expect(el.getAttribute('current-time')).toBe('42');
+      expect(el.currentTime).toBe(42);
+    });
+
+    it('playbackRate setter sets attribute and delegates number value', () => {
+      const el = create(defineTrackingVideoElement());
+      el.playbackRate = 2;
+      expect(el.getAttribute('playback-rate')).toBe('2');
+      expect(el.playbackRate).toBe(2);
+    });
+
+    it('attribute is set before MediaHost setter is called', () => {
+      const el = create(defineTrackingVideoElement());
+      const spy = vi.spyOn(el, 'setAttribute');
+      el.src = 'video.mp4';
+
+      expect(spy).toHaveBeenCalledWith('src', 'video.mp4');
+      expect(spy.mock.invocationCallOrder[0]).toBeLessThan(Number.POSITIVE_INFINITY);
+    });
+
+    it('MediaHost setter receives the coerced value for each type', () => {
+      const el = create(defineTrackingVideoElement());
+
+      el.src = 'video.mp4';
+      el.volume = 0.75;
+      el.muted = true;
+      el.currentTime = 10;
+      el.playbackRate = 1.5;
+
+      expect(el.src).toBe('video.mp4');
+      expect(el.volume).toBe(0.75);
+      expect(el.muted).toBe(true);
+      expect(el.currentTime).toBe(10);
+      expect(el.playbackRate).toBe(1.5);
+    });
+
+    it('setting the same attribute value does not re-trigger the MediaHost setter', () => {
+      const el = create(defineTrackingVideoElement());
+      const spy = vi.fn();
+      const origSetAttribute = el.setAttribute.bind(el);
+
+      el.setAttribute = (...args: [string, string]) => {
+        origSetAttribute(...args);
+        spy(...args);
+      };
+
+      el.src = 'video.mp4';
+      expect(spy).toHaveBeenCalledOnce();
+      expect(el.src).toBe('video.mp4');
+    });
+
+    it('defaultMuted getter reflects the muted attribute', () => {
+      const el = create(defineTrackingVideoElement());
+      expect(el.defaultMuted).toBe(false);
+
+      el.setAttribute('muted', '');
+      expect(el.defaultMuted).toBe(true);
+
+      el.removeAttribute('muted');
+      expect(el.defaultMuted).toBe(false);
+    });
+
+    it('defaultMuted setter toggles the muted attribute', () => {
+      const el = create(defineTrackingVideoElement());
+      el.defaultMuted = true;
+      expect(el.hasAttribute('muted')).toBe(true);
+
+      el.defaultMuted = false;
+      expect(el.hasAttribute('muted')).toBe(false);
+    });
+
+    it('defaultMuted setter triggers the MediaHost muted setter via attributeChangedCallback', () => {
+      const el = create(defineTrackingVideoElement());
+      el.defaultMuted = true;
+      expect(el.muted).toBe(true);
+
+      el.defaultMuted = false;
+      expect(el.muted).toBe(false);
+    });
+
+    it('muted property setter and defaultMuted share the same attribute', () => {
+      const el = create(defineTrackingVideoElement());
+      el.muted = true;
+      expect(el.defaultMuted).toBe(true);
+
+      el.defaultMuted = false;
+      expect(el.muted).toBe(false);
+    });
+
+    it('object-typed properties bypass attribute and delegate directly to MediaHost', () => {
+      const el = create(defineVideoElementWithObjects());
+      const config = { startLevel: 2 };
+      el.config = config;
+
+      expect(el.hasAttribute('config')).toBe(false);
+      expect(el.config).toBe(config);
     });
   });
 

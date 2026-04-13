@@ -58,7 +58,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
         },
-        { signal }
+        { signal, capture: true }
       );
 
       target.addEventListener(

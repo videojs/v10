@@ -4,11 +4,11 @@ import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
 export const AudioAttributes = [
-  'disableremoteplayback',
+  'disableRemotePlayback',
   'autoplay',
   'controls',
-  'controlslist',
-  'crossorigin',
+  'controlsList',
+  'crossOrigin',
   'loading',
   'loop',
   'muted',
@@ -19,8 +19,8 @@ export const AudioAttributes = [
 
 export const VideoAttributes = [
   ...AudioAttributes,
-  'autopictureinpicture',
-  'disablepictureinpicture',
+  'autoPictureInPicture',
+  'disablePictureInPicture',
   'poster',
 ] as const;
 
@@ -100,7 +100,6 @@ function getCommonTemplateHTML(tag: string) {
   };
 }
 
-/** Properties that are excluded from the custom media element. */
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
 export function CustomMediaElement<T extends Constructor<any>>(
@@ -123,13 +122,36 @@ export function CustomMediaElement<T extends Constructor<any>>(
     static get observedAttributes() {
       CustomMedia.#define();
       // biome-ignore lint/complexity/noThisInStatic: intentional use of this
-      const { Attributes } = this as typeof CustomMedia;
+      const Attributes = (this as typeof CustomMedia).Attributes.map((s) => s.toLowerCase());
       return [...Attributes, ...attrToProp.keys()];
     }
 
     static #define() {
       if (CustomMedia.#isDefined) return;
       CustomMedia.#isDefined = true;
+
+      // First define the getters and setters for the observed attributes.
+      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+      const { Attributes } = this as typeof CustomMedia;
+      for (const propName of Attributes) {
+        // If it's on the MediaHost prototype, handle it below.
+        if (propName in MediaHost.prototype) continue;
+
+        const attr = propName.toLowerCase();
+        Object.defineProperty(CustomMedia.prototype, propName, {
+          get() {
+            const val = this.getAttribute(attr);
+            return val === null ? false : val === '' ? true : val;
+          },
+          set(val: string | boolean | number | null) {
+            setAttributeValue(this, attr, val);
+          },
+        });
+      }
+
+      // Probe instance to check default value types so only primitive-valued
+      // properties are registered as observed attributes.
+      const probe = new MediaHost();
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
@@ -149,10 +171,19 @@ export function CustomMediaElement<T extends Constructor<any>>(
             };
 
             if (descriptor.set) {
-              attrToProp.set(kebabCase(prop), prop);
-              config.set = function (this: CustomMedia, val: any) {
-                this.#mediaHost[prop] = val;
-              };
+              const defaultType = typeof probe[prop];
+              if (defaultType !== 'object' && defaultType !== 'function') {
+                const attr = kebabCase(prop);
+                attrToProp.set(attr, prop);
+
+                config.set = function (this: CustomMedia, val: any) {
+                  setAttributeValue(this, attr, val);
+                };
+              } else {
+                config.set = function (this: CustomMedia, val: any) {
+                  this.#mediaHost[prop] = val;
+                };
+              }
             }
           }
 
@@ -173,7 +204,7 @@ export function CustomMediaElement<T extends Constructor<any>>(
         const ctor = this.constructor as typeof CustomMedia;
         this.attachShadow(ctor.shadowRootOptions);
 
-        const allowedKeys = ctor.Attributes as string[];
+        const allowedKeys = ctor.Attributes.map((s) => s.toLowerCase());
         const disallowedKeys = [...attrToProp.keys()];
         const attrs: Record<string, string> = omit(
           pick(namedNodeMapToObject(this.attributes), allowedKeys),
@@ -191,13 +222,21 @@ export function CustomMediaElement<T extends Constructor<any>>(
       this.#syncMediaChildren();
     }
 
-    get target() {
+    get target(): HTMLVideoElement | HTMLAudioElement | null {
       return (
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
         this.shadowRoot?.querySelector(tag) ??
         null
       );
+    }
+
+    get defaultMuted() {
+      return this.hasAttribute('muted');
+    }
+
+    set defaultMuted(val: boolean) {
+      setAttributeValue(this, 'muted', val);
     }
 
     addEventListener(
@@ -230,14 +269,9 @@ export function CustomMediaElement<T extends Constructor<any>>(
       const prop = attrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
-          const current = (this as any)[prop];
-          const parsed =
-            typeof current === 'boolean'
-              ? newValue !== null
-              : typeof current === 'number'
-                ? Number(newValue)
-                : (newValue ?? '');
-          (this as any)[prop] = parsed;
+          const valueType = typeof this.#mediaHost[prop];
+          this.#mediaHost[prop] =
+            valueType === 'boolean' ? newValue !== null : valueType === 'number' ? Number(newValue) : (newValue ?? '');
         }
         return;
       }
@@ -324,4 +358,12 @@ export function CustomMediaElement<T extends Constructor<any>>(
   }
 
   return CustomMedia as any;
+}
+
+function setAttributeValue(el: Element, attr: string, val: unknown): void {
+  if (val === true || val === false || val == null) {
+    el.toggleAttribute(attr, Boolean(val));
+  } else {
+    el.setAttribute(attr, String(val));
+  }
 }
