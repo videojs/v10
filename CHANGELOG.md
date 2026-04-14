@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.18] - 2026-04-14
+
+### 🚀 Features
+- *(site)* Add versioned docs infrastructure ([#1314](https://github.com/videojs/v10/pull/1314)) by [@decepulis](https://github.com/decepulis)
+- *(cli)* Add @videojs/cli docs command for LLM-friendly installation ([#1214](https://github.com/videojs/v10/pull/1214)) by [@decepulis](https://github.com/decepulis)
+
+### 🐛 Bug Fixes
+- *(site)* Revert FrameworkCase conditional rendering ([#1317](https://github.com/videojs/v10/pull/1317)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Prevent images from overflowing on narrow viewports ([#1302](https://github.com/videojs/v10/pull/1302)) by [@decepulis](https://github.com/decepulis)
+- *(core)* Reduce doubletap window from 300ms to 200ms ([#1328](https://github.com/videojs/v10/pull/1328)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Ignore gestures on interactive child elements ([#1327](https://github.com/videojs/v10/pull/1327)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Site accessibility rough edges ([#1330](https://github.com/videojs/v10/pull/1330)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Update text link hover style to gold underline ([#1149](https://github.com/videojs/v10/pull/1149)) by [@decepulis](https://github.com/decepulis)
+- *(core)* Ignore non-primary pointer buttons in tap gesture ([#1329](https://github.com/videojs/v10/pull/1329)) by [@mihar-22](https://github.com/mihar-22)
+
+### 💼 Other
+- Media contracts ([#1297](https://github.com/videojs/v10/pull/1297)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🚜 Refactor
+- *(packages)* [**breaking**] Replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/pull/1292)) by [@luwes](https://github.com/luwes)
+- *(site)* Replace BEM class names with @scope-based CSS isolation in demos ([#1315](https://github.com/videojs/v10/pull/1315)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Move media host observed attributes to subclasses ([#1326](https://github.com/videojs/v10/pull/1326)) by [@luwes](https://github.com/luwes)
+
+### 📚 Documentation
+- Improve intro of a11y guide ([#1318](https://github.com/videojs/v10/pull/1318)) by [@decepulis](https://github.com/decepulis)
+- Improve intro of a11y guide ([#1331](https://github.com/videojs/v10/pull/1331)) by [@decepulis](https://github.com/decepulis)
+
+### ⚙️ Miscellaneous Tasks
+- *(site)* Rewrite media element builder for MediaHost architecture ([#1334](https://github.com/videojs/v10/pull/1334)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Preset pipeline — scan source directories instead of barrel files ([#1333](https://github.com/videojs/v10/pull/1333)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-beta.17] - 2026-04-11
 
 ### 🚀 Features
@@ -406,7 +437,7 @@ All notable changes to this project will be documented in this file.
 ## [@videojs/core@10.0.0-alpha.10] - 2026-03-10
 
 ### 🚀 Features
-- *(site)* New home page, docs, and design system ([#566](https://github.com/videojs/v10/pull/566)) by [@ronalduQualabs](https://github.com/ronalduQualabs)
+- *(site)* New home page, docs, and design system ([#566](https://github.com/videojs/v10/pull/566)) by [@ronald-urbina](https://github.com/ronald-urbina)
 - *(skin)* Add audio skins for HTML and React presets ([#772](https://github.com/videojs/v10/pull/772)) by [@sampotts](https://github.com/sampotts)
 - *(sandbox)* Rebuild sandbox with shell UI and expanded templates ([#773](https://github.com/videojs/v10/pull/773)) by [@sampotts](https://github.com/sampotts)
 - *(site)* Darker dark mode footer ([#780](https://github.com/videojs/v10/pull/780)) by [@decepulis](https://github.com/decepulis)
@@ -452,7 +483,7 @@ All notable changes to this project will be documented in this file.
 - Fix repo biome lint errors ([#804](https://github.com/videojs/v10/pull/804)) by [@mihar-22](https://github.com/mihar-22)
 
 ### New Contributors
-* @ronalduQualabs made their first contribution in [#566](https://github.com/videojs/v10/pull/566)
+* @ronald-urbina made their first contribution in [#566](https://github.com/videojs/v10/pull/566)
 
 ## [@videojs/core@10.0.0-alpha.9] - 2026-03-06
 
@@ -1184,6 +1215,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.18]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.17...@videojs/core@10.0.0-beta.18
 [@videojs/core@10.0.0-beta.17]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.16...@videojs/core@10.0.0-beta.17
 [@videojs/core@10.0.0-beta.16]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.15...@videojs/core@10.0.0-beta.16
 [@videojs/core@10.0.0-beta.15]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.14...@videojs/core@10.0.0-beta.15
