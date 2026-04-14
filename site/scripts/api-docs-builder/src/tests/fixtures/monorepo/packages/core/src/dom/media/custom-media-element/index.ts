@@ -1,36 +1,13 @@
 /**
  * Mock custom media element infrastructure.
  *
- * Exercises: shared Events, Attributes, and CSS vars that the builder reads
- * to populate media element references. Slots are parsed from the template
- * HTML (getVideoTemplateHTML / getAudioTemplateHTML), not from exported arrays.
+ * Exercises: shared native attributes (via static properties), CSS vars,
+ * and slots that the builder reads to populate media element references.
+ * Slots are parsed from getVideoTemplateHTML / getCommonTemplateHTML.
  *
  * VideoCSSVars/AudioCSSVars follow the `{ camelKey: '--var-name' }` pattern
  * with JSDoc descriptions, matching UI component css-vars files.
  */
-
-export const Events = [
-  'abort',
-  'canplay',
-  'durationchange',
-  'ended',
-  'pause',
-  'play',
-  'timeupdate',
-  'volumechange',
-] as const;
-
-export const Attributes = [
-  'autoplay',
-  'controls',
-  'crossorigin',
-  'loop',
-  'muted',
-  'playsinline',
-  'poster',
-  'preload',
-  'src',
-] as const;
 
 /** CSS custom property names for video elements. */
 export const VideoCSSVars = {
@@ -68,26 +45,44 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
   `;
 }
 
-function getAudioTemplateHTML(attrs: Record<string, string>): string {
-  return /*html*/ `
-    <style>
-      audio { width: 100%; }
-    </style>
-    <slot name="media">
-      <audio></audio>
-    </slot>
-    <slot></slot>
-  `;
+function getCommonTemplateHTML(tag: string) {
+  return (attrs: Record<string, string>) => {
+    return /*html*/ `
+      <style>
+        ${tag} { width: 100%; }
+      </style>
+      <slot name="media">
+        <${tag}></${tag}>
+      </slot>
+      <slot></slot>
+    `;
+  };
 }
 
-// Minimal stubs — the builder only needs to detect these by name, not run them.
-export function CustomMediaMixin(base: any, _opts: any) {
-  return base;
-}
+// Stub — the builder parses the AST, it doesn't run the code.
+// Mirrors the real CustomMediaElement factory signature.
+export function CustomMediaElement(tag: string, Host: any) {
+  class CustomMedia {
+    static getTemplateHTML = tag === 'video' ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
+    static shadowRootOptions = { mode: 'open' };
 
-export const CustomVideoElement = class {
-  static getTemplateHTML = getVideoTemplateHTML;
-};
-export const CustomAudioElement = class {
-  static getTemplateHTML = getAudioTemplateHTML;
-};
+    static properties = {
+      autoPictureInPicture: { type: Boolean },
+      autoplay: { type: Boolean },
+      controls: { type: Boolean },
+      controlsList: { type: String },
+      crossOrigin: { type: String },
+      defaultMuted: { type: Boolean, attribute: 'muted' },
+      disablePictureInPicture: { type: Boolean },
+      disableRemotePlayback: { type: Boolean },
+      loading: { type: String },
+      loop: { type: Boolean },
+      playsInline: { type: Boolean },
+      poster: { type: String },
+      preload: { type: String },
+      src: { type: String },
+    };
+  }
+
+  return CustomMedia;
+}

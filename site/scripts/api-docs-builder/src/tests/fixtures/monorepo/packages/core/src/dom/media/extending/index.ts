@@ -1,13 +1,13 @@
 /**
- * Mock extending delegate — mirrors MuxMediaBase extending HlsMediaBase.
+ * Mock extending host — mirrors MuxVideoMedia extending HlsMedia.
  *
- * Exercises: delegate inheritance. The builder must walk the extends chain
- * to extract properties from both this class and its parent (ComplexDelegate).
+ * Exercises: host inheritance. The builder must walk the extends chain
+ * to extract properties from both this class and its parent (ComplexHost).
  * Child properties override parent properties of the same name.
  */
-import { ComplexDelegate } from '../complex';
+import { ComplexHost } from '../complex';
 
-export class ExtendingDelegate extends ComplexDelegate {
+export class ExtendingHost extends ComplexHost {
   #playbackId: string = '';
   #customDomain: string = '';
 
@@ -38,5 +38,3 @@ export class ExtendingDelegate extends ComplexDelegate {
     super.debug = value;
   }
 }
-
-export class ExtendingCustomMedia {}
