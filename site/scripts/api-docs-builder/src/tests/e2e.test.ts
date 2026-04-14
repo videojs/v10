@@ -854,18 +854,17 @@ describe('Feature pipeline (end-to-end)', () => {
 // ═══════════════════════════════════════════════════════════════════════
 //
 // Presets bundle features, skins, and media elements for a specific use
-// case. They are discovered from package.json exports in
-// packages/{html,react}/.
+// case. They are discovered from directories under packages/{html,react}/
+// src/presets/.
 //
 // Key behaviors:
-//   - Discovery: reads package.json exports for ./X + ./X/* pairs
-//   - Feature bundle: *Features export from barrel → resolved to feature names
-//   - HTML skins: classes with static tagName whose name matches *Skin*Element
-//   - HTML media element: classes with static tagName that aren't skins or players
+//   - Discovery: directories under both HTML and React preset paths
+//   - Feature bundle: *Features export → resolved to list of feature names
+//   - HTML skins: classes extending SkinElement, with tagName
 //   - React skins: exports matching *Skin naming
-//   - React media element: remaining exports that aren't bundles or skins
-//   - Tailwind exclusion: .tailwind files are filtered out
-//   - Player exclusion: *Player* classes are filtered out
+//   - Media element: React exports that aren't bundles or skins
+//   - Tailwind exclusion: .tailwind files/exports are filtered out
+//   - HTML media element: implied by preset name (video → <video>)
 
 describe('Preset pipeline (end-to-end)', () => {
   const results = generatePresetReferences(FIXTURE_ROOT);
@@ -879,13 +878,13 @@ describe('Preset pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
 
   describe('Discovery', () => {
-    it('discovers presets from package.json exports', () => {
+    it('discovers presets from preset directories', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['audio', 'background', 'video']);
+      expect(names).toEqual(['audio', 'video']);
     });
 
     it('produces one result per preset', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(2);
     });
   });
 
@@ -925,11 +924,6 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skinNames).not.toContain('VideoSkinTailwindElement');
     });
 
-    it('does not produce an HTML media element for native video', () => {
-      const ref = findPreset('video')!.reference;
-      expect(ref.html.mediaElement).toBeUndefined();
-    });
-
     it('detects React skins', () => {
       const skins = findPreset('video')!.reference.react.skins;
       expect(skins).toEqual(expect.arrayContaining([{ name: 'VideoSkin' }, { name: 'MinimalVideoSkin' }]));
@@ -966,11 +960,6 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skins).toEqual([{ name: 'AudioSkinElement', tagName: 'audio-skin' }]);
     });
 
-    it('does not produce an HTML media element for native audio', () => {
-      const ref = findPreset('audio')!.reference;
-      expect(ref.html.mediaElement).toBeUndefined();
-    });
-
     it('detects single React skin', () => {
       const skins = findPreset('audio')!.reference.react.skins;
       expect(skins).toEqual([{ name: 'AudioSkin' }]);
@@ -979,47 +968,6 @@ describe('Preset pipeline (end-to-end)', () => {
     it('detects React media element', () => {
       const ref = findPreset('audio')!.reference;
       expect(ref.react.mediaElement).toBe('Audio');
-    });
-  });
-
-  // ─────────────────────────────────────────────────────────────────
-  // BACKGROUND PRESET (incomplete barrel, custom media element)
-  // ─────────────────────────────────────────────────────────────────
-
-  describe('background preset', () => {
-    it('identifies the feature bundle', () => {
-      const ref = findPreset('background')!.reference;
-      expect(ref.featureBundle).toBe('backgroundFeatures');
-    });
-
-    it('resolves empty features array', () => {
-      const ref = findPreset('background')!.reference;
-      expect(ref.features).toEqual([]);
-    });
-
-    it('detects HTML skin from directory scan (not in barrel)', () => {
-      const skins = findPreset('background')!.reference.html.skins;
-      expect(skins).toEqual([{ name: 'BackgroundVideoSkinElement', tagName: 'background-video-skin' }]);
-    });
-
-    it('detects HTML media element via export * chain', () => {
-      const ref = findPreset('background')!.reference;
-      expect(ref.html.mediaElement).toBe('background-video');
-    });
-
-    it('excludes player elements', () => {
-      const skinNames = findPreset('background')!.reference.html.skins.map((s) => s.name);
-      expect(skinNames).not.toContain('BackgroundVideoPlayerElement');
-    });
-
-    it('detects React skin', () => {
-      const skins = findPreset('background')!.reference.react.skins;
-      expect(skins).toEqual([{ name: 'BackgroundVideoSkin' }]);
-    });
-
-    it('detects React media element', () => {
-      const ref = findPreset('background')!.reference;
-      expect(ref.react.mediaElement).toBe('BackgroundVideo');
     });
   });
 
