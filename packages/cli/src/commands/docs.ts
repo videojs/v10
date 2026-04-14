@@ -1,11 +1,11 @@
 import * as p from '@clack/prompts';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
-import { type PartialInstallFlags, promptFramework, promptInstallOptions } from '../utils/prompts.js';
+import { mapRawSkin, type PartialInstallFlags, promptFramework, promptInstallOptions } from '../utils/prompts.js';
 import { replaceMarker } from '../utils/replace.js';
 
 interface ParsedFlags {
@@ -52,20 +52,6 @@ function mapPresetToUseCase(preset: string): UseCase {
   return result;
 }
 
-function mapSkinFlag(skinFlag: string, preset: string): Skin {
-  const isAudio = preset === 'audio';
-  const map: Record<string, Skin> = {
-    default: isAudio ? 'audio' : 'video',
-    minimal: isAudio ? 'minimal-audio' : 'minimal-video',
-  };
-  const result = map[skinFlag];
-  if (!result) {
-    console.error(`Invalid skin: "${skinFlag}". Must be "default" or "minimal".`);
-    process.exit(1);
-  }
-  return result;
-}
-
 const ALL_RENDERERS: Renderer[] = ['html5-video', 'html5-audio', 'hls', 'background-video'];
 
 function validateMedia(media: string): Renderer {
@@ -93,8 +79,8 @@ function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialIns
   }
 
   if (flags.skin) {
-    if (flags.preset) {
-      partial.skin = mapSkinFlag(flags.skin, flags.preset);
+    if (partial.preset) {
+      partial.skin = mapRawSkin(flags.skin, partial.preset);
     } else {
       partial.rawSkin = flags.skin;
     }

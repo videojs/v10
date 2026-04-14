@@ -71,7 +71,7 @@ export interface PartialInstallFlags {
   installMethod?: InstallMethod;
 }
 
-function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
+export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
   const isAudio = useCase === 'default-audio';
   const map: Record<string, Skin> = {
     default: isAudio ? 'audio' : 'video',

@@ -7,7 +7,7 @@ const DOCS_DIR = join(__dirname, '..', 'docs');
 
 function safePath(...segments: string[]): string | null {
   const resolved = resolve(DOCS_DIR, ...segments);
-  if (!resolved.startsWith(resolve(DOCS_DIR))) return null;
+  if (!resolved.startsWith(resolve(DOCS_DIR) + '/')) return null;
   return resolved;
 }
 
