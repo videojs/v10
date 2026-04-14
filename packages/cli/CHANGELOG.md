@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.18...@videojs/cli@10.0.0-beta.19) (2026-04-14)
+
+
+### Bug Fixes
+
+* **cli:** correct bin path to match tsdown output ([#1337](https://github.com/videojs/v10/issues/1337)) ([58b882c](https://github.com/videojs/v10/commit/58b882c49afd74daf605459b472ea055e6aa7a59))
+
 ## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.17...@videojs/cli@10.0.0-beta.18) (2026-04-14)
 
 
