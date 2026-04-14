@@ -66,6 +66,19 @@ If you're in `site/`...
 | `pnpm test:ui`       | Run Vitest with its web-based UI                 |
 | `pnpm test:coverage` | Generate test coverage report                    |
 
+## Deployment
+
+The site deploys via Netlify from two branches:
+
+| Branch | Deploys to | Content |
+| :--- | :--- | :--- |
+| `site/v10` | **videojs.org** | Stable docs matching the latest release |
+| `main` | **next.videojs.org** | Pre-release docs (may include unreleased APIs) |
+
+On each release, the CD workflow force-pushes `main` to `site/v10`, keeping production docs in sync with published packages.
+
+**Fixing a typo without cutting a release:** Land the fix on `main` first, then cherry-pick to `site/v10`. The next release's force-push already includes the fix (since it came from `main`), so nothing gets lost. The `site/v10` branch is protected — direct pushes are restricted to the CD bot.
+
 ## Environment Variables
 
 The installation page's video uploader uses OAuth + Mux. See [CLAUDE.md](CLAUDE.md) for the full list of environment variables. The site works without these — the uploader just won't be available.
