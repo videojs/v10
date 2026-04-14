@@ -1,13 +1,8 @@
-import type { Constructor } from '@videojs/utils/types';
+import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { ErrorData } from 'hls.js';
 import Hls from 'hls.js';
-
 import { MediaError } from '../../../core/media/media-error';
-
-export interface HlsEngineHost extends EventTarget {
-  readonly engine: Hls | null;
-  readonly target: HTMLMediaElement | null;
-}
+import type { HlsEngineHost } from './types';
 
 const hlsErrorTypeToCode: Record<string, number> = {
   [Hls.ErrorTypes.NETWORK_ERROR]: MediaError.MEDIA_ERR_NETWORK,
@@ -18,7 +13,7 @@ const hlsErrorTypeToCode: Record<string, number> = {
 };
 
 export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaErrors extends (BaseClass as Constructor<HlsEngineHost>) {
+  class HlsJsMediaErrors extends BaseClass {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
@@ -73,5 +68,5 @@ export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(B
     }
   }
 
-  return HlsJsMediaErrors as unknown as Base & Constructor<{ readonly error: MediaError | null }>;
+  return HlsJsMediaErrors as unknown as MixinReturn<Base, { readonly error: MediaError | null }>;
 }

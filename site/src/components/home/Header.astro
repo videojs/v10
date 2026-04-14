@@ -4,21 +4,15 @@ import BetaPill from '@/components/BetaPill';
 import FrameworkControl from '@/components/home/FrameworkControl';
 import HeroVideo from '@/components/home/HeroVideo';
 import SkinControl from '@/components/home/SkinControl';
-import { MUX_URL, VJS10_DEMO_VIDEO } from '@/consts';
+import { MUX_URL } from '@/consts';
 
-const times = [0, 12.9, 17.61, 15.8, 7.72, 4.8, 3.3];
-const posterTime = times[Math.floor(Math.random() * times.length)];
-const poster = `${VJS10_DEMO_VIDEO.poster}?time=${posterTime}`;
+interface Props {
+  poster: string;
+}
+
+const { poster } = Astro.props;
 ---
 
-<link
-  rel="preload"
-  href={poster}
-  as="image"
-  type="image/webp"
-  fetchpriority="high"
-  slot="priority-head"
-/>
 <header
   class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
   style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
@@ -28,7 +22,7 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=${posterTime}`;
     style={{ gridArea: "pill" }}
   />
   <h1
-    class="z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
+    class="pointer-events-none z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
     style="--grid-area: title; --md-grid-area: video;"
   >
     The Open Source Player <br class="lg:hidden" /><span
@@ -60,6 +54,7 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=${posterTime}`;
       href={MUX_URL}
       target="_blank"
       rel="noopener"
+      aria-label="Mux"
     >
       <MuxLogoSmall width="100%" />
     </a>

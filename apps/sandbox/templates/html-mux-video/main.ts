@@ -19,15 +19,10 @@ async function render() {
   const storyboard = getStoryboardSrc(state.source);
   const poster = getPosterSrc(state.source);
 
-  const sourceAttr =
-    SOURCES[state.source].type === 'mp4'
-      ? `src="${SOURCES[state.source].url}"`
-      : `playback-id="${SOURCES[state.source].playbackId}"`;
-
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <mux-video ${sourceAttr} debug playsinline crossorigin="anonymous">
+        <mux-video src="${SOURCES[state.source].url}" debug playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </mux-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

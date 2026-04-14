@@ -1,9 +1,10 @@
 'use client';
 
-import type { Media, MediaContainer } from '@videojs/core/dom';
+import type { Media } from '@videojs/core';
+import type { MediaContainer } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
-import type { Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
+import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
 
 import { useComposedRefs } from '../utils/use-composed-refs';
@@ -103,7 +104,10 @@ export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
 }
 
-export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container({ children, ...props }, ref) {
+export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container(
+  { children, tabIndex = 0, ...props },
+  ref
+) {
   const setContainer = useContainerAttach();
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
@@ -113,8 +117,18 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     return () => setContainer?.(null);
   }, [setContainer]);
 
+  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    props.onPointerUp?.(event);
+    const el = internalRef.current;
+    if (!el) return;
+    // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
+    if (!el.contains(document.activeElement) || document.activeElement === document.body) {
+      el.focus({ preventScroll: true });
+    }
+  };
+
   return (
-    <div ref={composedRef} {...props}>
+    <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
       {children}
     </div>
   );

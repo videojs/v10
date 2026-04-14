@@ -73,6 +73,7 @@ function createControlsState(overrides: Partial<MediaControlsState> = {}): Media
   return {
     userActive: true,
     controlsVisible: true,
+    toggleControls: () => true,
     ...overrides,
   };
 }

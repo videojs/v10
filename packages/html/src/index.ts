@@ -1,5 +1,4 @@
 // Core
-export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store
@@ -23,10 +22,12 @@ export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-el
 export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
+export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
 export { MediaButtonElement } from './ui/media-button-element';
@@ -45,6 +46,7 @@ export { SliderBufferElement } from './ui/slider/slider-buffer-element';
 export { SliderElement } from './ui/slider/slider-element';
 export type { SliderEventMap, SliderValueEventDetail } from './ui/slider/slider-events';
 export { SliderFillElement } from './ui/slider/slider-fill-element';
+export { SliderPreviewElement } from './ui/slider/slider-preview-element';
 export { SliderThumbElement } from './ui/slider/slider-thumb-element';
 export { SliderThumbnailElement } from './ui/slider/slider-thumbnail-element';
 export { SliderTrackElement } from './ui/slider/slider-track-element';

@@ -16,7 +16,7 @@ export type HotkeyActionName =
   | 'toggleMuted'
   | 'toggleFullscreen'
   | 'toggleSubtitles'
-  | 'togglePiP'
+  | 'togglePictureInPicture'
   | 'seekStep'
   | 'volumeStep'
   | 'speedUp'
@@ -57,7 +57,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
     selectTextTrack(store.state)?.toggleSubtitles();
   },
 
-  togglePiP({ store }) {
+  togglePictureInPicture({ store }) {
     const pip = selectPiP(store.state);
     if (!pip) return;
     pip.pip ? pip.exitPictureInPicture() : pip.requestPictureInPicture();

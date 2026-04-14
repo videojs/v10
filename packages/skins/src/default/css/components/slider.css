@@ -158,3 +158,20 @@
     height: var(--media-slider-fill);
   }
 }
+
+/* Dragging — thumb and fill follow the pointer position */
+.media-default-skin .media-slider[data-dragging] .media-slider__thumb[data-orientation="horizontal"] {
+  left: var(--media-slider-pointer);
+}
+
+.media-default-skin .media-slider[data-dragging] .media-slider__thumb[data-orientation="vertical"] {
+  top: calc(100% - var(--media-slider-pointer));
+}
+
+.media-default-skin .media-slider[data-dragging] .media-slider__fill[data-orientation="horizontal"] {
+  width: var(--media-slider-pointer);
+}
+
+.media-default-skin .media-slider[data-dragging] .media-slider__fill[data-orientation="vertical"] {
+  height: var(--media-slider-pointer);
+}

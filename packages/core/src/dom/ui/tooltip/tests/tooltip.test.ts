@@ -99,6 +99,7 @@ describe('createTooltip', () => {
         pointerType: 'mouse',
         buttons: 0,
         preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
       });
 
       expect(onOpenChange).not.toHaveBeenCalled();
@@ -131,6 +132,7 @@ describe('createTooltip', () => {
           pointerType: 'touch',
           buttons: 0,
           preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         });
 
         vi.advanceTimersByTime(600);
@@ -148,6 +150,7 @@ describe('createTooltip', () => {
           pointerType: 'mouse',
           buttons: 0,
           preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         });
 
         vi.advanceTimersByTime(600);
@@ -164,11 +167,12 @@ describe('createTooltip', () => {
           pointerType: 'touch' as const,
           buttons: 0,
           preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         };
 
         // Simulate tap: pointerdown → focusin (flag consumed and reset)
         tooltip.triggerProps.onPointerDown(pointerEvent);
-        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
         expect(onOpenChange).not.toHaveBeenCalled();
       });
@@ -177,7 +181,7 @@ describe('createTooltip', () => {
         const { tooltip, onOpenChange } = createTestTooltip();
 
         // Simulate keyboard Tab: focusin without preceding pointerdown
-        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
         expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
       });
@@ -191,15 +195,16 @@ describe('createTooltip', () => {
           pointerType: 'touch' as const,
           buttons: 0,
           preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         };
 
         // Tap: pointerdown → focusin (suppressed, flag consumed)
         tooltip.triggerProps.onPointerDown(pointerEvent);
-        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
         expect(onOpenChange).not.toHaveBeenCalled();
 
         // Later keyboard Tab: flag is clean, focus opens tooltip
-        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
         expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
       });
     });
@@ -209,7 +214,7 @@ describe('createTooltip', () => {
         disabled: () => true,
       });
 
-      tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+      tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
       expect(onOpenChange).not.toHaveBeenCalled();
     });
@@ -231,6 +236,7 @@ describe('createTooltip', () => {
         pointerType: 'mouse',
         buttons: 0,
         preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
       });
     });
   });

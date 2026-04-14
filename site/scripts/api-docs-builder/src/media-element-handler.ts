@@ -8,7 +8,8 @@
  *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
  *   - Media element classes: packages/html/src/media/{name}/index.ts
  *     composed as MediaPropsMixin(MediaAttachMixin(CustomMedia), Delegate)
- *   - Delegate classes: packages/core/src/dom/media/{name}/index.ts with getter/setter pairs
+ *   - Delegate classes: packages/core/src/dom/media/{name}/index.ts with getter/setter pairs.
+ *     CustomMedia classes use inheritance mixins (e.g., HlsMediaMixin(CustomVideoElement)).
  *   - Shared data: packages/core/src/dom/media/custom-media-element/index.ts
  *     exports Attributes, Events, VideoCSSVars, AudioCSSVars, and template functions
  *   - Slots: parsed from getVideoTemplateHTML / getAudioTemplateHTML in custom-media-element
@@ -454,7 +455,7 @@ function parseSlots(html: string, slots: string[]): void {
 
 /**
  * Determine whether a CustomMedia base class is video or audio by checking
- * the extends clause of the class that defines it (e.g., DelegateMixin(CustomVideoElement, ...)).
+ * the extends clause of the class that defines it (e.g., HlsMediaMixin(CustomVideoElement)).
  */
 function resolveMediaType(
   mediaFilePath: string,

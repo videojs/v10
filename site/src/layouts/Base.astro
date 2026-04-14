@@ -31,6 +31,7 @@ function resolveImageUrl(img: ImageMetadata | string): string {
   return new URL(img.src, Astro.url).toString();
 }
 
+const defaultOgImage = new URL('/og-default.png', Astro.site).toString();
 const resolvedTwitterImage = twitterImage ?? image;
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
@@ -57,6 +58,7 @@ const fullTitle =
     />
     <meta name="generator" content={Astro.generator} />
     <meta name="algolia-site-verification" content="9CE2D1D6448256D3" />
+    {Astro.site?.origin !== PRODUCTION_URL.origin && <meta name="robots" content="noindex" />}
 
     {/* Analytics (production only) */}
     {import.meta.env.PROD && <Posthog />}
@@ -113,7 +115,10 @@ const fullTitle =
     />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={resolveImageUrl(image)} />}
+    <meta
+      property="og:image"
+      content={image ? resolveImageUrl(image) : defaultOgImage}
+    />
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
@@ -123,14 +128,12 @@ const fullTitle =
     />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    {
-      resolvedTwitterImage && (
-        <meta
-          property="twitter:image"
-          content={resolveImageUrl(resolvedTwitterImage)}
-        />
-      )
-    }
+    <meta
+      property="twitter:image"
+      content={resolvedTwitterImage
+        ? resolveImageUrl(resolvedTwitterImage)
+        : defaultOgImage}
+    />
 
     {/* Whatever else */}
     <slot name="head" />
@@ -154,6 +157,12 @@ const fullTitle =
         // background colors are applied here for a more consistent FilmGrain blending
       ]}
     >
+      <a
+        href="#main-content"
+        class="sr-only bg-manila-light font-display text-h3 text-faded-black uppercase focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-50 focus:px-4 focus:py-2 dark:bg-faded-black dark:text-manila-light"
+      >
+        Skip to content
+      </a>
       <PreferenceSync client:idle />
 
       <LegacyBanner />

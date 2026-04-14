@@ -3,6 +3,17 @@
   publish = "site/dist"
   ignore = "pnpm turbo query affected --packages site --tasks build --exit-code"
 
+# turbo query affected defaults to comparing against the merge-base with main.
+# On the production branch (site/v10) and main itself, that merge-base is HEAD,
+# so turbo finds zero changes and skips the build. HEAD~1 compares against the
+# previous commit instead. We scope this to production and branch-deploy only —
+# PR previews keep the default merge-base behavior so multi-commit pushes work.
+[context.production.environment]
+  TURBO_SCM_BASE = "HEAD~1"
+
+[context.branch-deploy.environment]
+  TURBO_SCM_BASE = "HEAD~1"
+
 # PostHog reverse proxy (ad-blocker bypass)
 [[redirects]]
   from = "/ph/static/*"

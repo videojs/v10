@@ -3,18 +3,24 @@ import { MediaError } from '../../../../core/media/media-error';
 import { NativeHlsMediaErrorsMixin, type NativeMediaHost } from '../errors';
 
 class FakeHost extends EventTarget implements NativeMediaHost {
-  target: HTMLMediaElement | null = null;
+  #target: HTMLMediaElement | null = null;
+
+  get target() {
+    return this.#target;
+  }
 
   attach(target: HTMLMediaElement): void {
-    this.target = target;
+    if (!target || this.#target === target) return;
+    this.#target = target;
   }
 
   detach(): void {
-    this.target = null;
+    if (!this.#target) return;
+    this.#target = null;
   }
 
   destroy(): void {
-    this.target = null;
+    this.#target = null;
   }
 }
 
@@ -171,6 +177,46 @@ describe('NativeHlsMediaErrorsMixin', () => {
     video.dispatchEvent(new Event('emptied'));
 
     expect(host.error).toBeNull();
+  });
+
+  it('has target set when error handler fires during attach', () => {
+    const host = new NativeHlsMediaErrors();
+    const video = document.createElement('video');
+
+    let targetDuringError: EventTarget | null = 'unset' as any;
+    host.addEventListener('error', () => {
+      targetDuringError = host.target;
+    });
+
+    Object.defineProperty(video, 'error', {
+      value: { code: MediaError.MEDIA_ERR_NETWORK, message: 'fail' },
+      configurable: true,
+    });
+
+    host.attach(video);
+    video.dispatchEvent(new Event('error'));
+
+    expect(targetDuringError).toBe(video);
+  });
+
+  it('does not register listeners when base attach guard rejects same target', () => {
+    const host = new NativeHlsMediaErrors();
+    const video = document.createElement('video');
+    host.attach(video);
+
+    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'first');
+    expect(host.error).not.toBeNull();
+
+    video.dispatchEvent(new Event('emptied'));
+    expect(host.error).toBeNull();
+
+    host.attach(video);
+
+    const handler = vi.fn();
+    host.addEventListener('error', handler);
+    fireNativeError(video, MediaError.MEDIA_ERR_DECODE, 'second');
+
+    expect(handler).toHaveBeenCalledOnce();
   });
 
   it('re-initializes on re-attach', () => {

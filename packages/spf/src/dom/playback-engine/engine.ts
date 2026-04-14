@@ -9,13 +9,12 @@ import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { signal } from '../../core/signals/primitives';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
-import type { TextTrackBufferState } from '../features/load-text-track-cues';
 import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
 import { setupSourceBuffers } from '../features/setup-sourcebuffer';
-import { setupTextTracks } from '../features/setup-text-tracks';
-import { syncSelectedTextTrackFromDom } from '../features/sync-selected-text-track-from-dom';
-import { syncTextTrackModes } from '../features/sync-text-track-modes';
+import { syncTextTracks } from '../features/sync-text-tracks';
+import type { TextTrackSegmentLoaderActor } from '../features/text-track-segment-loader-actor';
+import type { TextTracksActor } from '../features/text-tracks-actor';
 import { trackCurrentTime } from '../features/track-current-time';
 import { trackPlaybackInitiated } from '../features/track-playback-initiated';
 import { updateDuration } from '../features/update-duration';
@@ -80,9 +79,6 @@ export interface PlaybackEngineState {
   // concerns don't share a field; see quality-switching.ts for the full design note.
   abrDisabled?: boolean;
 
-  // Text track buffer state (tracks loaded VTT segments per text track ID)
-  textBufferState?: TextTrackBufferState;
-
   // Current playback position (mirrored from mediaElement via trackCurrentTime)
   currentTime?: number;
 
@@ -109,8 +105,9 @@ export interface PlaybackEngineOwners {
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
 
-  // Text tracks (track elements by ID)
-  textTracks?: Map<string, HTMLTrackElement>;
+  // Text track actors (written by loadTextTrackCues; destroyed by engine on destroy)
+  textTracksActor?: TextTracksActor;
+  segmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 /**
@@ -276,17 +273,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 6.5. Signal end of stream when all segments loaded
     endOfStream({ state, owners }),
 
-    // 7. Setup text tracks (when mediaElement and presentation ready)
-    setupTextTracks({ state, owners }),
-
-    // 8. Sync text track modes (when track selected and track elements created)
-    syncTextTrackModes({ state, owners }),
-
-    // 8.5. Bridge DOM text track mode changes → selectedTextTrackId
-    //      Detects when external code (e.g. captions button via toggleSubtitles())
-    //      sets a subtitle/caption track to 'showing' and reflects that into SPF
-    //      state, which in turn drives loadTextTrackCues.
-    syncSelectedTextTrackFromDom({ state, owners }),
+    // 7-8.5. Text track sync: setup, mode sync, and DOM bridge.
+    //        Consolidates setupTextTracks, syncTextTrackModes, syncSelectedTextTrackFromDom.
+    syncTextTracks({ state, owners }),
 
     // 9. Load text track cues (when track resolved and mode set)
     loadTextTrackCues({ state, owners }),
@@ -297,7 +286,17 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     state,
     owners,
     destroy: () => {
-      cleanups.forEach((cleanup) => cleanup());
+      cleanups.forEach((cleanup) => (typeof cleanup === 'function' ? cleanup() : cleanup.destroy()));
+      // Destroy any actors that orchestrations wrote into owners during their lifetime.
+      for (const value of Object.values(owners.get())) {
+        if (
+          value !== null &&
+          typeof value === 'object' &&
+          typeof (value as { destroy?: unknown }).destroy === 'function'
+        ) {
+          (value as { destroy(): void }).destroy();
+        }
+      }
       destroyVttParser();
     },
   };

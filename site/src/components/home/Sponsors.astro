@@ -10,6 +10,7 @@ import { MUX_URL } from '@/consts';
 
 type SponsorItem = {
   Logo: ComponentType<SVGProps<SVGSVGElement>>;
+  name: string;
   label: string;
   href: string;
   width: string;
@@ -17,10 +18,22 @@ type SponsorItem = {
 };
 
 const sponsors: SponsorItem[] = [
-  { Logo: FastlyLogo, label: 'CDN', href: 'https://fastly.com/', width: '7.8rem' },
-  { Logo: BrightcoveLogo, label: 'Emeritus Sponsor', href: 'https://brightcove.com/', width: '11rem' },
-  { Logo: BrowserStackLogo, label: 'Device Testing', href: 'https://browserstack.com/', width: '12rem' },
-  { Logo: NetlifyLogo, label: 'Static Hosting', href: 'https://netlify.com/', width: '11rem' },
+  { Logo: FastlyLogo, name: 'Fastly', label: 'CDN', href: 'https://fastly.com/', width: '7.8rem' },
+  {
+    Logo: BrightcoveLogo,
+    name: 'Brightcove',
+    label: 'Emeritus Sponsor',
+    href: 'https://brightcove.com/',
+    width: '11rem',
+  },
+  {
+    Logo: BrowserStackLogo,
+    name: 'BrowserStack',
+    label: 'Device Testing',
+    href: 'https://browserstack.com/',
+    width: '12rem',
+  },
+  { Logo: NetlifyLogo, name: 'Netlify', label: 'Static Hosting', href: 'https://netlify.com/', width: '11rem' },
 ];
 ---
 
@@ -41,6 +54,7 @@ const sponsors: SponsorItem[] = [
       href={MUX_URL}
       target="_blank"
       rel="noopener"
+      aria-label="Mux"
       class="flex h-45 items-center justify-center bg-faded-black md:h-full md:min-h-74 dark:bg-soot dark:text-manila-light"
     >
       <div class="relative w-40 md:w-48">
@@ -70,7 +84,7 @@ const sponsors: SponsorItem[] = [
       class="grid gap-4 md:grid-separator-container md:grid-cols-4 md:gap-0 md:border md:border-manila-light dark:border-faded-black dark:text-manila-light"
     >
       {
-        sponsors.map(({ Logo, label, href, width, className }) => (
+        sponsors.map(({ Logo, name, label, href, width, className }) => (
           <div
             class={clsx(
               "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-manila-dark md:px-0 dark:border-manila-light md:dark:border-warm-gray",
@@ -81,6 +95,7 @@ const sponsors: SponsorItem[] = [
               href={href}
               target="_blank"
               rel="noopener"
+              aria-label={name}
               class="relative flex h-32.5 items-center justify-center bg-manila-light md:grid-separators md:h-37.5 dark:bg-faded-black"
             >
               <div class="mx-2.5 max-w-full" style={{ width }}>

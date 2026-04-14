@@ -1,5 +1,5 @@
 /**
- * Mock simple delegate — mirrors DashMediaDelegate.
+ * Mock simple delegate — mirrors DashMediaBase.
  *
  * Exercises: minimal delegate with just src (read-write) and engine (readonly).
  * No JSDoc on properties — tests that missing descriptions produce undefined.

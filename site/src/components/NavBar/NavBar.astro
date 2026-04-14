@@ -33,6 +33,7 @@ const { class: className, dark = false } = Astro.props;
 ---
 
 <nav
+  aria-label="Video.js"
   class:list={[
     "flex justify-between",
     "mx-auto w-full max-w-305 items-center px-5 py-7 md:py-10",
@@ -64,7 +65,10 @@ const { class: className, dark = false } = Astro.props;
             "flex items-center rounded-xs px-5 py-2 font-display font-bold uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
           ]}
         >
-          {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+          {link.label}{" "}
+          {link.external ? (
+            <ArrowUpRight size="1em" aria-hidden="true" />
+          ) : null}
         </a>
       ))
     }

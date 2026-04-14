@@ -24,7 +24,11 @@ export class HotkeyElement extends MediaElement {
   target: 'player' | 'document' = 'player';
 
   readonly #player = new PlayerController(this, playerContext);
-  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #container = new ContextConsumer(this, {
+    context: containerContext,
+    callback: () => this.requestUpdate(),
+    subscribe: true,
+  });
   #cleanup: (() => void) | null = null;
 
   override connectedCallback(): void {

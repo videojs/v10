@@ -181,9 +181,6 @@ export type TextTrack = Track & {
 export type PartiallyResolvedTextTrack = PartiallyResolved<TextTrack>;
 
 /**
- * Unresolved text track (alias for backwards compatibility).
-
-/**
  * Union of all resolved track types.
  */
 export type ResolvedTrack = VideoTrack | AudioTrack | TextTrack;
@@ -195,9 +192,6 @@ export type PartiallyResolvedTrack =
   | PartiallyResolvedVideoTrack
   | PartiallyResolvedAudioTrack
   | PartiallyResolvedTextTrack;
-
-/**
- * Union of all unresolved track types (alias for backwards compatibility).
 
 // =============================================================================
 // Switching and Selection Sets

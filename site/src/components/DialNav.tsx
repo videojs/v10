@@ -68,6 +68,8 @@ export default function DialNav({ left, right }: DialNavProps) {
       <DialTag
         href={left[0].href}
         onClick={(e) => handleClick(e, left[0])}
+        aria-hidden="true"
+        tabIndex={-1}
         className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-faded-black dark:text-manila-light [--fill:var(--color-manila-light)] dark:[--fill:var(--color-faded-black)]"
       >
         <DialOuter

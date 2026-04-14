@@ -1,12 +1,12 @@
-.html-playback-rate-button-basic {
+.video-player {
   position: relative;
 }
 
-.html-playback-rate-button-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-playback-rate-button-basic__button {
+.media-playback-rate-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,6 +20,6 @@
   cursor: pointer;
 }
 
-.html-playback-rate-button-basic__button::after {
+.media-playback-rate-button::after {
   content: attr(data-rate) "\00D7";
 }

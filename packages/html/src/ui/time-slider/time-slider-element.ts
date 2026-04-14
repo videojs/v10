@@ -68,10 +68,6 @@ export class TimeSliderElement extends MediaElement {
       },
       getStepPercent: () => this.#core.getStepPercent(),
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
-      onValueChange: (percent) => {
-        const media = this.#timeState.value;
-        if (media) media.seek(this.#core.rawValueFromPercent(percent));
-      },
       onValueCommit: (percent) => {
         const media = this.#timeState.value;
         if (media) media.seek(this.#core.rawValueFromPercent(percent));

@@ -1,12 +1,12 @@
-.react-captions-button-basic {
+.media-container {
   position: relative;
 }
 
-.react-captions-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.react-captions-button-basic__button {
+.media-captions-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;

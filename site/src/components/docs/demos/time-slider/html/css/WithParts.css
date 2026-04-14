@@ -1,14 +1,14 @@
-.html-time-slider-parts,
-.html-time-slider-parts media-container {
+.video-player,
+.video-player media-container {
   display: block;
   position: relative;
 }
 
-.html-time-slider-parts video {
+.video-player video {
   width: 100%;
 }
 
-.html-time-slider-parts__slider {
+.media-time-slider {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -19,7 +19,7 @@
   cursor: pointer;
 }
 
-.html-time-slider-parts__track {
+.media-slider-track {
   position: absolute;
   left: 0;
   right: 0;
@@ -29,11 +29,11 @@
   transition: height 150ms ease;
 }
 
-.html-time-slider-parts__slider[data-interactive] .html-time-slider-parts__track {
+.media-time-slider[data-interactive] .media-slider-track {
   height: 6px;
 }
 
-.html-time-slider-parts__buffer {
+.media-slider-buffer {
   position: absolute;
   top: 0;
   left: 0;
@@ -43,7 +43,7 @@
   border-radius: 9999px;
 }
 
-.html-time-slider-parts__fill {
+.media-slider-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -53,7 +53,7 @@
   border-radius: 9999px;
 }
 
-.html-time-slider-parts__thumb {
+.media-slider-thumb {
   position: absolute;
   left: var(--media-slider-fill);
   width: 14px;
@@ -65,15 +65,20 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.html-time-slider-parts__slider[data-interactive] .html-time-slider-parts__thumb {
+.media-time-slider[data-interactive] .media-slider-thumb {
   transform: translateX(-50%) scale(1);
 }
 
-.html-time-slider-parts__slider[data-dragging] .html-time-slider-parts__thumb {
+.media-time-slider[data-dragging] .media-slider-thumb {
+  left: var(--media-slider-pointer);
   transform: translateX(-50%) scale(1.1);
 }
 
-.html-time-slider-parts__value {
+.media-time-slider[data-dragging] .media-slider-fill {
+  width: var(--media-slider-pointer);
+}
+
+.media-slider-value {
   position: absolute;
   left: var(--media-slider-pointer);
   bottom: 100%;
@@ -90,6 +95,6 @@
   transition: opacity 150ms ease;
 }
 
-.html-time-slider-parts__slider[data-pointing] .html-time-slider-parts__value {
+.media-time-slider[data-pointing] .media-slider-value {
   opacity: 1;
 }

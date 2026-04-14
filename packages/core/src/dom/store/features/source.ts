@@ -2,6 +2,7 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaSourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { isMediaSourceCapable } from '../../media/predicate';
 
 export const sourceFeature = definePlayerFeature({
   name: 'source',
@@ -9,9 +10,10 @@ export const sourceFeature = definePlayerFeature({
     source: null,
     canPlay: false,
     loadSource(src: string) {
-      signals.clear(); // Cancel pending operations (e.g., seek)
+      signals.clear();
 
       const { media } = target();
+      if (!isMediaSourceCapable(media)) return src;
       media.src = src;
       media.load();
 
@@ -21,6 +23,8 @@ export const sourceFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
+
+    if (!isMediaSourceCapable(media)) return;
 
     const sync = () =>
       set({

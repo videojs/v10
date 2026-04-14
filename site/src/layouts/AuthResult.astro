@@ -16,7 +16,10 @@ const iconClass = variant === 'error' ? 'text-red' : '';
 ---
 
 <Base title={title} {description}>
-  <main class="flex min-h-screen items-center justify-center p-6">
+  <main
+    id="main-content"
+    class="flex min-h-screen items-center justify-center p-6"
+  >
     <div class="flex max-w-md flex-col items-center gap-4 text-center">
       <Icon size={48} className={iconClass} />
       <div>

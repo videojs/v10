@@ -1,5 +1,6 @@
 export interface UIEvent {
   preventDefault(): void;
+  stopPropagation(): void;
 }
 
 export interface UIKeyboardEvent extends UIEvent {

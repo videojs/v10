@@ -6,7 +6,6 @@ import {
   DEFAULT_DASH_SOURCE,
   DEFAULT_SOURCE,
   MP4_SOURCE_IDS,
-  MUX_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
   SOURCES,
 } from '@app/shared/sources';
@@ -78,13 +77,6 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain source to Mux playbackId sources when switching to mux-video
-  useEffect(() => {
-    if (preset === 'mux-video' && !SOURCES[source].playbackId) {
-      setSource(DEFAULT_SOURCE);
-    }
-  }, [preset, source, setSource]);
-
   // CDN and background video do not have a Tailwind skin variant.
   useEffect(() => {
     if ((platform === 'cdn' || preset === 'background-video') && styling === 'tailwind') {
@@ -93,13 +85,7 @@ export function App() {
   }, [platform, preset, styling]);
 
   const availableSources =
-    preset === 'audio'
-      ? MP4_SOURCE_IDS
-      : preset === 'dash-video'
-        ? DASH_SOURCE_IDS
-        : preset === 'mux-video'
-          ? MUX_SOURCE_IDS
-          : NON_DASH_SOURCE_IDS;
+    preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : NON_DASH_SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
@@ -120,6 +106,7 @@ export function App() {
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
         isMuxVideo={preset === 'mux-video'}
+        isMuxAudio={preset === 'mux-audio'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

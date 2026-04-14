@@ -41,6 +41,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     if (this.hotkeyAction && !this.#hotkeyRegistry) {
       this.#hotkeyRegistry = new AriaKeyShortcutsController(this, this.hotkeyAction);
