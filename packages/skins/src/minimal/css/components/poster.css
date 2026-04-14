@@ -15,7 +15,8 @@
 .media-minimal-skin > img:not([data-visible]) {
   opacity: 0;
 }
-.media-minimal-skin media-poster ::slotted(img) {
+.media-minimal-skin media-poster ::slotted(img),
+.media-minimal-skin media-poster img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -31,6 +32,7 @@
 }
 
 .media-minimal-skin:fullscreen media-poster ::slotted(img),
+.media-minimal-skin:fullscreen media-poster img,
 .media-minimal-skin:fullscreen > img {
   object-fit: contain;
 }

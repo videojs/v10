@@ -1,14 +1,14 @@
 import { TimeElement } from '../../ui/time/time-element';
 import { TimeGroupElement } from '../../ui/time/time-group-element';
 import { TimeSeparatorElement } from '../../ui/time/time-separator-element';
-import { safeDefine } from '../safe-define';
+import { defineTime } from './compounds';
 
-safeDefine(TimeElement);
-safeDefine(TimeGroupElement);
-safeDefine(TimeSeparatorElement);
+defineTime();
 
 declare global {
   interface HTMLElementTagNameMap {
     [TimeElement.tagName]: TimeElement;
+    [TimeGroupElement.tagName]: TimeGroupElement;
+    [TimeSeparatorElement.tagName]: TimeSeparatorElement;
   }
 }

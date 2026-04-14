@@ -57,7 +57,12 @@ Why this choice wins. Keep concise.
 |--------|---------|
 | `draft` | Thinking through it, not final |
 | `decided` | Decision made, documented |
+| `implemented` | Built and shipped — kept for rationale |
 | `superseded` | Replaced by another design doc |
+
+## Archive
+
+`archive/` contains design docs for fully implemented features where the "what" is now captured by the code itself. These docs are preserved for reference but are no longer actively maintained. Docs with high "why" value (decisions, rationale, alternatives) stay in the main directory with `status: implemented`.
 
 ## File Naming
 

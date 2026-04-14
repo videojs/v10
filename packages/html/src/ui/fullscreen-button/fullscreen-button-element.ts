@@ -11,6 +11,7 @@ export class FullscreenButtonElement extends MediaButtonElement<FullscreenButton
   protected readonly core = new FullscreenButtonCore();
   protected readonly stateAttrMap = FullscreenButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectFullscreen);
+  protected override readonly hotkeyAction = 'toggleFullscreen';
 
   protected activate(state: MediaFullscreenState): void {
     this.core.toggle(state);

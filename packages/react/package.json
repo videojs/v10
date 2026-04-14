@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "10.0.0-beta.11",
+  "version": "10.0.0-beta.17",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -70,7 +70,7 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
@@ -80,12 +80,12 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.14",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "jsdom": "^26.1.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "tsdown": "^0.21.4",
     "typescript": "^6.0.2",
     "vitest": "^4.1.0"

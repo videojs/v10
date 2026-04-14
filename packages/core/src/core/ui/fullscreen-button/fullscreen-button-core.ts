@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaFullscreenState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
@@ -11,7 +13,7 @@ export interface FullscreenButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'> {
+export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'>, ButtonState {
   /** Whether fullscreen can be requested on this platform. */
   availability: MediaFullscreenState['fullscreenAvailability'];
 }
@@ -21,6 +23,12 @@ export class FullscreenButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<FullscreenButtonState>({
+    fullscreen: false,
+    availability: 'available',
+    label: '',
+  });
 
   #props = { ...FullscreenButtonCore.defaultProps };
   #media: MediaFullscreenState | null = null;
@@ -59,10 +67,10 @@ export class FullscreenButtonCore {
 
   getState(): FullscreenButtonState {
     const media = this.#media!;
-    return {
-      fullscreen: media.fullscreen,
-      availability: media.fullscreenAvailability,
-    };
+    this.state.patch({ fullscreen: media.fullscreen, availability: media.fullscreenAvailability });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   async toggle(media: MediaFullscreenState): Promise<void> {

@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface SeekButtonProps {
   /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
@@ -15,7 +17,7 @@ export interface SeekButtonProps {
 
 export type SeekButtonDirection = 'forward' | 'backward';
 
-export interface SeekButtonState {
+export interface SeekButtonState extends ButtonState {
   /** Whether a seek is in progress. */
   seeking: boolean;
   /** Whether the button seeks forward or backward. */
@@ -28,6 +30,12 @@ export class SeekButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<SeekButtonState>({
+    seeking: false,
+    direction: 'forward',
+    label: '',
+  });
 
   #props = { ...SeekButtonCore.defaultProps };
   #media: MediaTimeState | null = null;
@@ -67,10 +75,12 @@ export class SeekButtonCore {
 
   getState(): SeekButtonState {
     const media = this.#media!;
-    return {
-      seeking: media.seeking,
-      direction: this.#props.seconds < 0 ? 'backward' : 'forward',
-    };
+    const direction: SeekButtonDirection = this.#props.seconds < 0 ? 'backward' : 'forward';
+
+    this.state.patch({ seeking: media.seeking, direction });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   async seek(media: MediaTimeState): Promise<void> {

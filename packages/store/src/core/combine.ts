@@ -12,6 +12,19 @@ export function combine<Target, const Slices extends Slice<Target, any>[]>(
   return {
     state: (ctx: StateContext<Target>) => {
       const states = slices.map((slice) => slice.state(ctx));
+
+      if (__DEV__) {
+        const seen = new Set<string>();
+        for (const state of states) {
+          for (const key of Object.keys(state as object)) {
+            if (seen.has(key)) {
+              console.warn(`[vjs-store] combine(): duplicate state key "${key}" — later slice overwrites earlier one`);
+            }
+            seen.add(key);
+          }
+        }
+      }
+
       return Object.assign({}, ...states) as UnionSliceState<Slices>;
     },
 

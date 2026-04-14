@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { safeDefine } from '../safe-define';
 
 describe('safeDefine', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('registers a custom element', () => {
     class TestElement extends HTMLElement {
       static tagName = 'test-sd-register';
@@ -32,5 +36,15 @@ describe('safeDefine', () => {
     safeDefine(Original);
     safeDefine(Replacement);
     expect(customElements.get('test-sd-no-replace')).toBe(Original);
+  });
+
+  it('does nothing when customElements is unavailable', () => {
+    vi.stubGlobal('customElements', undefined);
+
+    class TestElement extends HTMLElement {
+      static tagName = 'test-sd-ssr';
+    }
+
+    expect(() => safeDefine(TestElement)).not.toThrow();
   });
 });

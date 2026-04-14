@@ -2,9 +2,10 @@ media-tooltip-group {
   display: contents;
 }
 
-/* Fixes a weird issue with Safari when setting aspect-ratio */
 :host {
+  /* `display:grid` fixes a weird issue with Safari when setting aspect-ratio */
   display: grid;
+  width: 100%;
 }
 
 /* Hide volume popover when volume control is unsupported (e.g., iOS Safari). */

@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
@@ -13,7 +15,7 @@ export interface MuteButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'> {
+export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, ButtonState {
   /**
    * Derived volume level:
    * - `off`: muted or volume is 0
@@ -29,6 +31,12 @@ export class MuteButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<MuteButtonState>({
+    muted: false,
+    volumeLevel: 'off',
+    label: '',
+  });
 
   #props = { ...MuteButtonCore.defaultProps };
   #media: MediaVolumeState | null = null;
@@ -67,10 +75,10 @@ export class MuteButtonCore {
 
   getState(): MuteButtonState {
     const media = this.#media!;
-    return {
-      muted: media.muted || media.volume === 0,
-      volumeLevel: getVolumeLevel(media),
-    };
+    this.state.patch({ muted: media.muted || media.volume === 0, volumeLevel: getVolumeLevel(media) });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   toggle(media: MediaVolumeState): void {

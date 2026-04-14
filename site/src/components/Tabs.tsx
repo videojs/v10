@@ -18,12 +18,10 @@ import clsx from 'clsx';
 
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
-
 import useIsHydrated from '@/utils/useIsHydrated';
-
 import CopyButton from './CopyButton';
-import CopyIcon from './icons/copy-icon.svg?react';
 
 export type TabsVariant = 'expanded' | 'compact';
 
@@ -307,7 +305,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
       hidden={!isActive}
       data-value={value}
       className={twMerge(
-        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
+        clsx('overflow-auto p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
         className
       )}
     >

@@ -17,7 +17,7 @@ const Player = createPlayer({ features: videoFeatures });
 export function MinimalSkinDemo() {
   return (
     <Player.Provider>
-      <MinimalVideoSkin className="w-full aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
+      <MinimalVideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </MinimalVideoSkin>
     </Player.Provider>

@@ -1,12 +1,12 @@
-.react-use-store-access {
+.media-container {
   position: relative;
 }
 
-.react-use-store-access video {
+.media-container video {
   width: 100%;
 }
 
-.react-use-store-access__controls {
+.controls {
   display: flex;
   gap: 6px;
   padding: 12px;
@@ -14,7 +14,7 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.react-use-store-access__controls button {
+.controls button {
   padding: 4px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;

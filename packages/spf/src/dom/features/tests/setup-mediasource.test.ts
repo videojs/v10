@@ -1,89 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation } from '../../../core/types';
-import {
-  canSetup,
-  type MediaSourceOwners,
-  type MediaSourceState,
-  setupMediaSource,
-  shouldSetup,
-} from '../setup-mediasource';
+import { type MediaSourceOwners, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
-// Mock the DOM utilities
+// Mock the DOM utilities.
+// observeMediaSourceReadyState returns 'open' immediately — simulates the
+// MediaSource having opened, which is the condition the inner effect waits on
+// before writing to owners.
 vi.mock('../../media/mediasource-setup', () => ({
   createMediaSource: vi.fn(() => ({
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    readyState: 'closed',
+    readyState: 'open',
   })),
   attachMediaSource: vi.fn(() => ({
     detach: vi.fn(),
   })),
-  waitForSourceOpen: vi.fn(() => Promise.resolve()),
+  observeMediaSourceReadyState: vi.fn((_ms: MediaSource, _signal: AbortSignal) => ({
+    get: () => 'open' as MediaSource['readyState'],
+  })),
 }));
 
-describe('canSetup', () => {
-  it('returns true when mediaElement and presentation.url exist', () => {
-    const state: MediaSourceState = {
-      presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
-    };
-    const owners: MediaSourceOwners = {
-      mediaElement: {} as HTMLMediaElement,
-    };
-
-    expect(canSetup(state, owners)).toBe(true);
-  });
-
-  it('returns false when mediaElement is missing', () => {
-    const state: MediaSourceState = {
-      presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
-    };
-    const owners: MediaSourceOwners = {};
-
-    expect(canSetup(state, owners)).toBe(false);
-  });
-
-  it('returns false when presentation is missing', () => {
-    const state: MediaSourceState = {};
-    const owners: MediaSourceOwners = {
-      mediaElement: {} as HTMLMediaElement,
-    };
-
-    expect(canSetup(state, owners)).toBe(false);
-  });
-
-  it('returns false when presentation.url is missing', () => {
-    const state: MediaSourceState = {
-      presentation: {} as Presentation,
-    };
-    const owners: MediaSourceOwners = {
-      mediaElement: {} as HTMLMediaElement,
-    };
-
-    expect(canSetup(state, owners)).toBe(false);
-  });
-});
-
-describe('shouldSetup', () => {
-  it('returns true when mediaSource does not exist', () => {
-    const state: MediaSourceState = {};
-    const owners: MediaSourceOwners = {
-      mediaElement: {} as HTMLMediaElement,
-    };
-
-    expect(shouldSetup(state, owners)).toBe(true);
-  });
-
-  it('returns false when mediaSource already exists', () => {
-    const state: MediaSourceState = {};
-    const owners: MediaSourceOwners = {
-      mediaElement: {} as HTMLMediaElement,
-      mediaSource: {} as MediaSource,
-    };
-
-    expect(shouldSetup(state, owners)).toBe(false);
-  });
-});
+function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
+  const state = signal<MediaSourceState>(initialState);
+  const owners = signal<MediaSourceOwners>(initialOwners);
+  const cleanup = setupMediaSource({ state, owners });
+  return { state, owners, cleanup };
+}
 
 describe('setupMediaSource', () => {
   beforeEach(() => {
@@ -93,18 +36,14 @@ describe('setupMediaSource', () => {
   it('creates MediaSource when mediaElement and presentation.url exist', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    // Set up conditions
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait for async operation
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledWith({ preferManaged: true });
     });
@@ -118,18 +57,16 @@ describe('setupMediaSource', () => {
     const mockMediaSource = {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      readyState: 'closed',
+      readyState: 'open',
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
     const mediaElement = {} as HTMLMediaElement;
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    owners.patch({ mediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -140,49 +77,27 @@ describe('setupMediaSource', () => {
     cleanup();
   });
 
-  it('waits for sourceopen event', async () => {
-    const { waitForSourceOpen } = await import('../../media/mediasource-setup');
-
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
-
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
-      presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
-    });
-
-    await vi.waitFor(() => {
-      expect(waitForSourceOpen).toHaveBeenCalled();
-    });
-
-    cleanup();
-  });
-
-  it('updates owners with mediaSource reference', async () => {
+  it('updates owners with mediaSource and mediaSourceReadyState', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const mockMediaSource = {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      readyState: 'closed',
+      readyState: 'open',
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
     await vi.waitFor(() => {
-      const currentOwners = owners.current;
-      expect(currentOwners.mediaSource).toBe(mockMediaSource);
+      expect(owners.get().mediaSource).toBe(mockMediaSource);
+      expect(owners.get().mediaSourceReadyState).toBeDefined();
     });
 
     cleanup();
@@ -191,16 +106,13 @@ describe('setupMediaSource', () => {
   it('does not create MediaSource if mediaElement is missing', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait a bit to ensure no async operations occur
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).not.toHaveBeenCalled();
@@ -211,14 +123,10 @@ describe('setupMediaSource', () => {
   it('does not create MediaSource if presentation.url is missing', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { owners, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
 
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-
-    // Wait a bit to ensure no async operations occur
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).not.toHaveBeenCalled();
@@ -229,27 +137,23 @@ describe('setupMediaSource', () => {
   it('does not create multiple MediaSources (deduplication)', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait for first creation
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledTimes(1);
     });
 
-    // Trigger another update (same data)
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait a bit to ensure no additional calls
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).toHaveBeenCalledTimes(1);

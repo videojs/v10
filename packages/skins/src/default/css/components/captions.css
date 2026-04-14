@@ -4,11 +4,17 @@
 
 .media-default-skin {
   --media-caption-track-duration: var(--media-controls-transition-duration);
-  --media-caption-track-delay: calc(var(--media-controls-transition-delay) + 25ms);
+  --media-caption-track-delay: 25ms;
   --media-caption-track-y: -0.5rem;
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-y: -3.5rem;
+    --media-caption-track-y: -5.5rem;
+  }
+
+  @container media-root (width > 42rem) {
+    &:has(.media-controls[data-visible]) > * {
+      --media-caption-track-y: -3.5rem;
+    }
   }
 }
 

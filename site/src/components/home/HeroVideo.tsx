@@ -34,7 +34,14 @@ export default function HeroVideo({
         }
         poster={poster}
       >
-        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline />
+        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline crossOrigin="anonymous">
+          <track
+            kind="metadata"
+            label="thumbnails"
+            src={`https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.vtt`}
+            default
+          />
+        </HlsVideo>
       </SkinComponent>
     </Player.Provider>
   );

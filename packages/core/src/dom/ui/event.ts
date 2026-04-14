@@ -1,5 +1,6 @@
 export interface UIEvent {
   preventDefault(): void;
+  stopPropagation(): void;
 }
 
 export interface UIKeyboardEvent extends UIEvent {
@@ -18,6 +19,10 @@ export interface UIPointerEvent extends UIEvent {
   pointerId: number;
   pointerType: string;
   buttons: number;
+}
+
+export interface UIWheelEvent extends UIEvent {
+  deltaY: number;
 }
 
 export interface UIFocusEvent extends UIEvent {

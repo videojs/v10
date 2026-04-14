@@ -22,9 +22,9 @@ class PlayerActions extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
-    const playBtn = this.querySelector<HTMLButtonElement>('.action-play')!;
-    const pauseBtn = this.querySelector<HTMLButtonElement>('.action-pause')!;
-    const volumeBtn = this.querySelector<HTMLButtonElement>('.action-volume')!;
+    const playBtn = this.querySelector<HTMLButtonElement>('.play')!;
+    const pauseBtn = this.querySelector<HTMLButtonElement>('.pause')!;
+    const volumeBtn = this.querySelector<HTMLButtonElement>('.volume')!;
 
     const bind = (el: HTMLElement, action: () => void) => {
       const props = createButton({ onActivate: action, isDisabled: () => !this.#player.value });
@@ -57,7 +57,7 @@ class PlayerState extends MediaElement {
     const state = this.#state.value;
     if (!state) return;
 
-    const el = this.querySelector('.state-text');
+    const el = this.querySelector('.text');
     if (el) {
       el.textContent = `Paused: ${state.paused ? 'Yes' : 'No'} | Time: ${state.currentTime.toFixed(1)}s | Volume: ${Math.round(state.volume * 100)}%`;
     }

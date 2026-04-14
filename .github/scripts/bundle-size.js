@@ -34,7 +34,6 @@ const ROOT = resolve(__dirname, '../..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
 const SKIP_PACKAGES = new Set([
-  'sandbox',
   'react-native',
   'skins',
   'icons',

@@ -40,6 +40,7 @@ export class AlertDialogElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     this.#dialog = createAlertDialog({
       transition: createTransition(),

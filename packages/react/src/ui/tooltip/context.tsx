@@ -11,6 +11,8 @@ export interface TooltipContextValue {
   stateAttrMap: StateAttrMap<TooltipCore.State>;
   anchorName: string;
   popupId: string;
+  content: string | undefined;
+  setContent: (content: string | undefined) => void;
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);
@@ -21,4 +23,8 @@ export function useTooltipContext(): TooltipContextValue {
   const ctx = useContext(TooltipContext);
   if (!ctx) throw new Error('Tooltip compound components must be used within a Tooltip.Root');
   return ctx;
+}
+
+export function useOptionalTooltipContext(): TooltipContextValue | null {
+  return useContext(TooltipContext);
 }

@@ -7,11 +7,11 @@
  */
 export const shared = {
   a: 'underline intent:no-underline',
-  code: 'border border-manila-75 bg-manila-25 dark:bg-soot dark:border-warm-gray px-1 rounded font-mono text-code normal-case',
+  code: 'border border-manila-75 bg-manila-25 dark:bg-soot dark:border-warm-gray px-1 rounded font-mono text-code normal-case break-words',
   codeBlock: 'font-mono text-code text-manila-light',
   pre: 'shiki astro-code',
   em: 'italic',
-  li: 'text-p2',
+  li: '',
   ol: 'list-decimal list-outside pl-4 space-y-1',
   strong: 'font-bold',
   ul: 'list-disc list-outside pl-4 space-y-1',

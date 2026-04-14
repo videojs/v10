@@ -11,6 +11,69 @@ Rationale behind SPF's key choices.
 
 ---
 
+## Actor/Reactor Pattern (from text track spike)
+
+These decisions were made or confirmed during the text track architecture spike
+(videojs/v10#1158). See [text-track-architecture.md](text-track-architecture.md) for
+the full reference implementation and assessment.
+
+---
+
+### `monitor`-before-state ordering as a load-bearing guarantee
+
+**Decision:** `monitor` effects in `createMachineReactor` always run before per-state effects.
+This ordering guarantee is documented in `createMachineReactor`'s source and must be preserved.
+
+**Rationale:** Per-state effects rely on invariants established by `monitor` functions.
+When a `monitor` function returns a new state, the framework calls `transition()` and the
+snapshot updates before any per-state effect fires — so per-state effects that no-op when
+`snapshot.value !== expectedState` do so correctly without needing to re-check conditions
+themselves.
+
+**Caveat:** The guarantee is specific to `createMachineReactor`'s registration order. It depends
+on the TC39 `signal-polyfill`'s `Watcher` preserving insertion order in `getPending()` —
+not a formal guarantee of the TC39 Signals proposal.
+
+---
+
+### `deriveState` pattern for transition logic
+
+**Decision:** Transition conditions live in a pure `deriveState` function, wrapped in a
+`computed()` signal outside any effect body, consumed by the `monitor` field to drive
+transitions. The `monitor` function returns the target state; the framework handles the
+comparison and transition.
+
+**Rationale:** Keeps the `monitor` function minimal and machine-readable; makes transition
+conditions independently testable as a plain function; prevents the inline computed
+anti-pattern (see [actor-reactor-factories.md](actor-reactor-factories.md)).
+
+---
+
+### Actors in owners as the lifecycle contract
+
+**Decision:** Actors created by a reactor are written to the shared `owners` signal.
+The engine's `destroy()` generically destroys any value in owners with a `destroy()`
+method. The reactor does not destroy its own actors.
+
+**Rationale:** Keeps reactor cleanup simple — no tracking of which actors were created,
+no custom destroy logic. Gives the engine a single, uniform cleanup point. The tradeoff
+is an implicit contract: callers using a reactor outside the engine must destroy actors
+from owners before destroying the reactor.
+
+---
+
+### Entry-reset as a defensive pattern for actor-creating states
+
+**Decision:** States that create actors (`'setting-up'`) and states that are reset points
+(`'preconditions-unmet'`) both call `teardownActors()` on entry. `teardownActors` is a
+guarded no-op when actors are already `undefined`, preventing spurious signal writes.
+
+**Rationale:** Any transition to a reset state may arrive from a state where actors were
+alive. Defensive teardown on *both* states eliminates the need to track "did I come from
+an actor-alive state?" — the entry effect is always safe to run.
+
+---
+
 ## Architecture
 
 ### Reactor / Actor Separation
@@ -227,7 +290,7 @@ Rationale behind SPF's key choices.
 
 **Decision:** `loadSegments` maintains local `throughput` state per track and syncs it to `state.bandwidthState` after each sample.
 
-**Context:** This is a migration artifact. The long-term design has ABR read directly from a throughput observable rather than going through the global state. The bridge exists to decouple the refactor from the feature work.
+**Context:** This is a migration artifact. The long-term design has ABR read directly from a reactive throughput source rather than going through the global state. The bridge exists to decouple the refactor from the feature work.
 
 **Status: temporary.** Remove once ABR reads from `throughput` directly. See [Open Questions](#abr-throughput).
 
@@ -262,7 +325,7 @@ This lets the UI show "currently manual at 720p, ABR would choose 1080p" without
 
 ### ABR Throughput Direct Read {#abr-throughput}
 
-The bandwidth bridge (`loadSegments` → `state.bandwidthState` → `switchQuality`) introduces a round-trip through global state. ABR should eventually read from a throughput observable owned by the network layer, removing the bridge.
+The bandwidth bridge (`loadSegments` → `state.bandwidthState` → `switchQuality`) introduces a round-trip through global state. ABR should eventually read from a reactive throughput source owned by the network layer, removing the bridge.
 
 **Open:** Requires defining the throughput API in `core/` and wiring it through `dom/`.
 

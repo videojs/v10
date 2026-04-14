@@ -5,19 +5,18 @@
 @import "./components/error.css";
 @import "./components/controls.css";
 @import "./components/time.css";
-@import "./components/buttons.css";
+@import "./components/button.css";
+@import "./components/button-group.css";
 @import "./components/icons.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "../../shared/css/audio/icon-state.css";
-@import "../../shared/css/audio/tooltip-state.css";
 
 /* ==========================================================================
    Root
    ========================================================================== */
 
 .media-default-skin--audio {
-  --media-border-color: oklch(0 0 0 / 0.1);
   --media-surface-background-color: oklch(1 0 0 / 0.5);
   --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
   --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
@@ -28,6 +27,8 @@
   --media-error-dialog-transition-delay: 100ms;
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
+  --media-tooltip-side-offset: 0.75rem;
+  --media-popover-side-offset: 0.75rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -36,9 +37,19 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    --media-border-color: oklch(1 0 0 / 0.1);
     --media-surface-background-color: oklch(0 0 0 / 0.4);
     --media-text-color: var(--media-color-primary, oklch(1 0 0));
+  }
+
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --media-surface-background-color: oklch(1 0 0);
+    --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) and ((prefers-reduced-transparency: reduce) or (prefers-contrast: more)) {
+    --media-surface-background-color: oklch(0 0 0);
+    --media-surface-inner-border-color: oklch(1 0 0 / 0.2);
+    --media-surface-outer-border-color: transparent;
   }
 }
 

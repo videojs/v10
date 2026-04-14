@@ -1,9 +1,11 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render';
 import {
   bufferingIndicator,
   button,
+  buttonGroupEnd,
+  buttonGroupStart,
   controls,
+  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -17,29 +19,14 @@ import {
   seek,
   slider,
   time,
-  tooltipState,
 } from '@videojs/skins/default/tailwind/video.tailwind';
+import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
-import { SkinMixin } from '../skin-mixin';
+import { safeDefine } from '../safe-define';
+import { SkinElement } from '../skin-element';
 
-// Side-effect imports: register all custom elements used in the template.
-import '../media/container';
-import '../ui/buffering-indicator';
-import '../ui/captions-button';
-import '../ui/controls';
-import '../ui/fullscreen-button';
-import '../ui/mute-button';
-import '../ui/pip-button';
-import '../ui/play-button';
-import '../ui/playback-rate-button';
-import '../ui/popover';
-import '../ui/poster';
-import '../ui/seek-button';
-import '../ui/time';
-import '../ui/time-slider';
-import '../ui/tooltip';
-import '../ui/tooltip-group';
-import '../ui/volume-slider';
+// Register the player, container, and all UI custom elements.
+import './ui';
 
 const SEEK_TIME = 10;
 
@@ -60,42 +47,50 @@ function getTemplateHTML() {
         </div>
       </media-buffering-indicator>
 
+      <media-error-dialog class="${error.root}">
+        <div class="${error.dialog}">
+          <div class="${error.content}">
+            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
+          </div>
+          <div class="${error.actions}">
+            <media-alert-dialog-close class="${cn(button.base, button.primary)}">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
+
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
-          <span class="${tooltipState.play.wrapper}">
-            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
-              ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-              ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-              ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
-            </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
-              <span class="${tooltipState.play.replay}">Replay</span>
-              <span class="${tooltipState.play.play}">Play</span>
-              <span class="${tooltipState.play.pause}">Pause</span>
+          <div class="${buttonGroupStart}">
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+                ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
+                ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
+                ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+              </media-play-button>
+              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
+              <span class="${iconContainer}">
+                ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
+                <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
+              </span>
+            </media-seek-button>
+            <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.tooltip)}">
+              Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
-          </span>
 
-          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
-            <span class="${iconContainer}">
-              ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
-              <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
-            </span>
-          </media-seek-button>
-          <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.tooltip)}">
-            Seek backward ${SEEK_TIME} seconds
-          </media-tooltip>
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
+              <span class="${iconContainer}">
+                ${renderIcon('seek', { class: icon })}
+                <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
+              </span>
+            </media-seek-button>
+            <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.tooltip)}">
+              Seek forward ${SEEK_TIME} seconds
+            </media-tooltip>
+          </div>
 
-          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
-            <span class="${iconContainer}">
-              ${renderIcon('seek', { class: icon })}
-              <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
-            </span>
-          </media-seek-button>
-          <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.tooltip)}">
-            Seek forward ${SEEK_TIME} seconds
-          </media-tooltip>
-
-          <media-time-group class="${time.group}">
+          <div class="${time.group}">
             <media-time type="current" class="${time.current}"></media-time>
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
@@ -106,65 +101,49 @@ function getTemplateHTML() {
 
               <div class="${preview.root}">
                 <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
-                <media-slider-value type="pointer" class="${preview.timestamp}"></media-slider-value>
+                <media-slider-value type="pointer" class="${preview.time}"></media-slider-value>
                 ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
               </div>
             </media-time-slider>
             <media-time type="duration" class="${time.duration}"></media-time>
-          </media-time-group>
+          </div>
 
-          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
-          <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">
-            Toggle playback rate
-          </media-tooltip>
-
-          <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-            ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-            ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-            ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
-          </media-mute-button>
-
-          <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.popover, popup.volume)}">
-            <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
-              <media-slider-track class="${slider.track}">
-                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-              </media-slider-track>
-              <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
-            </media-volume-slider>
-          </media-popover>
-
-          <span class="${tooltipState.captions.wrapper}">
-            <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
-              ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
-              ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
-            </media-captions-button>
-            <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
-              <span class="${tooltipState.captions.enable}">Enable captions</span>
-              <span class="${tooltipState.captions.disable}">Disable captions</span>
+          <div class="${buttonGroupEnd}">
+            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
+            <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">
+              Toggle playback rate
             </media-tooltip>
-          </span>
 
-          <span class="${tooltipState.pip.wrapper}">
-            <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
-              ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
-              ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
-            </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
-              <span class="${tooltipState.pip.enter}">Enter picture-in-picture</span>
-              <span class="${tooltipState.pip.exit}">Exit picture-in-picture</span>
-            </media-tooltip>
-          </span>
+            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            </media-mute-button>
 
-          <span class="${tooltipState.fullscreen.wrapper}">
-            <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.fullscreen.button)}">
-              ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
-              ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
-            </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}">
-              <span class="${tooltipState.fullscreen.enter}">Enter fullscreen</span>
-              <span class="${tooltipState.fullscreen.exit}">Exit fullscreen</span>
-            </media-tooltip>
-          </span>
+            <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.popover, popup.volume)}">
+              <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
+                <media-slider-track class="${slider.track}">
+                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                </media-slider-track>
+                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
+              </media-volume-slider>
+            </media-popover>
+              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
+                ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
+                ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
+              </media-captions-button>
+              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
+                ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
+                ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
+              </media-pip-button>
+              <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.fullscreen.button)}">
+                ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
+                ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
+              </media-fullscreen-button>
+              <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+          </div>
         </media-tooltip-group>
       </media-controls>
 
@@ -173,12 +152,12 @@ function getTemplateHTML() {
   `;
 }
 
-export class VideoSkinTailwindElement extends SkinMixin(ReactiveElement) {
+export class VideoSkinTailwindElement extends SkinElement {
   static readonly tagName = 'video-skin-tailwind';
-  static getTemplateHTML = getTemplateHTML;
+  static template = createTemplate(getTemplateHTML());
 }
 
-customElements.define(VideoSkinTailwindElement.tagName, VideoSkinTailwindElement);
+safeDefine(VideoSkinTailwindElement);
 
 declare global {
   interface HTMLElementTagNameMap {

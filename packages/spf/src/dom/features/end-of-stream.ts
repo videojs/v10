@@ -1,5 +1,5 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -11,6 +11,8 @@ export interface EndOfStreamState extends TrackSelectionState {
 
 export interface EndOfStreamOwners {
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
@@ -63,7 +65,7 @@ function isLastSegmentAppended(segments: readonly { id: string }[], actor: Sourc
   if (!lastSeg) return false;
   // A partial segment is still streaming — the last segment is not ready until
   // its entry is present and not marked partial.
-  return actor?.snapshot.context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
+  return actor?.snapshot.get().context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
 }
 
 /**
@@ -107,10 +109,12 @@ export function canEndStream(state: EndOfStreamState, owners: EndOfStreamOwners)
 export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
   if (!canEndStream(state, owners)) return false;
 
-  const { mediaSource, mediaElement } = owners;
+  const { mediaElement } = owners;
 
-  // MediaSource must be open
-  if (mediaSource!.readyState !== 'open') return false;
+  // MediaSource must be open — use reactive readyState signal when available
+  // so the computed re-evaluates when readyState changes (e.g. 'ended' → 'open' on seek-back).
+  const readyState = owners.mediaSourceReadyState?.get() ?? owners.mediaSource?.readyState;
+  if (readyState !== 'open') return false;
 
   // CRITICAL: MediaElement must have metadata before calling endOfStream
   // Calling endOfStream before HAVE_METADATA causes DEMUXER_ERROR
@@ -130,8 +134,8 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   // SourceBufferActors must be idle — setting duration while a SourceBuffer is
   // updating throws InvalidStateError. The actor subscriber in endOfStream() will
   // re-evaluate when each actor transitions back to idle.
-  if (owners.videoBufferActor?.snapshot.status === 'updating') return false;
-  if (owners.audioBufferActor?.snapshot.status === 'updating') return false;
+  if (owners.videoBufferActor?.snapshot.get().value === 'updating') return false;
+  if (owners.audioBufferActor?.snapshot.get().value === 'updating') return false;
 
   // Last segment must be appended for each selected track
   if (!hasLastSegmentLoaded(state, owners)) return false;
@@ -160,12 +164,12 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
 
 /**
  * Wait for all currently-updating SourceBufferActors to finish.
- * Uses actor status rather than raw SourceBuffer.updating so the wait is
+ * Uses actor state rather than raw SourceBuffer.updating so the wait is
  * aligned with the same abstraction that owns all buffer operations.
  */
 function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
   const updatingActors = [owners.videoBufferActor, owners.audioBufferActor].filter(
-    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.status === 'updating'
+    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().value === 'updating'
   );
 
   if (updatingActors.length === 0) return Promise.resolve();
@@ -174,10 +178,20 @@ function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
     updatingActors.map(
       (actor) =>
         new Promise<void>((resolve) => {
-          const unsub = actor.subscribe((snapshot) => {
-            if (snapshot.status !== 'updating') {
-              unsub();
-              resolve();
+          // effect() runs its body synchronously on creation, then re-runs on the
+          // next microtask after any dependency changes. If the actor is already
+          // idle by the time effect() is called, resolve fires immediately and
+          // cleanup is scheduled via queueMicrotask to avoid unwatching during
+          // the watcher notification cycle.
+          let cleanup: (() => void) | undefined;
+          let resolved = false;
+          cleanup = effect(() => {
+            if (actor.snapshot.get().value !== 'updating') {
+              if (!resolved) {
+                resolved = true;
+                resolve();
+              }
+              queueMicrotask(() => cleanup?.());
             }
           });
         })
@@ -248,71 +262,40 @@ const endOfStreamTask = async (
  * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
  * and MediaSource.duration updates.
  */
-export function endOfStream({
+export function endOfStream<S extends EndOfStreamState, O extends EndOfStreamOwners>({
   state,
   owners,
 }: {
-  state: WritableState<EndOfStreamState>;
-  owners: WritableState<EndOfStreamOwners>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
-  let hasEnded = false;
-  let destroyed = false;
-  const activeActorUnsubs: Array<() => void> = [];
+  // Derived condition. Transitively tracks through owners into each actor's
+  // snapshot signal — when owners changes and points to a new actor, this computed
+  // re-tracks to the new actor's signal on next evaluation.
+  // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
+  // reads are automatically tracked by the Signal.Computed dependency graph.
+  const shouldEnd = computed(() => shouldEndStream(state.get(), owners.get()));
 
-  const runEvaluate = async () => {
-    if (destroyed) return;
-    const currentState = state.current;
-    const currentOwners = owners.current;
+  let hasEnded = false;
+
+  const cleanupEffect = effect(() => {
+    if (!shouldEnd.get()) return;
+    const currentOwners = owners.get();
     if (hasEnded) {
       // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
       // readyState is 'ended' automatically transitions it back to 'open'.
       // This happens on seek-back after end-of-stream — allow endOfStream()
       // to be called again once the last segment is reloaded.
-      if (currentOwners.mediaSource?.readyState !== 'open') return;
+      const readyState = currentOwners.mediaSourceReadyState?.get() ?? currentOwners.mediaSource?.readyState;
+      if (readyState !== 'open') return;
       hasEnded = false;
     }
-    if (!shouldEndStream(currentState, currentOwners)) return;
 
     // Set flag before awaiting to close the re-entry window between
     // endOfStream() being called and the async task completing.
     hasEnded = true;
-    try {
-      await endOfStreamTask({ currentOwners }, {});
-    } catch (error) {
-      console.error('Failed to call endOfStream:', error);
-    }
-  };
-
-  // Subscribe to actor snapshot changes so endOfStream re-evaluates when a
-  // segment is appended (actor context updated), not just on state/owners changes.
-  // Re-subscribe whenever owners changes (actors may have appeared or changed).
-  const cleanupOwners = owners.subscribe((currentOwners) => {
-    activeActorUnsubs.forEach((u) => u());
-    activeActorUnsubs.length = 0;
-
-    for (const actor of [currentOwners.videoBufferActor, currentOwners.audioBufferActor]) {
-      if (!actor) continue;
-      // Skip the immediate fire — the combineLatest subscription handles the
-      // initial evaluation. Only react to subsequent snapshot changes.
-      let isFirst = true;
-      activeActorUnsubs.push(
-        actor.subscribe(() => {
-          if (isFirst) {
-            isFirst = false;
-            return;
-          }
-          runEvaluate();
-        })
-      );
-    }
+    endOfStreamTask({ currentOwners }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
   });
 
-  const cleanupCombineLatest = combineLatest([state, owners]).subscribe(async () => runEvaluate());
-
-  return () => {
-    destroyed = true;
-    activeActorUnsubs.forEach((u) => u());
-    cleanupOwners();
-    cleanupCombineLatest();
-  };
+  return cleanupEffect;
 }

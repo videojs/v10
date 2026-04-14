@@ -44,39 +44,13 @@ describe('TooltipCore', () => {
     expect(state.align).toBe('center');
   });
 
-  describe('getTriggerAttrs', () => {
-    it('returns undefined aria-describedby when closed', () => {
-      const core = new TooltipCore();
-      core.setInput(CLOSED);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs['aria-describedby']).toBeUndefined();
-    });
-
-    it('returns aria-describedby with popupId when open', () => {
-      const core = new TooltipCore();
-      core.setInput(OPEN);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs['aria-describedby']).toBe('tooltip-1');
-    });
-
-    it('returns undefined aria-describedby when no popupId', () => {
-      const core = new TooltipCore();
-      core.setInput(OPEN);
-      const attrs = core.getTriggerAttrs(core.getState());
-
-      expect(attrs['aria-describedby']).toBeUndefined();
-    });
-  });
-
   describe('getPopupAttrs', () => {
-    it('returns tooltip role', () => {
+    it('returns presentation role', () => {
       const core = new TooltipCore();
       core.setInput(OPEN);
       const attrs = core.getPopupAttrs(core.getState());
 
-      expect(attrs.role).toBe('tooltip');
+      expect(attrs.role).toBe('presentation');
     });
 
     it('returns popover manual attribute', () => {

@@ -1,7 +1,7 @@
 {
   "name": "@videojs/spf",
   "type": "module",
-  "version": "10.0.0-beta.11",
+  "version": "10.0.0-beta.17",
   "description": "Stream Processing Framework for Video.js 10",
   "license": "Apache-2.0",
   "repository": {
@@ -16,6 +16,7 @@
     "spf",
     "videojs"
   ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -50,14 +51,15 @@
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
     "@vitest/browser": "^4.1.0",
-    "@vitest/browser-playwright": "4.1.0",
+    "@vitest/browser-playwright": "4.1.2",
     "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^26.1.0",
-    "playwright": "^1.58.1",
+    "playwright": "^1.59.1",
     "tsdown": "^0.21.4",
     "typescript": "^6.0.2",
     "vitest": "^4.1.0"

@@ -54,6 +54,7 @@ export interface Guide {
 
 export interface Section {
   sidebarLabel: string;
+  llmsDescription?: string;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   defaultOpen?: boolean;

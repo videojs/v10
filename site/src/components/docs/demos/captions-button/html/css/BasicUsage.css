@@ -1,12 +1,12 @@
-.html-captions-button-basic {
+.video-player {
   position: relative;
 }
 
-.html-captions-button-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-captions-button-basic__button {
+.media-captions-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,15 +20,15 @@
   cursor: pointer;
 }
 
-.html-captions-button-basic__button .show-when-active {
+.media-captions-button .active {
   display: none;
 }
-.html-captions-button-basic__button .show-when-inactive {
+.media-captions-button .inactive {
   display: none;
 }
-.html-captions-button-basic__button[data-active] .show-when-active {
+.media-captions-button[data-active] .active {
   display: inline;
 }
-.html-captions-button-basic__button:not([data-active]) .show-when-inactive {
+.media-captions-button:not([data-active]) .inactive {
   display: inline;
 }

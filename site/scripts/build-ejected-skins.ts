@@ -15,6 +15,7 @@ import { dirname, relative as relativePath, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import { resolveImports } from '../../build/plugins/resolve-css-imports.ts';
+import { normalizeImports } from './normalize-imports.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
@@ -398,65 +399,6 @@ function collectDeclarationClosure(
   return [...dependencyTexts, declarationText];
 }
 
-function normalizeImports(source: string): string {
-  const sourceFile = createSourceFile('imports.tsx', source);
-  const sideEffectImports = new Set<string>();
-  const namedImports = new Map<string, Set<string>>();
-  const rawImports: string[] = [];
-  let bodyStart = 0;
-
-  for (const statement of sourceFile.statements) {
-    if (isDirectivePrologueStatement(statement)) {
-      bodyStart = statement.getEnd();
-      continue;
-    }
-
-    if (!ts.isImportDeclaration(statement)) {
-      break;
-    }
-
-    bodyStart = statement.getEnd();
-    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-    const importClause = statement.importClause;
-
-    if (!importClause) {
-      sideEffectImports.add(specifier);
-      continue;
-    }
-
-    const namedBindings = importClause.namedBindings;
-    if (importClause.name || (namedBindings && !ts.isNamedImports(namedBindings))) {
-      rawImports.push(getImportStatementText(source, statement));
-      continue;
-    }
-
-    if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
-
-    const names = namedImports.get(specifier) ?? new Set<string>();
-    for (const element of namedBindings.elements) {
-      const isTypeImport = element.isTypeOnly || /^import\s+type\s/.test(statement.getText(sourceFile));
-      names.add(isTypeImport ? `type ${element.getText(sourceFile)}` : element.getText(sourceFile));
-    }
-
-    namedImports.set(specifier, names);
-  }
-
-  const importLines = [
-    ...[...sideEffectImports].map((specifier) => `import '${specifier}';`),
-    ...rawImports,
-    ...[...namedImports.entries()].map(
-      ([specifier, names]) => `import { ${[...names].join(', ')} } from '${specifier}';`
-    ),
-  ];
-  const body = source.slice(bodyStart).replace(/^\s+/, '');
-
-  if (importLines.length === 0) {
-    return body;
-  }
-
-  return `${importLines.join('\n')}\n\n${body}`;
-}
-
 function inlineModuleExport(
   sourceFile: ts.SourceFile,
   importName: string,
@@ -737,19 +679,10 @@ function resolveCss(cssPath: string): string {
 }
 
 function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
-  if (skin.id.includes('minimal-video')) {
-    return 'video-minimal';
-  }
+  const isMinimal = skin.id.includes('minimal');
+  const prefix = skin.id.includes('video') ? 'video' : 'audio';
 
-  if (skin.id.includes('minimal-audio')) {
-    return 'audio-minimal';
-  }
-
-  if (skin.id.includes('video')) {
-    return 'video';
-  }
-
-  return 'audio';
+  return isMinimal ? `${prefix}-minimal-ui` : `${prefix}-ui`;
 }
 
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {

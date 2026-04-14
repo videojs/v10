@@ -1,45 +1,46 @@
 import * as dashjs from 'dashjs';
+import type { MediaEngineHost } from '../../../core/media/types';
+import { HTMLVideoElementHost } from '../video-host';
 
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
-import { CustomVideoElement } from '../custom-media-element';
-import { VideoProxy } from '../proxy';
-
-export class DashMediaDelegate implements Delegate {
+export class DashMedia
+  extends HTMLVideoElementHost
+  implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>
+{
   #engine: dashjs.MediaPlayerClass;
+  #src = '';
 
   constructor() {
+    super();
     this.#engine = dashjs.MediaPlayer().create();
     this.#engine.initialize(undefined, undefined, false);
   }
 
-  get engine(): dashjs.MediaPlayerClass {
+  get engine() {
     return this.#engine;
   }
 
-  attach(target: EventTarget): void {
-    this.#engine.attachView(target as HTMLMediaElement);
+  get src() {
+    return this.#src;
   }
 
-  detach(): void {
-    // dash.js types don't reflect null support, but null is valid for detaching
-    this.#engine.attachView(null as unknown as HTMLMediaElement);
-  }
-
-  destroy(): void {
-    this.#engine.destroy();
-  }
-
-  set src(src: string) {
+  set src(src) {
+    this.#src = src;
     this.#engine.attachSource(src);
   }
 
-  get src(): string {
-    return (this.#engine.getSource() as string) ?? '';
+  attach(target: HTMLVideoElement) {
+    super.attach(target);
+    this.#engine.attachView(target);
+  }
+
+  detach() {
+    super.detach();
+    // dash.js types don't reflect null support, but null is valid for detaching
+    this.#engine.attachView(null as unknown as HTMLVideoElement);
+  }
+
+  destroy() {
+    this.detach();
+    this.#engine.destroy();
   }
 }
-
-// This is used by the web component because it needs to extend HTMLElement!
-export class DashCustomMedia extends DelegateMixin(CustomVideoElement, DashMediaDelegate) {}
-
-// This is used by the React component.
-export class DashMedia extends DelegateMixin(VideoProxy, DashMediaDelegate) {}

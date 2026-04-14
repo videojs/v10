@@ -1,11 +1,11 @@
-.react-use-button-basic {
+.demo {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px;
 }
 
-.react-use-button-basic__button {
+.button {
   align-self: flex-start;
   padding: 8px 20px;
   border-radius: 6px;
@@ -16,12 +16,12 @@
   transition: opacity 0.2s;
 }
 
-.react-use-button-basic__button[disabled] {
+.button[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.react-use-button-basic__label {
+.label {
   display: flex;
   align-items: center;
   gap: 6px;

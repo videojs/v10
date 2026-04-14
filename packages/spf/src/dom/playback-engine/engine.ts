@@ -1,44 +1,25 @@
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
-import { createEventStream } from '../../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
 import { switchQuality } from '../../core/features/quality-switching';
-import {
-  type PresentationAction,
-  resolvePresentation,
-  syncPreloadAttribute,
-} from '../../core/features/resolve-presentation';
-import { resolveTrack, type TrackResolutionAction } from '../../core/features/resolve-track';
-import {
-  selectAudioTrack,
-  selectTextTrack,
-  selectVideoTrack,
-  type TrackSelectionAction,
-} from '../../core/features/select-tracks';
-import { createState } from '../../core/state/create-state';
+import { resolvePresentation } from '../../core/features/resolve-presentation';
+import { resolveTrack } from '../../core/features/resolve-track';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../core/features/select-tracks';
+import { syncPreloadAttribute } from '../../core/features/sync-preload-attribute';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
+import { signal } from '../../core/signals/primitives';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
-import type { TextTrackBufferState } from '../features/load-text-track-cues';
 import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
 import { setupSourceBuffers } from '../features/setup-sourcebuffer';
-import { setupTextTracks } from '../features/setup-text-tracks';
-import { syncSelectedTextTrackFromDom } from '../features/sync-selected-text-track-from-dom';
-import { syncTextTrackModes } from '../features/sync-text-track-modes';
+import { syncTextTracks } from '../features/sync-text-tracks';
+import type { TextTrackSegmentLoaderActor } from '../features/text-track-segment-loader-actor';
+import type { TextTracksActor } from '../features/text-tracks-actor';
 import { trackCurrentTime } from '../features/track-current-time';
 import { trackPlaybackInitiated } from '../features/track-playback-initiated';
 import { updateDuration } from '../features/update-duration';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { destroyVttParser } from '../text/parse-vtt-segment';
-
-/**
- * Union of all action types used by playback engine orchestrations.
- * Includes synthetic @@INITIALIZE@@ event for combineLatest bootstrapping.
- */
-export type PlaybackEngineAction =
-  | PresentationAction
-  | TrackResolutionAction
-  | TrackSelectionAction
-  | { type: '@@INITIALIZE@@' };
 
 /**
  * Configuration for the playback engine.
@@ -82,7 +63,7 @@ export interface PlaybackEngineConfig {
 export interface PlaybackEngineState {
   // Presentation state
   presentation?: any;
-  preload?: string;
+  preload?: 'auto' | 'metadata' | 'none';
 
   // Track selection state
   selectedVideoTrackId?: string;
@@ -97,9 +78,6 @@ export interface PlaybackEngineState {
   // TODO: replace with separate manualVideoTrackId / abrVideoTrackId fields so the two
   // concerns don't share a field; see quality-switching.ts for the full design note.
   abrDisabled?: boolean;
-
-  // Text track buffer state (tracks loaded VTT segments per text track ID)
-  textBufferState?: TextTrackBufferState;
 
   // Current playback position (mirrored from mediaElement via trackCurrentTime)
   currentTime?: number;
@@ -118,6 +96,8 @@ export interface PlaybackEngineOwners {
 
   // MediaSource
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
 
   // SourceBuffers and their actors (created together by setupSourceBuffer)
   videoBuffer?: SourceBuffer;
@@ -125,8 +105,9 @@ export interface PlaybackEngineOwners {
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
 
-  // Text tracks (track elements by ID)
-  textTracks?: Map<string, HTMLTrackElement>;
+  // Text track actors (written by loadTextTrackCues; destroyed by engine on destroy)
+  textTracksActor?: TextTracksActor;
+  segmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 /**
@@ -134,19 +115,14 @@ export interface PlaybackEngineOwners {
  */
 export interface PlaybackEngine {
   /**
-   * Reactive state (for inspection/testing).
+   * Reactive state signal (for inspection/testing).
    */
-  state: ReturnType<typeof createState<PlaybackEngineState>>;
+  state: Signal<PlaybackEngineState>;
 
   /**
-   * Mutable owners (for inspection/testing).
+   * Mutable owners signal (for inspection/testing).
    */
-  owners: ReturnType<typeof createState<PlaybackEngineOwners>>;
-
-  /**
-   * Shared event stream (for inspection/testing/triggering events).
-   */
-  events: ReturnType<typeof createEventStream<PlaybackEngineAction>>;
+  owners: Signal<PlaybackEngineOwners>;
 
   /**
    * Cleanup function to destroy all orchestrations.
@@ -175,22 +151,23 @@ export interface PlaybackEngine {
  *   preferredAudioLanguage: 'en',
  * });
  *
- * // Initialize by patching state and owners
- * engine.owners.patch({ mediaElement: document.querySelector('video') });
- * engine.state.patch({
+ * // Initialize by setting state and owners
+ * engine.owners.set({ ...engine.owners.get(), mediaElement: document.querySelector('video') });
+ * engine.state.set({
+ *   ...engine.state.get(),
  *   presentation: { url: 'https://example.com/playlist.m3u8' },
  *   preload: 'auto',
  * });
  *
  * // Inspect state
- * console.log(engine.state.current);
+ * console.log(engine.state.get());
  *
  * // Cleanup
  * engine.destroy();
  */
 export function createPlaybackEngine(config: PlaybackEngineConfig = {}): PlaybackEngine {
-  // Create reactive state and owners (initially empty)
-  const state = createState<PlaybackEngineState>({
+  // Create reactive state and owners as signals
+  const state = signal<PlaybackEngineState>({
     bandwidthState: {
       fastEstimate: 0,
       fastTotalWeight: 0,
@@ -199,51 +176,38 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       bytesSampled: 0,
     },
   });
-  const owners = createState<PlaybackEngineOwners>({});
+  const owners = signal<PlaybackEngineOwners>({});
 
-  // Create single shared event stream for all orchestrations
-  const events = createEventStream<PlaybackEngineAction>();
-
-  // Wire up orchestrations (all share single event stream)
-  // Note: @ts-expect-error needed due to EventStream invariance - each orchestration expects
-  // specific event types, but shared stream has union of all types. Proper fix would
-  // require making EventStream covariant or refactoring event system.
+  // Wire up orchestrations
   const cleanups = [
     // 0a. Sync preload attribute from mediaElement → state.preload
-    //     Only re-reads when the mediaElement reference changes (lastMediaElement guard).
     //     Normalises '' (absent attribute) to 'auto' (browser default).
-    // @ts-expect-error - WritableState type variance
-    syncPreloadAttribute(state, owners),
+    syncPreloadAttribute({ state, owners }),
 
-    // 0b. Bridge media element play event → state.playbackInitiated + event stream
-    //     Enables preload="none"/"metadata" resolution via native controls / element.play()
-    // @ts-expect-error - EventStream type variance
-    trackPlaybackInitiated({ state, owners, events }),
+    // 0b. Track media element play event → state.playbackInitiated
+    //     Enables preload="none" resolution via native controls / element.play()
+    trackPlaybackInitiated({ state, owners }),
 
     // 1. Resolve presentation (URL already in state)
-    // @ts-expect-error - EventStream type variance
-    resolvePresentation({ state, events }),
+    resolvePresentation({ state }),
 
     // 2. Select initial tracks (when presentation loads)
     selectVideoTrack(
-      // @ts-expect-error - Owners and EventStream type compatibility
-      { state, owners, events },
+      { state },
       {
         type: 'video',
         ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
       }
     ),
     selectAudioTrack(
-      // @ts-expect-error - Owners and EventStream type compatibility
-      { state, owners, events },
+      { state },
       {
         type: 'audio',
         ...(config.preferredAudioLanguage !== undefined && { preferredAudioLanguage: config.preferredAudioLanguage }),
       }
     ),
     selectTextTrack(
-      // @ts-expect-error - Owners and EventStream type compatibility
-      { state, owners, events },
+      { state },
       {
         type: 'text',
         ...(config.preferredSubtitleLanguage !== undefined && {
@@ -255,12 +219,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     ),
 
     // 3. Resolve selected tracks (fetch media playlists)
-    // @ts-expect-error - EventStream type variance
-    resolveTrack({ state, events }, { type: 'video' as const }),
-    // @ts-expect-error - EventStream type variance
-    resolveTrack({ state, events }, { type: 'audio' as const }),
-    // @ts-expect-error - EventStream type variance
-    resolveTrack({ state, events }, { type: 'text' as const }),
+    resolveTrack({ state }, { type: 'video' as const }),
+    resolveTrack({ state }, { type: 'audio' as const }),
+    resolveTrack({ state }, { type: 'text' as const }),
 
     // 3.5. Calculate presentation duration from resolved tracks
     calculatePresentationDuration({ state }),
@@ -300,7 +261,10 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     trackCurrentTime({ state, owners }),
 
     // 5.75. ABR quality switching (reacts to bandwidth samples from loadSegments)
-    switchQuality({ state }),
+    switchQuality(
+      { state },
+      config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {}
+    ),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
     loadSegments({ state, owners }, { type: 'video' }),
@@ -309,33 +273,30 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 6.5. Signal end of stream when all segments loaded
     endOfStream({ state, owners }),
 
-    // 7. Setup text tracks (when mediaElement and presentation ready)
-    setupTextTracks({ state, owners }),
-
-    // 8. Sync text track modes (when track selected and track elements created)
-    syncTextTrackModes({ state, owners }),
-
-    // 8.5. Bridge DOM text track mode changes → selectedTextTrackId
-    //      Detects when external code (e.g. captions button via toggleSubtitles())
-    //      sets a subtitle/caption track to 'showing' and reflects that into SPF
-    //      state, which in turn drives loadTextTrackCues.
-    syncSelectedTextTrackFromDom({ state, owners }),
+    // 7-8.5. Text track sync: setup, mode sync, and DOM bridge.
+    //        Consolidates setupTextTracks, syncTextTrackModes, syncSelectedTextTrackFromDom.
+    syncTextTracks({ state, owners }),
 
     // 9. Load text track cues (when track resolved and mode set)
     loadTextTrackCues({ state, owners }),
   ];
 
-  // Dispatch synthetic initialize event to satisfy combineLatest
-  // (combineLatest waits for all sources to emit before triggering listeners)
-  events.dispatch({ type: '@@INITIALIZE@@' });
-
   // Return engine instance
   return {
     state,
     owners,
-    events,
     destroy: () => {
-      cleanups.forEach((cleanup) => cleanup());
+      cleanups.forEach((cleanup) => (typeof cleanup === 'function' ? cleanup() : cleanup.destroy()));
+      // Destroy any actors that orchestrations wrote into owners during their lifetime.
+      for (const value of Object.values(owners.get())) {
+        if (
+          value !== null &&
+          typeof value === 'object' &&
+          typeof (value as { destroy?: unknown }).destroy === 'function'
+        ) {
+          (value as { destroy(): void }).destroy();
+        }
+      }
       destroyVttParser();
     },
   };

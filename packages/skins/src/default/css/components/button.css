@@ -1,0 +1,110 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+/* Base button */
+.media-default-skin .media-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: calc(infinity * 1px);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition-property: background-color, outline-offset, scale;
+  /* Fix weird jumping when clicking on the buttons in Safari. */
+  will-change: scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  touch-action: manipulation;
+
+  &:focus-visible {
+    outline-color: currentColor;
+    outline-offset: 2px;
+  }
+
+  &:active {
+    scale: 0.98;
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    filter: grayscale(1);
+    cursor: not-allowed;
+  }
+
+  &[data-availability="unavailable"] {
+    display: none;
+  }
+}
+
+/* Primary button variant */
+.media-default-skin .media-button--primary {
+  background: oklch(1 0 0);
+  color: oklch(0 0 0);
+  font-weight: 500;
+  text-shadow: none;
+}
+
+/* Subtle button variant */
+.media-default-skin .media-button--subtle {
+  background: transparent;
+  color: inherit;
+  text-shadow: inherit;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded="true"] {
+    background-color: oklch(from currentColor l c h / 0.1);
+    text-decoration: none;
+  }
+}
+
+/* Icon button variant */
+.media-default-skin .media-button--icon {
+  display: grid;
+  width: 2.25rem;
+  padding: 0;
+  aspect-ratio: 1;
+
+  &:active {
+    scale: 0.9;
+  }
+
+  & .media-icon {
+    filter: drop-shadow(0 1px 0 var(--media-controls-current-shadow-color, oklch(0 0 0 / 0.25)));
+  }
+}
+
+/* Seek button */
+.media-default-skin .media-button--seek {
+  & .media-icon__label {
+    position: absolute;
+    right: -1px;
+    bottom: -3px;
+    font-size: 10px;
+    font-weight: 480;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &:has(.media-icon--flipped) .media-icon__label {
+    right: unset;
+    left: -1px;
+  }
+}
+
+/* Playback rate button */
+.media-default-skin .media-button--playback-rate {
+  padding: 0;
+
+  &::after {
+    content: attr(data-rate) "\00D7";
+    width: 4ch;
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -3,34 +3,41 @@
    ========================================================================== */
 
 .media-minimal-skin .media-time-controls {
+  container: media-time-controls / inline-size;
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
   flex: 1;
   gap: 0.75rem;
 }
-.media-minimal-skin .media-time {
+
+.media-minimal-skin .media-time-group {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
-.media-minimal-skin .media-time__value {
+
+.media-minimal-skin .media-time {
   font-variant-numeric: tabular-nums;
 }
-.media-minimal-skin .media-time__value--current,
-.media-minimal-skin .media-time__separator {
+
+.media-minimal-skin .media-time--current,
+.media-minimal-skin .media-time-separator {
   display: none;
 }
-@container media-controls (width > 28rem) {
+
+@container media-root (width > 42rem) {
   .media-minimal-skin .media-time-controls {
     flex-direction: row;
   }
-  .media-minimal-skin .media-time__value--duration,
-  .media-minimal-skin .media-time__separator {
+
+  .media-minimal-skin .media-time--duration,
+  .media-minimal-skin .media-time-separator {
     color: oklch(from currentColor l c h / 0.6);
   }
-  .media-minimal-skin .media-time__value--current,
-  .media-minimal-skin .media-time__separator {
+
+  .media-minimal-skin .media-time--current,
+  .media-minimal-skin .media-time-separator {
     display: inline;
   }
 }

@@ -17,6 +17,7 @@ export const CaptionsButton = createMediaButton<CaptionsButtonCore, CaptionsButt
   stateAttrMap: CaptionsButtonDataAttrs,
   selector: selectTextTrack,
   action: (core, state) => core.toggle(state),
+  hotkeyAction: 'toggleSubtitles',
 });
 
 export namespace CaptionsButton {

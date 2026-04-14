@@ -5,7 +5,7 @@ date: 2026-03-11
 
 # SPF Primitives
 
-The five foundational building blocks of SPF. Most design decisions here are **open** — this document captures the intended shape and unresolved questions, not final answers.
+The five foundational building blocks of SPF. Each section tracks what is decided, what is the current approach, and what remains open — the balance has shifted significantly as the text track spike (videojs/v10#1158) settled the factory designs and committed the signals primitive.
 
 ---
 
@@ -39,11 +39,13 @@ A Task is ephemeral: once it reaches a terminal state, it stays there. It is not
 
 ### Relationship to Actors
 
-A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute Tasks; they don't expose Tasks externally. A Task's status may or may not be part of the Actor's observable snapshot — that's a design choice for the Actor, not the Task.
+A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute Tasks; they don't expose Tasks externally. A Task's status may or may not be part of the Actor's reactive snapshot — that's a design choice for the Actor, not the Task.
 
 ### Current approach
 
 `core/task.ts` — thin wrapper around a function with an `AbortController`. The shape is approximately right; the question is how much structure to add.
+
+> **See also:** [actor-reactor-factories.md](actor-reactor-factories.md) — decided design for `createMachineActor` / `createMachineReactor`, including how runners are declared and lifecycle-managed.
 
 ### Open questions
 
@@ -77,7 +79,7 @@ Runners are internal to Actors and Reactors. An Actor may own one or more Runner
 
 ### Open questions
 
-- **Runner state modeling and observability** — should a Runner formally model its pending and running Tasks (beyond just tracking them internally for `abortAll`)? If so, should that state be observable — and if observable, does it belong on the Runner itself or only surfaced via the owning Actor's snapshot? A related sub-question: should a Task briefly remain visible in a terminal state (`done` or `error`) before being removed, giving subscribers a notification window? Or are terminal Tasks removed immediately, with callers expected to observe results through other means (e.g., the Task's own `value`/`error`, or the Actor's snapshot)?
+- **Runner state modeling and observability** — should a Runner formally model its pending and running Tasks (beyond just tracking them internally for `abortAll`)? If so, should that state be reactive — and if reactive, does it belong on the Runner itself or only surfaced via the owning Actor's snapshot? A related sub-question: should a Task briefly remain visible in a terminal state (`done` or `error`) before being removed, giving subscribers a notification window? Or are terminal Tasks removed immediately, with callers expected to observe results through other means (e.g., the Task's own `value`/`error`, or the Actor's snapshot)?
 - **Runner composition** — can Runners be nested (a serial Runner of concurrent Runners)? Probably not needed now, but worth keeping in mind.
 
 ---
@@ -90,14 +92,14 @@ Long-lived instances that own state over time, receive messages, and use Tasks a
 
 An Actor:
 
-- Has an observable **snapshot** — a typed record of its current context (what's been buffered, what track is loaded, etc.) plus a **status** drawn from a finite state machine
+- Has a reactive **snapshot** — a typed record of its current context (what's been buffered, what track is loaded, etc.) plus a **status** drawn from a finite state machine
 - Receives **messages** via an explicit `send(message)` method — imperative input
 - Executes work in response to messages using Tasks and Runners
 - Is the sole owner and writer of its own state — reads and writes flow through the Actor's own snapshot; external state is not directly accessed
 
-The snapshot is observable: other things (Reactors, `endOfStream`, the engine) can subscribe to Actor state changes without polling.
+The snapshot is reactive: other things (Reactors, `endOfStream`, the engine) can subscribe to Actor state changes without polling.
 
-Actors should be **classes**. The current bespoke-closure approach makes it difficult to test, subclass, or inspect Actors in isolation. A class with a defined interface makes the contract explicit.
+Actors are created via **factory functions** (`createMachineActor`, `createTransitionActor`) that take a declarative definition object. The factory owns all mechanics (snapshot signal, runner lifecycle, `'destroyed'` guard); the definition owns behavior.
 
 ### Relationship to Reactors
 
@@ -105,59 +107,91 @@ An Actor does not know about state outside itself. It receives messages and prod
 
 ### Current approach
 
-The concept is approximately right in the current codebase, but implementations are bespoke closures rather than classes. They will need to be refactored into classes with a formal interface. Beyond that structural change, additional structure is likely to emerge — for example, an Actor may define an explicit message map from message type to Task, making the relationship between inputs and work more declarative and inspectable.
+`createMachineActor` in `core/create-machine-actor.ts` — a declarative factory replacing bespoke closures.
+Actors define state, context, message handlers per state, and an optional runner factory in
+a definition object. The factory manages the snapshot signal, runner lifecycle, and
+`'destroyed'` terminal state. See [actor-reactor-factories.md](actor-reactor-factories.md).
+
+`SourceBufferActor` and `SegmentLoaderActor` both use `createMachineActor`. Actors without
+FSM states (e.g., `TextTracksActor`) use `createTransitionActor` — a reducer-style factory
+with reactive context but no per-state behavior. Lightweight callback actors (e.g.,
+`TextTrackSegmentLoaderActor`) implement the `CallbackActor` interface directly.
+
+### Decided
+
+- **Snapshot as signal** — Actors expose `snapshot` as a `ReadonlySignal`, making current state synchronously readable and tracked in reactive contexts without polling.
+- **Message validity per state** — Actors define valid messages per state via a per-state `on` map in the definition. Messages sent in a state with no handler for that type are silently dropped. `'destroyed'` always drops all messages.
+- **Factory function, not base class** — `createMachineActor(definition)` rather than `extends BaseActor`. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **`'destroyed'` is always implicit** — the framework adds it as the terminal state; user status types never include it.
+- **Actor dependencies are explicit** — Actors receive dependencies at construction time (via the factory call site) and interact with peer Actors via `send()`. No global state access.
 
 ### Open questions
 
-- **Snapshot as signal vs subscribable** — does the Actor expose `snapshot` as a **signal** (synchronously readable, tracked in reactive contexts) or as a **subscribable** (push-based, no current value without explicit storage)? This is tightly coupled to the Observable State decision (§5). The synchronous-inspection use case (e.g., `endOfStream` reading idle status without subscribing) slightly favors signals.
-- **Message validity and handling** — whether a message is valid depends on the Actor's current status. Some messages may be invalid in certain states and should be rejected or ignored rather than queued. How each Actor defines valid messages per state, and what happens when an invalid message arrives (silent drop, error, warning), is left to the Actor's own finite state machine definition.
 - **Error handling** — if a Task inside an Actor throws an unaborted error, does the Actor die, recover to an error state, or retry? No answer yet; depends on which Actors exist and what errors are recoverable.
-- **Base class vs interface** — if Actors are classes, is there a base class (`BaseActor`) with common snapshot/status machinery, or just an interface that each Actor implements independently?
-- **Scope of Actor dependencies** — should Actors be definitionally constrained to their own state plus explicitly passed-in dependencies (including other Actors, platform resources like a `SourceBuffer`, etc.), or should they be permitted to read from or write to shared global state (e.g., global owners, global events)? The current pattern has Actors receiving everything they need at construction time and interacting with other Actors via `send()` — one Actor's output becoming another's input. Allowing global state access would blur the boundary between Actor and Reactor (which exists precisely to mediate between global state and Actors). Tentatively: no — keep Actors self-contained; Reactors are the right place for global state coordination.
 
 ---
 
 ## 4. Reactors
 
-Long-lived instances that *react* to observable state changes rather than receiving explicit messages. Like Actors, they have an observable snapshot with status and use Tasks and Runners for async work.
+Long-lived instances that *react* to reactive state changes rather than receiving explicit messages. Like Actors, they have a reactive snapshot with status and use Tasks and Runners for async work.
 
 ### Concept
 
 A Reactor:
 
-- Has an observable **snapshot** with **status** (same structure as an Actor)
+- Has a reactive **snapshot** with **status** (same structure as an Actor)
 - Is **driven by subscriptions** to external state — when observed state changes in a relevant way, the Reactor decides whether and how to respond
 - Uses Tasks and Runners to execute work, just like an Actor
 - Has **no `send()` method** — it cannot receive imperative messages
 
-The key distinction from a plain effect or subscription: a Reactor has its own state machine and is a first-class observable thing. Other parts of the system can observe a Reactor's status ("is the segment loader currently loading?") without coupling to its internals.
+The key distinction from a plain effect or subscription: a Reactor has its own state machine and is a first-class reactive entity. Other parts of the system can observe a Reactor's status ("is the segment loader currently loading?") without coupling to its internals.
 
 Most of what currently lives in `dom/features/` as top-level functions are conceptually Reactors — they subscribe to state, do async work, and produce side effects. The missing piece is the formal status/snapshot structure.
 
 ### Relationship to Actors
 
-A Reactor is typically the bridge between observable state and one or more Actors. It observes state, decides what message to send, and calls `actor.send(message)`. The Actor handles execution; the Reactor handles coordination.
+A Reactor is typically the bridge between reactive state and one or more Actors. It observes state, decides what message to send, and calls `actor.send(message)`. The Actor handles execution; the Reactor handles coordination.
 
 ### Current approach
 
-The current codebase has top-level functions in `dom/features/` that gesture at the Reactor concept — they observe state and produce side effects — but lack the formal structure entirely: no class, no status, no snapshot, no defined lifecycle. These will need significant rework to become first-class Reactors.
+`createMachineReactor` in `core/create-machine-reactor.ts` — a declarative factory. The first Reactor
+implementations are in `dom/features/` as part of the text track spike (videojs/v10#1158):
+`syncTextTracks` and `loadTextTrackCues`. See [text-track-architecture.md](text-track-architecture.md)
+for the reference implementation.
+
+Older features in `dom/features/` (e.g., `loadSegments`, `endOfStream`) are still
+function-based with no formal status or snapshot — they remain to be migrated.
+
+### Decided
+
+- **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status, context }>`.
+- **Factory function, not base class** — `createMachineReactor(definition)`. Per-state effect arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
+- **`monitor` for cross-cutting state derivation** — a `monitor` function (or array) returns the target state; the framework drives the transition. Registered before per-state effects — the ordering guarantee ensures transitions fire before per-state effects re-evaluate. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **`entry` / `effects` per-state split** — `entry` runs once on state entry, automatically untracked. `effects` re-run when tracked signals change. This makes reactive intent explicit in the definition shape rather than relying on `untrack()` conventions.
+- **Context via closure (tested approach)** — the text track spike used closure variables for Reactor non-finite state throughout. Reactors do not have a formal `context` field — non-finite state is held in closures and the `owners` signal.
 
 ### Open questions
 
-- **Snapshot as signal vs subscribable** — same question as Actors (§3). Tightly coupled to §5.
-- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? Synchronous firing is simpler but risks re-entrancy; deferral is safer but adds latency. This is closely tied to how the Observable State primitive handles scheduling.
-- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns all of this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose. Worth defining regardless.
-- **Can a Reactor send to another Reactor?** — Probably not directly (that would make it an Actor). If cross-Reactor coordination is needed, it likely flows through state.
+- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? The current implementation defers via `queueMicrotask`; the exact semantics under compound state changes are not fully characterized.
+- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose.
+- **Reactor context — what belongs where** — non-finite state is held in closures and `owners`, not in a formal Reactor `context` field. The right answer depends on what debugging and testing patterns emerge.
 
 ---
 
-## 5. Observable State
+## 5. Reactive State
 
-The reactive primitive that drives everything. State that can be observed over time, derived from other state, and composed in complex ways. The most consequential open design question in SPF.
+The reactive primitive that drives everything. State that can be observed over time, derived
+from other state, and composed in complex ways.
+
+The choice of signals as this primitive is a **committed architectural direction** — not an
+open question. See [signals.md](signals.md) for the full decision rationale, tradeoffs,
+and known friction. The sections below preserve the original conceptual comparison for
+context; the "Current approach" and "Open questions" sections reflect the current state.
 
 ### Concept
 
-Observable state needs to support:
+Reactive state needs to support:
 
 - **(a) Mapping, filtering, distinctness** — deriving new state from existing state; only propagating when the value meaningfully changed
 - **(b) Composition** — combining multiple state sources into derived state; expressing complex conditions as first-class values
@@ -220,15 +254,28 @@ A disciplined hybrid could work: signals for state (current values, derived valu
 
 ### Current approach
 
-A minimal hand-rolled observable in `core/state/` and `core/reactive/`. The concept is directionally correct but the primitive is insufficient for SPF's needs: no operators, no caching, no scheduling control, manual dependency wiring. This will be replaced entirely — the current implementation should be treated as a placeholder that established the pattern, not a foundation to build on.
+The TC39 `signal-polyfill` with a thin effect layer in `core/signals/effect.ts`. SPF wraps
+this as `signal()`, `computed()`, `untrack()`, `update()`, and `effect()` in `core/signals/`.
+
+This is a committed architectural direction. The text track spike (videojs/v10#1158) proved
+that Actors and Reactors can be cleanly built on top of signals. The pre-existing
+`core/state/` observable layer is no longer used for new code and should be treated as legacy.
+
+See [signals.md](signals.md) for full decision rationale, TC39 risks and mitigations,
+points of friction, and future directions.
 
 ### Open questions
 
-- **Signals vs observables as the canonical state primitive** — or a defined hybrid with explicit bridge points?
-- **Home-grown vs. off-the-shelf** — given SPF's bundle size goals, a home-grown implementation that covers exactly what SPF needs is the most likely path, regardless of whether signals or observables are chosen. Off-the-shelf libraries are unlikely to satisfy both requirements simultaneously: full feature coverage and acceptable size. A possible exception is the TC39 Signals polyfill, which may prove small enough and well-aligned enough to be viable — but this isn't obvious yet and warrants evaluation.
-- **Does "always having a current value" cause problems in practice?** The initialization question is solvable; the real question is whether reading-outside-reactive-context is a discipline problem or a design problem.
-- **Scheduling model for Reactors** — if signal effects are synchronous, do Reactors fire mid-batch? If so, is that correct for all Reactors, or should some defer? Should the Reactor abstraction impose a scheduling policy, or leave it to the state primitive?
-- **How does abort/cleanup compose with the state primitive?** An explicit answer here would clean up a lot of the current manual AbortController management scattered across features.
+- **Scheduling model for Reactors** — effects are currently deferred via `queueMicrotask`.
+  The exact semantics under compound state changes (multiple signal writes in the same turn)
+  are not fully characterized. SPF controls the scheduler via the `Watcher` API; whether
+  different parts of the system ever need different scheduling is open.
+- **How does abort/cleanup compose with the state primitive?** Cleanup today is manual
+  (`effect()` returns a disposal function, wired by hand). A more principled integration
+  with `AbortController` or signal-scoped lifetimes could reduce boilerplate.
+- **Reading outside reactive context** — is this a discipline problem or a design problem?
+  Currently discipline (`untrack()` conventions). The `entry`/`reactive` split in
+  `createMachineReactor` would address the most common case structurally.
 
 ---
 
@@ -239,7 +286,7 @@ How the five primitives fit together and the cross-cutting concerns that don't b
 ### The dependency graph
 
 ```
-Observable State
+Reactive State
       ↑ reads/subscribes
   Reactors ──send()──→ Actors
       ↑ both use         ↑ both use
@@ -248,9 +295,9 @@ Observable State
 
 - **Tasks** have no dependencies on the other primitives — they're pure async work units.
 - **TaskRunners** depend only on Tasks.
-- **Actors** depend on TaskRunners and Tasks. They may expose their snapshot via Observable State (signal or subscribable).
-- **Reactors** depend on Observable State (they subscribe to it) and on Actors (they send messages to them). They also use TaskRunners and Tasks for their own async work.
-- **Observable State** is the substrate — everything else either reads from it, writes to it, or both.
+- **Actors** depend on TaskRunners and Tasks. They may expose their snapshot via Reactive State (signal or subscribable).
+- **Reactors** depend on Reactive State (they subscribe to it) and on Actors (they send messages to them). They also use TaskRunners and Tasks for their own async work.
+- **Reactive State** is the substrate — everything else either reads from it, writes to it, or both.
 
 ### Lifecycle ownership
 
@@ -258,13 +305,13 @@ Currently the `PlaybackEngine` explicitly creates, wires, and destroys every Act
 
 An alternative: if Reactors self-scope to the reactive graph (e.g., signal effects are owned by a context that the engine controls), destroying the engine's reactive scope could automatically dispose all Reactors. Actors would still need explicit lifecycle management since they hold external resources (SourceBuffer, MediaSource).
 
-This is not a decision yet — it's worth understanding what the Observable State primitive makes possible before committing to a lifecycle model.
+The signals primitive is now committed, so this is a real option — but it has not been evaluated against the explicit engine ownership model. See Open Questions.
 
 ### Scheduling coordination
 
 The current `patch()` + `flush()` model exists because batching is needed for correctness (multiple synchronous patches shouldn't fire N subscriber callbacks), but immediate propagation is sometimes needed (bandwidth sampling must reach ABR before the next fetch starts).
 
-Whatever Observable State primitive is chosen, SPF needs an explicit answer for: *when does a state change propagate to subscribers?* Options:
+With signals as the committed primitive, SPF still needs an explicit answer for: *when does a state change propagate to subscribers?* Options:
 
 - **Always synchronous** (within batch): predictable, but requires careful batch discipline
 - **Always deferred** (microtask): safe default, but requires explicit "flush" for time-sensitive paths

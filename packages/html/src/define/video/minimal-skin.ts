@@ -1,25 +1,11 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render/minimal';
-import { createStyles, SkinMixin } from '../skin-mixin';
+import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+import { safeDefine } from '../safe-define';
+import { SkinElement } from '../skin-element';
 import styles from './minimal-skin.css?inline';
 
-// Side-effect imports: register all custom elements used in the template.
-import '../media/container';
-import '../ui/buffering-indicator';
-import '../ui/controls';
-import '../ui/fullscreen-button';
-import '../ui/mute-button';
-import '../ui/pip-button';
-import '../ui/play-button';
-import '../ui/playback-rate-button';
-import '../ui/popover';
-import '../ui/poster';
-import '../ui/seek-button';
-import '../ui/time';
-import '../ui/time-slider';
-import '../ui/tooltip';
-import '../ui/tooltip-group';
-import '../ui/volume-slider';
+// Register the player, container, and all UI custom elements.
+import './minimal-ui';
 
 const SEEK_TIME = 10;
 
@@ -38,6 +24,18 @@ function getTemplateHTML() {
         ${renderIcon('spinner', { class: 'media-icon' })}
       </media-buffering-indicator>
 
+      <media-error-dialog class="media-error">
+        <div class="media-error__dialog">
+          <div class="media-error__content">
+            <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+          </div>
+          <div class="media-error__actions">
+            <media-alert-dialog-close class="media-button media-button--primary">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
+
       <media-controls class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
@@ -46,11 +44,7 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
-              <span class="media-tooltip-label media-tooltip-label--play">Play</span>
-              <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
-            </media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -74,10 +68,10 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-time-controls">
-            <media-time-group class="media-time">
-              <media-time type="current" class="media-time__value media-time__value--current"></media-time>
-              <media-time-separator class="media-time__separator"></media-time-separator>
-              <media-time type="duration" class="media-time__value media-time__value--duration"></media-time>
+            <media-time-group class="media-time-group">
+              <media-time type="current" class="media-time media-time--current"></media-time>
+              <media-time-separator class="media-time-separator"></media-time-separator>
+              <media-time type="duration" class="media-time media-time--duration"></media-time>
             </media-time-group>
 
             <media-time-slider class="media-slider">
@@ -91,7 +85,7 @@ function getTemplateHTML() {
                 <div class="media-preview__thumbnail-wrapper">
                   <media-slider-thumbnail class="media-preview__thumbnail"></media-slider-thumbnail>
                 </div>
-                <media-slider-value type="pointer" class="media-preview__timestamp"></media-slider-value>
+                <media-slider-value type="pointer" class="media-time media-preview__time"></media-slider-value>
                 ${renderIcon('spinner', { class: 'media-preview__spinner media-icon' })}
               </div>
             </media-time-slider>
@@ -130,19 +124,13 @@ function getTemplateHTML() {
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
               ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
             </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>
-              <span class="media-tooltip-label media-tooltip-label--exit-pip">Exit picture-in-picture</span>
-            </media-tooltip>
+            <media-tooltip id="pip-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
             <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
               ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
               ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="media-tooltip">
-              <span class="media-tooltip-label media-tooltip-label--enter-fullscreen">Enter fullscreen</span>
-              <span class="media-tooltip-label media-tooltip-label--exit-fullscreen">Exit fullscreen</span>
-            </media-tooltip>
+            <media-tooltip id="fullscreen-tooltip" side="top" class="media-tooltip"></media-tooltip>
           </div>
         </media-tooltip-group>
       </media-controls>
@@ -152,13 +140,13 @@ function getTemplateHTML() {
   `;
 }
 
-export class MinimalVideoSkinElement extends SkinMixin(ReactiveElement) {
+export class MinimalVideoSkinElement extends SkinElement {
   static readonly tagName = 'video-minimal-skin';
-  static styles = createStyles(styles);
-  static getTemplateHTML = getTemplateHTML;
+  static styles = createShadowStyle(styles);
+  static template = createTemplate(getTemplateHTML());
 }
 
-customElements.define(MinimalVideoSkinElement.tagName, MinimalVideoSkinElement);
+safeDefine(MinimalVideoSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {

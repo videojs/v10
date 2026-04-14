@@ -1,12 +1,12 @@
-.react-play-button-basic {
+.media-container {
   position: relative;
 }
 
-.react-play-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.react-play-button-basic__button {
+.media-play-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;

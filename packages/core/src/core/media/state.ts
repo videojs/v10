@@ -33,10 +33,11 @@ export interface MediaPlaybackState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/pause
    */
   pause(): void;
+  /** Toggle play/pause. Returns `true` if playback started. */
+  togglePaused(): boolean;
 }
 
-/** Indicates whether a feature can be programmatically controlled on this platform. */
-export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+import type { MediaFeatureAvailability } from './types';
 
 export interface MediaVolumeState {
   /**
@@ -161,6 +162,8 @@ export interface MediaFullscreenState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen
    */
   exitFullscreen(): Promise<void>;
+  /** Toggle fullscreen mode. */
+  toggleFullscreen(): Promise<void>;
 }
 
 export interface MediaControlsState {
@@ -168,6 +171,8 @@ export interface MediaControlsState {
   userActive: boolean;
   /** Whether controls should be visible (userActive || paused). */
   controlsVisible: boolean;
+  /** Toggle controls visibility. Returns the new `controlsVisible` value. */
+  toggleControls(): boolean;
 }
 
 export interface MediaPlaybackRateState {
@@ -221,7 +226,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
-export interface MediaTextTrack<Kind extends TextTrackKind> {
+export interface MediaTextTrack<Kind extends string = TextTrackKind> {
   kind: Kind;
   label: string;
   language: string;
@@ -236,7 +241,7 @@ export interface MediaTextTrackState {
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
   /** All text tracks available on the media element. */
-  textTrackList: MediaTextTrack<TextTrackKind>[];
+  textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
@@ -294,4 +299,6 @@ export interface MediaPictureInPictureState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
   exitPictureInPicture(): Promise<void>;
+  /** Toggle picture-in-picture mode. */
+  togglePictureInPicture(): Promise<void>;
 }

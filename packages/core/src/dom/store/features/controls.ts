@@ -3,30 +3,38 @@ import { isNull } from '@videojs/utils/predicate';
 
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { findGestureCoordinator } from '../../gesture/coordinator';
+import { isMediaPauseCapable } from '../../media/predicate';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
-  state: (): MediaControlsState => ({
+  state: ({ get, set }): MediaControlsState => ({
     userActive: true,
     controlsVisible: true,
+    toggleControls() {
+      // Fallback before attach — no idle timer, just flip state.
+      const next = !get().userActive;
+      set({ userActive: next, controlsVisible: next });
+      return next as boolean;
+    },
   }),
 
   attach({ target, signal, get, set }) {
     const { media, container } = target;
 
-    if (isNull(container)) {
-      if (__DEV__) {
+    if (!isMediaPauseCapable(media) || isNull(container)) {
+      if (__DEV__ && isNull(container)) {
         console.warn('[vjs] controlsFeature requires a container element for activity tracking.');
       }
       return;
     }
 
-    function computeVisible(userActive: boolean): boolean {
+    const computeVisible = (userActive: boolean): boolean => {
       return userActive || media.paused;
-    }
+    };
 
     // Idle timer
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -53,6 +61,18 @@ export const controlsFeature = definePlayerFeature({
       set({ userActive: false, controlsVisible: computeVisible(false) });
     }
 
+    // Expose toggleControls with access to idle timer.
+    set({
+      toggleControls() {
+        if (get().controlsVisible) {
+          setInactive();
+        } else {
+          setActive();
+        }
+        return get().controlsVisible;
+      },
+    });
+
     // Touch tap-to-toggle
     let pointerDownTime = 0;
 
@@ -62,7 +82,17 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        // If the event target is in the controls don't set inactive because that sets pointer-events: none in CSS.
+        // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
+        const coordinator = findGestureCoordinator(container as HTMLElement);
+        if (
+          coordinator?.bindings.some(
+            (b) => b.type === 'tap' && b.action === 'toggleControls' && (!b.pointer || b.pointer === 'touch')
+          )
+        ) {
+          return;
+        }
+
+        // Inline touch tap-to-toggle for standalone use (no gestures).
         const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
@@ -75,7 +105,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Recompute visibility when playback state changes.
-    function onPlaybackChange() {
+    const onPlaybackChange = () => {
       const { userActive } = get();
       set({ controlsVisible: computeVisible(userActive) });
 
@@ -83,7 +113,7 @@ export const controlsFeature = definePlayerFeature({
       if (!media.paused && userActive) {
         scheduleIdle();
       }
-    }
+    };
 
     // Container event listeners
     listen(container, 'pointermove', setActive, { signal });

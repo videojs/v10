@@ -11,21 +11,6 @@
 export * from './index';
 
 // =============================================================================
-// State Management (O1)
-// =============================================================================
-
-export type {
-  SelectorListener,
-  SelectorOptions,
-  State,
-  StateConfig,
-  StateListener,
-  StateSelector,
-  WritableState,
-} from './core/state/create-state';
-export { createState, isState } from './core/state/create-state';
-
-// =============================================================================
 // HLS Parsing (P1, P2, P3)
 // =============================================================================
 
@@ -95,32 +80,15 @@ export {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-  waitForSourceOpen,
 } from './dom/media/mediasource-setup';
 export type { ResponseLike } from './dom/network/fetch';
 export { fetchResolvable, getResponseText } from './dom/network/fetch';
-
-// =============================================================================
-// Events (F1)
-// =============================================================================
-
-export type { EventListener, EventStream } from './core/events/create-event-stream';
-export { createEventStream, isEventStream } from './core/events/create-event-stream';
-
-// =============================================================================
-// Reactive Composition (F1)
-// =============================================================================
-
-export type { InferObservableValues, Observable } from './core/reactive/combine-latest';
-export { combineLatest } from './core/reactive/combine-latest';
 
 // =============================================================================
 // Features (F1)
 // =============================================================================
 
 export type {
-  PlatformOwners,
-  PresentationAction,
   PresentationState,
   UnresolvedPresentation,
 } from './core/features/resolve-presentation';
@@ -129,8 +97,9 @@ export {
   isUnresolved,
   resolvePresentation,
   shouldResolve,
-  syncPreloadAttribute,
 } from './core/features/resolve-presentation';
+export type { PlatformOwners } from './core/features/sync-preload-attribute';
+export { syncPreloadAttribute } from './core/features/sync-preload-attribute';
 
 // =============================================================================
 // Features (F9 - Quality Switching)

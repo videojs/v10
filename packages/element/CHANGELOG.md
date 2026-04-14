@@ -1,5 +1,47 @@
 # Changelog
 
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.16...@videojs/element@10.0.0-beta.17) (2026-04-11)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.15...@videojs/element@10.0.0-beta.16) (2026-04-10)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.14...@videojs/element@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.13...@videojs/element@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.12...@videojs/element@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.11...@videojs/element@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.10...@videojs/element@10.0.0-beta.11) (2026-03-24)
 
 

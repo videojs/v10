@@ -1,12 +1,12 @@
-.html-mute-button-volume-levels {
+.video-player {
   position: relative;
 }
 
-.html-mute-button-volume-levels video {
+.video-player video {
   width: 100%;
 }
 
-.html-mute-button-volume-levels__button {
+.media-mute-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,22 +20,22 @@
   cursor: pointer;
 }
 
-.html-mute-button-volume-levels__button .level-off,
-.html-mute-button-volume-levels__button .level-low,
-.html-mute-button-volume-levels__button .level-medium,
-.html-mute-button-volume-levels__button .level-high {
+.media-mute-button .level-off,
+.media-mute-button .level-low,
+.media-mute-button .level-medium,
+.media-mute-button .level-high {
   display: none;
 }
 
-.html-mute-button-volume-levels__button[data-volume-level="off"] .level-off {
+.media-mute-button[data-volume-level="off"] .level-off {
   display: inline;
 }
-.html-mute-button-volume-levels__button[data-volume-level="low"] .level-low {
+.media-mute-button[data-volume-level="low"] .level-low {
   display: inline;
 }
-.html-mute-button-volume-levels__button[data-volume-level="medium"] .level-medium {
+.media-mute-button[data-volume-level="medium"] .level-medium {
   display: inline;
 }
-.html-mute-button-volume-levels__button[data-volume-level="high"] .level-high {
+.media-mute-button[data-volume-level="high"] .level-high {
   display: inline;
 }

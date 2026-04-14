@@ -33,6 +33,7 @@ describe('VolumeSliderCore', () => {
         label: 'Volume',
         step: 1,
         largeStep: 10,
+        wheelStep: 5,
         orientation: 'horizontal',
         disabled: false,
         thumbAlignment: 'center',

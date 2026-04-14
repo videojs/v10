@@ -11,5 +11,7 @@
     from var(--media-controls-current-shadow-color) l c h /
     calc(alpha * 0.4)
   );
+  background-color: var(--media-controls-background-color);
+  backdrop-filter: var(--media-controls-backdrop-filter);
   text-shadow: 0 1px 0 var(--media-controls-current-shadow-color);
 }
