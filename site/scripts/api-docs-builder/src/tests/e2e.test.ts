@@ -1194,7 +1194,7 @@ describe('Media element pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
   //
   // A media element whose delegate extends another delegate (mirrors
-  // MuxMediaDelegate extending HlsMediaDelegate). The builder must
+  // MuxMediaBase extending HlsMediaBase). The builder must
   // walk the extends chain to include inherited properties. Child
   // properties override parent definitions.
 

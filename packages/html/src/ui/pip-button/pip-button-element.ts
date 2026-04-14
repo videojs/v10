@@ -11,7 +11,7 @@ export class PiPButtonElement extends MediaButtonElement<PiPButtonCore> {
   protected readonly core = new PiPButtonCore();
   protected readonly stateAttrMap = PiPButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectPiP);
-  protected override readonly hotkeyAction = 'togglePiP';
+  protected override readonly hotkeyAction = 'togglePictureInPicture';
 
   protected activate(state: MediaPictureInPictureState): void {
     this.core.toggle(state);

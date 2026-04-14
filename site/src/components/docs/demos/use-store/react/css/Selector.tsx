@@ -1,8 +1,6 @@
 import { createPlayer, useStore } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './Selector.css';
-
 const Player = createPlayer({
   features: videoFeatures,
 });
@@ -15,7 +13,7 @@ function DerivedState() {
   }));
 
   return (
-    <dl className="react-use-store-selector__state">
+    <dl className="panel">
       <div>
         <dt>Remaining</dt>
         <dd>{derived.remaining.toFixed(1)}s</dd>
@@ -31,7 +29,7 @@ function DerivedState() {
 export default function Selector() {
   return (
     <Player.Provider>
-      <Player.Container className="react-use-store-selector">
+      <Player.Container className="media-container">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay

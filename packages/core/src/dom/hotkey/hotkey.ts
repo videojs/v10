@@ -71,12 +71,13 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
 }
 
 /**
- * Single non-letter character — Shift was used to produce the character itself,
- * not as a deliberate modifier (e.g. Shift+. → ">", Shift+/ → "?").
+ * Single non-letter character — layout-dependent modifiers (Shift, Alt/Option)
+ * were used to produce the character itself, not as deliberate modifiers
+ * (e.g. Shift+. → ">", Option+Shift → ">" on some Mac layouts).
  * Letters excluded because Shift changes case intentionally (k vs K).
  * Named keys excluded because event.key.length > 1 (ArrowLeft, Tab, etc.).
  */
-function isImplicitShift(key: string): boolean {
+function isImplicitModifierKey(key: string): boolean {
   return key.length === 1 && !/[a-z]/i.test(key);
 }
 
@@ -88,15 +89,17 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
   // Case-insensitive key comparison.
   if (event.key.toLowerCase() !== binding.key) return false;
 
-  // Implicit Shift: non-letter character keys (>, <, ?, !) may require Shift to produce
-  // on some layouts but not others. Treat Shift as present only when the event has it,
-  // but ignore extra shiftKey when the binding doesn't ask for it.
-  const shiftKey = isImplicitShift(event.key) ? event.shiftKey && binding.modifiers.has('shift') : event.shiftKey;
+  // Implicit modifiers: non-letter character keys (>, <, ?, !) may require Shift or
+  // Alt (Option) to produce on some layouts but not others. Treat these modifiers as
+  // present only when the binding explicitly asks for them.
+  const implicit = isImplicitModifierKey(event.key);
+  const shiftKey = implicit ? event.shiftKey && binding.modifiers.has('shift') : event.shiftKey;
+  const altKey = implicit ? event.altKey && binding.modifiers.has('alt') : event.altKey;
 
   // Exact modifier matching — all four must agree.
   if (shiftKey !== binding.modifiers.has('shift')) return false;
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
-  if (event.altKey !== binding.modifiers.has('alt')) return false;
+  if (altKey !== binding.modifiers.has('alt')) return false;
   if (event.metaKey !== binding.modifiers.has('meta')) return false;
 
   return true;

@@ -23,13 +23,10 @@ function App() {
   const poster = usePoster();
   const storyboard = useStoryboard();
 
-  const sourceAttr =
-    SOURCES[source].type === 'mp4' ? { src: SOURCES[source].url } : { playbackId: SOURCES[source].playbackId };
-
   return (
     <VideoProvider>
       <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
-        <MuxVideo {...sourceAttr} debug playsInline crossOrigin="anonymous">
+        <MuxVideo src={SOURCES[source].url} debug playsInline crossOrigin="anonymous">
           <Storyboard src={storyboard} />
         </MuxVideo>
       </VideoSkinComponent>

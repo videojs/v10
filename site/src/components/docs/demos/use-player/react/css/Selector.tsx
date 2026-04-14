@@ -1,8 +1,6 @@
 import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './Selector.css';
-
 const Player = createPlayer({
   features: videoFeatures,
 });
@@ -15,7 +13,7 @@ function StateDisplay() {
   }));
 
   return (
-    <dl className="react-use-player-selector__state">
+    <dl className="panel">
       <div>
         <dt>Paused</dt>
         <dd>{String(state.paused)}</dd>
@@ -33,7 +31,7 @@ function StateDisplay() {
 export default function Selector() {
   return (
     <Player.Provider>
-      <Player.Container className="react-use-player-selector">
+      <Player.Container className="media-container">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay

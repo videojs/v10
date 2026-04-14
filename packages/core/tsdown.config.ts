@@ -32,8 +32,8 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     mode === 'dev'
       ? {
           build: true,
-          // Unified tsconfig covering both core and dom sources.
-          // Needs DOM libs to preserve MediaApiMixin return types.
+          // Unified tsconfig covering both core and dom sources
+          // so DOM lib types are available for dom subpath exports.
           tsconfig: 'tsconfig.dts.json',
         }
       : false,

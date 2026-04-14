@@ -121,7 +121,7 @@ describe('matchesHotkeyEvent', () => {
     expect(matchesHotkeyEvent(binding, createEvent('j'))).toBe(false);
   });
 
-  describe('implicit shift for non-letter characters', () => {
+  describe('implicit modifiers for non-letter characters', () => {
     it('matches > when Shift is held (US keyboard: Shift+. produces >)', () => {
       const binding = parseHotkeyPattern('>')[0]!;
       expect(matchesHotkeyEvent(binding, createEvent('>', { shiftKey: true }))).toBe(true);
@@ -172,6 +172,47 @@ describe('matchesHotkeyEvent', () => {
       const binding = parseHotkeyPattern('Shift+>')[0]!;
       expect(matchesHotkeyEvent(binding, createEvent('>', { shiftKey: true }))).toBe(true);
       expect(matchesHotkeyEvent(binding, createEvent('>'))).toBe(false);
+    });
+
+    it('matches > when Alt is held (Mac Option key produces >)', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { altKey: true }))).toBe(true);
+    });
+
+    it('matches > when Alt and Shift are held (Mac Option+Shift produces >)', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { altKey: true, shiftKey: true }))).toBe(true);
+    });
+
+    it('matches < when Alt is held (Mac Option key produces <)', () => {
+      const binding = parseHotkeyPattern('<')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('<', { altKey: true }))).toBe(true);
+    });
+
+    it('Alt+> binding requires Alt held', () => {
+      const binding = parseHotkeyPattern('Alt+>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { altKey: true }))).toBe(true);
+      expect(matchesHotkeyEvent(binding, createEvent('>'))).toBe(false);
+    });
+
+    it('rejects letter k when Alt is held (Alt is not implicit for letters)', () => {
+      const binding = parseHotkeyPattern('k')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('k', { altKey: true }))).toBe(false);
+    });
+
+    it('rejects ArrowLeft when Alt is held but binding has no Alt', () => {
+      const binding = parseHotkeyPattern('ArrowLeft')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('ArrowLeft', { altKey: true }))).toBe(false);
+    });
+
+    it('rejects > when Ctrl is held but binding has no Ctrl', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { ctrlKey: true }))).toBe(false);
+    });
+
+    it('rejects > when Meta is held but binding has no Meta', () => {
+      const binding = parseHotkeyPattern('>')[0]!;
+      expect(matchesHotkeyEvent(binding, createEvent('>', { metaKey: true }))).toBe(false);
     });
   });
 });

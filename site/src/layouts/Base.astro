@@ -58,6 +58,11 @@ const fullTitle =
     />
     <meta name="generator" content={Astro.generator} />
     <meta name="algolia-site-verification" content="9CE2D1D6448256D3" />
+    {
+      Astro.site?.origin !== PRODUCTION_URL.origin && (
+        <meta name="robots" content="noindex" />
+      )
+    }
 
     {/* Analytics (production only) */}
     {import.meta.env.PROD && <Posthog />}

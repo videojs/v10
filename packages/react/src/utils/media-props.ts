@@ -1,4 +1,4 @@
-import type { MediaApi } from '@videojs/core/dom';
+import type { Media } from '@videojs/core';
 
 type AnyClass = abstract new (...args: any[]) => any;
 
@@ -13,7 +13,7 @@ function getSettableProps(DelegateClass: AnyClass): Set<string> {
   return props;
 }
 
-export function mediaProps(media: MediaApi, DelegateClass: AnyClass, props: Record<string, any>) {
+export function mediaProps(media: Media, DelegateClass: AnyClass, props: Record<string, any>) {
   const delegateKeys = getSettableProps(DelegateClass);
   const rest: Record<string, any> = {};
 

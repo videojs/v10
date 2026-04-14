@@ -35,6 +35,7 @@ export function createTapGesture(
     pointer: options?.pointer,
     region: options?.region,
     disabled: options?.disabled,
+    action: options?.action,
   });
 }
 
@@ -60,5 +61,6 @@ export function createDoubleTapGesture(
     pointer: options?.pointer,
     region: options?.region,
     disabled: options?.disabled,
+    action: options?.action,
   });
 }

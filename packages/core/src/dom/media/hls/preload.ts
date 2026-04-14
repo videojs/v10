@@ -1,10 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-
-export interface HlsEngineHost {
-  readonly engine: Hls | null;
-  readonly target: HTMLMediaElement | null;
-}
+import type { HlsEngineHost } from './types';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 

@@ -53,6 +53,7 @@ function pointerEvent(overrides: Partial<UIPointerEvent> = {}): UIPointerEvent {
     pointerType: 'mouse',
     buttons: 1,
     preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
     ...overrides,
   };
 }
@@ -69,6 +70,7 @@ function keyboardEvent(key: string, overrides: Partial<UIKeyboardEvent> = {}): U
     target: node,
     currentTarget: node,
     preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
     ...overrides,
   };
 }

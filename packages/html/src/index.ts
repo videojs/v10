@@ -1,5 +1,4 @@
 // Core
-export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store
@@ -28,6 +27,7 @@ export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
 export { MediaButtonElement } from './ui/media-button-element';

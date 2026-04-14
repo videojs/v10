@@ -1,4 +1,5 @@
 export * from './feature';
+export * from './gesture/actions';
 export * from './gesture/coordinator';
 export * from './gesture/create-tap-gesture';
 export * from './gesture/gesture';
@@ -6,7 +7,6 @@ export * from './hotkey/actions';
 export * from './hotkey/aria';
 export * from './hotkey/coordinator';
 export * from './hotkey/hotkey';
-export * from './media/proxy';
 export * from './media/types';
 export * from './store/features';
 export * from './store/selectors';

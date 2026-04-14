@@ -1,4 +1,4 @@
-import { listen } from '@videojs/utils/dom';
+import { isInteractiveTarget, listen } from '@videojs/utils/dom';
 
 import type { GestureBinding, GestureMatchResult, GestureRecognizer, GestureRegion, GestureType } from './gesture';
 import { resolveRegion } from './region';
@@ -13,6 +13,10 @@ export class GestureCoordinator {
 
   constructor(target: HTMLElement) {
     this.#target = target;
+  }
+
+  get bindings(): readonly GestureBinding[] {
+    return this.#bindings;
   }
 
   add(binding: GestureBinding): () => void {
@@ -55,6 +59,7 @@ export class GestureCoordinator {
       'pointerup',
       (event) => {
         if (Date.now() - pointerDownTime > TAP_THRESHOLD) return;
+        if (isInteractiveTarget(event)) return;
 
         const pointerType = event.pointerType;
         const clientX = event.clientX;

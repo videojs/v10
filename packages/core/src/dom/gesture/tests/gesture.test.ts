@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
-const DOUBLETAP_WINDOW = 300;
+const DOUBLETAP_WINDOW = 200;
 
 function setup() {
   const container = document.createElement('div');
@@ -369,6 +369,86 @@ describe('regions', () => {
     expect(tapHandler).toHaveBeenCalledOnce();
     expect(doubletapLeft).not.toHaveBeenCalled();
     expect(doubletapRight).not.toHaveBeenCalled();
+  });
+});
+
+describe('interactive child filtering', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('does not fire when event originates from a child button', () => {
+    const container = setup();
+    const button = document.createElement('button');
+    container.appendChild(button);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(button);
+    vi.advanceTimersByTime(50);
+    pointerUp(button, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not fire when event originates from a child with role="slider"', () => {
+    const container = setup();
+    const slider = document.createElement('div');
+    slider.setAttribute('role', 'slider');
+    container.appendChild(slider);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(slider);
+    vi.advanceTimersByTime(50);
+    pointerUp(slider, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not fire when event originates from a nested child inside an interactive element', () => {
+    const container = setup();
+    const button = document.createElement('button');
+    const icon = document.createElement('span');
+    button.appendChild(icon);
+    container.appendChild(button);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(icon);
+    vi.advanceTimersByTime(50);
+    pointerUp(icon, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('fires when event originates from a non-interactive child', () => {
+    const container = setup();
+    const overlay = document.createElement('div');
+    container.appendChild(overlay);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(overlay);
+    vi.advanceTimersByTime(50);
+    pointerUp(overlay, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('fires when event targets the container directly', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).toHaveBeenCalledOnce();
   });
 });
 

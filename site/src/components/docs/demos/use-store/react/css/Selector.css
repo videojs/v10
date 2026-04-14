@@ -1,12 +1,12 @@
-.react-use-store-selector {
+.media-container {
   position: relative;
 }
 
-.react-use-store-selector video {
+.media-container video {
   width: 100%;
 }
 
-.react-use-store-selector__state {
+.panel {
   display: flex;
   gap: 16px;
   padding: 12px;
@@ -16,16 +16,16 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.react-use-store-selector__state div {
+.panel div {
   display: flex;
   gap: 8px;
 }
 
-.react-use-store-selector__state dt {
+.panel dt {
   color: #6b7280;
 }
 
-.react-use-store-selector__state dd {
+.panel dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }

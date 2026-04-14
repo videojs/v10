@@ -1,5 +1,5 @@
 /**
- * Mock complex delegate — mirrors HlsMediaDelegate.
+ * Mock complex delegate — mirrors HlsMediaBase.
  *
  * Exercises: multiple getter/setter pairs with JSDoc descriptions,
  * readonly properties, boolean type, overlap with native Attributes

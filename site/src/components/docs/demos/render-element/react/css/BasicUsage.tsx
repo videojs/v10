@@ -1,8 +1,6 @@
 import { renderElement } from '@videojs/react';
 import { type ReactNode, useState } from 'react';
 
-import './BasicUsage.css';
-
 interface TagState {
   active: boolean;
 }
@@ -30,20 +28,19 @@ function Tag({
 export default function BasicUsage() {
   const [active, setActive] = useState(false);
 
-  const className = (state: TagState) =>
-    `react-render-element-basic__tag${state.active ? ' react-render-element-basic__tag--active' : ''}`;
+  const className = (state: TagState) => `tag${state.active ? ' tag--active' : ''}`;
 
   const style = (state: TagState) => ({
     fontSize: state.active ? '1.125rem' : '0.875rem',
   });
 
   return (
-    <div className="react-render-element-basic">
-      <button type="button" className="react-render-element-basic__toggle" onClick={() => setActive((prev) => !prev)}>
+    <div className="demo">
+      <button type="button" className="toggle" onClick={() => setActive((prev) => !prev)}>
         {active ? 'Deactivate' : 'Activate'}
       </button>
 
-      <div className="react-render-element-basic__tags">
+      <div className="tags">
         <Tag active={active} className={className} style={style}>
           Default &lt;span&gt;
         </Tag>

@@ -128,12 +128,7 @@ async function render() {
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
-  const sourceAttr =
-    preset === 'background-video'
-      ? `src="${BACKGROUND_VIDEO_SRC}"`
-      : (preset === 'mux-video' || preset === 'mux-audio') && source.type !== 'mp4'
-        ? `playback-id="${source.playbackId}"`
-        : `src="${source.url}"`;
+  const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
 
   // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {

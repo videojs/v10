@@ -2,16 +2,15 @@ import { AlertDialogCloseElement } from '../../ui/alert-dialog/alert-dialog-clos
 import { AlertDialogDescriptionElement } from '../../ui/alert-dialog/alert-dialog-description-element';
 import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-title-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
-import { safeDefine } from '../safe-define';
+import { defineErrorDialog } from './compounds';
 
-// Parent first — child elements consume its context.
-safeDefine(ErrorDialogElement);
-safeDefine(AlertDialogCloseElement);
-safeDefine(AlertDialogDescriptionElement);
-safeDefine(AlertDialogTitleElement);
+defineErrorDialog();
 
 declare global {
   interface HTMLElementTagNameMap {
     [ErrorDialogElement.tagName]: ErrorDialogElement;
+    [AlertDialogCloseElement.tagName]: AlertDialogCloseElement;
+    [AlertDialogDescriptionElement.tagName]: AlertDialogDescriptionElement;
+    [AlertDialogTitleElement.tagName]: AlertDialogTitleElement;
   }
 }

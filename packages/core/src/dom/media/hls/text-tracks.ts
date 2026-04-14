@@ -2,11 +2,7 @@ import { listen } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
-
-interface HlsEngineHost {
-  readonly engine: Hls | null;
-  readonly target: HTMLMediaElement | null;
-}
+import type { HlsEngineHost } from './types';
 
 /**
  * Bridges hls.js non-native text tracks to native `<track>` elements so the

@@ -151,6 +151,10 @@ export function createSlider(options: SliderOptions): SliderApi {
     onPointerDown(event) {
       if (options.isDisabled()) return;
 
+      // The slider fully owns pointer interactions — prevent parent gesture
+      // coordinators from misinterpreting slider taps as surface gestures.
+      event.stopPropagation();
+
       // Prevent the browser's default mousedown focus behavior. Without this,
       // clicking a non-focusable child (e.g. the track) causes the browser to
       // move focus away from the thumb after our programmatic `focus()` call,
@@ -212,6 +216,8 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerUp(event) {
       if (isNull(capturedPointerId)) return;
+
+      event.stopPropagation();
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 

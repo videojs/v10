@@ -7,6 +7,7 @@ function wheelEvent(deltaY: number): UIWheelEvent {
   return {
     deltaY,
     preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
   };
 }
 

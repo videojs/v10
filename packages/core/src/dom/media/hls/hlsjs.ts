@@ -1,5 +1,6 @@
 import Hls, { type HlsConfig } from 'hls.js';
-import type { Delegate } from '../../../core/media/delegate';
+import type { MediaEngineHost } from '../../../core/media/types';
+import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
@@ -14,7 +15,7 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
-class HlsJsMediaDelegateBase extends EventTarget implements Delegate {
+class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
 
   constructor(params: { config: Partial<HlsConfig> }) {
@@ -23,10 +24,6 @@ class HlsJsMediaDelegateBase extends EventTarget implements Delegate {
       ...defaultHlsConfig,
       ...params.config,
     });
-  }
-
-  get target() {
-    return this.#engine?.media ?? null;
   }
 
   get engine() {
@@ -41,20 +38,23 @@ class HlsJsMediaDelegateBase extends EventTarget implements Delegate {
     this.#engine?.loadSource(src);
   }
 
-  attach(target: HTMLMediaElement) {
+  attach(target: HTMLVideoElement) {
+    super.attach(target);
     this.#engine?.attachMedia(target);
   }
 
   detach() {
     this.#engine?.detachMedia();
+    super.detach();
   }
 
   destroy() {
+    this.detach();
     this.#engine?.destroy();
     this.#engine = null;
   }
 }
 
-export class HlsJsMediaDelegate extends HlsJsMediaPreloadMixin(
-  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaDelegateBase)))
+export class HlsJsMedia extends HlsJsMediaPreloadMixin(
+  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
 ) {}

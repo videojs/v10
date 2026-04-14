@@ -1,12 +1,12 @@
-.react-playback-rate-button-basic {
+.media-container {
   position: relative;
 }
 
-.react-playback-rate-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.react-playback-rate-button-basic__button {
+.media-playback-rate-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
