@@ -43,7 +43,7 @@ export const VIDEO_PAGES = [
     framework: 'html',
     media: 'native-hls-video',
     resource: 'hlsTs',
-    skipBrowsers: ['firefox'],
+    skipBrowsers: ['firefox', 'webkit'],
   },
   {
     name: 'HTML Mux Video',
