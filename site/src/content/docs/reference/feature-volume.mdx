@@ -3,28 +3,15 @@ title: Volume
 description: Volume level and mute state for the player store
 ---
 
-import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Controls volume level and mute state.
 
-## State
+<FeatureReference feature="volume" />
 
-| State | Type | Description |
-|---|---|---|
-| `volume` | `number` | Volume level from 0 (silent) to 1 (max) |
-| `muted` | `boolean` | Whether audio is muted |
-| `volumeAvailability` | `MediaFeatureAvailability` | Whether volume can be set on this platform |
-
-## Actions
-
-| Action | Description |
-|---|---|
-| `setVolume(volume)` | Set volume (clamped 0–1). Auto-unmutes when raising above zero. |
-| `toggleMuted()` | Toggle mute. Restores volume to 0.25 when unmuting at zero. |
-
-## Selector
+### Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
@@ -68,5 +55,3 @@ class VolumeSlider extends MediaElement {
 }
 ```
 </FrameworkCase>
-
-<UtilReference util="selectVolume" />

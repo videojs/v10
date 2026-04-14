@@ -3,20 +3,15 @@ title: Buffer
 description: Buffered and seekable time range state for the player store
 ---
 
-import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Read-only — tracks buffered and seekable time ranges.
 
-## State
+<FeatureReference feature="buffer" />
 
-| State | Type | Description |
-|---|---|---|
-| `buffered` | `[number, number][]` | Buffered time ranges as `[start, end]` tuples |
-| `seekable` | `[number, number][]` | Seekable time ranges as `[start, end]` tuples |
-
-## Selector
+### Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectBuffer` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
@@ -53,5 +48,3 @@ class BufferBar extends MediaElement {
 }
 ```
 </FrameworkCase>
-
-<UtilReference util="selectBuffer" />

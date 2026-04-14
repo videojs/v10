@@ -3,6 +3,8 @@ import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
+import { FeatureReferenceSchema } from './types/feature-reference';
+import { PresetReferenceSchema } from './types/preset-reference';
 import { UtilReferenceSchema } from './types/util-reference';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
@@ -127,6 +129,22 @@ const utilReference = defineCollection({
   schema: UtilReferenceSchema,
 });
 
+const featureReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-feature-reference',
+  }),
+  schema: FeatureReferenceSchema,
+});
+
+const presetReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-preset-reference',
+  }),
+  schema: PresetReferenceSchema,
+});
+
 const ejectedSkins = defineCollection({
   loader: file('./src/content/ejected-skins.json'),
   schema: z.object({
@@ -141,4 +159,13 @@ const ejectedSkins = defineCollection({
   }),
 });
 
-export const collections = { blog, docs, authors, componentReference, utilReference, ejectedSkins };
+export const collections = {
+  blog,
+  docs,
+  authors,
+  componentReference,
+  utilReference,
+  featureReference,
+  presetReference,
+  ejectedSkins,
+};

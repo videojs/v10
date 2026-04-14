@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { generateComponentReferences } from './pipeline.js';
-import { ComponentReferenceSchema } from './types.js';
+import { generateComponentReferences, generateFeatureReferences, generatePresetReferences } from './pipeline.js';
+import { ComponentReferenceSchema, FeatureReferenceSchema, PresetReferenceSchema } from './types.js';
 import { generateUtilReferences } from './util-handler.js';
 
 // Magenta prefix - visible on both light and dark terminals
@@ -18,6 +18,8 @@ const log = {
 const MONOREPO_ROOT = path.resolve(import.meta.dirname, '../../../../');
 const COMPONENT_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-component-reference');
 const UTIL_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-util-reference');
+const FEATURE_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-feature-reference');
+const PRESET_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-preset-reference');
 
 /**
  * Main entry point.
@@ -33,9 +35,11 @@ function main() {
     originalWarn.apply(console, args);
   };
 
-  // Ensure output directory exists
-  if (!fs.existsSync(COMPONENT_OUTPUT_PATH)) {
-    fs.mkdirSync(COMPONENT_OUTPUT_PATH, { recursive: true });
+  // Ensure output directories exist
+  for (const dir of [COMPONENT_OUTPUT_PATH, UTIL_OUTPUT_PATH, FEATURE_OUTPUT_PATH, PRESET_OUTPUT_PATH]) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
   }
 
   // Generate component references via pipeline
@@ -79,6 +83,70 @@ function main() {
   errorCount += utilResult.errors;
 
   log.info(`Done! Generated ${utilResult.success} util files.`);
+
+  // Generate feature references
+  const featureResults = generateFeatureReferences(MONOREPO_ROOT);
+
+  if (featureResults.length === 0) {
+    log.info('No features found.');
+  } else {
+    log.info(`Found ${featureResults.length} features. Processing...`);
+  }
+
+  let featureSuccessCount = 0;
+  for (const result of featureResults) {
+    const validated = FeatureReferenceSchema.safeParse(result.reference);
+    if (!validated.success) {
+      log.error(`Schema validation failed for feature ${result.name}:`);
+      for (const issue of validated.error.issues) {
+        log.error(`  - ${issue.path.join('.')}: ${issue.message}`);
+      }
+      errorCount++;
+      continue;
+    }
+
+    const outputFile = path.join(FEATURE_OUTPUT_PATH, `${result.slug}.json`);
+    const json = `${JSON.stringify(validated.data, null, 2)}\n`;
+    fs.writeFileSync(outputFile, json);
+
+    log.success(`✅ Generated ${path.basename(outputFile)}`);
+    featureSuccessCount++;
+    successCount++;
+  }
+
+  log.info(`Done! Generated ${featureSuccessCount} feature files.`);
+
+  // Generate preset references
+  const presetResults = generatePresetReferences(MONOREPO_ROOT);
+
+  if (presetResults.length === 0) {
+    log.info('No presets found.');
+  } else {
+    log.info(`Found ${presetResults.length} presets. Processing...`);
+  }
+
+  let presetSuccessCount = 0;
+  for (const result of presetResults) {
+    const validated = PresetReferenceSchema.safeParse(result.reference);
+    if (!validated.success) {
+      log.error(`Schema validation failed for preset ${result.name}:`);
+      for (const issue of validated.error.issues) {
+        log.error(`  - ${issue.path.join('.')}: ${issue.message}`);
+      }
+      errorCount++;
+      continue;
+    }
+
+    const outputFile = path.join(PRESET_OUTPUT_PATH, `${result.name}.json`);
+    const json = `${JSON.stringify(validated.data, null, 2)}\n`;
+    fs.writeFileSync(outputFile, json);
+
+    log.success(`✅ Generated ${path.basename(outputFile)}`);
+    presetSuccessCount++;
+    successCount++;
+  }
+
+  log.info(`Done! Generated ${presetSuccessCount} preset files.`);
 
   console.warn = originalWarn;
 
