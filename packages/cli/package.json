@@ -1,0 +1,37 @@
+{
+  "name": "@videojs/cli",
+  "type": "module",
+  "version": "10.0.0-beta.17",
+  "description": "Video.js documentation CLI",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/cli"
+  },
+  "bin": "./dist/index.js",
+  "files": [
+    "dist",
+    "docs"
+  ],
+  "scripts": {
+    "copy-docs": "node scripts/copy-docs.js",
+    "build": "pnpm run copy-docs && tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "clean": "rimraf dist docs"
+  },
+  "dependencies": {
+    "@bomb.sh/args": "^0.3.1",
+    "@clack/prompts": "^0.10.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "site": "workspace:*",
+    "tsdown": "^0.21.4",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.0"
+  }
+}

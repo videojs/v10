@@ -1,5 +1,5 @@
-import type { Renderer, UseCase } from '@/stores/installation';
-import { VALID_RENDERERS } from '@/stores/installation';
+import type { Renderer, UseCase } from '@/utils/installation/types';
+import { VALID_RENDERERS } from '@/utils/installation/types';
 
 export interface DetectionResult {
   renderer: Renderer;

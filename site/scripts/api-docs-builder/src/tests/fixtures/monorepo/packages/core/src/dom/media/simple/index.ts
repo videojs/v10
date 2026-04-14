@@ -1,10 +1,18 @@
 /**
- * Mock simple delegate — mirrors DashMediaBase.
+ * Mock simple host — mirrors DashMedia.
  *
- * Exercises: minimal delegate with just src (read-write) and engine (readonly).
+ * Exercises: minimal host with just src (read-write) and engine (readonly).
  * No JSDoc on properties — tests that missing descriptions produce undefined.
  */
-export class SimpleDelegate {
+
+// Stub — the builder walks the prototype chain and stops here.
+export class HTMLVideoElementHost {
+  attach(_target: EventTarget): void {}
+  detach(): void {}
+  destroy(): void {}
+}
+
+export class SimpleHost extends HTMLVideoElementHost {
   #src: string = '';
   #engine: object = {};
 
@@ -19,10 +27,4 @@ export class SimpleDelegate {
   get engine(): object {
     return this.#engine;
   }
-
-  attach(_target: EventTarget): void {}
-  detach(): void {}
-  destroy(): void {}
 }
-
-export class SimpleCustomMedia {}

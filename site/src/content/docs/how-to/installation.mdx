@@ -16,6 +16,8 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import HumanCase from '@/components/docs/HumanCase.astro';
+import LLMCase from '@/components/docs/LLMCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 <Aside type="caution" title="Beta Software">
@@ -28,6 +30,26 @@ Video.js is a **React video player component library** &mdash; composable primit
 <FrameworkCase frameworks={["html"]}>
 Video.js is an **HTML video player built on custom elements** &mdash; lightweight, framework-free components for building accessible, customizable players with minimal bundle size.
 </FrameworkCase>
+
+<LLMCase>
+<div data-cli-replace="installation">
+
+Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
+
+```bash
+npx @videojs/cli docs how-to/installation \
+  --framework <html|react> \
+  --preset <video|audio|background-video> \
+  --skin <default|minimal> \
+  --media <html5-video|html5-audio|hls|background-video> \
+  --source-url <url> \
+  --install-method <cdn|npm|pnpm|yarn|bun>
+```
+
+</div>
+</LLMCase>
+
+<HumanCase>
 
 Answer the questions below to get started quickly with your first embed code.
 
@@ -119,6 +141,8 @@ Add it to your components folder in a new file.
   <ReactUsageCodeBlock client:idle />
 </ContentWidth>
 </FrameworkCase>
+
+</HumanCase>
 
 ## CSP
 

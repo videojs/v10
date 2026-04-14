@@ -17,6 +17,7 @@ export default {
         'cd',
         'ci',
         'claude',
+        'cli',
         'core',
         'design',
         'element',

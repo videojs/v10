@@ -62,21 +62,21 @@
  *
  * Media elements (packages/html/src/define/media/ + packages/core/src/dom/media/):
  *   simple-video  — Simple media element. Exercises: discovery via static
- *                   tagName in define/media/*.ts, minimal delegate (src rw,
- *                   engine readonly), shared Attributes/Events/CSS vars
+ *                   tagName in define/media/*.ts, minimal host (src rw,
+ *                   engine readonly), shared attributes/events/CSS vars
  *                   from custom-media-element, slots parsed from template HTML.
- *   complex-video — Complex media element. Exercises: delegate with JSDoc
+ *   complex-video — Complex media element. Exercises: host with JSDoc
  *                   descriptions, multiple property types (string, boolean,
- *                   Record), delegate-vs-native attribute deduplication
- *                   (src, preload in delegate → omitted from nativeAttributes).
- *   extending-video — Extending media element. Exercises: delegate inheritance
- *                   (ExtendingDelegate extends ComplexDelegate). Builder must
+ *                   Record), host-vs-native attribute deduplication
+ *                   (src, preload in host → omitted from nativeAttributes).
+ *   extending-video — Extending media element. Exercises: host inheritance
+ *                   (ExtendingHost extends ComplexHost). Builder must
  *                   walk the extends chain to include inherited properties.
  *                   Child overrides (debug) replace parent definitions.
  *   container.ts  — Exclusion case. Not a media element — re-exports an
  *                   existing class instead of declaring one inline.
  *   background-video.ts — Exclusion case. Uses MediaAttachMixin(HTMLElement)
- *                   without MediaPropsMixin. API reference manually maintained.
+ *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -854,17 +854,18 @@ describe('Feature pipeline (end-to-end)', () => {
 // ═══════════════════════════════════════════════════════════════════════
 //
 // Presets bundle features, skins, and media elements for a specific use
-// case. They are discovered from directories under packages/{html,react}/
-// src/presets/.
+// case. They are discovered from package.json exports in
+// packages/{html,react}/.
 //
 // Key behaviors:
-//   - Discovery: directories under both HTML and React preset paths
-//   - Feature bundle: *Features export → resolved to list of feature names
-//   - HTML skins: classes extending SkinElement, with tagName
+//   - Discovery: reads package.json exports for ./X + ./X/* pairs
+//   - Feature bundle: *Features export from barrel → resolved to feature names
+//   - HTML skins: classes with static tagName whose name matches *Skin*Element
+//   - HTML media element: classes with static tagName that aren't skins or players
 //   - React skins: exports matching *Skin naming
-//   - Media element: React exports that aren't bundles or skins
-//   - Tailwind exclusion: .tailwind files/exports are filtered out
-//   - HTML media element: implied by preset name (video → <video>)
+//   - React media element: remaining exports that aren't bundles or skins
+//   - Tailwind exclusion: .tailwind files are filtered out
+//   - Player exclusion: *Player* classes are filtered out
 
 describe('Preset pipeline (end-to-end)', () => {
   const results = generatePresetReferences(FIXTURE_ROOT);
@@ -878,13 +879,13 @@ describe('Preset pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
 
   describe('Discovery', () => {
-    it('discovers presets from preset directories', () => {
+    it('discovers presets from package.json exports', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['audio', 'video']);
+      expect(names).toEqual(['audio', 'background', 'video']);
     });
 
     it('produces one result per preset', () => {
-      expect(results.length).toBe(2);
+      expect(results.length).toBe(3);
     });
   });
 
@@ -924,6 +925,11 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skinNames).not.toContain('VideoSkinTailwindElement');
     });
 
+    it('does not produce an HTML media element for native video', () => {
+      const ref = findPreset('video')!.reference;
+      expect(ref.html.mediaElement).toBeUndefined();
+    });
+
     it('detects React skins', () => {
       const skins = findPreset('video')!.reference.react.skins;
       expect(skins).toEqual(expect.arrayContaining([{ name: 'VideoSkin' }, { name: 'MinimalVideoSkin' }]));
@@ -960,6 +966,11 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skins).toEqual([{ name: 'AudioSkinElement', tagName: 'audio-skin' }]);
     });
 
+    it('does not produce an HTML media element for native audio', () => {
+      const ref = findPreset('audio')!.reference;
+      expect(ref.html.mediaElement).toBeUndefined();
+    });
+
     it('detects single React skin', () => {
       const skins = findPreset('audio')!.reference.react.skins;
       expect(skins).toEqual([{ name: 'AudioSkin' }]);
@@ -968,6 +979,47 @@ describe('Preset pipeline (end-to-end)', () => {
     it('detects React media element', () => {
       const ref = findPreset('audio')!.reference;
       expect(ref.react.mediaElement).toBe('Audio');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // BACKGROUND PRESET (incomplete barrel, custom media element)
+  // ─────────────────────────────────────────────────────────────────
+
+  describe('background preset', () => {
+    it('identifies the feature bundle', () => {
+      const ref = findPreset('background')!.reference;
+      expect(ref.featureBundle).toBe('backgroundFeatures');
+    });
+
+    it('resolves empty features array', () => {
+      const ref = findPreset('background')!.reference;
+      expect(ref.features).toEqual([]);
+    });
+
+    it('detects HTML skin from directory scan (not in barrel)', () => {
+      const skins = findPreset('background')!.reference.html.skins;
+      expect(skins).toEqual([{ name: 'BackgroundVideoSkinElement', tagName: 'background-video-skin' }]);
+    });
+
+    it('detects HTML media element via export * chain', () => {
+      const ref = findPreset('background')!.reference;
+      expect(ref.html.mediaElement).toBe('background-video');
+    });
+
+    it('excludes player elements', () => {
+      const skinNames = findPreset('background')!.reference.html.skins.map((s) => s.name);
+      expect(skinNames).not.toContain('BackgroundVideoPlayerElement');
+    });
+
+    it('detects React skin', () => {
+      const skins = findPreset('background')!.reference.react.skins;
+      expect(skins).toEqual([{ name: 'BackgroundVideoSkin' }]);
+    });
+
+    it('detects React media element', () => {
+      const ref = findPreset('background')!.reference;
+      expect(ref.react.mediaElement).toBe('BackgroundVideo');
     });
   });
 
@@ -993,25 +1045,25 @@ describe('Preset pipeline (end-to-end)', () => {
 // ═══════════════════════════════════════════════════════════════════════
 //
 // Media elements are custom elements that wrap native <video>/<audio> with
-// streaming delegates (HLS, DASH, etc.). They are discovered from
+// streaming hosts (HLS, DASH, etc.). They are discovered from
 // packages/html/src/define/media/*.ts by looking for files that declare a
 // class with `static tagName`.
 //
 // The builder extracts:
 //   - Tag name from the element class's static tagName
-//   - Delegate properties by following the mixin chain to the delegate class
-//     and walking its getter/setter pairs (mirrors MediaPropsMixin at runtime)
-//   - Shared native attributes, events, and CSS vars from custom-media-element
-//   - Slots parsed from the template HTML (getVideoTemplateHTML / getAudioTemplateHTML)
-//   - JSDoc descriptions from delegate getter/setter pairs
+//   - Host properties by following the CustomMediaElement(tag, Host) call to the
+//     host class and walking its getter/setter pairs
+//   - Shared native attributes from static properties, events, and CSS vars
+//   - Slots parsed from the template HTML (getVideoTemplateHTML / getCommonTemplateHTML)
+//   - JSDoc descriptions from host getter/setter pairs
 //
 // Key behaviors:
 //   - Discovery: files in define/media/ with an inline class declaration + static tagName
 //   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
-//     (no MediaPropsMixin — uses MediaAttachMixin(HTMLElement) directly)
-//   - Delegate inheritance: child delegate extends parent, builder walks the chain
-//   - Deduplication: properties in the delegate that overlap with native Attributes
-//     (e.g., src, preload) appear in delegateProperties and are omitted from nativeAttributes
+//     (no CustomMediaElement — uses MediaAttachMixin(HTMLElement) directly)
+//   - Host inheritance: child host extends parent, builder walks the chain
+//   - Deduplication: properties in the host that overlap with native attributes
+//     (e.g., src, preload) appear in hostProperties and are omitted from nativeAttributes
 
 describe('Media element pipeline (end-to-end)', () => {
   const results = generateMediaElementReferences(FIXTURE_ROOT);
@@ -1035,7 +1087,7 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(findElement('MediaContainerElement')).toBeUndefined();
     });
 
-    it('excludes background-video (no MediaPropsMixin, manually maintained)', () => {
+    it('excludes background-video (no CustomMediaElement, manually maintained)', () => {
       expect(findElement('BackgroundVideo')).toBeUndefined();
       expect(findElement('BackgroundVideoElement')).toBeUndefined();
     });
@@ -1049,19 +1101,19 @@ describe('Media element pipeline (end-to-end)', () => {
   // SIMPLE MEDIA ELEMENT: SimpleVideo
   // ─────────────────────────────────────────────────────────────────
   //
-  // A minimal media element with a simple delegate (src rw, engine readonly).
-  // No JSDoc on delegate properties — descriptions should be undefined.
-  // No overlap between delegate props and native Attributes (engine is not
-  // in Attributes), so nativeAttributes should be the full shared list.
+  // A minimal media element with a simple host (src rw, engine readonly).
+  // No JSDoc on host properties — descriptions should be undefined.
+  // No overlap between host props and native attributes (engine is not
+  // in static properties), so nativeAttributes should be the full shared list.
 
-  describe('SimpleVideo (minimal delegate)', () => {
+  describe('SimpleVideo (minimal host)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('SimpleVideo')!.reference;
       expect(ref.tagName).toBe('simple-video');
     });
 
-    it('extracts delegate properties with types and readonly flags', () => {
-      const props = findElement('SimpleVideo')!.reference.delegateProperties;
+    it('extracts host properties with types and readonly flags', () => {
+      const props = findElement('SimpleVideo')!.reference.hostProperties;
 
       // src: read-write string
       expect(props.src).toMatchObject({
@@ -1077,16 +1129,16 @@ describe('Media element pipeline (end-to-end)', () => {
       });
     });
 
-    it('excludes delegate methods (attach, detach, destroy)', () => {
-      const props = findElement('SimpleVideo')!.reference.delegateProperties;
+    it('excludes host lifecycle methods (attach, detach, destroy)', () => {
+      const props = findElement('SimpleVideo')!.reference.hostProperties;
       expect(props.attach).toBeUndefined();
       expect(props.detach).toBeUndefined();
       expect(props.destroy).toBeUndefined();
     });
 
-    it('includes native attributes from the shared Attributes array', () => {
+    it('includes native attributes from static properties', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      // src is in the delegate, so it should be omitted from nativeAttributes
+      // src is in the host, so it should be omitted from nativeAttributes
       expect(ref.nativeAttributes).toEqual(
         expect.arrayContaining([
           'autoplay',
@@ -1102,20 +1154,35 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(ref.nativeAttributes).not.toContain('src');
     });
 
-    it('includes events from the shared Events array', () => {
+    it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.events).toEqual(
-        expect.arrayContaining([
-          'abort',
-          'canplay',
-          'durationchange',
-          'ended',
-          'pause',
-          'play',
-          'timeupdate',
-          'volumechange',
-        ])
-      );
+      // Events are extracted from VideoEvents in types.ts, which extends
+      // all capability event interfaces including TextTrackListEvents
+      expect(ref.events).toEqual([
+        'play',
+        'playing',
+        'waiting',
+        'pause',
+        'ended',
+        'timeupdate',
+        'durationchange',
+        'seeking',
+        'seeked',
+        'loadedmetadata',
+        'loadstart',
+        'emptied',
+        'canplay',
+        'canplaythrough',
+        'loadeddata',
+        'volumechange',
+        'ratechange',
+        'progress',
+        'error',
+        'addtrack',
+        'removetrack',
+        'changetrack',
+        'trackmodechange',
+      ]);
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
@@ -1138,25 +1205,25 @@ describe('Media element pipeline (end-to-end)', () => {
   // COMPLEX MEDIA ELEMENT: ComplexVideo
   // ─────────────────────────────────────────────────────────────────
   //
-  // A full media element with a complex delegate that has JSDoc descriptions,
-  // multiple property types, and overlap with native Attributes (src, preload).
+  // A full media element with a complex host that has JSDoc descriptions,
+  // multiple property types, and overlap with native attributes (src, preload).
   // Tests that the builder extracts descriptions from JSDoc on getters and
-  // deduplicates delegate props from nativeAttributes.
+  // deduplicates host props from nativeAttributes.
 
-  describe('ComplexVideo (full delegate, JSDoc, deduplication)', () => {
+  describe('ComplexVideo (full host, JSDoc, deduplication)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('ComplexVideo')!.reference;
       expect(ref.tagName).toBe('complex-video');
     });
 
-    it('extracts all delegate properties', () => {
-      const props = findElement('ComplexVideo')!.reference.delegateProperties;
+    it('extracts all host properties', () => {
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
       const propNames = Object.keys(props).sort();
       expect(propNames).toEqual(['config', 'debug', 'engine', 'preferPlayback', 'preload', 'src', 'type']);
     });
 
-    it('extracts JSDoc descriptions from delegate getters', () => {
-      const props = findElement('ComplexVideo')!.reference.delegateProperties;
+    it('extracts JSDoc descriptions from host getters', () => {
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
       expect(props.type.description).toBe('Explicit source type. When unset, inferred from the source URL extension.');
       expect(props.preferPlayback.description).toBe("Whether to prefer `'mse'` or `'native'` playback.");
       expect(props.debug.description).toBe('Enable debug logging.');
@@ -1164,7 +1231,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('marks readonly properties correctly', () => {
-      const props = findElement('ComplexVideo')!.reference.delegateProperties;
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
       // engine: getter only → readonly
       expect(props.engine.readonly).toBe(true);
       // src: getter + setter → not readonly
@@ -1173,18 +1240,18 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('extracts property types', () => {
-      const props = findElement('ComplexVideo')!.reference.delegateProperties;
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
       expect(props.src.type).toBe('string');
       expect(props.debug.type).toBe('boolean');
       expect(props.config.type).toContain('Record');
     });
 
-    it('deduplicates delegate props from nativeAttributes', () => {
+    it('deduplicates host props from nativeAttributes', () => {
       const ref = findElement('ComplexVideo')!.reference;
-      // src and preload are in both the delegate AND native Attributes.
-      // They should appear in delegateProperties...
-      expect(ref.delegateProperties.src).toBeDefined();
-      expect(ref.delegateProperties.preload).toBeDefined();
+      // src and preload are in both the host AND native attributes.
+      // They should appear in hostProperties...
+      expect(ref.hostProperties.src).toBeDefined();
+      expect(ref.hostProperties.preload).toBeDefined();
       // ...and be omitted from nativeAttributes
       expect(ref.nativeAttributes).not.toContain('src');
       expect(ref.nativeAttributes).not.toContain('preload');
@@ -1198,19 +1265,19 @@ describe('Media element pipeline (end-to-end)', () => {
   // EXTENDING MEDIA ELEMENT: ExtendingVideo
   // ─────────────────────────────────────────────────────────────────
   //
-  // A media element whose delegate extends another delegate (mirrors
-  // MuxMediaBase extending HlsMediaBase). The builder must
-  // walk the extends chain to include inherited properties. Child
-  // properties override parent definitions.
+  // A media element whose host extends another host (mirrors
+  // MuxVideoMedia extending HlsMedia). The builder must walk the
+  // extends chain to include inherited properties. Child properties
+  // override parent definitions.
 
-  describe('ExtendingVideo (delegate inheritance)', () => {
+  describe('ExtendingVideo (host inheritance)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('ExtendingVideo')!.reference;
       expect(ref.tagName).toBe('extending-video');
     });
 
-    it('includes own properties from ExtendingDelegate', () => {
-      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
+    it('includes own properties from ExtendingHost', () => {
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
       expect(props.playbackId).toMatchObject({
         type: 'string',
         readonly: false,
@@ -1223,9 +1290,9 @@ describe('Media element pipeline (end-to-end)', () => {
       });
     });
 
-    it('includes inherited properties from ComplexDelegate', () => {
-      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
-      // These are inherited from ComplexDelegate
+    it('includes inherited properties from ComplexHost', () => {
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      // These are inherited from ComplexHost
       expect(props.src).toBeDefined();
       expect(props.type).toBeDefined();
       expect(props.preferPlayback).toBeDefined();
@@ -1235,15 +1302,41 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('child overrides replace parent definitions', () => {
-      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
-      // ExtendingDelegate overrides debug with different JSDoc
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      // ExtendingHost overrides debug with different JSDoc
       expect(props.debug.description).toBe('Overrides parent debug — adds network logging.');
     });
 
     it('inherited readonly flags are preserved', () => {
-      const props = findElement('ExtendingVideo')!.reference.delegateProperties;
-      // engine is readonly in ComplexDelegate and not overridden
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      // engine is readonly in ComplexHost and not overridden
       expect(props.engine.readonly).toBe(true);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CROSS-CUTTING: EVENT EXTRACTION
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Events are derived from the capability contract types in
+  // packages/core/src/core/media/types.ts, not hardcoded.
+  // VideoEvents includes TextTrackListEvents; AudioEvents does not.
+
+  describe('Event extraction from capability contracts', () => {
+    it('video elements include text track events from VideoEvents', () => {
+      const ref = findElement('SimpleVideo')!.reference;
+      expect(ref.events).toContain('addtrack');
+      expect(ref.events).toContain('removetrack');
+      expect(ref.events).toContain('changetrack');
+      expect(ref.events).toContain('trackmodechange');
+    });
+
+    it('all video elements share the same event list', () => {
+      const simple = findElement('SimpleVideo')!.reference.events;
+      const complex = findElement('ComplexVideo')!.reference.events;
+      const extending = findElement('ExtendingVideo')!.reference.events;
+      expect(complex).toEqual(simple);
+      expect(extending).toEqual(simple);
     });
   });
 });

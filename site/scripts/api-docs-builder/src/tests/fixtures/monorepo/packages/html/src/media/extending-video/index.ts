@@ -1,15 +1,13 @@
 /**
  * Mock extending media element — mirrors MuxVideo.
  *
- * Exercises: media element with a delegate that inherits from another delegate.
+ * Exercises: media element with a host that inherits from another host.
  */
-import { ExtendingCustomMedia, ExtendingDelegate } from '../../../../core/src/dom/media/extending';
+import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
+import { ExtendingHost } from '../../../../core/src/dom/media/extending';
 
 function MediaAttachMixin(base: any) {
   return base;
 }
-function MediaPropsMixin(base: any, _delegate: any) {
-  return base;
-}
 
-export class ExtendingVideo extends MediaPropsMixin(MediaAttachMixin(ExtendingCustomMedia), ExtendingDelegate) {}
+export class ExtendingVideo extends MediaAttachMixin(CustomMediaElement('video', ExtendingHost)) {}
