@@ -34,7 +34,7 @@ export interface SpfMediaAPI {
 export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SpfMediaImpl extends BaseClass {
     #engine: PlaybackEngine;
-    #config: PlaybackEngineConfig = {};
+    #config: PlaybackEngineConfig;
     #preload: '' | 'none' | 'metadata' | 'auto' = '';
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -42,7 +42,10 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     constructor(...args: any[]) {
       super(...args);
-      this.#engine = createPlaybackEngine(this.#config);
+
+      const { config } = args?.[0] ?? {};
+      this.#config = config;
+      this.#engine = createPlaybackEngine(config);
     }
 
     get engine(): PlaybackEngine {
