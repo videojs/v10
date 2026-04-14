@@ -1,5 +1,5 @@
 /**
- * Mock extending delegate — mirrors MuxMediaDelegate extending HlsMediaDelegate.
+ * Mock extending delegate — mirrors MuxMediaBase extending HlsMediaBase.
  *
  * Exercises: delegate inheritance. The builder must walk the extends chain
  * to extract properties from both this class and its parent (ComplexDelegate).

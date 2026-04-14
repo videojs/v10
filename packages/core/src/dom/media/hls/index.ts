@@ -1,11 +1,9 @@
 import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
-import { CustomVideoElement } from '../custom-media-element';
-import { NativeHlsMediaDelegate } from '../native-hls';
-import { VideoProxy } from '../proxy';
-import { HlsJsMediaDelegate } from './hlsjs';
+import { NativeHlsMedia } from '../native-hls';
+import { HTMLVideoElementHost } from '../video-host';
+import { HlsJsMedia } from './hlsjs';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
@@ -24,21 +22,16 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
-export class HlsMediaDelegate extends EventTarget implements Delegate {
-  #target: HTMLMediaElement | null = null;
-  #delegate: HlsJsMediaDelegate | NativeHlsMediaDelegate | null = null;
-  #src: string = '';
+export class HlsMedia extends HTMLVideoElementHost {
+  #delegate: HlsJsMedia | NativeHlsMedia | null = null;
+  #src = '';
   #type: SourceType | undefined;
   #preferPlayback: PlaybackType | undefined = 'mse';
   #config: Record<string, any> = {};
-  #debug: boolean = false;
+  #debug = false;
   #preload: PreloadType = 'metadata';
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
-
-  get target() {
-    return this.#target;
-  }
 
   get engine() {
     return this.#delegate?.engine ?? null;
@@ -58,7 +51,7 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
   }
 
   /** Explicit source type. When unset, inferred from the source URL extension. */
-  get type(): SourceType | undefined {
+  get type() {
     return this.#type ?? inferSourceType(this.src);
   }
 
@@ -68,11 +61,11 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
   }
 
   /** Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS. */
-  get preferPlayback(): PlaybackType | undefined {
+  get preferPlayback() {
     return this.#preferPlayback;
   }
 
-  set preferPlayback(value: PlaybackType | undefined) {
+  set preferPlayback(value) {
     this.#preferPlayback = value;
     this.#requestLoad();
   }
@@ -81,7 +74,7 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
     return this.#config;
   }
 
-  set config(config: Record<string, any>) {
+  set config(config) {
     this.#config = config;
     this.#requestLoad();
   }
@@ -90,7 +83,7 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
     return this.#debug;
   }
 
-  set debug(debug: boolean) {
+  set debug(debug) {
     this.#debug = debug;
     this.#requestLoad();
   }
@@ -99,26 +92,26 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
     return this.#preload;
   }
 
-  set preload(value: PreloadType) {
+  set preload(value) {
     this.#preload = value;
     if (this.#delegate) {
       this.#delegate.preload = value;
     }
   }
 
-  attach(target: HTMLMediaElement) {
-    this.#target = target;
+  attach(target: HTMLVideoElement) {
+    super.attach?.(target);
     this.#delegate?.attach(target);
   }
 
   detach() {
-    this.#target = null;
     this.#delegate?.detach();
+    super.detach?.();
   }
 
   destroy() {
-    this.#engineDestroy();
     this.detach();
+    this.#engineDestroy();
   }
 
   load() {
@@ -132,8 +125,8 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
         Hls.isSupported() && this.type === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
 
       this.#delegate = useMse
-        ? new HlsJsMediaDelegate({ config: { ...this.config, debug: this.debug } })
-        : new NativeHlsMediaDelegate();
+        ? new HlsJsMedia({ config: { ...this.config, debug: this.debug } })
+        : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
@@ -169,7 +162,7 @@ export class HlsMediaDelegate extends EventTarget implements Delegate {
     };
   }
 
-  #engineDestroy(): void {
+  #engineDestroy() {
     this.#delegate?.destroy();
     this.#delegate = null;
     this.#prevEngineProps = null;
@@ -182,7 +175,3 @@ function inferSourceType(src: string): SourceType {
   if (path.endsWith('.mp4')) return SourceTypes.MP4;
   return SourceTypes.M3U8;
 }
-
-export class HlsCustomMedia extends DelegateMixin(CustomVideoElement, HlsMediaDelegate) {}
-
-export class HlsMedia extends DelegateMixin(VideoProxy, HlsMediaDelegate) {}

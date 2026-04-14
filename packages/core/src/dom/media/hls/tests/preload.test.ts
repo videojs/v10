@@ -1,7 +1,8 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type HlsEngineHost, HlsJsMediaPreloadMixin } from '../preload';
+import { HlsJsMediaPreloadMixin } from '../preload';
+import type { HlsEngineHost } from '../types';
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -25,11 +26,12 @@ function createEngine(): Hls {
   } as unknown as Hls;
 }
 
-class FakeHost implements HlsEngineHost {
+class FakeHost extends EventTarget implements HlsEngineHost {
   engine: Hls | null;
   target: HTMLMediaElement | null = null;
 
   constructor(engine: Hls | null = null) {
+    super();
     this.engine = engine;
   }
 }

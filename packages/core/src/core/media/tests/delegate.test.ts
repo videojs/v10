@@ -1,92 +1,77 @@
+import type { Constructor } from '@videojs/utils/types';
 import { describe, expect, it, vi } from 'vitest';
+import { bridgeEvents } from '../../utils/bridge-events';
 
-import { DelegateMixin } from '../delegate';
-import { ProxyMixin } from '../proxy';
-
-class FakeBase extends EventTarget {
-  get(_prop: string): any {}
-  set(_prop: string, _val: any): void {}
-  call(_prop: string, ..._args: any[]): any {}
-  attach(_target: EventTarget): void {}
-  detach(): void {}
+interface MediaBase extends EventTarget {
+  readonly target: EventTarget | null;
+  attach?(target: EventTarget): void;
+  detach?(): void;
 }
 
-class EventfulDelegate extends EventTarget {
-  attach(_target: EventTarget): void {}
-  detach(): void {}
+function TestMediaMixin<Base extends Constructor<MediaBase>>(BaseClass: Base) {
+  return class TestMedia extends BaseClass {
+    #subDelegate = new EventTarget();
+    #src = '';
 
-  fire(): void {
-    this.dispatchEvent(new Event('custom'));
-  }
+    get src() {
+      return this.#src;
+    }
+
+    set src(value: string) {
+      this.#src = value;
+    }
+
+    fire() {
+      this.#subDelegate.dispatchEvent(new Event('custom'));
+    }
+
+    attach(target: EventTarget) {
+      bridgeEvents(this.#subDelegate, this);
+      super.attach?.(target);
+    }
+
+    detach() {
+      super.detach?.();
+    }
+  };
 }
 
-const Mixed = DelegateMixin(FakeBase, EventfulDelegate);
-
-describe('DelegateMixin', () => {
-  describe('event forwarding', () => {
-    it('forwards events dispatched by the delegate to the host', () => {
+describe('Media Mixins', () => {
+  describe('event bridging from sub-delegates', () => {
+    it('forwards events dispatched by a sub-delegate to the host', () => {
+      class Base extends EventTarget {
+        get target() {
+          return null;
+        }
+      }
+      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
       const host = new Mixed();
+
       const handler = vi.fn();
       host.addEventListener('custom', handler);
 
+      host.attach(new EventTarget());
       host.fire();
 
       expect(handler).toHaveBeenCalledOnce();
     });
 
     it('creates a new event instance for the host dispatch', () => {
+      class Base extends EventTarget {
+        get target() {
+          return null;
+        }
+      }
+      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
       const host = new Mixed();
       const hostEvents: Event[] = [];
       host.addEventListener('custom', (e) => hostEvents.push(e));
 
+      host.attach(new EventTarget());
       host.fire();
 
       expect(hostEvents).toHaveLength(1);
       expect(hostEvents[0]!.type).toBe('custom');
-    });
-
-    it('does not forward events when delegate is not an EventTarget', () => {
-      class PlainDelegate {
-        attach(_target: EventTarget): void {}
-        detach(): void {}
-      }
-
-      const PlainMixed = DelegateMixin(FakeBase, PlainDelegate);
-      const host = new PlainMixed();
-      const handler = vi.fn();
-      host.addEventListener('custom', handler);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('attach order with ProxyMixin', () => {
-    it('delegate interceptor fires before proxy forwarder when listener added pre-attach', () => {
-      class InterceptingDelegate extends EventTarget {
-        attach(target: EventTarget): void {
-          target.addEventListener('error', (event) => {
-            event.stopImmediatePropagation();
-            this.dispatchEvent(new CustomEvent('error', { detail: 'enriched' }));
-          });
-        }
-        detach(): void {}
-      }
-
-      const ProxyBase = ProxyMixin(EventTarget);
-      const Mixed = DelegateMixin(ProxyBase, InterceptingDelegate);
-
-      const host = new Mixed();
-      const handler = vi.fn();
-      host.addEventListener('error', handler);
-
-      const target = new EventTarget();
-      host.attach(target);
-
-      target.dispatchEvent(new Event('error'));
-
-      expect(handler).toHaveBeenCalledOnce();
-      const event = handler.mock.calls[0]![0] as CustomEvent;
-      expect(event.detail).toBe('enriched');
     });
   });
 });

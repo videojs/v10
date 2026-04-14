@@ -2,6 +2,7 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaPlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 
 export const playbackFeature = definePlayerFeature({
   name: 'playback',
@@ -14,10 +15,12 @@ export const playbackFeature = definePlayerFeature({
       return target().media.play();
     },
     pause() {
-      target().media.pause();
+      const { media } = target();
+      if (isMediaPauseCapable(media)) media.pause();
     },
     togglePaused() {
       const media = target().media;
+      if (!isMediaPauseCapable(media)) return false;
       if (media.paused) {
         media.play();
         return true;
@@ -29,6 +32,8 @@ export const playbackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
+
+    if (!isMediaPauseCapable(media) || !isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return;
 
     const sync = () =>
       set({

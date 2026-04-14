@@ -1,5 +1,5 @@
 export { animationFrame } from './animation-frame';
-export { namedNodeMapToObject } from './attributes';
+export { namedNodeMapToObject, serializeAttributes } from './attributes';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
 export { idleCallback } from './idle-callback';

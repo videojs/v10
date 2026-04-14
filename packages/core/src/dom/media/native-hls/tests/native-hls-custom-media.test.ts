@@ -1,40 +1,27 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
-import { NativeHlsCustomMedia } from '../index';
-
-let counter = 0;
-
-function defineElement(): string {
-  const tag = `test-nhls-cm-${counter++}`;
-  customElements.define(tag, class extends (NativeHlsCustomMedia as unknown as typeof HTMLElement) {});
-  return tag;
-}
-
-function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
-  Object.defineProperty(video, 'error', {
-    value: { code, message },
-    configurable: true,
-  });
-  video.dispatchEvent(new Event('error'));
-}
+import { NativeHlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('NativeHlsCustomMedia', () => {
+describe('NativeHlsMedia', () => {
   it('dispatches only the enriched ErrorEvent when a native error fires', () => {
-    const tag = defineElement();
-    const el = document.createElement(tag);
-    document.body.appendChild(el);
+    const video = document.createElement('video');
+    document.body.appendChild(video);
 
-    const video = el.shadowRoot!.querySelector('video')! as HTMLVideoElement;
-    (el as any).attach(video);
+    const media = new NativeHlsMedia();
+    media.attach(video);
 
     const handler = vi.fn();
-    el.addEventListener('error', handler);
+    media.addEventListener('error', handler);
 
-    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'network failure');
+    Object.defineProperty(video, 'error', {
+      value: { code: MediaError.MEDIA_ERR_NETWORK, message: 'network failure' },
+      configurable: true,
+    });
+    video.dispatchEvent(new Event('error'));
 
     expect(handler).toHaveBeenCalledOnce();
 

@@ -3,10 +3,10 @@ import type { Constructor } from '@videojs/utils/types';
 import { MediaError } from '../../../core/media/media-error';
 
 export interface NativeMediaHost extends EventTarget {
-  readonly target: HTMLMediaElement | null;
-  attach(target: HTMLMediaElement): void;
-  detach(): void;
-  destroy(): void;
+  readonly target: EventTarget | null;
+  attach?(target: EventTarget): void;
+  detach?(): void;
+  destroy?(): void;
 }
 
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
@@ -18,19 +18,19 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
       return this.#error;
     }
 
-    attach(target: HTMLMediaElement): void {
-      super.attach(target);
-      this.#init(target);
+    attach(target: EventTarget): void {
+      super.attach?.(target);
+      this.#init(target as HTMLMediaElement);
     }
 
     detach(): void {
       this.#destroy();
-      super.detach();
+      super.detach?.();
     }
 
     destroy(): void {
       this.#destroy();
-      super.destroy();
+      super.destroy?.();
     }
 
     #destroy(): void {
@@ -58,7 +58,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
         },
-        { signal }
+        { signal, capture: true }
       );
 
       target.addEventListener(

@@ -4,6 +4,7 @@ import { isNull } from '@videojs/utils/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
+import { isMediaPauseCapable } from '../../media/predicate';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -24,16 +25,16 @@ export const controlsFeature = definePlayerFeature({
   attach({ target, signal, get, set }) {
     const { media, container } = target;
 
-    if (isNull(container)) {
-      if (__DEV__) {
+    if (!isMediaPauseCapable(media) || isNull(container)) {
+      if (__DEV__ && isNull(container)) {
         console.warn('[vjs] controlsFeature requires a container element for activity tracking.');
       }
       return;
     }
 
-    function computeVisible(userActive: boolean): boolean {
+    const computeVisible = (userActive: boolean): boolean => {
       return userActive || media.paused;
-    }
+    };
 
     // Idle timer
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -104,7 +105,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     // Recompute visibility when playback state changes.
-    function onPlaybackChange() {
+    const onPlaybackChange = () => {
       const { userActive } = get();
       set({ controlsVisible: computeVisible(userActive) });
 
@@ -112,7 +113,7 @@ export const controlsFeature = definePlayerFeature({
       if (!media.paused && userActive) {
         scheduleIdle();
       }
-    }
+    };
 
     // Container event listeners
     listen(container, 'pointermove', setActive, { signal });

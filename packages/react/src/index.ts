@@ -1,7 +1,6 @@
 'use client';
 
 // Core
-export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store

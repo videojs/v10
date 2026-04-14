@@ -18,13 +18,10 @@ function App() {
   const source = useSource();
   const styling = useMemo(readStyling, []);
 
-  const sourceAttr =
-    SOURCES[source].type === 'mp4' ? { src: SOURCES[source].url } : { playbackId: SOURCES[source].playbackId };
-
   return (
     <AudioProvider>
       <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
-        <MuxAudio {...sourceAttr} debug crossOrigin="anonymous" />
+        <MuxAudio src={SOURCES[source].url} debug crossOrigin="anonymous" />
       </AudioSkinComponent>
     </AudioProvider>
   );
