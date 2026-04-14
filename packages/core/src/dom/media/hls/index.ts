@@ -110,8 +110,8 @@ export class HlsMedia extends HTMLVideoElementHost {
   }
 
   destroy() {
-    this.#engineDestroy();
     this.detach();
+    this.#engineDestroy();
   }
 
   load() {

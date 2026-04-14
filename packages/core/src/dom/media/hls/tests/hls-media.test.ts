@@ -90,6 +90,24 @@ describe('HlsMedia', () => {
     });
   });
 
+  describe('destroy', () => {
+    it('removes forwarding listeners from the native element', () => {
+      const { media, video } = setup();
+
+      const playHandler = vi.fn();
+      media.addEventListener('play', playHandler);
+
+      video.dispatchEvent(new Event('play'));
+      expect(playHandler).toHaveBeenCalledOnce();
+
+      media.destroy();
+      playHandler.mockClear();
+
+      video.dispatchEvent(new Event('play'));
+      expect(playHandler).not.toHaveBeenCalled();
+    });
+  });
+
   describe('property proxying', () => {
     it('proxies paused from the native element', () => {
       const { media } = setup();
