@@ -15,6 +15,7 @@ export const PresetReferenceSchema = z.object({
   features: z.array(z.string()),
   html: z.object({
     skins: z.array(PresetSkinDefSchema),
+    mediaElement: z.string().optional(),
   }),
   react: z.object({
     skins: z.array(PresetSkinDefSchema),

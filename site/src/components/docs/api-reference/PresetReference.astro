@@ -134,6 +134,14 @@ function featureDocsSlug(featureName: string): string {
                           <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>
                         </dd>
                       </FrameworkCase>
+                      {preset.html.mediaElement && (
+                        <FrameworkCase frameworks={["html"]}>
+                          <dt class="font-bold">Default media element</dt>
+                          <dd>
+                            <MarkdownCode>{`<${preset.html.mediaElement}>`}</MarkdownCode>
+                          </dd>
+                        </FrameworkCase>
+                      )}
                     </dl>
                   </div>
                 </Td>

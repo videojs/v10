@@ -558,6 +558,7 @@ export interface PresetReference {
   features: string[];
   html: {
     skins: PresetSkinDef[];
+    mediaElement?: string;
   };
   react: {
     skins: PresetSkinDef[];
