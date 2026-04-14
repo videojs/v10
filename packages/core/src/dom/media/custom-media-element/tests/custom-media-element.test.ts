@@ -846,4 +846,59 @@ describe('CustomMediaElement', () => {
       expect(video.hasAttribute('autoplay')).toBe(true);
     });
   });
+
+  describe('subclass properties override', () => {
+    it('includes subclass-added properties in observedAttributes', () => {
+      const Base = CustomMediaElement('video', TestVideoHost);
+      class Extended extends Base {
+        static properties = {
+          ...Base.properties,
+          playbackId: { type: String, attribute: 'playback-id' },
+        };
+      }
+
+      const tag = `test-video-${++tagCounter}`;
+      customElements.define(tag, Extended);
+
+      expect(Extended.observedAttributes).toContain('playback-id');
+    });
+
+    it('defines property accessors for subclass-added properties', () => {
+      const Base = CustomMediaElement('video', TestVideoHost);
+      class Extended extends Base {
+        static properties = {
+          ...Base.properties,
+          playbackId: { type: String, attribute: 'playback-id' },
+        };
+      }
+
+      const tag = `test-video-${++tagCounter}`;
+      customElements.define(tag, Extended);
+
+      const el = new Extended();
+      document.body.appendChild(el);
+
+      el.setAttribute('playback-id', 'abc123');
+      expect((el as any).playbackId).toBe('abc123');
+    });
+
+    it('subclass property setter sets the attribute', () => {
+      const Base = CustomMediaElement('video', TestVideoHost);
+      class Extended extends Base {
+        static properties = {
+          ...Base.properties,
+          playbackId: { type: String, attribute: 'playback-id' },
+        };
+      }
+
+      const tag = `test-video-${++tagCounter}`;
+      customElements.define(tag, Extended);
+
+      const el = new Extended();
+      document.body.appendChild(el);
+
+      (el as any).playbackId = 'xyz789';
+      expect(el.getAttribute('playback-id')).toBe('xyz789');
+    });
+  });
 });

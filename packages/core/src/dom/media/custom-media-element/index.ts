@@ -85,17 +85,17 @@ type MediaHostConstructor<T> = Constructor<T> & {
   observedAttributes?: string[];
 };
 
-export function CustomMediaElement<T extends MediaHostConstructor<any>>(
-  tag: string,
-  MediaHost: T
-): Constructor<HTMLElement & InstanceType<T>> & {
+type CustomMediaConstructor<T> = Constructor<HTMLElement & T> & {
   properties: Record<string, { type: any; attribute?: string }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
-} {
-  const mediaHostAttrToProp = new Map<string, string>();
+};
 
+export function CustomMediaElement<T extends MediaHostConstructor<any>>(
+  tag: string,
+  MediaHost: T
+): CustomMediaConstructor<T> {
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
@@ -116,9 +116,11 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
       src: { type: String },
     };
     static #isDefined = false;
+    static #mediaHostAttrToProp = new Map<string, string>();
 
     static get observedAttributes() {
-      CustomMedia.#define();
+      // biome-ignore lint/complexity/noThisInStatic: resolves to the subclass that may override `properties`
+      CustomMedia.#define(this);
       return [
         // biome-ignore lint/complexity/noThisInStatic: intentional use of this
         ...getAttrsFromProps(this.properties),
@@ -126,12 +128,11 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
       ];
     }
 
-    static #define() {
+    static #define(ctor: typeof CustomMedia) {
       if (CustomMedia.#isDefined) return;
       CustomMedia.#isDefined = true;
 
-      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
-      const Attributes = getAttrsFromProps(this.properties);
+      const Attributes = getAttrsFromProps(ctor.properties);
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
@@ -159,7 +160,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
               // If explicitly observed by the media host, or it's a native attribute,
               // route through attributeChangedCallback.
               if (MediaHost.observedAttributes?.includes(attr) || Attributes.includes(attr)) {
-                mediaHostAttrToProp.set(attr, prop);
+                ctor.#mediaHostAttrToProp.set(attr, prop);
 
                 config.set = function (this: CustomMedia, val: any) {
                   if (val === true || val === false || val == null) {
@@ -180,8 +181,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
         }
       }
 
-      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
-      const properties = this.properties as Record<string, { type: any; attribute?: string }>;
+      const properties = ctor.properties as Record<string, { type: any; attribute?: string }>;
       for (const [prop, { type, attribute }] of Object.entries(properties)) {
         if (prop in CustomMedia.prototype) continue;
 
@@ -216,7 +216,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
         this.attachShadow(ctor.shadowRootOptions);
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
-        const disallowedKeys = [...mediaHostAttrToProp.keys()];
+        const disallowedKeys = [...ctor.#mediaHostAttrToProp.keys()];
         const attrs: Record<string, string> = omit(
           pick(namedNodeMapToObject(this.attributes), allowedKeys),
           disallowedKeys
@@ -269,7 +269,8 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
     };
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      const prop = mediaHostAttrToProp.get(attrName);
+      const ctor = this.constructor as typeof CustomMedia;
+      const prop = ctor.#mediaHostAttrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];

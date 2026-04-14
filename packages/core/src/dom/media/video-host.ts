@@ -12,22 +12,22 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
   }
 
   webkitEnterFullscreen() {
-    return (this.target as unknown as WebKitVideoElement).webkitEnterFullscreen?.();
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitEnterFullscreen?.();
   }
 
   webkitExitFullscreen() {
-    return (this.target as unknown as WebKitVideoElement).webkitExitFullscreen?.();
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitExitFullscreen?.();
   }
 
   webkitSetPresentationMode(mode: WebKitPresentationMode) {
-    return (this.target as unknown as WebKitVideoElement).webkitSetPresentationMode?.(mode);
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitSetPresentationMode?.(mode);
   }
 
   get webkitDisplayingFullscreen() {
-    return (this.target as unknown as WebKitVideoElement).webkitDisplayingFullscreen ?? false;
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitDisplayingFullscreen ?? false;
   }
 
   get webkitPresentationMode() {
-    return (this.target as unknown as WebKitVideoElement).webkitPresentationMode ?? 'inline';
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitPresentationMode ?? 'inline';
   }
 }

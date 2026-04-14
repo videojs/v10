@@ -1,8 +1,6 @@
 import { HlsMedia } from '../hls';
 import { MuxDataMediaMixin } from './mux-data';
 
-export { isMuxVideoSrc, toPlaybackIdFromSrc, toVideoId } from './mux-data';
-
 export class MuxVideoMedia extends MuxDataMediaMixin(HlsMedia) {
   static PLAYER_SOFTWARE_NAME = 'mux-video';
 }
