@@ -19,8 +19,8 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     }
 
     attach(target: EventTarget): void {
-      this.#init(target as HTMLMediaElement);
       super.attach?.(target);
+      this.#init(target as HTMLMediaElement);
     }
 
     detach(): void {
