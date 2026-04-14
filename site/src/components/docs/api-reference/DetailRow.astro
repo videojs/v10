@@ -32,7 +32,7 @@ const hasDetail = Boolean(attributeName || detailedType || description);
 
 <Tr
   id={id}
-  data-detail-row
+  data-apiref-row
   class={clsx(
     hasDetail &&
       "group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot",
@@ -46,7 +46,7 @@ const hasDetail = Boolean(attributeName || detailedType || description);
           aria-expanded="false"
           aria-controls={`${id}-detail`}
           aria-label={`Details for ${name}`}
-          data-detail-toggle
+          data-apiref-toggle
         >
           <span
             aria-hidden="true"
@@ -104,13 +104,13 @@ const hasDetail = Boolean(attributeName || detailedType || description);
 
 <script>
   document
-    .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
+    .querySelectorAll<HTMLButtonElement>("[data-apiref-toggle]")
     .forEach((button) => {
       button.addEventListener("click", () => {
         const expanded = button.getAttribute("aria-expanded") === "true";
         button.setAttribute("aria-expanded", String(!expanded));
 
-        const row = button.closest<HTMLTableRowElement>("[data-detail-row]");
+        const row = button.closest<HTMLTableRowElement>("[data-apiref-row]");
         if (row) row.toggleAttribute("data-expanded", !expanded);
 
         const detail = document.getElementById(
@@ -121,11 +121,11 @@ const hasDetail = Boolean(attributeName || detailedType || description);
     });
 
   document
-    .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
+    .querySelectorAll<HTMLTableRowElement>("[data-apiref-row]")
     .forEach((row) => {
       row.addEventListener("click", (e) => {
         if ((e.target as Element).closest("a, button")) return;
-        row.querySelector<HTMLButtonElement>("[data-detail-toggle]")?.click();
+        row.querySelector<HTMLButtonElement>("[data-apiref-toggle]")?.click();
       });
     });
 </script>

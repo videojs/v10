@@ -74,11 +74,12 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
       {
         presets.map((preset) => {
           const id = `preset-${preset.name}`;
+          const htmlMedia = htmlMediaElement(preset);
           return (
             <>
               <Tr
                 id={id}
-                data-detail-row
+                data-preset-row
                 class="group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot"
               >
                 <Td class="align-top">
@@ -94,7 +95,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                     aria-expanded="false"
                     aria-controls={`${id}-detail`}
                     aria-label={`Details for ${preset.name} preset`}
-                    data-detail-toggle
+                    data-preset-toggle
                   >
                     <span
                       aria-hidden="true"
@@ -140,30 +141,36 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       <dt class="font-bold">Skins</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
-                          {listFormat
-                            .formatToParts(
-                              preset.react.skins.map((s) => s.name),
-                            )
-                            .map((part) =>
-                              part.type === "element" ? (
-                                <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
-                              ) : (
-                                <span>{part.value}</span>
-                              ),
-                            )}
+                          {preset.react.skins.length > 0
+                            ? listFormat
+                                .formatToParts(
+                                  preset.react.skins.map((s) => s.name),
+                                )
+                                .map((part) =>
+                                  part.type === "element" ? (
+                                    <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
+                                  ) : (
+                                    <span>{part.value}</span>
+                                  ),
+                                )
+                            : "–"}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
-                          {listFormat
-                            .formatToParts(
-                              preset.html.skins.map((s) => s.tagName ?? s.name),
-                            )
-                            .map((part) =>
-                              part.type === "element" ? (
-                                <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
-                              ) : (
-                                <span>{part.value}</span>
-                              ),
-                            )}
+                          {preset.html.skins.length > 0
+                            ? listFormat
+                                .formatToParts(
+                                  preset.html.skins.map(
+                                    (s) => s.tagName ?? s.name,
+                                  ),
+                                )
+                                .map((part) =>
+                                  part.type === "element" ? (
+                                    <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
+                                  ) : (
+                                    <span>{part.value}</span>
+                                  ),
+                                )
+                            : "–"}
                         </FrameworkCase>
                       </dd>
 
@@ -173,8 +180,8 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                           <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
-                          {htmlMediaElement(preset) ? (
-                            <MarkdownCode>{`<${htmlMediaElement(preset)}>`}</MarkdownCode>
+                          {htmlMedia ? (
+                            <MarkdownCode>{`<${htmlMedia}>`}</MarkdownCode>
                           ) : (
                             "–"
                           )}
@@ -194,13 +201,13 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
 
 <script>
   document
-    .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
+    .querySelectorAll<HTMLButtonElement>("[data-preset-toggle]")
     .forEach((button) => {
       button.addEventListener("click", () => {
         const expanded = button.getAttribute("aria-expanded") === "true";
         button.setAttribute("aria-expanded", String(!expanded));
 
-        const row = button.closest<HTMLTableRowElement>("[data-detail-row]");
+        const row = button.closest<HTMLTableRowElement>("[data-preset-row]");
         if (row) row.toggleAttribute("data-expanded", !expanded);
 
         const detail = document.getElementById(
@@ -211,11 +218,11 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
     });
 
   document
-    .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
+    .querySelectorAll<HTMLTableRowElement>("[data-preset-row]")
     .forEach((row) => {
       row.addEventListener("click", (e) => {
         if ((e.target as Element).closest("a, button")) return;
-        row.querySelector<HTMLButtonElement>("[data-detail-toggle]")?.click();
+        row.querySelector<HTMLButtonElement>("[data-preset-toggle]")?.click();
       });
     });
 </script>
