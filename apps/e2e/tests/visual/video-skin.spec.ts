@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { DATA_ATTRS, SELECTORS } from '../../fixtures/selectors';
-
 import { PlayerPage } from '../../page-objects/player';
 
 /**
@@ -50,3 +49,24 @@ for (const { name, path } of VISUAL_PAGES) {
     });
   });
 }
+
+// --- Mobile viewport snapshot (375×667) ---
+
+test.describe('Visual — Mobile Layout', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  let player: PlayerPage;
+
+  test.beforeEach(async ({ page }) => {
+    player = new PlayerPage(page);
+    await page.goto('/html-video-mp4.html');
+    await player.waitForMediaReady();
+  });
+
+  test('mobile layout', async ({ page }) => {
+    await player.showControls();
+    await page.waitForTimeout(300);
+
+    await expect(player.playerRoot).toHaveScreenshot('mobile-default.png');
+  });
+});
