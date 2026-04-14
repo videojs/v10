@@ -1,5 +1,133 @@
 # Changelog
 
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.17...@videojs/react@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Features
+
+* add background video components ([#567](https://github.com/videojs/v10/issues/567)) ([fd14f0c](https://github.com/videojs/v10/commit/fd14f0cb17c2fd1752c82d29252296492ed1568f))
+* add background video preset ([#607](https://github.com/videojs/v10/issues/607)) ([c2bc488](https://github.com/videojs/v10/commit/c2bc488366fd28f9a6d00dd28a4f790b5e1400ed))
+* add DashVideo media element (html, react) with sandbox support ([#940](https://github.com/videojs/v10/issues/940)) ([5bdbbec](https://github.com/videojs/v10/commit/5bdbbec8a0f69b4be89600287c63a04746b7ba49))
+* add media API + HLS video components ([#507](https://github.com/videojs/v10/issues/507)) ([b3a31a3](https://github.com/videojs/v10/commit/b3a31a335a363d3a96b510206b57d1bb9ebb8edd))
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+* add slider preview thumbnails ([#935](https://github.com/videojs/v10/issues/935)) ([e3f438e](https://github.com/videojs/v10/commit/e3f438e9f488f41c8cf51c95507bc41fc5b524d0))
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+* **core:** add buffering indicator component ([#527](https://github.com/videojs/v10/issues/527)) ([aa0fb7c](https://github.com/videojs/v10/commit/aa0fb7ca704843dd6ac8b0b18d9e35f8f430311e))
+* **core:** add controls component with activity tracking ([#514](https://github.com/videojs/v10/issues/514)) ([90d881c](https://github.com/videojs/v10/commit/90d881cec21d7f5e1e619061727e6c8d1ff48296))
+* **core:** add pip button component ([#525](https://github.com/videojs/v10/issues/525)) ([2c8b77a](https://github.com/videojs/v10/commit/2c8b77af4547b0a8af27abcc419f7d4dff3b005a))
+* **core:** add poster component ([#457](https://github.com/videojs/v10/issues/457)) ([c9ba1e1](https://github.com/videojs/v10/commit/c9ba1e1bfc83e02981a2ffad0a0f247092068687))
+* **core:** add seek button component ([#526](https://github.com/videojs/v10/issues/526)) ([c733077](https://github.com/videojs/v10/commit/c733077d324b3cd40eab7c0e33f1f73592609515))
+* **html:** add `<media-gesture>` element ([#1305](https://github.com/videojs/v10/issues/1305)) ([d2782f0](https://github.com/videojs/v10/commit/d2782f0c8d3e927fc2144a5286f4bc795a2ed4ac))
+* **html:** add alert dialog element ([#741](https://github.com/videojs/v10/issues/741)) ([5fc52aa](https://github.com/videojs/v10/commit/5fc52aa969292a8b8f636b532ac5ff27b082b222))
+* **html:** add data-availability to volume slider ([#1001](https://github.com/videojs/v10/issues/1001)) ([c95e134](https://github.com/videojs/v10/commit/c95e1343e16c8667f6b7f5560d12ec5f36f1acd8))
+* **html:** add slider element ([#655](https://github.com/videojs/v10/issues/655)) ([d5df015](https://github.com/videojs/v10/commit/d5df0150b3aef21c15d3a65c015bb6058e95ce53))
+* **html:** add time slider element ([#656](https://github.com/videojs/v10/issues/656)) ([26c7395](https://github.com/videojs/v10/commit/26c7395cd0fe7e2fe8a8020ffae40cf81ffb3974))
+* **html:** add volume slider element ([#657](https://github.com/videojs/v10/issues/657)) ([92b7c2a](https://github.com/videojs/v10/commit/92b7c2ac184d12c780ba1a1bb6f064782b77422a))
+* **html:** refactor attach contexts to carry state and setter ([#1024](https://github.com/videojs/v10/issues/1024)) ([c07da27](https://github.com/videojs/v10/commit/c07da27ead58f2d08b93036af49515800c944f16))
+* **packages:** add gesture bindings to default skins and presets ([#1310](https://github.com/videojs/v10/issues/1310)) ([1509a66](https://github.com/videojs/v10/commit/1509a66f60fc0598452f21af396c4b6f3569be5b))
+* **packages:** add hotkey bindings to preset skins ([#1264](https://github.com/videojs/v10/issues/1264)) ([9912a8e](https://github.com/videojs/v10/commit/9912a8e7593dc9f26c6dfe5cd8ddca34ef89a8ef))
+* **packages:** add mux-audio element and react component ([#1259](https://github.com/videojs/v10/issues/1259)) ([9fac0fc](https://github.com/videojs/v10/commit/9fac0fca3d5af44c76c9845da37b5197dd8538df))
+* **packages:** add PlaybackRateButton to core, html, and react ([#642](https://github.com/videojs/v10/issues/642)) ([0180828](https://github.com/videojs/v10/commit/0180828df91ad74f885906223fa7d359f1a2641a))
+* **packages:** add poster component to video skins ([#994](https://github.com/videojs/v10/issues/994)) ([59bbf6c](https://github.com/videojs/v10/commit/59bbf6c20924ec04e559fe23cbc1a0ad8c8ca080))
+* **packages:** error dialog component ([#1077](https://github.com/videojs/v10/issues/1077)) ([3430fe1](https://github.com/videojs/v10/commit/3430fe1a493e4bee34f03112206a0cb3cf9d88cf))
+* **packages:** export media component building blocks ([#1098](https://github.com/videojs/v10/issues/1098)) ([bc2929e](https://github.com/videojs/v10/commit/bc2929ef4fc7ed021c91d96b96498870ecf5e4e5))
+* **packages:** volume slider scroll support ([#1175](https://github.com/videojs/v10/issues/1175)) ([390b004](https://github.com/videojs/v10/commit/390b004d809272fd453b8a73e1969c59410c3620))
+* **react:** add alert dialog component ([#739](https://github.com/videojs/v10/issues/739)) ([536c86d](https://github.com/videojs/v10/commit/536c86d9d1b648f4e1b94b7a55b17735cc0ea03c))
+* **react:** add alert dialog to video skin ([#747](https://github.com/videojs/v10/issues/747)) ([5dfc67e](https://github.com/videojs/v10/commit/5dfc67ed02d92512b500c4461898050988e291a8))
+* **react:** add captions styling to video skins ([#582](https://github.com/videojs/v10/issues/582)) ([b78c6ce](https://github.com/videojs/v10/commit/b78c6ce7b1942cd00b737059f19bb37dc7585bec))
+* **react:** add gesture hooks and MediaGesture component ([#1309](https://github.com/videojs/v10/issues/1309)) ([8566260](https://github.com/videojs/v10/commit/8566260872804b2504d9f6f303d87457c7420d66))
+* **react:** add hotkeys ([#1241](https://github.com/videojs/v10/issues/1241)) ([1cc4ec7](https://github.com/videojs/v10/commit/1cc4ec7f81acda2aa77590b2f327b2f76b823767))
+* **react:** add playback rate button component ([#639](https://github.com/videojs/v10/issues/639)) ([3305fb3](https://github.com/videojs/v10/commit/3305fb3db6f3c89a2ff4fcc3f657e54ddfcbc700))
+* **react:** add popover component ([#653](https://github.com/videojs/v10/issues/653)) ([ed43d52](https://github.com/videojs/v10/commit/ed43d52f8fa347acb9dd62f8458a8324e3506fd1))
+* **react:** add slider component ([#644](https://github.com/videojs/v10/issues/644)) ([2f8ca09](https://github.com/videojs/v10/commit/2f8ca094ad5bc5bafc5435c2e97bca58c6d29b5d))
+* **react:** add slider preview component ([#710](https://github.com/videojs/v10/issues/710)) ([db75697](https://github.com/videojs/v10/commit/db7569711e5a571f6af421987c8490c3de37ed78))
+* **react:** add slider thumbnail component ([#722](https://github.com/videojs/v10/issues/722)) ([a6405e9](https://github.com/videojs/v10/commit/a6405e9278bc6e627cc1186f2af227941a1e55c0))
+* **react:** add Tailwind ejected video skins ([#589](https://github.com/videojs/v10/issues/589)) ([8763a57](https://github.com/videojs/v10/commit/8763a57360198d3b624363af00563469bb5fd180))
+* **react:** add thumbnail component ([#648](https://github.com/videojs/v10/issues/648)) ([40606ff](https://github.com/videojs/v10/commit/40606ff1885f44138fe7f70abcda6ef3bee32413))
+* **react:** add time slider component ([#647](https://github.com/videojs/v10/issues/647)) ([158378a](https://github.com/videojs/v10/commit/158378ac731db302b3d1f309de9d93f0f8fc92f2))
+* **react:** add tooltip component ([#736](https://github.com/videojs/v10/issues/736)) ([ae754ee](https://github.com/videojs/v10/commit/ae754eec8f3136be08026e08fbf404b4f0f7126e))
+* **react:** implement default and minimal video skins ([#550](https://github.com/videojs/v10/issues/550)) ([7d3be36](https://github.com/videojs/v10/commit/7d3be367f5b31b8a6d5b9a9e3c87245f95b8e22a))
+* **react:** implement video skins with responsive layout ([#568](https://github.com/videojs/v10/issues/568)) ([846d38e](https://github.com/videojs/v10/commit/846d38e79b11ba8de62bdb239bc1358e9abc28de))
+* **react:** initial skin scaffolding ([#523](https://github.com/videojs/v10/issues/523)) ([edefc2a](https://github.com/videojs/v10/commit/edefc2a2d63e2124d0a11a15f44bd7109c6d9788))
+* **react:** orientation-aware buffer styling and slider improvements ([#671](https://github.com/videojs/v10/issues/671)) ([86b2f4d](https://github.com/videojs/v10/commit/86b2f4d3b426ce8747af234f2d0f4c4a3ec402ec))
+* **react:** port time slider styling into video skin presets ([#666](https://github.com/videojs/v10/issues/666)) ([ebb75f5](https://github.com/videojs/v10/commit/ebb75f5863f137511f6fc75bb7fbf528d45b0d9b))
+* **react:** port volume popover and slider styling into skin presets ([#667](https://github.com/videojs/v10/issues/667)) ([6a1edda](https://github.com/videojs/v10/commit/6a1eddadd00b5d9aee45fb774b3d8f953d5c6dcd))
+* **react:** support native caption track shifting in video skins ([#636](https://github.com/videojs/v10/issues/636)) ([ac346db](https://github.com/videojs/v10/commit/ac346dbbd68443558ae16e4c81a28c8c605ae687))
+* **site:** add buffering indicator api reference ([84b7b07](https://github.com/videojs/v10/commit/84b7b0774a1fb655f4cb7f6a87e589097a661685)), closes [#532](https://github.com/videojs/v10/issues/532) [#533](https://github.com/videojs/v10/issues/533)
+* **site:** add TimeSlider, VolumeSlider, Popover API references ([#685](https://github.com/videojs/v10/issues/685)) ([8ab596e](https://github.com/videojs/v10/commit/8ab596ea30291d48962684203d153c689e1b0fec))
+* **site:** add util reference pipeline ([#537](https://github.com/videojs/v10/issues/537)) ([78112fb](https://github.com/videojs/v10/commit/78112fbefdaace678a2d1335409e40533f3819fa))
+* **skin:** add audio skins for HTML and React presets ([#772](https://github.com/videojs/v10/issues/772)) ([d751fda](https://github.com/videojs/v10/commit/d751fdabea9782b9f6c73aaebfb93ed393e488f7))
+* **skin:** add captions button to video skins ([#612](https://github.com/videojs/v10/issues/612)) ([fbf888f](https://github.com/videojs/v10/commit/fbf888fda3ed33d0893321b6b4cac19cfdbd6d97))
+* **skin:** add error dialogs ([#603](https://github.com/videojs/v10/issues/603)) ([ba94f74](https://github.com/videojs/v10/commit/ba94f74b91e09ce7ffd4a666562d555b3fbd2fb9))
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+* **skin:** add pip-enter and pip-exit icons ([#1015](https://github.com/videojs/v10/issues/1015)) ([81781ca](https://github.com/videojs/v10/commit/81781ca5854f4943b533073b1875b127308a5419))
+* **skin:** implement default and minimal skins for HTML player ([#698](https://github.com/videojs/v10/issues/698)) ([c5cafae](https://github.com/videojs/v10/commit/c5cafae57ff34d13f79d11862b82f10414bdcd40))
+* **skin:** port tooltip styling from tech preview ([#800](https://github.com/videojs/v10/issues/800)) ([6b6566e](https://github.com/videojs/v10/commit/6b6566e2540b4ad9fcd9b2a8e6c767f5f7e4072f))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+* **spf:** initial push of SPF ([#784](https://github.com/videojs/v10/issues/784)) ([27a3993](https://github.com/videojs/v10/commit/27a3993fb20af0523e42b0d03c70a6f5a465d144))
+
+
+### Bug Fixes
+
+* **cd:** add repository field to all packages for provenance verification ([b723589](https://github.com/videojs/v10/commit/b72358904a78a9403df16d77936d4a1f41a64bfe))
+* **ci:** rework bundle size report ([#745](https://github.com/videojs/v10/issues/745)) ([9f456f5](https://github.com/videojs/v10/commit/9f456f572f340f88b7e3e57316dd284e48631f78))
+* **core:** fix circular import and simplify media types ([#569](https://github.com/videojs/v10/issues/569)) ([38b3a8f](https://github.com/videojs/v10/commit/38b3a8f55ca96938db92fa06c0d171bf544ffe3b))
+* **core:** prevent slider thumb jump on pointer release ([#990](https://github.com/videojs/v10/issues/990)) ([b9bada9](https://github.com/videojs/v10/commit/b9bada95675f09b7c7d6859dcd213be7a0408bb7))
+* correct popup fallback positioning offsets ([#981](https://github.com/videojs/v10/issues/981)) ([82ede77](https://github.com/videojs/v10/commit/82ede77322204500d7ca0adc5cb24d4f068af462))
+* destroy hls.js instance on media unmount ([#749](https://github.com/videojs/v10/issues/749)) ([c4e8bbd](https://github.com/videojs/v10/commit/c4e8bbd3a2bcb66027c64faf8de0ec61d22c84fa))
+* **docs:** improvements to eject script ([#1012](https://github.com/videojs/v10/issues/1012)) ([559d516](https://github.com/videojs/v10/commit/559d5169b5783992ec792cdb7037c3119cad3e5b))
+* **html,react:** move @videojs/skins to devDependencies ([#716](https://github.com/videojs/v10/issues/716)) ([55b49ef](https://github.com/videojs/v10/commit/55b49efd82281815abe1e26eb764dfe914bb8208))
+* **html:** discover media elements and attach store target via DOM ([#481](https://github.com/videojs/v10/issues/481)) ([5eab1db](https://github.com/videojs/v10/commit/5eab1dbb2fbb906543f7749e5956c9791c30be34))
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+* **packages:** consistent react versions ([#1285](https://github.com/videojs/v10/issues/1285)) ([1c937da](https://github.com/videojs/v10/commit/1c937da4704d51c0c64e5085b6f235bb95a236eb))
+* **packages:** enable unbundle mode to avoid mangled exports ([00fdf96](https://github.com/videojs/v10/commit/00fdf966ca5148bcca303058dd798b1b880896e0))
+* **packages:** make tooltips visual-only and auto-forward media button labels ([#1174](https://github.com/videojs/v10/issues/1174)) ([86cf3e8](https://github.com/videojs/v10/commit/86cf3e8977719fbbdcd59244a543fdd8412c4484))
+* **packages:** narrow react peer dependency to v18+ ([#1289](https://github.com/videojs/v10/issues/1289)) ([6fb6ab7](https://github.com/videojs/v10/commit/6fb6ab7dfb4ac2671bfac4269dfc5813ab76f0e8))
+* **packages:** remove redundant "Shift" modifier from playback rate hotkeys ([#1290](https://github.com/videojs/v10/issues/1290)) ([a0fd3cb](https://github.com/videojs/v10/commit/a0fd3cbda8101f47806e0e71c727fbf483a1de66))
+* **packages:** set release-please manifest and package versions to beta.0 ([#850](https://github.com/videojs/v10/issues/850)) ([e085a0d](https://github.com/videojs/v10/commit/e085a0d73af0c142e0c0a371337daae98fdbaac9))
+* **packages:** time slider seek improvements ([#1291](https://github.com/videojs/v10/issues/1291)) ([b934c58](https://github.com/videojs/v10/commit/b934c589f824b0ed7338b19c2b3bad3160742e74))
+* **packages:** update package READMEs for beta ([#848](https://github.com/videojs/v10/issues/848)) ([9562a0e](https://github.com/videojs/v10/commit/9562a0ecca212034759d7cc948d4b3f0bc7a19c3))
+* **react:** add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/issues/1096)) ([1792bae](https://github.com/videojs/v10/commit/1792bae3b4cad5cbb89038e3fa10212f24b49e6b))
+* **react:** align media component conventions ([#1281](https://github.com/videojs/v10/issues/1281)) ([42abf88](https://github.com/videojs/v10/commit/42abf880955ec68d2c700eaa9bcf18b69c37471c))
+* **react:** correct buffer selector names in minimal skin CSS ([#672](https://github.com/videojs/v10/issues/672)) ([12277fd](https://github.com/videojs/v10/commit/12277fdac89cc1251f1518b92411f15d1386793a))
+* **react:** move @videojs/icons to devDependencies ([f09c686](https://github.com/videojs/v10/commit/f09c6861c1b2398e3f2ce2c1e711f5e08dfa1421))
+* **react:** set anchor-name and position-anchor imperatively in popover ([#715](https://github.com/videojs/v10/issues/715)) ([070d094](https://github.com/videojs/v10/commit/070d0944448fae4fd8ec140a13c5c073c31ccdc4))
+* **react:** strict mode support ([#742](https://github.com/videojs/v10/issues/742)) ([44d874d](https://github.com/videojs/v10/commit/44d874ddc225b9b8aaf6d8689bdb48ef0ac729fb))
+* **react:** thumbnails broken when using hls media ([#1210](https://github.com/videojs/v10/issues/1210)) ([8b571f5](https://github.com/videojs/v10/commit/8b571f5f05566f52deea866f4a64a7408d6c2c21))
+* **react:** use relative import path for useForceRender ([#669](https://github.com/videojs/v10/issues/669)) ([e3d7f4b](https://github.com/videojs/v10/commit/e3d7f4b277182a32ae57b4ce73fa190d774c5730))
+* revert preset provider ([#631](https://github.com/videojs/v10/issues/631)) ([5f1cafa](https://github.com/videojs/v10/commit/5f1cafaa25b8a58e06aae00f2ea1495c2aae2916))
+* **site:** resolve aliased part descriptions in api docs ([#518](https://github.com/videojs/v10/issues/518)) ([8294404](https://github.com/videojs/v10/commit/82944041f903ead4bb8afbce35fbfb7977caa23b))
+* **skin:** add missing tooltip provider/group ([#902](https://github.com/videojs/v10/issues/902)) ([1dbcd79](https://github.com/videojs/v10/commit/1dbcd79e541fce77021645d012fb3554d241b16b))
+* **skin:** extract transition properties into CSS custom properties ([#1075](https://github.com/videojs/v10/issues/1075)) ([657e711](https://github.com/videojs/v10/commit/657e7111b423ac2d2a1d0c6422b88297f40e2b04))
+* **skin:** hide volume popover when volume control is unsupported ([#1025](https://github.com/videojs/v10/issues/1025)) ([c09dbdd](https://github.com/videojs/v10/commit/c09dbdd121f2b8bb01e42d79350bf7a7acf09f28))
+* **skin:** responsive design fixes and improvements ([#1129](https://github.com/videojs/v10/issues/1129)) ([1082693](https://github.com/videojs/v10/commit/10826932be7861ebf5df8c66db7811c0510339f4))
+* **skins:** remove legacy caption markup artifacts ([#882](https://github.com/videojs/v10/issues/882)) ([85266ba](https://github.com/videojs/v10/commit/85266bab3b5b01a6cf6d769a16f662bffa57c208))
+* **skin:** temporarily hide the caption button ([#629](https://github.com/videojs/v10/issues/629)) ([0666d52](https://github.com/videojs/v10/commit/0666d526b1eb4de6af12a7710e119c588019c19f))
+* **spf:** implement preload IDL attribute on SpfMedia ([#1069](https://github.com/videojs/v10/issues/1069)) ([04f81a2](https://github.com/videojs/v10/commit/04f81a26e13648ca414f2e51380c8786a06a7724))
+
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.18
+    * @videojs/spf bumped to 10.0.0-beta.18
+    * @videojs/store bumped to 10.0.0-beta.18
+    * @videojs/utils bumped to 10.0.0-beta.18
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.18
+    * @videojs/skins bumped to 10.0.0-beta.18
+
 ## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.16...@videojs/react@10.0.0-beta.17) (2026-04-11)
 
 

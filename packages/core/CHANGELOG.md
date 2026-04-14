@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.17...@videojs/core@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Bug Fixes
+
+* **core:** ignore non-primary pointer buttons in tap gesture ([#1329](https://github.com/videojs/v10/issues/1329)) ([c7d4021](https://github.com/videojs/v10/commit/c7d4021bdea316d07b50706e0b8048eeedf74537))
+* **core:** reduce doubletap window from 300ms to 200ms ([#1328](https://github.com/videojs/v10/issues/1328)) ([8bce342](https://github.com/videojs/v10/commit/8bce3428901a5a949c5bfb8815cc2b051317bb2a))
+* **packages:** ignore gestures on interactive child elements ([#1327](https://github.com/videojs/v10/issues/1327)) ([b768c29](https://github.com/videojs/v10/commit/b768c29f98043a41c6272683e240bf1948238042))
+
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.18
+    * @videojs/store bumped to 10.0.0-beta.18
+    * @videojs/utils bumped to 10.0.0-beta.18
+
 ## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.16...@videojs/core@10.0.0-beta.17) (2026-04-11)
 
 

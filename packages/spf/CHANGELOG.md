@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.17...@videojs/spf@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.18
+
 ## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.16...@videojs/spf@10.0.0-beta.17) (2026-04-11)
 
 

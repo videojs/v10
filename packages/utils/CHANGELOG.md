@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.17...@videojs/utils@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Bug Fixes
+
+* **packages:** ignore gestures on interactive child elements ([#1327](https://github.com/videojs/v10/issues/1327)) ([b768c29](https://github.com/videojs/v10/commit/b768c29f98043a41c6272683e240bf1948238042))
+
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
 ## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.16...@videojs/utils@10.0.0-beta.17) (2026-04-11)
 
 
