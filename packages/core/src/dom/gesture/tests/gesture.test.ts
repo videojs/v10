@@ -48,6 +48,30 @@ describe('createTapGesture', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('does not fire on secondary button (right-click)', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container, { button: 2 });
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150, button: 2 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not fire on auxiliary button (middle-click)', () => {
+    const container = setup();
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(container, { button: 1 });
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150, button: 1 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('does not fire when disabled', () => {
     const container = setup();
     const handler = vi.fn();
@@ -456,13 +480,16 @@ describe('interactive child filtering', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function pointerDown(target: HTMLElement): void {
-  target.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+function pointerDown(target: HTMLElement, init: { button?: number } = {}): void {
+  const event = new Event('pointerdown', { bubbles: true });
+  Object.defineProperty(event, 'button', { value: init.button ?? 0 });
+  target.dispatchEvent(event);
 }
 
-function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: number }): void {
+function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: number; button?: number }): void {
   const event = new Event('pointerup', { bubbles: true });
   Object.defineProperty(event, 'pointerType', { value: init.pointerType });
   Object.defineProperty(event, 'clientX', { value: init.clientX });
+  Object.defineProperty(event, 'button', { value: init.button ?? 0 });
   target.dispatchEvent(event);
 }
