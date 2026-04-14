@@ -50,6 +50,38 @@ for (const { name, path } of VISUAL_PAGES) {
   });
 }
 
+// --- Captions snapshot (dedicated page with subtitle track baked in) ---
+
+test.describe('Visual — Captions', () => {
+  let player: PlayerPage;
+
+  test.beforeEach(async ({ page }) => {
+    player = new PlayerPage(page);
+    await page.goto('/html-video-captions.html');
+    await player.waitForMediaReady();
+  });
+
+  test('captions enabled', async ({ page }) => {
+    // Captions button should be available (subtitle track is in the HTML)
+    const captionsBtn = page.locator(SELECTORS.captionsButton).first();
+    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'available', {
+      timeout: 5_000,
+    });
+
+    // Enable captions
+    await captionsBtn.click();
+    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.active, '');
+
+    // Play briefly so the caption cue at 0:00 activates, then pause
+    await player.play();
+    await page.waitForTimeout(500);
+    await player.pause();
+    await player.showControls();
+
+    await expect(player.playerRoot).toHaveScreenshot('captions-enabled.png');
+  });
+});
+
 // --- Mobile viewport snapshot (375×667) ---
 
 test.describe('Visual — Mobile Layout', () => {

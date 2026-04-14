@@ -109,14 +109,3 @@ export const CDN_VIDEO_PAGES = [
 // ---------------------------------------------------------------------------
 
 export const ALL_VIDEO_PAGES = [...VIDEO_PAGES, ...EJECTED_VIDEO_PAGES, ...CDN_VIDEO_PAGES] as const;
-
-/** Pages that include storyboard tracks. */
-export const STORYBOARD_PAGES = [
-  { name: 'HTML Video MP4', path: '/html-video-mp4.html', resource: 'mp4' },
-  { name: 'React Video MP4', path: '/react-video-mp4.html', resource: 'mp4' },
-  { name: 'HTML Video HLS', path: '/html-video-hls.html', resource: 'hlsTs' },
-  { name: 'React Video HLS', path: '/react-video-hls.html', resource: 'hlsTs' },
-  { name: 'HTML Simple HLS Video fMP4', path: '/html-simple-hls-video-fmp4.html', resource: 'hlsFmp4' },
-  { name: 'CDN Video MP4', path: '/cdn-video-mp4.html', resource: 'mp4' },
-  { name: 'CDN Video HLS', path: '/cdn-video-hls.html', resource: 'hlsTs' },
-] as const;
