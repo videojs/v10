@@ -170,6 +170,12 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
+/**
+ * Packages excluded from metadata checks.
+ * CLI is bin-only — sideEffects/exports don't apply.
+ */
+const METADATA_EXCLUDE = new Set(['cli']);
+
 function checkPackageMetadata() {
   const warnings = [];
 
@@ -178,6 +184,9 @@ function checkPackageMetadata() {
 
     // Skip private packages — they're internal.
     if (pkg.private) continue;
+
+    // Skip packages that don't need library metadata.
+    if (METADATA_EXCLUDE.has(dir)) continue;
 
     // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {

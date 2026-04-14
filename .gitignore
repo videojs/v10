@@ -33,6 +33,7 @@ site/src/content/generated-api-reference/
 site/src/content/generated-component-reference/
 site/src/content/generated-util-reference/
 site/src/content/ejected-skins.json
+packages/cli/docs/
 
 # -------------------------
 # Environment

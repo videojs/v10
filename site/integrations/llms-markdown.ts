@@ -34,6 +34,21 @@ export default function llmsMarkdown(): AstroIntegration {
           emDelimiter: '*',
         });
 
+        // Ensure [data-llms-only] content passes through despite hidden attribute
+        turndown.addRule('llms-only', {
+          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-llms-only') !== null,
+          replacement: (content) => content,
+        });
+
+        // Wrap [data-cli-replace] content with text markers the CLI can find and replace
+        turndown.addRule('cli-replace', {
+          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
+          replacement: (content, node) => {
+            const id = (node as Element).getAttribute('data-cli-replace');
+            return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
+          },
+        });
+
         // Track all docs and blog pages for llms.txt index
         const docsPages: PageEntry[] = [];
         const blogPages: PageEntry[] = [];

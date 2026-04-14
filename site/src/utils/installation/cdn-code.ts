@@ -1,4 +1,4 @@
-import type { Renderer, Skin, UseCase } from '@/stores/installation';
+import type { Renderer, Skin, UseCase } from '@/utils/installation/types';
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 
