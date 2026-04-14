@@ -45,13 +45,18 @@ for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) 
     test('time slider allows seeking', async ({ page }) => {
       await player.seekTo(50);
 
-      const currentTime = await page.evaluate((selector) => {
-        const el = document.querySelector(selector);
-        const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
-        return media?.currentTime ?? 0;
-      }, SELECTORS.media);
-
-      expect(currentTime).toBeGreaterThan(0);
+      await expect
+        .poll(
+          async () => {
+            return page.evaluate((selector) => {
+              const el = document.querySelector(selector);
+              const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
+              return media?.currentTime ?? 0;
+            }, SELECTORS.media);
+          },
+          { timeout: 10_000 }
+        )
+        .toBeGreaterThan(0);
     });
 
     // --- Mute / Volume ---

@@ -11,7 +11,7 @@ function getPageEntries(): Record<string, string> {
   for (const entry of readdirSync(srcDir)) {
     const htmlFile = resolve(srcDir, entry);
 
-    if (entry.endsWith('.html') && statSync(htmlFile).isFile()) {
+    if (entry.endsWith('.html') && entry !== 'index.html' && statSync(htmlFile).isFile()) {
       const name = entry.replace('.html', '');
       entries[name] = htmlFile;
     }

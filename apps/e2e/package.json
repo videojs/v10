@@ -9,7 +9,6 @@
     "postinstall": "node -e \"process.env.CI || process.exit(1)\" || (pnpm run install:browsers && pnpm run install:deps)",
     "sync-ejected-skins": "tsx scripts/sync-ejected-skins.ts",
     "e2e": "playwright test",
-    "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui",

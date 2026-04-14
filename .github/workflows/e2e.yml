@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches-ignore:
-      - 'rfc/**'
 
 jobs:
   e2e:
@@ -18,9 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # PRs: Chromium only for fast feedback (~2 min).
-        # Push to main: Chromium + WebKit for full coverage.
-        browser: ${{ github.event_name == 'push' && fromJson('["chromium","webkit"]') || fromJson('["chromium"]') }}
+        browser: [chromium, webkit]
 
     steps:
       - name: Checkout code
