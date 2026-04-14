@@ -39,7 +39,9 @@ class NativeHlsMediaBase extends HTMLVideoElementHost {
     super.detach();
   }
 
-  destroy() {}
+  destroy() {
+    this.detach();
+  }
 }
 
 export class NativeHlsMedia extends NativeHlsMediaErrorsMixin(NativeHlsMediaBase) {}

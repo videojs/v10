@@ -40,6 +40,7 @@ export class DashMedia
   }
 
   destroy() {
+    this.detach();
     this.#engine.destroy();
   }
 }
