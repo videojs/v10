@@ -9,7 +9,7 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/cli"
   },
-  "bin": "./dist/index.js",
+  "bin": "./dist/index.mjs",
   "files": [
     "dist",
     "docs"
