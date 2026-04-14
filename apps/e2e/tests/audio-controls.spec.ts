@@ -1,9 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { AUDIO_PAGES } from '../fixtures/media';
+import { AUDIO_PAGES, type PageEntry } from '../fixtures/media';
+import { SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path } of AUDIO_PAGES) {
+for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) {
   test.describe(`Audio Controls — ${name}`, () => {
+    test.skip(({ browserName }) => {
+      return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
+    }, `Skipped on this browser`);
     let player: PlayerPage;
 
     test.beforeEach(async ({ page }) => {
@@ -41,11 +45,11 @@ for (const { name, path } of AUDIO_PAGES) {
     test('time slider allows seeking', async ({ page }) => {
       await player.seekTo(50);
 
-      const currentTime = await page.evaluate(() => {
-        const el = document.querySelector('video, audio, hls-video, simple-hls-video, native-hls-video, dash-video');
+      const currentTime = await page.evaluate((selector) => {
+        const el = document.querySelector(selector);
         const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
         return media?.currentTime ?? 0;
-      });
+      }, SELECTORS.media);
 
       expect(currentTime).toBeGreaterThan(0);
     });

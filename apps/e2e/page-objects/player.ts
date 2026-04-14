@@ -113,13 +113,12 @@ export class PlayerPage {
     // SPF-based renderers (simple-hls-video) with preload="metadata" need
     // time to resolve the manifest before seeks or other interactions work.
     await this.page.waitForFunction(
-      () => {
-        const media = document.querySelector(
-          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
-        ) as HTMLMediaElement | null;
+      (selector) => {
+        const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
         return actual && actual.readyState >= 1;
       },
+      SELECTORS.media,
       { timeout: 20_000 }
     );
 
@@ -127,13 +126,11 @@ export class PlayerPage {
       // Mute the media element to prevent audio during test runs.
       // Chromium supports --mute-audio but WebKit has no browser-level
       // equivalent, so we mute the renderer directly for cross-browser silence.
-      await this.page.evaluate(() => {
-        const media = document.querySelector(
-          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
-        ) as HTMLMediaElement | null;
+      await this.page.evaluate((selector) => {
+        const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
         if (actual) actual.muted = true;
-      });
+      }, SELECTORS.media);
     }
   }
 
@@ -158,13 +155,12 @@ export class PlayerPage {
     // On WebKit, seeking with no buffered data resolves to currentTime 0
     // instead of the requested position.
     await this.page.waitForFunction(
-      () => {
-        const media = document.querySelector(
-          'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
-        ) as HTMLMediaElement | null;
+      (selector) => {
+        const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
         return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
+      SELECTORS.media,
       { timeout: 30_000 }
     );
 

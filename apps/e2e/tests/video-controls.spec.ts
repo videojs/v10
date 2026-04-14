@@ -1,9 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { ALL_VIDEO_PAGES } from '../fixtures/media';
+import { ALL_VIDEO_PAGES, type PageEntry } from '../fixtures/media';
+import { SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path, mediaRenderer } of ALL_VIDEO_PAGES) {
+for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
   test.describe(`Video Controls — ${name}`, () => {
+    test.skip(({ browserName }) => {
+      return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
+    }, `Skipped on this browser`);
     let player: PlayerPage;
 
     test.beforeEach(async ({ page }) => {
@@ -39,14 +43,13 @@ for (const { name, path, mediaRenderer } of ALL_VIDEO_PAGES) {
     });
 
     test('seek forward advances playback', async () => {
-      // SPF (simple-hls-video) doesn't currently support seek before playback.
-      // With preload="metadata" the manifest resolves and duration is available,
-      // but no segment data is buffered. Setting currentTime fires 'seeking' but
-      // 'seeked' never fires because there's no data at the target position.
-      // Since data-started syncs on 'seeked', it's never set.
-      // This should eventually be supported — remove this skip when SPF handles
-      // seek-before-playback (e.g. by buffering on-demand for the target segment).
-      test.skip(mediaRenderer === 'simple-hls-video', 'SPF: seek before playback not yet supported');
+      // Renderers that rely on native <video> src or SPF can't complete seeks
+      // before playback — no segment data is buffered at the target position so
+      // 'seeked' never fires and data-started is never set.
+      test.skip(
+        mediaRenderer === 'simple-hls-video' || mediaRenderer === 'native-hls-video',
+        'seek before playback not yet supported'
+      );
 
       await player.seekForward.click();
       await expect(player.playButton).toHaveAttribute('data-started', '');
@@ -60,13 +63,11 @@ for (const { name, path, mediaRenderer } of ALL_VIDEO_PAGES) {
       await expect
         .poll(
           async () => {
-            return page.evaluate(() => {
-              const el = document.querySelector(
-                'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video'
-              );
+            return page.evaluate((selector) => {
+              const el = document.querySelector(selector);
               const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
               return media?.currentTime ?? 0;
-            });
+            }, SELECTORS.media);
           },
           { timeout: 10_000 }
         )

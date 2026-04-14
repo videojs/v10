@@ -48,6 +48,9 @@ export const SELECTORS = {
   tooltip: 'media-tooltip, .media-tooltip',
   popover: 'media-popover, .media-popover',
   errorDialog: 'media-error-dialog, .media-error',
+
+  // Media element — matches all renderer custom elements and native media
+  media: 'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
 } as const;
 
 /** Data attributes used for player state (same across both renderers). */

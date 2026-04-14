@@ -20,6 +20,18 @@ export const MEDIA = {
   },
 } as const;
 
+/** Playwright project names where a page should be skipped (e.g. no native HLS in Firefox). */
+type BrowserName = 'chromium' | 'webkit' | 'firefox';
+
+export interface PageEntry {
+  name: string;
+  path: string;
+  framework: string;
+  mediaRenderer: string;
+  media: string;
+  skipBrowsers?: BrowserName[];
+}
+
 // ---------------------------------------------------------------------------
 // Packaged skin pages
 // ---------------------------------------------------------------------------
@@ -47,6 +59,21 @@ export const VIDEO_PAGES = [
     mediaRenderer: 'dash-video',
     media: 'dash',
   },
+  {
+    name: 'HTML Native HLS Video',
+    path: '/html-native-hls-video.html',
+    framework: 'html',
+    mediaRenderer: 'native-hls-video',
+    media: 'hlsTs',
+    skipBrowsers: ['firefox'],
+  },
+  {
+    name: 'HTML Mux Video',
+    path: '/html-mux-video.html',
+    framework: 'html',
+    mediaRenderer: 'mux-video',
+    media: 'hlsTs',
+  },
   { name: 'React Video MP4', path: '/react-video-mp4.html', framework: 'react', mediaRenderer: 'video', media: 'mp4' },
   {
     name: 'React Video HLS',
@@ -55,12 +82,19 @@ export const VIDEO_PAGES = [
     mediaRenderer: 'hls-video',
     media: 'hlsTs',
   },
-] as const;
+] as const satisfies readonly PageEntry[];
 
 export const AUDIO_PAGES = [
   { name: 'HTML Audio MP4', path: '/html-audio-mp4.html', framework: 'html', mediaRenderer: 'audio', media: 'mp4' },
+  {
+    name: 'HTML Mux Audio',
+    path: '/html-mux-audio.html',
+    framework: 'html',
+    mediaRenderer: 'mux-audio',
+    media: 'hlsTs',
+  },
   { name: 'React Audio MP4', path: '/react-audio-mp4.html', framework: 'react', mediaRenderer: 'audio', media: 'mp4' },
-] as const;
+] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
 // Ejected skin pages
@@ -81,7 +115,7 @@ export const EJECTED_VIDEO_PAGES = [
     mediaRenderer: 'video',
     media: 'mp4',
   },
-] as const;
+] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
 // CDN bundle pages
@@ -90,7 +124,7 @@ export const EJECTED_VIDEO_PAGES = [
 export const CDN_VIDEO_PAGES = [
   { name: 'CDN Video MP4', path: '/cdn-video-mp4.html', framework: 'html', mediaRenderer: 'video', media: 'mp4' },
   { name: 'CDN Video HLS', path: '/cdn-video-hls.html', framework: 'html', mediaRenderer: 'hls-video', media: 'hlsTs' },
-] as const;
+] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
 // Combined arrays for parameterized tests
