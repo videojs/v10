@@ -28,7 +28,7 @@ test.describe('Mouse Gestures', () => {
 
   test.beforeEach(async ({ page }) => {
     player = new PlayerPage(page);
-    await page.goto('/html-video-mp4.html');
+    await page.goto('/pages/html-video-mp4.html');
     await player.waitForMediaReady();
   });
 
@@ -63,7 +63,7 @@ test.describe('Touch Gestures', () => {
 
   test.beforeEach(async ({ page }) => {
     player = new PlayerPage(page);
-    await page.goto('/html-video-mp4.html');
+    await page.goto('/pages/html-video-mp4.html');
     await player.waitForMediaReady();
   });
 

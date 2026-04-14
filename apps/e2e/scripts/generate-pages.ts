@@ -2,18 +2,18 @@
  * Generates Vite test pages from PageEntry definitions.
  *
  * Reads the media type configs and page arrays, then writes .ts/.tsx + .html
- * files to `apps/vite/src/`. Special pages (ejected skins, captions) are
+ * files to `apps/vite/src/pages/`. Special pages (ejected skins, captions) are
  * hand-written and not generated.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dirname, '../apps/vite/src');
+const OUT_DIR = resolve(__dirname, '../apps/vite/src/pages');
 
 // ---------------------------------------------------------------------------
 // Media type config — maps media element name to its import + attributes
@@ -148,7 +148,7 @@ function htmlShell(title: string, scriptSrc: string): string {
 }
 
 function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
-  const allImports = [...imports, `import { MEDIA } from './shared';`].join('\n');
+  const allImports = [...imports, `import { MEDIA } from '../shared';`].join('\n');
 
   const storyboard = config.hasStoryboard
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
@@ -176,7 +176,7 @@ document.getElementById('root')!.innerHTML = html\`
 }
 
 function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
-  const allImports = [...imports, `import { MEDIA } from './shared';`].join('\n');
+  const allImports = [...imports, `import { MEDIA } from '../shared';`].join('\n');
   const attrs = config.attrs ? ` ${config.attrs}` : '';
 
   return `${allImports}
@@ -208,7 +208,7 @@ function reactVideoPage(media: string, resource: string): string {
 ${mediaImport}
 import '@videojs/react/video/skin.css';
 import { createRoot } from 'react-dom/client';
-import { MEDIA } from './shared';
+import { MEDIA } from '../shared';
 
 const Player = createPlayer({ features: videoFeatures });
 
@@ -241,7 +241,7 @@ function reactAudioPage(media: string, resource: string): string {
 ${mediaImport}
 import '@videojs/react/audio/skin.css';
 import { createRoot } from 'react-dom/client';
-import { MEDIA } from './shared';
+import { MEDIA } from '../shared';
 
 const Player = createPlayer({ features: audioFeatures });
 
@@ -356,7 +356,7 @@ function generateIndexHtml(pages: PageDef[]): string {
   const cdn = pages.filter((p) => p.category === 'cdn');
 
   function list(entries: PageDef[]): string {
-    return entries.map((p) => `        <li><a href="/${p.path}.html">${p.name}</a></li>`).join('\n');
+    return entries.map((p) => `        <li><a href="/pages/${p.path}.html">${p.name}</a></li>`).join('\n');
   }
 
   return `<!doctype html>
@@ -401,6 +401,8 @@ ${list(cdn)}
 
 console.log('[generate-pages] Generating Vite test pages...');
 
+if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
+
 let count = 0;
 
 for (const page of PAGES) {
@@ -411,7 +413,8 @@ for (const page of PAGES) {
   count++;
 }
 
-// Generate index.html
-writeFileSync(resolve(OUT_DIR, 'index.html'), generateIndexHtml(PAGES));
+// Generate index.html in src/ (not pages/)
+const srcDir = resolve(OUT_DIR, '..');
+writeFileSync(resolve(srcDir, 'index.html'), generateIndexHtml(PAGES));
 
 console.log(`[generate-pages] Generated ${count} pages + index.html`);

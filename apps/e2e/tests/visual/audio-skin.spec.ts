@@ -8,8 +8,8 @@ import { PlayerPage } from '../../page-objects/player';
  */
 
 const VISUAL_PAGES = [
-  { name: 'HTML', path: '/html-audio-mp4.html' },
-  { name: 'React', path: '/react-audio-mp4.html' },
+  { name: 'HTML', path: '/pages/html-audio-mp4.html' },
+  { name: 'React', path: '/pages/react-audio-mp4.html' },
 ];
 
 for (const { name, path } of VISUAL_PAGES) {

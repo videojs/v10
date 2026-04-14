@@ -13,11 +13,11 @@ import { PlayerPage } from '../../page-objects/player';
  */
 
 const VISUAL_PAGES = [
-  { name: 'HTML', path: '/html-video-mp4.html' },
-  { name: 'React', path: '/react-video-mp4.html' },
+  { name: 'HTML', path: '/pages/html-video-mp4.html' },
+  { name: 'React', path: '/pages/react-video-mp4.html' },
   { name: 'Ejected-HTML', path: '/ejected-html-video-mp4.html' },
   { name: 'Ejected-React', path: '/ejected-react-video-mp4.html' },
-  { name: 'CDN', path: '/cdn-video-mp4.html' },
+  { name: 'CDN', path: '/pages/cdn-video-mp4.html' },
 ];
 
 for (const { name, path } of VISUAL_PAGES) {
@@ -93,7 +93,7 @@ test.describe('Visual — Mobile Layout', () => {
 
   test.beforeEach(async ({ page }) => {
     player = new PlayerPage(page);
-    await page.goto('/html-video-mp4.html');
+    await page.goto('/pages/html-video-mp4.html');
     await player.waitForMediaReady();
   });
 
