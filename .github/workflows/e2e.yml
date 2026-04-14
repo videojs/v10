@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - main
-  # Temporarily enabled for PR validation — remove after merge
   pull_request:
-    branches:
-      - main
+    types: [labeled]
 
 jobs:
   e2e:
     name: E2E (${{ matrix.browser }})
+    if: github.event_name == 'push' || github.event.label.name == 'test:e2e'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
