@@ -1,11 +1,3 @@
-/**
- * CDN bundle test page — MP4.
- *
- * Imports from `@videojs/html/cdn/video` which is the self-contained CDN
- * bundle. This tests a completely different code path from the workspace
- * package imports used in the other test pages.
- */
-
 import '@videojs/html/cdn/video';
 import { MEDIA } from './shared';
 

@@ -142,15 +142,15 @@ sudo pnpm test:e2e:install
 **Running tests:**
 
 ```sh
-pnpm test:e2e                    # Chromium only (fast feedback)
-pnpm test:e2e:all                # Chromium + WebKit
+pnpm test:e2e                    # Chromium + WebKit (all engines)
+pnpm test:e2e:vite               # Chromium only (fast feedback)
 ```
 
 **Visual snapshot tests** verify that skin CSS and layout aren't broken. If a snapshot test fails, it means the rendered skin looks different from the baseline. This could mean:
 
 1. **You intentionally changed the skin** — update the baselines:
    ```sh
-   pnpm test:e2e:update-snapshots
+   pnpm test:e2e:update
    ```
    Review the updated PNGs in `apps/e2e/tests/visual/` to confirm they look correct, then commit them.
 
