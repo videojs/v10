@@ -1,10 +1,15 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import { update } from '../../core/signals/primitives';
-import type { PlaybackEngineConfig } from './engine';
-import { createPlaybackEngine, type PlaybackEngine } from './engine';
+import type { PlaybackEngine } from './engine';
+import {
+  createHlsPlaybackEngine,
+  type HlsPlaybackEngineConfig,
+  type HlsPlaybackEngineOwners,
+  type HlsPlaybackEngineState,
+} from './hls-engine';
 
 export interface SpfMediaAPI {
-  readonly engine: PlaybackEngine;
+  readonly engine: PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   attach(mediaElement: HTMLMediaElement): void;
@@ -33,8 +38,8 @@ export interface SpfMediaAPI {
  */
 export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SpfMediaImpl extends BaseClass {
-    #engine: PlaybackEngine;
-    #config: PlaybackEngineConfig;
+    #engine: PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
+    #config: HlsPlaybackEngineConfig;
     #preload: '' | 'none' | 'metadata' | 'auto' = '';
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -45,10 +50,10 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
-      this.#engine = createPlaybackEngine(config);
+      this.#engine = createHlsPlaybackEngine(config);
     }
 
-    get engine(): PlaybackEngine {
+    get engine(): PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
       return this.#engine;
     }
 
@@ -105,7 +110,7 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
       this.#cancelPendingPlay();
       this.#engine.destroy();
-      this.#engine = createPlaybackEngine(this.#config);
+      this.#engine = createHlsPlaybackEngine(this.#config);
 
       // Apply explicit preload before setting owners so syncPreloadAttribute skips
       // element inference and the explicit value is preserved across src changes.
