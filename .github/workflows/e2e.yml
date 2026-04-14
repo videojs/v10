@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  # Temporarily enabled for PR validation — remove after merge
+  pull_request:
+    branches:
+      - main
 
 jobs:
   e2e:

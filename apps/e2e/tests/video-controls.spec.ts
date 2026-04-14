@@ -3,7 +3,7 @@ import { ALL_VIDEO_PAGES, type PageEntry } from '../fixtures/media';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
+for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
   test.describe(`Video Controls — ${name}`, () => {
     test.skip(({ browserName }) => {
       return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
@@ -49,10 +49,7 @@ for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as rea
     // --- Seek ---
 
     test('seek forward advances playback', async () => {
-      test.skip(
-        mediaRenderer === 'simple-hls-video' || mediaRenderer === 'native-hls-video',
-        'seek before playback not yet supported'
-      );
+      test.skip(media === 'simple-hls-video' || media === 'native-hls-video', 'seek before playback not yet supported');
 
       await player.seekForward.click();
       await expect(player.playButton).toHaveAttribute(DATA_ATTRS.started, '');
