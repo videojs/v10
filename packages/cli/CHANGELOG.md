@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.20...@videojs/cli@10.0.0-beta.21) (2026-04-14)
+
+
+### Bug Fixes
+
+* **cli:** normalize repository URL to match npm convention ([#1340](https://github.com/videojs/v10/issues/1340)) ([5301202](https://github.com/videojs/v10/commit/5301202a181e2ce572d274e0e2310e5cc7f5d60b))
+
 ## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.19...@videojs/cli@10.0.0-beta.20) (2026-04-14)
 
 

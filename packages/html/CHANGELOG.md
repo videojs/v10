@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.20...@videojs/html@10.0.0-beta.21) (2026-04-14)
+
+
+### Features
+
+* **site:** feature and preset reference UI + docs integration ([#1258](https://github.com/videojs/v10/issues/1258)) ([d4b805e](https://github.com/videojs/v10/commit/d4b805ea699bd33234c817a7519ff9efbd4753fd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.21
+    * @videojs/element bumped to 10.0.0-beta.21
+    * @videojs/spf bumped to 10.0.0-beta.21
+    * @videojs/store bumped to 10.0.0-beta.21
+    * @videojs/utils bumped to 10.0.0-beta.21
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.21
+    * @videojs/skins bumped to 10.0.0-beta.21
+
 ## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.19...@videojs/html@10.0.0-beta.20) (2026-04-14)
 
 
