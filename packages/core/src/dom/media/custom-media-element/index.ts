@@ -96,6 +96,9 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
+  const mediaHostAttrToProp = new Map<string, string>();
+  let isDefined = false;
+
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
@@ -115,8 +118,6 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
       preload: { type: String },
       src: { type: String },
     };
-    static #isDefined = false;
-    static #mediaHostAttrToProp = new Map<string, string>();
 
     static get observedAttributes() {
       // biome-ignore lint/complexity/noThisInStatic: resolves to the subclass that may override `properties`
@@ -129,8 +130,8 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
     }
 
     static #define(ctor: typeof CustomMedia) {
-      if (CustomMedia.#isDefined) return;
-      CustomMedia.#isDefined = true;
+      if (isDefined) return;
+      isDefined = true;
 
       const Attributes = getAttrsFromProps(ctor.properties);
 
@@ -160,7 +161,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
               // If explicitly observed by the media host, or it's a native attribute,
               // route through attributeChangedCallback.
               if (MediaHost.observedAttributes?.includes(attr) || Attributes.includes(attr)) {
-                ctor.#mediaHostAttrToProp.set(attr, prop);
+                mediaHostAttrToProp.set(attr, prop);
 
                 config.set = function (this: CustomMedia, val: any) {
                   if (val === true || val === false || val == null) {
@@ -216,7 +217,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
         this.attachShadow(ctor.shadowRootOptions);
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
-        const disallowedKeys = [...ctor.#mediaHostAttrToProp.keys()];
+        const disallowedKeys = [...mediaHostAttrToProp.keys()];
         const attrs: Record<string, string> = omit(
           pick(namedNodeMapToObject(this.attributes), allowedKeys),
           disallowedKeys
@@ -269,8 +270,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
     };
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      const ctor = this.constructor as typeof CustomMedia;
-      const prop = ctor.#mediaHostAttrToProp.get(attrName);
+      const prop = mediaHostAttrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
