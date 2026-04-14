@@ -93,6 +93,7 @@ function main() {
     log.info(`Found ${featureResults.length} features. Processing...`);
   }
 
+  let featureSuccessCount = 0;
   for (const result of featureResults) {
     const validated = FeatureReferenceSchema.safeParse(result.reference);
     if (!validated.success) {
@@ -109,10 +110,11 @@ function main() {
     fs.writeFileSync(outputFile, json);
 
     log.success(`✅ Generated ${path.basename(outputFile)}`);
+    featureSuccessCount++;
     successCount++;
   }
 
-  log.info(`Done! Generated ${featureResults.length} feature files.`);
+  log.info(`Done! Generated ${featureSuccessCount} feature files.`);
 
   // Generate preset references
   const presetResults = generatePresetReferences(MONOREPO_ROOT);
@@ -123,6 +125,7 @@ function main() {
     log.info(`Found ${presetResults.length} presets. Processing...`);
   }
 
+  let presetSuccessCount = 0;
   for (const result of presetResults) {
     const validated = PresetReferenceSchema.safeParse(result.reference);
     if (!validated.success) {
@@ -139,10 +142,11 @@ function main() {
     fs.writeFileSync(outputFile, json);
 
     log.success(`✅ Generated ${path.basename(outputFile)}`);
+    presetSuccessCount++;
     successCount++;
   }
 
-  log.info(`Done! Generated ${presetResults.length} preset files.`);
+  log.info(`Done! Generated ${presetSuccessCount} preset files.`);
 
   console.warn = originalWarn;
 

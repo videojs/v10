@@ -15,7 +15,17 @@ import FrameworkCase from '../FrameworkCase.astro';
 import InlineMarkdown from './InlineMarkdown.astro';
 
 const entries = await getCollection('presetReference');
-const presets: PresetReferenceType[] = entries.map((e) => e.data).sort((a, b) => a.name.localeCompare(b.name));
+const PINNED_PRESETS = ['video', 'audio'];
+const presets: PresetReferenceType[] = entries
+  .map((e) => e.data)
+  .sort((a, b) => {
+    const aPin = PINNED_PRESETS.indexOf(a.name);
+    const bPin = PINNED_PRESETS.indexOf(b.name);
+    if (aPin !== -1 && bPin !== -1) return aPin - bPin;
+    if (aPin !== -1) return -1;
+    if (bPin !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
 const { framework } = Astro.params;
 const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
@@ -47,6 +57,8 @@ function featureDocsSlug(featureName: string): string {
 function htmlMediaElement(preset: PresetReferenceType): string | undefined {
   return preset.html.mediaElement ?? NATIVE_MEDIA_ELEMENTS[preset.name];
 }
+
+const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
 ---
 
 <ContentWidth>
@@ -97,8 +109,8 @@ function htmlMediaElement(preset: PresetReferenceType): string | undefined {
                 <Td colspan="3" class="p-0">
                   <div class="px-6 py-4">
                     <dl
-                      class="grid grid-cols-(--cols) gap-x-6 gap-y-3"
-                      style="--cols: auto 1fr"
+                      class="grid grid-cols-(--grid-cols) gap-x-6 gap-y-3"
+                      style="--grid-cols: auto 1fr"
                     >
                       <dt class="font-bold">Feature bundle</dt>
                       <dd>
@@ -108,35 +120,50 @@ function htmlMediaElement(preset: PresetReferenceType): string | undefined {
                       <dt class="font-bold">Features</dt>
                       <dd>
                         {preset.features.length > 0
-                          ? preset.features.map((f, i) => (
-                              <>
-                                {/* prettier-ignore */}
-                                <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
-                                {i < preset.features.length - 1 && ", "}
-                              </>
-                            ))
+                          ? listFormat
+                              .formatToParts(preset.features)
+                              .map((part) =>
+                                part.type === "element" ? (
+                                  <DocsLink
+                                    class="inline-block whitespace-nowrap"
+                                    slug={featureDocsSlug(part.value)}
+                                  >
+                                    {part.value}
+                                  </DocsLink>
+                                ) : (
+                                  <span>{part.value}</span>
+                                ),
+                              )
                           : "–"}
                       </dd>
 
                       <dt class="font-bold">Skins</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
-                          {preset.react.skins.map((skin, i) => (
-                            <>
-                              {/* prettier-ignore */}
-                              <MarkdownCode>{`<${skin.name}>`}</MarkdownCode>
-                              {i < preset.react.skins.length - 1 && ", "}
-                            </>
-                          ))}
+                          {listFormat
+                            .formatToParts(
+                              preset.react.skins.map((s) => s.name),
+                            )
+                            .map((part) =>
+                              part.type === "element" ? (
+                                <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
+                              ) : (
+                                <span>{part.value}</span>
+                              ),
+                            )}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
-                          {preset.html.skins.map((skin, i) => (
-                            <>
-                              {/* prettier-ignore */}
-                              <MarkdownCode>{`<${skin.tagName}>`}</MarkdownCode>
-                              {i < preset.html.skins.length - 1 && ", "}
-                            </>
-                          ))}
+                          {listFormat
+                            .formatToParts(
+                              preset.html.skins.map((s) => s.tagName ?? s.name),
+                            )
+                            .map((part) =>
+                              part.type === "element" ? (
+                                <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
+                              ) : (
+                                <span>{part.value}</span>
+                              ),
+                            )}
                         </FrameworkCase>
                       </dd>
 

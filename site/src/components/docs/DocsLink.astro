@@ -7,7 +7,7 @@ import A from '../typography/A.astro';
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
 }
-const { slug } = Astro.props;
+const { slug, class: className } = Astro.props;
 
 const { framework: paramFramework } = Astro.params;
 if (!paramFramework || !isValidFramework(paramFramework)) {
@@ -20,4 +20,4 @@ const { url: href } = resolveDocsLinkUrl({
 });
 ---
 
-<A href={href}><slot /></A>
+<A href={href} class={className}><slot /></A>
