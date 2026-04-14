@@ -19,4 +19,11 @@ test.describe('Mobile Viewport', () => {
     expect(box!.width).toBeLessThanOrEqual(375);
     expect(box!.height).toBeGreaterThan(0);
   });
+
+  test('mobile layout snapshot', async ({ page }) => {
+    await player.showControls();
+    await page.waitForTimeout(300);
+
+    await expect(player.playerRoot).toHaveScreenshot('mobile-default.png');
+  });
 });
