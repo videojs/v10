@@ -2,29 +2,71 @@
  * Media element reference extraction.
  *
  * Discovers media elements from packages/html/src/define/media/*.ts and extracts
- * delegate properties, shared attributes/events/CSS vars, and slots.
+ * host properties, shared attributes/events/CSS vars, and slots.
  *
  * Convention:
  *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
  *   - Media element classes: packages/html/src/media/{name}/index.ts
- *     composed as MediaPropsMixin(MediaAttachMixin(CustomMedia), Delegate)
- *   - Delegate classes: packages/core/src/dom/media/{name}/index.ts with getter/setter pairs.
- *     CustomMedia classes use inheritance mixins (e.g., HlsMediaMixin(CustomVideoElement)).
+ *     composed as MediaAttachMixin(CustomMediaElement('video'|'audio', Host))
+ *   - Host classes: packages/core/src/dom/media/{name}/index.ts extending
+ *     HTMLVideoElementHost or HTMLAudioElementHost with getter/setter pairs
  *   - Shared data: packages/core/src/dom/media/custom-media-element/index.ts
- *     exports Attributes, Events, VideoCSSVars, AudioCSSVars, and template functions
- *   - Slots: parsed from getVideoTemplateHTML / getAudioTemplateHTML in custom-media-element
+ *     exports CustomMediaElement factory (with static properties), VideoCSSVars,
+ *     AudioCSSVars, and template functions
+ *   - Slots: parsed from getVideoTemplateHTML / getCommonTemplateHTML in custom-media-element
  *
  * Exclusions (elements discovered but intentionally skipped):
  *   - container.ts: re-exports a class, doesn't declare one inline → no static tagName found
- *   - background-video.ts: uses MediaAttachMixin(HTMLElement) without MediaPropsMixin →
- *     parseMixinChain returns null. Its API reference is manually maintained in MDX.
+ *   - background-video.ts: uses MediaAttachMixin(HTMLElement) without CustomMediaElement →
+ *     parseCustomMediaElementCall returns null. Its API reference is manually maintained in MDX.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCSSVars } from './css-vars-handler.js';
-import type { DelegatePropertyDef, MediaElementReference, MediaElementResult } from './pipeline.js';
+import type { HostPropertyDef, MediaElementReference, MediaElementResult } from './pipeline.js';
+
+// ─── Constants ──────────────────────────────────────────────────────
+
+/**
+ * Standard HTMLMediaElement events forwarded by CustomMediaElement.
+ * CustomMediaElement dynamically bridges all events from the host, but these
+ * are the standard media events that all elements emit. Shared across video
+ * and audio elements.
+ */
+const MEDIA_EVENTS = [
+  'abort',
+  'canplay',
+  'canplaythrough',
+  'durationchange',
+  'emptied',
+  'ended',
+  'error',
+  'loadeddata',
+  'loadedmetadata',
+  'loadstart',
+  'pause',
+  'play',
+  'playing',
+  'progress',
+  'ratechange',
+  'seeked',
+  'seeking',
+  'stalled',
+  'suspend',
+  'timeupdate',
+  'volumechange',
+  'waiting',
+] as const;
+
+/** Classes that mark the end of the host prototype chain for property extraction. */
+const HOST_BASE_CLASSES = new Set([
+  'HTMLMediaElementHost',
+  'HTMLVideoElementHost',
+  'HTMLAudioElementHost',
+  'EventTarget',
+]);
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -33,9 +75,9 @@ interface MediaElementSource {
   className: string;
   tagName: string;
   mediaFilePath: string;
-  delegateFilePath: string;
-  delegateClassName: string;
-  customMediaClassName: string;
+  hostFilePath: string;
+  hostClassName: string;
+  mediaType: 'video' | 'audio';
 }
 
 // ─── Module Resolution ───────────────────────────────────────────────
@@ -80,7 +122,7 @@ function discoverMediaElements(monorepoRoot: string, compilerOptions: ts.Compile
 /**
  * Parse a define/media file to extract class name, tagName, and import chain.
  * Returns null if the file doesn't declare an inline class with static tagName
- * (container.ts) or if the class doesn't use MediaPropsMixin (background-video.ts).
+ * (container.ts) or if the class doesn't use CustomMediaElement (background-video.ts).
  */
 function parseDefineFile(
   sourceFile: ts.SourceFile,
@@ -140,15 +182,15 @@ function parseDefineFile(
   const mediaFilePath = resolveModuleToFile(filePath, baseImportPath, compilerOptions);
   if (!mediaFilePath) return null;
 
-  // Parse the media element file to find the delegate class
+  // Parse the media element file to find the CustomMediaElement(tag, Host) call
   const mediaContent = fs.readFileSync(mediaFilePath, 'utf-8');
   const mediaSourceFile = ts.createSourceFile(mediaFilePath, mediaContent, ts.ScriptTarget.Latest, true);
 
-  const delegateInfo = parseMixinChain(mediaSourceFile, baseClassName);
-  if (!delegateInfo) return null;
+  const hostInfo = parseCustomMediaElementCall(mediaSourceFile, baseClassName);
+  if (!hostInfo) return null;
 
-  // Resolve delegate import path
-  let delegateImportPath: string | undefined;
+  // Resolve host class import path
+  let hostImportPath: string | undefined;
   ts.forEachChild(mediaSourceFile, (node) => {
     if (!ts.isImportDeclaration(node)) return;
     if (!ts.isStringLiteral(node.moduleSpecifier)) return;
@@ -156,26 +198,26 @@ function parseDefineFile(
     if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings)) return;
 
     for (const specifier of importClause.namedBindings.elements) {
-      if (specifier.name.text === delegateInfo.delegateClassName) {
-        delegateImportPath = node.moduleSpecifier.text;
+      if (specifier.name.text === hostInfo.hostClassName) {
+        hostImportPath = node.moduleSpecifier.text;
         break;
       }
     }
   });
 
-  if (!delegateImportPath) return null;
+  if (!hostImportPath) return null;
 
-  const delegateFilePath = resolveModuleToFile(mediaFilePath, delegateImportPath, compilerOptions);
-  if (!delegateFilePath) return null;
+  const hostFilePath = resolveModuleToFile(mediaFilePath, hostImportPath, compilerOptions);
+  if (!hostFilePath) return null;
 
   return {
     defineFilePath: filePath,
     className: stripElementSuffix(className),
     tagName,
     mediaFilePath,
-    delegateFilePath,
-    delegateClassName: delegateInfo.delegateClassName,
-    customMediaClassName: delegateInfo.customMediaClassName,
+    hostFilePath,
+    hostClassName: hostInfo.hostClassName,
+    mediaType: hostInfo.mediaType,
   };
 }
 
@@ -184,15 +226,15 @@ function stripElementSuffix(name: string): string {
 }
 
 /**
- * Parse the media element class to find the MediaPropsMixin(Base, Delegate) call.
- * Returns null for elements that don't use MediaPropsMixin (e.g., BackgroundVideo).
+ * Parse the media element class to find the CustomMediaElement(tag, Host) call.
+ * Returns null for elements that don't use CustomMediaElement (e.g., BackgroundVideo).
  */
-function parseMixinChain(
+function parseCustomMediaElementCall(
   sourceFile: ts.SourceFile,
   className: string
-): { delegateClassName: string; customMediaClassName: string } | null {
-  let delegateClassName: string | undefined;
-  let customMediaClassName: string | undefined;
+): { hostClassName: string; mediaType: 'video' | 'audio' } | null {
+  let hostClassName: string | undefined;
+  let mediaType: 'video' | 'audio' | undefined;
 
   ts.forEachChild(sourceFile, (node) => {
     if (!ts.isClassDeclaration(node)) return;
@@ -203,60 +245,62 @@ function parseMixinChain(
     if (!extendsClause || extendsClause.types.length === 0) return;
 
     const extendsExpr = extendsClause.types[0]!.expression;
-    findMediaPropsMixin(extendsExpr);
+    findCustomMediaElement(extendsExpr);
   });
 
-  function findMediaPropsMixin(node: ts.Node): void {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'MediaPropsMixin') {
+  function findCustomMediaElement(node: ts.Node): void {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'CustomMediaElement'
+    ) {
       if (node.arguments.length >= 2) {
-        const delegateArg = node.arguments[1]!;
-        if (ts.isIdentifier(delegateArg)) {
-          delegateClassName = delegateArg.text;
+        // First arg: media type string literal ('video' or 'audio')
+        const tagArg = node.arguments[0]!;
+        if (ts.isStringLiteral(tagArg)) {
+          mediaType = tagArg.text === 'audio' ? 'audio' : 'video';
         }
-        const baseArg = node.arguments[0]!;
-        customMediaClassName = unwrapMixinBase(baseArg);
+        // Second arg: host class identifier
+        const hostArg = node.arguments[1]!;
+        if (ts.isIdentifier(hostArg)) {
+          hostClassName = hostArg.text;
+        }
       }
       return;
     }
-    ts.forEachChild(node, findMediaPropsMixin);
+    ts.forEachChild(node, findCustomMediaElement);
   }
 
-  if (!delegateClassName || !customMediaClassName) return null;
-  return { delegateClassName, customMediaClassName };
+  if (!hostClassName || !mediaType) return null;
+  return { hostClassName, mediaType };
 }
 
-function unwrapMixinBase(node: ts.Node): string | undefined {
-  if (ts.isIdentifier(node)) return node.text;
-  if (ts.isCallExpression(node) && node.arguments.length > 0) {
-    return unwrapMixinBase(node.arguments[0]!);
-  }
-  return undefined;
-}
-
-// ─── Delegate Property Extraction ────────────────────────────────────
+// ─── Host Property Extraction ───────────────────────────────────────
 
 /**
- * Extract getter/setter pairs from a delegate class and its ancestors,
- * mirroring what buildAttrPropMap() in media-props-mixin.ts does at runtime.
+ * Extract getter/setter pairs from a host class and its ancestors,
+ * mirroring what CustomMediaElement does at runtime when it walks
+ * the MediaHost prototype chain.
  */
-function extractDelegateProperties(
+function extractHostProperties(
   filePath: string,
-  delegateClassName: string,
+  hostClassName: string,
   compilerOptions: ts.CompilerOptions
-): Record<string, DelegatePropertyDef> {
-  const properties: Record<string, DelegatePropertyDef> = {};
-  extractClassProperties(filePath, delegateClassName, properties, compilerOptions, new Set());
+): Record<string, HostPropertyDef> {
+  const properties: Record<string, HostPropertyDef> = {};
+  extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set());
   return properties;
 }
 
 /**
  * Recursively extract getter/setter pairs from a class and its parent chain.
  * Child properties override parent properties (checked via the `seen` set).
+ * Stops at host base classes (HTMLMediaElementHost, HTMLVideoElementHost, etc.).
  */
 function extractClassProperties(
   filePath: string,
   className: string,
-  properties: Record<string, DelegatePropertyDef>,
+  properties: Record<string, HostPropertyDef>,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>
 ): void {
@@ -274,7 +318,7 @@ function extractClassProperties(
   ts.forEachChild(sourceFile, (node) => {
     if (!ts.isClassDeclaration(node) || !node.name || node.name.text !== className) return;
 
-    // Check for extends clause (delegate inheritance)
+    // Check for extends clause (host inheritance)
     if (node.heritageClauses) {
       const extendsClause = node.heritageClauses.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
       if (extendsClause && extendsClause.types.length > 0) {
@@ -308,7 +352,7 @@ function extractClassProperties(
   });
 
   // Resolve parent class and extract its properties first (child overrides parent)
-  if (parentClassName && parentClassName !== 'EventTarget') {
+  if (parentClassName && !HOST_BASE_CLASSES.has(parentClassName)) {
     // Find the import for the parent class
     ts.forEachChild(sourceFile, (node) => {
       if (!ts.isImportDeclaration(node)) return;
@@ -339,7 +383,7 @@ function extractClassProperties(
 
   // Apply this class's properties (overrides parent)
   for (const [name, info] of getters) {
-    const def: DelegatePropertyDef = {
+    const def: HostPropertyDef = {
       type: info.type,
       readonly: !setters.has(name),
     };
@@ -371,31 +415,56 @@ function getJSDocDescription(node: ts.Node): string | undefined {
 
 // ─── Shared Data Extraction ──────────────────────────────────────────
 
-function extractStringArray(filePath: string, varName: string): string[] {
+/**
+ * Extract native attribute names from the `static properties` object inside
+ * the CustomMediaElement factory. Each key maps to an attribute name via
+ * `props[key].attribute ?? key.toLowerCase()`.
+ */
+function extractStaticProperties(filePath: string): string[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const items: string[] = [];
+  const attributes: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isVariableStatement(node)) return;
-    for (const decl of node.declarationList.declarations) {
-      if (!ts.isIdentifier(decl.name) || decl.name.text !== varName) continue;
-      if (!decl.initializer) continue;
+  function visit(node: ts.Node): void {
+    // Look for: static properties = { ... }
+    if (
+      ts.isPropertyDeclaration(node) &&
+      node.name &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === 'properties' &&
+      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
+      node.initializer &&
+      ts.isObjectLiteralExpression(node.initializer)
+    ) {
+      for (const prop of node.initializer.properties) {
+        if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
 
-      let expr = decl.initializer;
-      if (ts.isAsExpression(expr)) expr = expr.expression;
+        const propName = prop.name.text;
+        let attrName = propName.toLowerCase();
 
-      if (ts.isArrayLiteralExpression(expr)) {
-        for (const el of expr.elements) {
-          if (ts.isStringLiteral(el)) {
-            items.push(el.text);
+        // Check for explicit `attribute` override in the property config
+        if (ts.isObjectLiteralExpression(prop.initializer)) {
+          for (const configProp of prop.initializer.properties) {
+            if (
+              ts.isPropertyAssignment(configProp) &&
+              ts.isIdentifier(configProp.name) &&
+              configProp.name.text === 'attribute' &&
+              ts.isStringLiteral(configProp.initializer)
+            ) {
+              attrName = configProp.initializer.text;
+            }
           }
         }
-      }
-    }
-  });
 
-  return items;
+        attributes.push(attrName);
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return attributes;
 }
 
 function extractSlotsFromTemplate(filePath: string, templateFnName: string): string[] {
@@ -408,6 +477,48 @@ function extractSlotsFromTemplate(filePath: string, templateFnName: string): str
       const templateText = extractTemplateString(node.body);
       if (templateText) {
         parseSlots(templateText, slots);
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return slots;
+}
+
+/**
+ * Extract slots from getCommonTemplateHTML — a factory function that returns
+ * a function containing the template string.
+ */
+function extractSlotsFromTemplateFactory(filePath: string, factoryFnName: string): string[] {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const slots: string[] = [];
+
+  function visit(node: ts.Node): void {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === factoryFnName && node.body) {
+      // The factory returns a function — look for a return statement with a function/arrow
+      for (const stmt of node.body.statements) {
+        if (ts.isReturnStatement(stmt) && stmt.expression) {
+          // Could be an arrow function or function expression
+          let innerBody: ts.Block | ts.Expression | undefined;
+          if (ts.isArrowFunction(stmt.expression)) {
+            innerBody = stmt.expression.body;
+          } else if (ts.isFunctionExpression(stmt.expression)) {
+            innerBody = stmt.expression.body;
+          }
+
+          if (innerBody) {
+            const block = ts.isBlock(innerBody) ? innerBody : undefined;
+            if (block) {
+              const templateText = extractTemplateString(block);
+              if (templateText) {
+                parseSlots(templateText, slots);
+              }
+            }
+          }
+        }
       }
       return;
     }
@@ -453,65 +564,6 @@ function parseSlots(html: string, slots: string[]): void {
   }
 }
 
-/**
- * Determine whether a CustomMedia base class is video or audio by checking
- * the extends clause of the class that defines it (e.g., HlsMediaMixin(CustomVideoElement)).
- */
-function resolveMediaType(
-  mediaFilePath: string,
-  customMediaClassName: string,
-  compilerOptions: ts.CompilerOptions
-): 'video' | 'audio' {
-  const content = fs.readFileSync(mediaFilePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(mediaFilePath, content, ts.ScriptTarget.Latest, true);
-
-  let importSource: string | undefined;
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isImportDeclaration(node)) return;
-    if (!ts.isStringLiteral(node.moduleSpecifier)) return;
-    const importClause = node.importClause;
-    if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings)) return;
-
-    for (const specifier of importClause.namedBindings.elements) {
-      if (specifier.name.text === customMediaClassName) {
-        importSource = node.moduleSpecifier.text;
-        break;
-      }
-    }
-  });
-
-  // Fallback: default to video (all current media elements are video-based)
-  if (!importSource) return 'video';
-
-  const resolvedPath = resolveModuleToFile(mediaFilePath, importSource, compilerOptions);
-  if (!resolvedPath) return 'video';
-
-  const sourceContent = fs.readFileSync(resolvedPath, 'utf-8');
-  const resolvedSourceFile = ts.createSourceFile(resolvedPath, sourceContent, ts.ScriptTarget.Latest, true);
-
-  // Check the extends clause for CustomAudioElement specifically
-  let mediaType: 'video' | 'audio' = 'video';
-  ts.forEachChild(resolvedSourceFile, (node) => {
-    if (!ts.isClassDeclaration(node) || node.name?.text !== customMediaClassName) return;
-    if (!node.heritageClauses) return;
-
-    const extendsClause = node.heritageClauses.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
-    if (!extendsClause || extendsClause.types.length === 0) return;
-
-    // Walk the extends expression looking for CustomAudioElement identifier
-    function checkForAudio(n: ts.Node): void {
-      if (ts.isIdentifier(n) && n.text === 'CustomAudioElement') {
-        mediaType = 'audio';
-        return;
-      }
-      ts.forEachChild(n, checkForAudio);
-    }
-    checkForAudio(extendsClause.types[0]!.expression);
-  });
-
-  return mediaType;
-}
-
 // ─── Pipeline ────────────────────────────────────────────────────────
 
 export function generateMediaElementReferences(monorepoRoot: string): MediaElementResult[] {
@@ -527,8 +579,7 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   if (!fs.existsSync(customMediaPath)) return [];
 
   // Read shared data
-  const allAttributes = extractStringArray(customMediaPath, 'Attributes');
-  const allEvents = extractStringArray(customMediaPath, 'Events');
+  const allAttributes = extractStaticProperties(customMediaPath);
 
   // Extract CSS vars using the existing handler (needs a TS program)
   const program = ts.createProgram([customMediaPath], compilerOptions);
@@ -551,35 +602,29 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
   // Extract slots from template functions
   const videoSlots = extractSlotsFromTemplate(customMediaPath, 'getVideoTemplateHTML');
-  const audioSlots = extractSlotsFromTemplate(customMediaPath, 'getAudioTemplateHTML');
+  const audioSlots = extractSlotsFromTemplateFactory(customMediaPath, 'getCommonTemplateHTML');
 
   const results: MediaElementResult[] = [];
 
   for (const source of sources) {
-    const delegateProperties = extractDelegateProperties(
-      source.delegateFilePath,
-      source.delegateClassName,
-      compilerOptions
-    );
+    const hostProperties = extractHostProperties(source.hostFilePath, source.hostClassName, compilerOptions);
 
-    const mediaType = resolveMediaType(source.mediaFilePath, source.customMediaClassName, compilerOptions);
-
-    // Deduplicate: delegate props that overlap with native Attributes
-    const delegateAttrNames = new Set<string>();
-    for (const propName of Object.keys(delegateProperties)) {
-      delegateAttrNames.add(propName.toLowerCase());
+    // Deduplicate: host props that overlap with native attributes
+    const hostAttrNames = new Set<string>();
+    for (const propName of Object.keys(hostProperties)) {
+      hostAttrNames.add(propName.toLowerCase());
     }
-    const nativeAttributes = allAttributes.filter((attr) => !delegateAttrNames.has(attr));
+    const nativeAttributes = allAttributes.filter((attr) => !hostAttrNames.has(attr));
 
-    const cssCustomProperties = mediaType === 'video' ? videoCSSVars : audioCSSVars;
-    const slots = mediaType === 'video' ? videoSlots : audioSlots;
+    const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
+    const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
 
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
-      delegateProperties,
+      hostProperties,
       nativeAttributes,
-      events: [...allEvents],
+      events: [...MEDIA_EVENTS],
       cssCustomProperties,
       slots,
     };

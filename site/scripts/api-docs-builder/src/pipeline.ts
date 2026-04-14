@@ -575,7 +575,7 @@ export { generatePresetReferences } from './preset-handler.js';
 // MEDIA ELEMENT REFERENCE PIPELINE
 // ═══════════════════════════════════════════════════════════════════════
 
-export interface DelegatePropertyDef {
+export interface HostPropertyDef {
   type: string;
   description?: string;
   readonly: boolean;
@@ -584,7 +584,7 @@ export interface DelegatePropertyDef {
 export interface MediaElementReference {
   name: string;
   tagName: string;
-  delegateProperties: Record<string, DelegatePropertyDef>;
+  hostProperties: Record<string, HostPropertyDef>;
   nativeAttributes: string[];
   events: string[];
   cssCustomProperties: Record<string, { description: string }>;

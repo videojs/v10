@@ -1,11 +1,13 @@
 /**
- * Mock complex delegate — mirrors HlsMediaBase.
+ * Mock complex host — mirrors HlsMedia.
  *
  * Exercises: multiple getter/setter pairs with JSDoc descriptions,
- * readonly properties, boolean type, overlap with native Attributes
+ * readonly properties, boolean type, overlap with native attributes
  * (src, preload) that should be deduplicated by the builder.
  */
-export class ComplexDelegate {
+import { HTMLVideoElementHost } from '../simple';
+
+export class ComplexHost extends HTMLVideoElementHost {
   #src: string = '';
   #type: string | undefined;
   #preferPlayback: string | undefined = 'mse';
@@ -69,10 +71,4 @@ export class ComplexDelegate {
   get engine(): object | null {
     return this.#engine;
   }
-
-  attach(_target: EventTarget): void {}
-  detach(): void {}
-  destroy(): void {}
 }
-
-export class ComplexCustomMedia {}
