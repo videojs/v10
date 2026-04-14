@@ -81,18 +81,27 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
-type MediaHostConstructor<T> = Constructor<T> & {
+interface MediaHost extends EventTarget {
+  readonly target: EventTarget | null;
+  attach(target: EventTarget | null): void;
+  detach(): void;
+  destroy(): void;
+  /** Index signature for dynamic property forwarding. */
+  [key: string]: any;
+}
+
+type MediaHostConstructor = Constructor<MediaHost> & {
   observedAttributes?: string[];
 };
 
-type CustomMediaConstructor<T> = Constructor<HTMLElement & T> & {
+type CustomMediaConstructor<T extends MediaHostConstructor> = Constructor<HTMLElement & InstanceType<T>> & {
   properties: Record<string, { type: any; attribute?: string }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 };
 
-export function CustomMediaElement<T extends MediaHostConstructor<any>>(
+export function CustomMediaElement<T extends MediaHostConstructor>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
@@ -204,7 +213,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
       }
     }
 
-    #mediaHost: InstanceType<T>;
+    #mediaHost: MediaHost;
     #bridgedEventTypes = new Set<string>();
     #childMap = new Map<HTMLTrackElement | HTMLSourceElement, HTMLTrackElement | HTMLSourceElement>();
     #childObserver?: MutationObserver;
@@ -227,11 +236,22 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
       }
 
       this.#mediaHost = new MediaHost();
-      this.#mediaHost.attach(this.target);
+      this.#attachToTarget();
 
       this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
-      this.shadowRoot!.addEventListener('slotchange', () => this.#syncMediaChildren());
+      this.shadowRoot!.addEventListener('slotchange', () => {
+        this.#attachToTarget();
+        this.#syncMediaChildren();
+      });
+
       this.#syncMediaChildren();
+    }
+
+    #attachToTarget(): void {
+      const target = this.target;
+      if (target === this.#mediaHost.target) return;
+      if (this.#mediaHost.target) this.#mediaHost.detach();
+      this.#mediaHost.attach(target);
     }
 
     get target(): HTMLVideoElement | HTMLAudioElement | null {
@@ -241,6 +261,12 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
         this.shadowRoot?.querySelector(tag) ??
         null
       );
+    }
+
+    disconnectedCallback(): void {
+      if (!this.hasAttribute('keep-alive')) {
+        this.#mediaHost.destroy();
+      }
     }
 
     addEventListener(
@@ -291,12 +317,6 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
         this.target?.removeAttribute(attrName);
       } else if (this.target?.getAttribute(attrName) !== newValue) {
         this.target?.setAttribute(attrName, newValue);
-      }
-    }
-
-    disconnectedCallback(): void {
-      if (!this.hasAttribute('keep-alive')) {
-        this.#mediaHost.destroy();
       }
     }
 

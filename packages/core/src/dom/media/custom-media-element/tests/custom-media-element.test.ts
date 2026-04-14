@@ -200,6 +200,36 @@ describe('CustomMediaElement', () => {
       el.appendChild(slotted);
       expect(el.target).toBe(slotted);
     });
+
+    it('re-attaches media host when slotted media element appears after construction', () => {
+      const el = create(defineVideoElement());
+      const shadowVideo = el.shadowRoot!.querySelector('video')!;
+
+      const slottedVideo = document.createElement('video');
+      slottedVideo.slot = 'media';
+      el.appendChild(slottedVideo);
+
+      // Simulate slotchange with bubbles (matches real browser behavior)
+      const mediaSlot = el.shadowRoot!.querySelector('slot[name="media"]')!;
+      mediaSlot.dispatchEvent(new Event('slotchange', { bubbles: true }));
+
+      // After re-attach, property writes should go to the slotted element
+      el.volume = 0.5;
+      expect(slottedVideo.volume).toBe(0.5);
+      expect(shadowVideo.volume).toBe(1);
+    });
+
+    it('does not re-attach when the target has not changed', () => {
+      const el = create(defineVideoElement());
+      const shadowVideo = el.shadowRoot!.querySelector('video')!;
+
+      // Dispatch slotchange without adding a slotted element
+      const mediaSlot = el.shadowRoot!.querySelector('slot[name="media"]')!;
+      mediaSlot.dispatchEvent(new Event('slotchange', { bubbles: true }));
+
+      el.volume = 0.5;
+      expect(shadowVideo.volume).toBe(0.5);
+    });
   });
 
   describe('observedAttributes includes standard media attributes', () => {
