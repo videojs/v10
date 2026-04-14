@@ -19,7 +19,7 @@ const filteredSidebar = filterSidebar(framework);
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
   <PreferenceUpdater client:idle currentFramework={framework} />
-  <nav class="p-6">
+  <nav aria-label="Docs sidebar" class="p-6">
     {
       filteredSidebar.map((item) => (
         <SidebarItem item={item} framework={framework} docTitles={docTitles} />

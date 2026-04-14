@@ -32,6 +32,7 @@ const { class: className } = Astro.props;
 ---
 
 <nav
+  aria-label="Video.js"
   class:list={[
     "sticky top-0 z-30 mx-auto flex w-full items-center justify-between border-b border-b-manila-75 bg-manila-light px-5 dark:border-warm-gray dark:bg-faded-black",
     className,
@@ -55,7 +56,10 @@ const { class: className } = Astro.props;
       aria-current={isDocsActive ? "page" : undefined}
     >
       Docs
-      <hr class="absolute right-0 -bottom-px left-0 h-px bg-orange" />
+      <hr
+        aria-hidden="true"
+        class="absolute right-0 -bottom-px left-0 h-px bg-orange"
+      />
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
@@ -65,7 +69,10 @@ const { class: className } = Astro.props;
             "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
           ]}
         >
-          {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+          {link.label}{" "}
+          {link.external ? (
+            <ArrowUpRight size="1em" aria-hidden="true" />
+          ) : null}
         </a>
       ))
     }

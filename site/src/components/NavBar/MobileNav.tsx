@@ -96,7 +96,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                     className={className}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+                    {link.label} {link.external ? <ArrowUpRight size="1em" aria-hidden="true" /> : null}
                   </a>
                 );
               })}
@@ -106,6 +106,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                   'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
                 )}
                 target="_blank"
+                rel="noopener"
               >
                 Discord
               </a>
@@ -116,6 +117,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                   'border-b'
                 )}
                 target="_blank"
+                rel="noopener"
               >
                 GitHub
               </a>
