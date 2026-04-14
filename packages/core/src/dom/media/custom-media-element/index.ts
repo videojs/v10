@@ -89,7 +89,7 @@ export function CustomMediaElement<T extends MediaHostConstructor<any>>(
   tag: string,
   MediaHost: T
 ): Constructor<HTMLElement & InstanceType<T>> & {
-  readonly Attributes: readonly string[];
+  properties: Record<string, { type: any; attribute?: string }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
