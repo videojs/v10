@@ -22,16 +22,16 @@
   cursor: pointer;
 }
 
-.media-mute-button .show-when-muted {
+.media-mute-button .muted {
   display: none;
 }
-.media-mute-button .show-when-unmuted {
+.media-mute-button .unmuted {
   display: none;
 }
-.media-mute-button[data-muted] .show-when-muted {
+.media-mute-button[data-muted] .muted {
   display: inline;
 }
-.media-mute-button:not([data-muted]) .show-when-unmuted {
+.media-mute-button:not([data-muted]) .unmuted {
   display: inline;
 }
 

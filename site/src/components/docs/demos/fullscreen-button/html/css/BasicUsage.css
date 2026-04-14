@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.media-fullscreen-button .show-when-fullscreen {
+.media-fullscreen-button .fullscreen {
   display: none;
 }
-.media-fullscreen-button .show-when-not-fullscreen {
+.media-fullscreen-button .not-fullscreen {
   display: none;
 }
-.media-fullscreen-button[data-fullscreen] .show-when-fullscreen {
+.media-fullscreen-button[data-fullscreen] .fullscreen {
   display: inline;
 }
-.media-fullscreen-button:not([data-fullscreen]) .show-when-not-fullscreen {
+.media-fullscreen-button:not([data-fullscreen]) .not-fullscreen {
   display: inline;
 }

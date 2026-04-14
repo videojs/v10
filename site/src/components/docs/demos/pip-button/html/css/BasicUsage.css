@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.media-pip-button .show-when-pip {
+.media-pip-button .pip {
   display: none;
 }
-.media-pip-button .show-when-not-pip {
+.media-pip-button .not-pip {
   display: none;
 }
-.media-pip-button[data-pip] .show-when-pip {
+.media-pip-button[data-pip] .pip {
   display: inline;
 }
-.media-pip-button:not([data-pip]) .show-when-not-pip {
+.media-pip-button:not([data-pip]) .not-pip {
   display: inline;
 }

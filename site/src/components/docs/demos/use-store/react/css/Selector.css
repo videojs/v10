@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.state-panel {
+.panel {
   display: flex;
   gap: 16px;
   padding: 12px;
@@ -16,16 +16,16 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.state-panel div {
+.panel div {
   display: flex;
   gap: 8px;
 }
 
-.state-panel dt {
+.panel dt {
   color: #6b7280;
 }
 
-.state-panel dd {
+.panel dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }

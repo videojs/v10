@@ -26,15 +26,15 @@
   cursor: pointer;
 }
 
-.media-seek-button .show-when-backward {
+.media-seek-button .backward {
   display: none;
 }
-.media-seek-button .show-when-forward {
+.media-seek-button .forward {
   display: none;
 }
-.media-seek-button[data-direction="backward"] .show-when-backward {
+.media-seek-button[data-direction="backward"] .backward {
   display: inline;
 }
-.media-seek-button[data-direction="forward"] .show-when-forward {
+.media-seek-button[data-direction="forward"] .forward {
   display: inline;
 }

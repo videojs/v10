@@ -59,15 +59,15 @@
   cursor: pointer;
 }
 
-.button .show-when-paused,
-.button .show-when-playing {
+.button .paused,
+.button .playing {
   display: none;
 }
 
-.media-play-button[data-paused] .show-when-paused {
+.media-play-button[data-paused] .paused {
   display: inline;
 }
 
-.media-play-button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .playing {
   display: inline;
 }

@@ -38,15 +38,15 @@
   cursor: pointer;
 }
 
-.media-play-button .show-when-paused,
-.media-play-button .show-when-playing {
+.media-play-button .paused,
+.media-play-button .playing {
   display: none;
 }
 
-.media-play-button[data-paused] .show-when-paused {
+.media-play-button[data-paused] .paused {
   display: inline;
 }
 
-.media-play-button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .playing {
   display: inline;
 }

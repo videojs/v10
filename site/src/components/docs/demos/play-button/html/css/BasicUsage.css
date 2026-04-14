@@ -20,27 +20,27 @@
   cursor: pointer;
 }
 
-.media-play-button .show-when-paused {
+.media-play-button .paused {
   display: none;
 }
-.media-play-button .show-when-playing {
+.media-play-button .playing {
   display: none;
 }
-.media-play-button .show-when-ended {
+.media-play-button .ended {
   display: none;
 }
-.media-play-button[data-paused]:not([data-ended]) .show-when-paused {
+.media-play-button[data-paused]:not([data-ended]) .paused {
   display: inline;
 }
-.media-play-button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .playing {
   display: inline;
 }
-.media-play-button[data-ended] .show-when-ended {
+.media-play-button[data-ended] .ended {
   display: inline;
 }
-.media-play-button[data-ended] .show-when-paused {
+.media-play-button[data-ended] .paused {
   display: none;
 }
-.media-play-button[data-ended] .show-when-playing {
+.media-play-button[data-ended] .playing {
   display: none;
 }

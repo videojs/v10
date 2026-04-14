@@ -13,7 +13,7 @@ function StateDisplay() {
   }));
 
   return (
-    <dl className="state-panel">
+    <dl className="panel">
       <div>
         <dt>Paused</dt>
         <dd>{String(state.paused)}</dd>

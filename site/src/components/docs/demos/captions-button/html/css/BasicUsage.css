@@ -20,15 +20,15 @@
   cursor: pointer;
 }
 
-.media-captions-button .show-when-active {
+.media-captions-button .active {
   display: none;
 }
-.media-captions-button .show-when-inactive {
+.media-captions-button .inactive {
   display: none;
 }
-.media-captions-button[data-active] .show-when-active {
+.media-captions-button[data-active] .active {
   display: inline;
 }
-.media-captions-button:not([data-active]) .show-when-inactive {
+.media-captions-button:not([data-active]) .inactive {
   display: inline;
 }

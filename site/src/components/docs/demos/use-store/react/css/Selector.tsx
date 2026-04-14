@@ -13,7 +13,7 @@ function DerivedState() {
   }));
 
   return (
-    <dl className="state-panel">
+    <dl className="panel">
       <div>
         <dt>Remaining</dt>
         <dd>{derived.remaining.toFixed(1)}s</dd>
