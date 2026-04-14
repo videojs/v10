@@ -14,15 +14,6 @@ import type {
 } from '../../core/media/state';
 import type { Media } from '../../core/media/types';
 
-type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
-
-export type MediaBaseApi = {
-  play: () => Promise<void>;
-  paused: boolean;
-};
-
-export type MediaApi = WithOptional<MediaBaseApi, HTMLMediaElement>;
-
 export type { Media };
 
 export interface MediaContainer extends HTMLElement {}
