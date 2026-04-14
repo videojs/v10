@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
-const DOUBLETAP_WINDOW = 300;
+const DOUBLETAP_WINDOW = 200;
 
 function setup() {
   const container = document.createElement('div');

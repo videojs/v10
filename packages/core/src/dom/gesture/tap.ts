@@ -1,6 +1,6 @@
 import type { GestureMatchResult, GestureRecognizer } from './gesture';
 
-const DOUBLETAP_WINDOW = 300;
+const DOUBLETAP_WINDOW = 200;
 
 /**
  * Recognizes tap vs doubletap from quick pointer-up events.

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GestureMatchResult, GestureType } from '../gesture';
 import { TapRecognizer } from '../tap';
 
-const DOUBLETAP_WINDOW = 300;
+const DOUBLETAP_WINDOW = 200;
 
 const NOOP_RECOGNIZER = { handleUp: () => {}, reset: () => {} };
 
