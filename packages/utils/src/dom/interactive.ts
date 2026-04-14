@@ -31,10 +31,17 @@ export function isInteractiveTarget(event: Event): boolean {
 
 const ACTIVATION_KEYS = new Set([' ', 'Enter']);
 
-/** Whether the event is an activation key on an interactive element (button, slider). */
+/**
+ * Selector for elements that use Space/Enter as a native activation key.
+ * Narrower than `INTERACTIVE_SELECTOR` — excludes editable elements like
+ * `input`, `textarea`, `select` where Space/Enter is text input, not activation.
+ */
+const ACTIVATABLE_SELECTOR = 'button,a[href],[role="slider"],[role="button"]';
+
+/** Whether the event is an activation key on an activatable element (button, link, slider). */
 export function isInteractiveActivation(event: KeyboardEvent): boolean {
   if (!ACTIVATION_KEYS.has(event.key)) return false;
 
   const target = resolveEventTarget(event);
-  return target instanceof Element && target.matches(INTERACTIVE_SELECTOR);
+  return target instanceof Element && target.matches(ACTIVATABLE_SELECTOR);
 }
