@@ -3,27 +3,6 @@ import { omit, pick } from '@videojs/utils/object';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
-export const AudioAttributes = [
-  'disableRemotePlayback',
-  'autoplay',
-  'controls',
-  'controlsList',
-  'crossOrigin',
-  'loading',
-  'loop',
-  'muted',
-  'playsinline',
-  'preload',
-  'src',
-] as const;
-
-export const VideoAttributes = [
-  ...AudioAttributes,
-  'autoPictureInPicture',
-  'disablePictureInPicture',
-  'poster',
-] as const;
-
 /** CSS custom property names for video elements. */
 export const VideoCSSVars = {
   /** Border radius of the video element. */
@@ -102,7 +81,11 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
-export function CustomMediaElement<T extends Constructor<any>>(
+type MediaHostConstructor<T> = Constructor<T> & {
+  observedAttributes?: string[];
+};
+
+export function CustomMediaElement<T extends MediaHostConstructor<any>>(
   tag: string,
   MediaHost: T
 ): Constructor<HTMLElement & InstanceType<T>> & {
@@ -111,47 +94,44 @@ export function CustomMediaElement<T extends Constructor<any>>(
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 } {
-  const attrToProp = new Map<string, string>();
+  const mediaHostAttrToProp = new Map<string, string>();
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
-    static Attributes = tag.endsWith('video') ? VideoAttributes : tag.endsWith('audio') ? AudioAttributes : [];
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
+    static properties = {
+      autoPictureInPicture: { type: Boolean },
+      autoplay: { type: Boolean },
+      controls: { type: Boolean },
+      controlsList: { type: String },
+      crossOrigin: { type: String },
+      defaultMuted: { type: Boolean, attribute: 'muted' },
+      disablePictureInPicture: { type: Boolean },
+      disableRemotePlayback: { type: Boolean },
+      loading: { type: String },
+      loop: { type: Boolean },
+      playsInline: { type: Boolean },
+      poster: { type: String },
+      preload: { type: String },
+      src: { type: String },
+    };
     static #isDefined = false;
 
     static get observedAttributes() {
       CustomMedia.#define();
-      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
-      const Attributes = (this as typeof CustomMedia).Attributes.map((s) => s.toLowerCase());
-      return [...Attributes, ...attrToProp.keys()];
+      return [
+        // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+        ...getAttrsFromProps(this.properties),
+        ...(MediaHost.observedAttributes ?? []),
+      ];
     }
 
     static #define() {
       if (CustomMedia.#isDefined) return;
       CustomMedia.#isDefined = true;
 
-      // First define the getters and setters for the observed attributes.
       // biome-ignore lint/complexity/noThisInStatic: intentional use of this
-      const { Attributes } = this as typeof CustomMedia;
-      for (const propName of Attributes) {
-        // If it's on the MediaHost prototype, handle it below.
-        if (propName in MediaHost.prototype) continue;
-
-        const attr = propName.toLowerCase();
-        Object.defineProperty(CustomMedia.prototype, propName, {
-          get() {
-            const val = this.getAttribute(attr);
-            return val === null ? false : val === '' ? true : val;
-          },
-          set(val: string | boolean | number | null) {
-            setAttributeValue(this, attr, val);
-          },
-        });
-      }
-
-      // Probe instance to check default value types so only primitive-valued
-      // properties are registered as observed attributes.
-      const probe = new MediaHost();
+      const Attributes = getAttrsFromProps(this.properties);
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
@@ -160,7 +140,11 @@ export function CustomMediaElement<T extends Constructor<any>>(
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
 
-          const config: PropertyDescriptor = {};
+          const config: PropertyDescriptor = {
+            enumerable: true,
+            configurable: true,
+          };
+
           if (typeof descriptor.value === 'function') {
             config.value = function (this: CustomMedia, ...args: any[]) {
               return this.#mediaHost[prop](...args);
@@ -171,13 +155,18 @@ export function CustomMediaElement<T extends Constructor<any>>(
             };
 
             if (descriptor.set) {
-              const defaultType = typeof probe[prop];
-              if (defaultType !== 'object' && defaultType !== 'function') {
-                const attr = kebabCase(prop);
-                attrToProp.set(attr, prop);
+              const attr = kebabCase(prop);
+              // If explicitly observed by the media host, or it's a native attribute,
+              // route through attributeChangedCallback.
+              if (MediaHost.observedAttributes?.includes(attr) || Attributes.includes(attr)) {
+                mediaHostAttrToProp.set(attr, prop);
 
                 config.set = function (this: CustomMedia, val: any) {
-                  setAttributeValue(this, attr, val);
+                  if (val === true || val === false || val == null) {
+                    this.toggleAttribute(attr, Boolean(val));
+                  } else {
+                    this.setAttribute(attr, String(val));
+                  }
                 };
               } else {
                 config.set = function (this: CustomMedia, val: any) {
@@ -189,6 +178,28 @@ export function CustomMediaElement<T extends Constructor<any>>(
 
           Object.defineProperty(CustomMedia.prototype, prop, config);
         }
+      }
+
+      // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+      const properties = this.properties as Record<string, { type: any; attribute?: string }>;
+      for (const [prop, { type, attribute }] of Object.entries(properties)) {
+        if (prop in CustomMedia.prototype) continue;
+
+        const attr = attribute ?? prop.toLowerCase();
+        Object.defineProperty(CustomMedia.prototype, prop, {
+          get: function (this: CustomMedia) {
+            return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);
+          },
+          set: function (this: CustomMedia, val: any) {
+            if (type === Boolean) {
+              this.toggleAttribute(attr, Boolean(val));
+            } else {
+              this.setAttribute(attr, val);
+            }
+          },
+          enumerable: true,
+          configurable: true,
+        });
       }
     }
 
@@ -204,8 +215,8 @@ export function CustomMediaElement<T extends Constructor<any>>(
         const ctor = this.constructor as typeof CustomMedia;
         this.attachShadow(ctor.shadowRootOptions);
 
-        const allowedKeys = ctor.Attributes.map((s) => s.toLowerCase());
-        const disallowedKeys = [...attrToProp.keys()];
+        const allowedKeys = getAttrsFromProps(ctor.properties);
+        const disallowedKeys = [...mediaHostAttrToProp.keys()];
         const attrs: Record<string, string> = omit(
           pick(namedNodeMapToObject(this.attributes), allowedKeys),
           disallowedKeys
@@ -229,14 +240,6 @@ export function CustomMediaElement<T extends Constructor<any>>(
         this.shadowRoot?.querySelector(tag) ??
         null
       );
-    }
-
-    get defaultMuted() {
-      return this.hasAttribute('muted');
-    }
-
-    set defaultMuted(val: boolean) {
-      setAttributeValue(this, 'muted', val);
     }
 
     addEventListener(
@@ -266,7 +269,7 @@ export function CustomMediaElement<T extends Constructor<any>>(
     };
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      const prop = attrToProp.get(attrName);
+      const prop = mediaHostAttrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
@@ -360,10 +363,6 @@ export function CustomMediaElement<T extends Constructor<any>>(
   return CustomMedia as any;
 }
 
-function setAttributeValue(el: Element, attr: string, val: unknown): void {
-  if (val === true || val === false || val == null) {
-    el.toggleAttribute(attr, Boolean(val));
-  } else {
-    el.setAttribute(attr, String(val));
-  }
+function getAttrsFromProps(props: Record<string, any>): string[] {
+  return Object.keys(props).map((prop) => props[prop]?.attribute ?? prop.toLowerCase());
 }
