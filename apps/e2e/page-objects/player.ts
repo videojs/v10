@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 
 /**
  * Page Object Model for the Video.js player.
@@ -137,7 +137,7 @@ export class PlayerPage {
   /** Click play and wait for the paused attribute to be removed. */
   async play(): Promise<void> {
     await this.playButton.click();
-    await expect(this.playButton).not.toHaveAttribute('data-paused', { timeout: 5_000 });
+    await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   }
 
   /** Click pause and wait for the paused attribute to appear. */
@@ -146,7 +146,7 @@ export class PlayerPage {
     // starts and force-click doesn't reliably dispatch to Shadow DOM buttons.
     // Fall back to dispatching click via JS, then verify UI state.
     await this.playButton.dispatchEvent('click');
-    await expect(this.playButton).toHaveAttribute('data-paused', '', { timeout: 5_000 });
+    await expect(this.playButton).toHaveAttribute(DATA_ATTRS.paused, '', { timeout: 5_000 });
   }
 
   /** Click at a percentage position on the time slider. */

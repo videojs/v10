@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { STORYBOARD_PAGES } from '../fixtures/media';
+import { DATA_ATTRS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 for (const { name, path } of STORYBOARD_PAGES) {
@@ -19,8 +20,8 @@ for (const { name, path } of STORYBOARD_PAGES) {
 
       // Thumbnail should be attached and not in error/hidden state
       await expect(thumbnail).toBeAttached({ timeout: 10_000 });
-      await expect(thumbnail).not.toHaveAttribute('data-error', { timeout: 10_000 });
-      await expect(thumbnail).not.toHaveAttribute('data-hidden');
+      await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.error, { timeout: 10_000 });
+      await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.hidden);
 
       // Verify the thumbnail has non-zero dimensions (image actually loaded)
       const box = await thumbnail.boundingBox();

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 test.describe('Keyboard Navigation', () => {
@@ -13,24 +13,24 @@ test.describe('Keyboard Navigation', () => {
 
   test('Space key toggles play/pause on play button', async ({ page }) => {
     await player.playButton.focus();
-    await expect(player.playButton).toHaveAttribute('data-paused', '');
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
 
     await page.keyboard.press('Space');
-    await expect(player.playButton).not.toHaveAttribute('data-paused');
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
 
     await page.keyboard.press('Space');
-    await expect(player.playButton).toHaveAttribute('data-paused', '');
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
   });
 
   test('Enter key toggles play/pause on play button', async ({ page }) => {
     await player.playButton.focus();
-    await expect(player.playButton).toHaveAttribute('data-paused', '');
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
 
     await page.keyboard.press('Enter');
-    await expect(player.playButton).not.toHaveAttribute('data-paused');
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
 
     await page.keyboard.press('Enter');
-    await expect(player.playButton).toHaveAttribute('data-paused', '');
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
   });
 
   test('Tab navigates between controls', async ({ page }) => {
@@ -62,12 +62,12 @@ test.describe('Keyboard Navigation', () => {
   test('Space key toggles mute on mute button', async ({ page }) => {
     await player.muteButton.focus();
     // Media starts muted (see PlayerPage.waitForMediaReady)
-    await expect(player.muteButton).toHaveAttribute('data-muted', '');
+    await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
 
     await page.keyboard.press('Space');
-    await expect(player.muteButton).not.toHaveAttribute('data-muted');
+    await expect(player.muteButton).not.toHaveAttribute(DATA_ATTRS.muted);
 
     await page.keyboard.press('Space');
-    await expect(player.muteButton).toHaveAttribute('data-muted', '');
+    await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
   });
 });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 test.describe('Error Dialog', () => {
@@ -21,7 +21,7 @@ test.describe('Error Dialog', () => {
     });
 
     // Error dialog should appear with data-open
-    await expect(errorDialog).toHaveAttribute('data-open', '', { timeout: 15_000 });
+    await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 15_000 });
   });
 
   test('error dialog can be dismissed', async ({ page }) => {
@@ -33,13 +33,13 @@ test.describe('Error Dialog', () => {
       if (video) video.src = 'https://example.com/does-not-exist.mp4';
     });
 
-    await expect(errorDialog).toHaveAttribute('data-open', '', { timeout: 15_000 });
+    await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 15_000 });
 
     // Click the close/OK button
     const closeButton = page.locator('media-alert-dialog-close, .media-button--primary').first();
     await closeButton.click();
 
     // Dialog should close
-    await expect(errorDialog).not.toHaveAttribute('data-open', { timeout: 5_000 });
+    await expect(errorDialog).not.toHaveAttribute(DATA_ATTRS.open, { timeout: 5_000 });
   });
 });

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { AUDIO_PAGES, type PageEntry } from '../fixtures/media';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) {
@@ -19,15 +19,15 @@ for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) 
     // --- Play / Pause ---
 
     test('play button starts playback', async () => {
-      await expect(player.playButton).toHaveAttribute('data-paused', '');
+      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
       await player.play();
-      await expect(player.playButton).not.toHaveAttribute('data-paused');
+      await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
     });
 
     test('play button pauses playback', async () => {
       await player.play();
       await player.pause();
-      await expect(player.playButton).toHaveAttribute('data-paused', '');
+      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
     });
 
     // --- Seek Buttons ---
@@ -58,27 +58,27 @@ for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) 
 
     test('mute button toggles mute', async () => {
       // Media starts muted (see PlayerPage.waitForMediaReady)
-      await expect(player.muteButton).toHaveAttribute('data-muted', '');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
       await player.muteButton.click();
-      await expect(player.muteButton).not.toHaveAttribute('data-muted');
+      await expect(player.muteButton).not.toHaveAttribute(DATA_ATTRS.muted);
       await player.muteButton.click();
-      await expect(player.muteButton).toHaveAttribute('data-muted', '');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
     });
 
     test('mute button shows volume level', async () => {
-      await expect(player.muteButton).toHaveAttribute('data-volume-level');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
     });
 
     // --- Playback Rate ---
 
     test('playback rate button cycles rates', async () => {
       const rateBtn = player.playbackRateButton;
-      const initialRate = await rateBtn.getAttribute('data-rate');
+      const initialRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
 
       await rateBtn.click();
       await player.page.waitForTimeout(200);
 
-      const newRate = await rateBtn.getAttribute('data-rate');
+      const newRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
       expect(newRate).not.toBe(initialRate);
     });
 

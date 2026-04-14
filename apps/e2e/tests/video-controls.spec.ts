@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ALL_VIDEO_PAGES, type PageEntry } from '../fixtures/media';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
@@ -19,27 +19,27 @@ for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as rea
     // --- Play / Pause ---
 
     test('play button starts playback', async () => {
-      await expect(player.playButton).toHaveAttribute('data-paused', '');
+      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
       await player.play();
-      await expect(player.playButton).not.toHaveAttribute('data-paused');
+      await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
     });
 
     test('play button pauses playback', async () => {
       await player.play();
       await player.pause();
-      await expect(player.playButton).toHaveAttribute('data-paused', '');
+      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
     });
 
     // --- Seek Buttons ---
 
     test('seek forward button is present', async () => {
       await expect(player.seekForward).toBeAttached();
-      await expect(player.seekForward).toHaveAttribute('data-direction', 'forward');
+      await expect(player.seekForward).toHaveAttribute(DATA_ATTRS.direction, 'forward');
     });
 
     test('seek backward button is present', async () => {
       await expect(player.seekBackward).toBeAttached();
-      await expect(player.seekBackward).toHaveAttribute('data-direction', 'backward');
+      await expect(player.seekBackward).toHaveAttribute(DATA_ATTRS.direction, 'backward');
     });
 
     test('seek forward advances playback', async () => {
@@ -52,7 +52,7 @@ for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as rea
       );
 
       await player.seekForward.click();
-      await expect(player.playButton).toHaveAttribute('data-started', '');
+      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.started, '');
     });
 
     // --- Time Slider ---
@@ -76,53 +76,53 @@ for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as rea
 
     test('time slider shows interactive state on hover', async ({ page }) => {
       await player.hoverTimeSlider(50);
-      await expect(player.timeSlider).toHaveAttribute('data-pointing', '');
+      await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.pointing, '');
     });
 
     // --- Mute / Volume ---
 
     test('mute button toggles mute', async () => {
       // Media starts muted (see PlayerPage.waitForMediaReady)
-      await expect(player.muteButton).toHaveAttribute('data-muted', '');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
       await player.muteButton.click();
-      await expect(player.muteButton).not.toHaveAttribute('data-muted');
+      await expect(player.muteButton).not.toHaveAttribute(DATA_ATTRS.muted);
       await player.muteButton.click();
-      await expect(player.muteButton).toHaveAttribute('data-muted', '');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
     });
 
     test('mute button shows volume level', async () => {
-      await expect(player.muteButton).toHaveAttribute('data-volume-level');
+      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
     });
 
     // --- Playback Rate ---
 
     test('playback rate button cycles rates', async () => {
       const rateBtn = player.playbackRateButton;
-      const initialRate = await rateBtn.getAttribute('data-rate');
+      const initialRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
 
       await rateBtn.click();
       await player.page.waitForTimeout(200);
 
-      const newRate = await rateBtn.getAttribute('data-rate');
+      const newRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
       expect(newRate).not.toBe(initialRate);
     });
 
     // --- Fullscreen ---
 
     test('fullscreen button has availability attribute', async () => {
-      await expect(player.fullscreenButton).toHaveAttribute('data-availability');
+      await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
     });
 
     // --- Picture-in-Picture ---
 
     test('pip button has availability attribute', async () => {
-      await expect(player.pipButton).toHaveAttribute('data-availability');
+      await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
     });
 
     // --- Captions ---
 
     test('captions button has availability attribute', async () => {
-      await expect(player.captionsButton).toHaveAttribute('data-availability');
+      await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
     });
 
     // --- Poster ---
@@ -133,15 +133,15 @@ for (const { name, path, mediaRenderer, skipBrowsers } of ALL_VIDEO_PAGES as rea
       // The poster should either be removed or lose data-visible.
       // HTML: <media-poster> loses data-visible attribute
       // React: <img data-visible> loses data-visible (element may still exist)
-      const posterVisible = await page.evaluate(() => {
+      const posterVisible = await page.evaluate((attr) => {
         // Check HTML custom element
         const htmlPoster = document.querySelector('media-poster');
-        if (htmlPoster) return htmlPoster.hasAttribute('data-visible');
+        if (htmlPoster) return htmlPoster.hasAttribute(attr);
 
-        // Check React poster (img inside skin with data-visible)
-        const reactPoster = document.querySelector('img[data-visible]');
+        // Check React poster (img with data-visible)
+        const reactPoster = document.querySelector(`img[${attr}]`);
         return !!reactPoster;
-      });
+      }, DATA_ATTRS.visible);
 
       expect(posterVisible).toBe(false);
     });

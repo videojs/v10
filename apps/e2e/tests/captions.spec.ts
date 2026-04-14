@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 test.describe('Captions', () => {
@@ -13,14 +13,14 @@ test.describe('Captions', () => {
 
   test('captions button shows unavailable without subtitle tracks', async ({ page }) => {
     const captionsBtn = page.locator(SELECTORS.captionsButton).first();
-    await expect(captionsBtn).toHaveAttribute('data-availability', 'unavailable');
+    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
   });
 
   test('captions button becomes available when subtitle track is added', async ({ page }) => {
     const captionsBtn = page.locator(SELECTORS.captionsButton).first();
 
     // Initially unavailable
-    await expect(captionsBtn).toHaveAttribute('data-availability', 'unavailable');
+    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
 
     // Add a subtitle track
     await page.evaluate(() => {
@@ -36,7 +36,7 @@ test.describe('Captions', () => {
     });
 
     // Button should switch to available
-    await expect(captionsBtn).toHaveAttribute('data-availability', 'available', {
+    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'available', {
       timeout: 5_000,
     });
   });
