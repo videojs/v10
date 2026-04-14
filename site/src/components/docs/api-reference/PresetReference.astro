@@ -28,11 +28,24 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
   textTrack: 'text-tracks',
 };
 
+/**
+ * Native media elements used by presets that don't have a custom element.
+ * The pipeline can't detect these since they're not classes with `static tagName`.
+ */
+const NATIVE_MEDIA_ELEMENTS: Record<string, string> = {
+  video: 'video',
+  audio: 'audio',
+};
+
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
   if (override) return `reference/feature-${override}`;
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
   return `reference/feature-${kebab}`;
+}
+
+function htmlMediaElement(preset: PresetReferenceType): string | undefined {
+  return preset.html.mediaElement ?? NATIVE_MEDIA_ELEMENTS[preset.name];
 }
 ---
 
@@ -87,22 +100,19 @@ function featureDocsSlug(featureName: string): string {
                       class="grid grid-cols-(--cols) gap-x-6 gap-y-3"
                       style="--cols: auto 1fr"
                     >
-                      <FrameworkCase frameworks={["react"]}>
-                        <dt class="font-bold">Feature bundle</dt>
-                        <dd>
-                          <MarkdownCode>{preset.featureBundle}</MarkdownCode>
-                        </dd>
-                      </FrameworkCase>
+                      <dt class="font-bold">Feature bundle</dt>
+                      <dd>
+                        <MarkdownCode>{preset.featureBundle}</MarkdownCode>
+                      </dd>
 
                       <dt class="font-bold">Features</dt>
                       <dd>
                         {preset.features.length > 0
                           ? preset.features.map((f, i) => (
                               <>
-                                {i > 0 && ", "}
-                                <DocsLink slug={featureDocsSlug(f)}>
-                                  {f}
-                                </DocsLink>
+                                {/* prettier-ignore */}
+                                <DocsLink slug={featureDocsSlug(f)}>{f}</DocsLink>
+                                {i < preset.features.length - 1 && ", "}
                               </>
                             ))
                           : "–"}
@@ -113,27 +123,36 @@ function featureDocsSlug(featureName: string): string {
                         <FrameworkCase frameworks={["react"]}>
                           {preset.react.skins.map((skin, i) => (
                             <>
-                              {i > 0 && ", "}
+                              {/* prettier-ignore */}
                               <MarkdownCode>{`<${skin.name}>`}</MarkdownCode>
+                              {i < preset.react.skins.length - 1 && ", "}
                             </>
                           ))}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
                           {preset.html.skins.map((skin, i) => (
                             <>
-                              {i > 0 && ", "}
+                              {/* prettier-ignore */}
                               <MarkdownCode>{`<${skin.tagName}>`}</MarkdownCode>
+                              {i < preset.html.skins.length - 1 && ", "}
                             </>
                           ))}
                         </FrameworkCase>
                       </dd>
 
-                      <FrameworkCase frameworks={["react"]}>
-                        <dt class="font-bold">Default media element</dt>
-                        <dd>
+                      <dt class="font-bold">Default media element</dt>
+                      <dd>
+                        <FrameworkCase frameworks={["react"]}>
                           <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>
-                        </dd>
-                      </FrameworkCase>
+                        </FrameworkCase>
+                        <FrameworkCase frameworks={["html"]}>
+                          {htmlMediaElement(preset) ? (
+                            <MarkdownCode>{`<${htmlMediaElement(preset)}>`}</MarkdownCode>
+                          ) : (
+                            "–"
+                          )}
+                        </FrameworkCase>
+                      </dd>
                     </dl>
                   </div>
                 </Td>
