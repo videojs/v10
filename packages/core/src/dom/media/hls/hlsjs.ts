@@ -26,10 +26,6 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
     });
   }
 
-  get target(): HTMLVideoElement | null {
-    return (this.#engine?.media as HTMLVideoElement | undefined) ?? null;
-  }
-
   get engine() {
     return this.#engine;
   }
