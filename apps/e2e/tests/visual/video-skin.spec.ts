@@ -35,5 +35,13 @@ for (const { name, path } of VISUAL_PAGES) {
 
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-default.png`);
     });
+
+    test('storyboard thumbnail on hover', async ({ page }) => {
+      await player.hoverTimeSlider(50);
+      // Wait for the thumbnail image to load
+      await page.waitForTimeout(1_000);
+
+      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-storyboard.png`);
+    });
   });
 }
