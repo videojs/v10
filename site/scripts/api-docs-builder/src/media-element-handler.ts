@@ -29,37 +29,6 @@ import type { HostPropertyDef, MediaElementReference, MediaElementResult } from 
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-/**
- * Standard HTMLMediaElement events forwarded by CustomMediaElement.
- * CustomMediaElement dynamically bridges all events from the host, but these
- * are the standard media events that all elements emit. Shared across video
- * and audio elements.
- */
-const MEDIA_EVENTS = [
-  'abort',
-  'canplay',
-  'canplaythrough',
-  'durationchange',
-  'emptied',
-  'ended',
-  'error',
-  'loadeddata',
-  'loadedmetadata',
-  'loadstart',
-  'pause',
-  'play',
-  'playing',
-  'progress',
-  'ratechange',
-  'seeked',
-  'seeking',
-  'stalled',
-  'suspend',
-  'timeupdate',
-  'volumechange',
-  'waiting',
-] as const;
-
 /** Classes that mark the end of the host prototype chain for property extraction. */
 const HOST_BASE_CLASSES = new Set([
   'HTMLMediaElementHost',
@@ -564,6 +533,70 @@ function parseSlots(html: string, slots: string[]): void {
   }
 }
 
+// ─── Event Extraction ────────────────────────────────────────────────
+
+/**
+ * Extract event names from a composite event interface (e.g. VideoEvents, AudioEvents)
+ * by walking its `extends` chain and collecting property keys from each parent interface.
+ *
+ * Convention: capability event interfaces (MediaPlaybackEvents, etc.) are flat
+ * `eventName: EventLike` maps, and VideoEvents/AudioEvents compose them via `extends`.
+ */
+function extractEventsFromTypes(filePath: string, interfaceName: string): string[] {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
+  // Build a map of interface name → { extends list, own property keys }
+  const interfaces = new Map<string, { extends: string[]; keys: string[] }>();
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isInterfaceDeclaration(node) || !node.name) return;
+
+    const name = node.name.text;
+    const extendsList: string[] = [];
+    const keys: string[] = [];
+
+    if (node.heritageClauses) {
+      for (const clause of node.heritageClauses) {
+        if (clause.token !== ts.SyntaxKind.ExtendsKeyword) continue;
+        for (const type of clause.types) {
+          if (ts.isIdentifier(type.expression)) {
+            extendsList.push(type.expression.text);
+          }
+        }
+      }
+    }
+
+    for (const member of node.members) {
+      if (ts.isPropertySignature(member) && member.name && ts.isIdentifier(member.name)) {
+        keys.push(member.name.text);
+      }
+    }
+
+    interfaces.set(name, { extends: extendsList, keys });
+  });
+
+  // Recursively collect keys from the target interface and all ancestors
+  const events: string[] = [];
+  const visited = new Set<string>();
+
+  function collect(name: string): void {
+    if (visited.has(name)) return;
+    visited.add(name);
+
+    const iface = interfaces.get(name);
+    if (!iface) return;
+
+    for (const parent of iface.extends) {
+      collect(parent);
+    }
+    events.push(...iface.keys);
+  }
+
+  collect(interfaceName);
+  return events;
+}
+
 // ─── Pipeline ────────────────────────────────────────────────────────
 
 export function generateMediaElementReferences(monorepoRoot: string): MediaElementResult[] {
@@ -580,6 +613,11 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
   // Read shared data
   const allAttributes = extractStaticProperties(customMediaPath);
+
+  // Extract events from capability contract types
+  const mediaTypesPath = path.join(monorepoRoot, 'packages/core/src/core/media/types.ts');
+  const videoEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'VideoEvents') : [];
+  const audioEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'AudioEvents') : [];
 
   // Extract CSS vars using the existing handler (needs a TS program)
   const program = ts.createProgram([customMediaPath], compilerOptions);
@@ -618,13 +656,14 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
     const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
+    const events = source.mediaType === 'video' ? videoEvents : audioEvents;
 
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
       hostProperties,
       nativeAttributes,
-      events: [...MEDIA_EVENTS],
+      events,
       cssCustomProperties,
       slots,
     };

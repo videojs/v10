@@ -1097,20 +1097,35 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(ref.nativeAttributes).not.toContain('src');
     });
 
-    it('includes standard media events', () => {
+    it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.events).toEqual(
-        expect.arrayContaining([
-          'abort',
-          'canplay',
-          'durationchange',
-          'ended',
-          'pause',
-          'play',
-          'timeupdate',
-          'volumechange',
-        ])
-      );
+      // Events are extracted from VideoEvents in types.ts, which extends
+      // all capability event interfaces including TextTrackListEvents
+      expect(ref.events).toEqual([
+        'play',
+        'playing',
+        'waiting',
+        'pause',
+        'ended',
+        'timeupdate',
+        'durationchange',
+        'seeking',
+        'seeked',
+        'loadedmetadata',
+        'loadstart',
+        'emptied',
+        'canplay',
+        'canplaythrough',
+        'loadeddata',
+        'volumechange',
+        'ratechange',
+        'progress',
+        'error',
+        'addtrack',
+        'removetrack',
+        'changetrack',
+        'trackmodechange',
+      ]);
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
@@ -1239,6 +1254,32 @@ describe('Media element pipeline (end-to-end)', () => {
       const props = findElement('ExtendingVideo')!.reference.hostProperties;
       // engine is readonly in ComplexHost and not overridden
       expect(props.engine.readonly).toBe(true);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CROSS-CUTTING: EVENT EXTRACTION
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Events are derived from the capability contract types in
+  // packages/core/src/core/media/types.ts, not hardcoded.
+  // VideoEvents includes TextTrackListEvents; AudioEvents does not.
+
+  describe('Event extraction from capability contracts', () => {
+    it('video elements include text track events from VideoEvents', () => {
+      const ref = findElement('SimpleVideo')!.reference;
+      expect(ref.events).toContain('addtrack');
+      expect(ref.events).toContain('removetrack');
+      expect(ref.events).toContain('changetrack');
+      expect(ref.events).toContain('trackmodechange');
+    });
+
+    it('all video elements share the same event list', () => {
+      const simple = findElement('SimpleVideo')!.reference.events;
+      const complex = findElement('ComplexVideo')!.reference.events;
+      const extending = findElement('ExtendingVideo')!.reference.events;
+      expect(complex).toEqual(simple);
+      expect(extending).toEqual(simple);
     });
   });
 });
