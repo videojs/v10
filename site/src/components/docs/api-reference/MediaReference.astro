@@ -1,0 +1,98 @@
+---
+import { getEntry } from 'astro:content';
+import { kebabCase } from 'es-toolkit/string';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import H2 from '@/components/typography/H2Markdown.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import type { MediaReference } from '@/types/media-reference';
+import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
+import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
+import MediaHostPropsTable from './MediaHostPropsTable.astro';
+
+interface Props {
+  media: string;
+}
+
+const { media } = Astro.props;
+
+const entry = await getEntry('mediaReference', kebabCase(media));
+const ref: MediaReference | null = entry?.data ?? null;
+if (!ref) return;
+
+const model = createMediaReferenceModel(media, ref);
+if (!model) return;
+
+const hostPropsSection = model.sections.find((s: { key: string }) => s.key === 'hostProperties');
+const nativeAttrsSection = model.sections.find((s: { key: string }) => s.key === 'nativeAttributes');
+const eventsSection = model.sections.find((s: { key: string }) => s.key === 'events');
+const cssVarsSection = model.sections.find((s: { key: string }) => s.key === 'cssCustomProperties');
+const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slots');
+---
+
+<ContentWidth>
+  <H2 id={model.heading.id}>{model.heading.text}</H2>
+
+  {
+    hostPropsSection && (
+      <>
+        <H3 id={hostPropsSection.id}>{hostPropsSection.title}</H3>
+        <MediaHostPropsTable
+          hostProperties={ref.hostProperties}
+          componentName={media}
+        />
+      </>
+    )
+  }
+
+  {
+    nativeAttrsSection && (
+      <>
+        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
+        <p class="my-4 flex flex-wrap gap-2">
+          {ref.nativeAttributes.map((attr) => (
+            <MarkdownCode>{attr}</MarkdownCode>
+          ))}
+        </p>
+      </>
+    )
+  }
+
+  {
+    eventsSection && (
+      <>
+        <H3 id={eventsSection.id}>{eventsSection.title}</H3>
+        <p class="my-4 flex flex-wrap gap-2">
+          {ref.events.map((event) => (
+            <MarkdownCode>{event}</MarkdownCode>
+          ))}
+        </p>
+      </>
+    )
+  }
+
+  {
+    cssVarsSection && (
+      <>
+        <H3 id={cssVarsSection.id}>{cssVarsSection.title}</H3>
+        <ApiCSSVarsTable
+          cssCustomProperties={ref.cssCustomProperties}
+          componentName={media}
+        />
+      </>
+    )
+  }
+
+  {
+    slotsSection && (
+      <>
+        <H3 id={slotsSection.id}>{slotsSection.title}</H3>
+        <p class="my-4 flex flex-wrap gap-2">
+          {ref.slots.map((slot) => (
+            <MarkdownCode>{slot === "" ? "(default)" : slot}</MarkdownCode>
+          ))}
+        </p>
+      </>
+    )
+  }
+</ContentWidth>

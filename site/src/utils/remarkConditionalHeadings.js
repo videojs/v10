@@ -4,11 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
+import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from './utilReferenceModel';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENT_REF_DIR = path.resolve(__dirname, '../content/generated-component-reference');
 const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
+const MEDIA_REF_DIR = path.resolve(__dirname, '../content/generated-media-reference');
 
 function readComponentRefJson(componentName) {
   const kebab = kebabCase(componentName);
@@ -67,6 +69,9 @@ export default function remarkConditionalHeadings() {
           injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
         } else if (node.name === 'UtilReference') {
           injectUtilReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
+          return;
+        } else if (node.name === 'MediaReference') {
+          injectMediaReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
           return;
         }
       }
@@ -173,6 +178,32 @@ function injectUtilReferenceHeadings(node, headingsWithMetadata, reservedSlugs) 
 
   headingsWithMetadata.push(...utilHeadings);
   for (const heading of utilHeadings) {
+    reservedSlugs.add(heading.slug);
+  }
+}
+
+function readMediaRefJson(tagName) {
+  const filePath = path.join(MEDIA_REF_DIR, `${tagName}.json`);
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function injectMediaReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
+  const mediaAttr = node.attributes?.find((a) => a.name === 'media');
+  const mediaName = typeof mediaAttr?.value === 'string' ? mediaAttr.value : null;
+  if (!mediaName) return;
+
+  const json = readMediaRefJson(kebabCase(mediaName));
+  if (!json) return;
+
+  const mediaModel = createMediaReferenceModel(mediaName, json);
+  const mediaHeadings = buildMediaReferenceTocHeadings(mediaModel);
+
+  headingsWithMetadata.push(...mediaHeadings);
+  for (const heading of mediaHeadings) {
     reservedSlugs.add(heading.slug);
   }
 }
