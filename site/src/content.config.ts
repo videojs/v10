@@ -3,6 +3,7 @@ import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
+import { MediaReferenceSchema } from './types/media-reference';
 import { UtilReferenceSchema } from './types/util-reference';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
@@ -127,6 +128,14 @@ const utilReference = defineCollection({
   schema: UtilReferenceSchema,
 });
 
+const mediaReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-media-reference',
+  }),
+  schema: MediaReferenceSchema,
+});
+
 const ejectedSkins = defineCollection({
   loader: file('./src/content/ejected-skins.json'),
   schema: z.object({
@@ -141,4 +150,4 @@ const ejectedSkins = defineCollection({
   }),
 });
 
-export const collections = { blog, docs, authors, componentReference, utilReference, ejectedSkins };
+export const collections = { blog, docs, authors, componentReference, utilReference, mediaReference, ejectedSkins };
