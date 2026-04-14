@@ -49,6 +49,7 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
   }
 
   destroy() {
+    this.detach();
     this.#engine?.destroy();
     this.#engine = null;
   }
