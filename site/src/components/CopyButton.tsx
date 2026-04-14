@@ -55,16 +55,21 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
   };
 
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      disabled={disabled}
-      onClick={handleCopy}
-      className={className}
-      style={style}
-      aria-label={isCopied ? 'Copied' : 'Copy to clipboard'}
-    >
-      {isCopied ? copied || children : children}
-    </button>
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        disabled={disabled}
+        onClick={handleCopy}
+        className={className}
+        style={style}
+        aria-label={isCopied ? 'Copied' : 'Copy to clipboard'}
+      >
+        {isCopied ? copied || children : children}
+      </button>
+      <span aria-live="polite" className="sr-only">
+        {isCopied ? 'Copied' : ''}
+      </span>
+    </>
   );
 }

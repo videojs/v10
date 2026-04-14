@@ -69,7 +69,11 @@ function getGroupRotate(depth: number) {
         }
       >
         <span class="flex-1">{item.sidebarLabel}</span>
-        <DropdownIcon width={"0.65rem"} className={getGroupRotate(depth)} />
+        <DropdownIcon
+          width={"0.65rem"}
+          className={getGroupRotate(depth)}
+          aria-hidden="true"
+        />
       </summary>
       <div>
         {item.contents.map((contentItem) => (

@@ -85,6 +85,7 @@ export function ThemeToggle() {
 
   return (
     <ToggleGroup
+      aria-label="Color theme"
       disabled={preference === null}
       value={preference ? [preference] : []}
       onChange={(values) => {

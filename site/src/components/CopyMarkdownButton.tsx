@@ -82,45 +82,50 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
   const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy markdown to clipboard';
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={handleCopy}
-      className={clsx(
-        'relative border border-manila-75 dark:border-soot bg-manila-50 dark:bg-warm-gray px-3 py-1 rounded-xs whitespace-nowrap text-p3',
-        state.status === 'idle' && 'intent:bg-manila-dark dark:intent:bg-soot',
-        state.status === 'loading' ? 'opacity-70' : 'cursor-100',
-        disabled ? 'cursor-wait' : 'cursor-pointer',
-        className
-      )}
-      style={style}
-      aria-label={ariaLabel}
-      data-llms-ignore
-    >
-      <span
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={handleCopy}
         className={clsx(
-          state.status !== 'idle' && state.status !== 'loading' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-          'inline-flex items-center justify-center'
+          'relative border border-manila-75 dark:border-soot bg-manila-50 dark:bg-warm-gray px-3 py-1 rounded-xs whitespace-nowrap text-p3',
+          state.status === 'idle' && 'intent:bg-manila-dark dark:intent:bg-soot',
+          state.status === 'loading' ? 'opacity-70' : 'cursor-100',
+          disabled ? 'cursor-wait' : 'cursor-pointer',
+          className
         )}
+        style={style}
+        aria-label={ariaLabel}
+        data-llms-ignore
       >
-        Copy Markdown
+        <span
+          className={clsx(
+            state.status !== 'idle' && state.status !== 'loading' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+            'inline-flex items-center justify-center'
+          )}
+        >
+          Copy Markdown
+        </span>
+        <span
+          className={clsx(
+            state.status !== 'success' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+            'absolute inset-0 inline-flex items-center justify-center'
+          )}
+        >
+          Copied <CheckIcon className="ml-1 w-4 h-4" />
+        </span>
+        <span
+          className={clsx(
+            state.status !== 'error' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+            'absolute inset-0 inline-flex items-center justify-center'
+          )}
+        >
+          Error
+        </span>
+      </button>
+      <span aria-live="polite" className="sr-only">
+        {state.status === 'success' ? 'Copied' : state.status === 'error' ? 'Error copying markdown' : ''}
       </span>
-      <span
-        className={clsx(
-          state.status !== 'success' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-          'absolute inset-0 inline-flex items-center justify-center'
-        )}
-      >
-        Copied <CheckIcon className="ml-1 w-4 h-4" />
-      </span>
-      <span
-        className={clsx(
-          state.status !== 'error' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-          'absolute inset-0 inline-flex items-center justify-center'
-        )}
-      >
-        Error
-      </span>
-    </button>
+    </>
   );
 }
