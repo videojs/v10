@@ -74,6 +74,19 @@ export const sidebar: Sidebar = [
     ],
   },
   {
+    sidebarLabel: 'Media Elements',
+    llmsDescription: 'API Reference for media elements that handle streaming protocols and media playback.',
+    contents: [
+      { slug: 'reference/background-video' },
+      { slug: 'reference/dash-video' },
+      { slug: 'reference/hls-video' },
+      { slug: 'reference/mux-audio' },
+      { slug: 'reference/mux-video' },
+      { slug: 'reference/native-hls-video' },
+      { slug: 'reference/simple-hls-video' },
+    ],
+  },
+  {
     sidebarLabel: 'Hooks & Utilities',
     llmsDescription: 'API Reference for React hooks and utilities for player integration.',
     frameworks: ['react'],
