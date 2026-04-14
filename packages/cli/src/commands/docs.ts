@@ -94,7 +94,7 @@ function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialIns
     partial.media = validateMedia(flags.media);
   }
 
-  if (flags['install-method']) {
+  if (flags['install-method'] !== undefined) {
     partial.installMethod = validateInstallMethod(flags['install-method'], framework);
   }
 
