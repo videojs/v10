@@ -8,8 +8,8 @@ import '@app/styles.css';
 //   autoplay=true        Start with autoplay enabled
 //   preload=auto|metadata|none  Initial preload mode
 
-import type { PlaybackEngineState } from '@videojs/spf/playback-engine';
-import { createPlaybackEngine, effect } from '@videojs/spf/playback-engine';
+import type { HlsPlaybackEngineState } from '@videojs/spf/playback-engine';
+import { createHlsPlaybackEngine, effect } from '@videojs/spf/playback-engine';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
@@ -57,7 +57,7 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
-function getVideoTracks(state: PlaybackEngineState) {
+function getVideoTracks(state: HlsPlaybackEngineState) {
   return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
@@ -264,14 +264,14 @@ function inspectState() {
 log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
-let engine: ReturnType<typeof createPlaybackEngine>;
+let engine: ReturnType<typeof createHlsPlaybackEngine>;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createPlaybackEngine({ initialBandwidth: 1_000_000 });
+  engine = createHlsPlaybackEngine({ initialBandwidth: 1_000_000 });
   (window as any).engine = engine;
   (window as any).state = () => engine.state.get();
   (window as any).owners = () => engine.owners.get();

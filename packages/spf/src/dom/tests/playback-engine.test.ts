@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlaybackEngine } from '../playback-engine/engine';
+import { createHlsPlaybackEngine } from '../playback-engine/hls-engine';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../media/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('createPlaybackEngine', () => {
+describe('createHlsPlaybackEngine', () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('createPlaybackEngine', () => {
     globalThis.fetch = originalFetch;
   });
   it('creates engine with state, owners, and destroy', () => {
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.owners).toBeDefined();
@@ -30,7 +30,7 @@ describe('createPlaybackEngine', () => {
   });
 
   it('initializes with empty state and owners', () => {
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     expect(engine.state.get()).toEqual({
       bandwidthState: {
@@ -47,7 +47,7 @@ describe('createPlaybackEngine', () => {
   });
 
   it('allows patching state and owners from outside', async () => {
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
@@ -68,7 +68,7 @@ describe('createPlaybackEngine', () => {
   });
 
   it('accepts custom configuration', () => {
-    const engine = createPlaybackEngine({
+    const engine = createHlsPlaybackEngine({
       initialBandwidth: 3_000_000,
       preferredAudioLanguage: 'es',
     });
@@ -80,14 +80,14 @@ describe('createPlaybackEngine', () => {
   });
 
   it('cleans up all orchestrations on destroy', () => {
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     // Should not throw
     expect(() => engine.destroy()).not.toThrow();
   });
 
   it('can be destroyed multiple times safely', () => {
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     engine.destroy();
 
@@ -128,7 +128,7 @@ http://example.com/segment1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     // Patch state to trigger presentation resolution
     engine.state.set({
@@ -199,7 +199,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -294,7 +294,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -359,7 +359,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -424,7 +424,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -482,7 +482,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
 
     // Patch state but NOT owners (no mediaElement)
     engine.state.set({
@@ -562,7 +562,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'none';
 
@@ -643,7 +643,7 @@ http://example.com/seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'metadata';
 
@@ -721,7 +721,7 @@ http://example.com/seg1.m4s
 
     // Use a conservative initialBandwidth so switchQuality also selects 360p and
     // doesn't immediately upgrade — verifying only the selected track is resolved.
-    const engine = createPlaybackEngine({ initialBandwidth: 600_000 });
+    const engine = createHlsPlaybackEngine({ initialBandwidth: 600_000 });
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -822,7 +822,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -920,7 +920,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine({
+    const engine = createHlsPlaybackEngine({
       enableDefaultTrack: true,
     });
     const mediaElement = document.createElement('video');
@@ -999,7 +999,7 @@ http://example.com/text-fr-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine({
+    const engine = createHlsPlaybackEngine({
       preferredSubtitleLanguage: 'fr',
     });
     const mediaElement = document.createElement('video');
@@ -1087,7 +1087,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1188,7 +1188,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1285,7 +1285,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    const engine = createHlsPlaybackEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1394,7 +1394,7 @@ http://example.com/seg2.m4s
   });
   globalThis.fetch = mockFetch;
 
-  const engine = createPlaybackEngine();
+  const engine = createHlsPlaybackEngine();
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 
@@ -1472,7 +1472,7 @@ http://example.com/audio-seg1.m4s
   });
   globalThis.fetch = mockFetch;
 
-  const engine = createPlaybackEngine();
+  const engine = createHlsPlaybackEngine();
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 
