@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.19] - 2026-04-14
+
+### 🐛 Bug Fixes
+- *(cli)* Correct bin path to match tsdown output ([#1337](https://github.com/videojs/v10/pull/1337)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-beta.18] - 2026-04-14
 
 ### 🚀 Features
@@ -1215,6 +1220,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.19]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.18...@videojs/core@10.0.0-beta.19
 [@videojs/core@10.0.0-beta.18]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.17...@videojs/core@10.0.0-beta.18
 [@videojs/core@10.0.0-beta.17]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.16...@videojs/core@10.0.0-beta.17
 [@videojs/core@10.0.0-beta.16]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.15...@videojs/core@10.0.0-beta.16
