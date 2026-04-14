@@ -479,12 +479,11 @@ function extractSlotsFromTemplateFactory(filePath: string, factoryFnName: string
           }
 
           if (innerBody) {
-            const block = ts.isBlock(innerBody) ? innerBody : undefined;
-            if (block) {
-              const templateText = extractTemplateString(block);
-              if (templateText) {
-                parseSlots(templateText, slots);
-              }
+            const templateText = ts.isBlock(innerBody)
+              ? extractTemplateString(innerBody)
+              : getTemplateText(innerBody as ts.Expression);
+            if (templateText) {
+              parseSlots(templateText, slots);
             }
           }
         }
