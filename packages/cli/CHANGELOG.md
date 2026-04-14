@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.19...@videojs/cli@10.0.0-beta.20) (2026-04-14)
+
+
+### Bug Fixes
+
+* **cli:** replace deprecated noExternal with deps.alwaysBundle ([#1338](https://github.com/videojs/v10/issues/1338)) ([ef71209](https://github.com/videojs/v10/commit/ef712093d45caf9dc86b3c9b251174ecef2bc61f))
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.18...@videojs/cli@10.0.0-beta.19) (2026-04-14)
 
 

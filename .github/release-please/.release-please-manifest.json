@@ -1,12 +1,12 @@
 {
-  "packages/cli": "10.0.0-beta.19",
-  "packages/core": "10.0.0-beta.19",
-  "packages/element": "10.0.0-beta.19",
-  "packages/html": "10.0.0-beta.19",
-  "packages/icons": "10.0.0-beta.19",
-  "packages/react": "10.0.0-beta.19",
-  "packages/skins": "10.0.0-beta.19",
-  "packages/store": "10.0.0-beta.19",
-  "packages/utils": "10.0.0-beta.19",
-  "packages/spf": "10.0.0-beta.19"
+  "packages/cli": "10.0.0-beta.20",
+  "packages/core": "10.0.0-beta.20",
+  "packages/element": "10.0.0-beta.20",
+  "packages/html": "10.0.0-beta.20",
+  "packages/icons": "10.0.0-beta.20",
+  "packages/react": "10.0.0-beta.20",
+  "packages/skins": "10.0.0-beta.20",
+  "packages/store": "10.0.0-beta.20",
+  "packages/utils": "10.0.0-beta.20",
+  "packages/spf": "10.0.0-beta.20"
 }
