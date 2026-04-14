@@ -90,18 +90,14 @@ interface MediaHost extends EventTarget {
   [key: string]: any;
 }
 
-type MediaHostConstructor = Constructor<MediaHost> & {
-  observedAttributes?: string[];
-};
-
-type CustomMediaConstructor<T extends MediaHostConstructor> = Constructor<HTMLElement & InstanceType<T>> & {
+type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTMLElement & InstanceType<T>> & {
   properties: Record<string, { type: any; attribute?: string }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 };
 
-export function CustomMediaElement<T extends MediaHostConstructor>(
+export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
@@ -134,15 +130,12 @@ export function CustomMediaElement<T extends MediaHostConstructor>(
       return [
         // biome-ignore lint/complexity/noThisInStatic: intentional use of this
         ...getAttrsFromProps(this.properties),
-        ...(MediaHost.observedAttributes ?? []),
       ];
     }
 
     static #define(ctor: typeof CustomMedia) {
       if (isDefined) return;
       isDefined = true;
-
-      const Attributes = getAttrsFromProps(ctor.properties);
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
@@ -167,9 +160,7 @@ export function CustomMediaElement<T extends MediaHostConstructor>(
 
             if (descriptor.set) {
               const attr = kebabCase(prop);
-              // If explicitly observed by the media host, or it's a native attribute,
-              // route through attributeChangedCallback.
-              if (MediaHost.observedAttributes?.includes(attr) || Attributes.includes(attr)) {
+              if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
 
                 config.set = function (this: CustomMedia, val: any) {
