@@ -8,14 +8,26 @@ import Header from '@/components/home/Header.astro';
 import RoadMap from '@/components/home/Roadmap.astro';
 import Sponsors from '@/components/home/Sponsors.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '@/consts';
+import { SITE_DESCRIPTION, SITE_TITLE, VJS10_DEMO_VIDEO } from '@/consts';
 import Base from '@/layouts/Base.astro';
+
+const times = [0, 12.9, 17.61, 15.8, 7.72, 4.8, 3.3];
+const posterTime = times[Math.floor(Math.random() * times.length)];
+const poster = `${VJS10_DEMO_VIDEO.poster}?time=${posterTime}`;
 ---
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  <link
+    rel="preload"
+    href={poster}
+    as="image"
+    type="image/webp"
+    fetchpriority="high"
+    slot="priority-head"
+  />
   <NavBar />
   <main id="main-content">
-    <Header />
+    <Header poster={poster} />
     <Demo />
     <GetStartedBanner />
     <Built />
