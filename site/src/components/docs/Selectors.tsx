@@ -12,28 +12,17 @@ import {
 } from '@/types/docs';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 interface SelectorProps {
   currentFramework: SupportedFramework;
   currentSlug: string;
 }
 
-/** Read the style from the DOM attribute set by StyleInit (runs before paint). */
-function getInitialStyle(framework: SupportedFramework): AnySupportedStyle {
-  if (typeof document !== 'undefined') {
-    const domStyle = document.documentElement.dataset.style;
-    if (domStyle && isValidStyleForFramework(framework, domStyle)) {
-      return domStyle as AnySupportedStyle;
-    }
-  }
-  return FRAMEWORK_STYLES[framework][0];
-}
-
 export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
   const currentStyle = useStore(styleStore);
-
-  // Use nanostore value when available, otherwise read from DOM (set by StyleInit before paint)
-  const resolvedStyle = currentStyle ?? getInitialStyle(currentFramework);
+  const isHydrated = useIsHydrated();
+  const hydrationSafeCurrentStyle = isHydrated ? currentStyle : null;
 
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
@@ -45,18 +34,11 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
       newFramework,
     });
 
-    // Base UI's scroll lock transfers html.scrollTop → body.scrollTop.
-    // Capture scroll position before releasing the lock.
-    const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
-    const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
-
-    // Release scroll lock before navigating so the page doesn't appear frozen
-    if (scrollLocked) {
-      document.documentElement.removeAttribute('data-base-ui-scroll-locked');
-      document.documentElement.style.overflow = '';
-    }
-
     if (shouldReplace) {
+      // Base UI's scroll lock transfers html.scrollTop → body.scrollTop
+      const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
+      const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
+
       try {
         sessionStorage.setItem(
           'vjs-page-scroll',
@@ -111,7 +93,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
         />
         <span className="text-p3 text-faded-black dark:text-manila-light">Style</span>
         <Select
-          value={resolvedStyle}
+          value={hydrationSafeCurrentStyle}
           onChange={handleStyleChange}
           options={styleOptions}
           aria-label="Select style"

@@ -271,44 +271,32 @@ interface TabsPanelProps {
 }
 export function TabsPanel({ value, children, initial, className, variant = 'compact' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isHydrated = useIsHydrated();
   const [isActive, setIsActive] = useState(initial);
 
   // Observe the corresponding Tab element's data-tab-active attribute
-  // to sync panel visibility with tab activation.
-  //
-  // With Astro islands, Tab and TabsPanel hydrate independently via client:idle.
-  // We observe the tabs root subtree so that we detect data-tab-active changes
-  // regardless of hydration order between Tab and TabsPanel islands.
+  // to sync panel visibility with tab activation
   useEffect(() => {
-    if (!isHydrated) return;
-
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
-    if (!tabsRoot) return;
+    const correspondingTab = tabsRoot?.querySelector(`[role="tab"][data-value="${value}"]`);
 
-    function sync() {
-      const tab = tabsRoot!.querySelector(`[role="tab"][data-value="${value}"]`);
-      if (!tab) return;
-      const attr = tab.getAttribute('data-tab-active');
-      if (attr !== null) {
-        setIsActive(attr === 'true');
-      }
-    }
+    if (!correspondingTab) return;
 
-    // Sync current state immediately
-    sync();
-
-    // Watch the tabs root for any data-tab-active changes and subtree mutations
-    // (handles both click-driven attribute changes and late-hydrating Tab islands)
-    const observer = new MutationObserver(sync);
-    observer.observe(tabsRoot, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['data-tab-active'],
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-tab-active') {
+          const target = mutation.target as Element;
+          const newValue = target.getAttribute('data-tab-active') === 'true';
+          setIsActive(newValue);
+        }
+      });
     });
 
-    return () => observer.disconnect();
-  }, [value, isHydrated]);
+    observer.observe(correspondingTab, { attributes: true });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [value]);
 
   return (
     <div
