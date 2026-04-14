@@ -15,8 +15,8 @@ import { PlayerPage } from '../../page-objects/player';
 const VISUAL_PAGES = [
   { name: 'HTML', path: '/pages/html-video-mp4.html' },
   { name: 'React', path: '/pages/react-video-mp4.html' },
-  { name: 'Ejected-HTML', path: '/ejected-html-video-mp4.html' },
-  { name: 'Ejected-React', path: '/ejected-react-video-mp4.html' },
+  { name: 'Ejected-HTML', path: '/pages/ejected-html-video-mp4.html' },
+  { name: 'Ejected-React', path: '/pages/ejected-react-video-mp4.html' },
   { name: 'CDN', path: '/pages/cdn-video-mp4.html' },
 ];
 
@@ -57,7 +57,7 @@ test.describe('Visual — Captions', () => {
 
   test.beforeEach(async ({ page }) => {
     player = new PlayerPage(page);
-    await page.goto('/html-video-captions.html');
+    await page.goto('/pages/html-video-captions.html');
     await player.waitForMediaReady();
   });
 

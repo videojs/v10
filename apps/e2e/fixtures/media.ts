@@ -93,20 +93,20 @@ export const AUDIO_PAGES = [
 ] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
-// Ejected skin pages (hand-written → src/)
+// Ejected skin pages (generated → src/pages/)
 // ---------------------------------------------------------------------------
 
 export const EJECTED_VIDEO_PAGES = [
   {
     name: 'Ejected HTML Video MP4',
-    path: '/ejected-html-video-mp4.html',
+    path: '/pages/ejected-html-video-mp4.html',
     framework: 'html',
     media: 'video',
     resource: 'mp4',
   },
   {
     name: 'Ejected React Video MP4',
-    path: '/ejected-react-video-mp4.html',
+    path: '/pages/ejected-react-video-mp4.html',
     framework: 'react',
     media: 'video',
     resource: 'mp4',

@@ -124,7 +124,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn';
+  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions';
 }
 
 // ---------------------------------------------------------------------------
@@ -260,6 +260,82 @@ createRoot(document.getElementById('root')!).render(<App />);
 }
 
 // ---------------------------------------------------------------------------
+// Special page templates (captions, ejected skins)
+// ---------------------------------------------------------------------------
+
+function captionsPage(resource: string): string {
+  const captionVtt = 'WEBVTT\\n\\n00:00:00.000 --> 00:00:30.000\\nThis is a test caption';
+
+  return `import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+import { MEDIA } from '../shared';
+
+const html = String.raw;
+
+const captionVtt = encodeURIComponent('${captionVtt}');
+
+document.getElementById('root')!.innerHTML = html\`
+  <video-player>
+    <video-skin style="max-width: 800px; aspect-ratio: 16/9">
+      <video src="\${MEDIA.${resource}.url}" playsinline crossorigin="anonymous">
+        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />
+        <track kind="subtitles" label="English" srclang="en" src="data:text/vtt,\${captionVtt}" />
+      </video>
+      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />
+    </video-skin>
+  </video-player>
+\`;
+`;
+}
+
+function ejectedHtmlPage(): string {
+  // Path from pages/ to the site content
+  const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
+
+  return `import '@videojs/html/video/ui';
+import ejectedSkins from '${jsonPath}';
+
+interface EjectedSkinEntry {
+  id: string;
+  html?: string;
+  css?: string;
+}
+
+const skin = (ejectedSkins as EjectedSkinEntry[]).find((s) => s.id === 'default-video');
+
+if (!skin?.html || !skin?.css) {
+  throw new Error('Ejected skin "default-video" not found. Run \\\`pnpm -F site ejected-skins\\\` first.');
+}
+
+const style = document.createElement('style');
+style.textContent = skin.css;
+document.head.appendChild(style);
+
+const playerMatch = skin.html.match(/<video-player>[\\s\\S]*<\\/video-player>/);
+
+if (!playerMatch) {
+  throw new Error('Could not find <video-player> in ejected HTML output.');
+}
+
+const root = document.getElementById('root')!;
+root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
+`;
+}
+
+function ejectedReactPage(resource: string): string {
+  return `import { createRoot } from 'react-dom/client';
+import { VideoPlayer } from '../_generated/ejected-react-video-skin';
+import { MEDIA } from '../shared';
+
+function App() {
+  return <VideoPlayer src={MEDIA.${resource}.url} poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }} />;
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+}
+
+// ---------------------------------------------------------------------------
 // Page definitions (drive generation from here)
 // ---------------------------------------------------------------------------
 
@@ -305,6 +381,34 @@ const PAGES: PageDef[] = [
     resource: 'hlsTs',
     category: 'cdn',
   },
+
+  // Captions
+  {
+    name: 'HTML Video Captions',
+    path: 'html-video-captions',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'captions',
+  },
+
+  // Ejected Skins
+  {
+    name: 'Ejected HTML Video MP4',
+    path: 'ejected-html-video-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'ejected-html',
+  },
+  {
+    name: 'Ejected React Video MP4',
+    path: 'ejected-react-video-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    category: 'ejected-react',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -336,7 +440,14 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
 
   let ts: string;
 
-  if (page.framework === 'react') {
+  // Special category pages
+  if (page.category === 'captions') {
+    ts = captionsPage(page.resource);
+  } else if (page.category === 'ejected-html') {
+    ts = ejectedHtmlPage();
+  } else if (page.category === 'ejected-react') {
+    ts = ejectedReactPage(page.resource);
+  } else if (page.framework === 'react') {
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource);
   } else {
     const imports = getImports(page, config);
@@ -349,11 +460,14 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
 }
 
 function generateIndexHtml(pages: PageDef[]): string {
-  const htmlVideo = pages.filter((p) => p.framework === 'html' && !MEDIA_TYPES[p.media]?.isAudio && !p.category);
-  const htmlAudio = pages.filter((p) => p.framework === 'html' && MEDIA_TYPES[p.media]?.isAudio && !p.category);
-  const reactVideo = pages.filter((p) => p.framework === 'react' && !MEDIA_TYPES[p.media]?.isAudio);
-  const reactAudio = pages.filter((p) => p.framework === 'react' && MEDIA_TYPES[p.media]?.isAudio);
+  const noCategory = (p: PageDef) => !p.category;
+  const htmlVideo = pages.filter((p) => p.framework === 'html' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
+  const htmlAudio = pages.filter((p) => p.framework === 'html' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
+  const reactVideo = pages.filter((p) => p.framework === 'react' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
+  const reactAudio = pages.filter((p) => p.framework === 'react' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const cdn = pages.filter((p) => p.category === 'cdn');
+  const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
+  const captions = pages.filter((p) => p.category === 'captions');
 
   function list(entries: PageDef[]): string {
     return entries.map((p) => `        <li><a href="/pages/${p.path}.html">${p.name}</a></li>`).join('\n');
@@ -373,7 +487,7 @@ function generateIndexHtml(pages: PageDef[]): string {
       <ul>
 ${list(htmlVideo)}
 ${list(htmlAudio)}
-        <li><a href="/html-video-captions.html">HTML Video - Captions</a></li>
+${list(captions)}
       </ul>
       <h2>React</h2>
       <ul>
@@ -382,8 +496,7 @@ ${list(reactAudio)}
       </ul>
       <h2>Ejected Skins</h2>
       <ul>
-        <li><a href="/ejected-html-video-mp4.html">Ejected HTML Video - MP4</a></li>
-        <li><a href="/ejected-react-video-mp4.html">Ejected React Video - MP4</a></li>
+${list(ejected)}
       </ul>
       <h2>CDN Bundles</h2>
       <ul>
