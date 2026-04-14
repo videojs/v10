@@ -1,22 +1,8 @@
-import { isEditableTarget, listen, resolveEventTarget } from '@videojs/utils/dom';
+import { isEditableTarget, isInteractiveActivation, listen } from '@videojs/utils/dom';
 
 import { toAriaKeyShortcut } from './aria';
 import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
-
-const ACTIVATION_KEYS = new Set([' ', 'Enter']);
-
-/** Whether the event is an activation key on an interactive element (button, slider). */
-function isInteractiveActivation(event: KeyboardEvent): boolean {
-  if (!ACTIVATION_KEYS.has(event.key)) return false;
-
-  const target = resolveEventTarget(event);
-  if (!(target instanceof HTMLElement)) return false;
-  if (target instanceof HTMLButtonElement) return true;
-
-  const role = target.getAttribute('role');
-  return role === 'button' || role === 'slider';
-}
 
 interface HotkeyBinding {
   parsed: ParsedHotkeyBinding[];
