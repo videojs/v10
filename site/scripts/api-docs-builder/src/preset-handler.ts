@@ -260,40 +260,34 @@ function extractValueExports(filePath: string): string[] {
 
 // ─── Barrel Parsing (feature bundle only) ───────────────────────────
 
-interface BarrelExport {
-  name: string;
-  sourceSpecifier: string;
-}
-
 /**
- * Parse named value exports from a barrel file.
+ * Parse named value export names from a barrel file.
  * Only reads `export { X } from '...'` syntax — skips `export *` since
  * skins are discovered via directory scanning.
  */
-function parseBarrelNamedExports(filePath: string): BarrelExport[] {
+function parseBarrelExportNames(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const exports: BarrelExport[] = [];
+  const names: string[] = [];
 
   ts.forEachChild(sourceFile, (node) => {
     if (!ts.isExportDeclaration(node) || !node.moduleSpecifier) return;
-    const sourceSpecifier = (node.moduleSpecifier as ts.StringLiteral).text;
 
     if (node.exportClause && ts.isNamedExports(node.exportClause)) {
       for (const element of node.exportClause.elements) {
         if (element.isTypeOnly) continue;
-        exports.push({ name: element.name.text, sourceSpecifier });
+        names.push(element.name.text);
       }
     }
   });
 
-  return exports;
+  return names;
 }
 
 function findFeatureBundleExport(filePath: string): string | undefined {
-  return parseBarrelNamedExports(filePath).find((e) => isFeatureBundle(e.name))?.name;
+  return parseBarrelExportNames(filePath).find(isFeatureBundle);
 }
 
 /**
@@ -301,11 +295,12 @@ function findFeatureBundleExport(filePath: string): string | undefined {
  * The media element is a named re-export that isn't a feature bundle or skin.
  */
 function findReactMediaElement(filePath: string): string | undefined {
-  const exports = parseBarrelNamedExports(filePath);
-  for (const exp of exports) {
-    if (isFeatureBundle(exp.name)) continue;
-    if (isReactSkin(exp.name)) continue;
-    return exp.name;
+  const names = parseBarrelExportNames(filePath);
+  for (const name of names) {
+    if (isFeatureBundle(name)) continue;
+    if (isReactSkin(name)) continue;
+    if (/Tailwind$/.test(name)) continue;
+    return name;
   }
   return undefined;
 }

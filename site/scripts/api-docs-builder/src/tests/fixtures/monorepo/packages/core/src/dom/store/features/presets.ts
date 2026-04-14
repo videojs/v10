@@ -12,4 +12,4 @@ export const videoFeatures = [playbackFeature, volumeFeature];
 
 export const audioFeatures = [playbackFeature];
 
-export const backgroundFeatures = [] as const;
+export const backgroundFeatures = [];
