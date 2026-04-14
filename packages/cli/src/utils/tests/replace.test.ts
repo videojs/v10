@@ -39,6 +39,17 @@ after`;
     expect(result).not.toContain('middle');
   });
 
+  it('treats $ patterns in replacement literally', () => {
+    const markdown = `start
+<!-- cli:replace test -->
+old
+<!-- /cli:replace test -->
+end`;
+
+    const result = replaceMarker(markdown, 'test', 'https://example.com/video.php?id=$1&ref=$&');
+    expect(result).toContain('https://example.com/video.php?id=$1&ref=$&');
+  });
+
   it('handles multiline content between markers', () => {
     const markdown = `start
 <!-- cli:replace multi -->
