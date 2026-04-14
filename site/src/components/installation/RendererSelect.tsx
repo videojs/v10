@@ -87,7 +87,7 @@ export default function RendererSelect() {
               <button
                 type="button"
                 onClick={() => renderer.set(detection.renderer)}
-                className="cursor-pointer underline intent:no-underline"
+                className="cursor-pointer underline intent:decoration-gold"
               >
                 Select {detection.label}
               </button>

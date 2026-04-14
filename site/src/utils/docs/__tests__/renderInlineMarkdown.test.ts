@@ -41,7 +41,7 @@ describe('renderInlineMarkdown', () => {
     const result = renderInlineMarkdown('[link](https://example.com)');
     expect(result).toContain('href="https://example.com"');
     expect(result).toContain('underline');
-    expect(result).toContain('intent:no-underline');
+    expect(result).toContain('intent:decoration-gold');
   });
 
   it('renders unordered lists', () => {
