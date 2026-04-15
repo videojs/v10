@@ -69,15 +69,80 @@ describe('createPlaybackEngine type errors', () => {
     createPlaybackEngine([counter], { config: { interval: 'fast' } });
   });
 
-  it('errors when conflicting features produce a never field and you try to write it', () => {
+  it('errors when composing features with conflicting required state types', () => {
     const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
     const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
 
-    const engine = createPlaybackEngine([expectsNumber, expectsString]);
+    // @ts-expect-error — features have incompatible state: { value: number } vs { value: string }
+    createPlaybackEngine([expectsNumber, expectsString]);
+  });
 
-    // The intersection of { value: number } & { value: string } is { value: never }.
-    // Attempting to write any concrete value to a never field is a type error.
-    // @ts-expect-error — value is never (conflicting features), cannot assign number
-    update(engine.state, { value: 42 });
+  it('errors when composing features with conflicting optional state types', () => {
+    const expectsNumber = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const expectsString = (_deps: { state: Signal<{ count?: string }> }) => {};
+
+    // @ts-expect-error — features have incompatible state: { count?: number } vs { count?: string }
+    createPlaybackEngine([expectsNumber, expectsString]);
+  });
+
+  it('errors when composing features with conflicting config types', () => {
+    const expectsNumber = (_deps: { config: { interval?: number } }) => {};
+    const expectsString = (_deps: { config: { interval?: string } }) => {};
+
+    // @ts-expect-error — features have incompatible config: { interval?: number } vs { interval?: string }
+    createPlaybackEngine([expectsNumber, expectsString]);
+  });
+
+  it('errors when composing features with incompatible owners class types', () => {
+    const expectsCanvas = (_deps: { owners: Signal<{ el?: HTMLCanvasElement }> }) => {};
+    const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+
+    // @ts-expect-error — neither HTMLCanvasElement nor HTMLVideoElement extends the other
+    createPlaybackEngine([expectsCanvas, expectsVideo]);
+  });
+
+  // =========================================================================
+  // Non-conflicts — features that omit channels should compose freely
+  // =========================================================================
+
+  it('allows composing features with owners in a subtype relationship', () => {
+    const expectsElement = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+
+    // No error — HTMLVideoElement extends HTMLElement
+    createPlaybackEngine([expectsElement, expectsVideo]);
+  });
+
+  it('allows composing features that omit owners', () => {
+    const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: HTMLElement }> }) => {};
+
+    // No error — omitting owners is not a conflict
+    createPlaybackEngine([stateOnly, withOwners]);
+  });
+
+  it('allows composing features that omit state', () => {
+    const configOnly = (_deps: { config: { interval?: number } }) => {};
+    const withState = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
+
+    // No error — omitting state is not a conflict
+    createPlaybackEngine([configOnly, withState]);
+  });
+
+  it('allows composing features that omit config', () => {
+    const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const withConfig = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
+
+    // No error — omitting config is not a conflict
+    createPlaybackEngine([stateOnly, withConfig]);
+  });
+
+  it('allows composing features where each omits different channels', () => {
+    const onlyState = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const onlyOwners = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const onlyConfig = (_deps: { config: { interval?: number } }) => {};
+
+    // No error — features with disjoint channels don't conflict
+    createPlaybackEngine([onlyState, onlyOwners, onlyConfig]);
   });
 });

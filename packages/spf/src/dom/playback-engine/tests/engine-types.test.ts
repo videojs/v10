@@ -211,18 +211,6 @@ describe('createPlaybackEngine', () => {
     });
   });
 
-  describe('type errors', () => {
-    it('resolves conflicting feature state types to never', () => {
-      const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
-      const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
-
-      const engine = createPlaybackEngine([expectsNumber, expectsString]);
-
-      // The intersection of { value: number } & { value: string } is { value: never }.
-      expectTypeOf(engine.state.get().value).toEqualTypeOf<never>();
-    });
-
-    // Additional @ts-expect-error tests (wrong types for update, set, options)
-    // live in engine-types.test-d.ts and run via vitest typecheck.
-  });
+  // Type error enforcement tests (@ts-expect-error for wrong types, conflicting
+  // features, etc.) live in engine-types.test-d.ts and run via vitest typecheck.
 });
