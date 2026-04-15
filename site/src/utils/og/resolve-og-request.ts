@@ -85,8 +85,11 @@ export function getOgCacheHeaders(): Record<string, string> {
   return {
     'Cache-Control': 'public, max-age=0, must-revalidate',
     'CDN-Cache-Control': `public, max-age=${ONE_YEAR_IN_SECONDS}`,
-    // Netlify automatically invalidates function-response cache on new deploys,
-    // so a long-lived durable cache here means "cache until the next release."
+    // `durable` stores responses in Netlify's shared global cache (not just per-edge).
+    // Netlify purges all cached responses — including durable — on every deploy
+    // (atomic deploys). Opting out would require `Netlify-Cache-ID`, which we
+    // intentionally omit so each deploy gets fresh images.
+    // Ref: https://docs.netlify.com/build/caching/caching-overview/
     'Netlify-CDN-Cache-Control': `public, durable, max-age=${ONE_YEAR_IN_SECONDS}`,
   };
 }
