@@ -195,7 +195,7 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function reactVideoPage(media: string, resource: string): string {
+function reactVideoPage(media: string, resource: string, config: MediaTypeConfig): string {
   const reactMedia = REACT_MEDIA[media];
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
@@ -203,6 +203,11 @@ function reactVideoPage(media: string, resource: string): string {
   const mediaImport = isDefaultVideo
     ? `import { Video, VideoSkin, videoFeatures } from '@videojs/react/video';`
     : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoSkin, videoFeatures } from '@videojs/react/video';`;
+
+  const posterProp = config.hasPoster ? ` poster={MEDIA.${resource}.poster}` : '';
+  const storyboardTrack = config.hasStoryboard
+    ? `\n          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />`
+    : '';
 
   return `import { createPlayer } from '@videojs/react';
 ${mediaImport}
@@ -215,9 +220,8 @@ const Player = createPlayer({ features: videoFeatures });
 function App() {
   return (
     <Player.Provider>
-      <VideoSkin poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
-        <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">
-          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />
+      <VideoSkin${posterProp} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
+        <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
       </VideoSkin>
     </Player.Provider>
@@ -448,7 +452,7 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
   } else if (page.category === 'ejected-react') {
     ts = ejectedReactPage(page.resource);
   } else if (page.framework === 'react') {
-    ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource);
+    ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
     const imports = getImports(page, config);
     ts = config.isAudio ? htmlAudioPage(config, page.resource, imports) : htmlVideoPage(config, page.resource, imports);
