@@ -148,7 +148,7 @@ function htmlShell(title: string, scriptSrc: string): string {
 }
 
 function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
-  const allImports = [...imports, `import { MEDIA } from '../shared';`].join('\n');
+  const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
 
   const storyboard = config.hasStoryboard
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
@@ -176,7 +176,7 @@ document.getElementById('root')!.innerHTML = html\`
 }
 
 function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
-  const allImports = [...imports, `import { MEDIA } from '../shared';`].join('\n');
+  const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
   const attrs = config.attrs ? ` ${config.attrs}` : '';
 
   return `${allImports}
@@ -213,7 +213,7 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
 ${mediaImport}
 import '@videojs/react/video/skin.css';
 import { createRoot } from 'react-dom/client';
-import { MEDIA } from '../shared';
+import { MEDIA } from '../resources';
 
 const Player = createPlayer({ features: videoFeatures });
 
@@ -245,7 +245,7 @@ function reactAudioPage(media: string, resource: string): string {
 ${mediaImport}
 import '@videojs/react/audio/skin.css';
 import { createRoot } from 'react-dom/client';
-import { MEDIA } from '../shared';
+import { MEDIA } from '../resources';
 
 const Player = createPlayer({ features: audioFeatures });
 
@@ -272,7 +272,7 @@ function captionsPage(resource: string): string {
 
   return `import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
-import { MEDIA } from '../shared';
+import { MEDIA } from '../resources';
 
 const html = String.raw;
 
@@ -329,7 +329,7 @@ root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMa
 function ejectedReactPage(resource: string): string {
   return `import { createRoot } from 'react-dom/client';
 import { VideoPlayer } from '../_generated/ejected-react-video-skin';
-import { MEDIA } from '../shared';
+import { MEDIA } from '../resources';
 
 function App() {
   return <VideoPlayer src={MEDIA.${resource}.url} poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }} />;
