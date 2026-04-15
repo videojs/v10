@@ -61,6 +61,7 @@ const blog = defineCollection({
       authors: z.array(reference('authors')),
       canonical: z.url().optional(),
       devOnly: z.boolean().optional(), // only visible in development mode
+      ogTitle: z.string().optional(),
       ogImage: image().or(z.url()).optional(),
       twitterImage: image().or(z.url()).optional(),
     }),
@@ -89,6 +90,7 @@ const docs = defineCollection({
     title: z.string(),
     description: z.string(),
     updatedDate: z.coerce.date().optional(),
+    ogTitle: z.string().optional(),
     frameworkTitle: z.partialRecord(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
   }),
 });
