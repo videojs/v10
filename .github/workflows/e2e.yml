@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'release-please--branches--main'
   pull_request:
     types: [opened, labeled, synchronize]
 
