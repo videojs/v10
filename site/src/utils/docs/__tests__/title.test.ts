@@ -1,6 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import { describe, expect, it } from 'vitest';
-import { getDocTitle } from '../title';
+import { getDocTitle, isCodeIdentifier } from '../title';
 
 describe('getDocTitle', () => {
   // Mock fixtures
@@ -126,5 +126,42 @@ describe('getDocTitle', () => {
 
       expect(result).toBe('Default Title');
     });
+  });
+});
+
+describe('isCodeIdentifier', () => {
+  it('should detect PascalCase', () => {
+    expect(isCodeIdentifier('PlaybackRateButton')).toBe(true);
+    expect(isCodeIdentifier('MuteButton')).toBe(true);
+    expect(isCodeIdentifier('TimeDisplay')).toBe(true);
+  });
+
+  it('should detect camelCase', () => {
+    expect(isCodeIdentifier('usePlayerContext')).toBe(true);
+    expect(isCodeIdentifier('createPlayer')).toBe(true);
+    expect(isCodeIdentifier('playbackRate')).toBe(true);
+  });
+
+  it('should detect kebab-case', () => {
+    expect(isCodeIdentifier('playback-rate-button')).toBe(true);
+    expect(isCodeIdentifier('mute-button')).toBe(true);
+    expect(isCodeIdentifier('video-player')).toBe(true);
+  });
+
+  it('should not match natural-language titles', () => {
+    expect(isCodeIdentifier('Getting Started')).toBe(false);
+    expect(isCodeIdentifier('Installation')).toBe(false);
+    expect(isCodeIdentifier('Basic Concepts')).toBe(false);
+    expect(isCodeIdentifier('How to Use')).toBe(false);
+  });
+
+  it('should not match single lowercase words', () => {
+    expect(isCodeIdentifier('player')).toBe(false);
+    expect(isCodeIdentifier('installation')).toBe(false);
+  });
+
+  it('should not match single PascalCase words', () => {
+    expect(isCodeIdentifier('Player')).toBe(false);
+    expect(isCodeIdentifier('Slider')).toBe(false);
   });
 });

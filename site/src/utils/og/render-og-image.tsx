@@ -1,6 +1,8 @@
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
 
+import { isCodeIdentifier } from '@/utils/docs/title';
+
 // ---------------------------------------------------------------------------
 // Configuration — tune these values to adjust OG image appearance
 // ---------------------------------------------------------------------------
@@ -121,8 +123,9 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
   const { width, height, topMargin } = SIZES[size];
   const fontData = await loadFont();
 
-  // Uppercase, then truncate if needed
-  let displayTitle = title?.toUpperCase();
+  // Uppercase (unless the title is a code identifier like PlaybackRateButton),
+  // then truncate if needed
+  let displayTitle = title && isCodeIdentifier(title) ? title : title?.toUpperCase();
   if (displayTitle && displayTitle.length > MAX_CHAR_LIMIT) {
     const truncated = displayTitle.slice(0, MAX_CHAR_LIMIT);
     const lastSpace = truncated.lastIndexOf(' ');
