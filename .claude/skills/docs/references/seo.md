@@ -96,13 +96,13 @@ This helps search engines categorize docs as documentation for a specific softwa
 
 ## OG images
 
-Every page automatically gets a branded Open Graph image (1200×630 for OG, 1200×600 for Twitter) generated at build time via satori + resvg. The images show the Video.js mono logo, the page title in uppercase Eurostile, and the site's colour bars.
+Every supported page automatically gets a branded Open Graph image (1200×630 for OG, 1200×600 for Twitter) served by the dynamic Astro OG route via satori + resvg. The images show the Video.js mono logo, the page title in uppercase Eurostile, and the site's colour bars. The route only responds for known internal page paths, and Netlify caches each rendered image until the next deploy.
 
 **URLs** are derived from the page pathname:
 - OG: `/og/{slug}.png` (e.g., `/og/blog/my-post.png`)
 - Twitter: `/og/twitter/{slug}.png`
 
-**`ogTitle` frontmatter field** — use this when a page title is too long for a social preview. The OG image generator uppercases and renders this instead of the regular title. Titles over ~80 characters are truncated with an ellipsis and log a build warning.
+**`ogTitle` frontmatter field** — use this when a page title is too long for a social preview. The OG image generator uppercases and renders this instead of the regular title. Titles over ~80 characters are truncated with an ellipsis and log a warning when the image is generated.
 
 **Manual image override** — set `ogImage` (blog only) or pass the `image` prop to `Base.astro` to bypass auto-generation entirely.
 

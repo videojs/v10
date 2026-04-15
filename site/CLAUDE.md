@@ -449,8 +449,8 @@ All content must be written in **MDX format** to support:
   authors: string[];      // Reference to authors.json
   canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
-  ogTitle?: string;       // Shorter title for the auto-generated OG image
-  ogImage?: ImageMetadata | string;   // Local image or external URL (overrides auto-generated)
+  ogTitle?: string;       // Shorter title for the default dynamic OG image
+  ogImage?: ImageMetadata | string;   // Local image or external URL (overrides the default OG route)
   twitterImage?: ImageMetadata | string; // Falls back to ogImage
 }
 ```
@@ -459,6 +459,8 @@ All content must be written in **MDX format** to support:
 ```yaml
 ogImage: '../../assets/blog/2026-03-10-my-post/og.png'
 ```
+
+Without a manual override, `Base.astro` derives `/og/{slug}.png` and `/og/twitter/{slug}.png` automatically. Those images are rendered on demand by `src/pages/og/[...path].png.ts`, limited to known internal page paths, and cached by Netlify until the next deploy.
 
 ### Docs Collection (`src/content/docs/`)
 
@@ -472,7 +474,7 @@ ogImage: '../../assets/blog/2026-03-10-my-post/og.png'
 {
   title: string;
   description: string;
-  ogTitle?: string;       // Shorter title for the auto-generated OG image
+  ogTitle?: string;       // Shorter title for the default dynamic OG image
   frameworkTitle?: {      // Per-framework title overrides
     html?: string;
     react?: string;
