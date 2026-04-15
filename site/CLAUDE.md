@@ -449,7 +449,8 @@ All content must be written in **MDX format** to support:
   authors: string[];      // Reference to authors.json
   canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
-  ogImage?: ImageMetadata | string;   // Local image or external URL
+  ogTitle?: string;       // Shorter title for the auto-generated OG image
+  ogImage?: ImageMetadata | string;   // Local image or external URL (overrides auto-generated)
   twitterImage?: ImageMetadata | string; // Falls back to ogImage
 }
 ```
@@ -471,6 +472,7 @@ ogImage: '../../assets/blog/2026-03-10-my-post/og.png'
 {
   title: string;
   description: string;
+  ogTitle?: string;       // Shorter title for the auto-generated OG image
   frameworkTitle?: {      // Per-framework title overrides
     html?: string;
     react?: string;

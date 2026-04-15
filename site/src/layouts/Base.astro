@@ -31,8 +31,17 @@ function resolveImageUrl(img: ImageMetadata | string): string {
   return new URL(img.src, Astro.url).toString();
 }
 
-const defaultOgImage = new URL('/og-default.png', Astro.site).toString();
-const resolvedTwitterImage = twitterImage ?? image;
+// Auto-derive OG image URLs from the page pathname.
+// Three paths:
+//   1. No `image` prop → auto-derived /og/{slug}.png and /og/twitter/{slug}.png
+//   2. `image` only → both OG and Twitter use that image
+//   3. `image` + `twitterImage` → OG uses `image`, Twitter uses `twitterImage`
+const slug = Astro.url.pathname.replace(/^\//, '').replace(/\/$/, '') || 'index';
+const autoOgImage = new URL(`/og/${slug}.png`, Astro.site).toString();
+const autoTwitterImage = new URL(`/og/twitter/${slug}.png`, Astro.site).toString();
+
+const resolvedOgImage = image ? resolveImageUrl(image) : autoOgImage;
+const resolvedTwitterImage = image ? resolveImageUrl(twitterImage ?? image) : autoTwitterImage;
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
 const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
@@ -119,10 +128,7 @@ const fullTitle =
     />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta
-      property="og:image"
-      content={image ? resolveImageUrl(image) : defaultOgImage}
-    />
+    <meta property="og:image" content={resolvedOgImage} />
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
@@ -132,12 +138,7 @@ const fullTitle =
     />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    <meta
-      property="twitter:image"
-      content={resolvedTwitterImage
-        ? resolveImageUrl(resolvedTwitterImage)
-        : defaultOgImage}
-    />
+    <meta property="twitter:image" content={resolvedTwitterImage} />
 
     {/* Whatever else */}
     <slot name="head" />

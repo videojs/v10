@@ -34,6 +34,20 @@ Our guides are [MDX](https://mdxjs.com) files placed in the matching directory:
 - Concept pages go in `src/content/docs/concepts/[slug].mdx`
 - How-to guides go in `src/content/docs/how-to/[slug].mdx`
 
+Every guide needs a frontmatter block with `title` and `description`:
+
+```yaml
+---
+title: 'Your guide title'
+description: 'One-sentence summary for search and metadata'
+---
+```
+
+Optional frontmatter fields:
+
+- **`frameworkTitle`** — override the title for specific frameworks (e.g., `frameworkTitle: { react: 'Hooks in React' }`)
+- **`ogTitle`** — shorter title for the auto-generated Open Graph image. Use this when your page title is too long for a social preview (over ~80 characters).
+
 ## 3. Add that guide to the sidebar
 
 Next, open `src/docs.config.ts` and add your guide to the appropriate section of the sidebar. For example, to add a how-to guide on "Writing guides", you would add:
