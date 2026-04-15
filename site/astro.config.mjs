@@ -11,6 +11,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
+import ogTitleAudit from './integrations/og-title-audit';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
 import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
@@ -81,6 +82,7 @@ export default defineConfig({
         `${SITE_URL}/docs/framework/react/llms.txt`,
       ],
     }),
+    ogTitleAudit(),
     llmsMarkdown(),
     react({
       babel: {

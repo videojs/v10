@@ -1,6 +1,8 @@
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
 
+import { MAX_OG_TITLE_CHAR_LIMIT } from './title-config';
+
 // ---------------------------------------------------------------------------
 // Configuration — tune these values to adjust OG image appearance
 // ---------------------------------------------------------------------------
@@ -12,7 +14,7 @@ export const SMALL_FONT_SIZE = 36;
 /** Titles longer than this (in characters, after uppercasing) use the small font. */
 export const LARGE_SMALL_THRESHOLD = 25;
 /** Titles longer than this (in characters, after uppercasing) are truncated with an ellipsis. */
-export const MAX_CHAR_LIMIT = 80;
+export const MAX_CHAR_LIMIT = MAX_OG_TITLE_CHAR_LIMIT;
 
 // ---------------------------------------------------------------------------
 // Design tokens
