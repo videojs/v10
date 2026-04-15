@@ -1,7 +1,7 @@
 import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
-import { NativeHlsMedia } from '../native-hls';
+import { NativeHlsMedia } from '../native-hls/browser';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
 

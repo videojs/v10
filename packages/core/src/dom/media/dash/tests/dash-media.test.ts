@@ -12,7 +12,7 @@ vi.mock('dashjs', () => {
   return { MediaPlayer: () => ({ create }), default: { MediaPlayer: () => ({ create }) } };
 });
 
-import { DashMedia } from '../index';
+import { DashMedia } from '../browser';
 
 afterEach(() => {
   document.body.innerHTML = '';

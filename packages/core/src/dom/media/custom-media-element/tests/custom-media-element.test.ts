@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HTMLAudioElementHost } from '../../audio-host';
 import { HTMLVideoElementHost } from '../../video-host';
-import { CustomMediaElement } from '../index';
+import { CustomMediaElement } from '../browser';
 
 afterEach(() => {
   document.body.innerHTML = '';

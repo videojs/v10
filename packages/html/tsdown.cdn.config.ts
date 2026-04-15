@@ -89,6 +89,7 @@ for (const mode of buildModes) {
     },
     define: {
       __DEV__: isProd ? 'false' : 'true',
+      __BROWSER__: 'true',
     },
     plugins: [
       inlineCssPlugin({ skinsDir, minify: isProd }),

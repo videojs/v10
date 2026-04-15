@@ -1,7 +1,7 @@
 import type { Mixin } from '@videojs/utils/types';
 import Mux from 'mux-embed';
 import type { MediaEngineHost } from '../../../core/media/types';
-import { Hls, type HlsMedia } from '../hls';
+import { Hls, type HlsMedia } from '../hls/browser';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
@@ -198,7 +198,7 @@ export function toPlaybackIdFromSrc(src: string): string | undefined {
 
 export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
   if (typeof src !== 'string') return false;
-  const base = window?.location.href;
+  const base = typeof window !== 'undefined' ? window.location.href : undefined;
   const hostname = new URL(src, base).hostname.toLocaleLowerCase();
   return hostname.includes(MUX_VIDEO_DOMAIN);
 }

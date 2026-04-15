@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MuxVideoMedia } from '..';
+import { MuxVideoMedia } from '../browser';
 
 describe('MuxVideoMedia', () => {
   it('accepts src directly', () => {
