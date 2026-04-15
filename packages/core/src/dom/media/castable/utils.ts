@@ -83,7 +83,8 @@ export function setCastOptions(options: Partial<CastOptions>): void {
 export function getDefaultCastOptions(): CastOptions {
   return {
     receiverApplicationId: 'CC1AD845',
-    autoJoinPolicy: chrome.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? ('origin_scoped' as chrome.cast.AutoJoinPolicy),
+    autoJoinPolicy:
+      globalThis.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? ('origin_scoped' as chrome.cast.AutoJoinPolicy),
     androidReceiverCompatible: false,
     language: 'en-US',
     resumeSavedSession: true,
