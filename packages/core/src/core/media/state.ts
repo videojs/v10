@@ -289,18 +289,6 @@ export interface MediaCastState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
    */
   castAvailability: MediaFeatureAvailability;
-  /**
-   * Open the browser cast dialog.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/prompt
-   */
-  requestCast(): Promise<void>;
-  /**
-   * Disconnect the current cast session.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/prompt
-   */
-  exitCast(): Promise<void>;
   /** Toggle cast connection. */
   toggleCast(): Promise<void>;
 }

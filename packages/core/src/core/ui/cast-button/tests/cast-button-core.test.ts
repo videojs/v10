@@ -8,8 +8,6 @@ function createMediaState(overrides: Partial<MediaCastState> = {}): MediaCastSta
   return {
     castState: 'disconnected',
     castAvailability: 'available',
-    requestCast: vi.fn(async () => {}),
-    exitCast: vi.fn(async () => {}),
     toggleCast: vi.fn(async () => {}),
     ...overrides,
   };

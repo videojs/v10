@@ -125,8 +125,9 @@ export async function isHls(url: string): Promise<boolean> {
   try {
     const response = await fetch(url, { method: 'HEAD' });
     const contentType = response.headers.get('Content-Type');
-
-    return HLS_RESPONSE_HEADERS.some((header) => contentType === header);
+    if (!contentType) return false;
+    const normalizedContentType = contentType.toLowerCase().split(';')[0]!.trim();
+    return HLS_RESPONSE_HEADERS.some((header) => normalizedContentType === header.toLowerCase());
   } catch (err) {
     console.error('Error while trying to get the Content-Type of the manifest', err);
     return false;

@@ -12,21 +12,6 @@ export const castFeature = definePlayerFeature({
     castState: 'disconnected',
     castAvailability: 'unavailable',
 
-    async requestCast() {
-      const { media, container } = target();
-
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
-      }
-
-      return requestCast(media);
-    },
-
-    async exitCast() {
-      const { media } = target();
-      return requestCast(media);
-    },
-
     async toggleCast() {
       const { media, container } = target();
 
