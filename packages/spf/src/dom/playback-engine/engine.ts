@@ -95,12 +95,12 @@ type HasConflict<T extends object> = true extends {
 type NonUndefined<T> = T extends undefined ? never : T;
 
 /**
- * Check that two owners types are compatible: for each shared key,
+ * Check that two owners types are compatible: for each overlapping key,
  * one type must extend the other (ignoring optionality).
  *
  * - `{ el?: HTMLElement }` + `{ el?: HTMLVideoElement }` → valid (HTMLVideoElement extends HTMLElement)
  * - `{ el?: HTMLCanvasElement }` + `{ el?: HTMLVideoElement }` → invalid (neither extends the other)
- * - `{ el?: HTMLElement }` + `{ buffer?: SourceBuffer }` → valid (no shared keys)
+ * - `{ el?: HTMLElement }` + `{ buffer?: SourceBuffer }` → valid (no overlapping keys)
  */
 type OwnersCompatible<A extends object, B extends object> = [Extract<keyof A, keyof B>] extends [never]
   ? true
