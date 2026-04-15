@@ -14,6 +14,8 @@
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui",
     "test:update": "playwright test --update-snapshots",
+    "test:chromium": "playwright test --project=vite-chromium",
+    "test:webkit": "playwright test --project=vite-webkit",
     "test:vite": "playwright test --project=vite-chromium",
     "test:all": "playwright test --project=vite-chromium --project=vite-webkit",
     "report": "playwright show-report"
