@@ -124,6 +124,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/create-selector' },
       { slug: 'reference/feature-buffer' },
+      { slug: 'reference/feature-cast' },
       { slug: 'reference/feature-controls' },
       { slug: 'reference/feature-error' },
       { slug: 'reference/feature-fullscreen' },
