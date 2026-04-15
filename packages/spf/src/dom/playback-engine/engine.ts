@@ -193,7 +193,7 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
  * each feature declares what it needs via its parameter type, and the
  * engine computes the intersection of all requirements.
  *
- * @param features - Array of feature functions (or a single feature)
+ * @param features - Array of feature functions
  * @param options - Optional config, initial state, and initial owners
  *
  * @example
@@ -218,24 +218,19 @@ export function createPlaybackEngine<const Features extends readonly AnyFeature[
     ResolveFeatureOwners<Features>,
     ResolveFeatureConfig<Features>
   >
-): PlaybackEngine<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>>;
+): PlaybackEngine<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>> {
+  type S = ResolveFeatureState<Features>;
+  type O = ResolveFeatureOwners<Features>;
+  type C = ResolveFeatureConfig<Features>;
 
-export function createPlaybackEngine<F extends AnyFeature>(
-  feature: F,
-  options?: PlaybackEngineOptions<InferFeatureState<F>, InferFeatureOwners<F>, InferFeatureConfig<F>>
-): PlaybackEngine<InferFeatureState<F>, InferFeatureOwners<F>>;
+  const state = signal((options?.initialState ?? {}) as S);
+  const owners = signal((options?.initialOwners ?? {}) as O);
+  const config = (options?.config ?? {}) as C;
 
-export function createPlaybackEngine(
-  features: AnyFeature[] | AnyFeature,
-  options?: PlaybackEngineOptions<object, object, object>
-): PlaybackEngine<object, object> {
-  const state = signal((options?.initialState ?? {}) as object);
-  const owners = signal((options?.initialOwners ?? {}) as object);
-  const config = (options?.config ?? {}) as object;
-
-  const deps = { state, owners, config };
-  const featureArray = Array.isArray(features) ? features : [features];
-  const cleanups = featureArray.map((f) => f(deps));
+  const deps: FeatureDeps<S, O, C> = { state, owners, config };
+  // ValidateComposition resolves to [...Features] for valid compositions;
+  // the cast is needed because the type is unresolved in the generic context.
+  const cleanups = (features as unknown as AnyFeature[]).map((f) => f(deps));
 
   return {
     state,
