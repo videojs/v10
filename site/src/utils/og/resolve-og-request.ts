@@ -1,3 +1,4 @@
+import { normalizeSitePath } from '@/utils/og/normalize-site-path';
 import type { OgSize } from '@/utils/og/render-og-image';
 import { buildOgTitleMap } from '@/utils/og/title-entries';
 
@@ -12,10 +13,6 @@ export interface ResolvedOgRequest {
 }
 
 let ogTitleMapPromise: Promise<OgTitleMap> | null = null;
-
-function normalizeSitePath(path: string): string {
-  return path.replace(/^\/+|\/+$/g, '') || 'index';
-}
 
 async function getOgTitleMap(): Promise<OgTitleMap> {
   if (!ogTitleMapPromise) {

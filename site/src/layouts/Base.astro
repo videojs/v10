@@ -32,16 +32,18 @@ function resolveImageUrl(img: ImageMetadata | string): string {
 }
 
 // Auto-derive OG image URLs from the page pathname.
-// Three paths:
-//   1. No `image` prop → auto-derived /og/{slug}.png and /og/twitter/{slug}.png
-//   2. `image` only → both OG and Twitter use that image
-//   3. `image` + `twitterImage` → OG uses `image`, Twitter uses `twitterImage`
+// Each prop is independent — `twitterImage` can override the Twitter card
+// without requiring `image` to also be set.
 const slug = Astro.url.pathname.replace(/^\//, '').replace(/\/$/, '') || 'index';
 const autoOgImage = new URL(`/og/${slug}.png`, Astro.site).toString();
 const autoTwitterImage = new URL(`/og/twitter/${slug}.png`, Astro.site).toString();
 
 const resolvedOgImage = image ? resolveImageUrl(image) : autoOgImage;
-const resolvedTwitterImage = image ? resolveImageUrl(twitterImage ?? image) : autoTwitterImage;
+const resolvedTwitterImage = twitterImage
+  ? resolveImageUrl(twitterImage)
+  : image
+    ? resolveImageUrl(image)
+    : autoTwitterImage;
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
 const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
