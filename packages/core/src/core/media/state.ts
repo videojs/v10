@@ -274,6 +274,37 @@ export interface MediaErrorState {
   dismissError(): void;
 }
 
+export type CastState = 'disconnected' | 'connecting' | 'connected';
+
+export interface MediaCastState {
+  /**
+   * Current cast connection state.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/state
+   */
+  castState: CastState;
+  /**
+   * Whether casting can be requested on this platform.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
+   */
+  castAvailability: MediaFeatureAvailability;
+  /**
+   * Open the browser cast dialog.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/prompt
+   */
+  requestCast(): Promise<void>;
+  /**
+   * Disconnect the current cast session.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/prompt
+   */
+  exitCast(): Promise<void>;
+  /** Toggle cast connection. */
+  toggleCast(): Promise<void>;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.

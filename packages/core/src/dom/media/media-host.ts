@@ -129,6 +129,20 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return (this.target?.textTracks as TextTrackList) ?? [];
   }
 
+  // -- Remote playback --
+
+  get remote(): RemotePlayback | undefined {
+    return this.target?.remote;
+  }
+
+  get disableRemotePlayback() {
+    return this.target?.disableRemotePlayback ?? false;
+  }
+
+  set disableRemotePlayback(value: boolean) {
+    if (this.target) this.target.disableRemotePlayback = value;
+  }
+
   attach(target: T): void {
     if (!target || this.#target === target) return;
     this.#target = target;

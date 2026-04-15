@@ -100,13 +100,13 @@ export class HlsMedia extends HTMLVideoElementHost {
   }
 
   attach(target: HTMLVideoElement) {
-    super.attach?.(target);
+    super.attach(target);
     this.#delegate?.attach(target);
   }
 
   detach() {
     this.#delegate?.detach();
-    super.detach?.();
+    super.detach();
   }
 
   destroy() {

@@ -1,4 +1,5 @@
 import { bufferFeature } from './buffer';
+import { castFeature } from './cast';
 import { controlsFeature } from './controls';
 import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
@@ -14,6 +15,7 @@ export { audioFeatures, backgroundFeatures, videoFeatures } from './presets';
 // Short aliases
 export {
   bufferFeature as buffer,
+  castFeature as cast,
   controlsFeature as controls,
   fullscreenFeature as fullscreen,
   pipFeature as pip,

@@ -22,6 +22,7 @@ export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-el
 export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
+export { CastButtonElement } from './ui/cast-button/cast-button-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';

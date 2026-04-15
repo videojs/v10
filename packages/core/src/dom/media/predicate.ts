@@ -55,6 +55,21 @@ export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrack
   return isObject(value) && 'textTracks' in value;
 }
 
+export interface RemotePlaybackLike extends EventTarget {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
+}
+
+export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
+  return isObject(value) && 'remote' in value && isObject((value as Record<string, unknown>).remote);
+}
+
 export function isQuerySelectorAllCapable<T extends string>(
   value: unknown
 ): value is {
