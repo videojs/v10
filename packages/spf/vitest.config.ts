@@ -37,6 +37,17 @@ export default defineConfig({
           },
         },
       },
+      {
+        extends: true,
+        test: {
+          name: 'types',
+          include: [],
+          typecheck: {
+            enabled: true,
+            include: ['src/**/*.test-d.ts'],
+          },
+        },
+      },
     ],
   },
 });

@@ -32,6 +32,47 @@ export type Feature<S extends object, O extends object, C extends object> = (
   deps: FeatureDeps<S, O, C>
 ) => FeatureCleanup;
 
+// =============================================================================
+// Feature type inference
+// =============================================================================
+
+/** A feature function with unconstrained deps — used as a generic bound. */
+// biome-ignore lint/suspicious/noExplicitAny: required for generic feature inference
+type AnyFeature = (deps: any) => FeatureCleanup;
+
+/** Extract the first parameter (deps) type from a feature function. */
+// biome-ignore lint/suspicious/noExplicitAny: required for conditional type inference
+type DepsOf<F> = F extends (deps: infer D, ...args: any[]) => any ? D : never;
+
+/** Infer the state type a feature requires from its deps parameter. */
+export type InferFeatureState<F> = DepsOf<F> extends { state: Signal<infer S extends object> } ? S : object;
+
+/** Infer the owners type a feature requires from its deps parameter. */
+export type InferFeatureOwners<F> = DepsOf<F> extends { owners: Signal<infer O extends object> } ? O : object;
+
+/** Infer the config type a feature requires from its deps parameter. */
+export type InferFeatureConfig<F> = DepsOf<F> extends { config: infer C extends object } ? C : object;
+
+/** Convert a union to an intersection: `A | B` → `A & B`. */
+// biome-ignore lint/suspicious/noExplicitAny: required for distributive conditional type
+type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
+
+/** Resolve the combined state type from an array of features (intersection of all requirements). */
+export type ResolveFeatureState<Features extends readonly AnyFeature[]> =
+  UnionToIntersection<InferFeatureState<Features[number]>> extends infer R extends object ? R : object;
+
+/** Resolve the combined owners type from an array of features (intersection of all requirements). */
+export type ResolveFeatureOwners<Features extends readonly AnyFeature[]> =
+  UnionToIntersection<InferFeatureOwners<Features[number]>> extends infer R extends object ? R : object;
+
+/** Resolve the combined config type from an array of features (intersection of all requirements). */
+export type ResolveFeatureConfig<Features extends readonly AnyFeature[]> =
+  UnionToIntersection<InferFeatureConfig<Features[number]>> extends infer R extends object ? R : object;
+
+// =============================================================================
+// Engine
+// =============================================================================
+
 /**
  * Playback engine instance.
  *
@@ -63,9 +104,9 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
  * or any specific streaming protocol. It creates shared reactive state,
  * wires each feature to that state, and returns the engine interface.
  *
- * The state, owners, and config types are determined by the composition:
- * each feature declares what it needs, and the engine's types are the
- * intersection of those requirements.
+ * The state, owners, and config types are inferred from the features:
+ * each feature declares what it needs via its parameter type, and the
+ * engine computes the intersection of all requirements.
  *
  * @param features - Array of feature functions (or a single feature)
  * @param options - Optional config, initial state, and initial owners
@@ -85,15 +126,29 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
  * );
  * ```
  */
-export function createPlaybackEngine<S extends object, O extends object, C extends object>(
-  features: Feature<S, O, C>[] | Feature<S, O, C>,
-  options?: PlaybackEngineOptions<S, O, C>
-): PlaybackEngine<S, O> {
-  const state = signal<S>((options?.initialState ?? {}) as S);
-  const owners = signal<O>((options?.initialOwners ?? {}) as O);
-  const config = (options?.config ?? {}) as C;
+export function createPlaybackEngine<const Features extends readonly AnyFeature[]>(
+  features: [...Features],
+  options?: PlaybackEngineOptions<
+    ResolveFeatureState<Features>,
+    ResolveFeatureOwners<Features>,
+    ResolveFeatureConfig<Features>
+  >
+): PlaybackEngine<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>>;
 
-  const deps: FeatureDeps<S, O, C> = { state, owners, config };
+export function createPlaybackEngine<F extends AnyFeature>(
+  feature: F,
+  options?: PlaybackEngineOptions<InferFeatureState<F>, InferFeatureOwners<F>, InferFeatureConfig<F>>
+): PlaybackEngine<InferFeatureState<F>, InferFeatureOwners<F>>;
+
+export function createPlaybackEngine(
+  features: AnyFeature[] | AnyFeature,
+  options?: PlaybackEngineOptions<object, object, object>
+): PlaybackEngine<object, object> {
+  const state = signal((options?.initialState ?? {}) as object);
+  const owners = signal((options?.initialOwners ?? {}) as object);
+  const config = (options?.config ?? {}) as object;
+
+  const deps = { state, owners, config };
   const featureArray = Array.isArray(features) ? features : [features];
   const cleanups = featureArray.map((f) => f(deps));
 
