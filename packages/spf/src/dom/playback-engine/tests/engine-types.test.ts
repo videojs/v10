@@ -157,16 +157,18 @@ describe('ResolveFeatureConfig', () => {
 describe('createPlaybackEngine', () => {
   describe('single feature', () => {
     it('infers state type from a single feature', () => {
-      const engine = createPlaybackEngine(counter, {
+      const engine = createPlaybackEngine([counter], {
         config: { interval: 250 },
       });
       expectTypeOf(engine.state.get()).toEqualTypeOf<{ count?: number }>();
     });
 
     it('infers types from an inline arrow feature', () => {
-      const engine = createPlaybackEngine(({ state }: { state: Signal<{ value?: string }> }) => {
-        update(state, { value: 'hello' });
-      });
+      const engine = createPlaybackEngine([
+        ({ state }: { state: Signal<{ value?: string }> }) => {
+          update(state, { value: 'hello' });
+        },
+      ]);
       expectTypeOf(engine.state.get()).toEqualTypeOf<{ value?: string }>();
     });
   });
