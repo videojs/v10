@@ -84,7 +84,7 @@ pnpm build:sandbox
 # Build specific package
 pnpm -F <pkg> build
 
-# Run tests across all packages
+# Run unit tests across all packages
 pnpm test
 # Run tests for specific package
 pnpm -F <pkg> test
@@ -94,6 +94,13 @@ pnpm -F <pkg> test -t "test name pattern"
 pnpm -F <pkg> test src/path/to/file.test.ts
 # Run tests matching a glob or filter
 pnpm -F <pkg> test src/core
+
+# Run e2e tests (Chromium + WebKit)
+pnpm test:e2e
+# Run e2e tests (Chromium only, faster)
+pnpm test:e2e:vite
+# Update visual snapshot baselines
+pnpm test:e2e:update
 
 # Lint all workspace packages
 pnpm lint
