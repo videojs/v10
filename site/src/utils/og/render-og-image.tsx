@@ -1,4 +1,3 @@
-import https from 'node:https';
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
 
@@ -11,7 +10,7 @@ export const LARGE_FONT_SIZE = 48;
 /** Font size (px) for long titles. */
 export const SMALL_FONT_SIZE = 36;
 /** Titles longer than this (in characters, after uppercasing) use the small font. */
-export const LARGE_SMALL_THRESHOLD = 30;
+export const LARGE_SMALL_THRESHOLD = 25;
 /** Titles longer than this (in characters, after uppercasing) are truncated with an ellipsis. */
 export const MAX_CHAR_LIMIT = 80;
 
@@ -23,7 +22,8 @@ const BG_COLOR = '#1e1d1d'; // faded-black
 const TEXT_COLOR = '#f3e7d2'; // manila-light
 const LOGO_WIDTH = 800;
 const LOGO_HEIGHT = Math.round(LOGO_WIDTH * (68 / 381)); // ≈143px
-const TITLE_GAP = 52; // px between logo and title
+const LARGE_TITLE_GAP = 52; // px between logo and title for short titles
+const SMALL_TITLE_GAP = 52; // px between logo and title for long titles
 const H_PADDING = 100; // horizontal padding
 const COLOR_BAR_HEIGHT = 118;
 
@@ -50,39 +50,12 @@ const FONT_FAMILY = 'Eurostile LT Pro Bold Extended 2';
 
 let fontDataPromise: Promise<ArrayBuffer> | null = null;
 
-// We use Node's native `https` module instead of `globalThis.fetch` because
-// the Netlify adapter patches `globalThis.fetch` during prerendering (via
-// @netlify/serverless-functions-api). The patched version can interfere with
-// build-time requests — for example, it doesn't respect
-// `NODE_TLS_REJECT_UNAUTHORIZED=0`. Using `https.get` directly avoids the
-// Netlify shim entirely and gives us control over TLS options.
-// Shared agent that skips certificate validation. This is safe here because we
-// are making a build-time request to a hardcoded, trusted Mux CDN URL. Some CI
-// environments (notably Netlify's prerender sandbox) inject a corporate proxy
-// with a self-signed root CA that causes TLS validation failures for outbound
-// requests during the build. NODE_TLS_REJECT_UNAUTHORIZED=0 is unreliable here
-// because (a) Turbo may not propagate it to child processes and (b) the Netlify
-// adapter patches globalThis.fetch, which ignores the env var entirely.
-const agent = new https.Agent({ rejectUnauthorized: false });
-
-function fetchFont(url: string): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    https
-      .get(url, { agent }, (res) => {
-        // Follow redirects
-        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return fetchFont(res.headers.location).then(resolve, reject);
-        }
-        if (res.statusCode !== 200) {
-          return reject(new Error(`Failed to load font: ${res.statusCode}`));
-        }
-        const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => resolve(Buffer.concat(chunks).buffer as ArrayBuffer));
-        res.on('error', reject);
-      })
-      .on('error', reject);
-  });
+async function fetchFont(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load font: ${response.status}`);
+  }
+  return response.arrayBuffer();
 }
 
 function loadFont(): Promise<ArrayBuffer> {
@@ -160,6 +133,8 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
   }
 
   const fontSize = displayTitle && displayTitle.length > LARGE_SMALL_THRESHOLD ? SMALL_FONT_SIZE : LARGE_FONT_SIZE;
+  const titleGap = fontSize === LARGE_FONT_SIZE ? LARGE_TITLE_GAP : SMALL_TITLE_GAP;
+  const textWrap = fontSize === LARGE_FONT_SIZE ? 'pretty' : 'balance'; // balance messes up text when single-line
 
   const svg = await satori(
     <div
@@ -188,13 +163,14 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
         {displayTitle && (
           <div
             style={{
-              marginTop: TITLE_GAP,
+              marginTop: titleGap,
               fontFamily: FONT_FAMILY,
               fontSize,
               letterSpacing: '-0.03em',
               lineHeight: 1.2,
               color: TEXT_COLOR,
               textAlign: 'center',
+              textWrap,
             }}
           >
             {displayTitle}
