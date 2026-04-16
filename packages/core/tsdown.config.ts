@@ -30,7 +30,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   outExtensions: isServer(mode) ? () => ({ js: '.js', dts: '.d.ts' }) : undefined,
   outDir: `dist/${mode}`,
   define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
+    __DEV__: mode === 'dev' || isServer(mode) ? 'true' : 'false',
     __BROWSER__: isServer(mode) ? 'false' : 'true',
     __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },

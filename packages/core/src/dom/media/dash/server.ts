@@ -1,8 +1,9 @@
+import { serverMethodError } from '../server-error';
 import { HTMLVideoElementHost } from '../video-host';
 
 export class DashMedia extends HTMLVideoElementHost {
   engine = null;
-  destroy() {
-    this.detach();
+  destroy(): void {
+    serverMethodError('DashMedia', 'destroy');
   }
 }

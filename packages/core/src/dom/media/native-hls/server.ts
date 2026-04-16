@@ -1,9 +1,10 @@
+import { serverMethodError } from '../server-error';
 import { HTMLVideoElementHost } from '../video-host';
 
 export class NativeHlsMedia extends HTMLVideoElementHost {
   engine = null;
   preload = 'metadata';
-  destroy() {
-    this.detach();
+  destroy(): void {
+    serverMethodError('NativeHlsMedia', 'destroy');
   }
 }

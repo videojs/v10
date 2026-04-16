@@ -27,7 +27,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   },
   outDir: `dist/${mode}`,
   define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
+    __DEV__: mode === 'dev' || isServer(mode) ? 'true' : 'false',
     __BROWSER__: isServer(mode) ? 'false' : 'true',
   },
   dts: mode === 'dev',

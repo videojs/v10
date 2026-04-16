@@ -1,25 +1,18 @@
-// @ts-nocheck — server dist has no type declarations
 // @vitest-environment edge-runtime
+// @ts-expect-error -- Node API available in vitest runner
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
+const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+
 describe('Edge SSR safety', () => {
-  it('@videojs/html server define/media/hls-video', async () => {
-    const mod = await import('../../../dist/server/define/media/hls-video.js');
-    expect(mod).toBeDefined();
-  });
-
-  it('@videojs/html server define/media/dash-video', async () => {
-    const mod = await import('../../../dist/server/define/media/dash-video.js');
-    expect(mod).toBeDefined();
-  });
-
-  it('@videojs/html server define/media/mux-video', async () => {
-    const mod = await import('../../../dist/server/define/media/mux-video.js');
-    expect(mod).toBeDefined();
-  });
-
-  it('@videojs/html server define/video/skin', async () => {
-    const mod = await import('../../../dist/server/define/video/skin.js');
-    expect(mod).toBeDefined();
-  });
+  for (const [key, value] of Object.entries(pkg.exports as Record<string, unknown>)) {
+    if (typeof value !== 'object' || value === null || !('browser' in value)) continue;
+    if (key === '.' || key.includes('*') || key.endsWith('.css')) continue;
+    const specifier = key === '.' ? pkg.name : `${pkg.name}/${key.slice(2)}`;
+    it(specifier, async () => {
+      const mod = await import(specifier);
+      expect(mod).toBeDefined();
+    });
+  }
 });
