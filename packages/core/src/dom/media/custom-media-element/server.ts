@@ -1,11 +1,4 @@
-export const VideoCSSVars = {
-  borderRadius: '--media-video-border-radius',
-  objectFit: '--media-object-fit',
-  objectPosition: '--media-object-position',
-  captionTrackDuration: '--media-caption-track-duration',
-  captionTrackDelay: '--media-caption-track-delay',
-  captionTrackY: '--media-caption-track-y',
-} as const;
+export const VideoCSSVars = {} as const;
 
 export const AudioCSSVars = {} as const;
 
