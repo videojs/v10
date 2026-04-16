@@ -4,23 +4,17 @@ import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { NativeHlsMedia } from '../native-hls/browser';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
-
-export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+import {
+  inferSourceType,
+  type PlaybackType,
+  PlaybackTypes,
+  type PreloadType,
+  type SourceType,
+  SourceTypes,
+} from './types';
 
 export { Hls };
-
-export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
-export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
-
-export const PlaybackTypes = {
-  MSE: 'mse',
-  NATIVE: 'native',
-};
-
-export const SourceTypes = {
-  M3U8: 'application/vnd.apple.mpegurl',
-  MP4: 'video/mp4',
-};
+export { type PlaybackType, PlaybackTypes, type PreloadType, type SourceType, SourceTypes };
 
 export class HlsMedia extends HTMLVideoElementHost {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
@@ -168,10 +162,4 @@ export class HlsMedia extends HTMLVideoElementHost {
     this.#prevEngineProps = null;
     this.#loadRequested = null;
   }
-}
-
-function inferSourceType(src: string): SourceType {
-  const path = src.split(/[?#]/)[0] ?? '';
-  if (path.endsWith('.mp4')) return SourceTypes.MP4;
-  return SourceTypes.M3U8;
 }
