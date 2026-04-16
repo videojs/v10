@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
-import { HlsMedia, SourceTypes } from '../index';
+import { HlsMedia, SourceTypes } from '../browser';
 
 afterEach(() => {
   document.body.innerHTML = '';

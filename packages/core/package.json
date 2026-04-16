@@ -28,9 +28,12 @@
       "default": "./dist/default/dom.js"
     },
     "./dom/media/*": {
-      "types": "./dist/dev/dom/media/*/index.d.ts",
-      "development": "./dist/dev/dom/media/*/index.js",
-      "default": "./dist/default/dom/media/*/index.js"
+      "types": "./dist/dev/dom/media/*.d.ts",
+      "browser": {
+        "development": "./dist/dev/dom/media/*.js",
+        "default": "./dist/default/dom/media/*.js"
+      },
+      "default": "./dist/server/dom/media/*.js"
     }
   },
   "main": "dist/default/index.js",

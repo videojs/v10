@@ -1,4 +1,4 @@
-import { HlsMedia } from '../hls';
+import { HlsMedia } from '../hls/browser';
 import { MuxDataMediaMixin } from './mux-data';
 
 export class MuxVideoMedia extends MuxDataMediaMixin(HlsMedia) {

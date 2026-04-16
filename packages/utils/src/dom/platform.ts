@@ -1,3 +1,3 @@
 export function isMacOS(): boolean {
-  return typeof navigator !== 'undefined' && /mac/i.test(navigator.userAgent);
+  return __BROWSER__ && /mac/i.test(navigator.userAgent);
 }
