@@ -2,7 +2,7 @@
 
 import type { SliderState, StateAttrMap } from '@videojs/core';
 import type { SliderThumbProps } from '@videojs/core/dom';
-import type { RefCallback } from 'react';
+import type { ProviderProps, RefCallback } from 'react';
 import { createContext, useContext } from 'react';
 
 export interface SliderContextValue {
@@ -18,7 +18,9 @@ export interface SliderContextValue {
 
 const SliderContext = createContext<SliderContextValue | null>(null);
 
-export function SliderProvider({ value, children }: { value: SliderContextValue; children: React.ReactNode }) {
+type SliderProviderProps = ProviderProps<SliderContextValue>;
+
+export function SliderProvider({ value, children }: SliderProviderProps) {
   return <SliderContext.Provider value={value}>{children}</SliderContext.Provider>;
 }
 

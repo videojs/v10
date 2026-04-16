@@ -40,7 +40,7 @@ export const slider = {
     base: cn(
       'z-10 absolute -translate-x-1/2 -translate-y-1/2',
       'bg-current rounded-full',
-      'shadow-[0_0_0_1px_var(--media-controls-current-shadow-color-subtle,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.15),0_1px_2px_-1px_oklch(0_0_0/0.15)]',
+      'shadow-[0_0_0_1px_var(--media-current-shadow-color-subtle,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.15),0_1px_2px_-1px_oklch(0_0_0/0.15)]',
       'transition-[opacity,height,width,outline-offset] duration-150 ease-out select-none',
       'outline-4 outline-transparent -outline-offset-4',
       'hover:outline-current/25 hover:outline-offset-0',

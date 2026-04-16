@@ -1,13 +1,12 @@
 'use client';
 
+export type { InputFeedbackAction, InputFeedbackGroup } from '@videojs/core';
 // Core
 export * from '@videojs/core/dom';
-
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
-
 // Media primitives
 export {
   Container,
@@ -28,7 +27,6 @@ export {
   createPlayer,
   type ProviderProps,
 } from './player/create-player';
-
 // UI
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
@@ -47,6 +45,12 @@ export { useSlider } from './ui/hooks/use-slider';
 export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
 export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
+export { InputFeedback } from './ui/input-feedback';
+export type { InputFeedbackIconProps } from './ui/input-feedback/input-feedback-icon';
+export type { InputFeedbackItemProps } from './ui/input-feedback/input-feedback-item';
+export type { InputFeedbackRootProps } from './ui/input-feedback/input-feedback-root';
+export type { InputFeedbackTimeProps } from './ui/input-feedback/input-feedback-time';
+export type { InputFeedbackValueProps } from './ui/input-feedback/input-feedback-value';
 export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';

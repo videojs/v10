@@ -14,7 +14,10 @@
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/captions.css";
+@import "./components/input-feedback.css";
 @import "../../shared/css/video/icon-state.css";
+@import "../../shared/global/video/keyframes.css";
+@import "../../shared/global/video/properties.css";
 
 /* ==========================================================================
    Root
@@ -175,15 +178,13 @@
   &:not([data-visible]) {
     pointer-events: none;
     opacity: 0;
-    translate: 0 100%;
 
-    @media (pointer: fine) {
+    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
       filter: blur(8px);
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      filter: blur(0);
-      translate: 0 0;
+    @media (prefers-reduced-motion: no-preference) {
+      translate: 0 100%;
     }
   }
 

@@ -3,6 +3,9 @@
    ========================================================================== */
 
 .media-minimal-skin {
+  --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
+  --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
+  --media-icon-size: 18px;
   position: relative;
   display: block;
   width: 100%;
@@ -19,12 +22,16 @@
   line-height: 1.5;
   letter-spacing: normal;
   outline: 2px solid transparent;
-  outline-offset: 2px;
+  outline-offset: -4px;
   border-radius: var(--media-border-radius, 0.75rem);
   isolation: isolate;
+  transition-timing-function: ease-out;
+  transition-duration: 100ms;
+  transition-property: outline-offset, outline-color;
 
   &:focus-visible {
     outline-color: currentColor;
+    outline-offset: 2px;
   }
 
   & > * {

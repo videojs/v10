@@ -156,6 +156,43 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+
+      <!-- Input Feedback -->
+      <media-input-feedback class="media-input-feedback">
+        <media-input-feedback-item
+          group="volume"
+          class="media-surface media-input-feedback-island media-input-feedback-island--volume"
+        >
+          <div class="media-input-feedback-island__content">
+            ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
+            ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
+            ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
+            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
+          </div>
+        </media-input-feedback-item>
+        <media-input-feedback-item
+          group="captions"
+          class="media-surface media-input-feedback-island media-input-feedback-island--captions"
+        >
+          <div class="media-input-feedback-island__content">
+            ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
+            ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
+            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
+          </div>
+        </media-input-feedback-item>
+        <media-input-feedback-item group="seek" class="media-input-feedback-bubble">
+          <media-input-feedback-icon>
+            ${renderIcon('chevron', { class: 'media-icon media-icon--seek' })}
+          </media-input-feedback-icon>
+          <media-input-feedback-time class="media-time"></media-input-feedback-time>
+        </media-input-feedback-item>
+        <media-input-feedback-item group="playback" class="media-input-feedback-bubble">
+          <media-input-feedback-icon>
+            ${renderIcon('play', { class: 'media-icon media-icon--play' })}
+            ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
+          </media-input-feedback-icon>
+        </media-input-feedback-item>
+      </media-input-feedback>
     </media-container>
   `;
 }

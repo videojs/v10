@@ -41,6 +41,12 @@ export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-butto
 export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
+export { type InputFeedbackContextValue, inputFeedbackContext } from './ui/input-feedback/context';
+export { InputFeedbackElement } from './ui/input-feedback/input-feedback-element';
+export { InputFeedbackIconElement } from './ui/input-feedback/input-feedback-icon-element';
+export { InputFeedbackItemElement } from './ui/input-feedback/input-feedback-item-element';
+export { InputFeedbackTimeElement } from './ui/input-feedback/input-feedback-time-element';
+export { InputFeedbackValueElement } from './ui/input-feedback/input-feedback-value-element';
 export { LiveButtonElement } from './ui/live-button/live-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives

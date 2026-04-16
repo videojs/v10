@@ -4,6 +4,12 @@ import { toAriaKeyShortcut } from './aria';
 import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
 
+export interface HotkeyActivateEvent {
+  action?: string | undefined;
+  value?: number | undefined;
+  event: KeyboardEvent;
+}
+
 interface HotkeyBinding {
   parsed: ParsedHotkeyBinding[];
   options: HotkeyOptions;
@@ -19,10 +25,16 @@ export class HotkeyCoordinator {
   #docDisconnect: AbortController | null = null;
   /** Action name → bound keys. Controls query this to set `aria-keyshortcuts`. */
   #ariaRegistry = new Map<string, ParsedHotkeyBinding[]>();
+  #subscribers = new Set<(event: HotkeyActivateEvent) => void>();
   #destroyed = false;
 
   constructor(target: HTMLElement) {
     this.#target = target;
+  }
+
+  subscribe(callback: (event: HotkeyActivateEvent) => void): () => void {
+    this.#subscribers.add(callback);
+    return () => this.#subscribers.delete(callback);
   }
 
   add(options: HotkeyOptions): () => void {
@@ -141,6 +153,14 @@ export class HotkeyCoordinator {
         // Input safety: single-key shortcuts suppressed in editable fields.
         if (editable && p.modifiers.size === 0) continue;
 
+        if (this.#subscribers.size > 0) {
+          const activateEvent: HotkeyActivateEvent = {
+            action: options.action,
+            value: options.value,
+            event,
+          };
+          for (const cb of this.#subscribers) cb(activateEvent);
+        }
         event.preventDefault();
         options.onActivate(event, p.originalKey);
         return;

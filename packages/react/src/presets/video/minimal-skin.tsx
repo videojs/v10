@@ -6,6 +6,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -26,6 +27,9 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture/gesture';
+import { Hotkey } from '@/ui/hotkey/hotkey';
+import { InputFeedback } from '@/ui/input-feedback';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -144,7 +148,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -158,7 +162,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
           </div>
 
@@ -191,7 +195,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
               />
-              <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -248,6 +252,70 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
+      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
+      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+
+      {/* Input Feedback */}
+      <InputFeedback.Root className="media-input-feedback">
+        <InputFeedback.Item group="volume" className="media-input-feedback-island media-input-feedback-island--volume">
+          <div className="media-input-feedback-island__content">
+            <VolumeHighIcon className="media-icon media-icon--volume-high" />
+            <VolumeLowIcon className="media-icon media-icon--volume-low" />
+            <VolumeOffIcon className="media-icon media-icon--volume-off" />
+            <div className="media-input-feedback-island__progress" aria-hidden="true" />
+            <InputFeedback.Value className="media-input-feedback-island__value" />
+          </div>
+        </InputFeedback.Item>
+
+        <InputFeedback.Item
+          group="captions"
+          className="media-input-feedback-island media-input-feedback-island--captions"
+        >
+          <div className="media-input-feedback-island__content">
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <InputFeedback.Value className="media-input-feedback-island__value" />
+          </div>
+        </InputFeedback.Item>
+
+        <InputFeedback.Item group="seek" className="media-input-feedback-bubble">
+          <InputFeedback.Icon>
+            <ChevronIcon className="media-icon media-icon--seek" />
+          </InputFeedback.Icon>
+          <InputFeedback.Time className="media-time" />
+        </InputFeedback.Item>
+
+        <InputFeedback.Item group="playback" className="media-input-feedback-bubble">
+          <InputFeedback.Icon>
+            <PlayIcon className="media-icon media-icon--play" />
+            <PauseIcon className="media-icon media-icon--pause" />
+          </InputFeedback.Icon>
+        </InputFeedback.Item>
+      </InputFeedback.Root>
     </Container>
   );
 }

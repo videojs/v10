@@ -9,6 +9,7 @@ export interface GestureOptions {
   region?: GestureRegion | undefined;
   disabled?: boolean | undefined;
   action?: string | undefined;
+  value?: number | undefined;
 }
 
 export interface GestureBinding {
@@ -19,6 +20,16 @@ export interface GestureBinding {
   region?: GestureRegion | undefined;
   disabled?: boolean | undefined;
   action?: string | undefined;
+  value?: number | undefined;
+}
+
+export interface GestureActivateEvent {
+  type: GestureType;
+  action?: string | undefined;
+  value?: number | undefined;
+  region?: GestureRegion | undefined;
+  pointer?: GesturePointerType | undefined;
+  event: PointerEvent;
 }
 
 export interface GestureRecognizer {

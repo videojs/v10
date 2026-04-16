@@ -1,4 +1,11 @@
 @import "tailwindcss";
+
+/* NOTE: This is using a private export. You should import from either:
+- "@videojs/html/tailwind.css" for HTML skins
+- "@videojs/react/tailwind.css" for React skins
+*/
+@import "@videojs/skins/shared/tailwind.css";
+
 @source "../app";
 @source "../src";
 @source "../templates";

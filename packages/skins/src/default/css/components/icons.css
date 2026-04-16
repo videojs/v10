@@ -6,15 +6,9 @@
   position: relative;
 }
 .media-default-skin .media-icon {
-  display: block;
   flex-shrink: 0;
-  grid-area: 1 / 1;
-  width: 18px;
-  height: 18px;
-  transition-behavior: allow-discrete;
-  transition-property: display, opacity;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
 }
 .media-default-skin .media-icon--flipped {
   scale: -1 1;

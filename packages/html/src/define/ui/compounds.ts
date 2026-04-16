@@ -4,6 +4,11 @@ import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-titl
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
+import { InputFeedbackElement } from '../../ui/input-feedback/input-feedback-element';
+import { InputFeedbackIconElement } from '../../ui/input-feedback/input-feedback-icon-element';
+import { InputFeedbackItemElement } from '../../ui/input-feedback/input-feedback-item-element';
+import { InputFeedbackTimeElement } from '../../ui/input-feedback/input-feedback-time-element';
+import { InputFeedbackValueElement } from '../../ui/input-feedback/input-feedback-value-element';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
 import { SliderElement } from '../../ui/slider/slider-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
@@ -32,6 +37,15 @@ export function defineErrorDialog(): void {
   safeDefine(AlertDialogCloseElement);
   safeDefine(AlertDialogDescriptionElement);
   safeDefine(AlertDialogTitleElement);
+}
+
+export function defineInputFeedback(): void {
+  // Parent first — child elements consume its context.
+  safeDefine(InputFeedbackElement);
+  safeDefine(InputFeedbackIconElement);
+  safeDefine(InputFeedbackItemElement);
+  safeDefine(InputFeedbackTimeElement);
+  safeDefine(InputFeedbackValueElement);
 }
 
 /** Shared slider sub-elements used by all slider types. */

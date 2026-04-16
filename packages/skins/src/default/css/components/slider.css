@@ -55,7 +55,7 @@
   background-color: currentColor;
   border-radius: calc(infinity * 1px);
   box-shadow:
-    0 0 0 1px var(--media-controls-current-shadow-color-subtle, oklch(0 0 0 / 0.1)),
+    0 0 0 1px var(--media-current-shadow-color-subtle, oklch(0 0 0 / 0.1)),
     0 1px 3px 0 oklch(0 0 0 / 0.15),
     0 1px 2px -1px oklch(0 0 0 / 0.15);
   opacity: 0;

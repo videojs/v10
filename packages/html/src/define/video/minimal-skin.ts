@@ -134,6 +134,67 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="media-overlay"></div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+      <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
+      <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+      <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+      <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+      <media-hotkey keys=">" action="speedUp"></media-hotkey>
+      <media-hotkey keys="<" action="speedDown"></media-hotkey>
+
+      <!-- Gestures -->
+      <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+      <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+      <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+
+      <!-- Input Feedback -->
+      <media-input-feedback class="media-input-feedback">
+        <media-input-feedback-item group="volume" class="media-input-feedback-island media-input-feedback-island--volume">
+          <div class="media-input-feedback-island__content">
+            ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
+            ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
+            ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
+            <div class="media-input-feedback-island__progress" aria-hidden="true"></div>
+            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
+          </div>
+        </media-input-feedback-item>
+
+        <media-input-feedback-item group="captions" class="media-input-feedback-island media-input-feedback-island--captions">
+          <div class="media-input-feedback-island__content">
+            ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
+            ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
+            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
+          </div>
+        </media-input-feedback-item>
+
+        <media-input-feedback-item group="seek" class="media-input-feedback-bubble">
+          <media-input-feedback-icon>
+            ${renderIcon('chevron', { class: 'media-icon media-icon--seek' })}
+          </media-input-feedback-icon>
+          <media-input-feedback-time class="media-time"></media-input-feedback-time>
+        </media-input-feedback-item>
+
+        <media-input-feedback-item group="playback" class="media-input-feedback-bubble">
+          <media-input-feedback-icon>
+            ${renderIcon('play', { class: 'media-icon media-icon--play' })}
+            ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
+          </media-input-feedback-icon>
+        </media-input-feedback-item>
+      </media-input-feedback>
     </media-container>
   `;
 }

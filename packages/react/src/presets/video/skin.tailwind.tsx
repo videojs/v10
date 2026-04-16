@@ -9,6 +9,7 @@ import {
   iconContainer,
   iconFlipped,
   iconState,
+  inputFeedback,
   overlay,
   playbackRate,
   popup,
@@ -47,6 +48,9 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture/gesture';
+import { Hotkey } from '@/ui/hotkey/hotkey';
+import { InputFeedback } from '@/ui/input-feedback';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -212,7 +216,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -226,7 +230,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
           </div>
 
@@ -250,7 +254,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <div className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -307,6 +311,72 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className={overlay} />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
+      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
+      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+
+      {/* Input Feedback */}
+      <InputFeedback.Root className={inputFeedback.root}>
+        <InputFeedback.Item
+          group="volume"
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <div className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <InputFeedback.Value className={inputFeedback.island.value} />
+          </div>
+        </InputFeedback.Item>
+
+        <InputFeedback.Item
+          group="captions"
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownCaptions)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <InputFeedback.Value className={inputFeedback.island.value} />
+          </div>
+        </InputFeedback.Item>
+
+        <InputFeedback.Item group="seek" className={inputFeedback.bubble.base}>
+          <InputFeedback.Icon>
+            <ChevronIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek)} />
+          </InputFeedback.Icon>
+          <InputFeedback.Time className={inputFeedback.bubble.time} />
+        </InputFeedback.Item>
+
+        <InputFeedback.Item group="playback" className={inputFeedback.bubble.base}>
+          <InputFeedback.Icon>
+            <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+            <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+          </InputFeedback.Icon>
+        </InputFeedback.Item>
+      </InputFeedback.Root>
     </Container>
   );
 }
