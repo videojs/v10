@@ -1,3 +1,4 @@
+import { globSync } from 'node:fs';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import packageJson from './package.json' with { type: 'json' };
@@ -8,12 +9,15 @@ const buildModes: BuildMode[] = ['dev', 'default', 'server'];
 
 const isServer = (mode: BuildMode) => mode === 'server';
 
-const mediaDirs = ['custom-media-element', 'dash', 'hls', 'mux', 'native-hls', 'simple-hls'];
-
-const mediaEntry = (mode: BuildMode) =>
-  Object.fromEntries(
-    mediaDirs.map((dir) => [`dom/media/${dir}`, `./src/dom/media/${dir}/${isServer(mode) ? 'server' : 'browser'}.ts`])
+const mediaEntry = (mode: BuildMode) => {
+  const suffix = isServer(mode) ? 'server' : 'browser';
+  return Object.fromEntries(
+    globSync(`src/dom/media/*/${suffix}.ts`).map((file) => {
+      const dir = file.split('/').at(-2)!;
+      return [`dom/media/${dir}`, `./${file}`];
+    })
   );
+};
 
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
