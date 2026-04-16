@@ -28,19 +28,13 @@ function stubCssInlinePlugin() {
   };
 }
 
-/** Stub `define/*` entry modules with empty exports for the server build. */
+/** Stub all `define/*` modules with empty exports for the server build. */
 function stubDefinePlugin() {
   const defineDir = resolve(dirname(fileURLToPath(import.meta.url)), 'src/define');
   return {
     name: 'stub-define',
     load(id: string) {
-      // Only stub files inside define subdirectories (audio/, video/, etc.)
-      // Skip safe-define.ts, skin-element.ts, and CSS files at the define root.
-      if (
-        id.startsWith(defineDir) &&
-        id !== defineDir &&
-        /\/define\/(?:audio|background|feature|media|ui|video)\//.test(id)
-      ) {
+      if (id.startsWith(defineDir) && id !== defineDir) {
         return 'export {}';
       }
     },
