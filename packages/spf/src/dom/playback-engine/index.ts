@@ -1,8 +1,8 @@
 export { effect } from '../../core/signals/effect';
 export type { SpfMediaAPI } from './adapter';
 export { SpfMedia, SpfMediaMixin } from './adapter';
-export type { PlaybackEngine } from './engine';
-export { createPlaybackEngine } from './engine';
+export type { Composition, Composition as PlaybackEngine } from './engine';
+export { createComposition, createComposition as createPlaybackEngine } from './engine';
 // Backwards compatibility — re-export HLS types under the old names.
 // TODO: remove once downstream consumers migrate to Hls-prefixed names.
 export type {

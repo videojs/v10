@@ -1,6 +1,6 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import { update } from '../../core/signals/primitives';
-import type { PlaybackEngine } from './engine';
+import type { Composition } from './engine';
 import {
   createHlsPlaybackEngine,
   type HlsPlaybackEngineConfig,
@@ -9,7 +9,7 @@ import {
 } from './hls-engine';
 
 export interface SpfMediaAPI {
-  readonly engine: PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
+  readonly engine: Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   attach(mediaElement: HTMLMediaElement): void;
@@ -38,7 +38,7 @@ export interface SpfMediaAPI {
  */
 export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SpfMediaImpl extends BaseClass {
-    #engine: PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
+    #engine: Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
     #config: HlsPlaybackEngineConfig;
     #preload: '' | 'none' | 'metadata' | 'auto' = '';
 
@@ -53,7 +53,7 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#engine = createHlsPlaybackEngine(config);
     }
 
-    get engine(): PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
+    get engine(): Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
       return this.#engine;
     }
 

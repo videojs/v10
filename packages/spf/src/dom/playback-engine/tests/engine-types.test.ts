@@ -3,7 +3,7 @@ import { effect } from '../../../core/signals/effect';
 import type { Signal } from '../../../core/signals/primitives';
 import { update } from '../../../core/signals/primitives';
 import {
-  createPlaybackEngine,
+  createComposition,
   type InferFeatureConfig,
   type InferFeatureOwners,
   type InferFeatureState,
@@ -127,7 +127,7 @@ describe('ResolveFeatureState', () => {
   it('intersects different state shapes', () => {
     const featureA = (_deps: { state: Signal<{ count?: number }> }) => {};
     const featureB = (_deps: { state: Signal<{ label?: string }> }) => {};
-    const engine = createPlaybackEngine([featureA, featureB]);
+    const engine = createComposition([featureA, featureB]);
     expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
   });
 });
@@ -143,7 +143,7 @@ describe('ResolveFeatureOwners', () => {
 
 describe('ResolveFeatureConfig', () => {
   it('intersects config from multiple features', () => {
-    const engine = createPlaybackEngine([counter, render, persist], {
+    const engine = createComposition([counter, render, persist], {
       config: { interval: 250, defaultText: '--', saveEvery: 5 },
     });
     expectTypeOf(engine.state.get()).toExtend<{ count?: number }>();
@@ -151,20 +151,20 @@ describe('ResolveFeatureConfig', () => {
 });
 
 // =============================================================================
-// createPlaybackEngine — inference at the call site
+// createComposition — inference at the call site
 // =============================================================================
 
-describe('createPlaybackEngine', () => {
+describe('createComposition', () => {
   describe('single feature', () => {
     it('infers state type from a single feature', () => {
-      const engine = createPlaybackEngine([counter], {
+      const engine = createComposition([counter], {
         config: { interval: 250 },
       });
       expectTypeOf(engine.state.get()).toEqualTypeOf<{ count?: number }>();
     });
 
     it('infers types from an inline arrow feature', () => {
-      const engine = createPlaybackEngine([
+      const engine = createComposition([
         ({ state }: { state: Signal<{ value?: string }> }) => {
           update(state, { value: 'hello' });
         },
@@ -175,7 +175,7 @@ describe('createPlaybackEngine', () => {
 
   describe('feature array', () => {
     it('infers combined state from multiple features', () => {
-      const engine = createPlaybackEngine([counter, render, persist], {
+      const engine = createComposition([counter, render, persist], {
         initialState: { count: 0 },
         config: { interval: 250, defaultText: '--', saveEvery: 5 },
         initialOwners: { renderElement: document.createElement('div') },
@@ -189,13 +189,13 @@ describe('createPlaybackEngine', () => {
       const featureA = (_deps: { state: Signal<{ count?: number }> }) => {};
       const featureB = (_deps: { state: Signal<{ label?: string }> }) => {};
 
-      const engine = createPlaybackEngine([featureA, featureB]);
+      const engine = createComposition([featureA, featureB]);
       expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
     });
 
     it('type-checks options against inferred types', () => {
       // Config must satisfy the combined config requirements
-      const engine = createPlaybackEngine([counter, render], {
+      const engine = createComposition([counter, render], {
         config: { interval: 250, defaultText: '--' },
       });
 
@@ -205,7 +205,7 @@ describe('createPlaybackEngine', () => {
 
   describe('generic features', () => {
     it('infers constraint types from generic features', () => {
-      const engine = createPlaybackEngine([timer], {
+      const engine = createComposition([timer], {
         config: { tickRate: 500 },
       });
 
@@ -215,7 +215,7 @@ describe('createPlaybackEngine', () => {
 
   describe('resetting optional fields to undefined', () => {
     it('allows update() with undefined for optional state fields', () => {
-      const engine = createPlaybackEngine([counter]);
+      const engine = createComposition([counter]);
 
       // Features declare { count?: number } — resetting to undefined is valid
       // without the feature needing to declare | undefined explicitly.
@@ -224,7 +224,7 @@ describe('createPlaybackEngine', () => {
     });
 
     it('allows update() with undefined for optional owners fields', () => {
-      const engine = createPlaybackEngine([render], {
+      const engine = createComposition([render], {
         initialOwners: { renderElement: document.createElement('div') },
       });
 

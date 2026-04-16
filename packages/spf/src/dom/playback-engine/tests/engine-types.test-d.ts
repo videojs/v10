@@ -2,7 +2,7 @@ import { describe, it } from 'vitest';
 import { effect } from '../../../core/signals/effect';
 import type { Signal } from '../../../core/signals/primitives';
 import { update } from '../../../core/signals/primitives';
-import { createPlaybackEngine } from '../engine';
+import { createComposition } from '../engine';
 
 // =============================================================================
 // Test features
@@ -35,38 +35,38 @@ function render({
 // Type error enforcement
 // =============================================================================
 
-describe('createPlaybackEngine type errors', () => {
+describe('createComposition type errors', () => {
   it('errors when update() is called with a wrong type on engine.state', () => {
-    const engine = createPlaybackEngine([counter]);
+    const engine = createComposition([counter]);
     // @ts-expect-error — count expects number, not string
     update(engine.state, { count: 'not a number' });
   });
 
   it('errors when set() is called with a wrong type on engine.state', () => {
-    const engine = createPlaybackEngine([counter]);
+    const engine = createComposition([counter]);
     // @ts-expect-error — state expects { count?: number }, not { count: string }
     engine.state.set({ count: 'not a number' });
   });
 
   it('errors when update() uses a key not in the inferred state', () => {
-    const engine = createPlaybackEngine([counter]);
+    const engine = createComposition([counter]);
     // @ts-expect-error — 'unknown' is not a key of { count?: number }
     update(engine.state, { unknown: true });
   });
 
   it('errors when initialState has wrong types', () => {
     // @ts-expect-error — count expects number, not string
-    createPlaybackEngine([counter], { initialState: { count: 'wrong' } });
+    createComposition([counter], { initialState: { count: 'wrong' } });
   });
 
   it('errors when initialOwners has wrong types', () => {
     // @ts-expect-error — renderElement expects HTMLElement, not number
-    createPlaybackEngine([render], { initialOwners: { renderElement: 42 } });
+    createComposition([render], { initialOwners: { renderElement: 42 } });
   });
 
   it('errors when config has wrong types', () => {
     // @ts-expect-error — interval expects number, not string
-    createPlaybackEngine([counter], { config: { interval: 'fast' } });
+    createComposition([counter], { config: { interval: 'fast' } });
   });
 
   it('errors when composing features with conflicting required state types', () => {
@@ -74,7 +74,7 @@ describe('createPlaybackEngine type errors', () => {
     const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
 
     // @ts-expect-error — features have incompatible state: { value: number } vs { value: string }
-    createPlaybackEngine([expectsNumber, expectsString]);
+    createComposition([expectsNumber, expectsString]);
   });
 
   it('errors when composing features with conflicting optional state types', () => {
@@ -82,7 +82,7 @@ describe('createPlaybackEngine type errors', () => {
     const expectsString = (_deps: { state: Signal<{ count?: string }> }) => {};
 
     // @ts-expect-error — features have incompatible state: { count?: number } vs { count?: string }
-    createPlaybackEngine([expectsNumber, expectsString]);
+    createComposition([expectsNumber, expectsString]);
   });
 
   it('errors when composing features with conflicting config types', () => {
@@ -90,7 +90,7 @@ describe('createPlaybackEngine type errors', () => {
     const expectsString = (_deps: { config: { interval?: string } }) => {};
 
     // @ts-expect-error — features have incompatible config: { interval?: number } vs { interval?: string }
-    createPlaybackEngine([expectsNumber, expectsString]);
+    createComposition([expectsNumber, expectsString]);
   });
 
   it('errors when composing features with incompatible owners class types', () => {
@@ -98,7 +98,7 @@ describe('createPlaybackEngine type errors', () => {
     const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
 
     // @ts-expect-error — neither HTMLCanvasElement nor HTMLVideoElement extends the other
-    createPlaybackEngine([expectsCanvas, expectsVideo]);
+    createComposition([expectsCanvas, expectsVideo]);
   });
 
   // =========================================================================
@@ -110,7 +110,7 @@ describe('createPlaybackEngine type errors', () => {
     const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
 
     // No error — HTMLVideoElement extends HTMLElement
-    createPlaybackEngine([expectsElement, expectsVideo]);
+    createComposition([expectsElement, expectsVideo]);
   });
 
   it('allows composing features that omit owners', () => {
@@ -118,7 +118,7 @@ describe('createPlaybackEngine type errors', () => {
     const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: HTMLElement }> }) => {};
 
     // No error — omitting owners is not a conflict
-    createPlaybackEngine([stateOnly, withOwners]);
+    createComposition([stateOnly, withOwners]);
   });
 
   it('allows composing features that omit state', () => {
@@ -126,7 +126,7 @@ describe('createPlaybackEngine type errors', () => {
     const withState = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
 
     // No error — omitting state is not a conflict
-    createPlaybackEngine([configOnly, withState]);
+    createComposition([configOnly, withState]);
   });
 
   it('allows composing features that omit config', () => {
@@ -134,7 +134,7 @@ describe('createPlaybackEngine type errors', () => {
     const withConfig = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
 
     // No error — omitting config is not a conflict
-    createPlaybackEngine([stateOnly, withConfig]);
+    createComposition([stateOnly, withConfig]);
   });
 
   it('allows composing features where each omits different channels', () => {
@@ -143,7 +143,7 @@ describe('createPlaybackEngine type errors', () => {
     const onlyConfig = (_deps: { config: { interval?: number } }) => {};
 
     // No error — features with disjoint channels don't conflict
-    createPlaybackEngine([onlyState, onlyOwners, onlyConfig]);
+    createComposition([onlyState, onlyOwners, onlyConfig]);
   });
 
   // =========================================================================
@@ -154,7 +154,7 @@ describe('createPlaybackEngine type errors', () => {
     // Features declare { count?: number } — the engine allows resetting to
     // undefined without requiring the feature to declare | undefined.
     const feature = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const engine = createPlaybackEngine([feature]);
+    const engine = createComposition([feature]);
 
     // No error — optional fields can be reset to undefined
     update(engine.state, { count: undefined });
@@ -162,7 +162,7 @@ describe('createPlaybackEngine type errors', () => {
 
   it('allows resetting optional owners fields to undefined', () => {
     const feature = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
-    const engine = createPlaybackEngine([feature]);
+    const engine = createComposition([feature]);
 
     // No error — clearing an owner (e.g. on source switch)
     update(engine.owners, { el: undefined });

@@ -8,12 +8,12 @@ The framework doesn't know about HLS, DASH, or any specific protocol. It provide
 
 ## The Engine
 
-Everything starts with `createPlaybackEngine`. An engine composes **features** — functions that each handle one concern — and wires them together through shared reactive state.
+Everything starts with `createComposition`. An engine composes **features** — functions that each handle one concern — and wires them together through shared reactive state.
 
 ```ts
-import { createPlaybackEngine } from '@videojs/spf/playback-engine';
+import { createComposition } from '@videojs/spf/playback-engine';
 
-const engine = createPlaybackEngine([featureA, featureB]);
+const engine = createComposition([featureA, featureB]);
 ```
 
 The engine creates shared reactive channels, passes them to each feature, and returns:
@@ -33,10 +33,10 @@ The rest of this document builds up from the simplest possible engine to the ful
 A feature is a function that receives `{ state, owners, config }` and optionally returns a cleanup function. The simplest feature reads state and config:
 
 ```ts
-import { createPlaybackEngine } from '@videojs/spf/playback-engine';
+import { createComposition } from '@videojs/spf/playback-engine';
 import { update } from '@videojs/spf';
 
-const engine = createPlaybackEngine(
+const engine = createComposition(
   ({ state, config }) => {
     const interval = setInterval(() => {
       // update() shallow-merges into current state
@@ -66,7 +66,7 @@ await engine.destroy(); // clears the interval
 An engine has two reactive channels: **state** for application data and **owners** for platform resources. State and owners are both built on [TC39 Signals](https://github.com/tc39/proposal-signals) — reactive values that automatically notify dependents when they change. Use `effect()` to react to changes in either channel:
 
 ```ts
-import { createPlaybackEngine, effect } from '@videojs/spf/playback-engine';
+import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { update } from '@videojs/spf';
 
 // Feature: increments a counter
@@ -86,7 +86,7 @@ function render({ state, owners, config }) {
   });
 }
 
-const engine = createPlaybackEngine(
+const engine = createComposition(
   [counter, render],
   {
     initialState: { count: 0 },
@@ -117,7 +117,7 @@ A **SerialRunner** schedules tasks one at a time — the next task waits until t
 Building on our counter, let's add a `persist` feature that saves the count to a server every 5 ticks, and does one final save on destroy:
 
 ```ts
-import { createPlaybackEngine, effect } from '@videojs/spf/playback-engine';
+import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { Task, SerialRunner, update } from '@videojs/spf';
 
 // Feature: increments a counter
@@ -168,7 +168,7 @@ function persist({ state, config }) {
   };
 }
 
-const engine = createPlaybackEngine(
+const engine = createComposition(
   [counter, render, persist],
   {
     initialState: { count: 0 },
@@ -195,10 +195,10 @@ The `persist` feature introduces several concepts:
 An HLS playback engine is one specific composition of features. There's nothing special about it from SPF's perspective — it's just a list of features and some config.
 
 ```ts
-import { createPlaybackEngine } from '@videojs/spf';
+import { createComposition } from '@videojs/spf';
 
 function createHlsPlaybackEngine(config = {}) {
-  return createPlaybackEngine(
+  return createComposition(
     [
       // Preload and playback tracking
       syncPreloadAttribute,
