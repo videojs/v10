@@ -198,7 +198,7 @@ export function toPlaybackIdFromSrc(src: string): string | undefined {
 
 export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
   if (typeof src !== 'string') return false;
-  const base = typeof window !== 'undefined' ? window.location.href : undefined;
+  const base = __BROWSER__ ? window.location.href : undefined;
   const hostname = new URL(src, base).hostname.toLocaleLowerCase();
   return hostname.includes(MUX_VIDEO_DOMAIN);
 }

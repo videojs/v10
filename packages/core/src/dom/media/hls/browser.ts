@@ -14,7 +14,7 @@ import {
 } from './types';
 
 export { Hls };
-export { type PlaybackType, PlaybackTypes, type PreloadType, type SourceType, SourceTypes };
+export * from './types';
 
 export class HlsMedia extends HTMLVideoElementHost {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;

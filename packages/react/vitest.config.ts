@@ -6,7 +6,28 @@ export default defineConfig({
     __BROWSER__: 'true',
   },
   test: {
-    environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'react',
+          include: ['src/**/*.test.{ts,tsx}'],
+          exclude: ['src/tests/ssr-edge.test.ts'],
+          environment: 'jsdom',
+        },
+      },
+      {
+        extends: true,
+        define: {
+          __BROWSER__: 'false',
+          __DEV__: 'true',
+        },
+        test: {
+          name: 'react/edge',
+          include: ['src/tests/ssr-edge.test.ts'],
+          environment: 'edge-runtime',
+        },
+      },
+    ],
   },
 });

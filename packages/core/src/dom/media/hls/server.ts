@@ -1,7 +1,6 @@
 import { HTMLVideoElementHost } from '../video-host';
 
-export type { PlaybackType, PreloadType, SourceType } from './types';
-export { PlaybackTypes, SourceTypes } from './types';
+export * from './types';
 
 export class HlsMedia extends HTMLVideoElementHost {
   engine = null;

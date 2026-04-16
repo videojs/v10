@@ -19,7 +19,7 @@ export default defineConfig({
         test: {
           name: 'core/dom',
           include: ['src/dom/**/*.test.ts'],
-          exclude: ['src/dom/media/tests/ssr-safety.test.ts'],
+          exclude: ['src/dom/media/tests/ssr-safety.test.ts', 'src/dom/media/tests/ssr-edge.test.ts'],
           environment: 'jsdom',
           setupFiles: ['src/dom/tests/setup.ts'],
         },
@@ -33,6 +33,18 @@ export default defineConfig({
         test: {
           name: 'core/server',
           include: ['src/dom/media/tests/ssr-safety.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        define: {
+          __BROWSER__: 'false',
+          __DEV__: 'true',
+        },
+        test: {
+          name: 'core/edge',
+          include: ['src/dom/media/tests/ssr-edge.test.ts'],
+          environment: 'edge-runtime',
         },
       },
     ],
