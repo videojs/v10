@@ -145,4 +145,26 @@ describe('createPlaybackEngine type errors', () => {
     // No error — features with disjoint channels don't conflict
     createPlaybackEngine([onlyState, onlyOwners, onlyConfig]);
   });
+
+  // =========================================================================
+  // Resetting optional fields to undefined
+  // =========================================================================
+
+  it('allows resetting optional state fields to undefined', () => {
+    // Features declare { count?: number } — the engine allows resetting to
+    // undefined without requiring the feature to declare | undefined.
+    const feature = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const engine = createPlaybackEngine([feature]);
+
+    // No error — optional fields can be reset to undefined
+    update(engine.state, { count: undefined });
+  });
+
+  it('allows resetting optional owners fields to undefined', () => {
+    const feature = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const engine = createPlaybackEngine([feature]);
+
+    // No error — clearing an owner (e.g. on source switch)
+    update(engine.owners, { el: undefined });
+  });
 });

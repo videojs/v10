@@ -213,6 +213,27 @@ describe('createPlaybackEngine', () => {
     });
   });
 
+  describe('resetting optional fields to undefined', () => {
+    it('allows update() with undefined for optional state fields', () => {
+      const engine = createPlaybackEngine([counter]);
+
+      // Features declare { count?: number } — resetting to undefined is valid
+      // without the feature needing to declare | undefined explicitly.
+      update(engine.state, { count: undefined });
+      expectTypeOf(engine.state.get().count).toEqualTypeOf<number | undefined>();
+    });
+
+    it('allows update() with undefined for optional owners fields', () => {
+      const engine = createPlaybackEngine([render], {
+        initialOwners: { renderElement: document.createElement('div') },
+      });
+
+      // Clearing an owner (e.g. on source switch)
+      update(engine.owners, { renderElement: undefined });
+      expectTypeOf(engine.owners.get().renderElement).toEqualTypeOf<HTMLElement | undefined>();
+    });
+  });
+
   // Type error enforcement tests (@ts-expect-error for wrong types, conflicting
   // features, etc.) live in engine-types.test-d.ts and run via vitest typecheck.
 });
