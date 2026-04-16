@@ -159,21 +159,21 @@ type ValidateComposition<Features extends readonly AnyFeature[]> =
 // =============================================================================
 
 /**
- * Playback engine instance.
+ * A composition of features with shared reactive state, owners, and config.
  *
  * Generic over the state and owners shapes, which are determined by the
- * specific composition of features passed to `createPlaybackEngine`.
+ * specific features passed to `createComposition`.
  */
-export interface PlaybackEngine<S extends object, O extends object> {
+export interface Composition<S extends object, O extends object> {
   state: Signal<S>;
   owners: Signal<O>;
   destroy(): Promise<void>;
 }
 
 /**
- * Options for `createPlaybackEngine`. All fields are optional.
+ * Options for `createComposition`. All fields are optional.
  */
-export interface PlaybackEngineOptions<S extends object, O extends object, C extends object> {
+export interface CompositionOptions<S extends object, O extends object, C extends object> {
   /** Static configuration passed to every feature. */
   config?: C;
   /** Initial value for the state signal. */
@@ -183,11 +183,11 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
 }
 
 /**
- * Create a playback engine by composing features.
+ * Create a composition by composing features.
  *
- * `createPlaybackEngine` is generic — it knows nothing about HLS, DASH,
- * or any specific streaming protocol. It creates shared reactive state,
- * wires each feature to that state, and returns the engine interface.
+ * `createComposition` is generic — it knows nothing about HLS, DASH,
+ * or any specific protocol. It creates shared reactive state, wires
+ * each feature to that state, and returns the composition interface.
  *
  * The state, owners, and config types are inferred from the features:
  * each feature declares what it needs via its parameter type, and the
@@ -199,10 +199,10 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
  * @example
  * ```ts
  * // Minimal — just features
- * const engine = createPlaybackEngine([myFeature]);
+ * const engine = createComposition([myFeature]);
  *
  * // With config and initial state
- * const engine = createPlaybackEngine(
+ * const engine = createComposition(
  *   [resolvePresentation, selectVideoTrack, loadVideoSegments],
  *   {
  *     config: { initialBandwidth: 2_000_000 },
@@ -211,14 +211,14 @@ export interface PlaybackEngineOptions<S extends object, O extends object, C ext
  * );
  * ```
  */
-export function createPlaybackEngine<const Features extends readonly AnyFeature[]>(
+export function createComposition<const Features extends readonly AnyFeature[]>(
   features: ValidateComposition<Features>,
-  options?: PlaybackEngineOptions<
+  options?: CompositionOptions<
     ResolveFeatureState<Features>,
     ResolveFeatureOwners<Features>,
     ResolveFeatureConfig<Features>
   >
-): PlaybackEngine<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>> {
+): Composition<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>> {
   type S = ResolveFeatureState<Features>;
   type O = ResolveFeatureOwners<Features>;
   type C = ResolveFeatureConfig<Features>;

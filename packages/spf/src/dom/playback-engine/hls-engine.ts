@@ -19,7 +19,7 @@ import { trackPlaybackInitiated } from '../features/track-playback-initiated';
 import { updateDuration } from '../features/update-duration';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { destroyVttParser } from '../text/parse-vtt-segment';
-import { createPlaybackEngine, type PlaybackEngine } from './engine';
+import { type Composition, createComposition } from './engine';
 
 // ============================================================================
 // HLS Engine State & Owners
@@ -163,8 +163,8 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
  */
 export function createHlsPlaybackEngine(
   config: HlsPlaybackEngineConfig = {}
-): PlaybackEngine<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
-  return createPlaybackEngine(
+): Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
+  return createComposition(
     [
       syncPreloadAttribute,
       trackPlaybackInitiated,
