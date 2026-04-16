@@ -1,4 +1,4 @@
-import { serverMethodError } from '../server-error';
+import { serverError } from '../server-error';
 import { HTMLVideoElementHost } from '../video-host';
 
 export * from './types';
@@ -10,9 +10,9 @@ export class HlsMedia extends HTMLVideoElementHost {
   debug = false;
   preload = 'metadata';
   load(): void {
-    serverMethodError('HlsMedia', 'load');
+    serverError('HlsMedia.load()');
   }
   destroy(): void {
-    serverMethodError('HlsMedia', 'destroy');
+    serverError('HlsMedia.destroy()');
   }
 }
