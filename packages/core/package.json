@@ -27,44 +27,13 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./dom/media/hls": {
-      "types": "./dist/dev/dom/media/hls.d.ts",
+    "./dom/media/*": {
+      "types": "./dist/dev/dom/media/*.d.ts",
       "browser": {
-        "development": "./dist/dev/dom/media/hls.js",
-        "default": "./dist/default/dom/media/hls.js"
+        "development": "./dist/dev/dom/media/*.js",
+        "default": "./dist/default/dom/media/*.js"
       },
-      "default": "./dist/server/dom/media/hls.js"
-    },
-    "./dom/media/dash": {
-      "types": "./dist/dev/dom/media/dash.d.ts",
-      "browser": {
-        "development": "./dist/dev/dom/media/dash.js",
-        "default": "./dist/default/dom/media/dash.js"
-      },
-      "default": "./dist/server/dom/media/dash.js"
-    },
-    "./dom/media/mux": {
-      "types": "./dist/dev/dom/media/mux.d.ts",
-      "browser": {
-        "development": "./dist/dev/dom/media/mux.js",
-        "default": "./dist/default/dom/media/mux.js"
-      },
-      "default": "./dist/server/dom/media/mux.js"
-    },
-    "./dom/media/custom-media-element": {
-      "types": "./dist/dev/dom/media/custom-media-element.d.ts",
-      "development": "./dist/dev/dom/media/custom-media-element.js",
-      "default": "./dist/default/dom/media/custom-media-element.js"
-    },
-    "./dom/media/native-hls": {
-      "types": "./dist/dev/dom/media/native-hls.d.ts",
-      "development": "./dist/dev/dom/media/native-hls.js",
-      "default": "./dist/default/dom/media/native-hls.js"
-    },
-    "./dom/media/simple-hls": {
-      "types": "./dist/dev/dom/media/simple-hls.d.ts",
-      "development": "./dist/dev/dom/media/simple-hls.js",
-      "default": "./dist/default/dom/media/simple-hls.js"
+      "default": "./dist/server/dom/media/*.js"
     }
   },
   "main": "dist/default/index.js",
