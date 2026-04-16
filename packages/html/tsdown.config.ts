@@ -1,4 +1,4 @@
-import { globSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -28,15 +28,26 @@ function stubCssInlinePlugin() {
   };
 }
 
-/** Stub all `define/*` modules with empty exports for the server build. */
+/**
+ * Stub all `define/*` modules for the server build.
+ *
+ * Reads each source file, extracts `export class` names, and emits stub
+ * classes so that preset modules can still re-export them by name.
+ * Everything else (custom element registration, templates, styles) is dropped.
+ */
 function stubDefinePlugin() {
   const defineDir = resolve(dirname(fileURLToPath(import.meta.url)), 'src/define');
   return {
     name: 'stub-define',
     load(id: string) {
-      if (id.startsWith(defineDir) && id !== defineDir) {
-        return 'export {}';
-      }
+      if (!id.startsWith(defineDir) || id === defineDir) return;
+
+      const source = readFileSync(id, 'utf8');
+      const classNames = [...source.matchAll(/export class (\w+)/g)].map((m) => m[1]);
+
+      if (classNames.length === 0) return 'export {}';
+
+      return classNames.map((name) => `export class ${name} {}`).join('\n');
     },
   };
 }

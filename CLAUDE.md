@@ -106,6 +106,9 @@ pnpm clean
 # Validate workspace consistency (CI coverage, scopes, define imports, etc.)
 pnpm check:workspace
 
+# Validate all server entry points are SSR-safe (requires build first)
+pnpm check:ssr
+
 # Measure bundle size (SPF only)
 pnpm -F @videojs/spf size        # Public API (minified + gzipped)
 pnpm -F @videojs/spf size:all    # All exports (minified + gzipped)

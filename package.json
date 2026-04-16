@@ -39,7 +39,8 @@
     "format:astro": "prettier --write 'site/src/**/*.astro'",
     "typecheck": "tsc --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
-    "check:workspace": "node build/scripts/check-workspace.mjs"
+    "check:workspace": "node build/scripts/check-workspace.mjs",
+    "check:ssr": "node .github/scripts/ssr-check.js"
   },
   "devDependencies": {
     "@actions/core": "^3.0.0",

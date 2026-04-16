@@ -50,7 +50,12 @@ const propertyKeys = new Map<string, symbol>();
  * }
  * ```
  */
-export class ReactiveElement extends HTMLElement {
+// Fallback to an empty class when `HTMLElement` is not available (SSR / Node).
+// This allows the class definition to evaluate without throwing; instances
+// are never created on the server.
+const BaseElement = globalThis.HTMLElement ?? (class {} as unknown as typeof HTMLElement);
+
+export class ReactiveElement extends BaseElement {
   /**
    * User-supplied object that maps property names to
    * {@linkcode PropertyDeclaration} objects containing options for configuring
