@@ -1,27 +1,27 @@
 # SPF Fundamentals
 
-SPF is a general-purpose composition framework. It provides composable primitives — reactive state, actors, reactors, and tasks — that let you assemble a composition from independent, decoupled features.
+SPF is a general-purpose composition framework. It provides composable primitives — reactive state, actors, reactors, and tasks — that let you assemble a composition from independent, decoupled behaviors.
 
-The framework doesn't know about your domain. It provides the composition model; you provide the features.
+The framework doesn't know about your domain. It provides the composition model; you provide the behaviors.
 
 ---
 
 ## The Composition
 
-Everything starts with `createComposition`. A composition combines **features** — functions that each handle one concern — and wires them together through shared reactive state.
+Everything starts with `createComposition`. A composition combines **behaviors** — functions that each handle one concern — and wires them together through shared reactive state.
 
 ```ts
 import { createComposition } from '@videojs/spf/playback-engine';
 
-const composition = createComposition([featureA, featureB]);
+const composition = createComposition([behaviorA, behaviorB]);
 ```
 
-The composition creates shared reactive channels, passes them to each feature, and returns:
+The composition creates shared reactive channels, passes them to each behavior, and returns:
 
 ```ts
 composition.state     // reactive state signal (application data)
 composition.owners    // reactive owners signal (platform resources)
-composition.destroy() // tear down the composition and all features
+composition.destroy() // tear down the composition and all behaviors
 ```
 
 The rest of this document builds up from the simplest possible composition, introducing one concept at a time.
@@ -30,7 +30,7 @@ The rest of this document builds up from the simplest possible composition, intr
 
 ## State
 
-A feature is a function that receives `{ state, owners, config }` and optionally returns a cleanup function. The simplest feature reads state and config:
+A behavior is a function that receives `{ state, owners, config }` and optionally returns a cleanup function. The simplest behavior reads state and config:
 
 ```ts
 import { createComposition } from '@videojs/spf/playback-engine';
@@ -57,7 +57,7 @@ composition.state.get(); // { count: 1 }
 await composition.destroy(); // clears the interval
 ```
 
-`update()` shallow-merges a partial object into the current state; `state.set()` replaces the whole thing. The feature reads `config.interval` with a fallback for when no config is provided. `initialState` seeds the state signal — without it, state starts as `{}` and the `?? 0` default handles the first tick. The composition collects cleanup functions and calls them on `destroy()`.
+`update()` shallow-merges a partial object into the current state; `state.set()` replaces the whole thing. The behavior reads `config.interval` with a fallback for when no config is provided. `initialState` seeds the state signal — without it, state starts as `{}` and the `?? 0` default handles the first tick. The composition collects cleanup functions and calls them on `destroy()`.
 
 ---
 
@@ -69,7 +69,7 @@ A composition has two reactive channels: **state** for application data and **ow
 import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { update } from '@videojs/spf';
 
-// Feature: increments a counter
+// Behavior: increments a counter
 function counter({ state, config }) {
   const interval = setInterval(() => {
     update(state, { count: (state.get().count ?? 0) + 1 });
@@ -77,7 +77,7 @@ function counter({ state, config }) {
   return () => clearInterval(interval);
 }
 
-// Feature: renders count to a DOM element
+// Behavior: renders count to a DOM element
 function render({ state, owners, config }) {
   return effect(() => {
     const { renderElement } = owners.get();
@@ -96,17 +96,17 @@ const composition = createComposition(
 );
 ```
 
-`effect()` runs its callback immediately, tracks which signals were read, and re-runs whenever those signals change. The `render` feature reads from both channels — `state` for the count value and `owners` for the DOM element — so it re-runs when either changes. The guard (`if (!renderElement) return`) handles the case where owners hasn't been populated yet.
+`effect()` runs its callback immediately, tracks which signals were read, and re-runs whenever those signals change. The `render` behavior reads from both channels — `state` for the count value and `owners` for the DOM element — so it re-runs when either changes. The guard (`if (!renderElement) return`) handles the case where owners hasn't been populated yet.
 
-This is also the first example with two features. They don't know about each other — `counter` writes state, `render` reads it. Both return cleanup: `counter` clears its interval; `render` returns the stop function from `effect()`. The composition collects these and calls them on `destroy()`.
+This is also the first example with two behaviors. They don't know about each other — `counter` writes state, `render` reads it. Both return cleanup: `counter` clears its interval; `render` returns the stop function from `effect()`. The composition collects these and calls them on `destroy()`.
 
-The separation between state and owners signals intent. State is data that flows through the composition — counts, selections, timestamps. Owners are platform resources that features operate on — elements, buffers, connections. Both are reactive signals with the same API.
+The separation between state and owners signals intent. State is data that flows through the composition — counts, selections, timestamps. Owners are platform resources that behaviors operate on — elements, buffers, connections. Both are reactive signals with the same API.
 
 ---
 
 ## Tasks
 
-Sometimes a feature needs to do async work — save data, fetch a resource, process a chunk. You could use a Promise directly, but Promises start executing immediately and can't be cancelled. A **Task** is an async unit of work that:
+Sometimes a behavior needs to do async work — save data, fetch a resource, process a chunk. You could use a Promise directly, but Promises start executing immediately and can't be cancelled. A **Task** is an async unit of work that:
 
 - Exists before it runs — it can be inspected, queued, or aborted while still `'pending'`
 - Can be **aborted** from outside at any point
@@ -114,13 +114,13 @@ Sometimes a feature needs to do async work — save data, fetch a resource, proc
 
 A **SerialRunner** schedules tasks one at a time — the next task waits until the current one finishes. This is useful when operations must not overlap (saving state, writing to a database, etc.).
 
-Building on our counter, let's add a `persist` feature that saves the count to a server every 5 ticks, and does one final save on destroy:
+Building on our counter, let's add a `persist` behavior that saves the count to a server every 5 ticks, and does one final save on destroy:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { Task, SerialRunner, update } from '@videojs/spf';
 
-// Feature: increments a counter
+// Behavior: increments a counter
 function counter({ state, config }) {
   const interval = setInterval(() => {
     update(state, { count: (state.get().count ?? 0) + 1 });
@@ -128,7 +128,7 @@ function counter({ state, config }) {
   return () => clearInterval(interval);
 }
 
-// Feature: renders count to a DOM element
+// Behavior: renders count to a DOM element
 function render({ state, owners, config }) {
   return effect(() => {
     const { renderElement } = owners.get();
@@ -137,7 +137,7 @@ function render({ state, owners, config }) {
   });
 }
 
-// Feature: persists count at a configurable interval
+// Behavior: persists count at a configurable interval
 function persist({ state, config }) {
   const runner = new SerialRunner();
 
@@ -182,7 +182,7 @@ const composition = createComposition(
 await composition.destroy();
 ```
 
-The `persist` feature introduces several concepts:
+The `persist` behavior introduces several concepts:
 
 - **Task** — each save is a `new Task(...)` that receives an `AbortSignal`. The runner can cancel it if needed.
 - **SerialRunner** — ensures saves run one at a time. If the counter hits 5 and then 10 before the first save completes, the second save queues behind the first.
@@ -192,18 +192,18 @@ The `persist` feature introduces several concepts:
 
 ## Reactors
 
-So far, features have used `effect()` to react to state changes. Effects work well for simple observation, but they re-run on _every_ change to their dependencies. What if a feature needs lifecycle — setup when a condition becomes true, teardown when it becomes false, and the ability to distinguish "just entered this state" from "still in this state"?
+So far, behaviors have used `effect()` to react to state changes. Effects work well for simple observation, but they re-run on _every_ change to their dependencies. What if a behavior needs lifecycle — setup when a condition becomes true, teardown when it becomes false, and the ability to distinguish "just entered this state" from "still in this state"?
 
 A **reactor** is a state machine driven by signal observation. Its `monitor` function derives the target state from signals. When the state changes, the reactor transitions — running `entry` effects on the new state and cleaning up the old one.
 
-Let's make our counter pausable and resettable. We'll add button features that toggle pause and reset the count via owners:
+Let's make our counter pausable and resettable. We'll add button behaviors that toggle pause and reset the count via owners:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { createMachineReactor, update } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// Feature: a counter that can be paused
+// Behavior: a counter that can be paused
 function counter({ state, config }) {
   return createMachineReactor({
     initial: 'paused',
@@ -224,7 +224,7 @@ function counter({ state, config }) {
   });
 }
 
-// Feature: wires up a pause/unpause button
+// Behavior: wires up a pause/unpause button
 function pauseButton({ state, owners }) {
   // Update button text reactively
   effect(() => {
@@ -249,7 +249,7 @@ function pauseButton({ state, owners }) {
   });
 }
 
-// Feature: wires up a reset button
+// Behavior: wires up a reset button
 function resetButton({ state, owners }) {
   return effect(() => {
     const { resetBtn } = owners.get();
@@ -258,7 +258,7 @@ function resetButton({ state, owners }) {
   });
 }
 
-// Feature: renders count to a DOM element
+// Behavior: renders count to a DOM element
 function render({ state, owners, config }) {
   return effect(() => {
     const { renderElement } = owners.get();
@@ -283,14 +283,14 @@ const composition = createComposition(
 await composition.destroy();
 ```
 
-The `counter` feature is now a reactor with two states:
+The `counter` behavior is now a reactor with two states:
 
 - **`paused`** — no effects. The counter does nothing.
 - **`running`** — the `entry` effect starts the interval. When the reactor exits this state (pause or destroy), the cleanup clears it.
 
 The `monitor` function reads `state.get().paused` and returns the target state. The framework handles the transition — `counter` never calls `transition()` itself. When `paused` changes from `true` to `false`, the reactor moves to `running` and the interval starts. When it changes back, the reactor moves to `paused` and the interval is cleaned up.
 
-The `pauseButton` and `resetButton` features are plain effects — they wire up DOM event handlers that write directly to state. When a button is clicked, state changes, and the reactor (and render feature) respond automatically. No feature coordinates with another; they all communicate through shared state.
+The `pauseButton` and `resetButton` behaviors are plain effects — they wire up DOM event handlers that write directly to state. When a button is clicked, state changes, and the reactor (and `render`) respond automatically. No behavior coordinates with another; they all communicate through shared state.
 
 Key concepts:
 - **`monitor`** — a reactive function that derives the target state. Re-evaluates when its signal dependencies change.
@@ -303,7 +303,7 @@ Not everything needs a reactor. Use a reactor when you need distinct states with
 
 ## The Three Layers
 
-Features are built from three layers of primitives. Data flows in one direction:
+Behaviors are built from three layers of primitives. Data flows in one direction:
 
 ```
   Reactive State (signals)
@@ -413,7 +413,7 @@ state changes → reactor observes → actor.send({ type: 'process', data })
 This separation means:
 - **Actors don't know about external state.** They receive messages and produce state changes.
 - **Reactors don't do work.** They observe and coordinate.
-- **State is the single source of truth.** Features communicate through it, not through each other.
+- **State is the single source of truth.** Behaviors communicate through it, not through each other.
 
 ---
 
