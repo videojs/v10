@@ -301,6 +301,179 @@ Not everything needs a reactor. Use a reactor when you need distinct states with
 
 ---
 
+## Actors
+
+Signals and reactors are declarative — state is derived, effects react. But some resources are inherently imperative: a network request in progress, a database transaction, a file being written. You can't re-derive the right action from signals alone — you need to _tell_ the resource what to do, track where it is in that process, and handle interruptions.
+
+An **actor** is a message-driven state machine that owns a mutable resource. It receives messages via `send()`, manages work through a task runner, and exposes its current state as a reactive `snapshot`.
+
+Let's refactor our `persist` behavior. Currently it manages saves internally — other behaviors have no way to know if a save is in progress or what was last saved. With an actor, the save lifecycle becomes a first-class, observable part of the composition.
+
+```ts
+import { createComposition, effect } from '@videojs/spf/playback-engine';
+import { createMachineActor, createMachineReactor, Task, SerialRunner, update } from '@videojs/spf';
+import { listen } from '@videojs/utils/dom';
+
+// Actor: manages saving count to a server
+function createSaveActor() {
+  return createMachineActor({
+    runner: () => new SerialRunner(),
+    initial: 'idle',
+    context: { lastSaved: undefined as number | undefined },
+    states: {
+      idle: {
+        on: {
+          save: (msg, { transition, runner, setContext }) => {
+            transition('saving');
+            runner.schedule(new Task(async (signal) => {
+              await fetch('/api/count', {
+                method: 'POST',
+                body: JSON.stringify({ count: msg.count }),
+                signal,
+              });
+              return { lastSaved: msg.count };
+            })).then(setContext);
+          },
+        },
+      },
+      saving: {
+        onSettled: 'idle',
+        on: {
+          // New save while one is in-flight: cancel pending, schedule new
+          save: (msg, { runner, setContext }) => {
+            runner.abortPending();
+            runner.schedule(new Task(async (signal) => {
+              await fetch('/api/count', {
+                method: 'POST',
+                body: JSON.stringify({ count: msg.count }),
+                signal,
+              });
+              return { lastSaved: msg.count };
+            })).then(setContext);
+          },
+          cancel: (_msg, { transition, runner }) => {
+            runner.abortAll();
+            transition('idle');
+          },
+        },
+      },
+    },
+  });
+}
+
+// Behavior: a counter that can be paused
+function counter({ state, config }) {
+  return createMachineReactor({
+    initial: 'paused',
+    monitor: () => (state.get().paused ? 'paused' : 'running'),
+    states: {
+      paused: {},
+      running: {
+        entry: () => {
+          const interval = setInterval(() => {
+            update(state, { count: (state.get().count ?? 0) + 1 });
+          }, config.interval ?? 1000);
+          return () => clearInterval(interval);
+        },
+      },
+    },
+  });
+}
+
+// Behavior: creates a save actor and sends save messages on an interval
+function persist({ state, owners, config }) {
+  const actor = createSaveActor();
+  update(owners, { saveActor: actor });
+
+  const stopEffect = effect(() => {
+    const { count } = state.get();
+    if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
+      actor.send({ type: 'save', count });
+    }
+  });
+
+  return async () => {
+    stopEffect();
+    actor.send({ type: 'save', count: state.get().count });
+    await actor.snapshot.get().value === 'idle'
+      ? Promise.resolve()
+      : new Promise<void>((resolve) => {
+          effect(() => {
+            if (actor.snapshot.get().value === 'idle') resolve();
+          });
+        });
+    actor.destroy();
+  };
+}
+
+// Behavior: renders count and save status to DOM elements
+function render({ state, owners, config }) {
+  return effect(() => {
+    const { renderElement, saveActor } = owners.get();
+    if (!renderElement) return;
+
+    const count = state.get().count;
+    const saving = saveActor?.snapshot.get().value === 'saving';
+    renderElement.textContent = saving
+      ? `${count ?? config.defaultText ?? 'N/A'} (saving...)`
+      : String(count ?? config.defaultText ?? 'N/A');
+  });
+}
+
+// Behavior: wires up pause button
+function pauseButton({ state, owners }) {
+  effect(() => {
+    const { pauseBtn } = owners.get();
+    if (!pauseBtn) return;
+    pauseBtn.textContent = state.get().paused ? 'Start' : 'Pause';
+  });
+
+  return effect(() => {
+    const { pauseBtn } = owners.get();
+    if (!pauseBtn) return;
+    return listen(pauseBtn, 'click', () => {
+      update(state, { paused: !state.get().paused });
+    });
+  });
+}
+
+// Behavior: wires up reset button — also cancels pending saves
+function resetButton({ state, owners }) {
+  return effect(() => {
+    const { resetBtn, saveActor } = owners.get();
+    if (!resetBtn) return;
+    return listen(resetBtn, 'click', () => {
+      saveActor?.send({ type: 'cancel' });
+      update(state, { count: 0 });
+    });
+  });
+}
+
+const composition = createComposition(
+  [counter, persist, render, pauseButton, resetButton],
+  {
+    initialState: { count: 0, paused: true },
+    config: { interval: 250, defaultText: '--', saveEvery: 5 },
+    initialOwners: {
+      renderElement: document.getElementById('counter'),
+      pauseBtn: document.getElementById('pause'),
+      resetBtn: document.getElementById('reset'),
+    },
+  }
+);
+```
+
+The save actor encapsulates the imperative reality of network saves:
+
+- **Message-driven** — behaviors `send()` messages (`save`, `cancel`) rather than calling functions directly. The actor decides how to handle each message based on its current state.
+- **Stateful** — the actor tracks whether a save is in-flight and what was last saved. Incoming `save` messages during the `saving` state abort pending work and schedule fresh saves — the caller doesn't manage this.
+- **Observable** — `actor.snapshot` is a reactive signal. The `render` behavior reads it to show "(saving...)" without `persist` explicitly publishing status. The `resetButton` behavior reads `saveActor` from owners to send `cancel`.
+- **`onSettled`** — when the runner's tasks complete, the actor automatically transitions back to `idle`. No manual bookkeeping.
+
+The pattern: **reactors decide _when_ something should happen** (by observing signals), **actors handle _how_ it happens** (by managing imperative work). The reactor sends a message; the actor owns the execution.
+
+---
+
 ## The Three Layers
 
 Behaviors are built from three layers of primitives. Data flows in one direction:
