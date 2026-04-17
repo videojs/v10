@@ -1,77 +1,77 @@
 import { type Signal, signal } from '../../core/signals/primitives';
 
 /**
- * Cleanup returned by a feature. Features may return:
+ * Cleanup returned by a behavior. Behaviors may return:
  * - `void` / `undefined` — no cleanup needed
  * - A function — called on destroy (may return a Promise)
  * - An object with `destroy()` — called on destroy (may return a Promise)
  */
-export type FeatureCleanup = void | (() => void | Promise<void>) | { destroy(): void | Promise<void> };
+export type BehaviorCleanup = void | (() => void | Promise<void>) | { destroy(): void | Promise<void> };
 
 /**
- * The deps object passed to each feature by the engine.
+ * The deps object passed to each behavior by the engine.
  *
  * - `state` — shared reactive state signal
  * - `owners` — shared reactive owners signal (platform objects)
  * - `config` — static configuration, passed once at engine creation
  */
-export interface FeatureDeps<S extends object, O extends object, C extends object> {
+export interface BehaviorDeps<S extends object, O extends object, C extends object> {
   state: Signal<S>;
   owners: Signal<O>;
   config: C;
 }
 
 /**
- * A feature is a function that receives deps (state, owners, config)
+ * A behavior is a function that receives deps (state, owners, config)
  * and returns an optional cleanup handle.
  *
- * Each feature declares its own state/owners/config shape via its
+ * Each behavior declares its own state/owners/config shape via its
  * parameter type. The engine's types are determined by the composition.
  */
-export type Feature<S extends object, O extends object, C extends object> = (
-  deps: FeatureDeps<S, O, C>
-) => FeatureCleanup;
+export type Behavior<S extends object, O extends object, C extends object> = (
+  deps: BehaviorDeps<S, O, C>
+) => BehaviorCleanup;
 
 // =============================================================================
-// Feature type inference
+// Behavior type inference
 // =============================================================================
 
-/** A feature function with unconstrained deps — used as a generic bound. */
-// biome-ignore lint/suspicious/noExplicitAny: required for generic feature inference
-type AnyFeature = (deps: any) => FeatureCleanup;
+/** A behavior function with unconstrained deps — used as a generic bound. */
+// biome-ignore lint/suspicious/noExplicitAny: required for generic behavior inference
+type AnyBehavior = (deps: any) => BehaviorCleanup;
 
-/** Extract the first parameter (deps) type from a feature function. */
+/** Extract the first parameter (deps) type from a behavior function. */
 // biome-ignore lint/suspicious/noExplicitAny: required for conditional type inference
 type DepsOf<F> = F extends (deps: infer D, ...args: any[]) => any ? D : never;
 
-/** Infer the state type a feature requires from its deps parameter. */
-export type InferFeatureState<F> = DepsOf<F> extends { state: Signal<infer S extends object> } ? S : object;
+/** Infer the state type a behavior requires from its deps parameter. */
+export type InferBehaviorState<F> = DepsOf<F> extends { state: Signal<infer S extends object> } ? S : object;
 
-/** Infer the owners type a feature requires from its deps parameter. */
-export type InferFeatureOwners<F> = DepsOf<F> extends { owners: Signal<infer O extends object> } ? O : object;
+/** Infer the owners type a behavior requires from its deps parameter. */
+export type InferBehaviorOwners<F> = DepsOf<F> extends { owners: Signal<infer O extends object> } ? O : object;
 
-/** Infer the config type a feature requires from its deps parameter. */
-export type InferFeatureConfig<F> = DepsOf<F> extends { config: infer C extends object } ? C : object;
+/** Infer the config type a behavior requires from its deps parameter. */
+export type InferBehaviorConfig<F> = DepsOf<F> extends { config: infer C extends object } ? C : object;
 
 /** Convert a union to an intersection: `A | B` → `A & B`. */
 // biome-ignore lint/suspicious/noExplicitAny: required for distributive conditional type
 type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
 
-/** Resolve the combined state type from an array of features (intersection of all requirements). */
-export type ResolveFeatureState<Features extends readonly AnyFeature[]> =
-  UnionToIntersection<InferFeatureState<Features[number]>> extends infer R extends object ? R : object;
+/** Resolve the combined state type from an array of behaviors (intersection of all requirements). */
+export type ResolveBehaviorState<Behaviors extends readonly AnyBehavior[]> =
+  UnionToIntersection<InferBehaviorState<Behaviors[number]>> extends infer R extends object ? R : object;
 
-/** Resolve the combined owners type from an array of features (intersection of all requirements). */
-export type ResolveFeatureOwners<Features extends readonly AnyFeature[]> =
-  UnionToIntersection<InferFeatureOwners<Features[number]>> extends infer R extends object ? R : object;
+/** Resolve the combined owners type from an array of behaviors (intersection of all requirements). */
+export type ResolveBehaviorOwners<Behaviors extends readonly AnyBehavior[]> =
+  UnionToIntersection<InferBehaviorOwners<Behaviors[number]>> extends infer R extends object ? R : object;
 
-/** Resolve the combined config type from an array of features (intersection of all requirements). */
-export type ResolveFeatureConfig<Features extends readonly AnyFeature[]> =
-  UnionToIntersection<InferFeatureConfig<Features[number]>> extends infer R extends object ? R : object;
+/** Resolve the combined config type from an array of behaviors (intersection of all requirements). */
+export type ResolveBehaviorConfig<Behaviors extends readonly AnyBehavior[]> =
+  UnionToIntersection<InferBehaviorConfig<Behaviors[number]>> extends infer R extends object ? R : object;
 
 /**
  * True if any property in `T` collapsed to `undefined` or `never` — indicating
- * a type conflict from intersecting incompatible feature requirements.
+ * a type conflict from intersecting incompatible behavior requirements.
  *
  * - Required conflicts: `{ v: number } & { v: string }` → `{ v: never }` — caught via `[never] extends [undefined]`
  * - Optional conflicts: `{ v?: number } & { v?: string }` → `{ v?: undefined }` — caught directly
@@ -87,7 +87,7 @@ type HasConflict<T extends object> = true extends {
 //
 // Unlike state/config (where intersection catches primitive conflicts),
 // owners hold concrete platform objects where class hierarchy matters.
-// Two features sharing an owner key are compatible only if their types
+// Two behaviors sharing an owner key are compatible only if their types
 // are in a subtype relationship (one extends the other).
 // =============================================================================
 
@@ -114,22 +114,22 @@ type OwnersCompatible<A extends object, B extends object> = [Extract<keyof A, ke
     ? false
     : true;
 
-/** Check one feature's owners against all remaining features. */
-type CheckOwnersAgainstRest<Owners extends object, Rest extends readonly AnyFeature[]> = Rest extends readonly [
+/** Check one behavior's owners against all remaining behaviors. */
+type CheckOwnersAgainstRest<Owners extends object, Rest extends readonly AnyBehavior[]> = Rest extends readonly [
   infer Next,
-  ...infer Remaining extends readonly AnyFeature[],
+  ...infer Remaining extends readonly AnyBehavior[],
 ]
-  ? OwnersCompatible<Owners, InferFeatureOwners<Next>> extends true
+  ? OwnersCompatible<Owners, InferBehaviorOwners<Next>> extends true
     ? CheckOwnersAgainstRest<Owners, Remaining>
     : false
   : true;
 
-/** Check all pairs of features' owners for subtype compatibility. */
-type AllOwnersCompatible<Features extends readonly AnyFeature[]> = Features extends readonly [
+/** Check all pairs of behaviors' owners for subtype compatibility. */
+type AllOwnersCompatible<Behaviors extends readonly AnyBehavior[]> = Behaviors extends readonly [
   infer First,
-  ...infer Rest extends readonly AnyFeature[],
+  ...infer Rest extends readonly AnyBehavior[],
 ]
-  ? CheckOwnersAgainstRest<InferFeatureOwners<First>, Rest> extends true
+  ? CheckOwnersAgainstRest<InferBehaviorOwners<First>, Rest> extends true
     ? AllOwnersCompatible<Rest>
     : false
   : true;
@@ -139,30 +139,30 @@ type AllOwnersCompatible<Features extends readonly AnyFeature[]> = Features exte
 // =============================================================================
 
 /**
- * Validate that a feature composition has no type conflicts.
- * Returns the features tuple if valid, or an error message type if conflicts are detected.
+ * Validate that a behavior composition has no type conflicts.
+ * Returns the behaviors tuple if valid, or an error message type if conflicts are detected.
  *
  * - State/config: checked via intersection — conflicting primitives produce `never`/`undefined`
  * - Owners: checked via subtype — shared keys must have types in an extends relationship
  */
-type ValidateComposition<Features extends readonly AnyFeature[]> =
-  HasConflict<ResolveFeatureState<Features>> extends true
-    ? 'Error: features have conflicting state types'
-    : AllOwnersCompatible<Features> extends false
-      ? 'Error: features have incompatible owners types'
-      : HasConflict<ResolveFeatureConfig<Features>> extends true
-        ? 'Error: features have conflicting config types'
-        : [...Features];
+type ValidateComposition<Behaviors extends readonly AnyBehavior[]> =
+  HasConflict<ResolveBehaviorState<Behaviors>> extends true
+    ? 'Error: behaviors have conflicting state types'
+    : AllOwnersCompatible<Behaviors> extends false
+      ? 'Error: behaviors have incompatible owners types'
+      : HasConflict<ResolveBehaviorConfig<Behaviors>> extends true
+        ? 'Error: behaviors have conflicting config types'
+        : [...Behaviors];
 
 // =============================================================================
 // Engine
 // =============================================================================
 
 /**
- * A composition of features with shared reactive state, owners, and config.
+ * A composition of behaviors with shared reactive state, owners, and config.
  *
  * Generic over the state and owners shapes, which are determined by the
- * specific features passed to `createComposition`.
+ * specific behaviors passed to `createComposition`.
  */
 export interface Composition<S extends object, O extends object> {
   state: Signal<S>;
@@ -174,7 +174,7 @@ export interface Composition<S extends object, O extends object> {
  * Options for `createComposition`. All fields are optional.
  */
 export interface CompositionOptions<S extends object, O extends object, C extends object> {
-  /** Static configuration passed to every feature. */
+  /** Static configuration passed to every behavior. */
   config?: C;
   /** Initial value for the state signal. */
   initialState?: S;
@@ -183,23 +183,23 @@ export interface CompositionOptions<S extends object, O extends object, C extend
 }
 
 /**
- * Create a composition by composing features.
+ * Create a composition by composing behaviors.
  *
  * `createComposition` is generic — it knows nothing about HLS, DASH,
  * or any specific protocol. It creates shared reactive state, wires
- * each feature to that state, and returns the composition interface.
+ * each behavior to that state, and returns the composition interface.
  *
- * The state, owners, and config types are inferred from the features:
- * each feature declares what it needs via its parameter type, and the
+ * The state, owners, and config types are inferred from the behaviors:
+ * each behavior declares what it needs via its parameter type, and the
  * engine computes the intersection of all requirements.
  *
- * @param features - Array of feature functions
+ * @param behaviors - Array of behavior functions
  * @param options - Optional config, initial state, and initial owners
  *
  * @example
  * ```ts
- * // Minimal — just features
- * const engine = createComposition([myFeature]);
+ * // Minimal — just behaviors
+ * const engine = createComposition([myBehavior]);
  *
  * // With config and initial state
  * const engine = createComposition(
@@ -211,26 +211,26 @@ export interface CompositionOptions<S extends object, O extends object, C extend
  * );
  * ```
  */
-export function createComposition<const Features extends readonly AnyFeature[]>(
-  features: ValidateComposition<Features>,
+export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
+  behaviors: ValidateComposition<Behaviors>,
   options?: CompositionOptions<
-    ResolveFeatureState<Features>,
-    ResolveFeatureOwners<Features>,
-    ResolveFeatureConfig<Features>
+    ResolveBehaviorState<Behaviors>,
+    ResolveBehaviorOwners<Behaviors>,
+    ResolveBehaviorConfig<Behaviors>
   >
-): Composition<ResolveFeatureState<Features>, ResolveFeatureOwners<Features>> {
-  type S = ResolveFeatureState<Features>;
-  type O = ResolveFeatureOwners<Features>;
-  type C = ResolveFeatureConfig<Features>;
+): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorOwners<Behaviors>> {
+  type S = ResolveBehaviorState<Behaviors>;
+  type O = ResolveBehaviorOwners<Behaviors>;
+  type C = ResolveBehaviorConfig<Behaviors>;
 
   const state = signal((options?.initialState ?? {}) as S);
   const owners = signal((options?.initialOwners ?? {}) as O);
   const config = (options?.config ?? {}) as C;
 
-  const deps: FeatureDeps<S, O, C> = { state, owners, config };
-  // ValidateComposition resolves to [...Features] for valid compositions;
+  const deps: BehaviorDeps<S, O, C> = { state, owners, config };
+  // ValidateComposition resolves to [...Behaviors] for valid compositions;
   // the cast is needed because the type is unresolved in the generic context.
-  const cleanups = (features as unknown as AnyFeature[]).map((f) => f(deps));
+  const cleanups = (behaviors as unknown as AnyBehavior[]).map((f) => f(deps));
 
   return {
     state,
