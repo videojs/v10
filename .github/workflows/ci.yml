@@ -203,6 +203,3 @@ jobs:
 
       - name: Build CDN bundles
         run: pnpm build:cdn
-
-      - name: Check SSR safety
-        run: pnpm check:ssr

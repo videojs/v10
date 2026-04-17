@@ -163,7 +163,6 @@ async function measure(entryPoints, external = []) {
     write: false,
     outdir: '/tmp/bundle-size-out',
     external,
-    conditions: ['browser'],
     logLevel: 'silent',
   });
 
@@ -200,7 +199,6 @@ async function measureVirtual(code, resolveDir, external = []) {
     write: false,
     outdir: '/tmp/bundle-size-out',
     external,
-    conditions: ['browser'],
     logLevel: 'silent',
   });
 
@@ -215,17 +213,12 @@ async function measureVirtual(code, resolveDir, external = []) {
 }
 
 /**
- * Resolve the browser production path from an export value.
- *
- * Prefers `browser.default` (browser prod bundle) over top-level `default`
- * (server bundle) so we measure the code consumers actually ship.
+ * Resolve the `default` condition from an export value.
+ * Handles both `{ default: "./dist/..." }` objects and plain string values.
  */
 function resolveDefault(exportValue) {
   if (typeof exportValue === 'string') return exportValue;
   if (typeof exportValue === 'object' && exportValue !== null) {
-    if (typeof exportValue.browser === 'object' && exportValue.browser !== null) {
-      return exportValue.browser.default ?? exportValue.default ?? null;
-    }
     return exportValue.default ?? null;
   }
   return null;

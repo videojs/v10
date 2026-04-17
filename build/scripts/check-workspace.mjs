@@ -11,7 +11,6 @@
  * 4. Package metadata — non-private packages have required fields
  * 5. Release-please config — every versioned package is registered
  * 6. Define imports — no bare side-effect imports from relative paths
- * 7. Server bundles — browser/default export conditions match tsdown config
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -299,74 +298,6 @@ function checkDefineImports() {
   return { ok: warnings.length === 0, warnings };
 }
 
-// ── Check 7: Server bundles ──────────────────────────────────────────────────
-
-/**
- * Packages with `browser` export conditions must have a matching server build
- * in tsdown (build mode 'server', `__BROWSER__` define, `platform: 'node'`).
- *
- * For each export entry with a `browser` condition:
- * - The sibling `default` path must point to `dist/server/`
- * - The tsdown config must declare a `'server'` build mode
- * - The tsdown config must define `__BROWSER__`
- */
-function checkServerBundles() {
-  const warnings = [];
-
-  for (const dir of getPackageDirs()) {
-    const pkg = readPackageJson(dir);
-    if (pkg.private) continue;
-
-    const exports = pkg.exports;
-    if (!exports) continue;
-
-    // Collect export keys that have a `browser` condition.
-    const browserExports = [];
-
-    for (const [key, value] of Object.entries(exports)) {
-      if (typeof value !== 'object' || value === null) continue;
-      if ('browser' in value) {
-        browserExports.push(key);
-
-        // The `default` sibling must resolve to dist/server/.
-        const serverPath = value.default;
-        if (typeof serverPath === 'string' && !serverPath.includes('dist/server/')) {
-          warnings.push(
-            `${pkg.name}: export "${key}" has \`browser\` condition but \`default\` path "${serverPath}" does not point to dist/server/`
-          );
-        }
-      }
-    }
-
-    if (browserExports.length === 0) continue;
-
-    // Validate tsdown config has server build mode and __BROWSER__ define.
-    const tsdownPath = join(PACKAGES_DIR, dir, 'tsdown.config.ts');
-    if (!existsSync(tsdownPath)) {
-      warnings.push(`${pkg.name}: has \`browser\` exports but no tsdown.config.ts`);
-      continue;
-    }
-
-    const tsdownText = readText(tsdownPath);
-
-    if (!/'server'/.test(tsdownText)) {
-      warnings.push(`${pkg.name}: has \`browser\` exports but tsdown.config.ts is missing 'server' build mode`);
-    }
-
-    if (!/__BROWSER__/.test(tsdownText)) {
-      warnings.push(`${pkg.name}: has \`browser\` exports but tsdown.config.ts does not define __BROWSER__`);
-    }
-
-    if (!/platform.*['"]node['"]/.test(tsdownText)) {
-      warnings.push(
-        `${pkg.name}: has \`browser\` exports but tsdown.config.ts does not set platform to 'node' for server builds`
-      );
-    }
-  }
-
-  return { ok: warnings.length === 0, warnings };
-}
-
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
@@ -376,7 +307,6 @@ const checks = [
   { name: 'Package metadata', fn: checkPackageMetadata },
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
   { name: 'Define imports', fn: checkDefineImports },
-  { name: 'Server bundles', fn: checkServerBundles },
 ];
 
 let failed = 0;

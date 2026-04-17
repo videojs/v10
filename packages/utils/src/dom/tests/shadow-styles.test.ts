@@ -77,6 +77,7 @@ describe('applyShadowStyles', () => {
 
 describe('ensureGlobalStyle', () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     document.head.innerHTML = '';
   });
 
@@ -94,5 +95,10 @@ describe('ensureGlobalStyle', () => {
 
     expect(document.querySelectorAll('#test-dedup').length).toBe(1);
     expect(document.getElementById('test-dedup')!.textContent).toBe('a { color: red; }');
+  });
+
+  it('does nothing when document is unavailable', () => {
+    vi.stubGlobal('document', undefined);
+    expect(() => ensureGlobalStyle('ssr', 'body {}')).not.toThrow();
   });
 });

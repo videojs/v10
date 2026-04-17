@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
-import { NativeHlsMedia } from '../browser';
+import { NativeHlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
