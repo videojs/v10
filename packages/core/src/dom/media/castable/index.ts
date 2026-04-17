@@ -18,9 +18,11 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     #castReceiver: string | undefined;
     #remote: RemotePlayback | null | undefined;
     #provider: GoogleCastProvider | null | undefined;
+    #destroyed = false;
 
     get remote(): RemotePlayback | undefined {
       if (this.#remote) return this.#remote;
+      if (this.#destroyed) return undefined;
 
       if (requiresCastFramework()) {
         if (!this.target) return undefined;
@@ -58,6 +60,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       this.#provider?.destroy();
       this.#provider = null;
       this.#remote = null;
+      this.#destroyed = true;
       super.destroy();
     }
 
