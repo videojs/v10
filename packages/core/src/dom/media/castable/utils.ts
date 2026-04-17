@@ -1,8 +1,26 @@
-export const privateProps = new WeakMap<object, Record<string, any>>();
-
 export class InvalidStateError extends Error {}
 export class NotSupportedError extends Error {}
 export class NotFoundError extends Error {}
+
+export type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
+
+export function addRemoteListeners(
+  controller: cast.framework.RemotePlayerController,
+  listeners: Record<string, RemotePlayerListener>
+): void {
+  for (const [type, handler] of Object.entries(listeners)) {
+    controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
+  }
+}
+
+export function removeRemoteListeners(
+  controller: cast.framework.RemotePlayerController,
+  listeners: Record<string, RemotePlayerListener>
+): void {
+  for (const [type, handler] of Object.entries(listeners)) {
+    controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
+  }
+}
 
 const HLS_RESPONSE_HEADERS = ['application/x-mpegURL', 'application/vnd.apple.mpegurl', 'audio/mpegurl'];
 

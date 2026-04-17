@@ -1,18 +1,15 @@
 import type { Constructor } from '@videojs/utils/types';
-
+import { GoogleCastProvider } from './google-cast-provider';
 import { RemotePlayback } from './remote-playback';
-import type { CastableMediaElement, CastableMediaProps, CastableMediaSuperclass } from './types';
+import type { CastableMediaProps, CastableMediaSuperclass } from './types';
 import type { CastOptions } from './utils';
 import {
-  currentMedia,
   currentSession,
   getDefaultCastOptions,
   getPlaylistSegmentFormat,
   isHls,
   loadCastFramework,
-  privateProps,
   requiresCastFramework,
-  setPlaybackRate,
 } from './utils';
 
 export type { CastableMediaElement } from './types';
@@ -29,6 +26,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     #castStreamType: string | undefined;
     #castReceiver: string | undefined;
     #remote: RemotePlayback | null | undefined;
+    #provider: GoogleCastProvider | null | undefined;
 
     get remote(): RemotePlayback | undefined {
       if (this.#remote) return this.#remote;
@@ -40,18 +38,14 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
           loadCastFramework();
         }
 
-        privateProps.set(this, {
+        this.#provider = new GoogleCastProvider(this, {
           loadOnPrompt: () => this.#loadOnPrompt(),
         });
 
-        return (this.#remote = new RemotePlayback(this as unknown as CastableMediaElement));
+        return (this.#remote = new RemotePlayback(this.#provider));
       }
 
       return undefined;
-    }
-
-    get #castPlayer(): cast.framework.RemotePlayer | undefined {
-      return privateProps.get(this.remote!)?.getCastPlayer?.() as cast.framework.RemotePlayer | undefined;
     }
 
     attach(target: HTMLMediaElement): void {
@@ -67,9 +61,9 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     }
 
     destroy(): void {
-      this.#remote?.destroy();
+      this.#provider?.destroy();
+      this.#provider = null;
       this.#remote = null;
-      privateProps.delete(this);
       super.destroy();
     }
 
@@ -87,7 +81,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     }
 
     async load(): Promise<void> {
-      if (!this.#castPlayer) return super.load() as void;
+      if (!this.#provider?.isCasting) return super.load() as void;
 
       const mediaInfo = new chrome.cast.media.MediaInfo(this.castSrc, this.castContentType ?? '');
       mediaInfo.customData = (this.castCustomData as object) ?? null;
@@ -153,20 +147,16 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     }
 
     play(): void | Promise<void | undefined> {
-      if (this.#castPlayer) {
-        if (this.#castPlayer.isPaused) {
-          this.#castPlayer.controller?.playOrPause();
-        }
+      if (this.#provider?.isCasting) {
+        this.#provider.play();
         return;
       }
       return super.play();
     }
 
     pause(): void {
-      if (this.#castPlayer) {
-        if (!this.#castPlayer.isPaused) {
-          this.#castPlayer.controller?.playOrPause();
-        }
+      if (this.#provider?.isCasting) {
+        this.#provider.pause();
         return;
       }
       super.pause();
@@ -183,6 +173,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     set castReceiver(val: string | undefined) {
       if (this.#castReceiver === val) return;
       this.#castReceiver = val;
+
       if (val) {
         this.#castOptions.receiverApplicationId = val;
       }
@@ -195,7 +186,8 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     set castSrc(val: string) {
       if (this.#castSrc === val) return;
       this.#castSrc = val;
-      if (this.#castPlayer) this.load();
+
+      if (this.#provider?.isCasting) this.load();
     }
 
     get castContentType(): string | undefined {
@@ -213,7 +205,8 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     set castStreamType(val: string | undefined) {
       if (this.#castStreamType === val) return;
       this.#castStreamType = val;
-      if (this.#castPlayer) this.load();
+
+      if (this.#provider?.isCasting) this.load();
     }
 
     get castCustomData(): Record<string, unknown> | null | undefined {
@@ -239,90 +232,72 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     }
 
     get seeking(): boolean {
-      if (this.#castPlayer) return privateProps.get(this.remote!)?.isSeeking?.() ?? false;
+      if (this.#provider?.isCasting) return this.#provider.seeking;
       return super.seeking;
     }
 
     get readyState(): number {
-      if (this.#castPlayer) {
-        switch (this.#castPlayer.playerState) {
-          case chrome.cast.media.PlayerState.IDLE:
-            return 0;
-          case chrome.cast.media.PlayerState.BUFFERING:
-            return 2;
-          default:
-            return 3;
-        }
-      }
+      if (this.#provider?.isCasting) return this.#provider.readyState;
       return super.readyState;
     }
 
     get paused(): boolean {
-      if (this.#castPlayer) return this.#castPlayer.isPaused;
+      if (this.#provider?.isCasting) return this.#provider.paused;
       return super.paused;
     }
 
     get muted(): boolean {
-      if (this.#castPlayer) return this.#castPlayer.isMuted;
+      if (this.#provider?.isCasting) return this.#provider.muted;
       return super.muted;
     }
 
     set muted(val: boolean) {
-      if (this.#castPlayer) {
-        if ((val && !this.#castPlayer.isMuted) || (!val && this.#castPlayer.isMuted)) {
-          this.#castPlayer.controller?.muteOrUnmute();
-        }
+      if (this.#provider?.isCasting) {
+        this.#provider.muted = val;
         return;
       }
       super.muted = val;
     }
 
     get volume(): number {
-      if (this.#castPlayer) return this.#castPlayer.volumeLevel ?? 1;
+      if (this.#provider?.isCasting) return this.#provider.volume;
       return super.volume;
     }
 
     set volume(val: number) {
-      if (this.#castPlayer) {
-        this.#castPlayer.volumeLevel = +val;
-        this.#castPlayer.controller?.setVolumeLevel();
+      if (this.#provider?.isCasting) {
+        this.#provider.volume = val;
         return;
       }
       super.volume = val;
     }
 
     get playbackRate(): number {
-      if (this.#castPlayer) return currentMedia()?.playbackRate ?? 1;
+      if (this.#provider?.isCasting) return this.#provider.playbackRate;
       return super.playbackRate;
     }
 
     set playbackRate(val: number) {
-      if (this.#castPlayer) {
-        setPlaybackRate(val);
+      if (this.#provider?.isCasting) {
+        this.#provider.playbackRate = val;
         return;
       }
       super.playbackRate = val;
     }
 
     get duration(): number {
-      if (this.#castPlayer?.isMediaLoaded) {
-        return this.#castPlayer.duration ?? NaN;
-      }
+      if (this.#provider?.isCasting) return this.#provider.duration;
       return super.duration;
     }
 
     get currentTime(): number {
-      if (this.#castPlayer?.isMediaLoaded) {
-        return this.#castPlayer.currentTime ?? 0;
-      }
+      if (this.#provider?.isCasting) return this.#provider.currentTime;
       return super.currentTime;
     }
 
     set currentTime(val: number) {
-      if (this.#castPlayer) {
-        this.#castPlayer.currentTime = val;
-        privateProps.get(this.remote!)?.notifySeeking?.();
-        this.#castPlayer.controller?.seek();
+      if (this.#provider?.isCasting) {
+        this.#provider.currentTime = val;
         return;
       }
       super.currentTime = val;
