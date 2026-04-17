@@ -208,6 +208,9 @@ export class GoogleCastProvider {
     }
     if (this.paused) {
       this.#remote.controller?.playOrPause();
+      return new Promise<void>((resolve) => {
+        this.media.addEventListener('play', () => resolve(), { once: true });
+      });
     }
   }
 

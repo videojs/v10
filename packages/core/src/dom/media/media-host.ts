@@ -37,12 +37,16 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     this.#target = null;
   }
 
-  querySelectorAll(selectors: string) {
+  querySelectorAll<K extends keyof HTMLElementTagNameMap>(selectors: K): NodeListOf<HTMLElementTagNameMap[K]> | never[];
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+  querySelectorAll(selectors: string): NodeListOf<Element> | never[] {
     return this.target?.querySelectorAll(selectors) ?? [];
   }
 
-  querySelector(selector: string) {
-    return this.target?.querySelector(selector) ?? null;
+  querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelector(selectors: string): Element | null {
+    return this.target?.querySelector(selectors) ?? null;
   }
 
   addEventListener<K extends keyof Events & string>(
