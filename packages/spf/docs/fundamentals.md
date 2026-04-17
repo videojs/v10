@@ -200,7 +200,7 @@ Let's make our counter pausable and resettable. We'll add button behaviors that 
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineReactor, update } from '@videojs/spf';
+import { createMachineReactor, Task, SerialRunner, update } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
 // Behavior: a counter that can be paused
@@ -221,6 +221,44 @@ function counter({ state, config }) {
         },
       },
     },
+  });
+}
+
+// Behavior: persists count at a configurable interval
+function persist({ state, config }) {
+  const runner = new SerialRunner();
+
+  function save(count) {
+    runner.schedule(new Task((signal) =>
+      fetch('/api/count', {
+        method: 'POST',
+        body: JSON.stringify({ count }),
+        signal,
+      })
+    ));
+  }
+
+  const stopEffect = effect(() => {
+    const { count } = state.get();
+    if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
+      save(count);
+    }
+  });
+
+  return async () => {
+    stopEffect();
+    save(state.get().count);
+    await runner.settled;
+    runner.destroy();
+  };
+}
+
+// Behavior: renders count to a DOM element
+function render({ state, owners, config }) {
+  return effect(() => {
+    const { renderElement } = owners.get();
+    if (!renderElement) return;
+    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
   });
 }
 
@@ -258,20 +296,11 @@ function resetButton({ state, owners }) {
   });
 }
 
-// Behavior: renders count to a DOM element
-function render({ state, owners, config }) {
-  return effect(() => {
-    const { renderElement } = owners.get();
-    if (!renderElement) return;
-    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
-  });
-}
-
 const composition = createComposition(
-  [counter, pauseButton, resetButton, render],
+  [counter, persist, render, pauseButton, resetButton],
   {
     initialState: { count: 0, paused: true },
-    config: { interval: 250, defaultText: '--' },
+    config: { interval: 250, defaultText: '--', saveEvery: 5 },
     initialOwners: {
       renderElement: document.getElementById('counter'),
       pauseBtn: document.getElementById('pause'),
@@ -279,6 +308,8 @@ const composition = createComposition(
     },
   }
 );
+
+await composition.destroy();
 
 await composition.destroy();
 ```
