@@ -1,4 +1,5 @@
 export * from './buffer';
+export * from './cast';
 export * from './controls';
 export * from './error';
 export * as features from './feature.parts';

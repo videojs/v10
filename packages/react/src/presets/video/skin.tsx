@@ -1,6 +1,8 @@
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -20,6 +22,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
@@ -198,6 +201,18 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                     <CaptionsOffIcon className="media-icon media-icon--captions-off" />
                     <CaptionsOnIcon className="media-icon media-icon--captions-on" />
                   </CaptionsButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CastButton className="media-button--cast" render={<Button />}>
+                    <CastEnterIcon className="media-icon media-icon--cast-enter" />
+                    <CastExitIcon className="media-icon media-icon--cast-exit" />
+                  </CastButton>
                 }
               />
               <Tooltip.Popup className="media-surface media-tooltip" />

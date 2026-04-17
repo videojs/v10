@@ -1,5 +1,6 @@
 import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
 import { bufferFeature } from './buffer';
+import { castFeature } from './cast';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
 import { fullscreenFeature } from './fullscreen';
@@ -20,6 +21,7 @@ export const videoFeatures: VideoFeatures = [
   bufferFeature,
   fullscreenFeature,
   pipFeature,
+  castFeature,
   controlsFeature,
   textTrackFeature,
   errorFeature,

@@ -120,6 +120,12 @@ function getTemplateHTML() {
               Toggle captions
             </media-tooltip>
 
+            <media-cast-button commandfor="cast-tooltip" class="media-button media-button--subtle media-button--icon media-button--cast">
+              ${renderIcon('cast-enter', { class: 'media-icon media-icon--cast-enter' })}
+              ${renderIcon('cast-exit', { class: 'media-icon media-icon--cast-exit' })}
+            </media-cast-button>
+            <media-tooltip id="cast-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
             <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
               ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}

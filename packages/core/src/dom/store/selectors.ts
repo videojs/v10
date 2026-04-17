@@ -1,6 +1,7 @@
 import { createSelector } from '@videojs/store';
 
 import { bufferFeature } from './features/buffer';
+import { castFeature } from './features/cast';
 import { controlsFeature } from './features/controls';
 import { errorFeature } from './features/error';
 import { fullscreenFeature } from './features/fullscreen';
@@ -14,6 +15,8 @@ import { volumeFeature } from './features/volume';
 
 /** Select the buffer state (buffered ranges, percent buffered). */
 export const selectBuffer = createSelector(bufferFeature);
+/** Select the cast state (cast connection state, availability). */
+export const selectCast = createSelector(castFeature);
 /** Select the controls state (controls visible, user-active). */
 export const selectControls = createSelector(controlsFeature);
 /** Select the error state (error, dismissed, dismissError). */

@@ -3,6 +3,22 @@ import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation
 import { HTMLMediaElementHost } from './media-host';
 
 export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement, VideoEvents> implements Video {
+  get poster() {
+    return this.target?.poster ?? '';
+  }
+
+  set poster(value: string) {
+    if (this.target) this.target.poster = value;
+  }
+
+  get webkitDisplayingFullscreen() {
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitDisplayingFullscreen ?? false;
+  }
+
+  get webkitPresentationMode() {
+    return (this.target as unknown as WebKitVideoElement | null)?.webkitPresentationMode ?? 'inline';
+  }
+
   requestPictureInPicture() {
     return this.target?.requestPictureInPicture() ?? Promise.reject();
   }
@@ -21,13 +37,5 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
 
   webkitSetPresentationMode(mode: WebKitPresentationMode) {
     return (this.target as unknown as WebKitVideoElement | null)?.webkitSetPresentationMode?.(mode);
-  }
-
-  get webkitDisplayingFullscreen() {
-    return (this.target as unknown as WebKitVideoElement | null)?.webkitDisplayingFullscreen ?? false;
-  }
-
-  get webkitPresentationMode() {
-    return (this.target as unknown as WebKitVideoElement | null)?.webkitPresentationMode ?? 'inline';
   }
 }

@@ -4,7 +4,8 @@ import { isNull } from '@videojs/utils/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
-import { isMediaPauseCapable } from '../../media/predicate';
+import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../media/predicate';
+import { isCastConnected, isCastConnecting } from '../../presentation/cast';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -33,7 +34,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     const computeVisible = (userActive: boolean): boolean => {
-      return userActive || media.paused;
+      return userActive || media.paused || isCastConnected(media) || isCastConnecting(media);
     };
 
     // Idle timer
@@ -129,6 +130,18 @@ export const controlsFeature = definePlayerFeature({
     listen(media, 'play', onPlaybackChange, { signal });
     listen(media, 'pause', onPlaybackChange, { signal });
     listen(media, 'ended', onPlaybackChange, { signal });
+
+    // Recompute visibility when cast state changes.
+    if (isMediaRemotePlaybackCapable(media)) {
+      const onCastChange = () => {
+        const { userActive } = get();
+        set({ controlsVisible: computeVisible(userActive) });
+      };
+
+      listen(media.remote, 'connect', onCastChange, { signal });
+      listen(media.remote, 'connecting', onCastChange, { signal });
+      listen(media.remote, 'disconnect', onCastChange, { signal });
+    }
 
     // Clean up timer on signal abort.
     signal.addEventListener('abort', clearIdle, { once: true });

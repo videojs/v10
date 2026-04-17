@@ -21,6 +21,88 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return this.#target;
   }
 
+  attach(target: T): void {
+    if (!target || this.#target === target) return;
+    this.#target = target;
+    for (const type of this.#types) {
+      target.addEventListener(type, this.#forwardEvent);
+    }
+  }
+
+  detach(): void {
+    if (!this.#target) return;
+    for (const type of this.#types) {
+      this.#target.removeEventListener(type, this.#forwardEvent);
+    }
+    this.#target = null;
+  }
+
+  querySelectorAll<K extends keyof HTMLElementTagNameMap>(selectors: K): NodeListOf<HTMLElementTagNameMap[K]> | never[];
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+  querySelectorAll(selectors: string): NodeListOf<Element> | never[] {
+    return this.target?.querySelectorAll(selectors) ?? [];
+  }
+
+  querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelector(selectors: string): Element | null {
+    return this.target?.querySelector(selectors) ?? null;
+  }
+
+  addEventListener<K extends keyof Events & string>(
+    type: K,
+    listener: (event: Events[K]) => void,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    if (!this.#types.has(type)) {
+      this.#types.add(type);
+      this.target?.addEventListener(type, this.#forwardEvent);
+    }
+    super.addEventListener(type, listener as EventListener, options);
+  }
+
+  removeEventListener<K extends keyof Events & string>(
+    type: K,
+    listener: (event: Events[K]) => void,
+    options?: boolean | EventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+    options?: boolean | EventListenerOptions
+  ): void {
+    super.removeEventListener(type, listener as EventListener, options);
+  }
+
+  #forwardEvent = (event: Event) => {
+    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+  };
+
+  // -- Metadata --
+
+  get title() {
+    return this.target?.title ?? '';
+  }
+
+  set title(value: string) {
+    if (this.target) this.target.title = value;
+  }
+
   // -- Playback --
 
   get paused() {
@@ -29,6 +111,14 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
 
   get ended() {
     return this.target?.ended ?? false;
+  }
+
+  get loop() {
+    return this.target?.loop ?? false;
+  }
+
+  set loop(value: boolean) {
+    if (this.target) this.target.loop = value;
   }
 
   play() {
@@ -129,67 +219,17 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return (this.target?.textTracks as TextTrackList) ?? [];
   }
 
-  attach(target: T): void {
-    if (!target || this.#target === target) return;
-    this.#target = target;
-    for (const type of this.#types) {
-      target.addEventListener(type, this.#forwardEvent);
-    }
+  // -- Remote playback --
+
+  get remote(): RemotePlayback | undefined {
+    return this.target?.remote;
   }
 
-  detach(): void {
-    if (!this.#target) return;
-    for (const type of this.#types) {
-      this.#target.removeEventListener(type, this.#forwardEvent);
-    }
-    this.#target = null;
+  get disableRemotePlayback() {
+    return this.target?.disableRemotePlayback ?? false;
   }
 
-  querySelectorAll(selectors: string) {
-    return this.target?.querySelectorAll(selectors) ?? [];
+  set disableRemotePlayback(value: boolean) {
+    if (this.target) this.target.disableRemotePlayback = value;
   }
-
-  addEventListener<K extends keyof Events & string>(
-    type: K,
-    listener: (event: Events[K]) => void,
-    options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    if (!this.#types.has(type)) {
-      this.#types.add(type);
-      this.target?.addEventListener(type, this.#forwardEvent);
-    }
-    super.addEventListener(type, listener as EventListener, options);
-  }
-
-  removeEventListener<K extends keyof Events & string>(
-    type: K,
-    listener: (event: Events[K]) => void,
-    options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | EventListenerOptions
-  ): void {
-    super.removeEventListener(type, listener as EventListener, options);
-  }
-
-  #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
-  };
 }
