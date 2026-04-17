@@ -5,7 +5,7 @@ import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
 import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../media/predicate';
-import { isCastConnected } from '../../presentation/cast';
+import { isCastConnected, isCastConnecting } from '../../presentation/cast';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -34,7 +34,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     const computeVisible = (userActive: boolean): boolean => {
-      return userActive || media.paused || isCastConnected(media);
+      return userActive || media.paused || isCastConnected(media) || isCastConnecting(media);
     };
 
     // Idle timer
@@ -139,6 +139,7 @@ export const controlsFeature = definePlayerFeature({
       };
 
       listen(media.remote, 'connect', onCastChange, { signal });
+      listen(media.remote, 'connecting', onCastChange, { signal });
       listen(media.remote, 'disconnect', onCastChange, { signal });
     }
 
