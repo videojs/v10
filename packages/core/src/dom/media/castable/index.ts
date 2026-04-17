@@ -2,15 +2,7 @@ import type { Constructor } from '@videojs/utils/types';
 import { GoogleCastProvider } from './google-cast-provider';
 import { RemotePlayback } from './remote-playback';
 import type { CastableMediaProps, CastableMediaSuperclass } from './types';
-import type { CastOptions } from './utils';
-import {
-  currentSession,
-  getDefaultCastOptions,
-  getPlaylistSegmentFormat,
-  isHls,
-  loadCastFramework,
-  requiresCastFramework,
-} from './utils';
+import { getDefaultCastOptions, loadCastFramework, requiresCastFramework } from './utils';
 
 export type { CastableMediaElement } from './types';
 
@@ -18,7 +10,6 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
   superclass: Base
 ): Base & Constructor<CastableMediaProps> => {
   class CastableMedia extends superclass {
-    #localState = { paused: false };
     #castOptions = getDefaultCastOptions();
     #castCustomData: Record<string, unknown> | null | undefined;
     #castSrc: string | undefined;
@@ -39,16 +30,19 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
         }
 
         this.#provider = new GoogleCastProvider(this, {
-          loadOnPrompt: () => this.#loadOnPrompt(),
+          duration: () => super.duration,
+          currentTime: () => super.currentTime,
+          paused: () => super.paused,
+          muted: () => super.muted,
+          pause: () => super.pause(),
         });
-
         return (this.#remote = new RemotePlayback(this.#provider));
       }
 
       return undefined;
     }
 
-    attach(target: HTMLMediaElement): void {
+    attach(target: HTMLMediaElement) {
       super.attach(target);
 
       if (requiresCastFramework() && !this.disableRemotePlayback) {
@@ -56,97 +50,23 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       }
     }
 
-    detach(): void {
+    detach() {
       super.detach();
     }
 
-    destroy(): void {
+    destroy() {
       this.#provider?.destroy();
       this.#provider = null;
       this.#remote = null;
       super.destroy();
     }
 
-    async #loadOnPrompt(): Promise<void> {
-      this.#localState.paused = super.paused;
-      super.pause();
-
-      this.muted = super.muted;
-
-      try {
-        await this.load();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    async load(): Promise<void> {
+    async load() {
       if (!this.#provider?.isCasting) return super.load() as void;
-
-      const mediaInfo = new chrome.cast.media.MediaInfo(this.castSrc, this.castContentType ?? '');
-      mediaInfo.customData = (this.castCustomData as object) ?? null;
-
-      const subtitles = [...this.querySelectorAll('track')].filter(
-        (el): el is HTMLTrackElement =>
-          el instanceof HTMLTrackElement && !!el.src && (el.kind === 'subtitles' || el.kind === 'captions')
-      );
-
-      const activeTrackIds: number[] = [];
-      let textTrackIdCount = 0;
-
-      if (subtitles.length) {
-        mediaInfo.tracks = subtitles.map((trackEl) => {
-          const trackId = ++textTrackIdCount;
-          if (activeTrackIds.length === 0 && trackEl.track.mode === 'showing') {
-            activeTrackIds.push(trackId);
-          }
-
-          const track = new chrome.cast.media.Track(trackId, chrome.cast.media.TrackType.TEXT);
-          track.trackContentId = trackEl.src;
-          track.trackContentType = 'text/vtt';
-          track.subtype =
-            trackEl.kind === 'captions'
-              ? chrome.cast.media.TextTrackType.CAPTIONS
-              : chrome.cast.media.TextTrackType.SUBTITLES;
-          track.name = trackEl.label;
-          track.language = trackEl.srclang;
-          return track;
-        });
-      }
-
-      if (this.castStreamType === 'live') {
-        mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
-      } else {
-        mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-      }
-
-      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-      mediaInfo.metadata.title = this.title;
-      mediaInfo.metadata.images = [new chrome.cast.Image(this.poster)];
-
-      if (await isHls(this.castSrc)) {
-        const segmentFormat = await getPlaylistSegmentFormat(this.castSrc);
-        const isFragmentedMP4 = segmentFormat?.includes('m4s') || segmentFormat?.includes('mp4');
-        if (isFragmentedMP4) {
-          mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.FMP4;
-          mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.FMP4;
-        } else if (segmentFormat?.includes('ts')) {
-          mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.TS;
-          mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.TS;
-        }
-      }
-
-      const request = new chrome.cast.media.LoadRequest(mediaInfo);
-      request.currentTime = super.currentTime ?? 0;
-      request.autoplay = !this.#localState.paused;
-      request.activeTrackIds = activeTrackIds;
-
-      await currentSession()?.loadMedia(request);
-
-      this.dispatchEvent(new Event('volumechange'));
+      await this.#provider.load();
     }
 
-    play(): void | Promise<void | undefined> {
+    play() {
       if (this.#provider?.isCasting) {
         this.#provider.play();
         return;
@@ -154,7 +74,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       return super.play();
     }
 
-    pause(): void {
+    pause() {
       if (this.#provider?.isCasting) {
         this.#provider.pause();
         return;
@@ -162,11 +82,11 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       super.pause();
     }
 
-    get castOptions(): CastOptions {
+    get castOptions() {
       return this.#castOptions;
     }
 
-    get castReceiver(): string | undefined {
+    get castReceiver() {
       return this.#castReceiver;
     }
 
@@ -179,8 +99,8 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       }
     }
 
-    get castSrc(): string {
-      return this.#castSrc ?? this.src ?? this.currentSrc;
+    get castSrc() {
+      return this.#castSrc ?? this.querySelector('source')?.src ?? this.src ?? this.currentSrc;
     }
 
     set castSrc(val: string) {
@@ -190,7 +110,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       if (this.#provider?.isCasting) this.load();
     }
 
-    get castContentType(): string | undefined {
+    get castContentType() {
       return this.#castContentType;
     }
 
@@ -198,7 +118,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       this.#castContentType = val;
     }
 
-    get castStreamType(): string | undefined {
+    get castStreamType() {
       return this.#castStreamType ?? this.streamType;
     }
 
@@ -209,7 +129,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       if (this.#provider?.isCasting) this.load();
     }
 
-    get castCustomData(): Record<string, unknown> | null | undefined {
+    get castCustomData() {
       return this.#castCustomData;
     }
 
@@ -223,30 +143,27 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       this.#castCustomData = val;
     }
 
-    get poster(): string {
-      return (this.target as HTMLVideoElement | null)?.poster ?? '';
-    }
-
-    get title(): string {
-      return this.target?.title ?? '';
-    }
-
-    get seeking(): boolean {
+    get seeking() {
       if (this.#provider?.isCasting) return this.#provider.seeking;
       return super.seeking;
     }
 
-    get readyState(): number {
+    get readyState() {
       if (this.#provider?.isCasting) return this.#provider.readyState;
       return super.readyState;
     }
 
-    get paused(): boolean {
+    get paused() {
       if (this.#provider?.isCasting) return this.#provider.paused;
       return super.paused;
     }
 
-    get muted(): boolean {
+    get ended() {
+      if (this.#provider?.isCasting) return this.#provider.ended;
+      return super.ended;
+    }
+
+    get muted() {
       if (this.#provider?.isCasting) return this.#provider.muted;
       return super.muted;
     }
@@ -259,7 +176,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       super.muted = val;
     }
 
-    get volume(): number {
+    get volume() {
       if (this.#provider?.isCasting) return this.#provider.volume;
       return super.volume;
     }
@@ -272,7 +189,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       super.volume = val;
     }
 
-    get playbackRate(): number {
+    get playbackRate() {
       if (this.#provider?.isCasting) return this.#provider.playbackRate;
       return super.playbackRate;
     }
@@ -285,12 +202,12 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
       super.playbackRate = val;
     }
 
-    get duration(): number {
+    get duration() {
       if (this.#provider?.isCasting) return this.#provider.duration;
       return super.duration;
     }
 
-    get currentTime(): number {
+    get currentTime() {
       if (this.#provider?.isCasting) return this.#provider.currentTime;
       return super.currentTime;
     }

@@ -22,11 +22,11 @@ export class RemotePlayback extends EventTarget {
     });
   }
 
-  get state(): RemotePlaybackState {
+  get state() {
     return this.#state;
   }
 
-  async watchAvailability(callback: AvailabilityCallback): Promise<number> {
+  async watchAvailability(callback: AvailabilityCallback) {
     if (this.#provider.media.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
@@ -39,7 +39,7 @@ export class RemotePlayback extends EventTarget {
     return id;
   }
 
-  async cancelWatchAvailability(callbackId?: number): Promise<void> {
+  async cancelWatchAvailability(callbackId?: number) {
     if (this.#provider.media.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
@@ -54,7 +54,7 @@ export class RemotePlayback extends EventTarget {
     this.#callbacks.clear();
   }
 
-  async prompt(): Promise<void> {
+  async prompt() {
     if (this.#provider.media.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
@@ -62,7 +62,7 @@ export class RemotePlayback extends EventTarget {
     await this.#provider.requestCastSession();
   }
 
-  #setState(next: RemotePlaybackState): void {
+  #setState(next: RemotePlaybackState) {
     if (this.#state === next) return;
     this.#state = next;
     if (next === 'connecting') this.dispatchEvent(new Event('connecting'));
@@ -70,7 +70,7 @@ export class RemotePlayback extends EventTarget {
     else this.dispatchEvent(new Event('disconnect'));
   }
 
-  #setAvailable(available: boolean): void {
+  #setAvailable(available: boolean) {
     if (this.#available === available) return;
     this.#available = available;
     for (const callback of this.#callbacks.values()) callback(available);

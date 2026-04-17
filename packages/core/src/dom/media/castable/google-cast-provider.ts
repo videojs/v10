@@ -8,7 +8,9 @@ import {
   currentSession,
   editTracksInfo,
   getMediaStatus,
+  getPlaylistSegmentFormat,
   IterableWeakSet,
+  isHls,
   NotSupportedError,
   onCastApiAvailable,
   removeRemoteListeners,
@@ -19,7 +21,14 @@ import {
 export type GoogleCastProviderHooks = {
   setState: (next: RemotePlaybackState) => void;
   setAvailable: (available: boolean) => void;
-  loadOnPrompt: () => Promise<void>;
+};
+
+export type LocalPlayer = {
+  duration: () => number;
+  currentTime: () => number;
+  paused: () => boolean;
+  muted: () => boolean;
+  pause: () => void;
 };
 
 const providerInstances = new IterableWeakSet<GoogleCastProvider>();
@@ -54,24 +63,26 @@ export class GoogleCastProvider {
 
   #hooks: Partial<GoogleCastProviderHooks> = {};
   #isInit = false;
-  #remotePlayer!: cast.framework.RemotePlayer;
+  #local: LocalPlayer;
+  #remote!: cast.framework.RemotePlayer;
   #remoteListeners!: Record<string, RemotePlayerListener>;
   #playbackRate = 1;
+  #localPaused = false;
   #onTextTrackChange = () => this.#updateRemoteTextTrack();
   #onMediaUpdate = () => this.#checkPlaybackRate();
 
-  constructor(media: CastableMediaElement, hooks: Partial<GoogleCastProviderHooks>) {
+  constructor(media: CastableMediaElement, local: LocalPlayer) {
     this.media = media;
-    this.bindHooks(hooks);
+    this.#local = local;
     providerInstances.add(this);
     this.init();
   }
 
-  bindHooks(hooks: Partial<GoogleCastProviderHooks>): void {
+  bindHooks(hooks: Partial<GoogleCastProviderHooks>) {
     Object.assign(this.#hooks, hooks);
   }
 
-  get isCasting(): boolean {
+  get isCasting() {
     return castElementRef.has(this.media);
   }
 
@@ -80,12 +91,12 @@ export class GoogleCastProvider {
     else castElementRef.delete(this.media);
   }
 
-  hasDevicesAvailable(): boolean {
+  hasDevicesAvailable() {
     const castState = castContext()?.getCastState();
     return Boolean(castState && castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE);
   }
 
-  async requestCastSession(): Promise<void> {
+  async requestCastSession() {
     if (!this.#isCastApiAvailable()) {
       throw new NotSupportedError('The RemotePlayback API is disabled on this platform.');
     }
@@ -110,47 +121,134 @@ export class GoogleCastProvider {
       throw new Error(err as string);
     }
 
-    await this.#hooks.loadOnPrompt?.();
+    this.#localPaused = this.#local.paused();
+    this.#local.pause();
+    this.muted = this.#local.muted();
+
+    try {
+      await this.load();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async load() {
+    const mediaInfo = new chrome.cast.media.MediaInfo(this.media.castSrc, this.media.castContentType ?? '');
+    mediaInfo.customData = (this.media.castCustomData as object) ?? null;
+
+    const subtitles = [...this.media.querySelectorAll('track')].filter(
+      (el): el is HTMLTrackElement =>
+        el instanceof HTMLTrackElement && !!el.src && (el.kind === 'subtitles' || el.kind === 'captions')
+    );
+
+    const activeTrackIds: number[] = [];
+    let textTrackIdCount = 0;
+
+    if (subtitles.length) {
+      mediaInfo.tracks = subtitles.map((trackEl) => {
+        const trackId = ++textTrackIdCount;
+        if (activeTrackIds.length === 0 && trackEl.track.mode === 'showing') {
+          activeTrackIds.push(trackId);
+        }
+
+        const track = new chrome.cast.media.Track(trackId, chrome.cast.media.TrackType.TEXT);
+        track.trackContentId = trackEl.src;
+        track.trackContentType = 'text/vtt';
+        track.subtype =
+          trackEl.kind === 'captions'
+            ? chrome.cast.media.TextTrackType.CAPTIONS
+            : chrome.cast.media.TextTrackType.SUBTITLES;
+        track.name = trackEl.label;
+        track.language = trackEl.srclang;
+        return track;
+      });
+    }
+
+    mediaInfo.streamType =
+      this.media.castStreamType === 'live' ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
+
+    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+    mediaInfo.metadata.title = this.media.title;
+    mediaInfo.metadata.images = [new chrome.cast.Image(this.media.poster)];
+
+    if (await isHls(this.media.castSrc)) {
+      if (!mediaInfo.contentType) {
+        mediaInfo.contentType = 'application/x-mpegURL';
+      }
+
+      const segmentFormat = await getPlaylistSegmentFormat(this.media.castSrc);
+      const isFragmentedMP4 = segmentFormat?.includes('m4s') || segmentFormat?.includes('mp4');
+      if (isFragmentedMP4) {
+        mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.FMP4;
+        mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.FMP4;
+      } else if (segmentFormat?.includes('ts')) {
+        mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.TS;
+        mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.TS;
+      }
+    }
+
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+    request.currentTime = this.#local.currentTime();
+    request.autoplay = !this.#localPaused;
+    request.activeTrackIds = activeTrackIds;
+
+    await currentSession()?.loadMedia(request);
+
+    this.media.dispatchEvent(new Event('volumechange'));
   }
 
   // -- Native media surface (called by the mixin while isCasting is true) --
 
-  play(): void {
+  async play() {
+    // When a casted media ends, the media is unloaded and the player state is IDLE.
+    if (!this.#remote.isMediaLoaded) {
+      this.#localPaused = false;
+      await this.load();
+      return;
+    }
     if (this.paused) {
-      this.#remotePlayer.controller?.playOrPause();
+      this.#remote.controller?.playOrPause();
     }
   }
 
-  pause(): void {
+  pause() {
     if (!this.paused) {
-      this.#remotePlayer.controller?.playOrPause();
+      this.#remote.controller?.playOrPause();
     }
   }
 
-  get paused(): boolean {
-    return this.#remotePlayer.isPaused;
+  // isPaused is not true when the media has ended so add the ended check.
+  get paused() {
+    return this.#remote.isPaused || this.ended;
   }
 
-  get muted(): boolean {
-    return this.#remotePlayer.isMuted;
+  get ended() {
+    return (
+      this.#remote.playerState === chrome.cast.media.PlayerState.IDLE &&
+      currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED
+    );
+  }
+
+  get muted() {
+    return this.#remote.isMuted;
   }
 
   set muted(value: boolean) {
-    if (value !== this.#remotePlayer.isMuted) {
-      this.#remotePlayer.controller?.muteOrUnmute();
+    if (value !== this.#remote.isMuted) {
+      this.#remote.controller?.muteOrUnmute();
     }
   }
 
-  get volume(): number {
-    return this.#remotePlayer.volumeLevel ?? 1;
+  get volume() {
+    return this.#remote.volumeLevel ?? 1;
   }
 
   set volume(value: number) {
-    this.#remotePlayer.volumeLevel = +value;
-    this.#remotePlayer.controller?.setVolumeLevel();
+    this.#remote.volumeLevel = +value;
+    this.#remote.controller?.setVolumeLevel();
   }
 
-  get playbackRate(): number {
+  get playbackRate() {
     return currentMedia()?.playbackRate ?? 1;
   }
 
@@ -158,24 +256,24 @@ export class GoogleCastProvider {
     setPlaybackRate(value);
   }
 
-  get duration(): number {
-    if (this.#remotePlayer?.isMediaLoaded) return this.#remotePlayer.duration ?? NaN;
-    return this.media.target?.duration ?? NaN;
+  get duration() {
+    if (this.#remote?.isMediaLoaded) return this.#remote.duration ?? NaN;
+    return this.#local.duration();
   }
 
-  get currentTime(): number {
-    if (this.#remotePlayer?.isMediaLoaded) return this.#remotePlayer.currentTime ?? 0;
-    return this.media.target?.currentTime ?? 0;
+  get currentTime() {
+    if (this.#remote?.isMediaLoaded) return this.#remote.currentTime ?? 0;
+    return this.#local.currentTime();
   }
 
   set currentTime(value: number) {
-    this.#remotePlayer.currentTime = value;
+    this.#remote.currentTime = value;
     this.#notifySeeking();
-    this.#remotePlayer.controller?.seek();
+    this.#remote.controller?.seek();
   }
 
-  get readyState(): number {
-    switch (this.#remotePlayer.playerState) {
+  get readyState() {
+    switch (this.#remote.playerState) {
       case chrome.cast.media.PlayerState.IDLE:
         return 0;
       case chrome.cast.media.PlayerState.BUFFERING:
@@ -185,7 +283,7 @@ export class GoogleCastProvider {
     }
   }
 
-  init(): void {
+  init() {
     if (!cf || this.#isInit) return;
     this.#isInit = true;
 
@@ -195,8 +293,8 @@ export class GoogleCastProvider {
 
     this.onCastStateChanged();
 
-    this.#remotePlayer = new cf.RemotePlayer();
-    new cf.RemotePlayerController(this.#remotePlayer);
+    this.#remote = new cf.RemotePlayer();
+    new cf.RemotePlayerController(this.#remote);
 
     this.#remoteListeners = {
       [cf.RemotePlayerEventType.IS_CONNECTED_CHANGED]: (event?: cast.framework.RemotePlayerChangedEvent) => {
@@ -218,7 +316,7 @@ export class GoogleCastProvider {
         this.media.dispatchEvent(new Event('volumechange'));
       },
       [cf.RemotePlayerEventType.CURRENT_TIME_CHANGED]: () => {
-        if (!this.isCasting || !this.#remotePlayer.isMediaLoaded) return;
+        if (!this.isCasting || !this.#remote.isMediaLoaded) return;
         this.#notifySeeked();
         this.media.dispatchEvent(new Event('timeupdate'));
       },
@@ -226,10 +324,10 @@ export class GoogleCastProvider {
         this.media.dispatchEvent(new Event('resize'));
       },
       [cf.RemotePlayerEventType.IS_PAUSED_CHANGED]: () => {
-        this.media.dispatchEvent(new Event(this.isCasting && this.#remotePlayer.isPaused ? 'pause' : 'play'));
+        this.media.dispatchEvent(new Event(this.isCasting && this.#remote.isPaused ? 'pause' : 'play'));
       },
       [cf.RemotePlayerEventType.PLAYER_STATE_CHANGED]: () => {
-        const playerState = this.isCasting ? this.#remotePlayer.playerState : undefined;
+        const playerState = this.isCasting ? this.#remote.playerState : undefined;
 
         if (playerState !== chrome.cast.media.PlayerState.BUFFERING) {
           this.#notifySeeked();
@@ -239,11 +337,16 @@ export class GoogleCastProvider {
           return;
         }
 
+        if (playerState === chrome.cast.media.PlayerState.IDLE) {
+          const eventName = currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED ? 'ended' : 'emptied';
+          this.media.dispatchEvent(new Event(eventName));
+          return;
+        }
+
         const eventName = (
           {
             [chrome.cast.media.PlayerState.PLAYING]: 'playing',
             [chrome.cast.media.PlayerState.BUFFERING]: 'waiting',
-            [chrome.cast.media.PlayerState.IDLE]: 'emptied',
           } as Record<string, string>
         )[playerState ?? ''];
 
@@ -252,7 +355,7 @@ export class GoogleCastProvider {
         }
       },
       [cf.RemotePlayerEventType.IS_MEDIA_LOADED_CHANGED]: async () => {
-        if (!this.isCasting || !this.#remotePlayer.isMediaLoaded) return;
+        if (!this.isCasting || !this.#remote.isMediaLoaded) return;
 
         await Promise.resolve();
         this.#onRemoteMediaLoaded();
@@ -260,7 +363,7 @@ export class GoogleCastProvider {
     };
   }
 
-  onCastStateChanged(): void {
+  onCastStateChanged() {
     const castState = castContext()!.getCastState();
 
     if (castElementRef.has(this.media)) {
@@ -281,13 +384,13 @@ export class GoogleCastProvider {
     }
   }
 
-  async onSessionStateChanged(): Promise<void> {
+  async onSessionStateChanged() {
     const { SESSION_RESUMED } = cf!.SessionState;
     if (castContext()!.getSessionState() === SESSION_RESUMED) {
       if (this.media.castSrc === currentMedia()?.media?.contentId) {
         castElementRef.add(this.media);
 
-        addRemoteListeners(this.#remotePlayer.controller!, this.#remoteListeners);
+        addRemoteListeners(this.#remote.controller!, this.#remoteListeners);
 
         try {
           await getMediaStatus(new chrome.cast.media.GetStatusRequest());
@@ -301,42 +404,42 @@ export class GoogleCastProvider {
     }
   }
 
-  destroy(): void {
+  destroy() {
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
     this.media?.textTracks?.removeEventListener('change', this.#onTextTrackChange);
 
-    if (this.#remoteListeners && this.#remotePlayer?.controller) {
-      removeRemoteListeners(this.#remotePlayer.controller, this.#remoteListeners);
+    if (this.#remoteListeners && this.#remote?.controller) {
+      removeRemoteListeners(this.#remote.controller, this.#remoteListeners);
     }
 
     if (this.media) castElementRef.delete(this.media);
     this.#isInit = false;
   }
 
-  #isCastApiAvailable(): boolean {
+  #isCastApiAvailable() {
     return Boolean(globalThis.chrome?.cast?.isAvailable);
   }
 
-  #applyCastOptions(): void {
+  #applyCastOptions() {
     setCastOptions(this.media.castOptions);
   }
 
-  #attachRemoteListeners(): void {
-    addRemoteListeners(this.#remotePlayer.controller!, this.#remoteListeners);
+  #attachRemoteListeners() {
+    addRemoteListeners(this.#remote.controller!, this.#remoteListeners);
   }
 
-  #disconnect(): void {
+  #disconnect() {
     if (!castElementRef.has(this.media)) return;
 
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
-    removeRemoteListeners(this.#remotePlayer.controller!, this.#remoteListeners);
+    removeRemoteListeners(this.#remote.controller!, this.#remoteListeners);
     this.seeking = false;
     this.#playbackRate = 1;
 
     castElementRef.delete(this.media);
 
-    this.media.muted = this.#remotePlayer.isMuted;
-    const savedState = this.#remotePlayer.savedPlayerState;
+    this.media.muted = this.#remote.isMuted;
+    const savedState = this.#remote.savedPlayerState;
     if (savedState) {
       this.media.currentTime = savedState.currentTime;
       if (savedState.isPaused === false) {
@@ -345,24 +448,24 @@ export class GoogleCastProvider {
     }
   }
 
-  #notifySeeking(): void {
+  #notifySeeking() {
     this.seeking = true;
     this.media.dispatchEvent(new Event('seeking'));
   }
 
-  #notifySeeked(): void {
+  #notifySeeked() {
     if (!this.seeking) return;
     this.seeking = false;
     this.media.dispatchEvent(new Event('seeked'));
   }
 
-  #onRemoteMediaLoaded(): void {
+  #onRemoteMediaLoaded() {
     this.#playbackRate = currentMedia()?.playbackRate ?? 1;
     currentMedia()?.addUpdateListener(this.#onMediaUpdate);
     this.#updateRemoteTextTrack();
   }
 
-  #checkPlaybackRate(): void {
+  #checkPlaybackRate() {
     const rate = currentMedia()?.playbackRate ?? 1;
     if (rate !== this.#playbackRate) {
       this.#playbackRate = rate;
@@ -370,10 +473,10 @@ export class GoogleCastProvider {
     }
   }
 
-  async #updateRemoteTextTrack(): Promise<void> {
+  async #updateRemoteTextTrack() {
     if (!this.isCasting) return;
 
-    const remoteTracks = this.#remotePlayer.mediaInfo?.tracks ?? [];
+    const remoteTracks = this.#remote.mediaInfo?.tracks ?? [];
     const remoteSubtitles = remoteTracks.filter(({ type }) => type === chrome.cast.media.TrackType.TEXT);
 
     const localSubtitles = [...this.media.textTracks].filter(({ kind }) => kind === 'subtitles' || kind === 'captions');

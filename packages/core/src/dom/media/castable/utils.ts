@@ -7,7 +7,7 @@ export type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEv
 export function addRemoteListeners(
   controller: cast.framework.RemotePlayerController,
   listeners: Record<string, RemotePlayerListener>
-): void {
+) {
   for (const [type, handler] of Object.entries(listeners)) {
     controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
   }
@@ -16,7 +16,7 @@ export function addRemoteListeners(
 export function removeRemoteListeners(
   controller: cast.framework.RemotePlayerController,
   listeners: Record<string, RemotePlayerListener>
-): void {
+) {
   for (const [type, handler] of Object.entries(listeners)) {
     controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
   }
@@ -39,7 +39,7 @@ export const IterableWeakSet: { new <T extends WeakKey>(): Set<T> } = globalThis
     } as unknown as { new <T extends WeakKey>(): Set<T> })
   : (Set as unknown as { new <T extends WeakKey>(): Set<T> });
 
-export function onCastApiAvailable(callback: () => void): void {
+export function onCastApiAvailable(callback: () => void) {
   if (!globalThis.chrome?.cast?.isAvailable) {
     (globalThis as Record<string, unknown>).__onGCastApiAvailable = () => {
       customElements.whenDefined('google-cast-button').then(callback);
@@ -51,12 +51,12 @@ export function onCastApiAvailable(callback: () => void): void {
   }
 }
 
-export function requiresCastFramework(): boolean {
+export function requiresCastFramework() {
   // todo: exclude for Android>=56 which supports the Remote Playback API natively.
   return Boolean(globalThis.chrome);
 }
 
-export function loadCastFramework(): void {
+export function loadCastFramework() {
   const sdkUrl = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
   if (globalThis.chrome?.cast || document.querySelector(`script[src="${sdkUrl}"]`)) return;
 
@@ -65,26 +65,26 @@ export function loadCastFramework(): void {
   document.head.append(script);
 }
 
-export function castContext(): cast.framework.CastContext | undefined {
+export function castContext() {
   return (globalThis as Record<string, unknown> & { cast?: typeof cast }).cast?.framework?.CastContext.getInstance();
 }
 
-export function currentSession(): cast.framework.CastSession | null | undefined {
+export function currentSession() {
   return castContext()?.getCurrentSession();
 }
 
-export function currentMedia(): chrome.cast.media.Media | undefined {
+export function currentMedia() {
   return currentSession()?.getSessionObj().media[0] ?? undefined;
 }
 
-export function editTracksInfo(request: chrome.cast.media.EditTracksInfoRequest): Promise<void> {
-  return new Promise((resolve, reject) => {
+export function editTracksInfo(request: chrome.cast.media.EditTracksInfoRequest) {
+  return new Promise<void>((resolve, reject) => {
     currentMedia()!.editTracksInfo(request, resolve, reject);
   });
 }
 
-export function getMediaStatus(request: chrome.cast.media.GetStatusRequest): Promise<void> {
-  return new Promise((resolve, reject) => {
+export function getMediaStatus(request: chrome.cast.media.GetStatusRequest) {
+  return new Promise<void>((resolve, reject) => {
     currentMedia()!.getStatus(request, resolve, reject);
   });
 }
@@ -92,7 +92,7 @@ export function getMediaStatus(request: chrome.cast.media.GetStatusRequest): Pro
 const MEDIA_NAMESPACE = 'urn:x-cast:com.google.cast.media';
 let requestId = 0;
 
-export function setPlaybackRate(rate: number): Promise<chrome.cast.ErrorCode | undefined> {
+export function setPlaybackRate(rate: number) {
   const media = currentMedia();
   return currentSession()!.sendMessage(MEDIA_NAMESPACE, {
     type: 'SET_PLAYBACK_RATE',
@@ -104,7 +104,7 @@ export function setPlaybackRate(rate: number): Promise<chrome.cast.ErrorCode | u
 
 export type CastOptions = cast.framework.CastOptions;
 
-export function setCastOptions(options: Partial<CastOptions>): void {
+export function setCastOptions(options: Partial<CastOptions>) {
   castContext()!.setOptions({
     ...getDefaultCastOptions(),
     ...options,
@@ -122,7 +122,7 @@ export function getDefaultCastOptions(): CastOptions {
   };
 }
 
-function getFormat(segment: string | undefined): string | null | undefined {
+function getFormat(segment: string | undefined) {
   if (!segment) return undefined;
 
   const regex = /\.([a-zA-Z0-9]+)(?:\?.*)?$/;
@@ -130,7 +130,7 @@ function getFormat(segment: string | undefined): string | null | undefined {
   return match ? match[1] : null;
 }
 
-function parsePlaylistUrls(playlistContent: string): string[] {
+function parsePlaylistUrls(playlistContent: string) {
   const lines = playlistContent.split('\n');
   const urls: string[] = [];
 
@@ -148,12 +148,16 @@ function parsePlaylistUrls(playlistContent: string): string[] {
   return urls;
 }
 
-function parseSegment(playlistContent: string): string | undefined {
+function parseSegment(playlistContent: string) {
   const lines = playlistContent.split('\n');
   return lines.find((line) => !line.trim().startsWith('#') && line.trim() !== '');
 }
 
-export async function isHls(url: string): Promise<boolean> {
+export async function isHls(url: string) {
+  if (!url) return false;
+  if (/\.m3u8?(\?.*)?$/i.test(url)) return true;
+  if (url.startsWith('blob:')) return false;
+
   try {
     const response = await fetch(url, { method: 'HEAD' });
     const contentType = response.headers.get('Content-Type');
@@ -166,7 +170,7 @@ export async function isHls(url: string): Promise<boolean> {
   }
 }
 
-export async function getPlaylistSegmentFormat(url: string): Promise<string | null | undefined> {
+export async function getPlaylistSegmentFormat(url: string) {
   try {
     const mainManifestContent = await (await fetch(url)).text();
     let availableChunksContent = mainManifestContent;

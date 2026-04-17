@@ -21,6 +21,84 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return this.#target;
   }
 
+  attach(target: T): void {
+    if (!target || this.#target === target) return;
+    this.#target = target;
+    for (const type of this.#types) {
+      target.addEventListener(type, this.#forwardEvent);
+    }
+  }
+
+  detach(): void {
+    if (!this.#target) return;
+    for (const type of this.#types) {
+      this.#target.removeEventListener(type, this.#forwardEvent);
+    }
+    this.#target = null;
+  }
+
+  querySelectorAll(selectors: string) {
+    return this.target?.querySelectorAll(selectors) ?? [];
+  }
+
+  querySelector(selector: string) {
+    return this.target?.querySelector(selector) ?? null;
+  }
+
+  addEventListener<K extends keyof Events & string>(
+    type: K,
+    listener: (event: Events[K]) => void,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    if (!this.#types.has(type)) {
+      this.#types.add(type);
+      this.target?.addEventListener(type, this.#forwardEvent);
+    }
+    super.addEventListener(type, listener as EventListener, options);
+  }
+
+  removeEventListener<K extends keyof Events & string>(
+    type: K,
+    listener: (event: Events[K]) => void,
+    options?: boolean | EventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
+    options?: boolean | EventListenerOptions
+  ): void {
+    super.removeEventListener(type, listener as EventListener, options);
+  }
+
+  #forwardEvent = (event: Event) => {
+    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+  };
+
+  // -- Metadata --
+
+  get title() {
+    return this.target?.title ?? '';
+  }
+
+  set title(value: string) {
+    if (this.target) this.target.title = value;
+  }
+
   // -- Playback --
 
   get paused() {
@@ -150,68 +228,4 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
   set disableRemotePlayback(value: boolean) {
     if (this.target) this.target.disableRemotePlayback = value;
   }
-
-  attach(target: T): void {
-    if (!target || this.#target === target) return;
-    this.#target = target;
-    for (const type of this.#types) {
-      target.addEventListener(type, this.#forwardEvent);
-    }
-  }
-
-  detach(): void {
-    if (!this.#target) return;
-    for (const type of this.#types) {
-      this.#target.removeEventListener(type, this.#forwardEvent);
-    }
-    this.#target = null;
-  }
-
-  querySelectorAll(selectors: string) {
-    return this.target?.querySelectorAll(selectors) ?? [];
-  }
-
-  addEventListener<K extends keyof Events & string>(
-    type: K,
-    listener: (event: Events[K]) => void,
-    options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    if (!this.#types.has(type)) {
-      this.#types.add(type);
-      this.target?.addEventListener(type, this.#forwardEvent);
-    }
-    super.addEventListener(type, listener as EventListener, options);
-  }
-
-  removeEventListener<K extends keyof Events & string>(
-    type: K,
-    listener: (event: Events[K]) => void,
-    options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | EventListenerOptions
-  ): void {
-    super.removeEventListener(type, listener as EventListener, options);
-  }
-
-  #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
-  };
 }
