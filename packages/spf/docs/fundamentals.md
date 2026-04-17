@@ -190,6 +190,117 @@ The `persist` feature introduces several concepts:
 
 ---
 
+## Reactors
+
+So far, features have used `effect()` to react to state changes. Effects work well for simple observation, but they re-run on _every_ change to their dependencies. What if a feature needs lifecycle — setup when a condition becomes true, teardown when it becomes false, and the ability to distinguish "just entered this state" from "still in this state"?
+
+A **reactor** is a state machine driven by signal observation. Its `monitor` function derives the target state from signals. When the state changes, the reactor transitions — running `entry` effects on the new state and cleaning up the old one.
+
+Let's make our counter pausable and resettable. We'll add button features that toggle pause and reset the count via owners:
+
+```ts
+import { createComposition, effect } from '@videojs/spf/playback-engine';
+import { createMachineReactor, update } from '@videojs/spf';
+import { listen } from '@videojs/utils/dom';
+
+// Feature: a counter that can be paused
+function counter({ state, config }) {
+  return createMachineReactor({
+    initial: 'paused',
+    monitor: () => (state.get().paused ? 'paused' : 'running'),
+    states: {
+      paused: {},
+      running: {
+        // entry runs once when transitioning to 'running'.
+        // Its return value is cleanup — called on exit (pause or destroy).
+        entry: () => {
+          const interval = setInterval(() => {
+            update(state, { count: (state.get().count ?? 0) + 1 });
+          }, config.interval ?? 1000);
+          return () => clearInterval(interval);
+        },
+      },
+    },
+  });
+}
+
+// Feature: wires up a pause/unpause button
+function pauseButton({ state, owners }) {
+  // Update button text reactively
+  effect(() => {
+    const { pauseBtn } = owners.get();
+    if (!pauseBtn) return;
+    pauseBtn.textContent = state.get().paused ? 'Start' : 'Pause';
+  });
+
+  // listen() adds an event listener and returns a cleanup function.
+  // Returning it from effect() means the listener is removed when the
+  // button is replaced or the composition is destroyed.
+  return effect(() => {
+    const { pauseBtn } = owners.get();
+    if (!pauseBtn) return;
+    return listen(pauseBtn, 'click', () => {
+      update(state, { paused: !state.get().paused });
+    });
+    // Equivalent to:
+    // const handler = () => update(state, { paused: !state.get().paused });
+    // pauseBtn.addEventListener('click', handler);
+    // return () => pauseBtn.removeEventListener('click', handler);
+  });
+}
+
+// Feature: wires up a reset button
+function resetButton({ state, owners }) {
+  return effect(() => {
+    const { resetBtn } = owners.get();
+    if (!resetBtn) return;
+    return listen(resetBtn, 'click', () => update(state, { count: 0 }));
+  });
+}
+
+// Feature: renders count to a DOM element
+function render({ state, owners, config }) {
+  return effect(() => {
+    const { renderElement } = owners.get();
+    if (!renderElement) return;
+    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
+  });
+}
+
+const composition = createComposition(
+  [counter, pauseButton, resetButton, render],
+  {
+    initialState: { count: 0, paused: true },
+    config: { interval: 250, defaultText: '--' },
+    initialOwners: {
+      renderElement: document.getElementById('counter'),
+      pauseBtn: document.getElementById('pause'),
+      resetBtn: document.getElementById('reset'),
+    },
+  }
+);
+
+await composition.destroy();
+```
+
+The `counter` feature is now a reactor with two states:
+
+- **`paused`** — no effects. The counter does nothing.
+- **`running`** — the `entry` effect starts the interval. When the reactor exits this state (pause or destroy), the cleanup clears it.
+
+The `monitor` function reads `state.get().paused` and returns the target state. The framework handles the transition — `counter` never calls `transition()` itself. When `paused` changes from `true` to `false`, the reactor moves to `running` and the interval starts. When it changes back, the reactor moves to `paused` and the interval is cleaned up.
+
+The `pauseButton` and `resetButton` features are plain effects — they wire up DOM event handlers that write directly to state. When a button is clicked, state changes, and the reactor (and render feature) respond automatically. No feature coordinates with another; they all communicate through shared state.
+
+Key concepts:
+- **`monitor`** — a reactive function that derives the target state. Re-evaluates when its signal dependencies change.
+- **`entry`** — runs once on state entry, automatically untracked. Return a cleanup function (or an object with `abort()`).
+- **`effects`** — (not shown here) re-run when tracked signals change. Use for reactive sync within a state.
+
+Not everything needs a reactor. Use a reactor when you need distinct states with setup/teardown lifecycles. Use an effect when you just need to respond to changes.
+
+---
+
 ## The Three Layers
 
 Features are built from three layers of primitives. Data flows in one direction:
