@@ -4,15 +4,15 @@ import type { Signal } from '../../../core/signals/primitives';
 import { update } from '../../../core/signals/primitives';
 import {
   createComposition,
-  type InferFeatureConfig,
-  type InferFeatureOwners,
-  type InferFeatureState,
-  type ResolveFeatureOwners,
-  type ResolveFeatureState,
+  type InferBehaviorConfig,
+  type InferBehaviorOwners,
+  type InferBehaviorState,
+  type ResolveBehaviorOwners,
+  type ResolveBehaviorState,
 } from '../engine';
 
 // =============================================================================
-// Test features — concrete parameter types
+// Test behaviors — concrete parameter types
 // =============================================================================
 
 function counter({ state, config }: { state: Signal<{ count?: number }>; config: { interval?: number } }) {
@@ -48,7 +48,7 @@ function persist({ state, config }: { state: Signal<{ count?: number }>; config:
 }
 
 // =============================================================================
-// Test features — generic parameter types (the pattern real features use)
+// Test behaviors — generic parameter types (the pattern real behaviors use)
 // =============================================================================
 
 interface TimerState {
@@ -67,82 +67,82 @@ function timer<S extends TimerState, C extends TimerConfig>({ state, config }: {
 }
 
 // =============================================================================
-// InferFeature* — single feature inference
+// InferBehavior* — single behavior inference
 // =============================================================================
 
-describe('InferFeatureState', () => {
-  it('extracts state type from a concrete feature', () => {
-    expectTypeOf<InferFeatureState<typeof counter>>().toEqualTypeOf<{ count?: number }>();
+describe('InferBehaviorState', () => {
+  it('extracts state type from a concrete behavior', () => {
+    expectTypeOf<InferBehaviorState<typeof counter>>().toEqualTypeOf<{ count?: number }>();
   });
 
-  it('extracts state type from a feature that uses owners', () => {
-    expectTypeOf<InferFeatureState<typeof render>>().toEqualTypeOf<{ count?: number }>();
+  it('extracts state type from a behavior that uses owners', () => {
+    expectTypeOf<InferBehaviorState<typeof render>>().toEqualTypeOf<{ count?: number }>();
   });
 
-  it('returns object for a feature with no state in params', () => {
+  it('returns object for a behavior with no state in params', () => {
     const noState = ({ config: _config }: { config: { x: number } }) => {};
-    expectTypeOf<InferFeatureState<typeof noState>>().toEqualTypeOf<object>();
+    expectTypeOf<InferBehaviorState<typeof noState>>().toEqualTypeOf<object>();
   });
 });
 
-describe('InferFeatureOwners', () => {
-  it('extracts owners type from a feature that uses owners', () => {
-    expectTypeOf<InferFeatureOwners<typeof render>>().toEqualTypeOf<{ renderElement?: HTMLElement }>();
+describe('InferBehaviorOwners', () => {
+  it('extracts owners type from a behavior that uses owners', () => {
+    expectTypeOf<InferBehaviorOwners<typeof render>>().toEqualTypeOf<{ renderElement?: HTMLElement }>();
   });
 
-  it('returns object for a feature with no owners in params', () => {
-    expectTypeOf<InferFeatureOwners<typeof counter>>().toEqualTypeOf<object>();
-  });
-});
-
-describe('InferFeatureConfig', () => {
-  it('extracts config type from a concrete feature', () => {
-    expectTypeOf<InferFeatureConfig<typeof counter>>().toEqualTypeOf<{ interval?: number }>();
-  });
-
-  it('extracts different config types from different features', () => {
-    expectTypeOf<InferFeatureConfig<typeof render>>().toEqualTypeOf<{ defaultText?: string }>();
-    expectTypeOf<InferFeatureConfig<typeof persist>>().toEqualTypeOf<{ saveEvery?: number }>();
+  it('returns object for a behavior with no owners in params', () => {
+    expectTypeOf<InferBehaviorOwners<typeof counter>>().toEqualTypeOf<object>();
   });
 });
 
-describe('InferFeature* with generic features', () => {
-  it('infers constraint types from generic features', () => {
-    expectTypeOf<InferFeatureState<typeof timer>>().toEqualTypeOf<TimerState>();
-    expectTypeOf<InferFeatureConfig<typeof timer>>().toEqualTypeOf<TimerConfig>();
+describe('InferBehaviorConfig', () => {
+  it('extracts config type from a concrete behavior', () => {
+    expectTypeOf<InferBehaviorConfig<typeof counter>>().toEqualTypeOf<{ interval?: number }>();
+  });
+
+  it('extracts different config types from different behaviors', () => {
+    expectTypeOf<InferBehaviorConfig<typeof render>>().toEqualTypeOf<{ defaultText?: string }>();
+    expectTypeOf<InferBehaviorConfig<typeof persist>>().toEqualTypeOf<{ saveEvery?: number }>();
+  });
+});
+
+describe('InferBehavior* with generic behaviors', () => {
+  it('infers constraint types from generic behaviors', () => {
+    expectTypeOf<InferBehaviorState<typeof timer>>().toEqualTypeOf<TimerState>();
+    expectTypeOf<InferBehaviorConfig<typeof timer>>().toEqualTypeOf<TimerConfig>();
   });
 });
 
 // =============================================================================
-// ResolveFeature* — multi-feature composition inference
+// ResolveBehavior* — multi-behavior composition inference
 // =============================================================================
 
-describe('ResolveFeatureState', () => {
-  it('intersects state from multiple features', () => {
-    type Features = [typeof counter, typeof render, typeof persist];
+describe('ResolveBehaviorState', () => {
+  it('intersects state from multiple behaviors', () => {
+    type Behaviors = [typeof counter, typeof render, typeof persist];
     // All three expect { count?: number }, intersection is the same
-    expectTypeOf<ResolveFeatureState<Features>>().toEqualTypeOf<{ count?: number }>();
+    expectTypeOf<ResolveBehaviorState<Behaviors>>().toEqualTypeOf<{ count?: number }>();
   });
 
   it('intersects different state shapes', () => {
-    const featureA = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const featureB = (_deps: { state: Signal<{ label?: string }> }) => {};
-    const engine = createComposition([featureA, featureB]);
+    const behaviorA = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const behaviorB = (_deps: { state: Signal<{ label?: string }> }) => {};
+    const engine = createComposition([behaviorA, behaviorB]);
     expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
   });
 });
 
-describe('ResolveFeatureOwners', () => {
-  it('resolves owners from mixed features (some without owners)', () => {
+describe('ResolveBehaviorOwners', () => {
+  it('resolves owners from mixed behaviors (some without owners)', () => {
     // counter has no owners, render has renderElement
-    type Features = [typeof counter, typeof render];
+    type Behaviors = [typeof counter, typeof render];
     // object & { renderElement?: HTMLElement } should simplify
-    expectTypeOf<ResolveFeatureOwners<Features>>().toExtend<{ renderElement?: HTMLElement }>();
+    expectTypeOf<ResolveBehaviorOwners<Behaviors>>().toExtend<{ renderElement?: HTMLElement }>();
   });
 });
 
-describe('ResolveFeatureConfig', () => {
-  it('intersects config from multiple features', () => {
+describe('ResolveBehaviorConfig', () => {
+  it('intersects config from multiple behaviors', () => {
     const engine = createComposition([counter, render, persist], {
       config: { interval: 250, defaultText: '--', saveEvery: 5 },
     });
@@ -155,15 +155,15 @@ describe('ResolveFeatureConfig', () => {
 // =============================================================================
 
 describe('createComposition', () => {
-  describe('single feature', () => {
-    it('infers state type from a single feature', () => {
+  describe('single behavior', () => {
+    it('infers state type from a single behavior', () => {
       const engine = createComposition([counter], {
         config: { interval: 250 },
       });
       expectTypeOf(engine.state.get()).toEqualTypeOf<{ count?: number }>();
     });
 
-    it('infers types from an inline arrow feature', () => {
+    it('infers types from an inline arrow behavior', () => {
       const engine = createComposition([
         ({ state }: { state: Signal<{ value?: string }> }) => {
           update(state, { value: 'hello' });
@@ -173,8 +173,8 @@ describe('createComposition', () => {
     });
   });
 
-  describe('feature array', () => {
-    it('infers combined state from multiple features', () => {
+  describe('behavior array', () => {
+    it('infers combined state from multiple behaviors', () => {
       const engine = createComposition([counter, render, persist], {
         initialState: { count: 0 },
         config: { interval: 250, defaultText: '--', saveEvery: 5 },
@@ -185,11 +185,11 @@ describe('createComposition', () => {
       expectTypeOf(engine.owners.get()).toExtend<{ renderElement?: HTMLElement }>();
     });
 
-    it('infers combined state from features with different state shapes', () => {
-      const featureA = (_deps: { state: Signal<{ count?: number }> }) => {};
-      const featureB = (_deps: { state: Signal<{ label?: string }> }) => {};
+    it('infers combined state from behaviors with different state shapes', () => {
+      const behaviorA = (_deps: { state: Signal<{ count?: number }> }) => {};
+      const behaviorB = (_deps: { state: Signal<{ label?: string }> }) => {};
 
-      const engine = createComposition([featureA, featureB]);
+      const engine = createComposition([behaviorA, behaviorB]);
       expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
     });
 
@@ -203,8 +203,8 @@ describe('createComposition', () => {
     });
   });
 
-  describe('generic features', () => {
-    it('infers constraint types from generic features', () => {
+  describe('generic behaviors', () => {
+    it('infers constraint types from generic behaviors', () => {
       const engine = createComposition([timer], {
         config: { tickRate: 500 },
       });
@@ -217,8 +217,8 @@ describe('createComposition', () => {
     it('allows update() with undefined for optional state fields', () => {
       const engine = createComposition([counter]);
 
-      // Features declare { count?: number } — resetting to undefined is valid
-      // without the feature needing to declare | undefined explicitly.
+      // Behaviors declare { count?: number } — resetting to undefined is valid
+      // without the behavior needing to declare | undefined explicitly.
       update(engine.state, { count: undefined });
       expectTypeOf(engine.state.get().count).toEqualTypeOf<number | undefined>();
     });
@@ -235,5 +235,5 @@ describe('createComposition', () => {
   });
 
   // Type error enforcement tests (@ts-expect-error for wrong types, conflicting
-  // features, etc.) live in engine-types.test-d.ts and run via vitest typecheck.
+  // behaviors, etc.) live in engine-types.test-d.ts and run via vitest typecheck.
 });

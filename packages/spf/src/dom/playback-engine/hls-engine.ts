@@ -28,15 +28,15 @@ import { type Composition, createComposition } from './engine';
 /**
  * State shape for the HLS playback engine.
  *
- * This is the union of all state required by the features composed into
- * the HLS engine. Each feature declares its own state interface; this
+ * This is the union of all state required by the behaviors composed into
+ * the HLS engine. Each behavior declares its own state interface; this
  * type satisfies all of them.
  */
 export interface HlsPlaybackEngineState {
   // `any` is intentional: the presentation field transitions from unresolved
-  // ({ url: string }) to resolved (Presentation) at runtime. Individual features
+  // ({ url: string }) to resolved (Presentation) at runtime. Individual behaviors
   // declare narrower constraints and narrow the type themselves. Using a union
-  // here would break Signal invariance against the feature interfaces.
+  // here would break Signal invariance against the behavior interfaces.
   presentation?: any;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
@@ -51,7 +51,7 @@ export interface HlsPlaybackEngineState {
 /**
  * Owners shape for the HLS playback engine.
  *
- * Platform objects and actor references managed by HLS features.
+ * Platform objects and actor references managed by HLS behaviors.
  */
 export interface HlsPlaybackEngineOwners {
   mediaElement?: HTMLMediaElement | undefined;
@@ -68,8 +68,8 @@ export interface HlsPlaybackEngineOwners {
 /**
  * Configuration for the HLS playback engine.
  *
- * Each option is consumed by the appropriate feature — the engine itself
- * has no config beyond what its features read.
+ * Each option is consumed by the appropriate behavior — the engine itself
+ * has no config beyond what its behaviors read.
  */
 export interface HlsPlaybackEngineConfig {
   initialBandwidth?: number;
@@ -79,7 +79,7 @@ export interface HlsPlaybackEngineConfig {
   enableDefaultTrack?: boolean;
 }
 
-/** Shorthand for the deps shape used by HLS engine features. */
+/** Shorthand for the deps shape used by HLS engine behaviors. */
 type Deps = {
   state: Signal<HlsPlaybackEngineState>;
   owners: Signal<HlsPlaybackEngineOwners>;
@@ -89,9 +89,9 @@ type Deps = {
 // ============================================================================
 // Thin media-type wrappers
 //
-// Features parameterized by media type get thin wrappers that close over
+// Behaviors parameterized by media type get thin wrappers that close over
 // the type value, so the engine composition reads as a flat list of
-// features without inline config.
+// behaviors without inline config.
 // ============================================================================
 
 const loadVideoSegments = (deps: Deps) => loadSegments(deps, { type: 'video' });
@@ -102,10 +102,10 @@ const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as 
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
 
 // ============================================================================
-// Config-aware feature wrappers
+// Config-aware behavior wrappers
 //
-// Features that read from engine config get wrappers that thread the
-// relevant config fields into the feature's own config parameter.
+// Behaviors that read from engine config get wrappers that thread the
+// relevant config fields into the behavior's own config parameter.
 // ============================================================================
 
 const selectVideoTrackFromConfig = ({ config, ...deps }: Deps) =>
@@ -142,7 +142,7 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
 /**
  * Create an HLS playback engine.
  *
- * Composes SPF features into a reactive pipeline for HLS playback over MSE:
+ * Composes SPF behaviors into a reactive pipeline for HLS playback over MSE:
  * manifest resolution, track selection, ABR, segment loading, and
  * end-of-stream coordination.
  *

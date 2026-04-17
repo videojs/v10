@@ -5,7 +5,7 @@ import { update } from '../../../core/signals/primitives';
 import { createComposition } from '../engine';
 
 // =============================================================================
-// Test features
+// Test behaviors
 // =============================================================================
 
 function counter({ state, config }: { state: Signal<{ count?: number }>; config: { interval?: number } }) {
@@ -69,31 +69,31 @@ describe('createComposition type errors', () => {
     createComposition([counter], { config: { interval: 'fast' } });
   });
 
-  it('errors when composing features with conflicting required state types', () => {
+  it('errors when composing behaviors with conflicting required state types', () => {
     const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
     const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
 
-    // @ts-expect-error — features have incompatible state: { value: number } vs { value: string }
+    // @ts-expect-error — behaviors have incompatible state: { value: number } vs { value: string }
     createComposition([expectsNumber, expectsString]);
   });
 
-  it('errors when composing features with conflicting optional state types', () => {
+  it('errors when composing behaviors with conflicting optional state types', () => {
     const expectsNumber = (_deps: { state: Signal<{ count?: number }> }) => {};
     const expectsString = (_deps: { state: Signal<{ count?: string }> }) => {};
 
-    // @ts-expect-error — features have incompatible state: { count?: number } vs { count?: string }
+    // @ts-expect-error — behaviors have incompatible state: { count?: number } vs { count?: string }
     createComposition([expectsNumber, expectsString]);
   });
 
-  it('errors when composing features with conflicting config types', () => {
+  it('errors when composing behaviors with conflicting config types', () => {
     const expectsNumber = (_deps: { config: { interval?: number } }) => {};
     const expectsString = (_deps: { config: { interval?: string } }) => {};
 
-    // @ts-expect-error — features have incompatible config: { interval?: number } vs { interval?: string }
+    // @ts-expect-error — behaviors have incompatible config: { interval?: number } vs { interval?: string }
     createComposition([expectsNumber, expectsString]);
   });
 
-  it('errors when composing features with incompatible owners class types', () => {
+  it('errors when composing behaviors with incompatible owners class types', () => {
     const expectsCanvas = (_deps: { owners: Signal<{ el?: HTMLCanvasElement }> }) => {};
     const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
 
@@ -102,10 +102,10 @@ describe('createComposition type errors', () => {
   });
 
   // =========================================================================
-  // Non-conflicts — features that omit channels should compose freely
+  // Non-conflicts — behaviors that omit channels should compose freely
   // =========================================================================
 
-  it('allows composing features with owners in a subtype relationship', () => {
+  it('allows composing behaviors with owners in a subtype relationship', () => {
     const expectsElement = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
     const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
 
@@ -113,7 +113,7 @@ describe('createComposition type errors', () => {
     createComposition([expectsElement, expectsVideo]);
   });
 
-  it('allows composing features that omit owners', () => {
+  it('allows composing behaviors that omit owners', () => {
     const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
     const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: HTMLElement }> }) => {};
 
@@ -121,7 +121,7 @@ describe('createComposition type errors', () => {
     createComposition([stateOnly, withOwners]);
   });
 
-  it('allows composing features that omit state', () => {
+  it('allows composing behaviors that omit state', () => {
     const configOnly = (_deps: { config: { interval?: number } }) => {};
     const withState = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
 
@@ -129,7 +129,7 @@ describe('createComposition type errors', () => {
     createComposition([configOnly, withState]);
   });
 
-  it('allows composing features that omit config', () => {
+  it('allows composing behaviors that omit config', () => {
     const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
     const withConfig = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
 
@@ -137,12 +137,12 @@ describe('createComposition type errors', () => {
     createComposition([stateOnly, withConfig]);
   });
 
-  it('allows composing features where each omits different channels', () => {
+  it('allows composing behaviors where each omits different channels', () => {
     const onlyState = (_deps: { state: Signal<{ count?: number }> }) => {};
     const onlyOwners = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
     const onlyConfig = (_deps: { config: { interval?: number } }) => {};
 
-    // No error — features with disjoint channels don't conflict
+    // No error — behaviors with disjoint channels don't conflict
     createComposition([onlyState, onlyOwners, onlyConfig]);
   });
 
@@ -151,18 +151,18 @@ describe('createComposition type errors', () => {
   // =========================================================================
 
   it('allows resetting optional state fields to undefined', () => {
-    // Features declare { count?: number } — the engine allows resetting to
-    // undefined without requiring the feature to declare | undefined.
-    const feature = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const engine = createComposition([feature]);
+    // Behaviors declare { count?: number } — the engine allows resetting to
+    // undefined without requiring the behavior to declare | undefined.
+    const behavior = (_deps: { state: Signal<{ count?: number }> }) => {};
+    const engine = createComposition([behavior]);
 
     // No error — optional fields can be reset to undefined
     update(engine.state, { count: undefined });
   });
 
   it('allows resetting optional owners fields to undefined', () => {
-    const feature = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
-    const engine = createComposition([feature]);
+    const behavior = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const engine = createComposition([behavior]);
 
     // No error — clearing an owner (e.g. on source switch)
     update(engine.owners, { el: undefined });
