@@ -367,6 +367,7 @@ export class GoogleCastProvider {
   }
 
   onCastStateChanged() {
+    if (!this.#isInit) return;
     const castState = castContext()!.getCastState();
 
     if (castElementRef.has(this.media)) {
@@ -388,6 +389,7 @@ export class GoogleCastProvider {
   }
 
   async onSessionStateChanged() {
+    if (!this.#isInit) return;
     const { SESSION_RESUMED } = cf!.SessionState;
     if (castContext()!.getSessionState() === SESSION_RESUMED) {
       if (this.media.castSrc === currentMedia()?.media?.contentId) {
@@ -408,6 +410,8 @@ export class GoogleCastProvider {
   }
 
   destroy() {
+    providerInstances.delete(this);
+
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
     this.media?.textTracks?.removeEventListener('change', this.#onTextTrackChange);
 

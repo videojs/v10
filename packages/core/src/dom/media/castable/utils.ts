@@ -24,20 +24,33 @@ export function removeRemoteListeners(
 
 const HLS_RESPONSE_HEADERS = ['application/x-mpegURL', 'application/vnd.apple.mpegurl', 'audio/mpegurl'];
 
-export const IterableWeakSet: { new <T extends WeakKey>(): Set<T> } = globalThis.WeakRef
-  ? (class<T extends WeakKey> extends Set<WeakRef<T>> {
-      add(el: WeakRef<T>): this {
-        super.add(new WeakRef(el as unknown as T) as unknown as WeakRef<T>);
-        return this;
-      }
-      forEach(fn: (value: WeakRef<T>, value2: WeakRef<T>, set: Set<WeakRef<T>>) => void): void {
-        super.forEach((ref) => {
-          const value = ref.deref();
-          if (value) fn(value as unknown as WeakRef<T>, value as unknown as WeakRef<T>, this);
-        });
-      }
-    } as unknown as { new <T extends WeakKey>(): Set<T> })
-  : (Set as unknown as { new <T extends WeakKey>(): Set<T> });
+export class IterableWeakSet<T extends WeakKey> {
+  readonly #refs = new Set<WeakRef<T>>();
+  readonly #seen = new WeakMap<T, WeakRef<T>>();
+
+  add(value: T): this {
+    if (this.#seen.has(value)) return this;
+    const ref = new WeakRef(value);
+    this.#seen.set(value, ref);
+    this.#refs.add(ref);
+    return this;
+  }
+
+  delete(value: T): boolean {
+    const ref = this.#seen.get(value);
+    if (!ref) return false;
+    this.#seen.delete(value);
+    return this.#refs.delete(ref);
+  }
+
+  forEach(fn: (value: T) => void): void {
+    for (const ref of this.#refs) {
+      const value = ref.deref();
+      if (value) fn(value);
+      else this.#refs.delete(ref);
+    }
+  }
+}
 
 export function onCastApiAvailable(callback: () => void) {
   if (!globalThis.chrome?.cast?.isAvailable) {
