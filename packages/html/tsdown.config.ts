@@ -1,4 +1,4 @@
-import { globSync, readFileSync } from 'node:fs';
+import { globSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -7,50 +7,11 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 
-type BuildMode = 'dev' | 'default' | 'server';
+type BuildMode = 'dev' | 'default';
 
-const buildModes: BuildMode[] = ['dev', 'default', 'server'];
-
-const isServer = (mode: BuildMode) => mode === 'server';
+const buildModes: BuildMode[] = ['dev', 'default'];
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
-
-/** Stub `*.css?inline` imports with empty strings for the server build. */
-function stubCssInlinePlugin() {
-  return {
-    name: 'stub-css-inline',
-    resolveId(source: string) {
-      if (source.endsWith('.css?inline')) return { id: `\0stub-css:${source}`, external: false };
-    },
-    load(id: string) {
-      if (id.startsWith('\0stub-css:')) return 'export default ""';
-    },
-  };
-}
-
-/**
- * Stub all `define/*` modules for the server build.
- *
- * Reads each source file, extracts `export class` names, and emits stub
- * classes so that preset modules can still re-export them by name.
- * Everything else (custom element registration, templates, styles) is dropped.
- */
-function stubDefinePlugin() {
-  const defineDir = resolve(dirname(fileURLToPath(import.meta.url)), 'src/define');
-  return {
-    name: 'stub-define',
-    load(id: string) {
-      if (!id.startsWith(defineDir) || id === defineDir) return;
-
-      const source = readFileSync(id, 'utf8');
-      const classNames = [...source.matchAll(/export class (\w+)/g)].map((m) => m[1]);
-
-      if (classNames.length === 0) return 'export {}';
-
-      return classNames.map((name) => `export class ${name} {}`).join('\n');
-    },
-  };
-}
 
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts')
@@ -74,36 +35,32 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     ...defineEntries,
     ...presetEntries,
   },
-  platform: isServer(mode) ? 'node' : 'browser',
+  platform: 'browser',
   format: 'es',
   sourcemap: true,
   clean: true,
   hash: false,
   unbundle: true,
-  outExtensions: isServer(mode) ? () => ({ js: '.js', dts: '.d.ts' }) : undefined,
   treeshake: {
     // The sideEffects field in package.json uses dist paths, but the build
     // runs against source. Ensure define/* modules (which register custom
     // elements as a side effect) are never tree-shaken from skin bundles.
     moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
   },
-  noExternal: isServer(mode) ? [] : [/^@videojs\/icons/, /^@videojs\/skins/],
+  noExternal: [/^@videojs\/icons/, /^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
   outDir: `dist/${mode}`,
   define: {
-    __DEV__: mode === 'dev' || isServer(mode) ? 'true' : 'false',
-    __BROWSER__: isServer(mode) ? 'false' : 'true',
+    __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
-  plugins: isServer(mode)
-    ? [stubCssInlinePlugin(), stubDefinePlugin()]
-    : [
-        copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
-        inlineCssPlugin({ skinsDir, minify: mode !== 'dev' }),
-        inlineTemplatePlugin({ minify: mode !== 'dev' }),
-      ],
+  plugins: [
+    copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
+    inlineCssPlugin({ skinsDir, minify: mode !== 'dev' }),
+    inlineTemplatePlugin({ minify: mode !== 'dev' }),
+  ],
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

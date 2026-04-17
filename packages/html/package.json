@@ -23,86 +23,56 @@
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/index.js",
-        "default": "./dist/default/index.js"
-      },
-      "default": "./dist/server/index.js"
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
     },
     "./video": {
       "types": "./dist/dev/presets/video.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/video.js",
-        "default": "./dist/default/presets/video.js"
-      },
-      "default": "./dist/server/presets/video.js"
+      "development": "./dist/dev/presets/video.js",
+      "default": "./dist/default/presets/video.js"
     },
     "./video/*.css": "./dist/default/define/video/*.css",
     "./video/*": {
       "types": "./dist/dev/define/video/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/video/*.js",
-        "default": "./dist/default/define/video/*.js"
-      },
-      "default": "./dist/server/define/video/*.js"
+      "development": "./dist/dev/define/video/*.js",
+      "default": "./dist/default/define/video/*.js"
     },
     "./audio": {
       "types": "./dist/dev/presets/audio.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/audio.js",
-        "default": "./dist/default/presets/audio.js"
-      },
-      "default": "./dist/server/presets/audio.js"
+      "development": "./dist/dev/presets/audio.js",
+      "default": "./dist/default/presets/audio.js"
     },
     "./audio/*.css": "./dist/default/define/audio/*.css",
     "./audio/*": {
       "types": "./dist/dev/define/audio/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/audio/*.js",
-        "default": "./dist/default/define/audio/*.js"
-      },
-      "default": "./dist/server/define/audio/*.js"
+      "development": "./dist/dev/define/audio/*.js",
+      "default": "./dist/default/define/audio/*.js"
     },
     "./background": {
       "types": "./dist/dev/presets/background.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/background.js",
-        "default": "./dist/default/presets/background.js"
-      },
-      "default": "./dist/server/presets/background.js"
+      "development": "./dist/dev/presets/background.js",
+      "default": "./dist/default/presets/background.js"
     },
     "./background/*.css": "./dist/default/define/background/*.css",
     "./background/*": {
       "types": "./dist/dev/define/background/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/background/*.js",
-        "default": "./dist/default/define/background/*.js"
-      },
-      "default": "./dist/server/define/background/*.js"
+      "development": "./dist/dev/define/background/*.js",
+      "default": "./dist/default/define/background/*.js"
     },
     "./ui/*": {
       "types": "./dist/dev/define/ui/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/ui/*.js",
-        "default": "./dist/default/define/ui/*.js"
-      },
-      "default": "./dist/server/define/ui/*.js"
+      "development": "./dist/dev/define/ui/*.js",
+      "default": "./dist/default/define/ui/*.js"
     },
     "./feature/*": {
       "types": "./dist/dev/define/feature/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/feature/*.js",
-        "default": "./dist/default/define/feature/*.js"
-      },
-      "default": "./dist/server/define/feature/*.js"
+      "development": "./dist/dev/define/feature/*.js",
+      "default": "./dist/default/define/feature/*.js"
     },
     "./media/*": {
       "types": "./dist/dev/define/media/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/media/*.js",
-        "default": "./dist/default/define/media/*.js"
-      },
-      "default": "./dist/server/define/media/*.js"
+      "development": "./dist/dev/define/media/*.js",
+      "default": "./dist/default/define/media/*.js"
     },
     "./cdn/media/*": {
       "types": "./cdn/media/*.dev.d.ts",
@@ -117,11 +87,8 @@
     "./*.css": "./dist/default/define/*.css",
     "./*": {
       "types": "./dist/dev/define/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/define/*.js",
-        "default": "./dist/default/define/*.js"
-      },
-      "default": "./dist/server/define/*.js"
+      "development": "./dist/dev/define/*.js",
+      "default": "./dist/default/define/*.js"
     }
   },
   "scripts": {

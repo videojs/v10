@@ -63,7 +63,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
   function setupDocumentListeners(): void {
     cleanupDocumentListeners();
 
-    if (!__BROWSER__) return;
+    if (typeof document === 'undefined') return;
 
     docAbort = new AbortController();
     const { signal } = docAbort;

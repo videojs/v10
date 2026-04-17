@@ -19,70 +19,46 @@
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/index.js",
-        "default": "./dist/default/index.js"
-      },
-      "default": "./dist/server/index.js"
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
     },
     "./media/*": {
       "types": "./dist/dev/media/*/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/media/*/index.js",
-        "default": "./dist/default/media/*/index.js"
-      },
-      "default": "./dist/server/media/*/index.js"
+      "development": "./dist/dev/media/*/index.js",
+      "default": "./dist/default/media/*/index.js"
     },
     "./video": {
       "types": "./dist/dev/presets/video/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/video/index.js",
-        "default": "./dist/default/presets/video/index.js"
-      },
-      "default": "./dist/server/presets/video/index.js"
+      "development": "./dist/dev/presets/video/index.js",
+      "default": "./dist/default/presets/video/index.js"
     },
     "./video/*.css": "./dist/default/presets/video/*.css",
     "./video/*": {
       "types": "./dist/dev/presets/video/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/video/*.js",
-        "default": "./dist/default/presets/video/*.js"
-      },
-      "default": "./dist/server/presets/video/*.js"
+      "development": "./dist/dev/presets/video/*.js",
+      "default": "./dist/default/presets/video/*.js"
     },
     "./audio": {
       "types": "./dist/dev/presets/audio/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/audio/index.js",
-        "default": "./dist/default/presets/audio/index.js"
-      },
-      "default": "./dist/server/presets/audio/index.js"
+      "development": "./dist/dev/presets/audio/index.js",
+      "default": "./dist/default/presets/audio/index.js"
     },
     "./audio/*.css": "./dist/default/presets/audio/*.css",
     "./audio/*": {
       "types": "./dist/dev/presets/audio/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/audio/*.js",
-        "default": "./dist/default/presets/audio/*.js"
-      },
-      "default": "./dist/server/presets/audio/*.js"
+      "development": "./dist/dev/presets/audio/*.js",
+      "default": "./dist/default/presets/audio/*.js"
     },
     "./background": {
       "types": "./dist/dev/presets/background/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/background/index.js",
-        "default": "./dist/default/presets/background/index.js"
-      },
-      "default": "./dist/server/presets/background/index.js"
+      "development": "./dist/dev/presets/background/index.js",
+      "default": "./dist/default/presets/background/index.js"
     },
     "./background/*.css": "./dist/default/presets/background/*.css",
     "./background/*": {
       "types": "./dist/dev/presets/background/*.d.ts",
-      "browser": {
-        "development": "./dist/dev/presets/background/*.js",
-        "default": "./dist/default/presets/background/*.js"
-      },
-      "default": "./dist/server/presets/background/*.js"
+      "development": "./dist/dev/presets/background/*.js",
+      "default": "./dist/default/presets/background/*.js"
     }
   },
   "scripts": {

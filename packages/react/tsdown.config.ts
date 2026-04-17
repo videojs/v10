@@ -4,34 +4,30 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 
-type BuildMode = 'dev' | 'default' | 'server';
+type BuildMode = 'dev' | 'default';
 
-const buildModes: BuildMode[] = ['dev', 'default', 'server'];
-
-const isServer = (mode: BuildMode) => mode === 'server';
+const buildModes: BuildMode[] = ['dev', 'default'];
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: 'src/**/index.{ts,tsx}',
-  platform: isServer(mode) ? 'node' : 'browser',
+  platform: 'browser',
   format: 'es',
   sourcemap: true,
   clean: true,
   hash: false,
   unbundle: true,
-  outExtensions: isServer(mode) ? () => ({ js: '.js', dts: '.d.ts' }) : undefined,
-  noExternal: isServer(mode) ? [] : [/^@videojs\/skins/],
+  noExternal: [/^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
   outDir: `dist/${mode}`,
   define: {
-    __DEV__: mode === 'dev' || isServer(mode) ? 'true' : 'false',
-    __BROWSER__: isServer(mode) ? 'false' : 'true',
+    __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
-  plugins: isServer(mode) ? [] : [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` })],
+  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` })],
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

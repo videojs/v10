@@ -2,17 +2,17 @@ export type ShadowStyle = CSSStyleSheet | string;
 
 /** Inject a `<style>` tag into `document.head` once (idempotent by `id`). */
 export function ensureGlobalStyle(id: string, css: string): void {
-  if (!__BROWSER__) return;
-  if (document.getElementById(id)) return;
+  const doc = globalThis.document;
+  if (!doc || doc.getElementById(id)) return;
 
-  const style = document.createElement('style');
+  const style = doc.createElement('style');
   style.id = id;
   style.textContent = css;
-  document.head.appendChild(style);
+  doc.head.appendChild(style);
 }
 
 function isConstructableStyleSheet(value: ShadowStyle): value is CSSStyleSheet {
-  return __BROWSER__ && typeof CSSStyleSheet !== 'undefined' && value instanceof CSSStyleSheet;
+  return typeof globalThis.CSSStyleSheet !== 'undefined' && value instanceof globalThis.CSSStyleSheet;
 }
 
 function getStyleText(style: ShadowStyle): string {
@@ -25,11 +25,11 @@ function getStyleText(style: ShadowStyle): string {
 
 /** Create a constructable stylesheet when available, otherwise return raw CSS. */
 export function createShadowStyle(css: string): ShadowStyle {
-  if (!__BROWSER__ || typeof CSSStyleSheet === 'undefined') {
+  if (typeof globalThis.CSSStyleSheet === 'undefined') {
     return css;
   }
 
-  const sheet = new CSSStyleSheet();
+  const sheet = new globalThis.CSSStyleSheet();
   sheet.replaceSync(css);
   return sheet;
 }

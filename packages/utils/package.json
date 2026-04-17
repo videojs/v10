@@ -17,8 +17,7 @@
     },
     "./dom": {
       "types": "./dist/dom.d.ts",
-      "browser": "./dist/dom.js",
-      "default": "./dist/server/dom.js"
+      "default": "./dist/dom.js"
     },
     "./events": {
       "types": "./dist/events.d.ts",

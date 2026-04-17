@@ -26,9 +26,6 @@ importers:
       '@commitlint/format':
         specifier: ^20.0.0
         version: 20.4.3
-      '@edge-runtime/vm':
-        specifier: ^5.0.0
-        version: 5.0.0
       '@types/node':
         specifier: ^22.18.6
         version: 22.19.15
@@ -231,7 +228,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/core:
     dependencies:
@@ -265,7 +262,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/element:
     dependencies:
@@ -284,7 +281,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/html:
     dependencies:
@@ -324,7 +321,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/icons:
     dependencies:
@@ -401,7 +398,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/skins:
     dependencies:
@@ -448,7 +445,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/store:
     dependencies:
@@ -482,7 +479,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   packages/utils:
     devDependencies:
@@ -494,7 +491,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   site:
     dependencies:
@@ -684,7 +681,7 @@ importers:
         version: 4.5.0(rollup@4.59.0)(typescript@6.0.2)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
 
 packages:
 
@@ -1253,14 +1250,6 @@ packages:
         optional: true
       search-insights:
         optional: true
-
-  '@edge-runtime/primitives@6.0.0':
-    resolution: {integrity: sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA==}
-    engines: {node: '>=18'}
-
-  '@edge-runtime/vm@5.0.0':
-    resolution: {integrity: sha512-NKBGBSIKUG584qrS1tyxVpX/AKJKQw5HgjYEnPLC0QsTw79JrGn+qUr8CXFb955Iy7GUdiiUv1rJ6JBGvaKb6w==}
-    engines: {node: '>=18'}
 
   '@electric-sql/pglite@0.3.15':
     resolution: {integrity: sha512-Cj++n1Mekf9ETfdc16TlDi+cDDQF0W7EcbyRHYOAeZdsAe8M/FJg18itDTSwyHfar2WIezawM9o0EKaRGVKygQ==}
@@ -8847,12 +8836,6 @@ snapshots:
       - '@algolia/client-search'
       - algoliasearch
 
-  '@edge-runtime/primitives@6.0.0': {}
-
-  '@edge-runtime/vm@5.0.0':
-    dependencies:
-      '@edge-runtime/primitives': 6.0.0
-
   '@electric-sql/pglite@0.3.15': {}
 
   '@emmetio/abbreviation@2.3.3':
@@ -11083,7 +11066,7 @@ snapshots:
       '@vitest/mocker': 4.1.0(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
       playwright: 1.59.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -11097,7 +11080,7 @@ snapshots:
       '@vitest/mocker': 4.1.0(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       playwright: 1.59.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -11111,7 +11094,7 @@ snapshots:
       '@vitest/mocker': 4.1.2(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       playwright: 1.59.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -11127,7 +11110,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
       ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
@@ -11145,7 +11128,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
@@ -11162,7 +11145,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
@@ -11182,7 +11165,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
     optionalDependencies:
       '@vitest/browser': 4.1.0(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
 
@@ -11198,7 +11181,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
     optionalDependencies:
       '@vitest/browser': 4.1.0(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
 
@@ -11268,7 +11251,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
 
   '@vitest/utils@4.1.0':
     dependencies:
@@ -16050,7 +16033,7 @@ snapshots:
     optionalDependencies:
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
 
-  vitest@4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
+  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -16073,7 +16056,6 @@ snapshots:
       vite: 8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@edge-runtime/vm': 5.0.0
       '@opentelemetry/api': 1.9.1
       '@types/node': 24.12.2
       '@vitest/browser-playwright': 4.1.0(playwright@1.59.1)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
@@ -16083,7 +16065,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)):
+  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -16106,7 +16088,6 @@ snapshots:
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@edge-runtime/vm': 5.0.0
       '@opentelemetry/api': 1.9.1
       '@types/node': 24.12.2
       '@vitest/browser-playwright': 4.1.0(playwright@1.59.1)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
@@ -16116,7 +16097,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
+  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -16139,7 +16120,6 @@ snapshots:
       vite: 8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@edge-runtime/vm': 5.0.0
       '@opentelemetry/api': 1.9.1
       '@types/node': 24.12.2
       '@vitest/browser-playwright': 4.1.0(playwright@1.59.1)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
@@ -16149,7 +16129,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.0(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
+  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -16172,7 +16152,6 @@ snapshots:
       vite: 8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@edge-runtime/vm': 5.0.0
       '@opentelemetry/api': 1.9.1
       '@types/node': 24.12.2
       '@vitest/browser-playwright': 4.1.2(playwright@1.59.1)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
