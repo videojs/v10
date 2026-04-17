@@ -1,8 +1,6 @@
 import type { RemotePlaybackState } from './remote-playback';
 import type { CastableMediaElement } from './types';
-import type { RemotePlayerListener } from './utils';
 import {
-  addRemoteListeners,
   castContext,
   currentMedia,
   currentSession,
@@ -13,10 +11,11 @@ import {
   isHls,
   NotSupportedError,
   onCastApiAvailable,
-  removeRemoteListeners,
   setCastOptions,
   setPlaybackRate,
 } from './utils';
+
+type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
 
 export type GoogleCastProviderHooks = {
   setState: (next: RemotePlaybackState) => void;
@@ -66,6 +65,7 @@ export class GoogleCastProvider {
   #local: LocalPlayer;
   #remote!: cast.framework.RemotePlayer;
   #remoteListeners!: Record<string, RemotePlayerListener>;
+  #listenersAttached = false;
   #playbackRate = 1;
   #localPaused = false;
   #onTextTrackChange = () => this.#updateRemoteTextTrack();
@@ -92,8 +92,8 @@ export class GoogleCastProvider {
   }
 
   hasDevicesAvailable() {
-    const castState = castContext()?.getCastState();
-    return Boolean(castState && castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE);
+    const state = castContext()?.getCastState();
+    return !!state && state !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
   }
 
   async requestCastSession() {
@@ -137,29 +137,23 @@ export class GoogleCastProvider {
     mediaInfo.customData = (this.media.castCustomData as object) ?? null;
 
     const subtitles = [...this.media.querySelectorAll('track')].filter(
-      (el): el is HTMLTrackElement =>
-        el instanceof HTMLTrackElement && !!el.src && (el.kind === 'subtitles' || el.kind === 'captions')
+      (el) => el.src && (el.kind === 'subtitles' || el.kind === 'captions')
     );
 
+    const { Track, TrackType, TextTrackType } = chrome.cast.media;
     const activeTrackIds: number[] = [];
-    let textTrackIdCount = 0;
 
     if (subtitles.length) {
-      mediaInfo.tracks = subtitles.map((trackEl) => {
-        const trackId = ++textTrackIdCount;
-        if (activeTrackIds.length === 0 && trackEl.track.mode === 'showing') {
-          activeTrackIds.push(trackId);
-        }
+      mediaInfo.tracks = subtitles.map((el, i) => {
+        const trackId = i + 1;
+        if (!activeTrackIds.length && el.track.mode === 'showing') activeTrackIds.push(trackId);
 
-        const track = new chrome.cast.media.Track(trackId, chrome.cast.media.TrackType.TEXT);
-        track.trackContentId = trackEl.src;
+        const track = new Track(trackId, TrackType.TEXT);
+        track.trackContentId = el.src;
         track.trackContentType = 'text/vtt';
-        track.subtype =
-          trackEl.kind === 'captions'
-            ? chrome.cast.media.TextTrackType.CAPTIONS
-            : chrome.cast.media.TextTrackType.SUBTITLES;
-        track.name = trackEl.label;
-        track.language = trackEl.srclang;
+        track.subtype = el.kind === 'captions' ? TextTrackType.CAPTIONS : TextTrackType.SUBTITLES;
+        track.name = el.label;
+        track.language = el.srclang;
         return track;
       });
     }
@@ -172,18 +166,17 @@ export class GoogleCastProvider {
     mediaInfo.metadata.images = [new chrome.cast.Image(this.media.poster)];
 
     if (await isHls(this.media.castSrc)) {
-      if (!mediaInfo.contentType) {
-        mediaInfo.contentType = 'application/x-mpegURL';
-      }
+      mediaInfo.contentType ||= 'application/x-mpegURL';
 
-      const segmentFormat = await getPlaylistSegmentFormat(this.media.castSrc);
-      const isFragmentedMP4 = segmentFormat?.includes('m4s') || segmentFormat?.includes('mp4');
-      if (isFragmentedMP4) {
-        mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.FMP4;
-        mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.FMP4;
-      } else if (segmentFormat?.includes('ts')) {
-        mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.TS;
-        mediaInfo.hlsVideoSegmentFormat = chrome.cast.media.HlsVideoSegmentFormat.TS;
+      const fmt = (await getPlaylistSegmentFormat(this.media.castSrc)) ?? '';
+      const { HlsSegmentFormat: HS, HlsVideoSegmentFormat: HVS } = chrome.cast.media;
+
+      if (fmt.includes('m4s') || fmt.includes('mp4')) {
+        mediaInfo.hlsSegmentFormat = HS.FMP4;
+        mediaInfo.hlsVideoSegmentFormat = HVS.FMP4;
+      } else if (fmt.includes('ts')) {
+        mediaInfo.hlsSegmentFormat = HS.TS;
+        mediaInfo.hlsVideoSegmentFormat = HVS.TS;
       }
     }
 
@@ -330,32 +323,20 @@ export class GoogleCastProvider {
         this.media.dispatchEvent(new Event(this.isCasting && this.#remote.isPaused ? 'pause' : 'play'));
       },
       [cf.RemotePlayerEventType.PLAYER_STATE_CHANGED]: () => {
-        const playerState = this.isCasting ? this.#remote.playerState : undefined;
+        const PS = chrome.cast.media.PlayerState;
+        const state = this.isCasting ? this.#remote.playerState : undefined;
 
-        if (playerState !== chrome.cast.media.PlayerState.BUFFERING) {
-          this.#notifySeeked();
-        }
+        if (state !== PS.BUFFERING) this.#notifySeeked();
+        if (state === PS.PAUSED) return;
 
-        if (playerState === chrome.cast.media.PlayerState.PAUSED) {
+        if (state === PS.IDLE) {
+          const finished = currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED;
+          this.media.dispatchEvent(new Event(finished ? 'ended' : 'emptied'));
           return;
         }
 
-        if (playerState === chrome.cast.media.PlayerState.IDLE) {
-          const eventName = currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED ? 'ended' : 'emptied';
-          this.media.dispatchEvent(new Event(eventName));
-          return;
-        }
-
-        const eventName = (
-          {
-            [chrome.cast.media.PlayerState.PLAYING]: 'playing',
-            [chrome.cast.media.PlayerState.BUFFERING]: 'waiting',
-          } as Record<string, string>
-        )[playerState ?? ''];
-
-        if (eventName) {
-          this.media.dispatchEvent(new Event(eventName));
-        }
+        if (state === PS.PLAYING) this.media.dispatchEvent(new Event('playing'));
+        else if (state === PS.BUFFERING) this.media.dispatchEvent(new Event('waiting'));
       },
       [cf.RemotePlayerEventType.IS_MEDIA_LOADED_CHANGED]: async () => {
         if (!this.isCasting || !this.#remote.isMediaLoaded) return;
@@ -368,24 +349,14 @@ export class GoogleCastProvider {
 
   onCastStateChanged() {
     if (!this.#isInit) return;
-    const castState = castContext()!.getCastState();
+    const CS = cast.framework.CastState;
+    const state = castContext()!.getCastState();
 
-    if (castElementRef.has(this.media)) {
-      if (castState === cast.framework.CastState.CONNECTING) {
-        this.#hooks.setState?.('connecting');
-      }
+    if (this.isCasting && state === CS.CONNECTING) {
+      this.#hooks.setState?.('connecting');
     }
 
-    const isConnectable =
-      castState === cast.framework.CastState.NOT_CONNECTED ||
-      castState === cast.framework.CastState.CONNECTING ||
-      castState === cast.framework.CastState.CONNECTED;
-
-    if (isConnectable) {
-      this.#hooks.setAvailable?.(true);
-    } else if (!castState || castState === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-      this.#hooks.setAvailable?.(false);
-    }
+    this.#hooks.setAvailable?.(!!state && state !== CS.NO_DEVICES_AVAILABLE);
   }
 
   async onSessionStateChanged() {
@@ -395,7 +366,7 @@ export class GoogleCastProvider {
       if (this.media.castSrc === currentMedia()?.media?.contentId) {
         castElementRef.add(this.media);
 
-        addRemoteListeners(this.#remote.controller!, this.#remoteListeners);
+        this.#attachRemoteListeners();
 
         try {
           await getMediaStatus(new chrome.cast.media.GetStatusRequest());
@@ -405,21 +376,19 @@ export class GoogleCastProvider {
 
         this.#remoteListeners[cf!.RemotePlayerEventType.IS_PAUSED_CHANGED]!();
         this.#remoteListeners[cf!.RemotePlayerEventType.PLAYER_STATE_CHANGED]!();
+        this.media.dispatchEvent(new Event('ratechange'));
+
+        // TODO: sync remote enabled text track state to local text tracks
       }
     }
   }
 
   destroy() {
     providerInstances.delete(this);
-
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
-    this.media?.textTracks?.removeEventListener('change', this.#onTextTrackChange);
-
-    if (this.#remoteListeners && this.#remote?.controller) {
-      removeRemoteListeners(this.#remote.controller, this.#remoteListeners);
-    }
-
-    if (this.media) castElementRef.delete(this.media);
+    this.media.textTracks?.removeEventListener('change', this.#onTextTrackChange);
+    this.#detachRemoteListeners();
+    this.isCasting = false;
     this.#isInit = false;
   }
 
@@ -431,27 +400,46 @@ export class GoogleCastProvider {
     setCastOptions(this.media.castOptions);
   }
 
+  // CAF's RemotePlayerController does not deduplicate handlers, so we guard
+  // attach/detach with a flag to prevent duplicate event dispatches across
+  // cancel/retry and stop-casting flows.
   #attachRemoteListeners() {
-    addRemoteListeners(this.#remote.controller!, this.#remoteListeners);
+    if (this.#listenersAttached) return;
+    const controller = this.#remote?.controller;
+    if (!controller) return;
+
+    for (const [type, handler] of Object.entries(this.#remoteListeners)) {
+      controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
+    }
+    this.#listenersAttached = true;
+  }
+
+  #detachRemoteListeners() {
+    if (!this.#listenersAttached) return;
+    const controller = this.#remote?.controller;
+
+    if (controller) {
+      for (const [type, handler] of Object.entries(this.#remoteListeners)) {
+        controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
+      }
+    }
+    this.#listenersAttached = false;
   }
 
   #disconnect() {
-    if (!castElementRef.has(this.media)) return;
+    if (!this.isCasting) return;
 
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
-    removeRemoteListeners(this.#remote.controller!, this.#remoteListeners);
+    this.#detachRemoteListeners();
     this.seeking = false;
     this.#playbackRate = 1;
-
-    castElementRef.delete(this.media);
+    this.isCasting = false;
 
     this.media.muted = this.#remote.isMuted;
-    const savedState = this.#remote.savedPlayerState;
-    if (savedState) {
-      this.media.currentTime = savedState.currentTime;
-      if (savedState.isPaused === false) {
-        this.media.play();
-      }
+    const saved = this.#remote.savedPlayerState;
+    if (saved) {
+      this.media.currentTime = saved.currentTime;
+      if (saved.isPaused === false) this.media.play();
     }
   }
 
@@ -483,44 +471,28 @@ export class GoogleCastProvider {
   async #updateRemoteTextTrack() {
     if (!this.isCasting) return;
 
-    const remoteTracks = this.#remote.mediaInfo?.tracks ?? [];
-    const remoteSubtitles = remoteTracks.filter(({ type }) => type === chrome.cast.media.TrackType.TEXT);
+    const localSubs = [...this.media.textTracks].filter(({ kind }) => kind === 'subtitles' || kind === 'captions');
 
-    const localSubtitles = [...this.media.textTracks].filter(({ kind }) => kind === 'subtitles' || kind === 'captions');
+    const matched = (this.#remote.mediaInfo?.tracks ?? [])
+      .filter(({ type }) => type === chrome.cast.media.TrackType.TEXT)
+      .flatMap(({ language, name, trackId }) => {
+        const local = localSubs.find((l) => l.language === language && l.label === name);
+        return local?.mode ? [{ mode: local.mode, trackId }] : [];
+      });
 
-    const subtitles = remoteSubtitles
-      .map(({ language, name, trackId }) => {
-        const match = localSubtitles.find((local) => local.language === language && local.label === name);
-        if (match?.mode) return { mode: match.mode, trackId };
-        return null;
-      })
-      .filter((s): s is { mode: TextTrackMode; trackId: number } => s !== null);
+    const hidden = new Set(matched.filter((m) => m.mode !== 'showing').map((m) => m.trackId));
+    const showing = matched.find((m) => m.mode === 'showing')?.trackId;
 
-    const hiddenSubtitles = subtitles.filter((s) => s.mode !== 'showing');
-    const hiddenTrackIds = hiddenSubtitles.map((s) => s.trackId);
-    const showingSubtitle = subtitles.find((s) => s.mode === 'showing');
+    const active = currentSession()?.getSessionObj().media[0]?.activeTrackIds ?? [];
+    const next = new Set(active.filter((id) => !hidden.has(id)));
+    if (showing) next.add(showing);
 
-    const activeTrackIds = currentSession()?.getSessionObj().media[0]?.activeTrackIds ?? [];
-    let requestTrackIds = [...activeTrackIds];
+    if (next.size === active.length && active.every((id) => next.has(id))) return;
 
-    if (activeTrackIds.length) {
-      requestTrackIds = requestTrackIds.filter((id) => !hiddenTrackIds.includes(id));
-    }
-
-    if (showingSubtitle?.trackId) {
-      requestTrackIds = [...requestTrackIds, showingSubtitle.trackId];
-    }
-
-    requestTrackIds = [...new Set(requestTrackIds)];
-
-    const arrayEquals = (a: number[], b: number[]) => a.length === b.length && a.every((v) => b.includes(v));
-    if (!arrayEquals(activeTrackIds, requestTrackIds)) {
-      try {
-        const request = new chrome.cast.media.EditTracksInfoRequest(requestTrackIds);
-        await editTracksInfo(request);
-      } catch (error) {
-        console.error(error);
-      }
+    try {
+      await editTracksInfo(new chrome.cast.media.EditTracksInfoRequest([...next]));
+    } catch (error) {
+      console.error(error);
     }
   }
 }

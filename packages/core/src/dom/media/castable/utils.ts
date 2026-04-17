@@ -2,26 +2,6 @@ export class InvalidStateError extends Error {}
 export class NotSupportedError extends Error {}
 export class NotFoundError extends Error {}
 
-export type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
-
-export function addRemoteListeners(
-  controller: cast.framework.RemotePlayerController,
-  listeners: Record<string, RemotePlayerListener>
-) {
-  for (const [type, handler] of Object.entries(listeners)) {
-    controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
-  }
-}
-
-export function removeRemoteListeners(
-  controller: cast.framework.RemotePlayerController,
-  listeners: Record<string, RemotePlayerListener>
-) {
-  for (const [type, handler] of Object.entries(listeners)) {
-    controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
-  }
-}
-
 const HLS_RESPONSE_HEADERS = ['application/x-mpegURL', 'application/vnd.apple.mpegurl', 'audio/mpegurl'];
 
 export class IterableWeakSet<T extends WeakKey> {
@@ -53,12 +33,12 @@ export class IterableWeakSet<T extends WeakKey> {
 }
 
 export function onCastApiAvailable(callback: () => void) {
+  const whenDefined = () => customElements.whenDefined('google-cast-button').then(callback);
+
   if (!globalThis.chrome?.cast?.isAvailable) {
-    (globalThis as Record<string, unknown>).__onGCastApiAvailable = () => {
-      customElements.whenDefined('google-cast-button').then(callback);
-    };
-  } else if (!(globalThis as Record<string, unknown> & { cast?: typeof cast }).cast?.framework) {
-    customElements.whenDefined('google-cast-button').then(callback);
+    (globalThis as { __onGCastApiAvailable?: () => void }).__onGCastApiAvailable = whenDefined;
+  } else if (typeof cast === 'undefined' || !cast.framework) {
+    whenDefined();
   } else {
     callback();
   }
@@ -79,7 +59,7 @@ export function loadCastFramework() {
 }
 
 export function castContext() {
-  return (globalThis as Record<string, unknown> & { cast?: typeof cast }).cast?.framework?.CastContext.getInstance();
+  return typeof cast === 'undefined' ? undefined : cast.framework?.CastContext.getInstance();
 }
 
 export function currentSession() {

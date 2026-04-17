@@ -27,39 +27,35 @@ export class RemotePlayback extends EventTarget {
   }
 
   async watchAvailability(callback: AvailabilityCallback) {
-    if (this.#provider.media.disableRemotePlayback) {
-      throw new InvalidStateError('disableRemotePlayback attribute is present.');
-    }
-
+    this.#assertEnabled();
     const id = ++callbackIdCount;
     this.#callbacks.set(id, callback);
-
     queueMicrotask(() => callback(this.#provider.hasDevicesAvailable()));
-
     return id;
   }
 
   async cancelWatchAvailability(callbackId?: number) {
-    if (this.#provider.media.disableRemotePlayback) {
-      throw new InvalidStateError('disableRemotePlayback attribute is present.');
-    }
+    this.#assertEnabled();
 
-    if (callbackId !== undefined) {
-      if (!this.#callbacks.delete(callbackId)) {
-        throw new NotFoundError(`Callback not found for id ${callbackId}.`);
-      }
+    if (callbackId === undefined) {
+      this.#callbacks.clear();
       return;
     }
 
-    this.#callbacks.clear();
+    if (!this.#callbacks.delete(callbackId)) {
+      throw new NotFoundError(`Callback not found for id ${callbackId}.`);
+    }
   }
 
   async prompt() {
+    this.#assertEnabled();
+    await this.#provider.requestCastSession();
+  }
+
+  #assertEnabled() {
     if (this.#provider.media.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
-
-    await this.#provider.requestCastSession();
   }
 
   #setState(next: RemotePlaybackState) {
