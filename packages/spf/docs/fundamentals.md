@@ -316,6 +316,17 @@ import { listen } from '@videojs/utils/dom';
 
 // Actor: manages saving count to a server
 function createSaveActor() {
+  function makeSaveTask(count) {
+    return new Task(async (signal) => {
+      await fetch('/api/count', {
+        method: 'POST',
+        body: JSON.stringify({ count }),
+        signal,
+      });
+      return { lastSaved: count };
+    });
+  }
+
   return createMachineActor({
     runner: () => new SerialRunner(),
     initial: 'idle',
@@ -325,14 +336,7 @@ function createSaveActor() {
         on: {
           save: (msg, { transition, runner, setContext }) => {
             transition('saving');
-            runner.schedule(new Task(async (signal) => {
-              await fetch('/api/count', {
-                method: 'POST',
-                body: JSON.stringify({ count: msg.count }),
-                signal,
-              });
-              return { lastSaved: msg.count };
-            })).then(setContext);
+            runner.schedule(makeSaveTask(msg.count)).then(setContext);
           },
         },
       },
@@ -342,14 +346,7 @@ function createSaveActor() {
           // New save while one is in-flight: cancel pending, schedule new
           save: (msg, { runner, setContext }) => {
             runner.abortPending();
-            runner.schedule(new Task(async (signal) => {
-              await fetch('/api/count', {
-                method: 'POST',
-                body: JSON.stringify({ count: msg.count }),
-                signal,
-              });
-              return { lastSaved: msg.count };
-            })).then(setContext);
+            runner.schedule(makeSaveTask(msg.count)).then(setContext);
           },
           cancel: (_msg, { transition, runner }) => {
             runner.abortAll();
