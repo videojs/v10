@@ -1,4 +1,5 @@
 import type { MixinReturn } from '@videojs/utils/types';
+import type { RemotePlaybackLike } from '../predicate';
 import { GoogleCastProvider } from './google-cast-provider';
 import { RemotePlayback } from './remote-playback';
 import type { CastableMediaProps, CastableMediaSuperclass } from './types';
@@ -20,13 +21,11 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     #provider: GoogleCastProvider | null | undefined;
     #destroyed = false;
 
-    get remote(): RemotePlayback | undefined {
+    get remote(): RemotePlayback | RemotePlaybackLike | undefined {
       if (this.#remote) return this.#remote;
-      if (this.#destroyed) return undefined;
+      if (this.#destroyed) return super.remote;
 
       if (requiresCastFramework()) {
-        if (!this.target) return undefined;
-
         if (!this.disableRemotePlayback) {
           loadCastFramework();
         }
@@ -41,7 +40,7 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
         return (this.#remote = new RemotePlayback(this.#provider));
       }
 
-      return undefined;
+      return super.remote;
     }
 
     attach(target: HTMLMediaElement) {

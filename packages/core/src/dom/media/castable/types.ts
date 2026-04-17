@@ -1,8 +1,10 @@
+import type { RemotePlaybackLike } from '../predicate';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 
 export interface CastableMediaBase extends EventTarget {
   readonly target: HTMLMediaElement | null;
+  readonly remote: RemotePlaybackLike | undefined;
   title: string;
   poster: string;
   src: string;
@@ -31,7 +33,7 @@ export interface CastableMediaBase extends EventTarget {
 }
 
 export interface CastableMediaProps {
-  readonly remote: RemotePlayback | undefined;
+  readonly remote: RemotePlayback | RemotePlaybackLike | undefined;
   readonly castOptions: CastOptions;
   castReceiver: string | undefined;
   castSrc: string;
