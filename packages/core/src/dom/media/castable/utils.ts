@@ -71,6 +71,19 @@ export function getMediaStatus(request: chrome.cast.media.GetStatusRequest): Pro
   });
 }
 
+const MEDIA_NAMESPACE = 'urn:x-cast:com.google.cast.media';
+let requestId = 0;
+
+export function setPlaybackRate(rate: number): Promise<chrome.cast.ErrorCode | undefined> {
+  const media = currentMedia();
+  return currentSession()!.sendMessage(MEDIA_NAMESPACE, {
+    type: 'SET_PLAYBACK_RATE',
+    playbackRate: rate,
+    mediaSessionId: media?.mediaSessionId,
+    requestId: ++requestId,
+  });
+}
+
 export type CastOptions = cast.framework.CastOptions;
 
 export function setCastOptions(options: Partial<CastOptions>): void {

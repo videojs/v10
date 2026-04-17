@@ -7,6 +7,7 @@ import {
   getMediaStatus,
   InvalidStateError,
   IterableWeakSet,
+  NotFoundError,
   NotSupportedError,
   onCastApiAvailable,
   privateProps,
@@ -71,9 +72,10 @@ export class RemotePlayback extends EventTarget {
   #state: RemotePlaybackState = 'disconnected';
   #available = false;
   #seeking = false;
-  #callbacks = new Set<AvailabilityCallback>();
-  #callbackIds = new WeakMap<AvailabilityCallback, number>();
+  #playbackRate = 1;
+  #callbacks = new Map<number, AvailabilityCallback>();
   #onTextTrackChange = () => this.#updateRemoteTextTrack();
+  #onMediaUpdate = () => this.#checkPlaybackRate();
 
   constructor(media: CastableMediaElement) {
     super();
@@ -95,6 +97,7 @@ export class RemotePlayback extends EventTarget {
   }
 
   destroy(): void {
+    currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
     this.#media?.textTracks?.removeEventListener('change', this.#onTextTrackChange);
 
     if (this.#remoteListeners && this.#remotePlayer?.controller) {
@@ -119,24 +122,27 @@ export class RemotePlayback extends EventTarget {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
 
-    this.#callbackIds.set(callback, ++remotePlaybackCallbackIdCount);
-    this.#callbacks.add(callback);
+    const id = ++remotePlaybackCallbackIdCount;
+    this.#callbacks.set(id, callback);
 
     queueMicrotask(() => callback(this.#hasDevicesAvailable()));
 
-    return remotePlaybackCallbackIdCount;
+    return id;
   }
 
-  async cancelWatchAvailability(callback?: AvailabilityCallback): Promise<void> {
+  async cancelWatchAvailability(callbackId?: number): Promise<void> {
     if (this.#media.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
 
-    if (callback) {
-      this.#callbacks.delete(callback);
-    } else {
-      this.#callbacks.clear();
+    if (callbackId !== undefined) {
+      if (!this.#callbacks.delete(callbackId)) {
+        throw new NotFoundError(`Callback not found for id ${callbackId}.`);
+      }
+      return;
     }
+
+    this.#callbacks.clear();
   }
 
   async prompt(): Promise<void> {
@@ -175,8 +181,10 @@ export class RemotePlayback extends EventTarget {
   #disconnect(): void {
     if (!castElementRef.has(this.#media)) return;
 
+    currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
     removeRemoteListeners(this.#remotePlayer.controller!, this.#remoteListeners);
     this.#seeking = false;
+    this.#playbackRate = 1;
 
     castElementRef.delete(this.#media);
 
@@ -212,10 +220,10 @@ export class RemotePlayback extends EventTarget {
 
     if (!this.#available && isConnectable) {
       this.#available = true;
-      for (const callback of this.#callbacks) callback(true);
+      for (const callback of this.#callbacks.values()) callback(true);
     } else if (this.#available && (!castState || castState === cast.framework.CastState.NO_DEVICES_AVAILABLE)) {
       this.#available = false;
-      for (const callback of this.#callbacks) callback(false);
+      for (const callback of this.#callbacks.values()) callback(false);
     }
   }
 
@@ -337,7 +345,17 @@ export class RemotePlayback extends EventTarget {
   }
 
   #onRemoteMediaLoaded(): void {
+    this.#playbackRate = currentMedia()?.playbackRate ?? 1;
+    currentMedia()?.addUpdateListener(this.#onMediaUpdate);
     this.#updateRemoteTextTrack();
+  }
+
+  #checkPlaybackRate(): void {
+    const rate = currentMedia()?.playbackRate ?? 1;
+    if (rate !== this.#playbackRate) {
+      this.#playbackRate = rate;
+      this.#media.dispatchEvent(new Event('ratechange'));
+    }
   }
 
   async #updateRemoteTextTrack(): Promise<void> {

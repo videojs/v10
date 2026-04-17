@@ -9,9 +9,12 @@ export interface CastableMediaBase extends EventTarget {
   duration: number;
   muted: boolean;
   paused: boolean;
+  ended: boolean;
+  loop: boolean;
   seeking: boolean;
   readyState: number;
   volume: number;
+  playbackRate: number;
   streamType?: string;
   textTracks: TextTrackList;
   disableRemotePlayback: boolean;

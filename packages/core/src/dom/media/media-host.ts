@@ -31,6 +31,14 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return this.target?.ended ?? false;
   }
 
+  get loop() {
+    return this.target?.loop ?? false;
+  }
+
+  set loop(value: boolean) {
+    if (this.target) this.target.loop = value;
+  }
+
   play() {
     return this.target?.play() ?? Promise.reject();
   }

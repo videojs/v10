@@ -4,6 +4,7 @@ import { RemotePlayback } from './remote-playback';
 import type { CastableMediaElement, CastableMediaProps, CastableMediaSuperclass } from './types';
 import type { CastOptions } from './utils';
 import {
+  currentMedia,
   currentSession,
   getDefaultCastOptions,
   getPlaylistSegmentFormat,
@@ -11,6 +12,7 @@ import {
   loadCastFramework,
   privateProps,
   requiresCastFramework,
+  setPlaybackRate,
 } from './utils';
 
 export type { CastableMediaElement } from './types';
@@ -287,6 +289,19 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
         return;
       }
       super.volume = val;
+    }
+
+    get playbackRate(): number {
+      if (this.#castPlayer) return currentMedia()?.playbackRate ?? 1;
+      return super.playbackRate;
+    }
+
+    set playbackRate(val: number) {
+      if (this.#castPlayer) {
+        setPlaybackRate(val);
+        return;
+      }
+      super.playbackRate = val;
     }
 
     get duration(): number {
