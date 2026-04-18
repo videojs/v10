@@ -6,6 +6,8 @@ export const FullscreenButtonDataAttrs = {
   fullscreen: 'data-fullscreen',
   /** Indicates fullscreen availability (`available` or `unsupported`). */
   availability: 'data-availability',
-  /** Present when fullscreen is available. */
-  available: 'data-available',
+  /** Present when the button is non-interactive (explicitly disabled or feature not available). */
+  disabled: 'data-disabled',
+  /** Present when the feature is unsupported. */
+  hidden: 'data-hidden',
 } as const satisfies StateAttrMap<FullscreenButtonState>;

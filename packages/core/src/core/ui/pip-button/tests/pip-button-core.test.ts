@@ -19,7 +19,8 @@ function createState(overrides: Partial<PiPButtonState> = {}): PiPButtonState {
   return {
     pip: false,
     availability: 'available',
-    available: true,
+    disabled: false,
+    hidden: false,
     label: '',
     ...overrides,
   };
@@ -43,6 +44,26 @@ describe('PiPButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+    });
+
+    it('sets disabled and hidden when unsupported', () => {
+      const core = new PiPButtonCore();
+      core.setMedia(createMediaState({ pipAvailability: 'unsupported' }));
+      expect(core.getState().disabled).toBe(true);
+      expect(core.getState().hidden).toBe(true);
+    });
+
+    it('clears disabled and hidden when available', () => {
+      const core = new PiPButtonCore();
+      core.setMedia(createMediaState({ pipAvailability: 'available' }));
+      expect(core.getState().disabled).toBe(false);
+      expect(core.getState().hidden).toBe(false);
+    });
+
+    it('sets disabled from prop', () => {
+      const core = new PiPButtonCore({ disabled: true });
+      core.setMedia(createMediaState());
+      expect(core.getState().disabled).toBe(true);
     });
   });
 
@@ -78,9 +99,33 @@ describe('PiPButtonCore', () => {
     });
 
     it('sets aria-disabled when disabled', () => {
-      const core = new PiPButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets aria-disabled when hidden', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('omits aria-disabled when available and not disabled', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs['aria-disabled']).toBeUndefined();
+    });
+
+    it('sets hidden attr when hidden', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe(true);
+    });
+
+    it('omits hidden attr when not hidden', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs.hidden).toBeUndefined();
     });
   });
 

@@ -65,22 +65,16 @@ React renders a `<button>` element. Add a `className` to style it:
 
 
 <FrameworkCase frameworks={["html"]}>
-The default skins automatically hide the button when PiP is unsupported. For custom skins, use the `data-available` attribute:
-
-```css
-media-pip-button:not([data-available]) {
-  display: none;
-}
-```
+When PiP is unsupported, the button receives a `hidden` attribute and is automatically hidden by the browser. When disabled (via the `disabled` prop or because the feature is not available), the button remains visible but receives `data-disabled` for styling (e.g., reduced opacity).
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-In React, the button returns `null` when unavailable — no CSS needed.
+In React, the button returns `null` when unsupported — no CSS needed. When disabled (via the `disabled` prop or because the feature is not available), the button remains visible with `data-disabled` for styling.
 </FrameworkCase>
 
 ## Accessibility
 
-Renders a `<button>` with an automatic `aria-label`: "Enter PiP" or "Exit PiP". Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+Renders a `<button>` with an automatic `aria-label`: "Enter PiP" or "Exit PiP". Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>. Both disabled and unavailable states set `aria-disabled="true"` so screen readers announce the button as non-interactive.
 
 ## Examples
 

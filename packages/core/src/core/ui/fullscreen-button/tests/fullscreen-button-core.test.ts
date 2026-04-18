@@ -19,7 +19,8 @@ function createState(overrides: Partial<FullscreenButtonState> = {}): Fullscreen
   return {
     fullscreen: false,
     availability: 'available',
-    available: true,
+    disabled: false,
+    hidden: false,
     label: '',
     ...overrides,
   };
@@ -43,6 +44,26 @@ describe('FullscreenButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+    });
+
+    it('sets disabled and hidden when unsupported', () => {
+      const core = new FullscreenButtonCore();
+      core.setMedia(createMediaState({ fullscreenAvailability: 'unsupported' }));
+      expect(core.getState().disabled).toBe(true);
+      expect(core.getState().hidden).toBe(true);
+    });
+
+    it('clears disabled and hidden when available', () => {
+      const core = new FullscreenButtonCore();
+      core.setMedia(createMediaState({ fullscreenAvailability: 'available' }));
+      expect(core.getState().disabled).toBe(false);
+      expect(core.getState().hidden).toBe(false);
+    });
+
+    it('sets disabled from prop', () => {
+      const core = new FullscreenButtonCore({ disabled: true });
+      core.setMedia(createMediaState());
+      expect(core.getState().disabled).toBe(true);
     });
   });
 
@@ -78,9 +99,33 @@ describe('FullscreenButtonCore', () => {
     });
 
     it('sets aria-disabled when disabled', () => {
-      const core = new FullscreenButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+      const core = new FullscreenButtonCore();
+      const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets aria-disabled when hidden', () => {
+      const core = new FullscreenButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('omits aria-disabled when available and not disabled', () => {
+      const core = new FullscreenButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs['aria-disabled']).toBeUndefined();
+    });
+
+    it('sets hidden attr when hidden', () => {
+      const core = new FullscreenButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe(true);
+    });
+
+    it('omits hidden attr when not hidden', () => {
+      const core = new FullscreenButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs.hidden).toBeUndefined();
     });
   });
 

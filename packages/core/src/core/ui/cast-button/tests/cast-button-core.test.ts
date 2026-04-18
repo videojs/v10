@@ -17,7 +17,8 @@ function createState(overrides: Partial<CastButtonState> = {}): CastButtonState 
   return {
     castState: 'disconnected',
     availability: 'available',
-    available: true,
+    disabled: false,
+    hidden: false,
     label: '',
     ...overrides,
   };
@@ -41,6 +42,33 @@ describe('CastButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+    });
+
+    it('sets disabled when unavailable', () => {
+      const core = new CastButtonCore();
+      core.setMedia(createMediaState({ castAvailability: 'unavailable' }));
+      expect(core.getState().disabled).toBe(true);
+      expect(core.getState().hidden).toBe(false);
+    });
+
+    it('sets disabled and hidden when unsupported', () => {
+      const core = new CastButtonCore();
+      core.setMedia(createMediaState({ castAvailability: 'unsupported' }));
+      expect(core.getState().disabled).toBe(true);
+      expect(core.getState().hidden).toBe(true);
+    });
+
+    it('clears disabled and hidden when available', () => {
+      const core = new CastButtonCore();
+      core.setMedia(createMediaState({ castAvailability: 'available' }));
+      expect(core.getState().disabled).toBe(false);
+      expect(core.getState().hidden).toBe(false);
+    });
+
+    it('sets disabled from prop', () => {
+      const core = new CastButtonCore({ disabled: true });
+      core.setMedia(createMediaState());
+      expect(core.getState().disabled).toBe(true);
     });
 
     it('reflects connecting state', () => {
@@ -89,9 +117,33 @@ describe('CastButtonCore', () => {
     });
 
     it('sets aria-disabled when disabled', () => {
-      const core = new CastButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+      const core = new CastButtonCore();
+      const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets aria-disabled when hidden', () => {
+      const core = new CastButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('omits aria-disabled when available and not disabled', () => {
+      const core = new CastButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs['aria-disabled']).toBeUndefined();
+    });
+
+    it('sets hidden attr when hidden', () => {
+      const core = new CastButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe(true);
+    });
+
+    it('omits hidden attr when not hidden', () => {
+      const core = new CastButtonCore();
+      const attrs = core.getAttrs(createState());
+      expect(attrs.hidden).toBeUndefined();
     });
   });
 

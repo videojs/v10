@@ -16,8 +16,10 @@ export interface PiPButtonProps {
 export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>, ButtonState {
   /** Whether picture-in-picture can be requested on this platform. */
   availability: MediaPictureInPictureState['pipAvailability'];
-  /** Whether picture-in-picture is available (`availability === 'available'`). */
-  available: boolean;
+  /** Whether the button is non-interactive (explicitly disabled or feature not available). */
+  disabled: boolean;
+  /** Whether the button is hidden because the feature is unsupported. */
+  hidden: boolean;
 }
 
 export class PiPButtonCore {
@@ -29,7 +31,8 @@ export class PiPButtonCore {
   readonly state = createState<PiPButtonState>({
     pip: false,
     availability: 'available',
-    available: true,
+    disabled: false,
+    hidden: false,
     label: '',
   });
 
@@ -60,7 +63,8 @@ export class PiPButtonCore {
   getAttrs(state: PiPButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled || state.hidden ? 'true' : undefined,
+      hidden: state.hidden || undefined,
     };
   }
 
@@ -71,7 +75,9 @@ export class PiPButtonCore {
   getState(): PiPButtonState {
     const media = this.#media!;
     const availability = media.pipAvailability;
-    this.state.patch({ pip: media.pip, availability, available: availability === 'available' });
+    const disabled = this.#props.disabled || availability !== 'available';
+    const hidden = availability === 'unsupported';
+    this.state.patch({ pip: media.pip, availability, disabled, hidden });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;

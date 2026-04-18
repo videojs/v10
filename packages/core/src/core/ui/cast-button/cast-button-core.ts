@@ -19,8 +19,10 @@ export interface CastButtonState extends ButtonState {
   castState: CastState;
   /** Whether casting can be requested on this platform. */
   availability: MediaFeatureAvailability;
-  /** Whether casting is available (`availability === 'available'`). */
-  available: boolean;
+  /** Whether the button is non-interactive (explicitly disabled or feature not available). */
+  disabled: boolean;
+  /** Whether the button is hidden because the feature is unsupported. */
+  hidden: boolean;
 }
 
 export class CastButtonCore {
@@ -32,7 +34,8 @@ export class CastButtonCore {
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
     availability: 'unavailable',
-    available: false,
+    disabled: true,
+    hidden: false,
     label: '',
   });
 
@@ -65,7 +68,8 @@ export class CastButtonCore {
   getAttrs(state: CastButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled || state.hidden ? 'true' : undefined,
+      hidden: state.hidden || undefined,
     };
   }
 
@@ -76,7 +80,9 @@ export class CastButtonCore {
   getState(): CastButtonState {
     const media = this.#media!;
     const availability = media.castAvailability;
-    this.state.patch({ castState: media.castState, availability, available: availability === 'available' });
+    const disabled = this.#props.disabled || availability !== 'available';
+    const hidden = availability === 'unsupported';
+    this.state.patch({ castState: media.castState, availability, disabled, hidden });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;

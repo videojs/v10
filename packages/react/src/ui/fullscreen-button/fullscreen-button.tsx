@@ -18,7 +18,7 @@ export const FullscreenButton = createMediaButton<FullscreenButtonCore, Fullscre
   selector: selectFullscreen,
   action: (core, state) => core.toggle(state),
   hotkeyAction: 'toggleFullscreen',
-  isSupported: (state) => state.available,
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace FullscreenButton {

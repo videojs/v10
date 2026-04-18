@@ -6,6 +6,8 @@ export const CastButtonDataAttrs = {
   castState: 'data-cast-state',
   /** Indicates cast availability (`available`, `unavailable`, or `unsupported`). */
   availability: 'data-availability',
-  /** Present when casting is available. */
-  available: 'data-available',
+  /** Present when the button is non-interactive (explicitly disabled or feature not available). */
+  disabled: 'data-disabled',
+  /** Present when the feature is unsupported. */
+  hidden: 'data-hidden',
 } as const satisfies StateAttrMap<CastButtonState>;
