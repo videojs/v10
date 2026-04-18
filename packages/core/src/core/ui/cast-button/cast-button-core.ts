@@ -15,8 +15,11 @@ export interface CastButtonProps {
 }
 
 export interface CastButtonState extends ButtonState {
+  /** Current cast connection state. */
   castState: CastState;
+  /** Whether casting can be requested on this platform. */
   availability: MediaFeatureAvailability;
+  /** Whether casting is available (`availability === 'available'`). */
   available: boolean;
 }
 
