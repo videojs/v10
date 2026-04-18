@@ -49,6 +49,12 @@ You can style the button based on PiP state:
 media-pip-button[data-pip] {
   background: red;
 }
+
+/* Disabled (prop or feature unavailable) */
+media-pip-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 ```
 </FrameworkCase>
 
@@ -59,6 +65,12 @@ React renders a `<button>` element. Add a `className` to style it:
 /* In PiP mode */
 .pip-button[data-pip] {
   background: red;
+}
+
+/* Disabled (prop or feature unavailable) */
+.pip-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>

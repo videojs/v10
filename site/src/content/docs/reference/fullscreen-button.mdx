@@ -49,6 +49,12 @@ You can style the button based on fullscreen state:
 media-fullscreen-button[data-fullscreen] {
   background: red;
 }
+
+/* Disabled (prop or feature unavailable) */
+media-fullscreen-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 ```
 </FrameworkCase>
 
@@ -59,6 +65,12 @@ React renders a `<button>` element. Add a `className` to style it:
 /* In fullscreen */
 .fullscreen-button[data-fullscreen] {
   background: red;
+}
+
+/* Disabled (prop or feature unavailable) */
+.fullscreen-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>
