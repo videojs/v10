@@ -12,7 +12,7 @@ export class CastButtonElement extends MediaButtonElement<CastButtonCore> {
   protected readonly stateAttrMap = CastButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectCast);
 
-  protected activate(state: MediaCastState): void {
-    this.core.toggle(state);
+  protected activate(state: MediaCastState): void | Promise<void> {
+    return this.core.toggle(state);
   }
 }

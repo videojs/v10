@@ -158,14 +158,14 @@ describe('PiPButtonCore', () => {
       expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
-    it('catches PiP errors silently', async () => {
+    it('propagates PiP errors to caller', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({
         requestPictureInPicture: vi.fn(async () => {
           throw new Error('permission denied');
         }),
       });
-      await expect(core.toggle(media)).resolves.toBeUndefined();
+      await expect(core.toggle(media)).rejects.toThrow('permission denied');
     });
   });
 });

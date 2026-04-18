@@ -18,7 +18,7 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
-  action: (core: Core, state: InferMediaState<Core>) => void;
+  action: (core: Core, state: InferMediaState<Core>) => void | Promise<void>;
   hotkeyAction?: string;
   isSupported?: (state: InferComponentState<Core>) => boolean;
 }
@@ -58,7 +58,13 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const { getButtonProps, buttonRef } = useButton({
       displayName,
-      onActivate: () => action(core, feature!),
+      onActivate: async () => {
+        try {
+          await action(core, feature!);
+        } catch (error) {
+          if (__DEV__) console.error(`[${displayName}]`, error);
+        }
+      },
       isDisabled: () => !!coreProps.disabled || !feature,
     });
 

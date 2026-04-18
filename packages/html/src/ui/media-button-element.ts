@@ -27,7 +27,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
 
-  protected abstract activate(state: InferMediaState<Core>): void;
+  protected abstract activate(state: InferMediaState<Core>): void | Promise<void>;
 
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */
   protected readonly hotkeyAction: string | undefined = undefined;
@@ -50,7 +50,13 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.#disconnect = new AbortController();
 
     const buttonProps = createButton({
-      onActivate: () => this.activate(this.mediaState.value!),
+      onActivate: async () => {
+        try {
+          await this.activate(this.mediaState.value!);
+        } catch (error) {
+          if (__DEV__) console.error(`[${this.localName}]`, error);
+        }
+      },
       isDisabled: () => this.disabled || !this.mediaState.value,
     });
 

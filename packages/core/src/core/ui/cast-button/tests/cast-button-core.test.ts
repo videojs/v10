@@ -176,14 +176,14 @@ describe('CastButtonCore', () => {
       expect(media.toggleCast).not.toHaveBeenCalled();
     });
 
-    it('catches cast errors silently', async () => {
+    it('propagates cast errors to caller', async () => {
       const core = new CastButtonCore();
       const media = createMediaState({
         toggleCast: vi.fn(async () => {
           throw new Error('user cancelled');
         }),
       });
-      await expect(core.toggle(media)).resolves.toBeUndefined();
+      await expect(core.toggle(media)).rejects.toThrow('user cancelled');
     });
   });
 });

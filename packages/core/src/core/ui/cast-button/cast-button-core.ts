@@ -88,15 +88,11 @@ export class CastButtonCore {
     return this.state.current;
   }
 
-  async toggle(media: MediaCastState): Promise<void> {
+  toggle(media: MediaCastState): void | Promise<void> {
     if (this.#props.disabled) return;
     if (media.castAvailability !== 'available') return;
 
-    try {
-      await media.toggleCast();
-    } catch {
-      // Cast requests can fail (user cancelled, permissions, etc.)
-    }
+    return media.toggleCast();
   }
 }
 

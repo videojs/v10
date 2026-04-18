@@ -83,18 +83,14 @@ export class PiPButtonCore {
     return this.state.current;
   }
 
-  async toggle(media: MediaPictureInPictureState): Promise<void> {
+  toggle(media: MediaPictureInPictureState): void | Promise<void> {
     if (this.#props.disabled) return;
     if (media.pipAvailability !== 'available') return;
 
-    try {
-      if (media.pip) {
-        await media.exitPictureInPicture();
-      } else {
-        await media.requestPictureInPicture();
-      }
-    } catch {
-      // PiP requests can fail (user gesture required, permissions, etc.)
+    if (media.pip) {
+      return media.exitPictureInPicture();
+    } else {
+      return media.requestPictureInPicture().then(() => {});
     }
   }
 }
