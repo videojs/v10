@@ -19,6 +19,7 @@ function createState(overrides: Partial<FullscreenButtonState> = {}): Fullscreen
   return {
     fullscreen: false,
     availability: 'available',
+    available: true,
     label: '',
     ...overrides,
   };
