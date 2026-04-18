@@ -59,6 +59,7 @@ export const pipFeature = definePlayerFeature({
 
     sync();
 
+    listen(media, 'play', sync, { signal });
     listen(media, 'enterpictureinpicture', sync, { signal });
     listen(media, 'leavepictureinpicture', sync, { signal });
 
