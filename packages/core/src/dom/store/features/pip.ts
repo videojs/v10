@@ -19,7 +19,7 @@ export const pipFeature = definePlayerFeature({
 
       if (isFullscreenElement(container, media)) {
         // Exit fullscreen first if active
-        return exitFullscreen(media);
+        return exitFullscreen(media).then(() => requestPictureInPicture(media));
       }
 
       return requestPictureInPicture(media);
@@ -65,7 +65,7 @@ export const pipFeature = definePlayerFeature({
     // iOS Safari presentation mode change (covers PiP)
     const video = resolveHTMLVideoElement(media);
     if (video && 'webkitPresentationMode' in video) {
-      listen(media, 'webkitpresentationmodechanged', sync, { signal });
+      listen(video, 'webkitpresentationmodechanged', sync, { signal });
     }
   },
 });

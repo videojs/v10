@@ -74,7 +74,6 @@ export function requestFullscreen(container: HTMLElement | null, media: Media): 
   }
 
   if (isWebKitVideoElement(target)) {
-    console.log('enter');
     return Promise.resolve(target.webkitSetPresentationMode('fullscreen'));
   }
 
