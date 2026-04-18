@@ -215,6 +215,8 @@ export function createSlider(options: SliderOptions): SliderApi {
     },
 
     onPointerUp(event) {
+      if (options.isDisabled()) return;
+
       // The slider fully owns pointer interactions — prevent parent gesture
       // coordinators from misinterpreting slider taps as surface gestures.
       event.stopPropagation();
