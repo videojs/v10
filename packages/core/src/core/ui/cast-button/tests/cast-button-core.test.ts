@@ -17,6 +17,7 @@ function createState(overrides: Partial<CastButtonState> = {}): CastButtonState 
   return {
     castState: 'disconnected',
     availability: 'available',
+    available: true,
     label: '',
     ...overrides,
   };

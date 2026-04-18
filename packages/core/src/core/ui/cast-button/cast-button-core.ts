@@ -17,6 +17,7 @@ export interface CastButtonProps {
 export interface CastButtonState extends ButtonState {
   castState: CastState;
   availability: MediaFeatureAvailability;
+  available: boolean;
 }
 
 export class CastButtonCore {
@@ -28,6 +29,7 @@ export class CastButtonCore {
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
     availability: 'unavailable',
+    available: false,
     label: '',
   });
 
@@ -70,7 +72,8 @@ export class CastButtonCore {
 
   getState(): CastButtonState {
     const media = this.#media!;
-    this.state.patch({ castState: media.castState, availability: media.castAvailability });
+    const availability = media.castAvailability;
+    this.state.patch({ castState: media.castState, availability, available: availability === 'available' });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
