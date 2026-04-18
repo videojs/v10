@@ -16,6 +16,8 @@ export interface FullscreenButtonProps {
 export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'>, ButtonState {
   /** Whether fullscreen can be requested on this platform. */
   availability: MediaFullscreenState['fullscreenAvailability'];
+  /** Whether fullscreen is available (`availability === 'available'`). */
+  available: boolean;
 }
 
 export class FullscreenButtonCore {
@@ -27,6 +29,7 @@ export class FullscreenButtonCore {
   readonly state = createState<FullscreenButtonState>({
     fullscreen: false,
     availability: 'available',
+    available: true,
     label: '',
   });
 
@@ -67,24 +70,23 @@ export class FullscreenButtonCore {
 
   getState(): FullscreenButtonState {
     const media = this.#media!;
-    this.state.patch({ fullscreen: media.fullscreen, availability: media.fullscreenAvailability });
+    const availability = media.fullscreenAvailability;
+    this.state.patch({ fullscreen: media.fullscreen, availability, available: availability === 'available' });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
   }
 
-  async toggle(media: MediaFullscreenState): Promise<void> {
+  toggle(media: MediaFullscreenState): void | Promise<void> {
     if (this.#props.disabled) return;
     if (media.fullscreenAvailability !== 'available') return;
 
-    try {
-      if (media.fullscreen) {
-        await media.exitFullscreen();
-      } else {
-        await media.requestFullscreen();
-      }
-    } catch {
-      // Fullscreen requests can fail (user gesture required, permissions, etc.)
+    // Call synchronously to preserve the user activation token (iOS Safari
+    // requires fullscreen requests within the same event handler tick).
+    if (media.fullscreen) {
+      return media.exitFullscreen();
+    } else {
+      return media.requestFullscreen();
     }
   }
 }

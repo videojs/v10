@@ -1,4 +1,4 @@
-import type { RemotePlaybackLike } from '../predicate';
+import type { RemotePlaybackLike } from '../../../core/media/types';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 

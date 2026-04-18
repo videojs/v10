@@ -160,21 +160,19 @@ Volume, fullscreen, and picture-in-picture expose an `*Availability` property be
 | `'unavailable'` | Could work, not ready yet |
 | `'unsupported'` | Platform can never do this |
 
-Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) expose a `data-availability` attribute, so you can hide unsupported controls with CSS:
+Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) expose `data-available` and `data-availability` attributes. 
 
 <FrameworkCase frameworks={["html"]}>
+The default skins automatically hide unavailable buttons. For custom skins, you can hide them with CSS:
 ```css
-media-pip-button[data-availability="unsupported"] {
+media-pip-button:not([data-available]) {
   display: none;
 }
 ```
 </FrameworkCase>
+
 <FrameworkCase frameworks={["react"]}>
-```css
-.pip-button[data-availability="unsupported"] {
-  display: none;
-}
-```
+In React, the button returns `null` when unavailable — no CSS needed.
 </FrameworkCase>
 
 You can also check availability in JS:

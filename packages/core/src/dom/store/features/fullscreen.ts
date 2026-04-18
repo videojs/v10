@@ -2,6 +2,8 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { resolveHTMLVideoElement } from '../../media/predicate';
+import { isWebKitDocument } from '../../presentation';
 import {
   exitFullscreen,
   isFullscreenElement,
@@ -9,66 +11,66 @@ import {
   requestFullscreen,
 } from '../../presentation/fullscreen';
 import { exitPictureInPicture, isPictureInPictureElement } from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
   name: 'fullscreen',
-  state: ({ target }): MediaFullscreenState => ({
-    fullscreen: false,
-    fullscreenAvailability: 'unavailable',
-
-    async requestFullscreen() {
+  state: ({ target }): MediaFullscreenState => {
+    function enterFullscreen(): Promise<void> {
       const { media, container } = target();
 
-      // Exit PiP first if active (browser behavior is inconsistent)
       if (isPictureInPictureElement(media)) {
-        await exitPictureInPicture(media);
+        // Exit PiP first if active (browser behavior is inconsistent)
+        return exitPictureInPicture(media).then(() => requestFullscreen(container, media));
       }
 
       return requestFullscreen(container, media);
-    },
+    }
 
-    async exitFullscreen() {
-      const { media } = target();
-      return exitFullscreen(media);
-    },
+    return {
+      fullscreen: false,
+      fullscreenAvailability: 'unavailable',
 
-    async toggleFullscreen() {
-      const { media, container } = target();
+      requestFullscreen: enterFullscreen,
 
-      if (isFullscreenElement(container, media)) {
+      exitFullscreen() {
+        const { media } = target();
         return exitFullscreen(media);
-      }
+      },
 
-      if (isPictureInPictureElement(media)) {
-        await exitPictureInPicture(media);
-      }
+      toggleFullscreen() {
+        const { media, container } = target();
 
-      return requestFullscreen(container, media);
-    },
-  }),
+        if (isFullscreenElement(container, media)) {
+          return exitFullscreen(media);
+        }
+
+        return enterFullscreen();
+      },
+    };
+  },
 
   attach({ target, signal, set }) {
     const { media, container } = target;
 
-    set({
-      fullscreenAvailability: isFullscreenEnabled() ? 'available' : 'unsupported',
-    });
-
     const sync = () =>
       set({
+        fullscreenAvailability: isFullscreenEnabled(media) ? 'available' : 'unsupported',
         fullscreen: isFullscreenElement(container, media),
       });
 
     sync();
 
+    listen(media, 'play', sync, { signal });
     listen(document, 'fullscreenchange', sync, { signal });
-    listen(document, 'webkitfullscreenchange', sync, { signal });
+
+    if (isWebKitDocument(document)) {
+      listen(document, 'webkitfullscreenchange', sync, { signal });
+    }
 
     // iOS Safari presentation mode change (covers fullscreen)
-    const video = media as WebKitVideoElement;
-    if ('webkitPresentationMode' in video) {
-      listen(media, 'webkitpresentationmodechanged', sync, { signal });
+    const video = resolveHTMLVideoElement(media);
+    if (video && 'webkitPresentationMode' in video) {
+      listen(video, 'webkitpresentationmodechanged', sync, { signal });
     }
   },
 });

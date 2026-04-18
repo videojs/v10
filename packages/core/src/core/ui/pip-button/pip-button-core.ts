@@ -16,6 +16,8 @@ export interface PiPButtonProps {
 export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>, ButtonState {
   /** Whether picture-in-picture can be requested on this platform. */
   availability: MediaPictureInPictureState['pipAvailability'];
+  /** Whether picture-in-picture is available (`availability === 'available'`). */
+  available: boolean;
 }
 
 export class PiPButtonCore {
@@ -27,6 +29,7 @@ export class PiPButtonCore {
   readonly state = createState<PiPButtonState>({
     pip: false,
     availability: 'available',
+    available: true,
     label: '',
   });
 
@@ -67,7 +70,8 @@ export class PiPButtonCore {
 
   getState(): PiPButtonState {
     const media = this.#media!;
-    this.state.patch({ pip: media.pip, availability: media.pipAvailability });
+    const availability = media.pipAvailability;
+    this.state.patch({ pip: media.pip, availability, available: availability === 'available' });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;

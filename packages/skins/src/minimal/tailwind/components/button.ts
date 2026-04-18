@@ -11,7 +11,7 @@ export const button = {
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'supports-[corner-shape:squircle]:rounded-[1rem]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]',
-    'data-[availability=unavailable]:hidden'
+    'has-data-[availability]:not-data-[available]:hidden'
   ),
   primary: 'bg-white text-black font-medium text-shadow-none',
   subtle: cn(

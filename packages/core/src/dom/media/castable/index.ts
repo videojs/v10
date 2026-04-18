@@ -1,5 +1,5 @@
 import type { MixinReturn } from '@videojs/utils/types';
-import type { RemotePlaybackLike } from '../predicate';
+import type { RemotePlaybackLike } from '../../../core/media/types';
 import { GoogleCastProvider } from './google-cast-provider';
 import { RemotePlayback } from './remote-playback';
 import type { CastableMediaProps, CastableMediaSuperclass } from './types';

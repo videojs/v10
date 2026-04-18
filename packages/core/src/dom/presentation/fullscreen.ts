@@ -1,34 +1,49 @@
 import { isFunction } from '@videojs/utils/predicate';
+import { resolveHTMLMediaElement, resolveHTMLVideoElement } from '../media/predicate';
+import type { Media } from '../media/types';
+import { isWebKitDocument, isWebKitFullscreenElement, isWebKitVideoElement } from './webkit';
 
-import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from './types';
+export function isDocumentFullscreenEnabled(): boolean {
+  return document.fullscreenEnabled || (isWebKitDocument(document) && document.webkitFullscreenEnabled);
+}
 
-export function isFullscreenEnabled(): boolean {
-  const doc = document as WebKitDocument;
+export function getDocumentFullscreenElement(): Element | null {
+  if (document.fullscreenElement) {
+    return document.fullscreenElement;
+  }
 
-  if (doc.fullscreenEnabled || doc.webkitFullscreenEnabled) {
+  if (isWebKitDocument(document)) {
+    return document.webkitFullscreenElement;
+  }
+
+  return null;
+}
+
+export function isFullscreenEnabled(media: Media): boolean {
+  if (isDocumentFullscreenEnabled()) {
     return true;
   }
 
-  const video = document.createElement('video') as WebKitVideoElement;
-  return isFunction(video.webkitEnterFullscreen);
-}
+  const video = resolveHTMLVideoElement(media);
+  if (!video) return false;
 
-export function getFullscreenElement(): Element | null {
-  const doc = document as WebKitDocument;
-  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
-}
-
-export function isFullscreenElement(container: HTMLElement | null, media: EventTarget): boolean {
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (video.webkitDisplayingFullscreen && video.webkitPresentationMode === 'fullscreen') {
-      return true;
-    }
+  if (isWebKitVideoElement(video) && video.webkitSupportsPresentationMode('fullscreen')) {
+    return true;
   }
 
-  const target = container ?? media;
+  return false;
+}
 
-  if (getFullscreenElement() === target) return true;
+export function isFullscreenElement(container: HTMLElement | null, media: Media): boolean {
+  const video = resolveHTMLVideoElement(media);
+
+  if (isWebKitVideoElement(video) && video.webkitPresentationMode === 'fullscreen') {
+    return true;
+  }
+
+  const target = container ?? resolveHTMLMediaElement(media);
+
+  if (getDocumentFullscreenElement() === target) return true;
 
   if (target instanceof Element) {
     try {
@@ -41,52 +56,45 @@ export function isFullscreenElement(container: HTMLElement | null, media: EventT
   return false;
 }
 
-export async function requestFullscreen(container: HTMLElement | null, media: EventTarget): Promise<void> {
-  const doc = document as WebKitDocument;
-
-  if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
-    const el = container as WebKitFullscreenElement;
-
-    if (isFunction(el.requestFullscreen)) {
-      return el.requestFullscreen();
+export function requestFullscreen(container: HTMLElement | null, media: Media): Promise<void> {
+  if (isDocumentFullscreenEnabled()) {
+    if (container && isFunction(container.requestFullscreen)) {
+      return container.requestFullscreen();
     }
 
-    if (isFunction(el.webkitRequestFullscreen)) {
-      return el.webkitRequestFullscreen();
+    if (isWebKitFullscreenElement(container)) {
+      return container.webkitRequestFullscreen();
     }
   }
 
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitEnterFullscreen)) {
-      video.webkitEnterFullscreen();
-      return;
-    }
+  const target = resolveHTMLMediaElement(media);
 
-    if (isFunction(media.requestFullscreen)) {
-      return media.requestFullscreen();
-    }
+  if (target && isFunction(target.requestFullscreen)) {
+    return target.requestFullscreen();
+  }
+
+  if (isWebKitVideoElement(target)) {
+    console.log('enter');
+    return Promise.resolve(target.webkitSetPresentationMode('fullscreen'));
   }
 
   throw new DOMException('Fullscreen not supported', 'NotSupportedError');
 }
 
-export async function exitFullscreen(media?: EventTarget): Promise<void> {
-  const doc = document as WebKitDocument;
-
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitExitFullscreen) && video.webkitDisplayingFullscreen) {
-      video.webkitExitFullscreen();
-      return;
-    }
+export function exitFullscreen(media: Media): Promise<void> {
+  if (isFunction(document.exitFullscreen)) {
+    return document.exitFullscreen();
   }
 
-  if (isFunction(doc.exitFullscreen)) {
-    return doc.exitFullscreen();
+  if (isWebKitDocument(document) && isFunction(document.webkitExitFullscreen)) {
+    return Promise.resolve(document.webkitExitFullscreen());
   }
 
-  if (isFunction(doc.webkitExitFullscreen)) {
-    return doc.webkitExitFullscreen();
+  const target = media ? resolveHTMLMediaElement(media) : null;
+
+  if (isWebKitVideoElement(target) && target.webkitPresentationMode === 'fullscreen') {
+    return Promise.resolve(target.webkitSetPresentationMode('inline'));
   }
+
+  return Promise.resolve();
 }

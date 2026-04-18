@@ -174,6 +174,17 @@ export interface MediaPictureInPictureCapability {
   requestPictureInPicture(): Promise<unknown>;
 }
 
+export interface RemotePlaybackLike extends EventTarget {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
+}
+
 interface MediaEvents extends MediaPlaybackEvents {}
 
 export interface Media extends MediaPlaybackCapability, EventTargetLike<MediaEvents> {

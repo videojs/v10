@@ -38,7 +38,7 @@
     cursor: not-allowed;
   }
 
-  &[data-availability="unavailable"] {
+  &[data-availability]:not([data-available]) {
     display: none;
   }
 }

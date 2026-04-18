@@ -311,7 +311,7 @@ export interface MediaPictureInPictureState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestPictureInPicture
    */
-  requestPictureInPicture(): Promise<void>;
+  requestPictureInPicture(): Promise<unknown>;
   /**
    * Exit picture-in-picture mode.
    *
@@ -319,5 +319,5 @@ export interface MediaPictureInPictureState {
    */
   exitPictureInPicture(): Promise<void>;
   /** Toggle picture-in-picture mode. */
-  togglePictureInPicture(): Promise<void>;
+  togglePictureInPicture(): Promise<unknown>;
 }

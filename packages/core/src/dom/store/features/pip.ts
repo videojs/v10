@@ -2,6 +2,7 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
+import { resolveHTMLVideoElement } from '../../media/predicate';
 import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
 import {
   exitPictureInPicture,
@@ -9,54 +10,50 @@ import {
   isPictureInPictureEnabled,
   requestPictureInPicture,
 } from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
   name: 'pip',
-  state: ({ target }): MediaPictureInPictureState => ({
-    pip: false,
-    pipAvailability: 'unavailable',
-
-    async requestPictureInPicture() {
+  state: ({ target }): MediaPictureInPictureState => {
+    function enterPictureInPicture(): Promise<unknown> {
       const { media, container } = target();
 
-      // Exit fullscreen first if active
       if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+        // Exit fullscreen first if active
+        return exitFullscreen(media);
       }
 
       return requestPictureInPicture(media);
-    },
+    }
 
-    async exitPictureInPicture() {
-      const { media } = target();
-      return exitPictureInPicture(media);
-    },
+    return {
+      pip: false,
+      pipAvailability: 'unavailable',
 
-    async togglePictureInPicture() {
-      const { media, container } = target();
+      requestPictureInPicture: enterPictureInPicture,
 
-      if (isPictureInPictureElement(media)) {
+      exitPictureInPicture() {
+        const { media } = target();
         return exitPictureInPicture(media);
-      }
+      },
 
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
-      }
+      togglePictureInPicture() {
+        const { media } = target();
 
-      return requestPictureInPicture(media);
-    },
-  }),
+        if (isPictureInPictureElement(media)) {
+          return exitPictureInPicture(media);
+        }
+
+        return enterPictureInPicture();
+      },
+    };
+  },
 
   attach({ target, signal, set }) {
     const { media } = target;
 
-    set({
-      pipAvailability: isPictureInPictureEnabled() ? 'available' : 'unsupported',
-    });
-
     const sync = () =>
       set({
+        pipAvailability: isPictureInPictureEnabled(media) ? 'available' : 'unsupported',
         pip: isPictureInPictureElement(media),
       });
 
@@ -66,8 +63,8 @@ export const pipFeature = definePlayerFeature({
     listen(media, 'leavepictureinpicture', sync, { signal });
 
     // iOS Safari presentation mode change (covers PiP)
-    const video = media as WebKitVideoElement;
-    if ('webkitPresentationMode' in video) {
+    const video = resolveHTMLVideoElement(media);
+    if (video && 'webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }
   },

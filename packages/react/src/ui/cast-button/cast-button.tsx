@@ -15,6 +15,7 @@ export const CastButton = createMediaButton<CastButtonCore, CastButtonProps>({
   stateAttrMap: CastButtonDataAttrs,
   selector: selectCast,
   action: (core, state) => core.toggle(state),
+  isSupported: (state) => state.availability !== 'unsupported',
 });
 
 export namespace CastButton {

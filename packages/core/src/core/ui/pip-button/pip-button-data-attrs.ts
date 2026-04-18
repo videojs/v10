@@ -6,4 +6,6 @@ export const PiPButtonDataAttrs = {
   pip: 'data-pip',
   /** Indicates picture-in-picture availability (`available` or `unsupported`). */
   availability: 'data-availability',
+  /** Present when picture-in-picture is available. */
+  available: 'data-available',
 } as const satisfies StateAttrMap<PiPButtonState>;

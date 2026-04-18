@@ -22,7 +22,11 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
+export const HLS_MEDIA_SYMBOL = Symbol.for('@videojs/hls-media');
+
 export class HlsMedia extends HTMLVideoElementHost {
+  readonly [HLS_MEDIA_SYMBOL] = true;
+
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = '';
   #type: SourceType | undefined;

@@ -63,22 +63,19 @@ React renders a `<button>` element. Add a `className` to style it:
 ```
 </FrameworkCase>
 
-Consider hiding the button when unsupported:
 
 <FrameworkCase frameworks={["html"]}>
+The default skins automatically hide the button when PiP is unsupported. For custom skins, use the `data-available` attribute:
+
 ```css
-media-pip-button[data-availability="unsupported"] {
+media-pip-button:not([data-available]) {
   display: none;
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-```css
-.pip-button[data-availability="unsupported"] {
-  display: none;
-}
-```
+In React, the button returns `null` when unavailable — no CSS needed.
 </FrameworkCase>
 
 ## Accessibility

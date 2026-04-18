@@ -2,10 +2,14 @@ import * as dashjs from 'dashjs';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 
+export const DASH_MEDIA_SYMBOL = Symbol.for('@videojs/dash-media');
+
 export class DashMedia
   extends HTMLVideoElementHost
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>
 {
+  readonly [DASH_MEDIA_SYMBOL] = true;
+
   #engine: dashjs.MediaPlayerClass;
   #src = '';
 

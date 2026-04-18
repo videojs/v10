@@ -1,9 +1,22 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MEDIA_ELEMENT_HOST_SYMBOL } from '../../../media/media-host';
 import type { PlayerTarget } from '../../../media/types';
-import type { WebKitVideoElement } from '../../../presentation/types';
+import type { WebKitVideoElement } from '../../../presentation/webkit';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
+
+function createWebKitVideo() {
+  const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+  video.webkitSetPresentationMode = vi.fn();
+  video.webkitSupportsPresentationMode = vi.fn().mockReturnValue(true);
+  Object.defineProperty(video, 'webkitPresentationMode', {
+    value: 'inline',
+    writable: true,
+    configurable: true,
+  });
+  return video;
+}
 
 describe('pipFeature', () => {
   let originalPictureInPictureEnabled: boolean | undefined;
@@ -43,6 +56,7 @@ describe('pipFeature', () => {
       });
 
       const video = createMockVideo();
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 
@@ -85,8 +99,7 @@ describe('pipFeature', () => {
     });
 
     it('syncs pip on webkitpresentationmodechanged event (iOS Safari)', () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
-      video.webkitPresentationMode = 'inline';
+      const video = createWebKitVideo();
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
@@ -94,13 +107,17 @@ describe('pipFeature', () => {
       expect(store.state.pip).toBe(false);
 
       // Simulate entering PiP via WebKit presentation mode
-      video.webkitPresentationMode = 'picture-in-picture';
+      Object.defineProperty(video, 'webkitPresentationMode', {
+        value: 'picture-in-picture',
+        writable: true,
+        configurable: true,
+      });
       video.dispatchEvent(new Event('webkitpresentationmodechanged'));
 
       expect(store.state.pip).toBe(true);
 
       // Simulate exiting
-      video.webkitPresentationMode = 'inline';
+      Object.defineProperty(video, 'webkitPresentationMode', { value: 'inline', writable: true, configurable: true });
       video.dispatchEvent(new Event('webkitpresentationmodechanged'));
 
       expect(store.state.pip).toBe(false);
@@ -114,15 +131,15 @@ describe('pipFeature', () => {
       });
 
       const targetVideo = createMockVideo();
-      const mediaHost = document.createElement('div') as unknown as HTMLVideoElement & {
-        target: HTMLVideoElement;
-      };
+      targetVideo.requestPictureInPicture = vi.fn().mockResolvedValue({});
 
-      Object.defineProperty(mediaHost, 'target', {
-        value: targetVideo,
-        writable: true,
-        configurable: true,
-      });
+      // Create a mock media host (not an HTMLMediaElement) with the symbol
+      // so resolveHTMLMediaElement falls through to the symbol check and
+      // returns .target instead of the host itself.
+      const mediaHost = Object.assign(new EventTarget(), {
+        [MEDIA_ELEMENT_HOST_SYMBOL]: true,
+        target: targetVideo,
+      }) as any;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: mediaHost, container: null });
@@ -153,18 +170,17 @@ describe('pipFeature', () => {
       expect(video.requestPictureInPicture).toHaveBeenCalled();
     });
 
-    it('requestPictureInPicture() uses webkitSetPresentationMode first when available (iOS Safari)', async () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+    it('requestPictureInPicture() prefers standard API over webkitSetPresentationMode', async () => {
+      const video = createWebKitVideo();
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
-      video.webkitSetPresentationMode = vi.fn();
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 
       await store.requestPictureInPicture();
 
-      expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('picture-in-picture');
-      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
+      expect(video.requestPictureInPicture).toHaveBeenCalled();
+      expect(video.webkitSetPresentationMode).not.toHaveBeenCalled();
     });
 
     it('exitPictureInPicture() calls document.exitPictureInPicture', async () => {
@@ -235,7 +251,6 @@ describe('pipFeature', () => {
       await store.requestPictureInPicture();
 
       expect(document.exitFullscreen).toHaveBeenCalled();
-      expect(video.requestPictureInPicture).toHaveBeenCalled();
 
       document.exitFullscreen = originalExit;
     });

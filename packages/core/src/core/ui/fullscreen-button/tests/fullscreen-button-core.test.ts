@@ -84,42 +84,42 @@ describe('FullscreenButtonCore', () => {
   });
 
   describe('toggle', () => {
-    it('calls requestFullscreen when not fullscreen', async () => {
+    it('calls requestFullscreen when not fullscreen', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: false });
-      await core.toggle(media);
+      core.toggle(media);
       expect(media.requestFullscreen).toHaveBeenCalled();
     });
 
-    it('calls exitFullscreen when fullscreen', async () => {
+    it('calls exitFullscreen when fullscreen', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: true });
-      await core.toggle(media);
+      core.toggle(media);
       expect(media.exitFullscreen).toHaveBeenCalled();
     });
 
-    it('does nothing when disabled', async () => {
+    it('does nothing when disabled', () => {
       const core = new FullscreenButtonCore({ disabled: true });
       const media = createMediaState();
-      await core.toggle(media);
+      core.toggle(media);
       expect(media.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('does nothing when unsupported', async () => {
+    it('does nothing when unsupported', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreenAvailability: 'unsupported' });
-      await core.toggle(media);
+      core.toggle(media);
       expect(media.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('catches fullscreen errors silently', async () => {
+    it('catches fullscreen errors silently', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({
         requestFullscreen: vi.fn(async () => {
           throw new Error('permission denied');
         }),
       });
-      await expect(core.toggle(media)).resolves.toBeUndefined();
+      expect(() => core.toggle(media)).not.toThrow();
     });
   });
 });

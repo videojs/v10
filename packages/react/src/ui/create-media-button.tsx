@@ -20,13 +20,14 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void;
   hotkeyAction?: string;
+  isSupported?: (state: InferComponentState<Core>) => boolean;
 }
 
 /** Creates a media button React component from a core class and config. */
 export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
   config: MediaButtonConfig<Core>
 ): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
-  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction } = config;
+  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction, isSupported } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
@@ -75,8 +76,16 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return () => tooltipCtx.setContent(undefined);
     }, [tooltipCtx, label]);
 
-    if (!feature || !state) {
+    if (!feature) {
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
+      return null;
+    }
+
+    if (!state) {
+      return null;
+    }
+
+    if (isSupported && !isSupported(state)) {
       return null;
     }
 

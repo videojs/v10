@@ -1,5 +1,7 @@
 import type { ErrorLike, EventLike, EventTargetLike } from '../../core/media/types';
 
+export const MEDIA_ELEMENT_HOST_SYMBOL = Symbol.for('@videojs/media-element-host');
+
 const EMPTY_TIME_RANGES: Readonly<TimeRanges> = Object.freeze({
   length: 0,
   start() {
@@ -8,12 +10,14 @@ const EMPTY_TIME_RANGES: Readonly<TimeRanges> = Object.freeze({
   end() {
     return 0;
   },
-} as TimeRanges);
+});
 
 export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
   implements EventTargetLike<Events>
 {
+  readonly [MEDIA_ELEMENT_HOST_SYMBOL] = true;
+
   #target: T | null = null;
   #types = new Set<string>();
 
