@@ -58,9 +58,11 @@ test.describe('Mouse Gestures', () => {
     await player.play();
     await page.waitForTimeout(500);
 
-    // Click the time slider — should seek, not toggle play/pause
+    // Click the time slider — should seek, not toggle play/pause.
+    // Wait briefly after seek to give any leaked gesture time to fire.
     await player.seekTo(50);
-    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+    await page.waitForTimeout(300);
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
   });
 });
 
@@ -93,9 +95,11 @@ test.describe('React Mouse Gestures', () => {
     await player.play();
     await page.waitForTimeout(500);
 
-    // Click the time slider — should seek, not toggle play/pause
+    // Click the time slider — should seek, not toggle play/pause.
+    // Wait briefly after seek to give any leaked gesture time to fire.
     await player.seekTo(50);
-    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+    await page.waitForTimeout(300);
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
   });
 });
 
