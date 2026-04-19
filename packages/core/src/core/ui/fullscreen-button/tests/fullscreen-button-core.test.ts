@@ -158,14 +158,14 @@ describe('FullscreenButtonCore', () => {
       expect(media.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('catches fullscreen errors silently', () => {
+    it('propagates fullscreen errors to caller', async () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({
         requestFullscreen: vi.fn(async () => {
           throw new Error('permission denied');
         }),
       });
-      expect(() => core.toggle(media)).not.toThrow();
+      await expect(core.toggle(media)).rejects.toThrow('permission denied');
     });
   });
 });

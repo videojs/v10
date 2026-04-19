@@ -7,12 +7,12 @@ export function isPictureInPictureEnabled(media: Media): boolean {
   const video = resolveHTMLVideoElement(media);
   if (!video) return false;
 
-  if (isWebKitVideoElement(video)) {
-    return video.webkitSupportsPresentationMode('picture-in-picture');
-  }
-
   if (isFunction(video.requestPictureInPicture)) {
     return true;
+  }
+
+  if (isWebKitVideoElement(video)) {
+    return video.webkitSupportsPresentationMode('picture-in-picture');
   }
 
   return false;
@@ -53,7 +53,7 @@ export function requestPictureInPicture(media: Media): Promise<unknown> {
 export function exitPictureInPicture(media?: Media): Promise<void> {
   const video = media && resolveHTMLVideoElement(media);
 
-  if (isWebKitVideoElement(video)) {
+  if (isWebKitVideoElement(video) && video.webkitPresentationMode === 'picture-in-picture') {
     return Promise.resolve(video.webkitSetPresentationMode('inline'));
   }
 
