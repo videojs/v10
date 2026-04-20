@@ -375,40 +375,58 @@ createComposition([wantsCanvas, wantsVideo]);
 
 ## Reactors
 
-So far, behaviors have used `effect()` to react to state changes. Effects work well for simple observation, but they re-run on _every_ change to their dependencies. What if a behavior needs lifecycle — setup when a condition becomes true, teardown when it becomes false, and the ability to distinguish "just entered this state" from "still in this state"?
+The counter ticks on an interval whether you want it to or not. If you let users pause it, one approach is to check a `paused` flag inside the interval callback — but that leaves the interval running forever, just idling. What you really want is setup and teardown tied to the transition itself: the interval starts when the counter enters a "running" phase, and stops when it leaves.
 
-A **reactor** is a state machine driven by signal observation. Its `monitor` function derives the target state from signals. When the state changes, the reactor transitions — running `entry` effects on the new state and cleaning up the old one.
+An `effect()` can't cleanly model that. It re-runs on every signal change with no sense of phase. That's fine for "render the count into the DOM" — every change should re-render. It's wrong for "start a timer while `paused` is false." What you need is a state machine over signals: a **reactor**.
 
-Let's make our counter pausable and resettable. We'll add button behaviors that toggle pause and reset the count via owners:
+**What it is** — a state machine whose target state is derived from signals. Transitions run setup on entry and cleanup on exit.
+
+**When to use it** — when a behavior has distinct phases with setup/teardown tied to signal-derived conditions, not just observation.
+
+### A pausable counter
+
+A counter that can be paused and reset from DOM buttons. The counter is now a reactor; the rest are ordinary effect-based behaviors:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineReactor, update } from '@videojs/spf';
+import { createMachineReactor, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// Behavior: a counter that can be paused
-function counter({ state, config }) {
+function counter({
+  state,
+  config,
+}: {
+  state: Signal<{ count?: number; paused?: boolean }>;
+  config: { interval?: number };
+}) {
   return createMachineReactor({
     initial: 'paused',
     monitor: () => (state.get().paused ? 'paused' : 'running'),
     states: {
       paused: {},
       running: {
-        // entry runs once when transitioning to 'running'.
-        // Its return value is cleanup — called on exit (pause or destroy).
+        // entry runs once on transition; its return value is cleanup,
+        // called on exit (pause or destroy)
         entry: () => {
-          const interval = setInterval(() => {
+          const id = setInterval(() => {
             update(state, { count: (state.get().count ?? 0) + 1 });
           }, config.interval ?? 1000);
-          return () => clearInterval(interval);
+          return () => clearInterval(id);
         },
       },
     },
   });
 }
 
-// Behavior: renders count to a DOM element
-function render({ state, owners, config }) {
+function render({
+  state,
+  owners,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ renderElement?: HTMLElement }>;
+  config: { defaultText?: string };
+}) {
   return effect(() => {
     const { renderElement } = owners.get();
     if (!renderElement) return;
@@ -416,33 +434,42 @@ function render({ state, owners, config }) {
   });
 }
 
-// Behavior: wires up a pause/unpause button
-function pauseButton({ state, owners }) {
-  // Update button text reactively
-  effect(() => {
+function pauseButton({
+  state,
+  owners,
+}: {
+  state: Signal<{ paused?: boolean }>;
+  owners: Signal<{ pauseBtn?: HTMLElement }>;
+}) {
+  // Keep the button label in sync with paused
+  const stopLabel = effect(() => {
     const { pauseBtn } = owners.get();
     if (!pauseBtn) return;
     pauseBtn.textContent = state.get().paused ? 'Start' : 'Pause';
   });
 
-  // listen() adds an event listener and returns a cleanup function.
-  // Returning it from effect() means the listener is removed when the
-  // button is replaced or the composition is destroyed.
-  return effect(() => {
+  // listen() attaches a click handler and returns a cleanup that removes it
+  const stopClick = effect(() => {
     const { pauseBtn } = owners.get();
     if (!pauseBtn) return;
     return listen(pauseBtn, 'click', () => {
       update(state, { paused: !state.get().paused });
     });
-    // Equivalent to:
-    // const handler = () => update(state, { paused: !state.get().paused });
-    // pauseBtn.addEventListener('click', handler);
-    // return () => pauseBtn.removeEventListener('click', handler);
   });
+
+  return () => {
+    stopLabel();
+    stopClick();
+  };
 }
 
-// Behavior: wires up a reset button
-function resetButton({ state, owners }) {
+function resetButton({
+  state,
+  owners,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ resetBtn?: HTMLElement }>;
+}) {
   return effect(() => {
     const { resetBtn } = owners.get();
     if (!resetBtn) return;
@@ -450,184 +477,153 @@ function resetButton({ state, owners }) {
   });
 }
 
-const composition = createComposition(
-  [counter, render, pauseButton, resetButton],
-  {
-    initialState: { count: 0, paused: true },
-    config: { interval: 250, defaultText: '--' },
-    initialOwners: {
-      renderElement: document.getElementById('counter'),
-      pauseBtn: document.getElementById('pause'),
-      resetBtn: document.getElementById('reset'),
-    },
-  }
-);
+const composition = createComposition([counter, render, pauseButton, resetButton], {
+  initialState: { count: 0, paused: true },
+  config: { interval: 250, defaultText: '--' },
+  initialOwners: {
+    renderElement: document.getElementById('counter'),
+    pauseBtn: document.getElementById('pause'),
+    resetBtn: document.getElementById('reset'),
+  },
+});
 
 await composition.destroy();
 ```
 
-The `counter` behavior is now a reactor with two states:
+`counter` is now a reactor with two states, `paused` and `running`. Its `monitor` reads `state.get().paused` and returns the target. When the user clicks the pause button, `pauseButton` writes to state; `monitor` re-derives, and the reactor transitions. `entry` on `running` starts the interval; the cleanup it returns runs on the way back to `paused`. The framework handles the transition — `counter` never calls `transition()` itself.
 
-- **`paused`** — no effects. The counter does nothing.
-- **`running`** — the `entry` effect starts the interval. When the reactor exits this state (pause or destroy), the cleanup clears it.
+`pauseButton`, `resetButton`, and `render` are ordinary effect-based behaviors reacting to the same state the reactor derives from. None of them knows a reactor exists. Everything coordinates through the shared signal.
 
-The `monitor` function reads `state.get().paused` and returns the target state. The framework handles the transition — `counter` never calls `transition()` itself. When `paused` changes from `true` to `false`, the reactor moves to `running` and the interval starts. When it changes back, the reactor moves to `paused` and the interval is cleaned up.
+### Monitor, entry, and effects
 
-The `pauseButton` and `resetButton` behaviors are plain effects — they wire up DOM event handlers that write directly to state. When a button is clicked, state changes, and the reactor (and `render`) respond automatically. No behavior coordinates with another; they all communicate through shared state.
+A reactor is defined with three core pieces:
 
-Key concepts:
-- **`monitor`** — a reactive function that derives the target state. Re-evaluates when its signal dependencies change.
-- **`entry`** — runs once on state entry, automatically untracked. Return a cleanup function (or an object with `abort()`).
-- **`effects`** — (not shown here) re-run when tracked signals change. Use for reactive sync within a state.
+- **`monitor`** — a reactive function that returns the name of the target state. It re-evaluates when its signal dependencies change; if the result changes, the reactor transitions.
+- **`entry`** — runs once when the reactor enters a state. Automatically untracked, so reads don't subscribe. Return a cleanup function (or an object with `abort()`), and it runs on exit.
+- **`effects`** (not shown in the example) — live reactive effects scoped to a single state. They run while in that state, track their dependencies, and are cleaned up on exit. Use them when you want live sync *within* a phase, not just on entry.
 
-Not everything needs a reactor. Use a reactor when you need distinct states with setup/teardown lifecycles. Use an effect when you just need to respond to changes.
+Not every behavior needs a reactor. When all you need is to react to signal changes, `effect()` is enough. Reach for a reactor when different phases call for different setup and teardown, and the phase itself is derived from signal state.
 
 ---
 
 ## Tasks
 
-Sometimes a behavior needs to do async work — save data, fetch a resource, process a chunk. You could use a Promise directly, but Promises start executing immediately and can't be cancelled. A **Task** is an async unit of work that:
+`counter`, `render`, and the buttons all do their work synchronously — read a signal, write a signal, attach a handler. Saving that count to a server is different in kind. It's async, takes time, might fail, and you probably don't want overlapping requests when the count ticks faster than the network responds.
 
-- Exists before it runs — it can be inspected, queued, or aborted while still `'pending'`
-- Can be **aborted** from outside at any point
-- Exposes its **status** synchronously (`'pending'`, `'running'`, `'done'`, `'error'`)
+A plain Promise can't express any of that. It starts running the moment you create it, can't be cancelled, and offers no introspection into whether it's still in flight. What you want is an inspectable, abortable, schedulable unit of async work: a **Task**. And when multiple tasks line up behind each other — when `counter` hits 10 before the save at 5 has finished — you want a **SerialRunner** to queue them so they don't overlap.
 
-A **SerialRunner** schedules tasks one at a time — the next task waits until the current one finishes. This is useful when operations must not overlap (saving state, writing to a database, etc.).
+**What it is** — a Task is an async unit of work with a synchronous lifecycle (`pending` / `running` / `done` / `error`), an `AbortSignal` for cancellation, and no execution until a runner schedules it. A SerialRunner is the simplest scheduler: first in, first out, one at a time.
 
-Let's add a `persist` behavior that saves the count to a server every 5 ticks, and does one final save on destroy:
+**When to use it** — async work that needs inspection, cancellation, or ordering. Saves, uploads, chunked parses — anything where "two of these running at once" or "cancel this midway through" are real concerns.
+
+### A persist behavior
+
+Saving the count to a server every five ticks, with one final save on destroy:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineReactor, Task, SerialRunner, update } from '@videojs/spf';
+import { createMachineReactor, Task, SerialRunner, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// Behavior: a counter that can be paused
-function counter({ state, config }) {
-  return createMachineReactor({
-    initial: 'paused',
-    monitor: () => (state.get().paused ? 'paused' : 'running'),
-    states: {
-      paused: {},
-      running: {
-        entry: () => {
-          const interval = setInterval(() => {
-            update(state, { count: (state.get().count ?? 0) + 1 });
-          }, config.interval ?? 1000);
-          return () => clearInterval(interval);
-        },
-      },
-    },
-  });
-}
+// counter, render, pauseButton, resetButton — unchanged from the previous section
 
-// Behavior: persists count at a configurable interval
-function persist({ state, config }) {
+function persist({
+  state,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  config: { saveEvery?: number };
+}) {
   const runner = new SerialRunner();
 
-  function save(count) {
-    runner.schedule(new Task((signal) =>
-      fetch('/api/count', {
-        method: 'POST',
-        body: JSON.stringify({ count }),
-        signal,
-      })
-    ));
+  function save(count: number) {
+    runner.schedule(
+      new Task((signal) =>
+        fetch('/api/count', {
+          method: 'POST',
+          body: JSON.stringify({ count }),
+          signal,
+        }),
+      ),
+    );
   }
 
-  // Watch count and save at every 5th tick
+  // Watch count and save at every Nth tick
   const stopEffect = effect(() => {
-    const { count } = state.get();
+    const { count = 0 } = state.get();
     if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
       save(count);
     }
   });
 
-  // Async cleanup: save the final count, then tear down
+  // Async cleanup: save the final count, let the runner drain, then tear down
   return async () => {
     stopEffect();
-    save(state.get().count);
+    save(state.get().count ?? 0);
     await runner.settled;
     runner.destroy();
   };
 }
 
-// Behavior: renders count to a DOM element
-function render({ state, owners, config }) {
-  return effect(() => {
-    const { renderElement } = owners.get();
-    if (!renderElement) return;
-    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
-  });
-}
+const composition = createComposition([counter, persist, render, pauseButton, resetButton], {
+  initialState: { count: 0, paused: true },
+  config: { interval: 250, defaultText: '--', saveEvery: 5 },
+  initialOwners: {
+    renderElement: document.getElementById('counter'),
+    pauseBtn: document.getElementById('pause'),
+    resetBtn: document.getElementById('reset'),
+  },
+});
 
-// Behavior: wires up a pause/unpause button
-function pauseButton({ state, owners }) {
-  effect(() => {
-    const { pauseBtn } = owners.get();
-    if (!pauseBtn) return;
-    pauseBtn.textContent = state.get().paused ? 'Start' : 'Pause';
-  });
-
-  return effect(() => {
-    const { pauseBtn } = owners.get();
-    if (!pauseBtn) return;
-    return listen(pauseBtn, 'click', () => {
-      update(state, { paused: !state.get().paused });
-    });
-  });
-}
-
-// Behavior: wires up a reset button
-function resetButton({ state, owners }) {
-  return effect(() => {
-    const { resetBtn } = owners.get();
-    if (!resetBtn) return;
-    return listen(resetBtn, 'click', () => update(state, { count: 0 }));
-  });
-}
-
-const composition = createComposition(
-  [counter, persist, render, pauseButton, resetButton],
-  {
-    initialState: { count: 0, paused: true },
-    config: { interval: 250, defaultText: '--', saveEvery: 5 },
-    initialOwners: {
-      renderElement: document.getElementById('counter'),
-      pauseBtn: document.getElementById('pause'),
-      resetBtn: document.getElementById('reset'),
-    },
-  }
-);
-
-// Saves at count 5, 10, 15, 20...
-// On destroy, saves whatever the final count is
+// Saves at count 5, 10, 15, 20... and once more on destroy.
 await composition.destroy();
 ```
 
-The `persist` behavior introduces several concepts:
+Three things are new. The `save()` closure wraps each network request in `new Task(...)`; the task's body receives an `AbortSignal` that `fetch` understands natively. The `SerialRunner` collects scheduled tasks and runs them one at a time — scheduling a second task while the first is still running queues it behind, with no overlap. And `persist`'s cleanup is `async`: it stops the effect, schedules one last save, `await`s `runner.settled` to let pending work finish, then destroys the runner. `composition.destroy()` awaits this cleanup like any other.
 
-- **Task** — each save is a `new Task(...)` that receives an `AbortSignal`. The runner can cancel it if needed.
-- **SerialRunner** — ensures saves run one at a time. If the counter hits 5 and then 10 before the first save completes, the second save queues behind the first.
-- **Async cleanup** — the cleanup function is `async`. It stops the effect, schedules one final save, waits for the runner to settle, then destroys it. `composition.destroy()` awaits this.
+### Task and SerialRunner
+
+A **`Task`** holds the description of a piece of async work without starting it. Its constructor receives a function `(signal: AbortSignal) => Promise<T>`; the work doesn't begin until a runner picks it up. While `'pending'`, the task can be aborted, inspected, or dropped from the queue with no wasted effort. Once `'running'`, the `AbortSignal` fires on cancellation — which `fetch` and any `signal`-aware API handle cleanly.
+
+A **`SerialRunner`** is the simplest scheduler: first in, first out, one at a time. `runner.schedule(task)` returns a promise that resolves to the task's result when it eventually runs. Two useful read points:
+
+- **`runner.settled`** — a promise that resolves once the runner has no pending or running tasks. `await runner.settled` before teardown lets in-flight work finish.
+- **`runner.abortPending()` / `runner.abortAll()`** — cancel pending work, or everything including the current task. Useful when a newer request supersedes older ones.
+
+Reach for `Task` when you need control over async work: ordering, cancellation, or the ability to reason about what's in flight. For one-shot async work that you'd be happy to `await` and discard, a plain Promise is still fine.
 
 ---
 
 ## Actors
 
-Signals and reactors are declarative — state is derived, effects react. But some resources are inherently imperative: a network request in progress, a database transaction, a file being written. You can't re-derive the right action from signals alone — you need to _tell_ the resource what to do, track where it is in that process, and handle interruptions.
+`persist` does the job, but it keeps the save lifecycle to itself. If `render` wanted to show "(saving...)" while a save is in flight, or the reset button wanted to cancel an outstanding save, neither could — `persist` owns the runner and the "am I saving?" state internally, without publishing them.
 
-An **actor** is a message-driven state machine that owns a mutable resource. It receives messages via `send()`, manages work through a task runner, and exposes its current state as a reactive `snapshot`.
+Moving that work into an actor makes the save lifecycle observable. An actor is a message-driven state machine that owns a resource (here, the task runner), processes messages through its own transitions, and publishes its current state as a reactive snapshot that any behavior can subscribe to.
 
-Let's refactor our `persist` behavior. Currently it manages saves internally — other behaviors have no way to know if a save is in progress or what was last saved. With an actor, the save lifecycle becomes a first-class, observable part of the composition.
+**What it is** — a message-driven state machine that owns a mutable resource. Other behaviors `send()` messages to it; it transitions between states internally; its current state is exposed as a reactive `snapshot` signal.
+
+**When to use it** — when the imperative work a behavior performs is observable state the rest of the composition needs to see or drive. "Is a save in flight?", "Did the last request succeed?", "Please cancel what you're doing" — if any of that should be visible to other behaviors, you've outgrown a plain task.
+
+### A save actor
+
+Refactor `persist`: the runner and save state move into an actor; `persist` sends messages to it; `render` reads the actor's snapshot to show in-flight status; `resetButton` sends `cancel` to abort pending work.
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineActor, createMachineReactor, Task, SerialRunner, update } from '@videojs/spf';
+import {
+  createMachineActor,
+  createMachineReactor,
+  Task,
+  SerialRunner,
+  update,
+  type Signal,
+} from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// Actor: manages saving count to a server
+// counter, pauseButton — unchanged from previous sections
+
 function createSaveActor() {
-  function makeSaveTask(count) {
+  function makeSaveTask(count: number) {
     return new Task(async (signal) => {
       await fetch('/api/count', {
         method: 'POST',
@@ -654,7 +650,7 @@ function createSaveActor() {
       saving: {
         onSettled: 'idle',
         on: {
-          // New save while one is in-flight: cancel pending, schedule new
+          // A new save while one is in-flight: drop pending, schedule fresh
           save: (msg, { runner, setContext }) => {
             runner.abortPending();
             runner.schedule(makeSaveTask(msg.count)).then(setContext);
@@ -669,53 +665,42 @@ function createSaveActor() {
   });
 }
 
-// Behavior: a counter that can be paused
-function counter({ state, config }) {
-  return createMachineReactor({
-    initial: 'paused',
-    monitor: () => (state.get().paused ? 'paused' : 'running'),
-    states: {
-      paused: {},
-      running: {
-        entry: () => {
-          const interval = setInterval(() => {
-            update(state, { count: (state.get().count ?? 0) + 1 });
-          }, config.interval ?? 1000);
-          return () => clearInterval(interval);
-        },
-      },
-    },
-  });
-}
+type SaveActor = ReturnType<typeof createSaveActor>;
 
-// Behavior: creates a save actor and sends save messages on an interval
-function persist({ state, owners, config }) {
+function persist({
+  state,
+  owners,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ saveActor?: SaveActor }>;
+  config: { saveEvery?: number };
+}) {
   const actor = createSaveActor();
   update(owners, { saveActor: actor });
 
   const stopEffect = effect(() => {
-    const { count } = state.get();
+    const { count = 0 } = state.get();
     if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
       actor.send({ type: 'save', count });
     }
   });
 
-  return async () => {
+  return () => {
     stopEffect();
-    actor.send({ type: 'save', count: state.get().count });
-    await actor.snapshot.get().value === 'idle'
-      ? Promise.resolve()
-      : new Promise<void>((resolve) => {
-          effect(() => {
-            if (actor.snapshot.get().value === 'idle') resolve();
-          });
-        });
     actor.destroy();
   };
 }
 
-// Behavior: renders count and save status to DOM elements
-function render({ state, owners, config }) {
+function render({
+  state,
+  owners,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ renderElement?: HTMLElement; saveActor?: SaveActor }>;
+  config: { defaultText?: string };
+}) {
   return effect(() => {
     const { renderElement, saveActor } = owners.get();
     if (!renderElement) return;
@@ -728,25 +713,13 @@ function render({ state, owners, config }) {
   });
 }
 
-// Behavior: wires up pause button
-function pauseButton({ state, owners }) {
-  effect(() => {
-    const { pauseBtn } = owners.get();
-    if (!pauseBtn) return;
-    pauseBtn.textContent = state.get().paused ? 'Start' : 'Pause';
-  });
-
-  return effect(() => {
-    const { pauseBtn } = owners.get();
-    if (!pauseBtn) return;
-    return listen(pauseBtn, 'click', () => {
-      update(state, { paused: !state.get().paused });
-    });
-  });
-}
-
-// Behavior: wires up reset button — also cancels pending saves
-function resetButton({ state, owners }) {
+function resetButton({
+  state,
+  owners,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ resetBtn?: HTMLElement; saveActor?: SaveActor }>;
+}) {
   return effect(() => {
     const { resetBtn, saveActor } = owners.get();
     if (!resetBtn) return;
@@ -757,25 +730,32 @@ function resetButton({ state, owners }) {
   });
 }
 
-const composition = createComposition(
-  [counter, persist, render, pauseButton, resetButton],
-  {
-    initialState: { count: 0, paused: true },
-    config: { interval: 250, defaultText: '--', saveEvery: 5 },
-    initialOwners: {
-      renderElement: document.getElementById('counter'),
-      pauseBtn: document.getElementById('pause'),
-      resetBtn: document.getElementById('reset'),
-    },
-  }
-);
+const composition = createComposition([counter, persist, render, pauseButton, resetButton], {
+  initialState: { count: 0, paused: true },
+  config: { interval: 250, defaultText: '--', saveEvery: 5 },
+  initialOwners: {
+    renderElement: document.getElementById('counter'),
+    pauseBtn: document.getElementById('pause'),
+    resetBtn: document.getElementById('reset'),
+  },
+});
+
+await composition.destroy();
 ```
 
-The save actor encapsulates the imperative reality of network saves:
+The actor makes the save lifecycle observable. `persist` publishes the actor through owners and forwards save triggers as messages; `render` reads `saveActor.snapshot.get().value` and shows "(saving...)" when it's `'saving'`; `resetButton` sends a `cancel` message that aborts in-flight work and transitions the actor back to `idle`. None of these behaviors knows how a save is performed — they interact with the actor as a black box that happens to expose its current state.
 
-- **Message-driven** — behaviors `send()` messages (`save`, `cancel`) rather than calling functions directly. The actor decides how to handle each message based on its current state.
-- **Stateful** — the actor tracks whether a save is in-flight and what was last saved. Incoming `save` messages during the `saving` state abort pending work and schedule fresh saves — the caller doesn't manage this.
-- **Observable** — `actor.snapshot` is a reactive signal. The `render` behavior reads it to show "(saving...)" without `persist` explicitly publishing status. The `resetButton` behavior reads `saveActor` from owners to send `cancel`.
-- **`onSettled`** — when the runner's tasks complete, the actor automatically transitions back to `idle`. No manual bookkeeping.
+### Messages, transitions, and snapshot
 
-The pattern: **reactors decide _when_ something should happen** (by observing signals), **actors handle _how_ it happens** (by managing imperative work). The reactor sends a message; the actor owns the execution.
+An actor is defined by its states, its message handlers (`on`), and a snapshot signal it publishes.
+
+- **Messages** — `actor.send({ type: 'save', count: 42 })`. Each state declares the messages it accepts under `on`; unhandled messages are ignored. The handler receives the message plus a context exposing `transition`, `setContext`, and the actor's own `runner`.
+- **Transitions** — call `transition('saving')` inside a handler to move the actor to another state. Transitions are explicit in the handlers rather than derived the way a reactor's `monitor` is. `onSettled` lets you auto-transition when the runner finishes: here, the `saving` state drops back to `idle` once the scheduled task settles, with no manual bookkeeping.
+- **Snapshot** — `actor.snapshot` is a `Signal<{ value: string; context: Context }>` that publishes the actor's current state name and context. Any behavior that reads it inside an `effect()` re-runs on every transition or `setContext` call, which is what lets `render` show "(saving...)" without `persist` publishing a separate "am I saving?" flag.
+
+The division of labor:
+
+- **Reactors decide _when_** something should happen, by observing signals.
+- **Actors handle _how_** it happens, by managing imperative work and publishing its status.
+
+A reactor might send a message to an actor when a condition goes true; the actor performs the work and publishes its state; other behaviors observe that state through the snapshot signal. Each piece stays in its lane.
