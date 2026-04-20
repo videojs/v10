@@ -67,13 +67,11 @@ export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
 export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeSlider } from './ui/volume-slider';
-
-// Media utilities
-export { attachMediaElement } from './utils/attach-media-element';
-export { mediaProps } from './utils/media-props';
 // Utilities
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
+// Media utilities
+export { useAttachMedia } from './utils/use-attach-media';
 export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
 export { useDestroy } from './utils/use-destroy';
 export { useLatestRef } from './utils/use-latest-ref';

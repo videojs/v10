@@ -1,23 +1,36 @@
 'use client';
 
 import { HlsMedia } from '@videojs/core/dom/media/hls';
-import type { InferClassProps } from '@videojs/utils/types';
-import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
+import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { attachMediaElement } from '../../utils/attach-media-element';
-import { mediaProps } from '../../utils/media-props';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 
-export type HlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> & InferClassProps<typeof HlsMedia>;
+interface HlsMediaProps
+  extends Partial<Pick<HlsMedia, 'src' | 'type' | 'preferPlayback' | 'config' | 'debug' | 'preload'>> {}
 
-export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(function HlsVideo({ children, ...props }, ref) {
-  const mediaApi = useMediaInstance(HlsMedia);
+export interface HlsVideoProps extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps>, HlsMediaProps {
+  children?: ReactNode;
+}
 
-  const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(function HlsVideo(
+  { children, src, type, preferPlayback, config, debug, preload, ...htmlProps },
+  ref
+) {
+  const media = useMediaInstance(HlsMedia);
+  const attachRef = useAttachMedia(media);
+  const composedRef = useComposedRefs(attachRef, ref);
+
+  if (src !== undefined && media.src !== src) media.src = src;
+  if (media.type !== type) media.type = type;
+  if (media.preferPlayback !== preferPlayback) media.preferPlayback = preferPlayback;
+  if (config !== undefined && media.config !== config) media.config = config;
+  if (debug !== undefined && media.debug !== debug) media.debug = debug;
+  if (preload !== undefined && media.preload !== preload) media.preload = preload;
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, HlsMedia, props)}>
+    <video ref={composedRef} {...htmlProps}>
       {children}
     </video>
   );

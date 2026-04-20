@@ -1,24 +1,32 @@
 'use client';
 
 import { DashMedia } from '@videojs/core/dom/media/dash';
-import type { InferClassProps } from '@videojs/utils/types';
-import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
+import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { attachMediaElement } from '../../utils/attach-media-element';
-import { mediaProps } from '../../utils/media-props';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 
-export type DashVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
-  InferClassProps<typeof DashMedia>;
+interface DashMediaProps extends Partial<Pick<DashMedia, 'src'>> {}
 
-export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
-  const mediaApi = useMediaInstance(DashMedia);
+export interface DashVideoProps
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>,
+    DashMediaProps {
+  children?: ReactNode;
+}
 
-  const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo(
+  { children, src, ...htmlProps },
+  ref
+) {
+  const media = useMediaInstance(DashMedia);
+  const attachRef = useAttachMedia(media);
+  const composedRef = useComposedRefs(attachRef, ref);
+
+  if (src !== undefined && media.src !== src) media.src = src;
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, DashMedia, props)}>
+    <video ref={composedRef} {...htmlProps}>
       {children}
     </video>
   );
