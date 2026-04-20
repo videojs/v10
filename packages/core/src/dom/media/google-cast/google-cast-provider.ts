@@ -219,7 +219,12 @@ export class GoogleCastProvider {
   }
 
   // isPaused is not true when the media has ended so add the ended check.
+  // Fall back to the local element before remote media has loaded — e.g.
+  // while the cast picker is open, `isCasting` is already true but the
+  // RemotePlayer's `isPaused` still reports its default `false`, which
+  // would otherwise leak through as `media.paused === false`.
   get paused() {
+    if (!this.#remote.isMediaLoaded) return this.#local.paused();
     return this.#remote.isPaused || this.ended;
   }
 
