@@ -231,22 +231,48 @@ Behaviors read config directly (`config.interval`), usually with a fallback. Use
 
 ## Owners
 
-A composition has two reactive channels: **state** for application data and **owners** for platform resources. State and owners are both built on [TC39 Signals](https://github.com/tc39/proposal-signals) — reactive values that automatically notify dependents when they change. Use `effect()` to react to changes in either channel:
+A ticking counter and a console log aren't much of an application. What you'd actually want is to render the count somewhere — say, into an element on the page. That needs access to the element itself: a `<div>`, a buffer, an open socket. These are **resources** — platform objects with imperative interfaces that don't fit cleanly into plain application data, and the **owners** channel is where they live.
+
+An owner is something behaviors observe and operate on, not something they derive. The composition holds a signal whose value is a plain object mapping keys to resources. Behaviors read the keys they care about; `effect()` re-runs when a key appears, is replaced, or is cleared. The element itself is still the element — owners don't wrap or proxy it, they just make its lifecycle reactive.
+
+**What it is** — a reactive signal holding a map of named resources, shared across every behavior in a composition.
+
+**When to use it** — for values that have identity and behavior, not just data — DOM elements, buffers, long-lived connections. If you'd pass the thing around by reference, it probably belongs in owners.
+
+> [!NOTE]
+> The name "owners" is provisional. The concept — a channel for mutable resources that behaviors observe and act on — is stable; the label itself may change, and "resources" is one candidate under consideration.
+
+### A DOM-renderer behavior
+
+A behavior that renders the counter to a DOM element, paired with the counter from the previous section:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { update } from '@videojs/spf';
+import { update, type Signal } from '@videojs/spf';
 
-// Behavior: increments a counter
-function counter({ state, config }) {
-  const interval = setInterval(() => {
+function counter({
+  state,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  config: { interval?: number };
+}) {
+  const id = setInterval(() => {
     update(state, { count: (state.get().count ?? 0) + 1 });
   }, config.interval ?? 1000);
-  return () => clearInterval(interval);
+
+  return () => clearInterval(id);
 }
 
-// Behavior: renders count to a DOM element
-function render({ state, owners, config }) {
+function render({
+  state,
+  owners,
+  config,
+}: {
+  state: Signal<{ count?: number }>;
+  owners: Signal<{ renderElement?: HTMLElement }>;
+  config: { defaultText?: string };
+}) {
   return effect(() => {
     const { renderElement } = owners.get();
     if (!renderElement) return;
@@ -254,21 +280,71 @@ function render({ state, owners, config }) {
   });
 }
 
-const composition = createComposition(
-  [counter, render],
-  {
-    initialState: { count: 0 },
-    config: { interval: 250, defaultText: '--' },
-    initialOwners: { renderElement: document.getElementById('counter') },
-  }
-);
+const composition = createComposition([counter, render], {
+  initialState: { count: 0 },
+  config: { interval: 250, defaultText: '--' },
+  initialOwners: { renderElement: document.getElementById('counter') },
+});
+
+await composition.destroy();
 ```
 
-`effect()` runs its callback immediately, tracks which signals were read, and re-runs whenever those signals change. The `render` behavior reads from both channels — `state` for the count value and `owners` for the DOM element — so it re-runs when either changes. The guard (`if (!renderElement) return`) handles the case where owners hasn't been populated yet.
+`render` reads from both channels. `effect()` tracks every signal the callback reads and re-runs when any of them change — so when `count` ticks up, or when `renderElement` is swapped out or cleared, the render function runs again. The guard `if (!renderElement) return` handles the case where the element isn't in owners yet (for example, if `initialOwners` was omitted or the DOM wasn't ready).
 
-This is also the first example with two behaviors. They don't know about each other — `counter` writes state, `render` reads it. Both return cleanup: `counter` clears its interval; `render` returns the stop function from `effect()`. The composition collects these and calls them on `destroy()`.
+Each behavior returns its own cleanup: `counter` hands back a function that clears its interval; `render` returns the cleanup `effect()` gave it, which stops observing. `composition.destroy()` runs both.
 
-The separation between state and owners signals intent. State is data that flows through the composition — counts, selections, timestamps. Owners are platform resources that behaviors operate on — elements, buffers, connections. Both are reactive signals with the same API.
+### `initialOwners`
+
+`initialOwners` seeds the owners signal, the same way `initialState` seeds state:
+
+```ts
+createComposition([counter, render], {
+  initialOwners: { renderElement: document.getElementById('counter') },
+});
+```
+
+Its type is derived from the behaviors. Because `render` annotates `owners: Signal<{ renderElement?: HTMLElement }>`, TypeScript requires `initialOwners` to be assignable to that shape:
+
+```ts
+// @ts-expect-error — renderElement expects an HTMLElement, not a number
+createComposition([render], { initialOwners: { renderElement: 42 } });
+```
+
+If you omit `initialOwners`, the signal starts as `{}` — which is why `render` uses the optional annotation `renderElement?: HTMLElement` and guards the read.
+
+### Composing behaviors
+
+When you pass more than one behavior to `createComposition`, their declarations are combined and the compiler catches conflicts. The rule differs by channel.
+
+**State and config** use intersection: if two behaviors declare the same key with incompatible types, the intersection collapses and the composition is rejected.
+
+```ts
+const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
+const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
+
+// @ts-expect-error — behaviors have conflicting state types
+createComposition([expectsNumber, expectsString]);
+```
+
+**Owners** use subtype compatibility, because owner values are concrete platform objects whose class hierarchy matters. Two behaviors can share an owner key if one type extends the other — the composition picks the more specific one:
+
+```ts
+const wantsElement = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+const wantsVideo   = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+
+// ✅ HTMLVideoElement extends HTMLElement — fine
+createComposition([wantsElement, wantsVideo]);
+```
+
+Sibling types with no `extends` relationship are rejected:
+
+```ts
+const wantsCanvas = (_deps: { owners: Signal<{ el?: HTMLCanvasElement }> }) => {};
+const wantsVideo  = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+
+// @ts-expect-error — neither HTMLCanvasElement nor HTMLVideoElement extends the other
+createComposition([wantsCanvas, wantsVideo]);
+```
 
 ---
 
