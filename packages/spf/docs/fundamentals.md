@@ -249,25 +249,13 @@ An owner is something behaviors observe and operate on, not something they deriv
 
 ### A DOM-renderer behavior
 
-A behavior that renders the counter to a DOM element, paired with the counter from the previous section:
+A behavior that renders the counter to a DOM element, joining the counter and logger from the previous section:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { update, type Signal } from '@videojs/spf';
+import { type Signal } from '@videojs/spf';
 
-function counter({
-  state,
-  config,
-}: {
-  state: Signal<{ count?: number }>;
-  config: { interval?: number };
-}) {
-  const id = setInterval(() => {
-    update(state, { count: (state.get().count ?? 0) + 1 });
-  }, config.interval ?? 1000);
-
-  return () => clearInterval(id);
-}
+// counter, logCount — unchanged from the previous section
 
 function render({
   state,
@@ -285,7 +273,7 @@ function render({
   });
 }
 
-const composition = createComposition([counter, render], {
+const composition = createComposition([counter, logCount, render], {
   initialState: { count: 0 },
   config: { interval: 250, defaultText: '--' },
   initialOwners: { renderElement: document.getElementById('counter') },
@@ -301,7 +289,7 @@ await composition.destroy();
 `initialOwners` seeds the owners signal, the same way `initialState` seeds state:
 
 ```ts
-createComposition([counter, render], {
+createComposition([counter, logCount, render], {
   initialOwners: { renderElement: document.getElementById('counter') },
 });
 ```
@@ -392,6 +380,8 @@ import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { createMachineReactor, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
+// logCount, render — unchanged from the previous section
+
 function counter({
   state,
   config,
@@ -415,22 +405,6 @@ function counter({
         },
       },
     },
-  });
-}
-
-function render({
-  state,
-  owners,
-  config,
-}: {
-  state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: HTMLElement }>;
-  config: { defaultText?: string };
-}) {
-  return effect(() => {
-    const { renderElement } = owners.get();
-    if (!renderElement) return;
-    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
   });
 }
 
@@ -477,7 +451,7 @@ function resetButton({
   });
 }
 
-const composition = createComposition([counter, render, pauseButton, resetButton], {
+const composition = createComposition([counter, logCount, render, pauseButton, resetButton], {
   initialState: { count: 0, paused: true },
   config: { interval: 250, defaultText: '--' },
   initialOwners: {
@@ -522,10 +496,9 @@ Saving the count to a server every five ticks, with one final save on destroy:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineReactor, Task, SerialRunner, update, type Signal } from '@videojs/spf';
-import { listen } from '@videojs/utils/dom';
+import { Task, SerialRunner, type Signal } from '@videojs/spf';
 
-// counter, render, pauseButton, resetButton — unchanged from the previous section
+// counter, logCount, render, pauseButton, resetButton — unchanged from previous sections
 
 function persist({
   state,
@@ -565,15 +538,18 @@ function persist({
   };
 }
 
-const composition = createComposition([counter, persist, render, pauseButton, resetButton], {
-  initialState: { count: 0, paused: true },
-  config: { interval: 250, defaultText: '--', saveEvery: 5 },
-  initialOwners: {
-    renderElement: document.getElementById('counter'),
-    pauseBtn: document.getElementById('pause'),
-    resetBtn: document.getElementById('reset'),
+const composition = createComposition(
+  [counter, logCount, persist, render, pauseButton, resetButton],
+  {
+    initialState: { count: 0, paused: true },
+    config: { interval: 250, defaultText: '--', saveEvery: 5 },
+    initialOwners: {
+      renderElement: document.getElementById('counter'),
+      pauseBtn: document.getElementById('pause'),
+      resetBtn: document.getElementById('reset'),
+    },
   },
-});
+);
 
 // Saves at count 5, 10, 15, 20... and once more on destroy.
 await composition.destroy();
@@ -610,17 +586,10 @@ Refactor `persist`: the runner and save state move into an actor; `persist` send
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import {
-  createMachineActor,
-  createMachineReactor,
-  Task,
-  SerialRunner,
-  update,
-  type Signal,
-} from '@videojs/spf';
+import { createMachineActor, Task, SerialRunner, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// counter, pauseButton — unchanged from previous sections
+// counter, logCount, pauseButton — unchanged from previous sections
 
 function createSaveActor() {
   function makeSaveTask(count: number) {
@@ -730,15 +699,18 @@ function resetButton({
   });
 }
 
-const composition = createComposition([counter, persist, render, pauseButton, resetButton], {
-  initialState: { count: 0, paused: true },
-  config: { interval: 250, defaultText: '--', saveEvery: 5 },
-  initialOwners: {
-    renderElement: document.getElementById('counter'),
-    pauseBtn: document.getElementById('pause'),
-    resetBtn: document.getElementById('reset'),
+const composition = createComposition(
+  [counter, logCount, persist, render, pauseButton, resetButton],
+  {
+    initialState: { count: 0, paused: true },
+    config: { interval: 250, defaultText: '--', saveEvery: 5 },
+    initialOwners: {
+      renderElement: document.getElementById('counter'),
+      pauseBtn: document.getElementById('pause'),
+      resetBtn: document.getElementById('reset'),
+    },
   },
-});
+);
 
 await composition.destroy();
 ```
