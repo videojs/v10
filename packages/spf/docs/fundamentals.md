@@ -257,7 +257,7 @@ import { type Signal } from '@videojs/spf';
 
 // counter, logCount — unchanged from the previous section
 
-function render({
+function renderCount({
   state,
   owners,
   config,
@@ -273,7 +273,7 @@ function render({
   });
 }
 
-const composition = createComposition([counter, logCount, render], {
+const composition = createComposition([counter, logCount, renderCount], {
   initialState: { count: 0 },
   config: { interval: 250, defaultText: '--' },
   initialOwners: { renderElement: document.getElementById('counter') },
@@ -282,32 +282,32 @@ const composition = createComposition([counter, logCount, render], {
 await composition.destroy();
 ```
 
-`render` reads from both channels. `effect()` tracks every signal the callback reads and re-runs when any of them change — so when `count` ticks up, or when `renderElement` is swapped out or cleared, the render function runs again. The guard `if (!renderElement) return` handles the case where the element isn't in owners yet (for example, if `initialOwners` was omitted or the DOM wasn't ready).
+`renderCount` reads from both channels. `effect()` tracks every signal the callback reads and re-runs when any of them change — so when `count` ticks up, or when `renderElement` is swapped out or cleared, the renderCount function runs again. The guard `if (!renderElement) return` handles the case where the element isn't in owners yet (for example, if `initialOwners` was omitted or the DOM wasn't ready).
 
 ### `initialOwners`
 
 `initialOwners` seeds the owners signal, the same way `initialState` seeds state:
 
 ```ts
-createComposition([counter, logCount, render], {
+createComposition([counter, logCount, renderCount], {
   initialOwners: { renderElement: document.getElementById('counter') },
 });
 ```
 
-Its type is derived from the behaviors. Because `render` annotates `owners: Signal<{ renderElement?: HTMLElement }>`, TypeScript requires `initialOwners` to be assignable to that shape:
+Its type is derived from the behaviors. Because `renderCount` annotates `owners: Signal<{ renderElement?: HTMLElement }>`, TypeScript requires `initialOwners` to be assignable to that shape:
 
 ```ts
 // @ts-expect-error — renderElement expects an HTMLElement, not a number
-createComposition([render], { initialOwners: { renderElement: 42 } });
+createComposition([renderCount], { initialOwners: { renderElement: 42 } });
 ```
 
-If you omit `initialOwners`, the signal starts as `{}` — which is why `render` uses the optional annotation `renderElement?: HTMLElement` and guards the read.
+If you omit `initialOwners`, the signal starts as `{}` — which is why `renderCount` uses the optional annotation `renderElement?: HTMLElement` and guards the read.
 
 ### Updating owners from outside
 
 Owners is just a signal, so you can write to it the same way you write to state — usually from inside a behavior, occasionally from outside when orchestrating resources that live beyond the composition's scope.
 
-Swapping the element mid-composition updates what `render` is rendering into. Because `effect()` tracks `owners`, the swap re-runs the callback and the new element starts receiving updates immediately:
+Swapping the element mid-composition updates what `renderCount` is rendering into. Because `effect()` tracks `owners`, the swap re-runs the callback and the new element starts receiving updates immediately:
 
 ```ts
 const anotherDiv = document.getElementById('other-counter');
@@ -317,13 +317,13 @@ update(composition.owners, { renderElement: anotherDiv });
 Unsetting back to `undefined` is also fine — the guard (`if (!renderElement) return`) turns the absence into a no-op:
 
 ```ts
-update(composition.owners, { renderElement: undefined }); // render stops writing to the DOM
+update(composition.owners, { renderElement: undefined }); // renderCount stops writing to the DOM
 update(composition.owners, { renderElement: anotherDiv }); // and picks back up
 ```
 
-The same pattern covers creation time: if you omit `initialOwners`, the signal starts as `{}`, the first effect run bails on the guard, and `render` comes alive the moment a behavior (or outside code) attaches the element.
+The same pattern covers creation time: if you omit `initialOwners`, the signal starts as `{}`, the first effect run bails on the guard, and `renderCount` comes alive the moment a behavior (or outside code) attaches the element.
 
-This is the loose-coupling payoff. `render` doesn't need to know *when* `renderElement` will exist, only what to do when it does. Resources can arrive late, be swapped, or disappear — the behavior adjusts.
+This is the loose-coupling payoff. `renderCount` doesn't need to know *when* `renderElement` will exist, only what to do when it does. Resources can arrive late, be swapped, or disappear — the behavior adjusts.
 
 ### Composing behaviors
 
@@ -380,7 +380,7 @@ import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { createMachineReactor, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
-// logCount, render — unchanged from the previous section
+// logCount, renderCount — unchanged from the previous section
 
 function counter({
   state,
@@ -451,7 +451,7 @@ function resetButton({
   });
 }
 
-const composition = createComposition([counter, logCount, render, pauseButton, resetButton], {
+const composition = createComposition([counter, logCount, renderCount, pauseButton, resetButton], {
   initialState: { count: 0, paused: true },
   config: { interval: 250, defaultText: '--' },
   initialOwners: {
@@ -466,7 +466,7 @@ await composition.destroy();
 
 `counter` is now a reactor with two states, `paused` and `running`. Its `monitor` reads `state.get().paused` and returns the target. When the user clicks the pause button, `pauseButton` writes to state; `monitor` re-derives, and the reactor transitions. `entry` on `running` starts the interval; the cleanup it returns runs on the way back to `paused`. The framework handles the transition — `counter` never calls `transition()` itself.
 
-`pauseButton`, `resetButton`, and `render` are ordinary effect-based behaviors reacting to the same state the reactor derives from. None of them knows a reactor exists. Everything coordinates through the shared signal.
+`pauseButton`, `resetButton`, and `renderCount` are ordinary effect-based behaviors reacting to the same state the reactor derives from. None of them knows a reactor exists. Everything coordinates through the shared signal.
 
 ### Monitor, entry, and effects
 
@@ -482,7 +482,7 @@ Not every behavior needs a reactor. When all you need is to react to signal chan
 
 ## Tasks
 
-`counter`, `render`, and the buttons all do their work synchronously — read a signal, write a signal, attach a handler. Saving that count to a server is different in kind. It's async, takes time, might fail, and you probably don't want overlapping requests when the count ticks faster than the network responds.
+`counter`, `renderCount`, and the buttons all do their work synchronously — read a signal, write a signal, attach a handler. Saving that count to a server is different in kind. It's async, takes time, might fail, and you probably don't want overlapping requests when the count ticks faster than the network responds.
 
 A plain Promise can't express any of that. It starts running the moment you create it, can't be cancelled, and offers no introspection into whether it's still in flight. What you want is an inspectable, abortable, schedulable unit of async work: a **Task**. And when multiple tasks line up behind each other — when `counter` hits 10 before the save at 5 has finished — you want a **SerialRunner** to queue them so they don't overlap.
 
@@ -498,7 +498,7 @@ Saving the count to a server every five ticks, with one final save on destroy:
 import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { Task, SerialRunner, type Signal } from '@videojs/spf';
 
-// counter, logCount, render, pauseButton, resetButton — unchanged from previous sections
+// counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
 function persist({
   state,
@@ -539,7 +539,7 @@ function persist({
 }
 
 const composition = createComposition(
-  [counter, logCount, persist, render, pauseButton, resetButton],
+  [counter, logCount, persist, renderCount, pauseButton, resetButton],
   {
     initialState: { count: 0, paused: true },
     config: { interval: 250, defaultText: '--', saveEvery: 5 },
@@ -572,7 +572,7 @@ Reach for `Task` when you need control over async work: ordering, cancellation, 
 
 ## Actors
 
-`persist` does the job, but it keeps the save lifecycle to itself. If `render` wanted to show "(saving...)" while a save is in flight, or the reset button wanted to cancel an outstanding save, neither could — `persist` owns the runner and the "am I saving?" state internally, without publishing them.
+`persist` does the job, but it keeps the save lifecycle to itself. If `renderCount` wanted to show "(saving...)" while a save is in flight, or the reset button wanted to cancel an outstanding save, neither could — `persist` owns the runner and the "am I saving?" state internally, without publishing them.
 
 Moving that work into an actor makes the save lifecycle observable. An actor is a message-driven state machine that owns a resource (here, the task runner), processes messages through its own transitions, and publishes its current state as a reactive snapshot that any behavior can subscribe to.
 
@@ -582,14 +582,13 @@ Moving that work into an actor makes the save lifecycle observable. An actor is 
 
 ### A save actor
 
-Refactor `persist`: the runner and save state move into an actor; `persist` sends messages to it; `render` reads the actor's snapshot to show in-flight status; `resetButton` sends `cancel` to abort pending work.
+Refactor `persist`: the runner and save state move into an actor; `persist` sends messages to it; a new `renderSaving` behavior reads the actor's snapshot to surface in-flight status to a dedicated element; a new `cancelOnReset` behavior sends `cancel` when count returns to zero while a save is in flight.
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
 import { createMachineActor, Task, SerialRunner, update, type Signal } from '@videojs/spf';
-import { listen } from '@videojs/utils/dom';
 
-// counter, logCount, pauseButton — unchanged from previous sections
+// counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
 function createSaveActor() {
   function makeSaveTask(count: number) {
@@ -661,51 +660,42 @@ function persist({
   };
 }
 
-function render({
-  state,
+function renderSaving({
   owners,
-  config,
 }: {
-  state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: HTMLElement; saveActor?: SaveActor }>;
-  config: { defaultText?: string };
+  owners: Signal<{ savingElement?: HTMLElement; saveActor?: SaveActor }>;
 }) {
   return effect(() => {
-    const { renderElement, saveActor } = owners.get();
-    if (!renderElement) return;
-
-    const count = state.get().count;
-    const saving = saveActor?.snapshot.get().value === 'saving';
-    renderElement.textContent = saving
-      ? `${count ?? config.defaultText ?? 'N/A'} (saving...)`
-      : String(count ?? config.defaultText ?? 'N/A');
+    const { savingElement, saveActor } = owners.get();
+    if (!savingElement) return;
+    savingElement.textContent = saveActor?.snapshot.get().value === 'saving' ? 'saving...' : '';
   });
 }
 
-function resetButton({
+function cancelOnReset({
   state,
   owners,
 }: {
   state: Signal<{ count?: number }>;
-  owners: Signal<{ resetBtn?: HTMLElement; saveActor?: SaveActor }>;
+  owners: Signal<{ saveActor?: SaveActor }>;
 }) {
   return effect(() => {
-    const { resetBtn, saveActor } = owners.get();
-    if (!resetBtn) return;
-    return listen(resetBtn, 'click', () => {
-      saveActor?.send({ type: 'cancel' });
-      update(state, { count: 0 });
-    });
+    const { count } = state.get();
+    const { saveActor } = owners.get();
+    if (count === 0 && saveActor?.snapshot.get().value === 'saving') {
+      saveActor.send({ type: 'cancel' });
+    }
   });
 }
 
 const composition = createComposition(
-  [counter, logCount, persist, render, pauseButton, resetButton],
+  [counter, logCount, persist, renderCount, renderSaving, cancelOnReset, pauseButton, resetButton],
   {
     initialState: { count: 0, paused: true },
     config: { interval: 250, defaultText: '--', saveEvery: 5 },
     initialOwners: {
       renderElement: document.getElementById('counter'),
+      savingElement: document.getElementById('saving'),
       pauseBtn: document.getElementById('pause'),
       resetBtn: document.getElementById('reset'),
     },
@@ -715,7 +705,7 @@ const composition = createComposition(
 await composition.destroy();
 ```
 
-The actor makes the save lifecycle observable. `persist` publishes the actor through owners and forwards save triggers as messages; `render` reads `saveActor.snapshot.get().value` and shows "(saving...)" when it's `'saving'`; `resetButton` sends a `cancel` message that aborts in-flight work and transitions the actor back to `idle`. None of these behaviors knows how a save is performed — they interact with the actor as a black box that happens to expose its current state.
+The actor makes the save lifecycle observable. `persist` publishes the actor through owners and forwards save triggers as messages; `renderSaving` reads `saveActor.snapshot.get().value` and writes "saving..." to its own dedicated element when the actor is in the `'saving'` state; `cancelOnReset` reads the same snapshot and sends a `cancel` message when count returns to zero during an in-flight save, aborting the work and transitioning the actor back to `idle`. None of these behaviors knows how a save is performed — they interact with the actor as a black box that happens to expose its current state. And `resetButton` no longer has to know anything about saving: it just writes `{ count: 0 }` to state; `cancelOnReset` handles the rest.
 
 ### Messages, transitions, and snapshot
 
@@ -723,7 +713,7 @@ An actor is defined by its states, its message handlers (`on`), and a snapshot s
 
 - **Messages** — `actor.send({ type: 'save', count: 42 })`. Each state declares the messages it accepts under `on`; unhandled messages are ignored. The handler receives the message plus a context exposing `transition`, `setContext`, and the actor's own `runner`.
 - **Transitions** — call `transition('saving')` inside a handler to move the actor to another state. Transitions are explicit in the handlers rather than derived the way a reactor's `monitor` is. `onSettled` lets you auto-transition when the runner finishes: here, the `saving` state drops back to `idle` once the scheduled task settles, with no manual bookkeeping.
-- **Snapshot** — `actor.snapshot` is a `Signal<{ value: string; context: Context }>` that publishes the actor's current state name and context. Any behavior that reads it inside an `effect()` re-runs on every transition or `setContext` call, which is what lets `render` show "(saving...)" without `persist` publishing a separate "am I saving?" flag.
+- **Snapshot** — `actor.snapshot` is a `Signal<{ value: string; context: Context }>` that publishes the actor's current state name and context. Any behavior that reads it inside an `effect()` re-runs on every transition or `setContext` call, which is what lets `renderSaving` write "saving..." without `persist` publishing a separate "am I saving?" flag.
 
 The division of labor:
 
@@ -780,7 +770,7 @@ function mount({
 }
 
 const composition = createComposition(
-  [counter, logCount, mount, render, pauseButton, resetButton],
+  [counter, logCount, mount, renderCount, pauseButton, resetButton],
   {
     initialState: { count: 0, paused: true },
     config: { interval: 250, defaultText: '--' },
@@ -789,7 +779,7 @@ const composition = createComposition(
 );
 ```
 
-`mount` reads `rootElement`, creates three descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `render`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
+`mount` reads `rootElement`, creates three descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
 
 The media-engine analog is the same shape. A composition that drives HLS playback takes an `HTMLMediaElement` as its root owner and internally creates a `MediaSource` and one or more `SourceBuffer`s attached to it — resources whose creation, lifetime, and cleanup all belong to the composition. The caller only ever hands in the media element.
 
@@ -821,7 +811,7 @@ class Counter extends EventTarget {
     super();
 
     this.#composition = createComposition(
-      [counter, logCount, mount, render, pauseButton, resetButton],
+      [counter, logCount, mount, renderCount, pauseButton, resetButton],
       {
         initialState: { count: 0, paused: true },
         config: { interval: 250, defaultText: '--' },
