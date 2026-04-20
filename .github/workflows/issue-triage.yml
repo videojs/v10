@@ -60,6 +60,10 @@ jobs:
             - Review labels used on related/cross-referenced issues before deciding.
             - Add missing useful labels and remove clearly incorrect labels.
             - Do not create new labels; only use existing labels.
+            - Never apply these labels — they are managed manually:
+              - `epic` (epic linkage is curated by maintainers)
+              - Priority labels (`P0`, `P1`, `P2`)
+              Surface these as recommendations in step 8 instead.
             3. Detect probable duplicates:
             - Search for existing issues with the same bug/request symptoms, stack traces, repro steps, or scope.
             - If a likely duplicate is found, leave one concise comment linking the likely canonical issue and why it appears duplicated.
