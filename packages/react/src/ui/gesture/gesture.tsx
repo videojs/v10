@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
 
-export interface MediaGestureProps {
+export interface GestureProps {
   type: 'tap' | 'doubletap' | (string & {});
   action: GestureActionName | (string & {});
   value?: number;
@@ -23,7 +23,7 @@ export interface MediaGestureProps {
   disabled?: boolean;
 }
 
-export function MediaGesture({ type, action, value, pointer, region, disabled }: MediaGestureProps): ReactNode {
+export function Gesture({ type, action, value, pointer, region, disabled }: GestureProps): ReactNode {
   const store = usePlayer() as AnyPlayerStore;
   const container = useContainer();
 
@@ -48,3 +48,13 @@ export function MediaGesture({ type, action, value, pointer, region, disabled }:
 
   return null;
 }
+
+export namespace Gesture {
+  export type Props = GestureProps;
+}
+
+/** @deprecated Use `GestureProps` instead. */
+export type MediaGestureProps = GestureProps;
+
+/** @deprecated Use `Gesture` instead. */
+export const MediaGesture = Gesture;

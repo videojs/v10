@@ -71,11 +71,11 @@ Each element declares one binding. To bind multiple keys to the same action, use
 #### React
 
 ```tsx
-<MediaHotkey keys="k" action="togglePaused" />
-<MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
-<MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
-<MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-<MediaHotkey keys=">" action="speedUp" />
+<Hotkey keys="k" action="togglePaused" />
+<Hotkey keys="ArrowRight" action="seekStep" value={5} />
+<Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+<Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+<Hotkey keys=">" action="speedUp" />
 ```
 
 `keys` (not `key`) avoids collision with React's reserved `key` prop.
