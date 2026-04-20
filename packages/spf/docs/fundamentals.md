@@ -145,7 +145,7 @@ clearInterval(id);            // the interval is on you
 
 ## State
 
-The `setInterval` that drove `count` from outside works, but its lifecycle is managed separately from the composition's, and every tick has to reach back in to update state. Moved inside, as a behavior, the same logic gets typed access to state directly, its cleanup ties into `destroy()`, and it composes with other behaviors.
+The `setInterval` and the logger that drove `count` from outside both work, but their lifecycles sit apart from the composition's. Moved inside as behaviors, each gets typed access to state, cleanup ties into `destroy()`, and they coordinate with each other through the shared signal.
 
 State is the surface those behaviors share. A single reactive signal holding a plain object, shared across every behavior in a composition and visible from the outside through `composition.state`. Behaviors write to it when something happens; behaviors read it to know what's going on; the outside world subscribes when it needs to react. Because it's a signal, changes flow automatically — nobody coordinates, nobody wires things up.
 
@@ -155,7 +155,7 @@ State is the surface those behaviors share. A single reactive signal holding a p
 
 ### A counter behavior
 
-A counter that ticks on an interval, writes to state, and cleans up on destroy:
+A counter that ticks on an interval paired with a logger that reads the count as it changes — two behaviors coordinating entirely through shared state:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
@@ -175,19 +175,24 @@ function counter({
   return () => clearInterval(id);
 }
 
-const composition = createComposition([counter], {
+function logCount({ state }: { state: Signal<{ count?: number }> }) {
+  // effect() returns its own cleanup; handing it back here ties
+  // the effect's lifecycle to composition.destroy()
+  return effect(() => {
+    console.log(state.get().count);
+  });
+}
+
+const composition = createComposition([counter, logCount], {
   initialState: { count: 0 },
   config: { interval: 250 },
 });
-
-const stopLogging = effect(() => {
-  console.log(composition.state.get().count);
-});
 // logs: 0, 1, 2, 3, ...
 
-stopLogging();
-await composition.destroy();
+await composition.destroy(); // clears the interval and stops the effect
 ```
+
+Neither behavior knows the other exists. `counter` writes to state; `logCount` reads it. They coordinate through the shared signal, and each hands back the cleanup that belongs to its own lifecycle — a `clearInterval` closure for `counter`, the function `effect()` returned for `logCount`. One call to `composition.destroy()` unwinds both.
 
 ### `initialState`
 
@@ -291,8 +296,6 @@ await composition.destroy();
 
 `render` reads from both channels. `effect()` tracks every signal the callback reads and re-runs when any of them change — so when `count` ticks up, or when `renderElement` is swapped out or cleared, the render function runs again. The guard `if (!renderElement) return` handles the case where the element isn't in owners yet (for example, if `initialOwners` was omitted or the DOM wasn't ready).
 
-Each behavior returns its own cleanup: `counter` hands back a function that clears its interval; `render` returns the cleanup `effect()` gave it, which stops observing. `composition.destroy()` runs both.
-
 ### `initialOwners`
 
 `initialOwners` seeds the owners signal, the same way `initialState` seeds state:
@@ -311,6 +314,28 @@ createComposition([render], { initialOwners: { renderElement: 42 } });
 ```
 
 If you omit `initialOwners`, the signal starts as `{}` — which is why `render` uses the optional annotation `renderElement?: HTMLElement` and guards the read.
+
+### Updating owners from outside
+
+Owners is just a signal, so you can write to it the same way you write to state — usually from inside a behavior, occasionally from outside when orchestrating resources that live beyond the composition's scope.
+
+Swapping the element mid-composition updates what `render` is rendering into. Because `effect()` tracks `owners`, the swap re-runs the callback and the new element starts receiving updates immediately:
+
+```ts
+const anotherDiv = document.getElementById('other-counter');
+update(composition.owners, { renderElement: anotherDiv });
+```
+
+Unsetting back to `undefined` is also fine — the guard (`if (!renderElement) return`) turns the absence into a no-op:
+
+```ts
+update(composition.owners, { renderElement: undefined }); // render stops writing to the DOM
+update(composition.owners, { renderElement: anotherDiv }); // and picks back up
+```
+
+The same pattern covers creation time: if you omit `initialOwners`, the signal starts as `{}`, the first effect run bails on the guard, and `render` comes alive the moment a behavior (or outside code) attaches the element.
+
+This is the loose-coupling payoff. `render` doesn't need to know *when* `renderElement` will exist, only what to do when it does. Resources can arrive late, be swapped, or disappear — the behavior adjusts.
 
 ### Composing behaviors
 
