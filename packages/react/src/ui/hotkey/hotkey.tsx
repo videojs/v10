@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
 
-export interface MediaHotkeyProps {
+export interface HotkeyProps {
   keys: string;
   action: HotkeyActionName | (string & {});
   value?: number;
@@ -20,7 +20,7 @@ export interface MediaHotkeyProps {
   target?: 'player' | 'document';
 }
 
-export function MediaHotkey({ keys, action, value, disabled, target }: MediaHotkeyProps): ReactNode {
+export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): ReactNode {
   const store = usePlayer() as AnyPlayerStore;
   const container = useContainer();
 
@@ -44,3 +44,13 @@ export function MediaHotkey({ keys, action, value, disabled, target }: MediaHotk
 
   return null;
 }
+
+export namespace Hotkey {
+  export type Props = HotkeyProps;
+}
+
+/** @deprecated Use `HotkeyProps` instead. */
+export type MediaHotkeyProps = HotkeyProps;
+
+/** @deprecated Use `Hotkey` instead. */
+export const MediaHotkey = Hotkey;

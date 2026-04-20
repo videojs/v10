@@ -34,20 +34,20 @@ The component accepts additional props as needed (e.g. `value` for seek offset, 
 
 ```tsx
 {/* Full surface gestures */}
-<MediaGesture type="tap" action="togglePaused" />
-<MediaGesture type="swipe" action="seek" axis="x" threshold={30} />
+<Gesture type="tap" action="togglePaused" />
+<Gesture type="swipe" action="seek" axis="x" threshold={30} />
 
 {/* Regions */}
-<MediaGesture type="doubletap" action="seek" value={-10} region="left" />
-<MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
-<MediaGesture type="doubletap" action="seek" value={10} region="right" />
+<Gesture type="doubletap" action="seek" value={-10} region="left" />
+<Gesture type="doubletap" action="toggleFullscreen" region="center" />
+<Gesture type="doubletap" action="seek" value={10} region="right" />
 
 {/* Pointer filtering */}
-<MediaGesture pointer="touch" type="tap" action="toggleControls" />
-<MediaGesture pointer="mouse" type="tap" action="togglePaused" />
+<Gesture pointer="touch" type="tap" action="toggleControls" />
+<Gesture pointer="mouse" type="tap" action="togglePaused" />
 
 {/* Callback region — full control over hit testing */}
-<MediaGesture
+<Gesture
   type="doubletap"
   action="seek"
   value={-10}
@@ -83,7 +83,7 @@ When omitted, the gesture covers the full container surface. Full-surface gestur
 In React, `region` also accepts a callback that receives the gesture state and returns `true` or `false`. This gives full programmatic control over hit testing for custom zones that don't fit the `left` / `center` / `right` model:
 
 ```tsx
-<MediaGesture
+<Gesture
   type="swipe"
   action="setVolume"
   region={(state) => state.x > state.containerWidth / 2}
