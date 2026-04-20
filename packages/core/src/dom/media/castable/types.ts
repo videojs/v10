@@ -2,7 +2,21 @@ import type { RemotePlaybackLike } from '../predicate';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 
-export interface CastableMediaBase extends EventTarget {
+export interface CastableMediaProps {
+  castReceiver: string | undefined;
+  castContentType: string | undefined;
+  castStreamType: string | undefined;
+  castCustomData: Record<string, unknown> | null | undefined;
+}
+
+export const castableMediaDefaultProps: CastableMediaProps = {
+  castReceiver: undefined,
+  castContentType: undefined,
+  castStreamType: undefined,
+  castCustomData: undefined,
+};
+
+export interface CastableMediaHost extends EventTarget {
   readonly target: HTMLMediaElement | null;
   readonly remote: RemotePlaybackLike | undefined;
   title: string;
@@ -32,20 +46,16 @@ export interface CastableMediaBase extends EventTarget {
   querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
 }
 
-export interface CastableMediaProps {
+export interface CastableMedia extends CastableMediaProps {
   readonly remote: RemotePlayback | RemotePlaybackLike | undefined;
   readonly castOptions: CastOptions;
-  castReceiver: string | undefined;
   castSrc: string;
-  castContentType: string | undefined;
-  castStreamType: string | undefined;
-  castCustomData: Record<string, unknown> | null | undefined;
   poster: string;
   title: string;
 }
 
-export type CastableMediaElement = CastableMediaBase & CastableMediaProps;
+export type CastableMediaElement = CastableMediaHost & CastableMedia;
 
-export interface CastableMediaSuperclass {
-  new (...args: any[]): CastableMediaBase;
+export interface CastableMediaHostConstructor {
+  new (...args: any[]): CastableMediaHost;
 }

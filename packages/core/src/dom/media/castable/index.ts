@@ -2,14 +2,14 @@ import type { MixinReturn } from '@videojs/utils/types';
 import type { RemotePlaybackLike } from '../predicate';
 import { GoogleCastProvider } from './google-cast-provider';
 import { RemotePlayback } from './remote-playback';
-import type { CastableMediaProps, CastableMediaSuperclass } from './types';
+import type { CastableMedia, CastableMediaHostConstructor } from './types';
 import { getDefaultCastOptions, loadCastFramework, requiresCastFramework } from './utils';
 
 export type { CastableMediaElement } from './types';
 
-export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
+export const CastableMediaMixin = <Base extends CastableMediaHostConstructor>(
   superclass: Base
-): MixinReturn<Base, CastableMediaProps> => {
+): MixinReturn<Base, CastableMedia> => {
   class CastableMedia extends superclass {
     #castOptions = getDefaultCastOptions();
     #castCustomData: Record<string, unknown> | null | undefined;
@@ -222,5 +222,5 @@ export const CastableMediaMixin = <Base extends CastableMediaSuperclass>(
     }
   }
 
-  return CastableMedia as unknown as MixinReturn<Base, CastableMediaProps>;
+  return CastableMedia as unknown as MixinReturn<Base, CastableMedia>;
 };

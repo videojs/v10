@@ -22,14 +22,32 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
-export class HlsMedia extends HTMLVideoElementHost {
+export interface HlsMediaProps {
+  src: string;
+  type: SourceType | undefined;
+  preferPlayback: PlaybackType | undefined;
+  config: Record<string, any>;
+  debug: boolean;
+  preload: PreloadType;
+}
+
+export const hlsMediaDefaultProps: HlsMediaProps = {
+  src: '',
+  type: undefined,
+  preferPlayback: 'mse',
+  config: {},
+  debug: false,
+  preload: 'metadata',
+};
+
+export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
-  #src = '';
-  #type: SourceType | undefined;
-  #preferPlayback: PlaybackType | undefined = 'mse';
-  #config: Record<string, any> = {};
-  #debug = false;
-  #preload: PreloadType = 'metadata';
+  #src = hlsMediaDefaultProps.src;
+  #type = hlsMediaDefaultProps.type;
+  #preferPlayback = hlsMediaDefaultProps.preferPlayback;
+  #config = { ...hlsMediaDefaultProps.config };
+  #debug = hlsMediaDefaultProps.debug;
+  #preload = hlsMediaDefaultProps.preload;
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
 
