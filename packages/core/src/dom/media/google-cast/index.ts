@@ -107,9 +107,14 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       return this.#castSrc ?? this.querySelector('source')?.src ?? this.src ?? this.currentSrc;
     }
 
-    set castSrc(val: string) {
-      if (this.#castSrc === val) return;
-      this.#castSrc = val;
+    set castSrc(val: string | undefined) {
+      // Normalize empty/nullish values to `undefined` so the fallback chain in the
+      // getter (via `??`) still applies. The `CustomMediaElement` wrapper coerces
+      // removed attributes to `''` when routing through `attributeChangedCallback`,
+      // which would otherwise short-circuit the fallback and break Cast loading.
+      const next = val || undefined;
+      if (this.#castSrc === next) return;
+      this.#castSrc = next;
 
       if (this.#provider?.isCasting) this.load();
     }
