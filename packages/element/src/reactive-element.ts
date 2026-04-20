@@ -9,6 +9,22 @@ const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
 const propertyKeys = new Map<string, symbol>();
 
 /**
+ * Coerce a property value to match its declared `type`. Applied in the
+ * property setter so direct assignments (e.g. `el.seconds = "10"` from a
+ * framework that passes attributes as string properties) are normalized
+ * the same way attribute-to-property conversion already normalizes them.
+ *
+ * Null and undefined pass through so consumers can reset a property.
+ */
+function coerce(value: unknown, type: PropertyDeclaration['type']): unknown {
+  if (value == null) return value;
+  if (type === Number) return typeof value === 'number' ? value : Number(value);
+  if (type === Boolean) return typeof value === 'boolean' ? value : Boolean(value);
+  if (type === String) return typeof value === 'string' ? value : String(value);
+  return value;
+}
+
+/**
  * Lightweight reactive custom element base class.
  *
  * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`,
@@ -181,13 +197,9 @@ export class ReactiveElement extends HTMLElement {
     const decl = props.get(propName);
     if (!decl) return;
 
-    let value: unknown = newValue;
-
-    if (decl.type === Boolean) {
-      value = newValue !== null;
-    } else if (decl.type === Number) {
-      value = newValue === null ? null : Number(newValue);
-    }
+    // Boolean attributes map presence (non-null) to `true`, absence (null) to
+    // `false`. Other types flow through the setter, which coerces them.
+    const value: unknown = decl.type === Boolean ? newValue !== null : newValue;
     (this as Record<string, unknown>)[propName] = value;
   }
 
@@ -383,15 +395,18 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
         propertyKeys.set(name, key);
       }
 
+      const type = decl.type;
+
       Object.defineProperty(ctor.prototype, name, {
         get(this: ReactiveElement) {
           return (this as unknown as Record<symbol, unknown>)[key];
         },
         set(this: ReactiveElement, value: unknown) {
+          const coerced = coerce(value, type);
           const old = (this as unknown as Record<symbol, unknown>)[key];
-          (this as unknown as Record<symbol, unknown>)[key] = value;
+          (this as unknown as Record<symbol, unknown>)[key] = coerced;
 
-          if (!Object.is(old, value)) {
+          if (!Object.is(old, coerced)) {
             this.requestUpdate(name, old);
           }
         },
