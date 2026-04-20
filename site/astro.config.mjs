@@ -65,11 +65,19 @@ export default defineConfig({
     // Redirects are configured in netlify.toml
   },
   integrations: [
-    sentry({
-      project: 'videojsorg',
-      org: 'mux',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-    }),
+    // Only register Sentry when the upload token is present (i.e. production
+    // deploys). Without a token the integration still initializes the vite
+    // plugin and emits telemetry/init noise during every local and PR build,
+    // all for a "can't upload source maps" warning. Gate it at the source.
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [
+          sentry({
+            project: 'videojsorg',
+            org: 'mux',
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+          }),
+        ]
+      : []),
     mdx({ extendMarkdownConfig: true }),
     sitemap({
       // llms-markdown.ts auto-generates per-framework sub-indexes, but sitemap
