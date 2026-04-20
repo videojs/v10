@@ -45,7 +45,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #src = hlsMediaDefaultProps.src;
   #type = hlsMediaDefaultProps.type;
   #preferPlayback = hlsMediaDefaultProps.preferPlayback;
-  #config = hlsMediaDefaultProps.config;
+  #config = { ...hlsMediaDefaultProps.config };
   #debug = hlsMediaDefaultProps.debug;
   #preload = hlsMediaDefaultProps.preload;
   #loadRequested?: Promise<void> | null;
