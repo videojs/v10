@@ -6,25 +6,131 @@ The framework doesn't know about your domain. It provides the composition model;
 
 ---
 
-## The Composition
+## Compositions
 
-Everything starts with `createComposition`. A composition combines **behaviors** — functions that each handle one concern — and wires them together through shared reactive state.
+A composition is SPF's unit of assembly. `createComposition` takes a list of **behaviors** — functions that each handle one concern — wires them to shared reactive channels, and returns a small API for reading state and tearing everything down.
+
+This section covers the composition machinery itself: what `createComposition` returns, how its types are derived from your behaviors, and how to interact with a running composition from the outside. The sections that follow drill into the channels a composition exposes — [state](#state) and [owners](#owners) — and the primitives ([reactors](#reactors), [tasks](#tasks), [actors](#actors)) that behaviors use to coordinate richer work.
+
+### Creating a composition
+
+The simplest possible composition has no behaviors at all:
 
 ```ts
 import { createComposition } from '@videojs/spf/playback-engine';
 
-const composition = createComposition([behaviorA, behaviorB]);
+const composition = createComposition([]);
+
+composition.state;     // a signal holding an object
+composition.owners;    // another signal holding an object
+composition.destroy(); // Promise<void>
 ```
 
-The composition creates shared reactive channels, passes them to each behavior, and returns:
+Those three properties — `state`, `owners`, `destroy` — are the composition's entire public API.
+
+`state` and `owners` are [TC39 Signals](https://github.com/tc39/proposal-signals): reactive values that you read with `.get()` and write with `.set()`. That's all we need for this subsection. A couple of richer signal functions — `effect` and `computed` — show up in [Using the composition from outside](#using-the-composition-from-outside) below, where they first become useful.
+
+With no behaviors, the composition has no idea what shape of state you intend to store, so `state` and `owners` both resolve to `Signal<object>` — permissive on writes and useless on reads:
 
 ```ts
-composition.state     // reactive state signal (application data)
-composition.owners    // reactive owners signal (platform resources)
-composition.destroy() // tear down the composition and all behaviors
+// Writes: any object shape is accepted
+composition.state.set({ count: 0 });
+composition.state.set({ completelyDifferent: true });
+
+// Reads: the shape is `object`, so field access is a type error
+composition.state.get().count; // ❌ Property 'count' does not exist on type 'object'
 ```
 
-The rest of this document builds up from the simplest possible composition, introducing one concept at a time.
+This is the motivating problem the rest of the section solves. Types come from behaviors.
+
+### Giving state a shape
+
+Here is the smallest useful behavior: a function that does nothing except declare the shape of state it expects.
+
+```ts
+import { type Signal } from '@videojs/spf';
+
+function defineCount({ state }: { state: Signal<{ count?: number }> }) {
+  // no logic yet — this behavior exists to carry the type
+}
+
+const composition = createComposition([defineCount]);
+```
+
+A behavior's parameter type is the contract it declares with the composition. Because `defineCount` annotates its state as `Signal<{ count?: number }>`, the composition now knows that `count` is part of its state shape:
+
+```ts
+composition.state;       // Signal<{ count?: number }>
+composition.state.get(); // { count?: number }
+```
+
+`defineCount` is a stand-in. Real behaviors do work — run timers, wire up listeners, manage resources, return cleanup — and we'll replace it with a real counter in the next section.
+
+### How types flow
+
+Every value a composition exposes — `state`, `owners`, the arguments to `initialState`, `initialOwners`, and `config` — is typed from the behaviors you passed. Behaviors are the single source of truth; the composition inherits their shape.
+
+That's load-bearing. It means the compiler catches you when you try to write something the behavior wouldn't recognize:
+
+```ts
+import { update } from '@videojs/spf';
+
+// @ts-expect-error — 'unknown' is not a key of { count?: number }
+composition.state.set({ unknown: true });
+
+// @ts-expect-error — count must be a number
+composition.state.set({ count: 'not a number' });
+
+// @ts-expect-error — count must be a number
+update(composition.state, { count: 'still not a number' });
+```
+
+> **Stability note** — the exact error messages and inference rules are still evolving. The guarantee that conflicts are caught at compile time is stable; how they surface in your editor is not.
+
+When you pass multiple behaviors, their declarations are combined — incompatible ones fail at compile time. That story is most naturally motivated where multiple behaviors first appear organically, so it's demonstrated in [Owners](#owners).
+
+### Using the composition from outside
+
+From outside the composition — wherever your code called `createComposition` — you interact with its signals directly. Reading is synchronous:
+
+```ts
+composition.state.get(); // { count?: number }
+```
+
+Observation uses `effect`: it runs its callback immediately, tracks every signal the callback reads, and re-runs the callback whenever any of those signals change. It returns a cleanup function.
+
+```ts
+import { effect } from '@videojs/spf/playback-engine';
+
+const stopLogging = effect(() => {
+  console.log(composition.state.get().count);
+});
+
+// Later, to stop observing:
+stopLogging();
+```
+
+Derived values use `computed`: a read-only signal whose value is a function of other signals. It recomputes lazily — only when something reads it after a dependency has changed.
+
+```ts
+import { computed } from '@videojs/spf';
+
+const doubled = computed(() => (composition.state.get().count ?? 0) * 2);
+
+doubled.get(); // whatever `(count ?? 0) * 2` is
+```
+
+Writing from outside is rare — behaviors normally own writes — but it's typed the same as writes from inside:
+
+```ts
+update(composition.state, { count: 0 });
+```
+
+Destroying the composition runs every behavior's cleanup and awaits any async work:
+
+```ts
+await composition.destroy();
+```
 
 ---
 
@@ -34,21 +140,9 @@ The rest of this document builds up from the simplest possible composition, intr
 
 **When to use it.** Reach for state whenever two behaviors need to agree on the same value, or whenever the outside world needs to observe or drive a value the composition manages. Counts, selections, flags, timestamps — data that flows *through* the composition over time.
 
-### Signals: a one-minute primer
+### A counter behavior
 
-SPF's state and owners channels are both built on [TC39 Signals](https://github.com/tc39/proposal-signals). A signal is a reactive value with a tiny surface:
-
-- **Writable signal** — read with `.get()`, write with `.set()`. State and owners are both of this kind.
-- **`computed(fn)`** — a read-only signal whose value is derived from other signals. Recomputes lazily when any dependency changes.
-- **`effect(fn)`** — runs `fn` immediately, tracks which signals it reads, and re-runs `fn` whenever any of those change. Returns a cleanup function. If `fn` itself returns a function, that inner cleanup runs before each re-run and on teardown.
-
-On top of standard signal semantics, SPF adds one convenience: `update(signal, partial)` shallow-merges a partial object into the signal's current value, so behaviors don't have to spread manually.
-
-> A dedicated signals guide is coming. For now, `.get()`, `.set()`, `update()`, `effect()`, and `computed()` are the full working vocabulary.
-
-### Your first behavior
-
-Here's a complete composition with one behavior — a counter that ticks on an interval:
+The previous section left us with `defineCount` — a placeholder that declared state had an optional `count: number` and did nothing else. Here is a real behavior on the same shape: a counter that ticks on an interval.
 
 ```ts
 import { createComposition } from '@videojs/spf/playback-engine';
@@ -80,50 +174,18 @@ composition.state.get(); // { count: 1 }
 await composition.destroy();
 ```
 
-That tiny example touches every core piece of SPF composition. The rest of this section walks through it.
+Compared to `defineCount`, `counter` does three new things: it declares a second dep (`config`), it writes to state, and it returns a cleanup function that the composition calls on `destroy()`. It's also the first time we've used composition options — `initialState` and `config`. Both are covered below.
 
-### The `createComposition` factory
+### `initialState`
 
-`createComposition` takes an array of behaviors and an options object. It creates the shared reactive channels, hands them to each behavior, and returns the composition:
-
-```ts
-const composition = createComposition([counter], options);
-
-composition.state;     // Signal<{ count?: number }>
-composition.owners;    // Signal<{}> — covered in the next section
-composition.destroy(); // Promise<void> — tears down every behavior's cleanup
-```
-
-Those three properties — `state`, `owners`, `destroy` — are the composition's entire public API.
-
-### Behaviors: functions that receive shared channels
-
-A behavior is just a function. The composition calls it once with `{ state, owners, config }` and optionally collects a cleanup handle:
-
-```ts
-function counter({ state, config }: {
-  state: Signal<{ count?: number }>;
-  config: { interval?: number };
-}) {
-  // ... read/write state, subscribe, run timers, etc.
-  return () => { /* cleanup */ };
-}
-```
-
-A behavior can read from any channel, write to `state` or `owners`, and return cleanup — or nothing at all.
-
-The important detail: **a behavior declares the shape of the state, owners, and config it needs by annotating its parameter type**. `counter` tells the composition it expects state with an optional `count: number` and config with an optional `interval: number`. `createComposition` combines every behavior's declaration to derive the composition's own types — which means `composition.state.get()` is typed from what the behaviors ask for, not from whatever you happen to pass as `initialState`.
-
-### `initialState`: seed for the state signal
-
-`initialState` sets the starting value:
+`initialState` sets the starting value of the state signal:
 
 ```ts
 createComposition([counter], { initialState: { count: 0 } });
 composition.state.get(); // { count: 0 }
 ```
 
-Its type is derived from the behaviors. Because `counter` annotates `state: Signal<{ count?: number }>`, TypeScript requires `initialState` to be assignable to that shape:
+Its type is derived from the behaviors. Because `counter` annotates `state: Signal<{ count?: number }>`, TypeScript requires `initialState` to be assignable to `{ count?: number }`:
 
 ```ts
 // ✅ matches the behavior's declared state
@@ -133,24 +195,24 @@ createComposition([counter], { initialState: { count: 0 } });
 createComposition([counter], { initialState: { count: 'zero' } });
 ```
 
-If you omit `initialState`, the signal starts as `{}` — which is why `counter` falls back with `state.get().count ?? 0` on the first tick.
+If you omit `initialState`, the signal starts as `{}` — which is why `counter` falls back with `state.get().count ?? 0` on its first tick.
 
-### `config`: definitional values a behavior reads
+### `config`
 
-`config` is static configuration, passed once at composition time. Unlike state, config never changes after creation and isn't reactive.
+`config` is static configuration, passed once at composition time. Unlike state, config never changes and isn't reactive.
 
 ```ts
 createComposition([counter], { config: { interval: 250 } });
 ```
 
-Its shape, like state's, is inferred from the behaviors:
+Its shape is inferred from the behaviors:
 
 ```ts
 // @ts-expect-error — interval must be a number
 createComposition([counter], { config: { interval: 'fast' } });
 ```
 
-Behaviors read config directly (`config.interval`), usually with a fallback. Use config for values a behavior *needs to know at construction time* and wouldn't expect to change — thresholds, URLs, feature flags. Put values that change over time in state instead.
+Behaviors read config directly (`config.interval`), usually with a fallback. Use config for values a behavior *needs to know at construction time* and wouldn't expect to change — thresholds, URLs, feature flags. Put values that change over time in state.
 
 ### Reading and writing state inside a behavior
 
@@ -165,55 +227,6 @@ update(state, (s) => ({ ...s, count: 5 })); // updater function
 
 `update()` is the common case: change one field without touching the others. Use `state.set()` when you genuinely want to replace the whole value.
 
-### Using the composition from the outside
-
-Everything above happens *inside* a behavior. From outside — wherever your code called `createComposition` — you interact through the composition's public API:
-
-```ts
-import { effect } from '@videojs/spf/playback-engine';
-import { update } from '@videojs/spf';
-
-// Read
-composition.state.get(); // { count: 3 }
-
-// Observe
-const stop = effect(() => {
-  console.log(composition.state.get().count);
-});
-
-// Write (rare — prefer letting behaviors own writes)
-update(composition.state, { count: 0 });
-
-// Tear down — awaits every behavior's cleanup
-await composition.destroy();
-```
-
-Because `composition.state` is typed from the behaviors, TypeScript catches mistakes at the boundary too:
-
-```ts
-// @ts-expect-error — 'unknown' is not a key of { count?: number }
-update(composition.state, { unknown: true });
-
-// @ts-expect-error — count must be a number
-composition.state.set({ count: 'not a number' });
-```
-
-### TypeScript guardrails across behaviors
-
-When you compose multiple behaviors, `createComposition` intersects their state declarations. Compatible declarations merge; incompatible ones are rejected at compile time:
-
-```ts
-const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
-const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
-
-// @ts-expect-error — behaviors have conflicting state types
-createComposition([expectsNumber, expectsString]);
-```
-
-This is the core safety net of the composition model: as you pull behaviors together from different places, the compiler guarantees they're talking about the same state shape.
-
-> **Stability note** — the error messages and the exact inference rules may still evolve. The guarantee that conflicts are caught at compile time is stable; how they surface in your editor is not.
-
 ### When to reach for state
 
 Use state for any data that:
@@ -221,7 +234,7 @@ Use state for any data that:
 - The outside world needs to observe or drive.
 - Changes over the lifetime of the composition.
 
-If a value is a *resource* — a mutable platform object like a DOM element or a buffer — use [owners](#owners) instead. If it's a *setting* that never changes after construction, use [config](#config-definitional-values-a-behavior-reads).
+If a value is a *resource* — a mutable platform object like a DOM element or a buffer — use [owners](#owners) instead. If it's a *setting* that never changes after construction, use [config](#config) above.
 
 ---
 
