@@ -10,8 +10,6 @@ The framework doesn't know about your domain. It provides the composition model;
 
 A composition is SPF's unit of assembly. `createComposition` takes a list of **behaviors** — functions that each handle one concern — wires them to shared reactive channels, and returns a small API for reading state and tearing everything down.
 
-This section covers the composition machinery itself: what `createComposition` returns, how its types are derived from your behaviors, and how to interact with a running composition from the outside. The sections that follow drill into the channels a composition exposes — [state](#state) and [owners](#owners) — and the primitives ([reactors](#reactors), [tasks](#tasks), [actors](#actors)) that behaviors use to coordinate richer work.
-
 ### Creating a composition
 
 The simplest possible composition has no behaviors at all:
@@ -28,7 +26,7 @@ composition.destroy(); // Promise<void>
 
 Those three properties — `state`, `owners`, `destroy` — are the composition's entire public API.
 
-`state` and `owners` are [TC39 Signals](https://github.com/tc39/proposal-signals): reactive values that you read with `.get()` and write with `.set()`. That's all we need for this subsection. A couple of richer signal functions — `effect` and `computed` — show up in [Using the composition from outside](#using-the-composition-from-outside) below, where they first become useful.
+`state` and `owners` are [TC39 Signals](https://github.com/tc39/proposal-signals): reactive values that you read with `.get()` and write with `.set()`.
 
 With no behaviors, the composition has no idea what shape of state you intend to store, so `state` and `owners` both resolve to `Signal<object>` — permissive on writes and useless on reads:
 
@@ -41,7 +39,7 @@ composition.state.set({ completelyDifferent: true });
 composition.state.get().count; // ❌ Property 'count' does not exist on type 'object'
 ```
 
-This is the motivating problem the rest of the section solves. Types come from behaviors.
+Types come from behaviors.
 
 ### Giving state a shape
 
@@ -64,11 +62,11 @@ composition.state;       // Signal<{ count?: number }>
 composition.state.get(); // { count?: number }
 ```
 
-`defineCount` is a stand-in. Real behaviors do work — run timers, wire up listeners, manage resources, return cleanup — and we'll replace it with a real counter in the next section.
+`defineCount` is a placeholder. Real behaviors do work — run timers, wire up listeners, manage resources, return cleanup.
 
 ### How types flow
 
-Every value a composition exposes — `state`, `owners`, the arguments to `initialState`, `initialOwners`, and `config` — is typed from the behaviors you passed. Behaviors are the single source of truth; the composition inherits their shape.
+Things like the `state` and `owners` signals a composition exposes are typed from the behaviors you passed. Behaviors are the single source of truth; the composition inherits their shape.
 
 That's load-bearing. It means the compiler catches you when you try to write something the behavior wouldn't recognize:
 
@@ -142,7 +140,7 @@ await composition.destroy();
 
 ### A counter behavior
 
-The previous section left us with `defineCount` — a placeholder that declared state had an optional `count: number` and did nothing else. Here is a real behavior on the same shape: a counter that ticks on an interval.
+A counter that ticks on an interval, writes to state, and cleans up on destroy:
 
 ```ts
 import { createComposition } from '@videojs/spf/playback-engine';
@@ -173,8 +171,6 @@ composition.state.get(); // { count: 1 }
 
 await composition.destroy();
 ```
-
-Compared to `defineCount`, `counter` does three new things: it declares a second dep (`config`), it writes to state, and it returns a cleanup function that the composition calls on `destroy()`. It's also the first time we've used composition options — `initialState` and `config`. Both are covered below.
 
 ### `initialState`
 
