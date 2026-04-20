@@ -731,3 +731,170 @@ The division of labor:
 - **Actors handle _how_** it happens, by managing imperative work and publishing its status.
 
 A reactor might send a message to an actor when a condition goes true; the actor performs the work and publishes its state; other behaviors observe that state through the snapshot signal. Each piece stays in its lane.
+
+---
+
+## Creating owners within behaviors
+
+Behaviors have only ever read from owners so far — consuming resources that callers passed in via `initialOwners`. But behaviors can produce owners too: create a resource, register it in owners, and clean it up on teardown. That keeps resource creation inside the composition, which matters when a single composition needs several related resources that share a lifecycle.
+
+A `mount` behavior takes a single parent — `rootElement` — and creates the rest:
+
+```ts
+import { effect } from '@videojs/spf/playback-engine';
+import { update, type Signal } from '@videojs/spf';
+
+function mount({
+  owners,
+}: {
+  owners: Signal<{
+    rootElement?: HTMLElement;
+    renderElement?: HTMLElement;
+    pauseBtn?: HTMLElement;
+    resetBtn?: HTMLElement;
+  }>;
+}) {
+  return effect(() => {
+    const { rootElement } = owners.get();
+    if (!rootElement) return;
+
+    const renderElement = document.createElement('div');
+    const pauseBtn = document.createElement('button');
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Reset';
+
+    rootElement.append(renderElement, pauseBtn, resetBtn);
+    update(owners, { renderElement, pauseBtn, resetBtn });
+
+    return () => {
+      renderElement.remove();
+      pauseBtn.remove();
+      resetBtn.remove();
+      update(owners, {
+        renderElement: undefined,
+        pauseBtn: undefined,
+        resetBtn: undefined,
+      });
+    };
+  });
+}
+
+const composition = createComposition(
+  [counter, logCount, mount, render, pauseButton, resetButton],
+  {
+    initialState: { count: 0, paused: true },
+    config: { interval: 250, defaultText: '--' },
+    initialOwners: { rootElement: document.getElementById('counter') },
+  },
+);
+```
+
+`mount` reads `rootElement`, creates three descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `render`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
+
+The media-engine analog is the same shape. A composition that drives HLS playback takes an `HTMLMediaElement` as its root owner and internally creates a `MediaSource` and one or more `SourceBuffer`s attached to it — resources whose creation, lifetime, and cleanup all belong to the composition. The caller only ever hands in the media element.
+
+---
+
+## Wrapping a composition in a public API
+
+Compositions expose `state`, `owners`, and `destroy` — the right surface for behaviors and internal authors, too much and too low-level for outside consumers. Someone using your counter component doesn't want to write `update(composition.state, { paused: true })`; they want `counter.pause()`. And they don't want to subscribe to a signal; they want to `addEventListener('countchange', ...)`.
+
+A wrapper sits in front of the composition and projects exactly the surface you choose. A `Counter` class that extends `EventTarget` gives consumers a DOM-shaped API:
+
+```ts
+import { createComposition, effect, type Composition } from '@videojs/spf/playback-engine';
+import { update } from '@videojs/spf';
+
+type CounterState = { count?: number; paused?: boolean };
+type CounterOwners = {
+  rootElement?: HTMLElement;
+  renderElement?: HTMLElement;
+  pauseBtn?: HTMLElement;
+  resetBtn?: HTMLElement;
+};
+
+class Counter extends EventTarget {
+  readonly #composition: Composition<CounterState, CounterOwners>;
+  readonly #stopBridge: () => void;
+
+  constructor(rootElement: HTMLElement) {
+    super();
+
+    this.#composition = createComposition(
+      [counter, logCount, mount, render, pauseButton, resetButton],
+      {
+        initialState: { count: 0, paused: true },
+        config: { interval: 250, defaultText: '--' },
+        initialOwners: { rootElement },
+      },
+    );
+
+    // Bridge state changes to events on `this`
+    let lastCount: number | undefined;
+    let lastPaused: boolean | undefined;
+    this.#stopBridge = effect(() => {
+      const { count, paused } = this.#composition.state.get();
+      if (count !== lastCount) {
+        lastCount = count;
+        this.dispatchEvent(new CustomEvent('countchange', { detail: count ?? 0 }));
+      }
+      if (paused !== lastPaused) {
+        lastPaused = paused;
+        this.dispatchEvent(new Event(paused ? 'pause' : 'play'));
+      }
+    });
+  }
+
+  get count(): number {
+    return this.#composition.state.get().count ?? 0;
+  }
+
+  get paused(): boolean {
+    return this.#composition.state.get().paused ?? true;
+  }
+
+  pause(): void {
+    update(this.#composition.state, { paused: true });
+  }
+
+  resume(): void {
+    update(this.#composition.state, { paused: false });
+  }
+
+  reset(): void {
+    update(this.#composition.state, { count: 0 });
+  }
+
+  async destroy(): Promise<void> {
+    this.#stopBridge();
+    await this.#composition.destroy();
+  }
+}
+```
+
+From outside, consumers see something that looks and feels like a native DOM object:
+
+```ts
+const counter = new Counter(document.getElementById('counter-root'));
+
+counter.addEventListener('countchange', (e) => {
+  console.log('count:', (e as CustomEvent<number>).detail);
+});
+counter.addEventListener('play', () => console.log('running'));
+counter.addEventListener('pause', () => console.log('paused'));
+
+counter.resume();
+
+console.log(counter.count);   // 3
+console.log(counter.paused);  // false
+
+await counter.destroy();
+```
+
+No signals in sight. No `composition.state.get()`, no `update(...)`, no `effect()`. The wrapper maps every piece of the composition surface onto a consumer-shaped primitive: getters project current state, methods forward to `update()`, and a single bridging `effect()` translates state transitions into events on `this` (which is an `EventTarget`, so `addEventListener` and `dispatchEvent` just work).
+
+`destroy()` is the one place the wrapper's own cleanup lives. `#stopBridge` stops the bridging effect; `this.#composition.destroy()` tears down every behavior. Consumers get a single `Promise` to await.
+
+More events can be wired the same way — a `saving`/`saved` pair reading `saveActor.snapshot`, a `destroy` event dispatched before teardown, custom events derived from any signal worth surfacing. The pattern scales: every piece of composition state that matters to a consumer gets its own projection.
+
+This is the Adapter shape. For the HLS playback engine, `SpfMedia` (the web-component adapter) wraps `createHlsPlaybackEngine` the same way: consumers interact with a familiar `HTMLMediaElement`-shaped API (`play()`, `pause()`, `currentTime`, `addEventListener('timeupdate', ...)`) while the internal composition runs hidden underneath.
