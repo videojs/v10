@@ -14,6 +14,13 @@ export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike
   dispatchEvent(event: EventLike): boolean;
 }
 
+export interface RemotePlaybackLike extends EventTarget {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
 export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
   return EventTarget as unknown as { new (): EventTargetLike<Events> };
 }
@@ -172,6 +179,10 @@ export interface MediaFullscreenCapability {
 
 export interface MediaPictureInPictureCapability {
   requestPictureInPicture(): Promise<unknown>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
 }
 
 interface MediaEvents extends MediaPlaybackEvents {}

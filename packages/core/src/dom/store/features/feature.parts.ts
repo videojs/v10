@@ -1,10 +1,10 @@
 import { bufferFeature } from './buffer';
-import { castFeature } from './cast';
 import { controlsFeature } from './controls';
 import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
@@ -15,12 +15,12 @@ export { audioFeatures, backgroundFeatures, videoFeatures } from './presets';
 // Short aliases
 export {
   bufferFeature as buffer,
-  castFeature as cast,
   controlsFeature as controls,
   fullscreenFeature as fullscreen,
   pipFeature as pip,
   playbackFeature as playback,
   playbackRateFeature as playbackRate,
+  remotePlaybackFeature as remotePlayback,
   sourceFeature as source,
   textTrackFeature as textTrack,
   timeFeature as time,

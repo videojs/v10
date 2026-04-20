@@ -356,7 +356,7 @@ describe('controlsFeature', () => {
 
   describe('cast interaction', () => {
     it('keeps controlsVisible true when casting and user goes inactive', () => {
-      const { video, remote } = createCastableVideo({ paused: false });
+      const { video, remote } = createGoogleCastVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       remote.state = 'connected';
@@ -371,7 +371,7 @@ describe('controlsFeature', () => {
     });
 
     it('hides controls after cast disconnects and user is inactive', () => {
-      const { video, remote } = createCastableVideo({ paused: false });
+      const { video, remote } = createGoogleCastVideo({ paused: false });
       const { store } = createPlayerStore(video);
 
       remote.state = 'connected';
@@ -391,7 +391,7 @@ describe('controlsFeature', () => {
     });
 
     it('keeps controlsVisible true on mouseleave while casting', () => {
-      const { video, remote } = createCastableVideo({ paused: false });
+      const { video, remote } = createGoogleCastVideo({ paused: false });
       const { store, container } = createPlayerStore(video);
 
       remote.state = 'connected';
@@ -499,7 +499,7 @@ function createMockRemote(): EventTarget & { state: string; prompt: () => Promis
   return target;
 }
 
-function createCastableVideo(overrides: Parameters<typeof createMockVideo>[0] = {}) {
+function createGoogleCastVideo(overrides: Parameters<typeof createMockVideo>[0] = {}) {
   const video = createMockVideo(overrides);
   const remote = createMockRemote();
   Object.defineProperty(video, 'remote', { value: remote, configurable: true });

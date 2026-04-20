@@ -1,5 +1,5 @@
 import type { RemotePlaybackState } from './remote-playback';
-import type { CastableMediaElement } from './types';
+import type { GoogleCastMediaElement } from './types';
 import {
   castContext,
   currentMedia,
@@ -31,7 +31,7 @@ export type LocalPlayer = {
 };
 
 const providerInstances = new IterableWeakSet<GoogleCastProvider>();
-const castElementRef = new WeakSet<CastableMediaElement>();
+const castElementRef = new WeakSet<GoogleCastMediaElement>();
 
 let cf: typeof cast.framework | undefined;
 
@@ -57,7 +57,7 @@ onCastApiAvailable(() => {
 });
 
 export class GoogleCastProvider {
-  readonly media: CastableMediaElement;
+  readonly media: GoogleCastMediaElement;
   seeking = false;
 
   #hooks: Partial<GoogleCastProviderHooks> = {};
@@ -71,7 +71,7 @@ export class GoogleCastProvider {
   #onTextTrackChange = () => this.#updateRemoteTextTrack();
   #onMediaUpdate = () => this.#checkPlaybackRate();
 
-  constructor(media: CastableMediaElement, local: LocalPlayer) {
+  constructor(media: GoogleCastMediaElement, local: LocalPlayer) {
     this.media = media;
     this.#local = local;
     providerInstances.add(this);
@@ -133,6 +133,11 @@ export class GoogleCastProvider {
   }
 
   async load() {
+    if (!this.media.castSrc) {
+      // TODO: handle unloading the media?
+      return;
+    }
+
     const mediaInfo = new chrome.cast.media.MediaInfo(this.media.castSrc, this.media.castContentType ?? '');
     mediaInfo.customData = (this.media.castCustomData as object) ?? null;
 

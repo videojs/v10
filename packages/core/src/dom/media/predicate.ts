@@ -5,6 +5,7 @@ import type {
   MediaErrorCapability,
   MediaPauseCapability,
   MediaPlaybackRateCapability,
+  MediaRemotePlaybackCapability,
   MediaSeekCapability,
   MediaSourceCapability,
   MediaTextTrackCapability,
@@ -53,17 +54,6 @@ export function isMediaErrorCapable(value: unknown): value is MediaErrorCapabili
 
 export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrackCapability {
   return isObject(value) && 'textTracks' in value;
-}
-
-export interface RemotePlaybackLike extends EventTarget {
-  readonly state: string;
-  prompt(): Promise<void>;
-  watchAvailability(callback: (available: boolean) => void): Promise<number>;
-  cancelWatchAvailability(id?: number): Promise<void>;
-}
-
-export interface MediaRemotePlaybackCapability {
-  readonly remote: RemotePlaybackLike;
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
