@@ -83,10 +83,12 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       super.pause();
     }
 
+    /** Resolved options passed to the Google Cast framework when it initializes. */
     get castOptions() {
       return this.#castOptions;
     }
 
+    /** Cast receiver application ID. Defaults to Google's default media receiver. */
     get castReceiver() {
       return this.#castReceiver;
     }
@@ -100,6 +102,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       }
     }
 
+    /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
     get castSrc() {
       return this.#castSrc ?? this.querySelector('source')?.src ?? this.src ?? this.currentSrc;
     }
@@ -111,6 +114,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       if (this.#provider?.isCasting) this.load();
     }
 
+    /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
     get castContentType() {
       return this.#castContentType;
     }
@@ -119,6 +123,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       this.#castContentType = val;
     }
 
+    /** Stream type (`'on-demand'` or `'live'`) used on the Cast receiver. Falls back to `streamType`. */
     get castStreamType() {
       return this.#castStreamType ?? this.streamType;
     }
@@ -130,6 +135,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       if (this.#provider?.isCasting) this.load();
     }
 
+    /** Custom data sent to the Cast receiver with the load request. */
     get castCustomData() {
       return this.#castCustomData;
     }
