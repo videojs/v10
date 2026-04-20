@@ -62,7 +62,7 @@ Those three properties — `state`, `owners`, `destroy` — are the composition'
 > [!NOTE]
 > The set of reactive channels a composition exposes may grow. Additional channels — for example an event stream, either as another TC39 signal or an `EventTarget` — are under consideration. Treat `state` and `owners` as the current primitives, not a closed set.
 
-`state` and `owners` are [TC39 Signals](https://github.com/tc39/proposal-signals): reactive values that you read with `.get()` and write with `.set()`.
+`state` and `owners` are [TC39 Signals](https://github.com/tc39/proposal-signals): reactive values that you read with `.get()` and write with `.set()`. SPF adds one convenience — `update(signal, partial)` shallow-merges a partial object into the current value, so behaviors can write one field without spreading the whole object.
 
 ### Giving state a shape
 
@@ -226,28 +226,6 @@ createComposition([counter], { config: { interval: 'fast' } });
 ```
 
 Behaviors read config directly (`config.interval`), usually with a fallback. Use config for values a behavior *needs to know at construction time* and wouldn't expect to change — thresholds, URLs, feature flags. Put values that change over time in state.
-
-### Reading and writing state inside a behavior
-
-Inside a behavior, the state signal supports three update styles:
-
-```ts
-state.get();                                // read current value
-state.set({ count: 5 });                    // replace entire value
-update(state, { count: 5 });                // shallow-merge a partial
-update(state, (s) => ({ ...s, count: 5 })); // updater function
-```
-
-`update()` is the common case: change one field without touching the others. Use `state.set()` when you genuinely want to replace the whole value.
-
-### When to reach for state
-
-Use state for any data that:
-- Two or more behaviors need to read or write.
-- The outside world needs to observe or drive.
-- Changes over the lifetime of the composition.
-
-If a value is a *resource* — a mutable platform object like a DOM element or a buffer — use [owners](#owners) instead. If it's a *setting* that never changes after construction, use [config](#config) above.
 
 ---
 
