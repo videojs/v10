@@ -2,12 +2,20 @@ import * as dashjs from 'dashjs';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 
+export interface DashMediaProps {
+  src: string;
+}
+
+export const dashMediaDefaultProps: DashMediaProps = {
+  src: '',
+};
+
 export class DashMedia
   extends HTMLVideoElementHost
-  implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>
+  implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
-  #src = '';
+  #src = dashMediaDefaultProps.src;
 
   constructor() {
     super();

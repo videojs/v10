@@ -3,9 +3,19 @@ import { NativeHlsMediaErrorsMixin } from './errors';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
-class NativeHlsMediaBase extends HTMLVideoElementHost {
-  #src = '';
-  #preload: PreloadType = 'metadata';
+export interface NativeHlsMediaProps {
+  src: string;
+  preload: PreloadType;
+}
+
+export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
+  src: '',
+  preload: 'metadata',
+};
+
+class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaProps {
+  #src = nativeHlsMediaDefaultProps.src;
+  #preload = nativeHlsMediaDefaultProps.preload;
 
   get engine() {
     return null;
