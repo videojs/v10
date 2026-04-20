@@ -1,22 +1,24 @@
-import type { RemotePlaybackLike } from '../predicate';
+import type { RemotePlaybackLike } from '../../../core/media/types';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 
-export interface CastableMediaProps {
+export interface GoogleCastMediaProps {
+  castSrc: string | undefined;
   castReceiver: string | undefined;
   castContentType: string | undefined;
   castStreamType: string | undefined;
   castCustomData: Record<string, unknown> | null | undefined;
 }
 
-export const castableMediaDefaultProps: CastableMediaProps = {
+export const googleCastMediaDefaultProps: GoogleCastMediaProps = {
+  castSrc: undefined,
   castReceiver: undefined,
   castContentType: undefined,
   castStreamType: undefined,
   castCustomData: undefined,
 };
 
-export interface CastableMediaHost extends EventTarget {
+export interface GoogleCastMediaHost extends EventTarget {
   readonly target: HTMLMediaElement | null;
   readonly remote: RemotePlaybackLike | undefined;
   title: string;
@@ -46,16 +48,15 @@ export interface CastableMediaHost extends EventTarget {
   querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
 }
 
-export interface CastableMedia extends CastableMediaProps {
+export interface GoogleCastMedia extends GoogleCastMediaProps {
   readonly remote: RemotePlayback | RemotePlaybackLike | undefined;
   readonly castOptions: CastOptions;
-  castSrc: string;
   poster: string;
   title: string;
 }
 
-export type CastableMediaElement = CastableMediaHost & CastableMedia;
+export type GoogleCastMediaElement = GoogleCastMediaHost & GoogleCastMedia;
 
-export interface CastableMediaHostConstructor {
-  new (...args: any[]): CastableMediaHost;
+export interface GoogleCastMediaHostConstructor {
+  new (...args: any[]): GoogleCastMediaHost;
 }

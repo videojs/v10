@@ -1,13 +1,13 @@
 import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
 import type {
   MediaBufferState,
-  MediaCastState,
   MediaControlsState,
   MediaErrorState,
   MediaFullscreenState,
   MediaPictureInPictureState,
   MediaPlaybackRateState,
   MediaPlaybackState,
+  MediaRemotePlaybackState,
   MediaSourceState,
   MediaTextTrackState,
   MediaTimeState,
@@ -47,7 +47,7 @@ export type VideoFeatures = [
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
-  PlayerFeature<MediaCastState>,
+  PlayerFeature<MediaRemotePlaybackState>,
   PlayerFeature<MediaControlsState>,
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,

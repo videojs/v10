@@ -3,7 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { CastState, MediaCastState } from '../../media/state';
+import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
 
@@ -15,7 +15,7 @@ export interface CastButtonProps {
 }
 
 export interface CastButtonState extends ButtonState {
-  castState: CastState;
+  castState: RemotePlaybackConnectionState;
   availability: MediaFeatureAvailability;
 }
 
@@ -32,7 +32,7 @@ export class CastButtonCore {
   });
 
   #props = { ...CastButtonCore.defaultProps };
-  #media: MediaCastState | null = null;
+  #media: MediaRemotePlaybackState | null = null;
 
   constructor(props?: CastButtonProps) {
     if (props) this.setProps(props);
@@ -64,24 +64,29 @@ export class CastButtonCore {
     };
   }
 
-  setMedia(media: MediaCastState): void {
+  setMedia(media: MediaRemotePlaybackState): void {
     this.#media = media;
   }
 
   getState(): CastButtonState {
     const media = this.#media!;
-    this.state.patch({ castState: media.castState, availability: media.castAvailability });
+    const castSupported = !!(globalThis as any).chrome;
+
+    this.state.patch({
+      castState: media.remotePlaybackState,
+      availability: castSupported ? media.remotePlaybackAvailability : 'unsupported',
+    });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
   }
 
-  async toggle(media: MediaCastState): Promise<void> {
+  async toggle(media: MediaRemotePlaybackState): Promise<void> {
     if (this.#props.disabled) return;
-    if (media.castAvailability !== 'available') return;
+    if (media.remotePlaybackAvailability !== 'available') return;
 
     try {
-      await media.toggleCast();
+      await media.toggleRemotePlayback();
     } catch {
       // Cast requests can fail (user cancelled, permissions, etc.)
     }

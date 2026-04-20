@@ -1,6 +1,6 @@
 import { isObject } from '@videojs/utils/predicate';
 
-import type { MediaRemotePlaybackCapability } from '../media/predicate';
+import type { MediaRemotePlaybackCapability } from '../../core/media/types';
 
 function resolveRemote(media: EventTarget): MediaRemotePlaybackCapability['remote'] | undefined {
   const target = media as EventTarget & { remote?: unknown };
@@ -10,15 +10,15 @@ function resolveRemote(media: EventTarget): MediaRemotePlaybackCapability['remot
   return undefined;
 }
 
-export function isCastConnected(media: EventTarget) {
+export function isRemotePlaybackConnected(media: EventTarget) {
   return resolveRemote(media)?.state === 'connected';
 }
 
-export function isCastConnecting(media: EventTarget) {
+export function isRemotePlaybackConnecting(media: EventTarget) {
   return resolveRemote(media)?.state === 'connecting';
 }
 
-export async function requestCast(media: EventTarget) {
+export async function requestRemotePlayback(media: EventTarget) {
   const remote = resolveRemote(media);
   if (!remote) {
     throw new DOMException('Remote playback not supported', 'NotSupportedError');

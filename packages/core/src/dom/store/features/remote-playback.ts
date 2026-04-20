@@ -1,29 +1,29 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { CastState, MediaCastState } from '../../../core/media/state';
+import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaRemotePlaybackCapable } from '../../media/predicate';
-import { isCastConnected, requestCast } from '../../presentation/cast';
 import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
+import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
-export const castFeature = definePlayerFeature({
-  name: 'cast',
-  state: ({ target }): MediaCastState => ({
-    castState: 'disconnected',
-    castAvailability: 'unavailable',
+export const remotePlaybackFeature = definePlayerFeature({
+  name: 'remotePlayback',
+  state: ({ target }): MediaRemotePlaybackState => ({
+    remotePlaybackState: 'disconnected',
+    remotePlaybackAvailability: 'unavailable',
 
-    async toggleCast() {
+    async toggleRemotePlayback() {
       const { media, container } = target();
 
-      if (isCastConnected(media)) {
-        return requestCast(media);
+      if (isRemotePlaybackConnected(media)) {
+        return requestRemotePlayback(media);
       }
 
       if (isFullscreenElement(container, media)) {
         await exitFullscreen();
       }
 
-      return requestCast(media);
+      return requestRemotePlayback(media);
     },
   }),
 
@@ -32,7 +32,7 @@ export const castFeature = definePlayerFeature({
 
     if (!isMediaRemotePlaybackCapable(media)) return;
 
-    const syncState = () => set({ castState: media.remote.state as CastState });
+    const syncState = () => set({ remotePlaybackState: media.remote.state as RemotePlaybackConnectionState });
 
     syncState();
 
@@ -42,10 +42,10 @@ export const castFeature = definePlayerFeature({
 
     media.remote
       .watchAvailability((available: boolean) => {
-        set({ castAvailability: available ? 'available' : 'unavailable' });
+        set({ remotePlaybackAvailability: available ? 'available' : 'unavailable' });
       })
       .catch(() => {
-        set({ castAvailability: 'unsupported' });
+        set({ remotePlaybackAvailability: 'unsupported' });
       });
 
     signal.addEventListener('abort', () => {

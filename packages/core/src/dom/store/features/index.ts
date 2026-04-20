@@ -1,5 +1,4 @@
 export * from './buffer';
-export * from './cast';
 export * from './controls';
 export * from './error';
 export * as features from './feature.parts';
@@ -8,6 +7,7 @@ export * from './pip';
 export * from './playback';
 export * from './playback-rate';
 export * from './presets';
+export * from './remote-playback';
 export * from './source';
 export * from './text-track';
 export * from './time';

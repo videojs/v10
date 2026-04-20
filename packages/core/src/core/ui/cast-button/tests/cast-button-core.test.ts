@@ -1,14 +1,26 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MediaCastState } from '../../../media/state';
+import type { MediaRemotePlaybackState } from '../../../media/state';
 import type { CastButtonState } from '../cast-button-core';
 import { CastButtonCore } from '../cast-button-core';
 
-function createMediaState(overrides: Partial<MediaCastState> = {}): MediaCastState {
+// CastButtonCore reports `availability: 'unsupported'` outside Chromium
+// (detected via `globalThis.chrome`). Tests run in jsdom which lacks that
+// global, so stub it for every test and let individual tests override.
+function stubChrome(present: boolean) {
+  const key = 'chrome';
+  if (present) {
+    (globalThis as unknown as Record<string, unknown>)[key] = {};
+  } else {
+    delete (globalThis as unknown as Record<string, unknown>)[key];
+  }
+}
+
+function createMediaState(overrides: Partial<MediaRemotePlaybackState> = {}): MediaRemotePlaybackState {
   return {
-    castState: 'disconnected',
-    castAvailability: 'available',
-    toggleCast: vi.fn(async () => {}),
+    remotePlaybackState: 'disconnected',
+    remotePlaybackAvailability: 'available',
+    toggleRemotePlayback: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -23,10 +35,13 @@ function createState(overrides: Partial<CastButtonState> = {}): CastButtonState 
 }
 
 describe('CastButtonCore', () => {
+  beforeEach(() => stubChrome(true));
+  afterEach(() => stubChrome(false));
+
   describe('getState', () => {
     it('projects castState and availability', () => {
       const core = new CastButtonCore();
-      const media = createMediaState({ castState: 'connected' });
+      const media = createMediaState({ remotePlaybackState: 'connected' });
       core.setMedia(media);
       const state = core.getState();
 
@@ -36,7 +51,7 @@ describe('CastButtonCore', () => {
 
     it('reflects unsupported availability', () => {
       const core = new CastButtonCore();
-      core.setMedia(createMediaState({ castAvailability: 'unsupported' }));
+      core.setMedia(createMediaState({ remotePlaybackAvailability: 'unsupported' }));
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
@@ -44,10 +59,19 @@ describe('CastButtonCore', () => {
 
     it('reflects connecting state', () => {
       const core = new CastButtonCore();
-      core.setMedia(createMediaState({ castState: 'connecting' }));
+      core.setMedia(createMediaState({ remotePlaybackState: 'connecting' }));
       const state = core.getState();
 
       expect(state.castState).toBe('connecting');
+    });
+
+    it('reports unsupported outside Chromium', () => {
+      stubChrome(false);
+      const core = new CastButtonCore();
+      core.setMedia(createMediaState({ remotePlaybackAvailability: 'available' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unsupported');
     });
   });
 
@@ -95,38 +119,38 @@ describe('CastButtonCore', () => {
   });
 
   describe('toggle', () => {
-    it('calls toggleCast when disconnected', async () => {
+    it('calls toggleRemotePlayback when disconnected', async () => {
       const core = new CastButtonCore();
-      const media = createMediaState({ castState: 'disconnected' });
+      const media = createMediaState({ remotePlaybackState: 'disconnected' });
       await core.toggle(media);
-      expect(media.toggleCast).toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).toHaveBeenCalled();
     });
 
-    it('calls toggleCast when connected', async () => {
+    it('calls toggleRemotePlayback when connected', async () => {
       const core = new CastButtonCore();
-      const media = createMediaState({ castState: 'connected' });
+      const media = createMediaState({ remotePlaybackState: 'connected' });
       await core.toggle(media);
-      expect(media.toggleCast).toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).toHaveBeenCalled();
     });
 
     it('does nothing when disabled', async () => {
       const core = new CastButtonCore({ disabled: true });
       const media = createMediaState();
       await core.toggle(media);
-      expect(media.toggleCast).not.toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
 
     it('does nothing when unsupported', async () => {
       const core = new CastButtonCore();
-      const media = createMediaState({ castAvailability: 'unsupported' });
+      const media = createMediaState({ remotePlaybackAvailability: 'unsupported' });
       await core.toggle(media);
-      expect(media.toggleCast).not.toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
 
     it('catches cast errors silently', async () => {
       const core = new CastButtonCore();
       const media = createMediaState({
-        toggleCast: vi.fn(async () => {
+        toggleRemotePlayback: vi.fn(async () => {
           throw new Error('user cancelled');
         }),
       });

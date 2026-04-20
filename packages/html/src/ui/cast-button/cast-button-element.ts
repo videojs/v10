@@ -1,5 +1,5 @@
-import { CastButtonCore, CastButtonDataAttrs, type MediaCastState } from '@videojs/core';
-import { selectCast } from '@videojs/core/dom';
+import { CastButtonCore, CastButtonDataAttrs, type MediaRemotePlaybackState } from '@videojs/core';
+import { selectRemotePlayback } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -10,9 +10,9 @@ export class CastButtonElement extends MediaButtonElement<CastButtonCore> {
 
   protected readonly core = new CastButtonCore();
   protected readonly stateAttrMap = CastButtonDataAttrs;
-  protected readonly mediaState = new PlayerController(this, playerContext, selectCast);
+  protected readonly mediaState = new PlayerController(this, playerContext, selectRemotePlayback);
 
-  protected activate(state: MediaCastState): void {
+  protected activate(state: MediaRemotePlaybackState): void {
     this.core.toggle(state);
   }
 }
