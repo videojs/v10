@@ -539,7 +539,7 @@ function persist({
 }
 
 const composition = createComposition(
-  [counter, logCount, persist, renderCount, pauseButton, resetButton],
+  [counter, logCount, renderCount, pauseButton, resetButton, persist],
   {
     initialState: { count: 0, paused: true },
     config: { interval: 250, defaultText: '--', saveEvery: 5 },
@@ -691,7 +691,7 @@ function cancelOnReset({
 }
 
 const composition = createComposition(
-  [counter, logCount, persist, renderCount, renderSaving, cancelOnReset, pauseButton, resetButton],
+  [counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset],
   {
     initialState: { count: 0, paused: true },
     config: { interval: 250, defaultText: '--', saveEvery: 5 },
@@ -745,6 +745,7 @@ function mount({
   owners: Signal<{
     rootElement?: HTMLElement;
     renderElement?: HTMLElement;
+    savingElement?: HTMLElement;
     pauseBtn?: HTMLElement;
     resetBtn?: HTMLElement;
   }>;
@@ -754,19 +755,22 @@ function mount({
     if (!rootElement) return;
 
     const renderElement = document.createElement('div');
+    const savingElement = document.createElement('div');
     const pauseBtn = document.createElement('button');
     const resetBtn = document.createElement('button');
     resetBtn.textContent = 'Reset';
 
-    rootElement.append(renderElement, pauseBtn, resetBtn);
-    update(owners, { renderElement, pauseBtn, resetBtn });
+    rootElement.append(renderElement, savingElement, pauseBtn, resetBtn);
+    update(owners, { renderElement, savingElement, pauseBtn, resetBtn });
 
     return () => {
       renderElement.remove();
+      savingElement.remove();
       pauseBtn.remove();
       resetBtn.remove();
       update(owners, {
         renderElement: undefined,
+        savingElement: undefined,
         pauseBtn: undefined,
         resetBtn: undefined,
       });
@@ -775,16 +779,16 @@ function mount({
 }
 
 const composition = createComposition(
-  [counter, logCount, mount, renderCount, pauseButton, resetButton],
+  [counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount],
   {
     initialState: { count: 0, paused: true },
-    config: { interval: 250, defaultText: '--' },
+    config: { interval: 250, defaultText: '--', saveEvery: 5 },
     initialOwners: { rootElement: document.getElementById('counter') },
   },
 );
 ```
 
-`mount` reads `rootElement`, creates three descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
+`mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
 
 The media-engine analog is the same shape. A composition that drives HLS playback takes an `HTMLMediaElement` as its root owner and internally creates a `MediaSource` and one or more `SourceBuffer`s attached to it — resources whose creation, lifetime, and cleanup all belong to the composition. The caller only ever hands in the media element.
 
@@ -804,6 +808,7 @@ type CounterState = { count?: number; paused?: boolean };
 type CounterOwners = {
   rootElement?: HTMLElement;
   renderElement?: HTMLElement;
+  savingElement?: HTMLElement;
   pauseBtn?: HTMLElement;
   resetBtn?: HTMLElement;
 };
@@ -816,10 +821,10 @@ class Counter extends EventTarget {
     super();
 
     this.#composition = createComposition(
-      [counter, logCount, mount, renderCount, pauseButton, resetButton],
+      [counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount],
       {
         initialState: { count: 0, paused: true },
-        config: { interval: 250, defaultText: '--' },
+        config: { interval: 250, defaultText: '--', saveEvery: 5 },
         initialOwners: { rootElement },
       },
     );
