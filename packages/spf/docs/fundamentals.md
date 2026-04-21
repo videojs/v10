@@ -496,7 +496,7 @@ Saving the count to a server every five ticks, with one final save on destroy:
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { Task, SerialRunner, type Signal } from '@videojs/spf';
+import { Task, SerialRunner, computed, type Signal } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
@@ -521,18 +521,21 @@ function persist({
     );
   }
 
+  // Isolate count so unrelated state changes don't trigger a save
+  const count = computed(() => state.get().count ?? 0);
+
   // Watch count and save at every Nth tick
   const stopEffect = effect(() => {
-    const { count = 0 } = state.get();
-    if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
-      save(count);
+    const c = count.get();
+    if (c > 0 && c % (config.saveEvery ?? 5) === 0) {
+      save(c);
     }
   });
 
   // Async cleanup: save the final count, let the runner drain, then tear down
   return async () => {
     stopEffect();
-    save(state.get().count ?? 0);
+    save(count.get());
     await runner.settled;
     runner.destroy();
   };
@@ -556,6 +559,20 @@ await composition.destroy();
 ```
 
 Three things are new. The `save()` closure wraps each network request in `new Task(...)`; the task's body receives an `AbortSignal` that `fetch` understands natively. The `SerialRunner` collects scheduled tasks and runs them one at a time — scheduling a second task while the first is still running queues it behind, with no overlap. And `persist`'s cleanup is `async`: it stops the effect, schedules one last save, `await`s `runner.settled` to let pending work finish, then destroys the runner. `composition.destroy()` awaits this cleanup like any other.
+
+One more detail is worth unpacking: why `count` is wrapped in a `computed` before the effect reads it.
+
+### Narrowing what an effect re-runs on
+
+Previous effects read `count` straight from state — `state.get().count`. Here it's wrapped in a `computed`:
+
+```ts
+const count = computed(() => state.get().count ?? 0);
+```
+
+The reason is the shape of the effect that reads it. `save()` is a non-idempotent side effect: it schedules a network request. A state signal re-notifies on every write, so reading `state.get().count` directly would re-run the effect whenever `paused` toggled (or any unrelated field changed) and fire a save whenever the current count happened to be divisible by `saveEvery`. `computed` caches by value, so reading its `.get()` inside an effect only triggers a re-run when that value actually changed.
+
+For the DOM-update effects earlier in the doc — `renderCount` setting `textContent`, `pauseButton`'s label — spurious re-runs are harmless: the assignment just writes the same value already there. The `computed` guardrail matters when the effect's side effect isn't free to repeat.
 
 ### Task and SerialRunner
 
@@ -588,7 +605,7 @@ Refactor `persist`: the runner and save state move into an actor; `persist` send
 
 ```ts
 import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineActor, Task, SerialRunner, update, type Signal } from '@videojs/spf';
+import { createMachineActor, Task, SerialRunner, computed, update, type Signal } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
@@ -649,10 +666,13 @@ function persist({
   const actor = createSaveActor();
   update(owners, { saveActor: actor });
 
+  // Isolate count so unrelated state changes don't trigger a save
+  const count = computed(() => state.get().count ?? 0);
+
   const stopEffect = effect(() => {
-    const { count = 0 } = state.get();
-    if (count > 0 && count % (config.saveEvery ?? 5) === 0) {
-      actor.send({ type: 'save', count });
+    const c = count.get();
+    if (c > 0 && c % (config.saveEvery ?? 5) === 0) {
+      actor.send({ type: 'save', count: c });
     }
   });
 
@@ -681,10 +701,12 @@ function cancelOnReset({
   state: Signal<{ count?: number }>;
   owners: Signal<{ saveActor?: SaveActor }>;
 }) {
+  // Isolate count so unrelated state changes don't fire spurious cancels
+  const count = computed(() => state.get().count);
+
   return effect(() => {
-    const { count } = state.get();
     const { saveActor } = owners.get();
-    if (count === 0 && saveActor?.snapshot.get().value === 'saving') {
+    if (count.get() === 0 && saveActor?.snapshot.get().value === 'saving') {
       saveActor.send({ type: 'cancel' });
     }
   });
