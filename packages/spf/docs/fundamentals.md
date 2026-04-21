@@ -731,7 +731,7 @@ A reactor might send a message to an actor when a condition goes true; the actor
 
 ## Advanced: Creating owners within behaviors
 
-Behaviors have only ever read from owners so far — consuming resources that callers passed in via `initialOwners`. But behaviors can produce owners too: create a resource, register it in owners, and clean it up on teardown. That keeps resource creation inside the composition, which matters when a single composition needs several related resources that share a lifecycle.
+Up through Actors, the caller had to hand every element the composition uses directly into `initialOwners` — `renderElement`, `savingElement`, `pauseBtn`, `resetBtn`, each looked up from the DOM before `createComposition` runs. Adding or renaming any of them means touching the caller too. Behaviors can close that loop: given a single `rootElement`, a behavior creates the descendants itself, registers them in owners, and cleans them up on teardown. That keeps resource creation inside the composition, which matters when a single composition needs several related resources that share a lifecycle.
 
 A `mount` behavior takes a single parent — `rootElement` — and creates the rest:
 
