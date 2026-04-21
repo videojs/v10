@@ -212,13 +212,12 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   #engineDestroy() {
-    const prevStreamType = this.streamType;
     this.#delegate?.destroy();
     this.#delegate = null;
     this.#prevEngineProps = null;
     this.#loadRequested = null;
+    // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
-    if (prevStreamType !== this.streamType) this.dispatchEvent(new Event('streamtypechange'));
   }
 }
 

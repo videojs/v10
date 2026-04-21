@@ -169,6 +169,27 @@ describe('HlsMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
+    it('dispatches `streamtypechange` once per transition when the engine is recreated', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      handler.mockClear();
+      // `debug` is part of `HlsMedia`'s engine props — toggling it recreates the
+      // native delegate without switching playback engines.
+      media.debug = true;
+      media.load();
+
+      // Teardown: a single `live` → `unknown`, then the new delegate re-detects
+      // `live` from the same element during `attach`.
+      expect(handler).toHaveBeenCalledTimes(2);
+      expect(media.streamType).toBe('live');
+    });
+
     it('lets user-set values win over auto-detection', () => {
       const { media, video } = setup();
 
