@@ -58,18 +58,19 @@ export const timeFeature = definePlayerFeature({
       });
 
     // While a seek is in-flight the store holds an optimistic `currentTime`
-    // that reflects the user's target position.  Browser `timeupdate` events
-    // during seeking carry an unreliable intermediate value that would snap
-    // the time-slider back to the old position, so skip `currentTime` sync
-    // from `timeupdate` while the store indicates an active seek.
-    const onTimeUpdate = () => {
+    // that reflects the user's target position.  Browser `timeupdate` and
+    // `progress` events during seeking carry an unreliable intermediate
+    // `currentTime` that would snap the time-slider back to the old
+    // position, so skip sync from those events while the store indicates an
+    // active seek.
+    const syncUnlessSeeking = () => {
       if (get().seeking) return;
       sync();
     };
 
     sync();
 
-    listen(media, 'timeupdate', onTimeUpdate, { signal });
+    listen(media, 'timeupdate', syncUnlessSeeking, { signal });
     listen(media, 'durationchange', sync, { signal });
     listen(media, 'seeking', sync, { signal });
     listen(media, 'seeked', sync, { signal });
@@ -77,6 +78,6 @@ export const timeFeature = definePlayerFeature({
     listen(media, 'emptied', sync, { signal });
     // `progress` fires as the seekable range grows, so the live-edge duration
     // tracks the DVR window without requiring a separate durationchange event.
-    listen(media, 'progress', sync, { signal });
+    listen(media, 'progress', syncUnlessSeeking, { signal });
   },
 });

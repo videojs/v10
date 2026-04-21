@@ -283,6 +283,29 @@ describe('timeFeature', () => {
         expect(store.state.seeking).toBe(true);
       });
 
+      it('progress during seek does not overwrite optimistic currentTime', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        store.seek(60);
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+
+        // Browser fires progress (buffering at the seek target) with a stale
+        // currentTime still reflecting the pre-seek position.
+        video.currentTime = 12;
+        video.dispatchEvent(new Event('progress'));
+
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+      });
+
       it('timeupdate resumes syncing after seeked', async () => {
         const video = createMockVideo({
           currentTime: 10,
