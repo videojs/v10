@@ -246,6 +246,9 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
         }
       }
       await Promise.all(results);
+      // Clear any keys behaviors registered — or callers seeded via
+      // initialOwners — so the composition ends with an empty owners map.
+      owners.set({} as O);
     },
   };
 }

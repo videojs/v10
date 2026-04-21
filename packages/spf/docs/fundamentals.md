@@ -768,12 +768,6 @@ function mount({
       savingElement.remove();
       pauseBtn.remove();
       resetBtn.remove();
-      update(owners, {
-        renderElement: undefined,
-        savingElement: undefined,
-        pauseBtn: undefined,
-        resetBtn: undefined,
-      });
     };
   });
 }
@@ -788,7 +782,7 @@ const composition = createComposition(
 );
 ```
 
-`mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
+`mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. On destroy, `mount`'s cleanup detaches the descendants from the DOM; the composition itself clears every key in owners after all behavior cleanups have run, so no behavior has to unregister what it wrote.
 
 Each descendant is registered under its own key in owners rather than left for other behaviors to pick out of `rootElement` themselves. The alternative — watch the subtree with a `MutationObserver` and identify elements by selector or data attribute — works mechanically, but trades away most of what owners gives you. You lose typed identity (`renderElement: HTMLElement` is not the same contract as "some `<div>` inside `rootElement`"), you swap synchronous guards for coalesced microtask callbacks, and every downstream behavior becomes coupled to whatever DOM layout `mount` happens to produce. Owners is a signal of named resources; behaviors reading it never have to know where those resources came from, only that they appeared.
 
