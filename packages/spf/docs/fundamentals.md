@@ -238,7 +238,7 @@ Behaviors read config directly (`config.interval`), usually with a fallback. Use
 
 A ticking counter and a console log aren't much of an application. What you'd actually want is to render the count somewhere — say, into an element on the page. That needs access to the element itself: a `<div>`, a buffer, an open socket. These are **resources** — platform objects with imperative interfaces that don't fit cleanly into plain application data, and the **owners** channel is where they live.
 
-An owner is something behaviors observe and operate on, not something they derive. The composition holds a signal whose value is a plain object mapping keys to resources. Behaviors read the keys they care about; `effect()` re-runs when a key appears, is replaced, or is cleared. The element itself is still the element — owners don't wrap or proxy it, they just make its lifecycle reactive.
+The composition holds a signal whose value is a plain object mapping keys to resources. Behaviors read the keys they care about and act on the resources directly; `effect()` re-runs when a key appears, is replaced, or is cleared. The element itself is still the element — owners don't wrap or proxy it, they just make its lifecycle reactive.
 
 **What it is** — a reactive signal holding a map of named resources, shared across every behavior in a composition.
 
