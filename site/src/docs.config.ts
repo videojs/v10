@@ -132,6 +132,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-playback-rate' },
       { slug: 'reference/feature-remote-playback' },
       { slug: 'reference/feature-source' },
+      { slug: 'reference/feature-stream-type' },
       { slug: 'reference/feature-text-tracks' },
       { slug: 'reference/feature-time' },
       { slug: 'reference/feature-volume' },
