@@ -709,6 +709,9 @@ await composition.destroy();
 
 The actor makes the save lifecycle observable. `persist` publishes the actor through owners and forwards save triggers as messages; `renderSaving` reads `saveActor.snapshot.get().value` and writes "saving..." to its own dedicated element when the actor is in the `'saving'` state; `cancelOnReset` reads the same snapshot and sends a `cancel` message when count returns to zero during an in-flight save, aborting the work and transitioning the actor back to `idle`. None of these behaviors knows how a save is performed — they interact with the actor as a black box that happens to expose its current state. And `resetButton` no longer has to know anything about saving: it just writes `{ count: 0 }` to state; `cancelOnReset` handles the rest.
 
+> [!NOTE]
+> Actors live in `owners` here because they fit the shape — imperative resources with identity that behaviors observe and act on. Whether they warrant a dedicated channel is an open question. Treat actors-in-owners as a working convention, not a fixed design.
+
 ### Messages, transitions, and snapshot
 
 An actor is defined by its states, its message handlers (`on`), and a snapshot signal it publishes.
