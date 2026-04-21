@@ -2,7 +2,7 @@ import { describe, it } from 'vitest';
 import { effect } from '../../signals/effect';
 import type { Signal } from '../../signals/primitives';
 import { update } from '../../signals/primitives';
-import { createComposition } from '../engine';
+import { createComposition } from '../create-composition';
 
 // =============================================================================
 // Test behaviors

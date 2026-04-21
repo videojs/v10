@@ -1,4 +1,4 @@
-import { type Composition, createComposition } from '../../core/composition/engine';
+import { type Composition, createComposition } from '../../core/composition/create-composition';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { calculatePresentationDuration } from '../../media/features/calculate-presentation-duration';

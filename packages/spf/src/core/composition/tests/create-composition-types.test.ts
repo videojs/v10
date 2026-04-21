@@ -9,7 +9,7 @@ import {
   type InferBehaviorState,
   type ResolveBehaviorOwners,
   type ResolveBehaviorState,
-} from '../engine';
+} from '../create-composition';
 
 // =============================================================================
 // Test behaviors — concrete parameter types

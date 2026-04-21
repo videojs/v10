@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Signal } from '../../signals/primitives';
 import { update } from '../../signals/primitives';
-import { createComposition } from '../engine';
+import { createComposition } from '../create-composition';
 
 interface Resource {
   id: string;
