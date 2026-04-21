@@ -1000,3 +1000,47 @@ The wrapper would pass `this` through `initialOwners.target`, and `#teardowns` w
 We didn't do that, because the bridge is adapter work, not composition work. Dispatching `CustomEvent('countchange')` knows about the public API shape — the event name, the `detail` payload, the fact that a consumer is listening to an `EventTarget` at all. None of that has anything to do with the composition's domain. Leaving the bridge on the wrapper keeps that split clean: behaviors do composition work, the wrapper translates to the consumer-shaped surface. The `#teardowns` bookkeeping is a small cost paid to keep composition concerns from leaking out.
 
 This is the Adapter shape — the composition stays generic; the wrapper projects whatever surface the consumer expects.
+
+---
+
+## Bringing it all together
+
+By the end of the last section, we'd built a running counter with an internal tick, a logger, a DOM renderer, two buttons, a save pipeline, a save actor with observable status, automatic cancel-on-reset, a root-creating mount behavior, and an adapter wrapper with a DOM-shaped public API — nine behaviors in total, each a small function, each unaware of the others. Everything above this section taught how that works by doing. This section pulls the patterns out into the open: what holds across every composition, what's always optional, and what the model is really asking of you.
+
+### Additive, not rewriting
+
+Every section added new behaviors without touching the ones that came before. `counter` and `logCount` stayed the same from State onward; `renderCount` stayed the same from Owners onward; the buttons from Reactors onward. New capabilities landed as appended behaviors in the composition list, not as edits to existing ones.
+
+The exceptions are informative. `counter` was redefined in Reactors — its internal `setInterval` became a reactor-managed effect so it could enter and leave a `running` state. `persist` was redefined in Actors — its runner and in-flight flag moved into a dedicated actor, and `persist` itself shrank to a message forwarder. Neither rewrite reached outside the behavior being replaced: `counter` still read and wrote `state.count`; `persist` still triggered on the same Nth-tick condition. The contract each behavior exposed stayed stable; the implementation swapped.
+
+That's the normal way to extend a composition. Replace a behavior with a differently-shaped version of itself; add new behaviors for new capabilities; don't reach into existing behaviors to adjust them.
+
+### Use what you need
+
+None of the primitives are mandatory. A composition with one behavior that increments `count` is a real composition — no reactors, no tasks, no actors, no owners, no wrapper. Each primitive exists to solve a problem that a simpler shape couldn't:
+
+- **Reactors** earn their keep when lifecycle depends on state — setup runs while a condition holds, teardown fires when it stops, and nothing has to guard "is this still relevant?" on each tick.
+- **Tasks** earn their keep when async work needs introspection or cancellation. If a plain Promise works, a plain Promise is fine.
+- **Actors** earn their keep when the imperative work a behavior performs is observable state the rest of the composition needs to see or drive.
+- **Owner-creating behaviors** earn their keep when a composition needs several related resources that share a lifecycle.
+- **Adapter wrappers** earn their keep when the public API shape diverges from the composition's internal signals.
+
+Each is reachable when the problem becomes real, and sits out of the way when it doesn't. The cost of unused primitives is zero — you never imported them.
+
+### Contracts, not couplings
+
+No behavior in this doc imported another. `renderCount` doesn't know `counter` exists; `cancelOnReset` doesn't know `persist` or the actor factory by name. The only interface between behaviors is the shape of their shared signals — state keys, owners keys, config keys. If two behaviors agree on a key and its type, they can coordinate; if they don't share a key, they're invisible to each other.
+
+That's why additive composition works. A new behavior only needs to declare which keys it reads and writes. The composition-level type system takes care of merging its declarations with everyone else's and fails at compile time if a key's type disagrees across behaviors. Nothing has to be taught about a new behavior; nothing gets broken by removing one.
+
+### Conventions we leaned on
+
+A handful of conventions keep showing up because they pay off across every shape a composition can take. All of them surface earlier in this doc; this is just the index.
+
+- **Guard for missing owners.** Every behavior that reads an owner checks `if (!ownerKey) return;` before using it. Owners can arrive late or be cleared, and effects re-run when they do; the guard is what makes that safe.
+- **Isolate dependencies with `computed`.** When an effect's side effect is non-idempotent (scheduling a save, dispatching an event), wrap the specific field the effect cares about in `computed` so an unrelated state write doesn't re-fire it.
+- **One effect per derivation.** When a wrapper translates multiple state fields into separate events, each gets its own `effect` reading its own `computed`. Single-effect-with-diff-flags is imperative tracking wearing a reactive costume.
+- **Options bag, flat.** Public constructors take one caller-facing options bag; the wrapper splits it across `initialState` / `config` / `initialOwners` internally. Consumers never see the split.
+- **Cleanup returned, not scattered.** Behaviors return their cleanup function (or an object with `destroy()`), and the composition runs them all on destroy. External lifetime management (like the `#teardowns` array in the Counter wrapper) is only for things outside the composition.
+
+Everything in this doc is fundamentals. Real compositions do more — more behaviors, richer state, deeper owner graphs, multiple actors — but none of the primitives change shape. Once the composition model is familiar, the rest is your domain.
