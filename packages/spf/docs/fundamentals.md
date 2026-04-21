@@ -790,7 +790,15 @@ const composition = createComposition(
 
 `mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. When the composition is destroyed (or if `rootElement` is swapped or cleared), the cleanup detaches the descendants and clears them from owners, which re-trips the guards and leaves every downstream behavior quiescent.
 
-The media-engine analog is the same shape. A composition that drives HLS playback takes an `HTMLMediaElement` as its root owner and internally creates a `MediaSource` and one or more `SourceBuffer`s attached to it — resources whose creation, lifetime, and cleanup all belong to the composition. The caller only ever hands in the media element.
+Each descendant is registered under its own key in owners rather than left for other behaviors to pick out of `rootElement` themselves. The alternative — watch the subtree with a `MutationObserver` and identify elements by selector or data attribute — works mechanically, but trades away most of what owners gives you. You lose typed identity (`renderElement: HTMLElement` is not the same contract as "some `<div>` inside `rootElement`"), you swap synchronous guards for coalesced microtask callbacks, and every downstream behavior becomes coupled to whatever DOM layout `mount` happens to produce. Owners is a signal of named resources; behaviors reading it never have to know where those resources came from, only that they appeared.
+
+This is also where behaviors-as-units pays off. The contract every downstream behavior relies on is typed owners plus guards for missing keys — nothing about *how* the owners got populated. The same composition supports several equally valid shapes:
+
+- **Omit `mount`.** Pass `renderElement`, `savingElement`, and the buttons through `initialOwners` directly, or write them later via `composition.owners.set(...)`. This is the shape the Actors example uses.
+- **Replace `mount` with a different implementation.** A shadow-DOM variant, a React-rendered variant, one that clones a `<template>`, one that adopts pre-existing elements — any of them can slot in as long as they write the same keys.
+- **The one above.** `mount` owns subtree creation and teardown itself.
+
+None of the other behaviors change across those permutations. Substitution at the behavior boundary — rather than at the composition boundary — is what makes that possible.
 
 ---
 
