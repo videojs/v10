@@ -11,6 +11,7 @@ export { Hls };
 
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
 export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+export type StreamType = (typeof StreamTypes)[keyof typeof StreamTypes];
 
 export const PlaybackTypes = {
   MSE: 'mse',
@@ -22,6 +23,12 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
+export const StreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
 export interface HlsMediaProps {
   src: string;
   type: SourceType | undefined;
@@ -29,6 +36,7 @@ export interface HlsMediaProps {
   config: Record<string, any>;
   debug: boolean;
   preload: PreloadType;
+  streamType: StreamType;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
@@ -38,6 +46,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   config: {},
   debug: false,
   preload: 'metadata',
+  streamType: 'unknown',
 };
 
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
@@ -48,6 +57,8 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #config = { ...hlsMediaDefaultProps.config };
   #debug = hlsMediaDefaultProps.debug;
   #preload = hlsMediaDefaultProps.preload;
+  #streamType: StreamType = hlsMediaDefaultProps.streamType;
+  #streamTypeUserSet = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
 
@@ -106,6 +117,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
+  /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
   get preload() {
     return this.#preload;
   }
@@ -115,6 +127,25 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     if (this.#delegate) {
       this.#delegate.preload = value;
     }
+  }
+
+  /** Current stream type (`'on-demand'` / `'live'` / `'unknown'`). */
+  get streamType(): StreamType {
+    return this.#delegate?.streamType ?? this.#streamType;
+  }
+
+  set streamType(value: StreamType) {
+    this.#streamTypeUserSet = value !== StreamTypes.UNKNOWN;
+
+    if (this.#delegate) {
+      this.#delegate.streamType = value;
+      this.#streamType = this.#delegate.streamType;
+      return;
+    }
+
+    if (this.#streamType === value) return;
+    this.#streamType = value;
+    this.dispatchEvent(new Event('streamtypechange'));
   }
 
   attach(target: HTMLVideoElement) {
@@ -153,6 +184,10 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       }
 
       this.#delegate.preload = this.preload;
+
+      if (this.#streamTypeUserSet && this.#streamType !== StreamTypes.UNKNOWN) {
+        this.#delegate.streamType = this.#streamType;
+      }
     }
 
     if (this.#delegate) {

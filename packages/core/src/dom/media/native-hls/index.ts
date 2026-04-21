@@ -1,19 +1,23 @@
+import type { StreamType } from '../hls/index';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaErrorsMixin } from './errors';
+import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 export interface NativeHlsMediaProps {
   src: string;
   preload: PreloadType;
+  streamType: StreamType;
 }
 
 export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   src: '',
   preload: 'metadata',
+  streamType: 'unknown',
 };
 
-class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaProps {
+class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsMediaProps, 'streamType'> {
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
@@ -54,4 +58,4 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaP
   }
 }
 
-export class NativeHlsMedia extends NativeHlsMediaErrorsMixin(NativeHlsMediaBase) {}
+export class NativeHlsMedia extends NativeHlsMediaStreamTypeMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase)) {}
