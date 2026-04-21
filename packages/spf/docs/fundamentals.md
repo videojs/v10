@@ -574,7 +574,7 @@ Reach for `Task` when you need control over async work: ordering, cancellation, 
 
 ## Actors
 
-`persist` does the job, but it keeps the save lifecycle to itself. If `renderCount` wanted to show "(saving...)" while a save is in flight, or the reset button wanted to cancel an outstanding save, neither could — `persist` owns the runner and the "am I saving?" state internally, without publishing them.
+`persist` does the job, but it keeps the save lifecycle to itself. If one behavior wanted to show "saving..." while a save is in flight, or another wanted to cancel an outstanding save when the user hits reset, neither could — `persist` owns the runner and the "am I saving?" state internally, without publishing them.
 
 Moving that work into an actor makes the save lifecycle observable. An actor is a message-driven state machine that owns a resource (here, the task runner), processes messages through its own transitions, and publishes its current state as a reactive snapshot that any behavior can subscribe to.
 
