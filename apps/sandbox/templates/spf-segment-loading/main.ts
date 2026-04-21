@@ -8,8 +8,9 @@ import '@app/styles.css';
 //   autoplay=true        Start with autoplay enabled
 //   preload=auto|metadata|none  Initial preload mode
 
+import { effect } from '@videojs/spf';
 import type { HlsPlaybackEngineState } from '@videojs/spf/playback-engine';
-import { createHlsPlaybackEngine, effect } from '@videojs/spf/playback-engine';
+import { createHlsPlaybackEngine } from '@videojs/spf/playback-engine';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
