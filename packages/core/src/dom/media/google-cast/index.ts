@@ -94,11 +94,16 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
     }
 
     set castReceiver(val: string | undefined) {
-      if (this.#castReceiver === val) return;
-      this.#castReceiver = val;
+      // Normalize empty/nullish values to `undefined` so the type returned from
+      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
+      // coerces removed attributes to `''` when routing through
+      // `attributeChangedCallback`.
+      const next = val || undefined;
+      if (this.#castReceiver === next) return;
+      this.#castReceiver = next;
 
-      if (val) {
-        this.#castOptions.receiverApplicationId = val;
+      if (next) {
+        this.#castOptions.receiverApplicationId = next;
       }
     }
 
@@ -125,7 +130,11 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
     }
 
     set castContentType(val: string | undefined) {
-      this.#castContentType = val;
+      // Normalize empty/nullish values to `undefined` so the type returned from
+      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
+      // coerces removed attributes to `''` when routing through
+      // `attributeChangedCallback`.
+      this.#castContentType = val || undefined;
     }
 
     /** Stream type (`'on-demand'` or `'live'`) used on the Cast receiver. Falls back to `streamType`. */
