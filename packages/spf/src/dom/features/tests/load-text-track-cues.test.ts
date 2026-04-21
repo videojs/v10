@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { Presentation, Segment, TextTrack } from '../../../core/types';
+import type { Presentation, Segment, TextTrack } from '../../../media/types';
 import {
   loadTextTrackCues,
   type TextTrackCueLoadingOwners,

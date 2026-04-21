@@ -1,8 +1,8 @@
 import { effect } from '../../core/signals/effect';
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import type { Presentation } from '../../core/types';
-import { isResolvedTrack } from '../../core/types';
-import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import type { Presentation } from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
+import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 
 export interface EndOfStreamState extends TrackSelectionState {

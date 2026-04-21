@@ -7,7 +7,7 @@
  * 3. fetchResolvableStream() - Stream body as Uint8Array chunks
  */
 
-import type { AddressableObject } from '../../core/types';
+import type { AddressableObject } from '../../media/types';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from './chunked-stream-iterable';
 
 /**

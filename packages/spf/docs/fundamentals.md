@@ -19,8 +19,7 @@ A composition is SPF's unit of assembly. `createComposition` takes a list of **b
 A composition with one stand-in behavior, driven entirely from outside:
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { update, computed, type Signal } from '@videojs/spf';
+import { createComposition, effect, update, computed, type Signal } from '@videojs/spf';
 
 function defineCount({ state }: { state: Signal<{ count?: number }> }) {
   // no logic yet — this behavior exists to carry the type
@@ -158,8 +157,7 @@ State is the surface those behaviors share. A single reactive signal holding a p
 A counter that ticks on an interval paired with a logger that reads the count as it changes — two behaviors coordinating entirely through shared state:
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { update, type Signal } from '@videojs/spf';
+import { createComposition, effect, update, type Signal } from '@videojs/spf';
 
 function counter({
   state,
@@ -252,8 +250,7 @@ The composition holds a signal whose value is a plain object mapping keys to res
 A behavior that renders the counter to a DOM element, joining the counter and logger from the previous section:
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { type Signal } from '@videojs/spf';
+import { createComposition, effect, type Signal } from '@videojs/spf';
 
 // counter, logCount — unchanged from the previous section
 
@@ -376,8 +373,7 @@ An `effect()` can't cleanly model that. It re-runs on every signal change with n
 A counter that can be paused and reset from DOM buttons. The counter is now a reactor; the rest are ordinary effect-based behaviors:
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineReactor, update, type Signal } from '@videojs/spf';
+import { createComposition, effect, createMachineReactor, update, type Signal } from '@videojs/spf';
 import { listen } from '@videojs/utils/dom';
 
 // logCount, renderCount — unchanged from the previous section
@@ -495,8 +491,7 @@ A plain Promise can't express any of that. It starts running the moment you crea
 Saving the count to a server every five ticks, with one final save on destroy:
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { Task, SerialRunner, computed, type Signal } from '@videojs/spf';
+import { createComposition, effect, Task, SerialRunner, computed, type Signal } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
@@ -604,8 +599,7 @@ Moving that work into an actor makes the save lifecycle observable. An actor is 
 Refactor `persist`: the runner and save state move into an actor; `persist` sends messages to it; a new `renderSaving` behavior reads the actor's snapshot to surface in-flight status to a dedicated element; a new `cancelOnReset` behavior sends `cancel` when count returns to zero while a save is in flight.
 
 ```ts
-import { createComposition, effect } from '@videojs/spf/playback-engine';
-import { createMachineActor, Task, SerialRunner, computed, update, type Signal } from '@videojs/spf';
+import { createComposition, effect, createMachineActor, Task, SerialRunner, computed, update, type Signal } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton — unchanged from previous sections
 
@@ -758,8 +752,7 @@ Up through Actors, the caller had to hand every element the composition uses dir
 A `mount` behavior takes a single parent — `rootElement` — and creates the rest:
 
 ```ts
-import { effect } from '@videojs/spf/playback-engine';
-import { update, type Signal } from '@videojs/spf';
+import { effect, update, type Signal } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset — unchanged from previous sections
 
@@ -824,8 +817,7 @@ Compositions expose `state`, `owners`, and `destroy` — the right surface for b
 A wrapper sits in front of the composition and projects exactly the surface you choose. A `Counter` class that extends `EventTarget` gives consumers a DOM-shaped API:
 
 ```ts
-import { createComposition, effect, type Composition } from '@videojs/spf/playback-engine';
-import { computed, update } from '@videojs/spf';
+import { createComposition, effect, computed, update, type Composition } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount — unchanged from previous sections
 
