@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
-import { JSDOM } from 'jsdom';
+import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
 import { sidebar } from '../src/docs.config';
@@ -59,31 +59,24 @@ export default function llmsMarkdown(): AstroIntegration {
         // Standalone error pages emit e.g. 404.html, not 404/index.html
         const SKIP_PAGES = new Set(['404', '500']);
 
-        for (const page of pages) {
-          const { pathname } = page;
-
-          if (SKIP_PAGES.has(pathname.replace(/\/$/, ''))) continue;
+        async function processPage(pathname: string): Promise<void> {
+          if (SKIP_PAGES.has(pathname.replace(/\/$/, ''))) return;
 
           try {
             // Construct path to HTML file
             const htmlPath = join(siteDir, pathname, 'index.html');
             const html = await readFile(htmlPath, 'utf-8');
 
-            // Strip styles before JSDOM to avoid "Could not parse CSS stylesheet" warnings
-            const cleanHtml = html
-              .replace(/<style[\s\S]*?<\/style>/gi, '')
-              .replace(/<link[^>]*rel=["']stylesheet["'][^>]*\/?>/gi, '');
-
-            // Parse HTML with jsdom
-            const dom = new JSDOM(cleanHtml);
-            const document = dom.window.document;
+            // linkedom is a lightweight DOM-compatible parser — no CSS engine,
+            // no script execution, just enough DOM to run querySelector/cloneNode.
+            const { document } = parseHTML(html);
 
             // Check if page has llms content
             const contentElements = document.querySelectorAll('[data-llms-content]');
 
             if (contentElements.length === 0) {
               // No llms content, skip silently
-              continue;
+              return;
             }
 
             // For each content element, strip non-content elements before conversion
@@ -135,6 +128,21 @@ export default function llmsMarkdown(): AstroIntegration {
             logger.error(`Failed to process ${pathname}: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
+
+        // Process pages with a concurrency cap. Work is mostly CPU-bound
+        // (linkedom parse + Turndown) so parallelism only buys overlap with
+        // the readFile/writeFile I/O; 8 is enough to keep that overlap busy
+        // without flooding the event loop.
+        const CONCURRENCY = 8;
+        const queue = pages.map((page) => page.pathname);
+        const workers = Array.from({ length: CONCURRENCY }, async () => {
+          while (queue.length > 0) {
+            const pathname = queue.shift();
+            if (pathname === undefined) return;
+            await processPage(pathname);
+          }
+        });
+        await Promise.all(workers);
 
         // Group docs by framework
         const docsByFramework = new Map<string, PageEntry[]>();
