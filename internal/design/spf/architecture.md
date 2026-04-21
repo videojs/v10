@@ -40,7 +40,7 @@ Internal structure of SPF.
 └─────────────────────────────────────────────────────────┘
 ```
 
-The `core/` layer is runtime-agnostic — no DOM APIs, no fetch. The `dom/` layer wires browser platform APIs (MSE, fetch, HTMLMediaElement) into the core abstractions.
+The `core/` layer holds SPF's framework primitives (composition, signals, tasks, actors, reactors) — runtime-agnostic, with no DOM or network dependencies. The `media/` layer holds runtime-agnostic HAS-domain logic (ABR, buffer math, HLS parsing, CMAF-HAM types). The `dom/` layer wires browser platform APIs (MSE, fetch, HTMLMediaElement) into both.
 
 ---
 
@@ -64,7 +64,7 @@ interface State<S> {
 - `flush()` drains the pending patch immediately. Call when downstream subscribers need to react before the next tick (e.g., ABR sampling).
 - Selector subscriptions fire only when the selected slice changes, using a custom equality function.
 
-### Actor (`core/actor.ts` + `core/task.ts`)
+### Actor (`core/actors/actor.ts` + `core/tasks/task.ts`)
 
 An actor owns a `snapshot` (status + context) and serializes its own work via a runner.
 
@@ -81,11 +81,11 @@ interface Actor<Context> {
 
 **ConcurrentRunner** — deduplicates by ID. Used where parallel work is safe but duplicate tasks are wasteful.
 
-### HLS Parsing (`core/hls/`)
+### HLS Parsing (`media/hls/`)
 
 Parses multivariant and media playlists into typed structures (`Presentation`, `Track`, `Segment`). URL resolution is handled separately in `resolve-url.ts`, making the parsers pure functions of text input.
 
-### ABR (`core/abr/`)
+### ABR (`media/abr/`)
 
 Two components:
 
@@ -95,7 +95,7 @@ Two components:
 
 > **Zero-factor correction:** Raw EWMA starts near zero. The displayed/used estimate must apply `estimate / (1 - α^totalWeight)` to correct for the initialization bias.
 
-### Buffer Math (`core/buffer/`)
+### Buffer Math (`media/buffer/`)
 
 **Forward buffer** (`forward-buffer.ts`) — computes the target load window: `[currentTime, currentTime + forwardBufferDuration]`. Also computes the flush point (segments behind `currentTime - backBufferDuration`).
 
@@ -105,7 +105,7 @@ Two components:
 
 ## DOM Layer
 
-### PlaybackEngine (`dom/playback-engine/engine.ts`)
+### PlaybackEngine (`dom/playback-engine/hls-engine.ts`, built on `core/composition/engine.ts`)
 
 The orchestration hub. Initializes all features in a fixed order, wiring shared state, owners, and a single event stream.
 
