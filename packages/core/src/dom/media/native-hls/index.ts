@@ -1,9 +1,15 @@
-import type { StreamType } from '../hls/index';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaErrorsMixin } from './errors';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+export type StreamType = (typeof StreamTypes)[keyof typeof StreamTypes];
+
+export const StreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
 
 export interface NativeHlsMediaProps {
   src: string;

@@ -58,7 +58,6 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #debug = hlsMediaDefaultProps.debug;
   #preload = hlsMediaDefaultProps.preload;
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
-  #streamTypeUserSet = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
 
@@ -135,8 +134,6 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   set streamType(value: StreamType) {
-    this.#streamTypeUserSet = value !== StreamTypes.UNKNOWN;
-
     if (this.#delegate) {
       this.#delegate.streamType = value;
       this.#streamType = this.#delegate.streamType;
@@ -184,10 +181,6 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       }
 
       this.#delegate.preload = this.preload;
-
-      if (this.#streamTypeUserSet && this.#streamType !== StreamTypes.UNKNOWN) {
-        this.#delegate.streamType = this.#streamType;
-      }
     }
 
     if (this.#delegate) {
@@ -216,10 +209,13 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   #engineDestroy() {
+    const hadStreamType = this.#streamType !== StreamTypes.UNKNOWN;
     this.#delegate?.destroy();
     this.#delegate = null;
     this.#prevEngineProps = null;
     this.#loadRequested = null;
+    this.#streamType = StreamTypes.UNKNOWN;
+    if (hadStreamType) this.dispatchEvent(new Event('streamtypechange'));
   }
 }
 

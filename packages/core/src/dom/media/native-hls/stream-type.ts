@@ -1,6 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
-import { type StreamType, StreamTypes } from '../hls/index';
 import type { NativeMediaHost } from './errors';
+import { type StreamType, StreamTypes } from './index';
 
 /**
  * Exposes a settable `streamType` (`'on-demand' | 'live' | 'unknown'`) on the
