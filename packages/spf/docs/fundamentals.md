@@ -566,6 +566,8 @@ A **`SerialRunner`** is the simplest scheduler: first in, first out, one at a ti
 - **`runner.settled`** — a promise that resolves once the runner has no pending or running tasks. `await runner.settled` before teardown lets in-flight work finish.
 - **`runner.abortPending()` / `runner.abortAll()`** — cancel pending work, or everything including the current task. Useful when a newer request supersedes older ones.
 
+`SerialRunner` is the simplest scheduler, but not the only one: `ConcurrentRunner` runs tasks in parallel and deduplicates by `task.id`, which fits request batches where "the same thing twice" should collapse. Both accept any `TaskLike`, so building your own runner — rate-limited, priority-ordered, whatever your workload needs — is a supported extension point, not a workaround.
+
 Reach for `Task` when you need control over async work: ordering, cancellation, or the ability to reason about what's in flight. For one-shot async work that you'd be happy to `await` and discard, a plain Promise is still fine.
 
 ---
