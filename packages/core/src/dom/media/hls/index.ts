@@ -1,5 +1,6 @@
 import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
+import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
@@ -11,7 +12,7 @@ export { Hls };
 
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
 export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
-export type StreamType = (typeof StreamTypes)[keyof typeof StreamTypes];
+export type StreamType = MediaStreamType;
 
 export const PlaybackTypes = {
   MSE: 'mse',
@@ -23,11 +24,7 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
-export const StreamTypes = {
-  ON_DEMAND: 'on-demand',
-  LIVE: 'live',
-  UNKNOWN: 'unknown',
-} as const;
+export const StreamTypes = MediaStreamTypes;
 
 export interface HlsMediaProps {
   src: string;
@@ -46,7 +43,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   config: {},
   debug: false,
   preload: 'metadata',
-  streamType: 'unknown',
+  streamType: MediaStreamTypes.UNKNOWN,
 };
 
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
