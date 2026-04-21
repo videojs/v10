@@ -26,8 +26,8 @@ export type {
   ResolveBehaviorConfig,
   ResolveBehaviorOwners,
   ResolveBehaviorState,
-} from './core/composition/engine';
-export { createComposition } from './core/composition/engine';
+} from './core/composition/create-composition';
+export { createComposition } from './core/composition/create-composition';
 
 // =============================================================================
 // Signals

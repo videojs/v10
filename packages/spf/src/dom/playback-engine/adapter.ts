@@ -1,5 +1,5 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
-import type { Composition } from '../../core/composition/engine';
+import type { Composition } from '../../core/composition/create-composition';
 import { update } from '../../core/signals/primitives';
 import {
   createHlsPlaybackEngine,

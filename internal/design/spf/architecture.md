@@ -105,7 +105,7 @@ Two components:
 
 ## DOM Layer
 
-### PlaybackEngine (`dom/playback-engine/hls-engine.ts`, built on `core/composition/engine.ts`)
+### PlaybackEngine (`dom/playback-engine/hls-engine.ts`, built on `core/composition/create-composition.ts`)
 
 The orchestration hub. Initializes all features in a fixed order, wiring shared state, owners, and a single event stream.
 
