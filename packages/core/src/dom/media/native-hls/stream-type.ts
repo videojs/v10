@@ -2,21 +2,10 @@ import type { Constructor } from '@videojs/utils/types';
 import type { NativeMediaHost } from './errors';
 import { type StreamType, StreamTypes } from './index';
 
-/**
- * Exposes a settable `streamType` (`'on-demand' | 'live' | 'unknown'`) on the
- * native HLS delegate. Auto-detects from the media element's `duration`:
- * `Infinity` → `'live'`, finite positive → `'on-demand'`. Resets to
- * `'unknown'` on `emptied` and on detach.
- *
- * Setting `streamType` to a concrete value (`'live'` / `'on-demand'`) pins
- * the value and suppresses auto-detection; setting `'unknown'` clears the
- * override and re-enables detection. Dispatches `streamtypechange` on the
- * host when the value actually changes.
- */
 export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
     #streamType: StreamType = StreamTypes.UNKNOWN;
-    #userSet = false;
+    #isUserStreamType = false;
     #disconnect: AbortController | null = null;
 
     get streamType(): StreamType {
@@ -25,12 +14,12 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
 
     set streamType(value: StreamType) {
       if (value === StreamTypes.UNKNOWN) {
-        this.#userSet = false;
+        this.#isUserStreamType = false;
         this.#setDetected(this.#detect());
         return;
       }
 
-      this.#userSet = true;
+      this.#isUserStreamType = true;
       this.#update(value);
     }
 
@@ -78,7 +67,7 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
     }
 
     #setDetected(value: StreamType): void {
-      if (this.#userSet) return;
+      if (this.#isUserStreamType) return;
       this.#update(value);
     }
 

@@ -4,20 +4,10 @@ import Hls from 'hls.js';
 import { type StreamType, StreamTypes } from './index';
 import type { HlsEngineHost } from './types';
 
-/**
- * Exposes a settable `streamType` (`'on-demand' | 'live' | 'unknown'`) on the
- * hls.js delegate. Auto-detects from `LEVEL_LOADED` (`details.live`) and
- * resets to `'unknown'` on `MANIFEST_LOADING` / `DESTROYING`.
- *
- * Setting `streamType` to a concrete value (`'live'` / `'on-demand'`) pins
- * the value and suppresses auto-detection; setting `'unknown'` clears the
- * override and re-enables detection. Dispatches `streamtypechange` on the
- * host when the value actually changes.
- */
 export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaStreamType extends (BaseClass as Constructor<HlsEngineHost>) {
     #streamType: StreamType = StreamTypes.UNKNOWN;
-    #userSet = false;
+    #isUserStreamType = false;
 
     constructor(...args: any[]) {
       super(...args);
@@ -35,17 +25,17 @@ export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost
 
     set streamType(value: StreamType) {
       if (value === StreamTypes.UNKNOWN) {
-        this.#userSet = false;
+        this.#isUserStreamType = false;
         this.#update(StreamTypes.UNKNOWN);
         return;
       }
 
-      this.#userSet = true;
+      this.#isUserStreamType = true;
       this.#update(value);
     }
 
     #setDetected(value: StreamType): void {
-      if (this.#userSet) return;
+      if (this.#isUserStreamType) return;
       this.#update(value);
     }
 

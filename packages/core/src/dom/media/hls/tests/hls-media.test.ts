@@ -207,11 +207,41 @@ describe('HlsMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
-    it('resets on engine recreation', () => {
+    it('preserves a user-set value across `load()` on the same engine', () => {
+      const { media, video } = setup();
+
+      media.streamType = 'live';
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.load();
+
+      expect(media.streamType).toBe('live');
+      expect(handler).not.toHaveBeenCalled();
+
+      fireDurationChange(video, 120);
+      expect(media.streamType).toBe('live');
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('preserves a user-set value across engine recreation', () => {
       const { media } = setup();
 
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
+
+      media.preferPlayback = 'mse';
+      media.load();
+
+      expect(media.streamType).toBe('live');
+    });
+
+    it('stops preserving after the user override is cleared with `unknown`', () => {
+      const { media } = setup();
+
+      media.streamType = 'live';
+      media.streamType = 'unknown';
 
       media.preferPlayback = 'mse';
       media.load();
