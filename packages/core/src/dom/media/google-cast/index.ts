@@ -83,42 +83,61 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       super.pause();
     }
 
+    /** Resolved options passed to the Google Cast framework when it initializes. */
     get castOptions() {
       return this.#castOptions;
     }
 
+    /** Cast receiver application ID. Defaults to Google's default media receiver. */
     get castReceiver() {
       return this.#castReceiver;
     }
 
     set castReceiver(val: string | undefined) {
-      if (this.#castReceiver === val) return;
-      this.#castReceiver = val;
+      // Normalize empty/nullish values to `undefined` so the type returned from
+      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
+      // coerces removed attributes to `''` when routing through
+      // `attributeChangedCallback`.
+      const next = val || undefined;
+      if (this.#castReceiver === next) return;
+      this.#castReceiver = next;
 
-      if (val) {
-        this.#castOptions.receiverApplicationId = val;
+      if (next) {
+        this.#castOptions.receiverApplicationId = next;
       }
     }
 
+    /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
     get castSrc() {
       return this.#castSrc ?? this.querySelector('source')?.src ?? this.src ?? this.currentSrc;
     }
 
-    set castSrc(val: string) {
-      if (this.#castSrc === val) return;
-      this.#castSrc = val;
+    set castSrc(val: string | undefined) {
+      // Normalize empty/nullish values to `undefined` so the fallback chain in the
+      // getter (via `??`) still applies. The `CustomMediaElement` wrapper coerces
+      // removed attributes to `''` when routing through `attributeChangedCallback`,
+      // which would otherwise short-circuit the fallback and break Cast loading.
+      const next = val || undefined;
+      if (this.#castSrc === next) return;
+      this.#castSrc = next;
 
       if (this.#provider?.isCasting) this.load();
     }
 
+    /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
     get castContentType() {
       return this.#castContentType;
     }
 
     set castContentType(val: string | undefined) {
-      this.#castContentType = val;
+      // Normalize empty/nullish values to `undefined` so the type returned from
+      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
+      // coerces removed attributes to `''` when routing through
+      // `attributeChangedCallback`.
+      this.#castContentType = val || undefined;
     }
 
+    /** Stream type (`'on-demand'` or `'live'`) used on the Cast receiver. Falls back to `streamType`. */
     get castStreamType() {
       return this.#castStreamType ?? this.streamType;
     }
@@ -130,6 +149,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
       if (this.#provider?.isCasting) this.load();
     }
 
+    /** Custom data sent to the Cast receiver with the load request. */
     get castCustomData() {
       return this.#castCustomData;
     }
