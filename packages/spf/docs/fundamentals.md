@@ -739,6 +739,8 @@ A `mount` behavior takes a single parent — `rootElement` — and creates the r
 import { effect } from '@videojs/spf/playback-engine';
 import { update, type Signal } from '@videojs/spf';
 
+// counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset — unchanged from previous sections
+
 function mount({
   owners,
 }: {
@@ -802,6 +804,8 @@ A wrapper sits in front of the composition and projects exactly the surface you 
 ```ts
 import { createComposition, effect, type Composition } from '@videojs/spf/playback-engine';
 import { update } from '@videojs/spf';
+
+// counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount — unchanged from previous sections
 
 type CounterState = { count?: number; paused?: boolean };
 type CounterOwners = {
