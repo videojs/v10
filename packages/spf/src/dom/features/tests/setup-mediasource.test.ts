@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { Presentation } from '../../../core/types';
+import type { Presentation } from '../../../media/types';
 import { type MediaSourceOwners, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
 // Mock the DOM utilities.

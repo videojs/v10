@@ -1,8 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-import type { Reactor } from '../../core/create-machine-reactor';
-import { createMachineReactor } from '../../core/create-machine-reactor';
+import type { Reactor } from '../../core/reactors/create-machine-reactor';
+import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
-import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
+import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../media/types';
 
 /**
  * FSM states for text track sync.

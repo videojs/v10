@@ -1,6 +1,6 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
+import type { Composition } from '../../core/composition/engine';
 import { update } from '../../core/signals/primitives';
-import type { Composition } from './engine';
 import {
   createHlsPlaybackEngine,
   type HlsPlaybackEngineConfig,

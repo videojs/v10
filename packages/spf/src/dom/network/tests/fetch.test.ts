@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AddressableObject } from '../../../core/types';
+import type { AddressableObject } from '../../../media/types';
 import type { ResponseLike } from '../fetch';
 import { fetchResolvable, fetchResolvableStream, getResponseText } from '../fetch';
 

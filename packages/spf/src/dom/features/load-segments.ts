@@ -1,10 +1,10 @@
-import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
-import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, signal } from '../../core/signals/primitives';
-import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
-import { isResolvedTrack } from '../../core/types';
-import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import { type BandwidthState, sampleBandwidth } from '../../media/abr/bandwidth-estimator';
+import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../media/buffer/forward-buffer';
+import type { AddressableObject, Presentation, ResolvedTrack } from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
+import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../network/chunked-stream-iterable';
 import { fetchResolvable } from '../network/fetch';

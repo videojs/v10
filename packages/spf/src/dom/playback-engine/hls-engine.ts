@@ -1,11 +1,12 @@
-import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
-import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
-import { switchQuality } from '../../core/features/quality-switching';
-import { resolvePresentation } from '../../core/features/resolve-presentation';
-import { resolveTrack } from '../../core/features/resolve-track';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../core/features/select-tracks';
-import { syncPreloadAttribute } from '../../core/features/sync-preload-attribute';
+import { type Composition, createComposition } from '../../core/composition/engine';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
+import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
+import { calculatePresentationDuration } from '../../media/features/calculate-presentation-duration';
+import { switchQuality } from '../../media/features/quality-switching';
+import { resolvePresentation } from '../../media/features/resolve-presentation';
+import { resolveTrack } from '../../media/features/resolve-track';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../media/features/select-tracks';
+import { syncPreloadAttribute } from '../../media/features/sync-preload-attribute';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
 import { loadTextTrackCues } from '../features/load-text-track-cues';
@@ -19,7 +20,6 @@ import { trackPlaybackInitiated } from '../features/track-playback-initiated';
 import { updateDuration } from '../features/update-duration';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { destroyVttParser } from '../text/parse-vtt-segment';
-import { type Composition, createComposition } from './engine';
 
 // ============================================================================
 // HLS Engine State & Owners
