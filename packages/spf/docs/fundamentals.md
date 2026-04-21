@@ -959,4 +959,44 @@ The bridge is one effect per derivation, not one effect that diffs every field o
 
 More events can be wired the same way — a `saving`/`saved` pair reading `saveActor.snapshot`, a `destroy` event dispatched before teardown, custom events derived from any signal worth surfacing. Each is another `computed` + `effect` pushed onto `#teardowns`. The pattern scales: every piece of composition state that matters to a consumer gets its own projection.
 
+### Bridge as a behavior?
+
+The `#teardowns` array is a small piece of manual lifecycle tracking — we create effects, hold their stop functions, run them on destroy. That's the same shape we had at the very start of the doc, when `setInterval` and `stopLogging` lived outside the composition and the caller had to manage both. Moving them inside as behaviors tied their cleanup to `composition.destroy()` automatically. So why isn't the bridge a behavior too?
+
+It could be. A `forwardEvents` behavior that took the `EventTarget` itself as an owner would work:
+
+```ts
+function forwardEvents({
+  state,
+  owners,
+}: {
+  state: Signal<{ count?: number; paused?: boolean }>;
+  owners: Signal<{ target?: EventTarget }>;
+}) {
+  const count = computed(() => state.get().count);
+  const paused = computed(() => state.get().paused);
+
+  const stopCount = effect(() => {
+    const { target } = owners.get();
+    if (!target) return;
+    target.dispatchEvent(new CustomEvent('countchange', { detail: count.get() ?? 0 }));
+  });
+
+  const stopPaused = effect(() => {
+    const { target } = owners.get();
+    if (!target) return;
+    target.dispatchEvent(new Event(paused.get() ? 'pause' : 'play'));
+  });
+
+  return () => {
+    stopCount();
+    stopPaused();
+  };
+}
+```
+
+The wrapper would pass `this` through `initialOwners.target`, and `#teardowns` would disappear — `composition.destroy()` would handle it.
+
+We didn't do that, because the bridge is adapter work, not composition work. Dispatching `CustomEvent('countchange')` knows about the public API shape — the event name, the `detail` payload, the fact that a consumer is listening to an `EventTarget` at all. None of that has anything to do with the composition's domain. Leaving the bridge on the wrapper keeps that split clean: behaviors do composition work, the wrapper translates to the consumer-shaped surface. The `#teardowns` bookkeeping is a small cost paid to keep composition concerns from leaking out.
+
 This is the Adapter shape. For the HLS playback engine, `SpfMedia` (the web-component adapter) wraps `createHlsPlaybackEngine` the same way: consumers interact with a familiar `HTMLMediaElement`-shaped API (`play()`, `pause()`, `currentTime`, `addEventListener('timeupdate', ...)`) while the internal composition runs hidden underneath.
