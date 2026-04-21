@@ -888,7 +888,7 @@ class Counter extends EventTarget {
   }
 
   reset(): void {
-    update(this.#composition.state, { count: this.#options.initialCount });
+    update(this.#composition.state, { count: 0 });
   }
 
   async destroy(): Promise<void> {
@@ -923,7 +923,7 @@ await counter.destroy();
 
 No signals in sight. No `composition.state.get()`, no `update(...)`, no `effect()`. The wrapper maps every piece of the composition surface onto a consumer-shaped primitive: the constructor takes one flat options bag, getters project current state, methods forward to `update()`, and a single bridging `effect()` translates state transitions into events on `this` (which is an `EventTarget`, so `addEventListener` and `dispatchEvent` just work).
 
-The options shape is also its own translation layer. Consumers don't see the `state` / `config` / `initialOwners` split the composition uses internally; they pass one bag of named values. The constructor merges those over defaults into a `#options` object, then splits it across `createComposition` — `initialCount` and `paused` seed state, `tickIntervalMs` / `placeholder` / `autoSaveEveryTicks` become internal config keys (`interval`, `defaultText`, `saveEvery`), and `rootElement` seeds owners. `#options` stays around so the same defaulted values can back the getters (`count` falls through to `this.#options.initialCount`) and `reset()` without hard-coded literals drifting out of sync.
+The options shape is also its own translation layer. Consumers don't see the `state` / `config` / `initialOwners` split the composition uses internally; they pass one bag of named values. The constructor merges those over defaults into a `#options` object, then splits it across `createComposition` — `initialCount` and `paused` seed state, `tickIntervalMs` / `placeholder` / `autoSaveEveryTicks` become internal config keys (`interval`, `defaultText`, `saveEvery`), and `rootElement` seeds owners. `#options` stays around so the getters can reuse those defaulted values — `count` falls through to `this.#options.initialCount` when state is unset. `reset()` keeps its own hard-coded `0`: that value triggers the composition's `cancelOnReset` behavior, so it belongs to the internal contract rather than the caller-facing options.
 
 `destroy()` is the one place the wrapper's own cleanup lives. `#stopBridge` stops the bridging effect; `this.#composition.destroy()` tears down every behavior. Consumers get a single `Promise` to await.
 
