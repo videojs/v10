@@ -816,19 +816,42 @@ type CounterOwners = {
   resetBtn?: HTMLElement;
 };
 
+interface CounterOptions {
+  rootElement: HTMLElement;
+  initialCount?: number;
+  paused?: boolean;
+  tickIntervalMs?: number;
+  placeholder?: string;
+  autoSaveEveryTicks?: number;
+}
+
 class Counter extends EventTarget {
+  readonly #options: Required<CounterOptions>;
   readonly #composition: Composition<CounterState, CounterOwners>;
   readonly #stopBridge: () => void;
 
-  constructor(rootElement: HTMLElement) {
+  constructor(options: CounterOptions) {
     super();
+
+    this.#options = {
+      initialCount: 0,
+      paused: true,
+      tickIntervalMs: 250,
+      placeholder: '--',
+      autoSaveEveryTicks: 5,
+      ...options,
+    };
 
     this.#composition = createComposition(
       [counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount],
       {
-        initialState: { count: 0, paused: true },
-        config: { interval: 250, defaultText: '--', saveEvery: 5 },
-        initialOwners: { rootElement },
+        initialState: { count: this.#options.initialCount, paused: this.#options.paused },
+        config: {
+          interval: this.#options.tickIntervalMs,
+          defaultText: this.#options.placeholder,
+          saveEvery: this.#options.autoSaveEveryTicks,
+        },
+        initialOwners: { rootElement: this.#options.rootElement },
       },
     );
 
@@ -839,7 +862,7 @@ class Counter extends EventTarget {
       const { count, paused } = this.#composition.state.get();
       if (count !== lastCount) {
         lastCount = count;
-        this.dispatchEvent(new CustomEvent('countchange', { detail: count ?? 0 }));
+        this.dispatchEvent(new CustomEvent('countchange', { detail: count ?? this.#options.initialCount }));
       }
       if (paused !== lastPaused) {
         lastPaused = paused;
@@ -849,11 +872,11 @@ class Counter extends EventTarget {
   }
 
   get count(): number {
-    return this.#composition.state.get().count ?? 0;
+    return this.#composition.state.get().count ?? this.#options.initialCount;
   }
 
   get paused(): boolean {
-    return this.#composition.state.get().paused ?? true;
+    return this.#composition.state.get().paused ?? this.#options.paused;
   }
 
   pause(): void {
@@ -865,7 +888,7 @@ class Counter extends EventTarget {
   }
 
   reset(): void {
-    update(this.#composition.state, { count: 0 });
+    update(this.#composition.state, { count: this.#options.initialCount });
   }
 
   async destroy(): Promise<void> {
@@ -878,7 +901,11 @@ class Counter extends EventTarget {
 From outside, consumers see something that looks and feels like a native DOM object:
 
 ```ts
-const counter = new Counter(document.getElementById('counter-root'));
+const counter = new Counter({
+  rootElement: document.getElementById('counter-root'),
+  tickIntervalMs: 100,
+  paused: false,
+});
 
 counter.addEventListener('countchange', (e) => {
   console.log('count:', (e as CustomEvent<number>).detail);
@@ -894,7 +921,9 @@ console.log(counter.paused);  // false
 await counter.destroy();
 ```
 
-No signals in sight. No `composition.state.get()`, no `update(...)`, no `effect()`. The wrapper maps every piece of the composition surface onto a consumer-shaped primitive: getters project current state, methods forward to `update()`, and a single bridging `effect()` translates state transitions into events on `this` (which is an `EventTarget`, so `addEventListener` and `dispatchEvent` just work).
+No signals in sight. No `composition.state.get()`, no `update(...)`, no `effect()`. The wrapper maps every piece of the composition surface onto a consumer-shaped primitive: the constructor takes one flat options bag, getters project current state, methods forward to `update()`, and a single bridging `effect()` translates state transitions into events on `this` (which is an `EventTarget`, so `addEventListener` and `dispatchEvent` just work).
+
+The options shape is also its own translation layer. Consumers don't see the `state` / `config` / `initialOwners` split the composition uses internally; they pass one bag of named values. The constructor merges those over defaults into a `#options` object, then splits it across `createComposition` — `initialCount` and `paused` seed state, `tickIntervalMs` / `placeholder` / `autoSaveEveryTicks` become internal config keys (`interval`, `defaultText`, `saveEvery`), and `rootElement` seeds owners. `#options` stays around so the same defaulted values can back the getters (`count` falls through to `this.#options.initialCount`) and `reset()` without hard-coded literals drifting out of sync.
 
 `destroy()` is the one place the wrapper's own cleanup lives. `#stopBridge` stops the bridging effect; `this.#composition.destroy()` tears down every behavior. Consumers get a single `Promise` to await.
 
