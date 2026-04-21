@@ -763,12 +763,9 @@ function mount({
     rootElement.append(renderElement, savingElement, pauseBtn, resetBtn);
     update(owners, { renderElement, savingElement, pauseBtn, resetBtn });
 
-    return () => {
-      renderElement.remove();
-      savingElement.remove();
-      pauseBtn.remove();
-      resetBtn.remove();
-    };
+    // If this behavior needed cleanup when rootElement is cleared — to
+    // .remove() the descendants, or close a socket, observer, or
+    // MediaSource — we'd return a cleanup function from the effect here.
   });
 }
 
@@ -782,7 +779,7 @@ const composition = createComposition(
 );
 ```
 
-`mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. On destroy, `mount`'s cleanup detaches the descendants from the DOM; the composition itself clears every key in owners after all behavior cleanups have run, so no behavior has to unregister what it wrote.
+`mount` reads `rootElement`, creates four descendant elements, attaches them to the DOM, and writes them back into owners. The other behaviors — `renderCount`, `renderSaving`, `pauseButton`, `resetButton` — pick them up through the guards we've already written; none of them knows a mount step happened. On destroy, the descendants are discarded along with `rootElement`, and the composition clears every key in owners after all behavior cleanups have run — no manual bookkeeping on either side.
 
 Each descendant is registered under its own key in owners rather than left for other behaviors to pick out of `rootElement` themselves. The alternative — watch the subtree with a `MutationObserver` and identify elements by selector or data attribute — works mechanically, but trades away most of what owners gives you. You lose typed identity (`renderElement: HTMLElement` is not the same contract as "some `<div>` inside `rootElement`"), you swap synchronous guards for coalesced microtask callbacks, and every downstream behavior becomes coupled to whatever DOM layout `mount` happens to produce. Owners is a signal of named resources; behaviors reading it never have to know where those resources came from, only that they appeared.
 
