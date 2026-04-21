@@ -999,4 +999,4 @@ The wrapper would pass `this` through `initialOwners.target`, and `#teardowns` w
 
 We didn't do that, because the bridge is adapter work, not composition work. Dispatching `CustomEvent('countchange')` knows about the public API shape — the event name, the `detail` payload, the fact that a consumer is listening to an `EventTarget` at all. None of that has anything to do with the composition's domain. Leaving the bridge on the wrapper keeps that split clean: behaviors do composition work, the wrapper translates to the consumer-shaped surface. The `#teardowns` bookkeeping is a small cost paid to keep composition concerns from leaking out.
 
-This is the Adapter shape. For the HLS playback engine, `SpfMedia` (the web-component adapter) wraps `createHlsPlaybackEngine` the same way: consumers interact with a familiar `HTMLMediaElement`-shaped API (`play()`, `pause()`, `currentTime`, `addEventListener('timeupdate', ...)`) while the internal composition runs hidden underneath.
+This is the Adapter shape — the composition stays generic; the wrapper projects whatever surface the consumer expects.
