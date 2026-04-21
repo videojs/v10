@@ -1,3 +1,5 @@
+import type { MediaFeatureAvailability, MediaStreamType } from './types';
+
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -36,8 +38,6 @@ export interface MediaPlaybackState {
   /** Toggle play/pause. Returns `true` if playback started. */
   togglePaused(): boolean;
 }
-
-import type { MediaFeatureAvailability } from './types';
 
 export interface MediaVolumeState {
   /**
@@ -120,6 +120,19 @@ export interface MediaSourceState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load
    */
   loadSource(src: string): string;
+}
+
+export interface MediaStreamTypeState {
+  /**
+   * Current stream delivery type.
+   *
+   * Components use this to toggle live-specific UI (e.g. a live indicator,
+   * a "jump to live edge" affordance, or hiding the time display).
+   *
+   * @see {@link MediaStreamTypes} for the canonical string values.
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
+   */
+  streamType: MediaStreamType;
 }
 
 export interface MediaBufferState {

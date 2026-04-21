@@ -9,6 +9,7 @@ import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
 import { remotePlaybackFeature } from './features/remote-playback';
 import { sourceFeature } from './features/source';
+import { streamTypeFeature } from './features/stream-type';
 import { textTrackFeature } from './features/text-track';
 import { timeFeature } from './features/time';
 import { volumeFeature } from './features/volume';
@@ -31,6 +32,8 @@ export const selectPlaybackRate = createSelector(playbackRateFeature);
 export const selectRemotePlayback = createSelector(remotePlaybackFeature);
 /** Select the source state (src, type). */
 export const selectSource = createSelector(sourceFeature);
+/** Select the stream type state (`'on-demand' | 'live' | 'unknown'`). */
+export const selectStreamType = createSelector(streamTypeFeature);
 /** Select the text track state (chapters cues, thumbnail cues). */
 export const selectTextTrack = createSelector(textTrackFeature);
 /** Select the time state (currentTime, duration, seek). */

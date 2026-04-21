@@ -9,6 +9,7 @@ export * from './playback-rate';
 export * from './presets';
 export * from './remote-playback';
 export * from './source';
+export * from './stream-type';
 export * from './text-track';
 export * from './time';
 export * from './volume';

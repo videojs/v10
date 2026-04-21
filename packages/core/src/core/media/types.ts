@@ -185,6 +185,32 @@ export interface MediaRemotePlaybackCapability {
   readonly remote: RemotePlaybackLike;
 }
 
+export interface MediaStreamTypeEvents {
+  streamtypechange: EventLike;
+}
+
+/**
+ * Canonical values for {@link MediaStreamType}.
+ *
+ * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally
+ *   supported across the full timeline.
+ * - `LIVE` — a live or DVR stream. The seekable window may slide as new
+ *   segments are published, and `duration` is typically `Infinity`.
+ * - `UNKNOWN` — the stream type has not been determined yet (no source,
+ *   or metadata has not loaded).
+ */
+export const MediaStreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
+export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
+
+export interface MediaStreamTypeCapability {
+  readonly streamType: MediaStreamType;
+}
+
 interface MediaEvents extends MediaPlaybackEvents {}
 
 export interface Media extends MediaPlaybackCapability, EventTargetLike<MediaEvents> {
