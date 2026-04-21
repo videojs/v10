@@ -729,7 +729,7 @@ A reactor might send a message to an actor when a condition goes true; the actor
 
 ---
 
-## Creating owners within behaviors
+## Advanced: Creating owners within behaviors
 
 Behaviors have only ever read from owners so far — consuming resources that callers passed in via `initialOwners`. But behaviors can produce owners too: create a resource, register it in owners, and clean it up on teardown. That keeps resource creation inside the composition, which matters when a single composition needs several related resources that share a lifecycle.
 
@@ -790,7 +790,7 @@ The media-engine analog is the same shape. A composition that drives HLS playbac
 
 ---
 
-## Wrapping a composition in a public API
+## Advanced: Wrapping a composition in a public API
 
 Compositions expose `state`, `owners`, and `destroy` — the right surface for behaviors and internal authors, too much and too low-level for outside consumers. Someone using your counter component doesn't want to write `update(composition.state, { paused: true })`; they want `counter.pause()`. And they don't want to subscribe to a signal; they want to `addEventListener('countchange', ...)`.
 
