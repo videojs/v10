@@ -803,7 +803,7 @@ A wrapper sits in front of the composition and projects exactly the surface you 
 
 ```ts
 import { createComposition, effect, type Composition } from '@videojs/spf/playback-engine';
-import { update } from '@videojs/spf';
+import { computed, update } from '@videojs/spf';
 
 // counter, logCount, renderCount, pauseButton, resetButton, persist, renderSaving, cancelOnReset, mount — unchanged from previous sections
 
@@ -855,20 +855,33 @@ class Counter extends EventTarget {
       },
     );
 
-    // Bridge state changes to events on `this`
-    let lastCount: number | undefined;
-    let lastPaused: boolean | undefined;
-    this.#stopBridge = effect(() => {
-      const { count, paused } = this.#composition.state.get();
-      if (count !== lastCount) {
-        lastCount = count;
-        this.dispatchEvent(new CustomEvent('countchange', { detail: count ?? this.#options.initialCount }));
-      }
-      if (paused !== lastPaused) {
-        lastPaused = paused;
-        this.dispatchEvent(new Event(paused ? 'pause' : 'play'));
-      }
-    });
+    // One effect per state-derived event. Each reads a single `computed`,
+    // so it only re-runs when that specific value changes — no local
+    // "what changed this time?" diffing across fields.
+    const count = computed(() => this.#composition.state.get().count);
+    const paused = computed(() => this.#composition.state.get().paused);
+
+    const stops: Array<() => void> = [];
+
+    stops.push(
+      effect(() => {
+        this.dispatchEvent(
+          new CustomEvent('countchange', {
+            detail: count.get() ?? this.#options.initialCount,
+          }),
+        );
+      }),
+    );
+
+    stops.push(
+      effect(() => {
+        this.dispatchEvent(new Event(paused.get() ? 'pause' : 'play'));
+      }),
+    );
+
+    this.#stopBridge = () => {
+      for (const stop of stops) stop();
+    };
   }
 
   get count(): number {
@@ -925,8 +938,10 @@ No signals in sight. No `composition.state.get()`, no `update(...)`, no `effect(
 
 The options shape is also its own translation layer. Consumers don't see the `state` / `config` / `initialOwners` split the composition uses internally; they pass one bag of named values. The constructor merges those over defaults into a `#options` object, then splits it across `createComposition` — `initialCount` and `paused` seed state, `tickIntervalMs` / `placeholder` / `autoSaveEveryTicks` become internal config keys (`interval`, `defaultText`, `saveEvery`), and `rootElement` seeds owners. `#options` stays around so the getters can reuse those defaulted values — `count` falls through to `this.#options.initialCount` when state is unset. `reset()` keeps its own hard-coded `0`: that value triggers the composition's `cancelOnReset` behavior, so it belongs to the internal contract rather than the caller-facing options.
 
-`destroy()` is the one place the wrapper's own cleanup lives. `#stopBridge` stops the bridging effect; `this.#composition.destroy()` tears down every behavior. Consumers get a single `Promise` to await.
+The bridge is one effect per derivation, not one effect that diffs every field on each run. `count` and `paused` are pulled out as `computed` signals, and each one gets its own `effect` that dispatches the matching event. No `lastCount` / `lastPaused` flags to keep in sync, and each effect re-runs only when its own derivation's value changes. The inverse shape — a single `effect` that reads the whole state and compares each field to a local `let last*`  — is imperative diffing wearing a reactive costume; it works, but it stops scaling the moment a third or fourth field shows up.
 
-More events can be wired the same way — a `saving`/`saved` pair reading `saveActor.snapshot`, a `destroy` event dispatched before teardown, custom events derived from any signal worth surfacing. The pattern scales: every piece of composition state that matters to a consumer gets its own projection.
+`destroy()` is the one place the wrapper's own cleanup lives. `#stopBridge` iterates the `stops` array so every bridging effect is torn down; `this.#composition.destroy()` tears down every behavior. Consumers get a single `Promise` to await.
+
+More events can be wired the same way — a `saving`/`saved` pair reading `saveActor.snapshot`, a `destroy` event dispatched before teardown, custom events derived from any signal worth surfacing. Each is another `computed` + `effect` pushed onto the same `stops` array. The pattern scales: every piece of composition state that matters to a consumer gets its own projection.
 
 This is the Adapter shape. For the HLS playback engine, `SpfMedia` (the web-component adapter) wraps `createHlsPlaybackEngine` the same way: consumers interact with a familiar `HTMLMediaElement`-shaped API (`play()`, `pause()`, `currentTime`, `addEventListener('timeupdate', ...)`) while the internal composition runs hidden underneath.
