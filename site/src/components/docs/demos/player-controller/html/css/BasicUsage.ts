@@ -3,6 +3,7 @@ import {
   createButton,
   createPlayer,
   MediaElement,
+  PlayerController,
   selectPlayback,
   selectTime,
   selectVolume,
@@ -10,7 +11,7 @@ import {
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/media/container';
 
-const { ProviderMixin, PlayerController, context } = createPlayer({
+const { ProviderMixin, context } = createPlayer({
   features: videoFeatures,
 });
 
