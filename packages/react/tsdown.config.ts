@@ -26,7 +26,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: mode === 'dev',
+  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json' } : false,
   plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` })],
 });
 
