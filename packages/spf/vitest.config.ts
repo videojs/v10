@@ -26,6 +26,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'media',
+          include: ['src/media/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'dom',
           include: ['src/dom/**/*.test.ts'],
           browser: {
