@@ -1,6 +1,6 @@
 'use client';
 
-import type { Media } from '@videojs/core/dom';
+import type { Media } from '@videojs/core';
 import { useState } from 'react';
 
 import { useMediaAttach } from '../player/context';

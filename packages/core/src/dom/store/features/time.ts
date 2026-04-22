@@ -2,7 +2,7 @@ import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
 import type { MediaTimeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { hasMetadata } from '../../media/predicate';
+import { hasMetadata, isMediaBufferCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
@@ -15,18 +15,15 @@ export const timeFeature = definePlayerFeature({
       const { media } = target(),
         signal = signals.supersede(signalKeys.seek);
 
-      // If metadata isn't loaded, wait for it before seeking to avoid errors.
+      if (!isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return 0;
+
       if (!hasMetadata(media)) {
         const loaded = await onEvent(media, 'loadedmetadata', { signal }).catch(() => false);
         if (!loaded) return media.currentTime;
       }
 
-      // Perform the seek and wait for it to complete.
       const clampedTime = Math.max(0, Math.min(time, media.duration || Infinity));
 
-      // Optimistic update: reflect the target position immediately so UI consumers
-      // (e.g. time slider) don't snap back to the old currentTime while waiting
-      // for the browser's async seeking/seeked events.
       set({ currentTime: clampedTime, seeking: true });
 
       media.currentTime = clampedTime;
@@ -36,23 +33,51 @@ export const timeFeature = definePlayerFeature({
     },
   }),
 
-  attach({ target, signal, set }) {
+  attach({ target, signal, set, get }) {
     const { media } = target;
+
+    if (!isMediaSeekCapable(media)) return;
+
+    // For live streams `media.duration` is `Infinity` — fall back to the end
+    // of the last seekable range, which represents the live edge and tracks
+    // the sliding DVR window as new segments become available.
+    const resolveDuration = () => {
+      const { duration } = media;
+      if (duration === Number.POSITIVE_INFINITY && isMediaBufferCapable(media)) {
+        const { seekable } = media;
+        return seekable.length > 0 ? seekable.end(seekable.length - 1) : 0;
+      }
+      return Number.isFinite(duration) ? duration : 0;
+    };
 
     const sync = () =>
       set({
         currentTime: media.currentTime,
-        duration: Number.isFinite(media.duration) ? media.duration : 0,
+        duration: resolveDuration(),
         seeking: media.seeking,
       });
 
+    // While a seek is in-flight the store holds an optimistic `currentTime`
+    // that reflects the user's target position.  Browser `timeupdate` and
+    // `progress` events during seeking carry an unreliable intermediate
+    // `currentTime` that would snap the time-slider back to the old
+    // position, so skip sync from those events while the store indicates an
+    // active seek.
+    const syncUnlessSeeking = () => {
+      if (get().seeking) return;
+      sync();
+    };
+
     sync();
 
-    listen(media, 'timeupdate', sync, { signal });
+    listen(media, 'timeupdate', syncUnlessSeeking, { signal });
     listen(media, 'durationchange', sync, { signal });
     listen(media, 'seeking', sync, { signal });
     listen(media, 'seeked', sync, { signal });
     listen(media, 'loadedmetadata', sync, { signal });
     listen(media, 'emptied', sync, { signal });
+    // `progress` fires as the seekable range grows, so the live-edge duration
+    // tracks the DVR window without requiring a separate durationchange event.
+    listen(media, 'progress', syncUnlessSeeking, { signal });
   },
 });

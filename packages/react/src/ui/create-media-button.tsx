@@ -1,29 +1,32 @@
 'use client';
 
-import type { InferComponentState, InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
+import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 
 import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
+import { useAriaKeyShortcuts } from './hotkey/use-aria-key-shortcuts';
+import { useOptionalTooltipContext } from './tooltip/context';
 
-interface MediaButtonConfig<Core extends Required<MediaUIComponent>> {
+interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   displayName: string;
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void;
+  hotkeyAction?: string;
 }
 
 /** Creates a media button React component from a core class and config. */
-export function createMediaButton<Core extends Required<MediaUIComponent>, Props extends object>(
+export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
   config: MediaButtonConfig<Core>
 ): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
-  const { displayName, core: CoreClass, stateAttrMap, selector, action } = config;
+  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
@@ -45,7 +48,9 @@ export function createMediaButton<Core extends Required<MediaUIComponent>, Props
       }
     }
 
+    const tooltipCtx = useOptionalTooltipContext();
     const feature = usePlayer(selector);
+    const shortcuts = useAriaKeyShortcuts(hotkeyAction);
 
     const [core] = useState(() => new CoreClass());
     core.setProps(coreProps);
@@ -56,15 +61,26 @@ export function createMediaButton<Core extends Required<MediaUIComponent>, Props
       isDisabled: () => !!coreProps.disabled || !feature,
     });
 
-    if (!feature) {
+    // Derive state and label before the hooks boundary so the
+    // useLayoutEffect below (called unconditionally) can reference them.
+    type State = InferComponentState<Core>;
+    if (feature) core.setMedia(feature);
+    const state = feature ? (core.getState() as State) : null;
+    const label = state ? core.getLabel(state) : undefined;
+
+    // Forward label to tooltip popup content when inside a Tooltip.Root.
+    useLayoutEffect(() => {
+      if (!tooltipCtx) return;
+      tooltipCtx.setContent(label);
+      return () => tooltipCtx.setContent(undefined);
+    }, [tooltipCtx, label]);
+
+    if (!feature || !state) {
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
       return null;
     }
 
-    type State = InferComponentState<Core>;
-
-    core.setMedia(feature);
-    const state = core.getState() as State;
+    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcuts };
 
     return renderElement(
       'button',
@@ -73,7 +89,7 @@ export function createMediaButton<Core extends Required<MediaUIComponent>, Props
         state,
         stateAttrMap,
         ref: [forwardedRef, buttonRef],
-        props: [core.getAttrs(state), elementProps, getButtonProps()],
+        props: [attrs, elementProps, getButtonProps()],
       }
     );
   });

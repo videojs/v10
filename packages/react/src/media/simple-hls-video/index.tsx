@@ -1,23 +1,37 @@
+'use client';
+
 import { SimpleHlsMedia } from '@videojs/core/dom/media/simple-hls';
-import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
+import type { SpfMediaProps } from '@videojs/spf/dom';
+import { spfMediaDefaultProps } from '@videojs/spf/dom';
+import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { attachMediaElement } from '../../utils/attach-media-element';
-import { mediaProps } from '../../utils/media-props';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
+import { useSyncProps } from '../../utils/use-sync-props';
 
-export type SimpleHlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>>;
+export interface SimpleHlsVideoProps
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof SpfMediaProps>,
+    Partial<SpfMediaProps> {
+  children?: ReactNode;
+}
 
-export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(({ children, ...props }, ref) => {
-  const mediaApi = useMediaInstance(SimpleHlsMedia);
-
-  const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(function SimpleHlsVideo(
+  { children, ...props },
+  ref
+) {
+  const media = useMediaInstance(SimpleHlsMedia);
+  const attachRef = useAttachMedia(media);
+  const composedRef = useComposedRefs(attachRef, ref);
+  const htmlProps = useSyncProps(media, props, spfMediaDefaultProps);
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, props)}>
+    <video ref={composedRef} {...htmlProps}>
       {children}
     </video>
   );
 });
 
-export default SimpleHlsVideo;
+export namespace SimpleHlsVideo {
+  export type Props = SimpleHlsVideoProps;
+}

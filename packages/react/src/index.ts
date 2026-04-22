@@ -1,8 +1,6 @@
 'use client';
 
 // Core
-export type { Delegate } from '@videojs/core';
-export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store
@@ -35,12 +33,20 @@ export {
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
+export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
 export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
+export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
+export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/gesture';
+export { type UseDoubleTapGestureOptions, useDoubleTapGesture } from './ui/gesture/use-doubletap-gesture';
+export { type UseTapGestureOptions, useTapGesture } from './ui/gesture/use-tap-gesture';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
+export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
+export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
+export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
@@ -61,13 +67,11 @@ export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
 export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeSlider } from './ui/volume-slider';
-
-// Media utilities
-export { attachMediaElement } from './utils/attach-media-element';
-export { mediaProps } from './utils/media-props';
 // Utilities
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
+// Media utilities
+export { useAttachMedia } from './utils/use-attach-media';
 export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
 export { useDestroy } from './utils/use-destroy';
 export { useLatestRef } from './utils/use-latest-ref';

@@ -11,6 +11,7 @@ export class MuteButtonElement extends MediaButtonElement<MuteButtonCore> {
   protected readonly core = new MuteButtonCore();
   protected readonly stateAttrMap = MuteButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectVolume);
+  protected override readonly hotkeyAction = 'toggleMuted';
 
   protected activate(state: MediaVolumeState): void {
     this.core.toggle(state);

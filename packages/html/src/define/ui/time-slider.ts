@@ -6,20 +6,19 @@ import { SliderThumbnailElement } from '../../ui/slider/slider-thumbnail-element
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
 import { SliderValueElement } from '../../ui/slider/slider-value-element';
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
-import { safeDefine } from '../safe-define';
+import { defineTimeSlider } from './compounds';
 
-// Parent slider first — sub-elements consume its context.
-safeDefine(TimeSliderElement);
-safeDefine(SliderBufferElement);
-safeDefine(SliderFillElement);
-safeDefine(SliderPreviewElement);
-safeDefine(SliderThumbElement);
-safeDefine(SliderThumbnailElement);
-safeDefine(SliderTrackElement);
-safeDefine(SliderValueElement);
+defineTimeSlider();
 
 declare global {
   interface HTMLElementTagNameMap {
     [TimeSliderElement.tagName]: TimeSliderElement;
+    [SliderBufferElement.tagName]: SliderBufferElement;
+    [SliderFillElement.tagName]: SliderFillElement;
+    [SliderPreviewElement.tagName]: SliderPreviewElement;
+    [SliderThumbElement.tagName]: SliderThumbElement;
+    [SliderThumbnailElement.tagName]: SliderThumbnailElement;
+    [SliderTrackElement.tagName]: SliderTrackElement;
+    [SliderValueElement.tagName]: SliderValueElement;
   }
 }

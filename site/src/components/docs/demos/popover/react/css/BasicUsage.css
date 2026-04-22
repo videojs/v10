@@ -1,18 +1,18 @@
-.react-popover-basic {
+.media-container {
   position: relative;
 }
 
-.react-popover-basic video {
+.media-container video {
   width: 100%;
 }
 
-.react-popover-basic__bar {
+.bar {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.react-popover-basic__trigger {
+.trigger {
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -22,7 +22,7 @@
   cursor: pointer;
 }
 
-.react-popover-basic__popup {
+.popup {
   /* Reset UA [popover] defaults */
   margin: 0;
   border: 0;
@@ -36,10 +36,10 @@
   font-size: 14px;
 }
 
-.react-popover-basic__arrow {
+.arrow {
   fill: rgba(0, 0, 0, 0.85);
 }
 
-.react-popover-basic__content {
+.content {
   white-space: nowrap;
 }

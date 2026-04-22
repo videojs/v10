@@ -1,6 +1,8 @@
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -20,7 +22,9 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -35,20 +39,9 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
-import { ErrorDialog } from '../error-dialog';
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: 'media-error',
-  dialog: 'media-error__dialog',
-  content: 'media-error__content',
-  title: 'media-error__title',
-  description: 'media-error__description',
-  actions: 'media-error__actions',
-  close: 'media-button media-button--primary',
-};
 
 export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
@@ -62,28 +55,6 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
     />
   );
 });
-
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
-function CaptionsLabel(): string {
-  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? 'Disable captions' : 'Enable captions';
-}
-
-function PiPLabel(): string {
-  const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
-}
-
-function FullscreenLabel(): string {
-  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
-}
 
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
@@ -132,7 +103,19 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className="media-error">
+          <div className="media-error__dialog">
+            <div className="media-error__content">
+              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className="media-error__description" />
+            </div>
+            <div className="media-error__actions">
+              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <Controls.Root className="media-controls">
         <Tooltip.Provider>
@@ -147,9 +130,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -182,10 +163,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-time-controls">
-            <Time.Group className="media-time">
-              <Time.Value type="current" className="media-time__value media-time__value--current" />
-              <Time.Separator className="media-time__separator" />
-              <Time.Value type="duration" className="media-time__value media-time__value--duration" />
+            <Time.Group className="media-time-group">
+              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Separator className="media-time-separator" />
+              <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>
 
             <TimeSlider.Root className="media-slider">
@@ -199,7 +180,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <div className="media-preview__thumbnail-wrapper">
                   <Slider.Thumbnail className="media-preview__thumbnail" />
                 </div>
-                <TimeSlider.Value type="pointer" className="media-preview__timestamp" />
+                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
                 <SpinnerIcon className="media-preview__spinner media-icon" />
               </div>
             </TimeSlider.Root>
@@ -224,9 +205,19 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <CaptionsLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CastButton className="media-button--cast" render={<Button />}>
+                    <CastEnterIcon className="media-icon media-icon--cast-enter" />
+                    <CastExitIcon className="media-icon media-icon--cast-exit" />
+                  </CastButton>
+                }
+              />
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -238,9 +229,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <PiPLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -252,9 +241,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">
-                <FullscreenLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

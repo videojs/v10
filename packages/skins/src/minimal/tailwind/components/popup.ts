@@ -29,11 +29,11 @@ export const popup = {
   ),
   tooltip: cn(
     base,
-    'px-2 py-1 rounded-sm shadow-md shadow-black/10 bg-white/10 backdrop-blur-lg backdrop-saturate-150 text-[0.75rem] whitespace-nowrap',
-    '[--media-tooltip-side-offset:0.75rem]',
+    'px-2 py-1 rounded-lg text-[0.75rem] whitespace-nowrap',
+    'bg-(--media-tooltip-background-color) [backdrop-filter:var(--media-tooltip-backdrop-filter)]',
+    'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/10',
+    'text-(--media-tooltip-text-color)',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
-    'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
-    '[@media(prefers-reduced-transparency:reduce)]:bg-black/70',
-    'contrast-more:bg-black/90'
+    'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
   ),
 };

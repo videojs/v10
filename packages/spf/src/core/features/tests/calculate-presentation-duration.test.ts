@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createState } from '../../state/create-state';
+import { signal } from '../../signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../../types';
 import {
   calculatePresentationDuration,
@@ -254,11 +254,12 @@ describe('getDurationFromResolvedTracks', () => {
 
 describe('calculatePresentationDuration', () => {
   it('sets presentation.duration from resolved video track', async () => {
-    const state = createState<PresentationDurationState>({});
+    const state = signal<PresentationDurationState>({});
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentation({
         video: [
           {
@@ -279,18 +280,19 @@ describe('calculatePresentationDuration', () => {
     });
 
     await vi.waitFor(() => {
-      expect(state.current.presentation?.duration).toBe(120.5);
+      expect(state.get().presentation?.duration).toBe(120.5);
     });
 
     cleanup();
   });
 
   it('sets presentation.duration from resolved audio track', async () => {
-    const state = createState<PresentationDurationState>({});
+    const state = signal<PresentationDurationState>({});
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentation({
         audio: [
           {
@@ -315,14 +317,14 @@ describe('calculatePresentationDuration', () => {
     });
 
     await vi.waitFor(() => {
-      expect(state.current.presentation?.duration).toBe(90.75);
+      expect(state.get().presentation?.duration).toBe(90.75);
     });
 
     cleanup();
   });
 
   it('does not recalculate when duration already set', async () => {
-    const state = createState<PresentationDurationState>({
+    const state = signal<PresentationDurationState>({
       presentation: createPresentation({
         duration: 60,
         video: [
@@ -347,17 +349,18 @@ describe('calculatePresentationDuration', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.current.presentation?.duration).toBe(60);
+    expect(state.get().presentation?.duration).toBe(60);
 
     cleanup();
   });
 
   it('does not set invalid durations', async () => {
-    const state = createState<PresentationDurationState>({});
+    const state = signal<PresentationDurationState>({});
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentation({
         video: [
           {
@@ -379,7 +382,7 @@ describe('calculatePresentationDuration', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.current.presentation?.duration).toBeUndefined();
+    expect(state.get().presentation?.duration).toBeUndefined();
 
     cleanup();
   });

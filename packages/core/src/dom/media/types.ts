@@ -7,22 +7,16 @@ import type {
   MediaPictureInPictureState,
   MediaPlaybackRateState,
   MediaPlaybackState,
+  MediaRemotePlaybackState,
   MediaSourceState,
+  MediaStreamTypeState,
   MediaTextTrackState,
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
+import type { Media } from '../../core/media/types';
 
-type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
-
-export type MediaBaseApi = {
-  play: () => Promise<void>;
-  paused: boolean;
-};
-
-export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
-
-export type Media = HTMLMediaElement | HTMLAudioElement | HTMLVideoElement;
+export type { Media };
 
 export interface MediaContainer extends HTMLElement {}
 
@@ -31,7 +25,7 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export type { MediaFeatureAvailability } from '../../core/media/state';
+export type { MediaFeatureAvailability } from '../../core/media/types';
 
 export type PlayerFeature<State> = Slice<PlayerTarget, State>;
 
@@ -51,9 +45,11 @@ export type VideoFeatures = [
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaStreamTypeState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
+  PlayerFeature<MediaRemotePlaybackState>,
   PlayerFeature<MediaControlsState>,
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,
@@ -65,6 +61,7 @@ export type AudioFeatures = [
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaStreamTypeState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaErrorState>,
 ];
@@ -72,8 +69,25 @@ export type AudioFeatures = [
 // TODO: Define background video features (e.g., playback, source, buffer)
 export type BackgroundFeatures = [];
 
+/**
+ * Features for a live video player. Structurally identical to
+ * {@link VideoFeatures} — the "live" presets share the same store but ship a
+ * skin that omits duration-oriented UI.
+ */
+export type LiveVideoFeatures = VideoFeatures;
+
+/**
+ * Features for a live audio player. Structurally identical to
+ * {@link AudioFeatures}.
+ */
+export type LiveAudioFeatures = AudioFeatures;
+
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
 
 export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;
+
+export type LiveVideoPlayerStore = PlayerStore<LiveVideoFeatures>;
+
+export type LiveAudioPlayerStore = PlayerStore<LiveAudioFeatures>;

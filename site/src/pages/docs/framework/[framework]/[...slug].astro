@@ -15,7 +15,7 @@ import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
 import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
-import { getDocTitle } from '@/utils/docs/title';
+import { getDocTitle, isCodeIdentifier } from '@/utils/docs/title';
 import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
@@ -91,9 +91,6 @@ const jsonLdSchema = createTechArticleSchema({
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   articleSection: sections.length > 0 ? sections.join(' > ') : undefined,
 });
-
-// Leaving this in in case we change our minds
-// const isCamelOrPascalCase = (str: string) => /[a-z][A-Z]/.test(str);
 ---
 
 <DocsLayout doc={doc} framework={framework} slug={slug}>
@@ -124,6 +121,7 @@ const jsonLdSchema = createTechArticleSchema({
       <TableOfContents client:idle headings={filteredHeadings} />
     </div>
     <div
+      id="main-content"
       class="@container flex flex-col px-6 lg:px-12"
       style="grid-area: article;"
     >
@@ -147,8 +145,7 @@ const jsonLdSchema = createTechArticleSchema({
               as="h1"
               class={clsx(
                 "mt-0 mb-4 text-h25 @lg:text-h2",
-                // leaving this in in case we change our minds
-                // isCamelOrPascalCase(getDocTitle(doc, framework)) && "normal-case",
+                isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
               )}
             >
               {getDocTitle(doc, framework)}

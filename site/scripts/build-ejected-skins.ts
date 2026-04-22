@@ -15,6 +15,7 @@ import { dirname, relative as relativePath, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import { resolveImports } from '../../build/plugins/resolve-css-imports.ts';
+import { normalizeImports } from './normalize-imports.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
@@ -23,6 +24,8 @@ const PACKAGE_MANIFEST_CACHE = new Map<string, PackageManifest>();
 
 const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
 const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
+const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
+const DEMO_POSTER_SRC = 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp';
 const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
@@ -64,6 +67,11 @@ interface ReactSkinDef {
 }
 
 type SkinDef = HtmlSkinDef | ReactSkinDef;
+type MediaType = 'video' | 'audio';
+
+function getSkinMediaType(skin: SkinDef): MediaType {
+  return skin.id.includes('audio') ? 'audio' : 'video';
+}
 
 interface EjectedSkinEntry {
   id: string;
@@ -384,65 +392,6 @@ function collectDeclarationClosure(
   return [...dependencyTexts, declarationText];
 }
 
-function normalizeImports(source: string): string {
-  const sourceFile = createSourceFile('imports.tsx', source);
-  const sideEffectImports = new Set<string>();
-  const namedImports = new Map<string, Set<string>>();
-  const rawImports: string[] = [];
-  let bodyStart = 0;
-
-  for (const statement of sourceFile.statements) {
-    if (isDirectivePrologueStatement(statement)) {
-      bodyStart = statement.getEnd();
-      continue;
-    }
-
-    if (!ts.isImportDeclaration(statement)) {
-      break;
-    }
-
-    bodyStart = statement.getEnd();
-    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-    const importClause = statement.importClause;
-
-    if (!importClause) {
-      sideEffectImports.add(specifier);
-      continue;
-    }
-
-    const namedBindings = importClause.namedBindings;
-    if (importClause.name || (namedBindings && !ts.isNamedImports(namedBindings))) {
-      rawImports.push(getImportStatementText(source, statement));
-      continue;
-    }
-
-    if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
-
-    const names = namedImports.get(specifier) ?? new Set<string>();
-    for (const element of namedBindings.elements) {
-      const isTypeImport = element.isTypeOnly || /^import\s+type\s/.test(statement.getText(sourceFile));
-      names.add(isTypeImport ? `type ${element.getText(sourceFile)}` : element.getText(sourceFile));
-    }
-
-    namedImports.set(specifier, names);
-  }
-
-  const importLines = [
-    ...[...sideEffectImports].map((specifier) => `import '${specifier}';`),
-    ...rawImports,
-    ...[...namedImports.entries()].map(
-      ([specifier, names]) => `import { ${[...names].join(', ')} } from '${specifier}';`
-    ),
-  ];
-  const body = source.slice(bodyStart).replace(/^\s+/, '');
-
-  if (importLines.length === 0) {
-    return body;
-  }
-
-  return `${importLines.join('\n')}\n\n${body}`;
-}
-
 function inlineModuleExport(
   sourceFile: ts.SourceFile,
   importName: string,
@@ -723,26 +672,23 @@ function resolveCss(cssPath: string): string {
 }
 
 function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
-  if (skin.id.includes('minimal-video')) {
-    return 'video-minimal';
-  }
+  const isMinimal = skin.id.includes('minimal');
+  const prefix = skin.id.includes('video') ? 'video' : 'audio';
 
-  if (skin.id.includes('minimal-audio')) {
-    return 'audio-minimal';
-  }
-
-  if (skin.id.includes('video')) {
-    return 'video';
-  }
-
-  return 'audio';
+  return isMinimal ? `${prefix}-minimal-ui` : `${prefix}-ui`;
 }
 
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
   const cdnFileName = getHtmlSkinCdnFileName(skin);
   const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+  const cssLink = `<link rel="stylesheet" href="./player.css">`;
+  const playerTag = getSkinMediaType(skin) === 'audio' ? 'audio-player' : 'video-player';
+  const indented = html
+    .split('\n')
+    .map((l) => (l.length > 0 ? `  ${l}` : l))
+    .join('\n');
 
-  return `${scriptTag}\n\n${html}`;
+  return `${scriptTag}\n${cssLink}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -821,12 +767,39 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
   const fn = new Function(...keys, `return \`${templateBody}\`;`);
   const html = fn(...values) as string;
 
-  // Clean up whitespace: normalize indentation and trim
-  return html
-    .split('\n')
-    .map((line) => line.trimEnd())
+  // Clean up whitespace: dedent, trim trailing spaces, and trim outer edges.
+  const lines = html.split('\n').map((line) => line.trimEnd());
+  const minIndent = lines
+    .filter((l) => l.length > 0)
+    .reduce((min, l) => Math.min(min, l.length - l.trimStart().length), Infinity);
+
+  return lines
+    .map((l) => (l.length > 0 ? l.slice(minIndent) : l))
     .join('\n')
     .trim();
+}
+
+/**
+ * Replace `<slot name="media">`, `<slot>` (default slot), and
+ * `<slot name="poster">` with concrete elements so the ejected HTML is
+ * self-contained.
+ */
+function replaceSlots(html: string, mediaType: MediaType): string {
+  const tag = mediaType === 'audio' ? 'audio' : 'video';
+  const playsInline = mediaType === 'video' ? ' playsinline' : '';
+  const mediaElement = `<${tag} src="${DEMO_VIDEO_SRC}"${playsInline}></${tag}>`;
+
+  // Replace the deprecated comment + slot="media" + default slot block with the
+  // media element, preserving the original indentation.
+  html = html.replace(
+    /^([ \t]*)<!--\s*@deprecated[^\n]*\n\s*<slot name="media"><\/slot>\n\s*<slot><\/slot>/m,
+    `$1${mediaElement}`
+  );
+
+  // Replace the poster slot with an <img> element.
+  html = html.replace(/<slot name="poster"><\/slot>/, `<img src="${DEMO_POSTER_SRC}" />`);
+
+  return html;
 }
 
 /**
@@ -873,7 +846,8 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
     }
   }
 
-  const html = evaluateTemplate(templateBody, context);
+  let html = evaluateTemplate(templateBody, context);
+  html = replaceSlots(html, getSkinMediaType(skin));
 
   return prependHtmlSkinScripts(html, skin);
 }
@@ -1225,9 +1199,21 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
   return { source, utilities };
 }
 
+/** Find the index of the closing `)` that matches the `(` at `openIndex`. */
+function findMatchingParen(source: string, openIndex: number): number {
+  let depth = 0;
+  for (let i = openIndex; i < source.length; i++) {
+    if (source[i] === '(') depth++;
+    else if (source[i] === ')') depth--;
+    if (depth === 0) return i;
+  }
+  return -1;
+}
+
 /** Find the byte offset just past the last import statement in the source. */
 function findLastImportEnd(source: string): number {
-  const importRegex = /^import\s+.+from\s+['"][^'"]+['"];?\s*$/gm;
+  // Match both `import ... from '...'` and side-effect `import '...'`
+  const importRegex = /^import\s+(?:.+from\s+)?['"][^'"]+['"];?\s*$/gm;
   let lastEnd = 0;
   let match: RegExpExecArray | null;
   while ((match = importRegex.exec(source)) !== null) {
@@ -1309,6 +1295,7 @@ function resolvePropsInterface(source: string): string {
 type SectionKey = 'top' | 'mainType' | 'main' | 'labels' | 'components' | 'errorDialog' | 'utilities' | 'icons';
 
 const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
+  mainType: 'Skin',
   labels: 'Labels',
   components: 'Components',
   errorDialog: 'Error Dialog',
@@ -1324,6 +1311,7 @@ function hasExportModifier(statement: ts.Statement): boolean {
 function classifyDeclaration(name: string, isExported: boolean): SectionKey {
   if (isExported && name.endsWith('Skin')) return 'main';
   if (isExported && name.endsWith('SkinProps')) return 'mainType';
+  if (name === 'SEEK_TIME') return 'mainType';
   if (name.endsWith('Label')) return 'labels';
   if (name === 'ErrorDialog' || name === 'ErrorDialogClassNames' || name === 'ERROR_CLASSNAMES') return 'errorDialog';
   if (name.endsWith('Icon')) return 'icons';
@@ -1456,6 +1444,97 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
+ * Move the destructured props from the skin function body into the function
+ * argument so the signature reads e.g.:
+ *   `function VideoSkin({ children, className, poster, ...rest }: VideoSkinProps)`
+ */
+function destructureSkinProps(source: string): string {
+  return source.replace(
+    /export function (\w+Skin\w*)\(props: (\w+Props)\): ReactNode \{\n\s*const \{ (.+?) \} = props;\n/,
+    'export function $1({ $3 }: $2): ReactNode {\n'
+  );
+}
+
+/**
+ * Flatten the skin into a Player component: merge SkinProps into PlayerProps
+ * (adding `src`), inline the skin body into VideoPlayer/AudioPlayer wrapped
+ * in `Player.Provider`, and remove the separate Skin export.
+ */
+function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
+  const isVideo = mediaType === 'video';
+  const mediaTag = isVideo ? 'Video' : 'Audio';
+  const features = isVideo ? 'videoFeatures' : 'audioFeatures';
+  const playerName = isVideo ? 'VideoPlayer' : 'AudioPlayer';
+  const subpath = isVideo ? 'video' : 'audio';
+  const playsInline = isVideo ? ' playsInline' : '';
+
+  // 1. Add createPlayer to the @videojs/react import
+  source = source.replace(
+    /import \{([^}]+)\} from '@videojs\/react';/,
+    (_, names) => `import { createPlayer,${names}} from '@videojs/react';`
+  );
+
+  // 2. Add Video/Audio + features import and CSS import
+  const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
+  const cssImport = "import './player.css';";
+  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}\n${cssImport}`);
+
+  // 3. Add Player const above the interface, rename SkinProps → PlayerProps, replace `children` with `src`
+  source = source.replace(
+    /export interface \w+SkinProps/,
+    `export const Player = createPlayer({ features: ${features} });\n\nexport interface ${playerName}Props`
+  );
+  source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;`);
+
+  // 4. Replace the skin function: rename, swap children→src, wrap in Player.Provider
+  //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
+  source = source.replace(
+    /export function \w+Skin\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
+    (_, destructuredRest: string, body: string) => {
+      // Replace {children} with <Video/Audio> element inside the body
+      let newBody = body.replace(/^\n+/, '').replace(/(\s*)\{children\}/, `$1<${mediaTag} src={src}${playsInline} />`);
+
+      // Wrap the return body in <Player.Provider>, re-indenting everything
+      // inside `return (...)` by 2 extra spaces for the new wrapper.
+      const returnIdx = newBody.indexOf('return (');
+      if (returnIdx !== -1) {
+        const parenStart = newBody.indexOf('(', returnIdx);
+        const parenEnd = findMatchingParen(newBody, parenStart);
+        const inner = newBody.slice(parenStart + 1, parenEnd).replace(/^\n+|\n+$/g, '');
+        const reindented = inner
+          .split('\n')
+          .map((line) => (line.trim() === '' ? '' : `  ${line}`))
+          .join('\n');
+        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player.Provider>\n${reindented}\n    </Player.Provider>\n  )${newBody.slice(parenEnd + 1)}`;
+      }
+
+      const hasPoster = destructuredRest.includes('poster');
+      const posterExample = hasPoster ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
+
+      // Player const, @example JSDoc, and the function signature
+      const header = [
+        '/**',
+        ' * @example',
+        ' * ```tsx',
+        ` * <${playerName}`,
+        ` *   src="${DEMO_VIDEO_SRC}"${posterExample}`,
+        ' * />',
+        ' * ```',
+        ' */',
+        `export function ${playerName}({ src, ${destructuredRest}}: ${playerName}Props): ReactNode {`,
+      ].join('\n');
+
+      return `${header}\n${newBody}\n}`;
+    }
+  );
+
+  // 5. Remove the "Skin" section header (it's now part of "Player")
+  source = source.replace(/\/\/ =+\n\/\/ Skin\n\/\/ =+\n\n/, `${sectionHeader('Player')}\n\n`);
+
+  return source;
+}
+
+/**
  * Process a React skin: inline SVG icons, resolve all imports,
  * and produce both TSX and JSX versions.
  */
@@ -1499,7 +1578,14 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   source = flattenErrorClasses(source);
 
   // 10. Reorganize into sections with comment headers
-  const tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+  let tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+
+  // 11. Destructure skin props in function argument instead of body
+  tsx = destructureSkinProps(tsx);
+
+  // 12. Flatten skin into player (merge props, inline body, wrap in Player.Provider)
+  tsx = flattenSkinIntoPlayer(tsx, getSkinMediaType(skin));
+
   const jsx = tsxToJsx(tsx);
 
   return { tsx, jsx };

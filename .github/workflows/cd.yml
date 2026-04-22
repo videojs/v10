@@ -74,6 +74,14 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cdn
 
+      - name: Build CLI (requires site build)
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: pnpm build:cli
+
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm -r publish --filter "./packages/*" --access public --provenance --no-git-checks
+
+      - name: Update site/v10 branch
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: git push origin HEAD:refs/heads/site/v10 --force

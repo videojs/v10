@@ -10,6 +10,7 @@ function createMediaState(overrides: Partial<MediaPictureInPictureState> = {}): 
     pipAvailability: 'available',
     requestPictureInPicture: vi.fn(async () => {}),
     exitPictureInPicture: vi.fn(async () => {}),
+    togglePictureInPicture: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -18,6 +19,7 @@ function createState(overrides: Partial<PiPButtonState> = {}): PiPButtonState {
   return {
     pip: false,
     availability: 'available',
+    label: '',
     ...overrides,
   };
 }

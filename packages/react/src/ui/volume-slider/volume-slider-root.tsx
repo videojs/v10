@@ -1,8 +1,9 @@
 'use client';
 
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
-import { getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
-import { forwardRef, useState } from 'react';
+import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
+import { listen } from '@videojs/utils/dom';
+import { forwardRef, useCallback, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -34,6 +35,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       orientation,
       step = VolumeSliderCore.defaultProps.step,
       largeStep = VolumeSliderCore.defaultProps.largeStep,
+      wheelStep = VolumeSliderCore.defaultProps.wheelStep,
       disabled,
       thumbAlignment,
       onDragStart,
@@ -44,10 +46,15 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
 
     const [core] = useState(() => new VolumeSliderCore());
-    core.setProps({ label, orientation, step, largeStep, disabled, thumbAlignment });
+    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
 
-    // Keep a ref to the latest volume state for callbacks.
+    // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
+    const disabledRef = useLatestRef(disabled);
+
+    const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
+    const getStepPercent = () => core.getStepPercent();
+    const setVolume = (percent: number) => volumeRef.current?.setVolume(percent / 100);
 
     const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<VolumeSliderCore.State>({
       computeState: (input) => {
@@ -55,23 +62,42 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
         core.setMedia(volume ?? noopVolume);
         return core.getState();
       },
-      getPercent: () => (volume ? volume.volume * 100 : 0),
-      getStepPercent: () => core.getStepPercent(),
+      getPercent,
+      getStepPercent,
       getLargeStepPercent: () => core.getLargeStepPercent(),
       orientation,
       disabled,
       adjustPercent: (rawPercent, thumbSize, trackSize) =>
         core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
       getCSSVars: getSliderCSSVars,
-      onValueChange: (percent) => {
-        volumeRef.current?.setVolume(percent / 100);
-      },
-      onValueCommit: (percent) => {
-        volumeRef.current?.setVolume(percent / 100);
-      },
+      onValueChange: setVolume,
+      onValueCommit: setVolume,
       onDragStart,
       onDragEnd,
     });
+
+    const [wheelHandler] = useState(() =>
+      createWheelStep({
+        isDisabled: () => !!disabledRef.current || !volumeRef.current,
+        getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
+        getStepPercent: () => core.getWheelStepPercent(),
+        onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
+      })
+    );
+
+    // Attach non-passive wheel listener via callback ref so it covers
+    // late-mounted elements (null → mounted after volume appears).
+    const wheelCleanupRef = useRef<(() => void) | null>(null);
+    const wheelRef = useCallback(
+      (element: HTMLDivElement | null) => {
+        wheelCleanupRef.current?.();
+        wheelCleanupRef.current = null;
+        if (element) {
+          wheelCleanupRef.current = listen(element, 'wheel', wheelHandler.onWheel, { passive: false });
+        }
+      },
+      [wheelHandler]
+    );
 
     if (!volume) {
       if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
@@ -96,7 +122,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           {
             state,
             stateAttrMap: VolumeSliderDataAttrs,
-            ref: [forwardedRef, rootRef],
+            ref: [forwardedRef, rootRef, wheelRef],
             props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
           }
         )}

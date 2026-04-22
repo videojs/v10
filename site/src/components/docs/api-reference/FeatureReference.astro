@@ -1,0 +1,48 @@
+---
+import { getEntry } from 'astro:content';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import H2 from '@/components/typography/H2Markdown.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import type { FeatureReference } from '@/types/feature-reference';
+import { createFeatureReferenceModel } from '@/utils/featureReferenceModel';
+import ApiActionsTable from './ApiActionsTable.astro';
+import ApiStateTable from './ApiStateTable.astro';
+
+interface Props {
+  feature: string;
+}
+
+const { feature } = Astro.props;
+
+const entry = await getEntry('featureReference', feature);
+const ref: FeatureReference | null = entry?.data ?? null;
+if (!ref) return;
+
+const model = createFeatureReferenceModel(feature, ref);
+if (!model) return;
+
+const stateSection = model.sections.find((s) => s.key === 'state');
+const actionsSection = model.sections.find((s) => s.key === 'actions');
+---
+
+<ContentWidth>
+  <H2 id={model.heading.id}>{model.heading.text}</H2>
+
+  {
+    stateSection && (
+      <>
+        <H3 id={stateSection.id}>{stateSection.title}</H3>
+        <ApiStateTable state={model.data.state} componentName={feature} />
+      </>
+    )
+  }
+
+  {
+    actionsSection && (
+      <>
+        <H3 id={actionsSection.id}>{actionsSection.title}</H3>
+        <ApiActionsTable actions={model.data.actions} featureName={feature} />
+      </>
+    )
+  }
+</ContentWidth>

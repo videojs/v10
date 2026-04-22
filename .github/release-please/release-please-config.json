@@ -13,6 +13,7 @@
       "type": "linked-versions",
       "groupName": "videojs",
       "components": [
+        "@videojs/cli",
         "@videojs/core",
         "@videojs/element",
         "@videojs/html",
@@ -26,6 +27,12 @@
     }
   ],
   "packages": {
+    "packages/cli": {
+      "component": "@videojs/cli",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "versioning": "prerelease"
+    },
     "packages/core": {
       "component": "@videojs/core",
       "prerelease": true,

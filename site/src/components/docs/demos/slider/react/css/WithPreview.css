@@ -1,11 +1,11 @@
-.react-slider-preview {
+.demo {
   display: flex;
   align-items: center;
   padding: 40px 24px;
   background: #1a1a1a;
 }
 
-.react-slider-preview__slider {
+.media-slider {
   position: relative;
   width: 100%;
   display: flex;
@@ -14,7 +14,7 @@
   cursor: pointer;
 }
 
-.react-slider-preview__track {
+.media-slider-track {
   position: absolute;
   left: 0;
   right: 0;
@@ -24,11 +24,11 @@
   transition: height 150ms ease;
 }
 
-.react-slider-preview__slider[data-interactive] .react-slider-preview__track {
+.media-slider[data-interactive] .media-slider-track {
   height: 6px;
 }
 
-.react-slider-preview__fill {
+.media-slider-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -38,7 +38,7 @@
   border-radius: 9999px;
 }
 
-.react-slider-preview__thumb {
+.media-slider-thumb {
   position: absolute;
   left: var(--media-slider-fill);
   width: 14px;
@@ -50,15 +50,15 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.react-slider-preview__slider[data-interactive] .react-slider-preview__thumb {
+.media-slider[data-interactive] .media-slider-thumb {
   transform: translateX(-50%) scale(1);
 }
 
-.react-slider-preview__slider[data-dragging] .react-slider-preview__thumb {
+.media-slider[data-dragging] .media-slider-thumb {
   transform: translateX(-50%) scale(1.1);
 }
 
-.react-slider-preview__preview {
+.preview {
   position: absolute;
   bottom: 100%;
   margin-bottom: 6px;
@@ -67,11 +67,11 @@
   transition: opacity 150ms ease;
 }
 
-.react-slider-preview__slider[data-pointing] .react-slider-preview__preview {
+.media-slider[data-pointing] .preview {
   opacity: 1;
 }
 
-.react-slider-preview__value {
+.media-slider-value {
   background: rgba(0, 0, 0, 0.8);
   color: white;
   font-size: 12px;

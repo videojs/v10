@@ -144,7 +144,13 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 
 **Presets** preconfigure these parts for a specific use case.
 
-The default presets are `/video` and `/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
+<FrameworkCase frameworks={["react"]}>
+The default presets are `@videojs/react/video` and `@videojs/react/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The default presets are `@videojs/html/video` and `@videojs/html/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
+</FrameworkCase>
 
 Beyond the defaults, presets target more specific use cases. For example, `/background` includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it:
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine/engine';
+import { createPlaybackEngine } from '../playback-engine/engine';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../media/append-segment', () => ({
@@ -18,12 +18,11 @@ describe('createPlaybackEngine', () => {
     // Restore original fetch
     globalThis.fetch = originalFetch;
   });
-  it('creates engine with state, owners, and events', () => {
+  it('creates engine with state, owners, and destroy', () => {
     const engine = createPlaybackEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.owners).toBeDefined();
-    expect(engine.events).toBeDefined();
     expect(engine.destroy).toBeDefined();
     expect(typeof engine.destroy).toBe('function');
 
@@ -33,7 +32,7 @@ describe('createPlaybackEngine', () => {
   it('initializes with empty state and owners', () => {
     const engine = createPlaybackEngine();
 
-    expect(engine.state.current).toEqual({
+    expect(engine.state.get()).toEqual({
       bandwidthState: {
         fastEstimate: 0,
         fastTotalWeight: 0,
@@ -42,7 +41,7 @@ describe('createPlaybackEngine', () => {
         bytesSampled: 0,
       },
     });
-    expect(engine.owners.current).toEqual({});
+    expect(engine.owners.get()).toEqual({});
 
     engine.destroy();
   });
@@ -52,8 +51,9 @@ describe('createPlaybackEngine', () => {
 
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'https://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -61,8 +61,8 @@ describe('createPlaybackEngine', () => {
     // Wait for microtask queue to drain (patches are batched)
     await new Promise<void>((resolve) => queueMicrotask(resolve));
 
-    expect(engine.owners.current.mediaElement).toBe(mediaElement);
-    expect(engine.state.current.presentation?.url).toBe('https://example.com/playlist.m3u8');
+    expect(engine.owners.get().mediaElement).toBe(mediaElement);
+    expect(engine.state.get().presentation?.url).toBe('https://example.com/playlist.m3u8');
 
     engine.destroy();
   });
@@ -131,7 +131,8 @@ http://example.com/segment1.m4s
     const engine = createPlaybackEngine();
 
     // Patch state to trigger presentation resolution
-    engine.state.patch({
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -139,7 +140,7 @@ http://example.com/segment1.m4s
     // Wait for presentation to be resolved (no event needed - state-driven)
     await vi.waitFor(
       () => {
-        const { presentation } = engine.state.current;
+        const { presentation } = engine.state.get();
         expect(presentation?.selectionSets).toBeDefined();
         expect(presentation?.selectionSets?.length).toBeGreaterThan(0);
       },
@@ -203,8 +204,9 @@ http://example.com/audio-seg1.m4s
     mediaElement.preload = 'auto';
 
     // Initialize: patch owners and state
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -212,8 +214,8 @@ http://example.com/audio-seg1.m4s
     // Wait for complete orchestration pipeline
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
-        const owners = engine.owners.current;
+        const state = engine.state.get();
+        const owners = engine.owners.get();
 
         // === IMMUTABLE STATE VERIFICATION ===
 
@@ -296,16 +298,17 @@ http://example.com/video-seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
-        const owners = engine.owners.current;
+        const state = engine.state.get();
+        const owners = engine.owners.get();
 
         // Should create video track and buffer
         expect(state.selectedVideoTrackId).toBeDefined();
@@ -360,16 +363,17 @@ http://example.com/audio-seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
-        const owners = engine.owners.current;
+        const state = engine.state.get();
+        const owners = engine.owners.get();
 
         // Should create audio track and buffer
         expect(state.selectedAudioTrackId).toBeDefined();
@@ -424,15 +428,16 @@ http://example.com/video-seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
 
         // Should have resolved presentation with text tracks
         expect(state.presentation?.selectionSets).toBeDefined();
@@ -480,7 +485,8 @@ http://example.com/video-seg1.m4s
     const engine = createPlaybackEngine();
 
     // Patch state but NOT owners (no mediaElement)
-    engine.state.patch({
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -488,7 +494,7 @@ http://example.com/video-seg1.m4s
     // Wait for presentation and track resolution
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.presentation?.selectionSets).toBeDefined();
         expect(state.selectedVideoTrackId).toBeDefined();
 
@@ -504,7 +510,7 @@ http://example.com/video-seg1.m4s
     // Give time for MediaSource setup (which shouldn't happen)
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const owners = engine.owners.current;
+    const owners = engine.owners.get();
 
     // Should NOT create MediaSource or SourceBuffers without mediaElement
     expect(owners.mediaElement).toBeUndefined();
@@ -560,27 +566,30 @@ http://example.com/audio-seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'none';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
     });
 
     // PHASE 1: Verify nothing auto-resolves
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    let state = engine.state.current;
+    let state = engine.state.get();
 
     expect(state.presentation?.selectionSets).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
 
-    // PHASE 2: Simulate play (via media element — sets playbackInitiated + dispatches to event stream)
+    // PHASE 2: Simulate play — reflect real browser behavior where paused becomes
+    // false before the play event fires (per WHATWG §4.8.11.8), then dispatch.
+    Object.defineProperty(mediaElement, 'paused', { get: () => false, configurable: true });
     mediaElement.dispatchEvent(new Event('play'));
 
     // Wait for complete orchestration
     await vi.waitFor(
       () => {
-        state = engine.state.current;
-        const owners = engine.owners.current;
+        state = engine.state.get();
+        const owners = engine.owners.get();
 
         // Now everything should be resolved and created
         expect(state.presentation?.selectionSets).toBeDefined();
@@ -638,15 +647,16 @@ http://example.com/seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'metadata';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'metadata',
     });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
 
         // Should resolve presentation and select/resolve track
         expect(state.presentation?.selectionSets).toBeDefined();
@@ -658,7 +668,7 @@ http://example.com/seg1.m4s
         expect(videoTrack?.segments).toBeDefined();
 
         // Init segment should be loaded (advances readyState to HAVE_METADATA)
-        expect(engine.owners.current.videoBufferActor?.snapshot.context.initTrackId).toBeDefined();
+        expect(engine.owners.get().videoBufferActor?.snapshot.get().context.initTrackId).toBeDefined();
       },
       { timeout: 2000 }
     );
@@ -709,19 +719,22 @@ http://example.com/seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createPlaybackEngine();
+    // Use a conservative initialBandwidth so switchQuality also selects 360p and
+    // doesn't immediately upgrade — verifying only the selected track is resolved.
+    const engine = createPlaybackEngine({ initialBandwidth: 600_000 });
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.selectedVideoTrackId).toBeDefined();
 
         // Selected track should be resolved
@@ -733,7 +746,7 @@ http://example.com/seg1.m4s
       { timeout: 2000 }
     );
 
-    const state = engine.state.current;
+    const state = engine.state.get();
     const allVideoTracks = state.presentation?.selectionSets?.find((s: any) => s.type === 'video')?.switchingSets?.[0]
       ?.tracks;
 
@@ -813,8 +826,9 @@ http://example.com/text-es-seg1.vtt
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -822,7 +836,7 @@ http://example.com/text-es-seg1.vtt
     // Wait for presentation to be resolved
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.presentation?.selectionSets).toBeDefined();
         const textSet = state.presentation?.selectionSets?.find((s: any) => s.type === 'text');
         expect(textSet?.switchingSets?.[0]?.tracks.length).toBeGreaterThan(0);
@@ -831,7 +845,7 @@ http://example.com/text-es-seg1.vtt
     );
 
     // Get text track IDs
-    const textSet = engine.state.current.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+    const textSet = engine.state.get().presentation?.selectionSets?.find((s: any) => s.type === 'text');
     const textTracks = textSet?.switchingSets?.[0]?.tracks;
     expect(textTracks?.length).toBe(2);
 
@@ -839,14 +853,15 @@ http://example.com/text-es-seg1.vtt
     expect(englishTrack).toBeDefined();
 
     // Manually select English text track
-    engine.state.patch({
+    engine.state.set({
+      ...engine.state.get(),
       selectedTextTrackId: englishTrack!.id,
     });
 
     // Wait for text track to be resolved
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.selectedTextTrackId).toBe(englishTrack!.id);
 
         // Text track should be resolved (has segments)
@@ -911,8 +926,9 @@ http://example.com/text-es-seg1.vtt
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -920,7 +936,7 @@ http://example.com/text-es-seg1.vtt
     // Wait for DEFAULT text track to be auto-selected and resolved
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.presentation?.selectionSets).toBeDefined();
 
         // Should auto-select text track with DEFAULT=YES + AUTOSELECT=YES
@@ -989,8 +1005,9 @@ http://example.com/text-fr-seg1.vtt
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -998,7 +1015,7 @@ http://example.com/text-fr-seg1.vtt
     // Wait for preferred language text track to be auto-selected and resolved
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.presentation?.selectionSets).toBeDefined();
 
         expect(state.selectedTextTrackId).toBeDefined();
@@ -1074,8 +1091,9 @@ http://example.com/text-es-seg1.vtt
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -1083,24 +1101,27 @@ http://example.com/text-es-seg1.vtt
     // Wait for presentation to be resolved
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.presentation?.selectionSets).toBeDefined();
       },
       { timeout: 2000 }
     );
 
-    const textSet = engine.state.current.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+    const textSet = engine.state.get().presentation?.selectionSets?.find((s: any) => s.type === 'text');
     const textTracks = textSet?.switchingSets?.[0]?.tracks;
 
     const englishTrack = textTracks?.find((t: any) => t.language === 'en');
     const spanishTrack = textTracks?.find((t: any) => t.language === 'es');
 
     // Select English track
-    engine.state.patch({ selectedTextTrackId: englishTrack!.id });
+    engine.state.set({
+      ...engine.state.get(),
+      selectedTextTrackId: englishTrack!.id,
+    });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.selectedTextTrackId).toBe(englishTrack!.id);
 
         const resolvedTrack = state.presentation?.selectionSets
@@ -1113,11 +1134,14 @@ http://example.com/text-es-seg1.vtt
     );
 
     // Switch to Spanish track
-    engine.state.patch({ selectedTextTrackId: spanishTrack!.id });
+    engine.state.set({
+      ...engine.state.get(),
+      selectedTextTrackId: spanishTrack!.id,
+    });
 
     await vi.waitFor(
       () => {
-        const state = engine.state.current;
+        const state = engine.state.get();
         expect(state.selectedTextTrackId).toBe(spanishTrack!.id);
 
         const resolvedTrack = state.presentation?.selectionSets
@@ -1168,8 +1192,9 @@ http://example.com/video-seg1.m4s
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -1177,12 +1202,6 @@ http://example.com/video-seg1.m4s
     // Wait for text tracks to be set up
     await vi.waitFor(
       () => {
-        const owners = engine.owners.current;
-
-        // Text tracks should be created
-        expect(owners.textTracks).toBeDefined();
-        expect(owners.textTracks?.size).toBe(3);
-
         // Track elements should be in DOM
         expect(mediaElement.children.length).toBe(3);
 
@@ -1193,21 +1212,18 @@ http://example.com/video-seg1.m4s
         expect(tracks[0]!.kind).toBe('subtitles');
         expect(tracks[0]!.label).toBe('English');
         expect(tracks[0]!.srclang).toBe('en');
-        expect(tracks[0]!.src).toBe('http://example.com/text-en.m3u8');
         expect(tracks[0]!.default).toBe(false);
 
         // Spanish track (DEFAULT)
         expect(tracks[1]!.kind).toBe('subtitles');
         expect(tracks[1]!.label).toBe('Spanish');
         expect(tracks[1]!.srclang).toBe('es');
-        expect(tracks[1]!.src).toBe('http://example.com/text-es.m3u8');
         expect(tracks[1]!.default).toBe(true);
 
         // French track
         expect(tracks[2]!.kind).toBe('subtitles');
         expect(tracks[2]!.label).toBe('French');
         expect(tracks[2]!.srclang).toBe('fr');
-        expect(tracks[2]!.src).toBe('http://example.com/text-fr.m3u8');
         expect(tracks[2]!.default).toBe(false);
       },
       { timeout: 2000 }
@@ -1273,8 +1289,9 @@ http://example.com/text-es-seg1.vtt
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
-    engine.owners.patch({ mediaElement });
-    engine.state.patch({
+    engine.owners.set({ ...engine.owners.get(), mediaElement });
+    engine.state.set({
+      ...engine.state.get(),
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
@@ -1282,63 +1299,58 @@ http://example.com/text-es-seg1.vtt
     // Wait for text tracks to be set up
     await vi.waitFor(
       () => {
-        expect(engine.owners.current.textTracks?.size).toBe(2);
+        expect(mediaElement.children.length).toBe(2);
       },
       { timeout: 2000 }
     );
 
-    const textTracks = engine.owners.current.textTracks!;
     const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+    const englishTrack = tracks.find((el) => el.srclang === 'en')!;
+    const spanishTrack = tracks.find((el) => el.srclang === 'es')!;
 
-    // Initially all tracks should be hidden (no selection, managed by activateTextTrack)
-    expect(tracks[0]!.track.mode).toBe('hidden');
-    expect(tracks[1]!.track.mode).toBe('hidden');
+    expect(englishTrack).toBeDefined();
+    expect(spanishTrack).toBeDefined();
 
-    // Get track IDs from the map
-    const englishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'en')?.[0];
-    const spanishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'es')?.[0];
-
-    expect(englishTrackId).toBeDefined();
-    expect(spanishTrackId).toBeDefined();
+    // Initially all tracks should be disabled (no selection)
+    expect(englishTrack.track.mode).toBe('disabled');
+    expect(spanishTrack.track.mode).toBe('disabled');
 
     // Select English track
-    engine.state.patch({ selectedTextTrackId: englishTrackId! });
+    engine.state.set({
+      ...engine.state.get(),
+      selectedTextTrackId: englishTrack.id,
+    });
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
         expect(englishTrack.track.mode).toBe('showing');
-        expect(spanishTrack.track.mode).toBe('hidden');
+        expect(spanishTrack.track.mode).toBe('disabled');
       },
       { timeout: 2000 }
     );
 
     // Switch to Spanish track
-    engine.state.patch({ selectedTextTrackId: spanishTrackId! });
+    engine.state.set({
+      ...engine.state.get(),
+      selectedTextTrackId: spanishTrack.id,
+    });
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
-        expect(englishTrack.track.mode).toBe('hidden');
+        expect(englishTrack.track.mode).toBe('disabled');
         expect(spanishTrack.track.mode).toBe('showing');
       },
       { timeout: 2000 }
     );
 
-    // Deselect (hide all)
-    engine.state.patch({ selectedTextTrackId: undefined } as unknown as Partial<PlaybackEngineState>);
+    // Deselect (disable all) — omit selectedTextTrackId to satisfy exactOptionalPropertyTypes
+    const { selectedTextTrackId: _removed, ...deselected } = engine.state.get();
+    engine.state.set(deselected as ReturnType<typeof engine.state.get>);
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
-        expect(englishTrack.track.mode).toBe('hidden');
-        expect(spanishTrack.track.mode).toBe('hidden');
+        expect(englishTrack.track.mode).toBe('disabled');
+        expect(spanishTrack.track.mode).toBe('disabled');
       },
       { timeout: 2000 }
     );
@@ -1386,8 +1398,9 @@ http://example.com/seg2.m4s
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 
-  engine.owners.patch({ mediaElement });
-  engine.state.patch({
+  engine.owners.set({ ...engine.owners.get(), mediaElement });
+  engine.state.set({
+    ...engine.state.get(),
     presentation: { url: 'http://example.com/playlist.m3u8' },
     preload: 'auto',
   });
@@ -1395,7 +1408,7 @@ http://example.com/seg2.m4s
   await vi.waitFor(
     () => {
       // Buffer state now lives in the SourceBufferActor (in owners), not in state.
-      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+      const videoCtx = engine.owners.get().videoBufferActor?.snapshot.get().context;
 
       // Should have init segment tracked (by track ID)
       expect(videoCtx?.initTrackId).toBeDefined();
@@ -1463,8 +1476,9 @@ http://example.com/audio-seg1.m4s
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 
-  engine.owners.patch({ mediaElement });
-  engine.state.patch({
+  engine.owners.set({ ...engine.owners.get(), mediaElement });
+  engine.state.set({
+    ...engine.state.get(),
     presentation: { url: 'http://example.com/playlist.m3u8' },
     preload: 'auto',
   });
@@ -1472,8 +1486,8 @@ http://example.com/audio-seg1.m4s
   await vi.waitFor(
     () => {
       // Buffer state now lives in the SourceBufferActors (in owners), not in state.
-      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
-      const audioCtx = engine.owners.current.audioBufferActor?.snapshot.context;
+      const videoCtx = engine.owners.get().videoBufferActor?.snapshot.get().context;
+      const audioCtx = engine.owners.get().audioBufferActor?.snapshot.get().context;
 
       // Both video and audio actors should exist
       expect(videoCtx).toBeDefined();

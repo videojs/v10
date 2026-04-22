@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import type { InstallMethod } from '@/stores/installation';
 import { installMethod } from '@/stores/installation';
+import type { InstallMethod } from '@/utils/installation/types';
 import HTMLCdnCodeBlock from './HTMLCdnCodeBlock';
 
 export default function HTMLInstallTabs() {
@@ -23,7 +23,6 @@ export default function HTMLInstallTabs() {
       }
     });
 
-    // Observe all tab elements for attribute changes
     const tabs = root.querySelectorAll('[role="tab"]');
     tabs.forEach((tab) => {
       observer.observe(tab, { attributes: true, attributeFilter: ['data-tab-active'] });

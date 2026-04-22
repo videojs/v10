@@ -1,20 +1,18 @@
 import { Slider } from '@videojs/react';
 import { useState } from 'react';
 
-import './WithPreview.css';
-
 export default function WithPreview() {
   const [value, setValue] = useState(50);
 
   return (
-    <div className="react-slider-preview">
-      <Slider.Root className="react-slider-preview__slider" value={value} onValueChange={setValue}>
-        <Slider.Track className="react-slider-preview__track">
-          <Slider.Fill className="react-slider-preview__fill" />
+    <div className="demo">
+      <Slider.Root className="media-slider" value={value} onValueChange={setValue}>
+        <Slider.Track className="media-slider-track">
+          <Slider.Fill className="media-slider-fill" />
         </Slider.Track>
-        <Slider.Thumb className="react-slider-preview__thumb" />
-        <Slider.Preview className="react-slider-preview__preview">
-          <Slider.Value type="pointer" className="react-slider-preview__value" />
+        <Slider.Thumb className="media-slider-thumb" />
+        <Slider.Preview className="preview">
+          <Slider.Value type="pointer" className="media-slider-value" />
         </Slider.Preview>
       </Slider.Root>
     </div>

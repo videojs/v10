@@ -2,8 +2,6 @@ import { useButton } from '@videojs/react';
 import type { Ref } from 'react';
 import { useState } from 'react';
 
-import './BasicUsage.css';
-
 export default function BasicUsage() {
   const [count, setCount] = useState(0);
   const [disabled, setDisabled] = useState(false);
@@ -15,16 +13,11 @@ export default function BasicUsage() {
   });
 
   return (
-    <div className="react-use-button-basic">
-      <button
-        ref={buttonRef as Ref<HTMLButtonElement>}
-        {...getButtonProps()}
-        className="react-use-button-basic__button"
-        disabled={disabled}
-      >
+    <div className="demo">
+      <button ref={buttonRef as Ref<HTMLButtonElement>} {...getButtonProps()} className="button" disabled={disabled}>
         Activated {count} times
       </button>
-      <label className="react-use-button-basic__label">
+      <label className="label">
         <input type="checkbox" checked={disabled} onChange={(e) => setDisabled(e.target.checked)} />
         Disabled
       </label>

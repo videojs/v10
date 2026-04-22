@@ -1,9 +1,9 @@
 import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
-import type { EventStream } from '../events/create-event-stream';
+import type { Reactor } from '../create-machine-reactor';
+import { createMachineReactor } from '../create-machine-reactor';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
-import { combineLatest } from '../reactive/combine-latest';
-import type { WritableState } from '../state/create-state';
-import type { AddressableObject, MediaElementLike, Presentation } from '../types';
+import { computed, type Signal, update } from '../signals/primitives';
+import type { AddressableObject, Presentation } from '../types';
 
 /**
  * Unresolved presentation - has a URL but no data yet.
@@ -17,13 +17,8 @@ export type UnresolvedPresentation = AddressableObject;
 export interface PresentationState {
   presentation?: UnresolvedPresentation | Presentation | undefined;
   preload?: 'auto' | 'metadata' | 'none' | undefined;
-}
-
-/**
- * Mutable platform objects.
- */
-export interface PlatformOwners {
-  mediaElement?: MediaElementLike | undefined;
+  /** True once the user has initiated playback — enables resolution regardless of preload. */
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -42,126 +37,90 @@ export function canResolve(
 }
 
 /**
- * Determines if resolution conditions are met based on preload policy and event.
+ * Determines if resolution conditions are met based on preload policy and playback state.
  *
  * Resolution conditions:
  * - State-driven: preload is 'auto' or 'metadata'
- * - Event-driven: play event
+ * - Playback-driven: playbackInitiated is true
  *
  * @param state - Current presentation state
- * @param event - Current action/event
  * @returns true if resolution conditions are met
  */
-export function shouldResolve(state: PresentationState, event: PresentationAction): boolean {
-  const { preload } = state;
+export function shouldResolve(state: PresentationState): boolean {
+  const { preload, playbackInitiated } = state;
   return (
     // State-driven: preload allows (auto/metadata)
     ['auto', 'metadata'].includes(preload as any) ||
-    // Event-driven: play event
-    event.type === 'play'
+    // Playback-driven: user has initiated playback
+    !!playbackInitiated
   );
 }
 
-/**
- * Syncs preload attribute from mediaElement to state.
- *
- * Watches the owners state for mediaElement changes and copies the
- * preload attribute to the immutable state.
- *
- * @param state - Immutable state container
- * @param owners - Mutable platform objects container
- * @returns Cleanup function to stop syncing
- */
-export function syncPreloadAttribute(
-  state: WritableState<PresentationState>,
-  owners: WritableState<PlatformOwners>
-): () => void {
-  return owners.subscribe((current) => {
-    // Only infer preload from the element when no explicit value has been set.
-    // An explicit value (set via SpfMedia.preload) always wins.
-    if (state.current.preload !== undefined) return;
-    const preload = current.mediaElement?.preload || undefined;
-    state.patch({ preload: preload as 'auto' | 'metadata' | 'none' | undefined });
-  });
-}
+export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
 
 /**
- * Action types for presentation resolution.
- * Event names match HTMLMediaElement events (lowercase).
+ * Derives the correct state from current state conditions.
+ *
+ * States are mutually exclusive and exhaustive:
+ * - `'preconditions-unmet'`: no presentation, or presentation has no URL
+ * - `'idle'`:     URL present, unresolved (no id), shouldResolve not met
+ * - `'resolving'`: URL present, unresolved (no id), shouldResolve met
+ * - `'resolved'`:  URL present, resolved (has id)
  */
-export type PresentationAction = { type: 'play' } | { type: 'pause' } | { type: 'load'; url: string };
+function deriveState(state: PresentationState): ResolvePresentationState {
+  const { presentation } = state;
+  if (!presentation || !('url' in presentation)) return 'preconditions-unmet';
+  if ('id' in presentation) return 'resolved';
+  return shouldResolve(state) ? 'resolving' : 'idle';
+}
 
 /**
  * Resolves unresolved presentations using reactive composition.
  *
- * Uses combineLatest to compose state + events, enabling both state-driven
- * and event-driven resolution triggers.
- *
- * Triggers resolution when:
- * - State-driven: Unresolved presentation + preload allows (auto/metadata)
- * - Event-driven: PLAY event when preload="none"
+ * FSM driven by `deriveState` — a single `always` monitor keeps the state in
+ * sync with conditions at all times. `'resolving'` additionally runs the fetch
+ * task and returns an AbortController so the framework aborts it on state exit.
  *
  * @example
- * ```ts
- * const state = createState({ presentation: undefined, preload: 'auto' });
- * const events = createEventStream<PresentationAction>();
- *
- * const cleanup = resolvePresentation({ state, events });
- *
- * // State-driven: resolves immediately when preload allows
- * state.patch({ presentation: { url: 'http://example.com/playlist.m3u8' } });
- *
- * // Event-driven: resolves on PLAY when preload="none"
- * state.patch({ preload: 'none', presentation: { url: '...' } });
- * events.dispatch({ type: 'PLAY' });
- * ```
+ * const reactor = resolvePresentation({ state });
+ * // later:
+ * reactor.destroy();
  */
-export function resolvePresentation({
+export function resolvePresentation<S extends PresentationState>({
   state,
-  events,
 }: {
-  state: WritableState<PresentationState>;
-  events: EventStream<PresentationAction>;
-}): () => void {
-  // This is effectively a very simple finite state model. We can formalize this if needed.
-  let resolving = false;
-  let abortController: AbortController | null = null;
+  state: Signal<S>;
+}): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get()));
 
-  const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
-    if (!canResolve(currentState) || !shouldResolve(currentState, event) || resolving) return;
+  return createMachineReactor<ResolvePresentationState>({
+    initial: 'preconditions-unmet',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      'preconditions-unmet': {},
+      idle: {},
+      resolving: {
+        // Entry: start fetch on state entry; return AbortController so the
+        // framework aborts the in-flight request on state exit.
+        entry: () => {
+          const presentation = state.get().presentation as UnresolvedPresentation;
+          const ac = new AbortController();
 
-    try {
-      // This along with the resolving finite state (or more complex) could be pulled into its own abstraction.
-      // Set flag before async work
-      resolving = true;
-      abortController = new AbortController();
+          fetchResolvable(presentation, { signal: ac.signal })
+            .then((response) => getResponseText(response))
+            .then((text) => {
+              const parsed = parseMultivariantPlaylist(text, presentation);
+              update(state, { presentation: parsed } as Partial<S>);
+            })
+            .catch((error) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
+              throw error;
+            });
 
-      const { presentation } = currentState;
-      // Fetch and parse playlist
-      const response = await fetchResolvable(presentation, { signal: abortController.signal });
-      const text = await getResponseText(response);
-      const parsed = parseMultivariantPlaylist(text, presentation);
-
-      // Update state with resolved presentation
-      state.patch({
-        presentation: parsed,
-      });
-    } catch (error) {
-      // Ignore AbortError - this is expected when cleanup happens
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      throw error;
-    } finally {
-      // Always clear flag
-      resolving = false;
-      abortController = null;
-    }
+          return ac;
+        },
+      },
+      resolved: {},
+    },
   });
-
-  // Return cleanup function that aborts pending fetches
-  return () => {
-    abortController?.abort();
-    cleanup();
-  };
 }

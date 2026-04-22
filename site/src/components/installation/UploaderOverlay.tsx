@@ -45,7 +45,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
       <OverlayWrapper>
         <p className="text-p3 font-bold">
           To upload this video to{' '}
-          <a href={MUX_URL} target="_blank" rel="noopener" className="underline intent:no-underline">
+          <a href={MUX_URL} target="_blank" rel="noopener" className="underline intent:decoration-gold">
             Mux
           </a>
           &hellip;
@@ -82,7 +82,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
           <a
             href="https://dashboard.mux.com/my/video/assets"
             target="_blank"
-            className="underline intent:no-underline"
+            className="underline intent:decoration-gold"
             rel="noopener"
           >
             manage on Mux
@@ -100,7 +100,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
           Error preparing video:
           {error}
         </p>
-        <button type="button" onClick={onRetry} className="text-p3 underline intent:no-underline">
+        <button type="button" onClick={onRetry} className="text-p3 underline intent:decoration-gold">
           Try again
         </button>
       </OverlayWrapper>

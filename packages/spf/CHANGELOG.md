@@ -1,5 +1,179 @@
 # Changelog
 
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.21...@videojs/spf@10.0.0-beta.22) (2026-04-18)
+
+
+### Bug Fixes
+
+* **packages:** add server-only bundles  ([#1349](https://github.com/videojs/v10/issues/1349)) ([3331fda](https://github.com/videojs/v10/commit/3331fdaf25c8a89ea6d36c2972631df589fc0ad3))
+
+
+### Reverts
+
+* **packages:** add server-only bundles ([#1349](https://github.com/videojs/v10/issues/1349)) ([#1354](https://github.com/videojs/v10/issues/1354)) ([8530316](https://github.com/videojs/v10/commit/8530316987b5122a2e455b0db3bad6fd3ffa8186))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.20...@videojs/spf@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.19...@videojs/spf@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.20
+
+## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.18...@videojs/spf@10.0.0-beta.19) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.19
+
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.17...@videojs/spf@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.18
+
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.16...@videojs/spf@10.0.0-beta.17) (2026-04-11)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.17
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.15...@videojs/spf@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **spf:** architecture reactors ([#1218](https://github.com/videojs/v10/issues/1218)) ([1346d86](https://github.com/videojs/v10/commit/1346d869ae62b6a81b551a512031cad218a7a1e5))
+
+
+### Bug Fixes
+
+* **packages:** workspace drift ([#1270](https://github.com/videojs/v10/issues/1270)) ([b874dad](https://github.com/videojs/v10/commit/b874dad30652654e77b3693116edc497355fd725))
+* **utils:** stable sort comparator and orphaned JSDoc ([#1286](https://github.com/videojs/v10/issues/1286)) ([071325d](https://github.com/videojs/v10/commit/071325de4dee666a09e305399ea95e163c5d8de4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.16
+
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.14...@videojs/spf@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.13...@videojs/spf@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.14
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.12...@videojs/spf@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.13
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.11...@videojs/spf@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+
+
+### Bug Fixes
+
+* **utils:** polyfill AbortSignal.any for Chromium ≤115 ([#1142](https://github.com/videojs/v10/issues/1142)) ([c3641c8](https://github.com/videojs/v10/commit/c3641c888c9630b2780cdda556431512d9ca5b81))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.12
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.10...@videojs/spf@10.0.0-beta.11) (2026-03-24)
 
 

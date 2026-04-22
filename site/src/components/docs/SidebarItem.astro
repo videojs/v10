@@ -1,6 +1,6 @@
 ---
 import GithubSlugger from 'github-slugger';
-import DropdownIcon from '@/components/icons/dropdown-arrow.svg?react';
+import DropdownIcon from '@/assets/icons/dropdown-arrow.svg?react';
 import type { Guide, Section, SupportedFramework } from '@/types/docs';
 import { isSection } from '@/types/docs';
 
@@ -69,7 +69,11 @@ function getGroupRotate(depth: number) {
         }
       >
         <span class="flex-1">{item.sidebarLabel}</span>
-        <DropdownIcon width={"0.65rem"} className={getGroupRotate(depth)} />
+        <DropdownIcon
+          width={"0.65rem"}
+          className={getGroupRotate(depth)}
+          aria-hidden="true"
+        />
       </summary>
       <div>
         {item.contents.map((contentItem) => (

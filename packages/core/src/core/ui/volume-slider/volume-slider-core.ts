@@ -1,10 +1,12 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaFeatureAvailability, MediaVolumeState } from '../../media/state';
+import type { MediaVolumeState } from '../../media/state';
+import type { MediaFeatureAvailability } from '../../media/types';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface VolumeSliderProps extends SliderProps {
+  /** Step increment for wheel scrolling. */
+  wheelStep?: number | undefined;
   /** @internal Derived from `volume` (0–100) — not user-settable. */
   value?: number | undefined;
   /** @internal Always 0 — not user-settable. */
@@ -22,6 +24,7 @@ export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,
     label: 'Volume',
+    wheelStep: 5,
   };
 
   #media: MediaVolumeState | null = null;
@@ -55,6 +58,13 @@ export class VolumeSliderCore extends SliderCore {
       muted: effectivelyMuted,
       availability: media.volumeAvailability,
     };
+  }
+
+  /** Wheel step as a percentage of the slider range. */
+  getWheelStepPercent(): number {
+    const props = this.props as NonNullableObject<VolumeSliderProps>;
+    const range = props.max - props.min;
+    return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
   override getLabel(state: SliderState): string {

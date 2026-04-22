@@ -13,9 +13,11 @@ export default {
       2,
       'always',
       [
+        'build',
         'cd',
         'ci',
         'claude',
+        'cli',
         'core',
         'design',
         'element',

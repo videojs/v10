@@ -15,6 +15,7 @@ export const MuteButton = createMediaButton<MuteButtonCore, MuteButtonProps>({
   stateAttrMap: MuteButtonDataAttrs,
   selector: selectVolume,
   action: (core, state) => core.toggle(state),
+  hotkeyAction: 'toggleMuted',
 });
 
 export namespace MuteButton {

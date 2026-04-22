@@ -6,7 +6,9 @@ import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
+import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -17,9 +19,11 @@ export const videoFeatures: VideoFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
+  streamTypeFeature,
   bufferFeature,
   fullscreenFeature,
   pipFeature,
+  remotePlaybackFeature,
   controlsFeature,
   textTrackFeature,
   errorFeature,
@@ -31,6 +35,7 @@ export const audioFeatures: AudioFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
+  streamTypeFeature,
   bufferFeature,
   errorFeature,
 ];

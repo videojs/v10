@@ -6,85 +6,55 @@ status: draft
 
 One-sentence description.
 
+## Problem
+
+What pain exists. Why is a compound component needed here?
+
 ## Anatomy
 
 ### React
 
 ```tsx
-import { Slider } from '@videojs/react';
+import { ComponentName } from '@videojs/react';
 
-<Slider.Root defaultValue={50}>    {/* Container, state owner */}
-  <Slider.Control>                 {/* Interactive area */}
-    <Slider.Track>                 {/* Visual track */}
-      <Slider.Indicator />         {/* Filled portion */}
-      <Slider.Thumb />             {/* Draggable handle */}
-    </Slider.Track>
-  </Slider.Control>
-</Slider.Root>
+<ComponentName.Root>           {/* Container, state owner */}
+  <ComponentName.Track>        {/* Visual track */}
+    <ComponentName.Fill />     {/* Filled portion */}
+    <ComponentName.Thumb />    {/* Interactive handle */}
+  </ComponentName.Track>
+</ComponentName.Root>
 ```
 
 ### HTML
 
 ```html
-<vjs-slider value="50">
-  <vjs-slider-control>
-    <vjs-slider-track>
-      <vjs-slider-indicator></vjs-slider-indicator>
-      <vjs-slider-thumb></vjs-slider-thumb>
-    </vjs-slider-track>
-  </vjs-slider-control>
-</vjs-slider>
+<media-component-name>
+  <media-component-track>
+    <media-component-fill></media-component-fill>
+    <media-component-thumb></media-component-thumb>
+  </media-component-track>
+</media-component-name>
 ```
 
-## Examples
+## API Surface
 
-### Range Slider
+### Props
 
-```tsx
-<Slider.Root defaultValue={[25, 75]}>
-  <Slider.Control>
-    <Slider.Track>
-      <Slider.Indicator />
-      <Slider.Thumb index={0} aria-label="Minimum" />
-      <Slider.Thumb index={1} aria-label="Maximum" />
-    </Slider.Track>
-  </Slider.Control>
-</Slider.Root>
-```
+| Prop           | Type                         | Default        | Description           |
+| -------------- | ---------------------------- | -------------- | --------------------- |
+| `value`        | `number`                     | —              | Controlled value.     |
+| `defaultValue` | `number`                     | `0`            | Uncontrolled value.   |
+| `orientation`  | `'horizontal' \| 'vertical'` | `'horizontal'` | Component orientation. |
+| `disabled`     | `boolean`                    | `false`        | Disables interaction. |
 
-### Vertical Orientation
+### Callbacks
 
-```tsx
-<Slider.Root orientation="vertical">{/* ... */}</Slider.Root>
-```
+| Callback        | Signature                            | Description            |
+| --------------- | ------------------------------------ | ---------------------- |
+| `onValueChange` | `(value: number) => void`            | Fired on value change. |
+| `onValueCommit` | `(value: number) => void`            | Fired on commit.       |
 
-## Parts
-
-### Root
-
-Container element. Owns state, provides context to children.
-
-#### Props
-
-| Prop           | Type                                             | Default        | Description            |
-| -------------- | ------------------------------------------------ | -------------- | ---------------------- |
-| `value`        | `number \| number[]`                             | —              | Controlled value.      |
-| `defaultValue` | `number \| number[]`                             | `0`            | Uncontrolled value.    |
-| `min`          | `number`                                         | `0`            | Minimum value.         |
-| `max`          | `number`                                         | `100`          | Maximum value.         |
-| `step`         | `number`                                         | `1`            | Step increment.        |
-| `orientation`  | `'horizontal' \| 'vertical'`                     | `'horizontal'` | Slider orientation.    |
-| `disabled`     | `boolean`                                        | `false`        | Disables interaction.  |
-| `render`       | `ReactElement \| (props, state) => ReactElement` | —              | Custom render element. |
-
-#### Callbacks
-
-| Callback        | Signature                                             | Description            |
-| --------------- | ----------------------------------------------------- | ---------------------- |
-| `onValueChange` | `(value: number \| number[], reason: string) => void` | Fired on value change. |
-| `onValueCommit` | `(value: number \| number[]) => void`                 | Fired on drag end.     |
-
-#### Data Attributes
+### Data Attributes
 
 | Attribute          | Description                 |
 | ------------------ | --------------------------- |
@@ -92,108 +62,31 @@ Container element. Owns state, provides context to children.
 | `data-orientation` | `horizontal` or `vertical`. |
 | `data-disabled`    | Present when disabled.      |
 
-#### CSS Custom Properties
+### CSS Custom Properties
 
-| Property            | Default | Description   |
-| ------------------- | ------- | ------------- |
-| `--vjs-slider-size` | `200px` | Track length. |
+| Property             | Default | Description       |
+| -------------------- | ------- | ----------------- |
+| `--vjs-component-bg` | `#000`  | Background color. |
 
-### Control
+> **Part-specific notes:** Call out anything noteworthy about individual parts here — e.g., "Thumb handles all pointer events and receives ARIA attributes" or "Fill renders as a pseudo-element in the HTML version."
 
-Interactive area that responds to pointer events.
+## State & Store
 
-#### Props
+### Required Features
 
-| Prop     | Type                                             | Default | Description            |
-| -------- | ------------------------------------------------ | ------- | ---------------------- |
-| `render` | `ReactElement \| (props, state) => ReactElement` | —       | Custom render element. |
+- `featureName` — What state this component reads from
 
-#### Data Attributes
+### State Read
 
-| Attribute          | Description                 |
-| ------------------ | --------------------------- |
-| `data-dragging`    | Present while dragging.     |
-| `data-orientation` | `horizontal` or `vertical`. |
+| State       | Type     | Description               |
+| ----------- | -------- | ------------------------- |
+| `stateName` | `number` | What this state represents |
 
-### Track
+### State Written
 
-Visual track element.
-
-#### Props
-
-| Prop     | Type                                             | Default | Description            |
-| -------- | ------------------------------------------------ | ------- | ---------------------- |
-| `render` | `ReactElement \| (props, state) => ReactElement` | —       | Custom render element. |
-
-#### CSS Custom Properties
-
-| Property         | Default | Description       |
-| ---------------- | ------- | ----------------- |
-| `--vjs-track-bg` | `#333`  | Track background. |
-
-### Indicator
-
-Filled portion of the track.
-
-#### Props
-
-| Prop     | Type                                             | Default | Description            |
-| -------- | ------------------------------------------------ | ------- | ---------------------- |
-| `render` | `ReactElement \| (props, state) => ReactElement` | —       | Custom render element. |
-
-#### CSS Custom Properties
-
-| Property             | Default | Description |
-| -------------------- | ------- | ----------- |
-| `--vjs-indicator-bg` | `#fff`  | Fill color. |
-
-### Thumb
-
-Draggable handle.
-
-#### Props
-
-| Prop     | Type                                             | Default | Description                   |
-| -------- | ------------------------------------------------ | ------- | ----------------------------- |
-| `index`  | `number`                                         | —       | Thumb index for range slider. |
-| `render` | `ReactElement \| (props, state) => ReactElement` | —       | Custom render element.        |
-
-#### Data Attributes
-
-| Attribute       | Description                        |
-| --------------- | ---------------------------------- |
-| `data-focused`  | Present when focused.              |
-| `data-dragging` | Present while dragging this thumb. |
-| `data-index`    | Thumb index in range sliders.      |
-
-#### CSS Custom Properties
-
-| Property           | Default | Description |
-| ------------------ | ------- | ----------- |
-| `--vjs-thumb-size` | `16px`  | Thumb size. |
-
-## Styling
-
-```css
-/* Basic horizontal slider */
-vjs-slider {
-  --vjs-slider-size: 200px;
-  --vjs-track-bg: #333;
-  --vjs-indicator-bg: #fff;
-  --vjs-thumb-size: 16px;
-}
-
-/* Vertical variant */
-vjs-slider[data-orientation='vertical'] {
-  --vjs-slider-size: 120px;
-}
-
-/* Disabled state */
-vjs-slider[data-disabled] {
-  opacity: 0.5;
-  pointer-events: none;
-}
-```
+| State       | Via            | Description                   |
+| ----------- | -------------- | ----------------------------- |
+| `stateName` | `requestName`  | When and why this is written  |
 
 ## Accessibility
 
@@ -203,17 +96,29 @@ vjs-slider[data-disabled] {
 | ---------------- | ---------------------- |
 | `ArrowRight/Up`  | Increase by step       |
 | `ArrowLeft/Down` | Decrease by step       |
-| `PageUp`         | Increase by large step |
-| `PageDown`       | Decrease by large step |
 | `Home`           | Set to minimum         |
 | `End`            | Set to maximum         |
 
 ### ARIA
 
-- Root role: `slider` (or `group` for range)
-- Thumb: `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
-- `aria-orientation` for vertical sliders
-- `aria-label` on Thumb for range sliders
+- Root role: `slider`
+- `aria-valuenow`, `aria-valuemin`, `aria-valuemax` on interactive element
+- `aria-orientation` for vertical
+- `aria-label` required for accessible name
+
+### Focus Management
+
+- Which element receives focus
+- Tab order within the component
+- Focus restoration behavior
+
+## Prior Art
+
+How do other libraries handle this?
+
+- **Base UI** — [API shape, composition model, relevant patterns]
+- **WAI-ARIA APG** — [canonical accessibility pattern for this component type]
+- **Player libraries** — [edge cases, feature requirements, context from Media Chrome, Vidstack, Video.js v8, Plyr]
 
 ## Open Questions
 

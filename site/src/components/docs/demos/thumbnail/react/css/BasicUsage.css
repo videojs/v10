@@ -1,9 +1,9 @@
-.react-thumbnail-text-track {
+.demo {
   position: relative;
   max-width: 280px;
 }
 
-.react-thumbnail-text-track__media {
+.media {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -11,13 +11,13 @@
   pointer-events: none;
 }
 
-.react-thumbnail-text-track__thumbnail {
+.media-thumbnail {
   display: block;
   width: auto;
   min-width: 0;
   max-width: 240px;
 }
 
-.react-thumbnail-text-track__thumbnail[data-hidden] {
+.media-thumbnail[data-hidden] {
   display: none;
 }

@@ -1,6 +1,8 @@
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -18,7 +20,8 @@ import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 import {
   bufferingIndicator,
   button,
-  buttonGroup,
+  buttonGroupEnd,
+  buttonGroupStart,
   controls,
   error,
   icon,
@@ -40,7 +43,9 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -55,20 +60,9 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
-import { ErrorDialog } from '../error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: error.root,
-  dialog: error.dialog,
-  content: error.content,
-  title: error.title,
-  description: error.description,
-  actions: error.actions,
-  close: cn(button.base, button.primary),
-};
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -118,28 +112,6 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
     />
   );
 });
-
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
-function CaptionsLabel(): string {
-  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? 'Disable captions' : 'Enable captions';
-}
-
-function PiPLabel(): string {
-  const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
-}
-
-function FullscreenLabel(): string {
-  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
-}
 
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
@@ -194,14 +166,26 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         )}
       />
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className={error.root}>
+          <div className={error.dialog}>
+            <div className={error.content}>
+              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className={error.description} />
+            </div>
+            <div className={error.actions}>
+              <ErrorDialog.Close className={cn(button.base, button.primary)}>OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <Controls.Root
         data-controls="" // Used as a hook for Tailwind has-[] styles
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroup}>
+          <div className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -212,15 +196,13 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <PlayLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
+                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
                       <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
@@ -234,7 +216,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
+                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
                       <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
@@ -263,13 +245,13 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <div className={preview.thumbnailWrapper}>
                   <Slider.Thumbnail className={preview.thumbnail} />
                 </div>
-                <TimeSlider.Value type="pointer" className={preview.timestamp} />
+                <TimeSlider.Value type="pointer" className={preview.time} />
                 <SpinnerIcon className={cn(icon, preview.spinner)} />
               </div>
             </TimeSlider.Root>
           </div>
 
-          <div className={buttonGroup}>
+          <div className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
@@ -286,9 +268,19 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <CaptionsLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CastButton className={iconState.cast.button} render={<Button />}>
+                    <CastEnterIcon className={cn(icon, iconState.cast.enter)} />
+                    <CastExitIcon className={cn(icon, iconState.cast.exit)} />
+                  </CastButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -300,9 +292,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <PiPLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -314,9 +304,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <FullscreenLabel />
-              </Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

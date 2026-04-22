@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 export const error = {
-  root: 'peer/error group/error flex absolute inset-0 z-20 items-center justify-center outline-none',
+  root: 'peer/error group/error hidden data-[open]:flex absolute inset-0 z-20 items-center justify-center outline-none',
   dialog: cn(
     'flex flex-col gap-3 max-w-72 p-3 rounded-[1.75rem] text-white',
     // Animation

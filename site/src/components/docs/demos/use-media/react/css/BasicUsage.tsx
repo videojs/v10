@@ -1,8 +1,6 @@
 import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './BasicUsage.css';
-
 const Player = createPlayer({
   features: videoFeatures,
 });
@@ -13,7 +11,7 @@ function MediaInfo() {
   if (!media) return null;
 
   return (
-    <dl className="react-use-media-basic__info">
+    <dl className="info-panel">
       <div>
         <dt>tagName</dt>
         <dd>{media.tagName.toLowerCase()}</dd>
@@ -41,7 +39,7 @@ function MediaInfo() {
 export default function BasicUsage() {
   return (
     <Player.Provider>
-      <Player.Container className="react-use-media-basic">
+      <Player.Container className="media-container">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay

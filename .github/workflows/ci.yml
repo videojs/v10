@@ -85,6 +85,7 @@ jobs:
       fail-fast: false
       matrix:
         package:
+          - '@videojs/cli'
           - '@videojs/core'
           - '@videojs/store'
           - '@videojs/utils'
@@ -119,6 +120,55 @@ jobs:
 
       - name: Test package
         run: pnpm turbo run test --filter="${{ matrix.package }}"
+
+  test-spf:
+    name: Test (@videojs/spf)
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test SPF
+        run: pnpm turbo run test --filter="@videojs/spf" --env-mode=loose
+
+  workspace:
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Check workspace consistency
+        run: pnpm check:workspace
 
   build:
     needs: install

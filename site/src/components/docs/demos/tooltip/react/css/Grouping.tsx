@@ -1,29 +1,27 @@
 import { Tooltip } from '@videojs/react';
 
-import './Grouping.css';
-
 export default function Grouping() {
   return (
-    <div className="react-tooltip-grouping">
+    <div className="demo">
       <Tooltip.Provider>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Play</Tooltip.Trigger>
-          <Tooltip.Popup className="react-tooltip-grouping__popup">
-            <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
+          <Tooltip.Trigger className="trigger">Play</Tooltip.Trigger>
+          <Tooltip.Popup className="media-tooltip">
+            <Tooltip.Arrow className="arrow" />
             Play video
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Mute</Tooltip.Trigger>
-          <Tooltip.Popup className="react-tooltip-grouping__popup">
-            <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
+          <Tooltip.Trigger className="trigger">Mute</Tooltip.Trigger>
+          <Tooltip.Popup className="media-tooltip">
+            <Tooltip.Arrow className="arrow" />
             Mute audio
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Fullscreen</Tooltip.Trigger>
-          <Tooltip.Popup className="react-tooltip-grouping__popup">
-            <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
+          <Tooltip.Trigger className="trigger">Fullscreen</Tooltip.Trigger>
+          <Tooltip.Popup className="media-tooltip">
+            <Tooltip.Arrow className="arrow" />
             Enter fullscreen
           </Tooltip.Popup>
         </Tooltip.Root>

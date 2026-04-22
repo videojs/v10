@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
-import { createMockVideo } from '../../../tests/test-helpers';
+import { createMockVideo, createTimeRanges } from '../../../tests/test-helpers';
 import { timeFeature } from '../time';
 
 describe('timeFeature', () => {
@@ -72,6 +72,66 @@ describe('timeFeature', () => {
       video.dispatchEvent(new Event('seeked'));
 
       expect(store.state.currentTime).toBe(50);
+    });
+
+    it('uses seekable end as duration for live streams (Infinity)', () => {
+      const video = createMockVideo({
+        currentTime: 0,
+        duration: Number.POSITIVE_INFINITY,
+        seekable: createTimeRanges([[0, 300]]),
+      });
+
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.duration).toBe(300);
+    });
+
+    it('returns 0 duration for live streams with no seekable range', () => {
+      const video = createMockVideo({
+        duration: Number.POSITIVE_INFINITY,
+        seekable: createTimeRanges([]),
+      });
+
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.duration).toBe(0);
+    });
+
+    it('updates live duration as seekable range grows on progress', () => {
+      const video = createMockVideo({
+        duration: Number.POSITIVE_INFINITY,
+        seekable: createTimeRanges([[0, 300]]),
+      });
+
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.duration).toBe(300);
+
+      Object.defineProperty(video, 'seekable', {
+        value: createTimeRanges([[10, 320]]),
+        configurable: true,
+      });
+      video.dispatchEvent(new Event('progress'));
+
+      expect(store.state.duration).toBe(320);
+    });
+
+    it('uses end of last seekable range when multiple ranges exist', () => {
+      const video = createMockVideo({
+        duration: Number.POSITIVE_INFINITY,
+        seekable: createTimeRanges([
+          [0, 100],
+          [150, 300],
+        ]),
+      });
+
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.duration).toBe(300);
     });
 
     it('updates on emptied event', () => {
@@ -195,6 +255,111 @@ describe('timeFeature', () => {
 
         expect(store.state.seeking).toBe(false);
         expect(store.state.currentTime).toBe(45);
+      });
+
+      it('timeupdate during seek does not overwrite optimistic currentTime', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        expect(store.state.currentTime).toBe(10);
+
+        // Start a seek — optimistic update sets currentTime to 60.
+        store.seek(60);
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+
+        // Browser fires timeupdate with a stale currentTime while still seeking.
+        video.currentTime = 12;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        // Optimistic value must be preserved — not overwritten by the stale timeupdate.
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+      });
+
+      it('progress during seek does not overwrite optimistic currentTime', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        store.seek(60);
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+
+        // Browser fires progress (buffering at the seek target) with a stale
+        // currentTime still reflecting the pre-seek position.
+        video.currentTime = 12;
+        video.dispatchEvent(new Event('progress'));
+
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+      });
+
+      it('timeupdate resumes syncing after seeked', async () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        const resultPromise = store.seek(60);
+
+        // Complete the seek.
+        video.currentTime = 60;
+        Object.defineProperty(video, 'seeking', { value: false, configurable: true });
+        video.dispatchEvent(new Event('seeked'));
+
+        await resultPromise;
+
+        expect(store.state.seeking).toBe(false);
+        expect(store.state.currentTime).toBe(60);
+
+        // Playback advances — timeupdate should sync normally again.
+        video.currentTime = 62;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        expect(store.state.currentTime).toBe(62);
+      });
+
+      it('rapid seeks during drag preserve latest optimistic value', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        // Simulate rapid drag: multiple seeks without waiting for seeked.
+        store.seek(30);
+        expect(store.state.currentTime).toBe(30);
+
+        store.seek(50);
+        expect(store.state.currentTime).toBe(50);
+
+        store.seek(70);
+        expect(store.state.currentTime).toBe(70);
+
+        // Stale timeupdate fires — should not snap back.
+        video.currentTime = 15;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        expect(store.state.currentTime).toBe(70);
       });
     });
   });

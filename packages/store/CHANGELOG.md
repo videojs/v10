@@ -1,5 +1,220 @@
 # Changelog
 
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.21...@videojs/store@10.0.0-beta.22) (2026-04-18)
+
+
+### Bug Fixes
+
+* **packages:** add server-only bundles  ([#1349](https://github.com/videojs/v10/issues/1349)) ([3331fda](https://github.com/videojs/v10/commit/3331fdaf25c8a89ea6d36c2972631df589fc0ad3))
+
+
+### Reverts
+
+* **packages:** add server-only bundles ([#1349](https://github.com/videojs/v10/issues/1349)) ([#1354](https://github.com/videojs/v10/issues/1354)) ([8530316](https://github.com/videojs/v10/commit/8530316987b5122a2e455b0db3bad6fd3ffa8186))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.22
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.22
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.20...@videojs/store@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.21
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.21
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.19...@videojs/store@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.20
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.20
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.20
+
+## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.18...@videojs/store@10.0.0-beta.19) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.19
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.19
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.19
+
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.17...@videojs/store@10.0.0-beta.18) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.18
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.18
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.18
+
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.16...@videojs/store@10.0.0-beta.17) (2026-04-11)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.17
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.17
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.17
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.15...@videojs/store@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **core:** add toggleControls to controls feature ([#1280](https://github.com/videojs/v10/issues/1280)) ([11f3057](https://github.com/videojs/v10/commit/11f305713bba718d54944a57684e8c135fe4e0e1))
+
+
+### Bug Fixes
+
+* **packages:** consistent react versions ([#1285](https://github.com/videojs/v10/issues/1285)) ([1c937da](https://github.com/videojs/v10/commit/1c937da4704d51c0c64e5085b6f235bb95a236eb))
+* **packages:** narrow react peer dependency to v18+ ([#1289](https://github.com/videojs/v10/issues/1289)) ([6fb6ab7](https://github.com/videojs/v10/commit/6fb6ab7dfb4ac2671bfac4269dfc5813ab76f0e8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.16
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.16
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.16
+
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.14...@videojs/store@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.15
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.15
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.15
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.13...@videojs/store@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.14
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.14
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.14
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.12...@videojs/store@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.13
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.13
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.13
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.11...@videojs/store@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+
+
+### Bug Fixes
+
+* **utils:** polyfill AbortSignal.any for Chromium ≤115 ([#1142](https://github.com/videojs/v10/issues/1142)) ([c3641c8](https://github.com/videojs/v10/commit/c3641c888c9630b2780cdda556431512d9ca5b81))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.12
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.12
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.12
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.10...@videojs/store@10.0.0-beta.11) (2026-03-24)
 
 

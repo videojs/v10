@@ -1,8 +1,9 @@
 ---
 import { ArrowUpRight } from 'lucide-react';
+import Discord from '@/assets/logos/discord.svg?react';
+import GitHub from '@/assets/logos/github.svg?react';
+import LogoMonoVersion from '@/assets/logos/videojs-mono.svg?react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL, MUX_URL } from '@/consts';
-import Discord from './icons/discord.svg?react';
-import GitHub from './icons/github.svg?react';
 import GetStartedLink from './NavBar/GetStartedLink';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -29,7 +30,7 @@ const { class: className } = Astro.props;
     className,
   ]}
 >
-  <nav
+  <div
     class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 @4xl:flex-row @4xl:items-start @4xl:border-t @4xl:px-10 dark:border-warm-gray"
   >
     <nav
@@ -50,7 +51,10 @@ const { class: className } = Astro.props;
               href={link.href}
               class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
             >
-              {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+              {link.label}{" "}
+              {link.external ? (
+                <ArrowUpRight size="1em" aria-hidden="true" />
+              ) : null}
             </a>
           ))
         }
@@ -87,11 +91,11 @@ const { class: className } = Astro.props;
     >
       Video.js is a free and open source HTML5 <a
         href="/"
-        class="underline intent:no-underline">video player.</a
+        class="underline intent:decoration-gold">video player.</a
       >
       <br class="@5xl:hidden" />Video hosting and streaming <a
         href={MUX_URL}
-        class="underline intent:no-underline"
+        class="underline intent:decoration-gold"
         >sponsored by Mux.
       </a>
       <br />
@@ -99,5 +103,5 @@ const { class: className } = Astro.props;
         class="@5xl:hidden"
       />&copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors
     </p>
-  </nav>
+  </div>
 </footer>

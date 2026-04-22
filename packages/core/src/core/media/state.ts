@@ -1,3 +1,5 @@
+import type { MediaFeatureAvailability, MediaStreamType } from './types';
+
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -33,10 +35,9 @@ export interface MediaPlaybackState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/pause
    */
   pause(): void;
+  /** Toggle play/pause. Returns `true` if playback started. */
+  togglePaused(): boolean;
 }
-
-/** Indicates whether a feature can be programmatically controlled on this platform. */
-export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 export interface MediaVolumeState {
   /**
@@ -121,6 +122,19 @@ export interface MediaSourceState {
   loadSource(src: string): string;
 }
 
+export interface MediaStreamTypeState {
+  /**
+   * Current stream delivery type.
+   *
+   * Components use this to toggle live-specific UI (e.g. a live indicator,
+   * a "jump to live edge" affordance, or hiding the time display).
+   *
+   * @see {@link MediaStreamTypes} for the canonical string values.
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
+   */
+  streamType: MediaStreamType;
+}
+
 export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.
@@ -161,6 +175,8 @@ export interface MediaFullscreenState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen
    */
   exitFullscreen(): Promise<void>;
+  /** Toggle fullscreen mode. */
+  toggleFullscreen(): Promise<void>;
 }
 
 export interface MediaControlsState {
@@ -168,6 +184,8 @@ export interface MediaControlsState {
   userActive: boolean;
   /** Whether controls should be visible (userActive || paused). */
   controlsVisible: boolean;
+  /** Toggle controls visibility. Returns the new `controlsVisible` value. */
+  toggleControls(): boolean;
 }
 
 export interface MediaPlaybackRateState {
@@ -221,7 +239,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
-export interface MediaTextTrack<Kind extends TextTrackKind> {
+export interface MediaTextTrack<Kind extends string = TextTrackKind> {
   kind: Kind;
   label: string;
   language: string;
@@ -236,7 +254,7 @@ export interface MediaTextTrackState {
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
   /** All text tracks available on the media element. */
-  textTrackList: MediaTextTrack<TextTrackKind>[];
+  textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
@@ -269,6 +287,25 @@ export interface MediaErrorState {
   dismissError(): void;
 }
 
+export type RemotePlaybackConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+export interface MediaRemotePlaybackState {
+  /**
+   * Current remote playback connection state.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/state
+   */
+  remotePlaybackState: RemotePlaybackConnectionState;
+  /**
+   * Whether remote playback can be requested on this platform.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
+   */
+  remotePlaybackAvailability: MediaFeatureAvailability;
+  /** Toggle the remote playback connection. */
+  toggleRemotePlayback(): Promise<void>;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.
@@ -294,4 +331,6 @@ export interface MediaPictureInPictureState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
   exitPictureInPicture(): Promise<void>;
+  /** Toggle picture-in-picture mode. */
+  togglePictureInPicture(): Promise<void>;
 }

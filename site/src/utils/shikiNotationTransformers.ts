@@ -6,7 +6,7 @@ import {
 import type { ShikiTransformer } from 'shiki';
 
 export const shikiNotationTransformers: ShikiTransformer[] = [
-  transformerNotationDiff({ matchAlgorithm: 'v3' }),
-  transformerNotationFocus({ matchAlgorithm: 'v3' }),
-  transformerNotationWordHighlight({ matchAlgorithm: 'v3' }),
+  transformerNotationDiff(),
+  transformerNotationFocus(),
+  transformerNotationWordHighlight(),
 ];

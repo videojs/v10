@@ -1,6 +1,6 @@
 ---
 import clsx from 'clsx';
-import ArrowIcon from '../icons/arrow.svg?react';
+import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import GetStartedLink from '../NavBar/GetStartedLink';
 ---
 
@@ -38,6 +38,7 @@ import GetStartedLink from '../NavBar/GetStartedLink';
 
     <GetStartedLink
       client:idle
+      aria-label="Get started"
       className={clsx(
         "relative z-10 ml-auto flex h-15 items-center justify-center text-faded-black lg:h-25 lg:w-40 lg:pr-2.5 dark:text-orange",
       )}

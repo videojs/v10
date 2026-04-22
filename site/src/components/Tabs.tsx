@@ -18,12 +18,10 @@ import clsx from 'clsx';
 
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
-
 import useIsHydrated from '@/utils/useIsHydrated';
-
 import CopyButton from './CopyButton';
-import CopyIcon from './icons/copy-icon.svg?react';
 
 export type TabsVariant = 'expanded' | 'compact';
 
@@ -96,7 +94,8 @@ interface TabsListProps {
 export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
     <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
-      <ul
+      <div
+        role="tablist"
         data-orientation="horizontal"
         aria-label={label}
         className={clsx(
@@ -105,7 +104,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
         )}
       >
         {children}
-      </ul>
+      </div>
       <CopyButton
         copyFrom={{
           container: `[data-tabs-root]`,
@@ -221,7 +220,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   }, []);
 
   return (
-    <li key={value} role="presentation" className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
+    <div key={value} className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
       <button
         ref={ref}
         type="button"
@@ -254,13 +253,13 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="font-bold invisible" data-search-ignore data-llms-ignore>
+          <span className="font-bold invisible" aria-hidden="true" data-search-ignore data-llms-ignore>
             {children}
           </span>
           <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
         </span>
       </button>
-    </li>
+    </div>
   );
 }
 
@@ -307,7 +306,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
       hidden={!isActive}
       data-value={value}
       className={twMerge(
-        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
+        clsx('overflow-auto p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
         className
       )}
     >

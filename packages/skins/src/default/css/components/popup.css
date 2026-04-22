@@ -69,8 +69,6 @@
 }
 
 .media-default-skin .media-popover {
-  --media-popover-side-offset: 0.5rem;
-
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {
     height: var(--media-popover-side-offset);
@@ -81,7 +79,7 @@
   }
 }
 .media-default-skin .media-popover--volume {
-  padding: 0.625rem 0.25rem;
+  padding: 0.75rem 0;
   border-radius: calc(infinity * 1px);
 
   &:has(media-volume-slider[data-availability="unsupported"]) {
@@ -94,7 +92,6 @@
   border-radius: calc(infinity * 1px);
   font-size: 0.75rem;
   white-space: nowrap;
-  --media-tooltip-side-offset: 0.75rem;
 
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {

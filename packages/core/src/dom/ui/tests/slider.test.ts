@@ -53,6 +53,7 @@ function pointerEvent(overrides: Partial<UIPointerEvent> = {}): UIPointerEvent {
     pointerType: 'mouse',
     buttons: 1,
     preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
     ...overrides,
   };
 }
@@ -69,6 +70,7 @@ function keyboardEvent(key: string, overrides: Partial<UIKeyboardEvent> = {}): U
     target: node,
     currentTarget: node,
     preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
     ...overrides,
   };
 }
@@ -215,29 +217,21 @@ describe('createSlider', () => {
   });
 
   describe('pointer: drag', () => {
-    it('starts drag after threshold pointermove events', () => {
+    it('starts drag immediately on pointerdown', () => {
       const onDragStart = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragStart }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-
-      // First move — below threshold
-      firePointerMove(slider, { clientX: 60 });
       flush();
-      expect(slider.input.current.dragging).toBe(false);
-      expect(onDragStart).not.toHaveBeenCalled();
 
-      // Second move — meets threshold
-      firePointerMove(slider, { clientX: 80 });
-      flush();
       expect(slider.input.current.dragging).toBe(true);
       expect(onDragStart).toHaveBeenCalledOnce();
 
       slider.destroy();
     });
 
-    it('calls onValueChange only after drag threshold is reached', () => {
+    it('calls onValueChange on every pointermove during drag', () => {
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onValueChange }));
@@ -245,17 +239,14 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
 
-      // Move 1: below threshold — no onValueChange
       firePointerMove(slider, { clientX: 60 });
-      expect(onValueChange).not.toHaveBeenCalled();
-
-      // Move 2: meets threshold — onValueChange fires
-      firePointerMove(slider, { clientX: 80 });
       expect(onValueChange).toHaveBeenCalledTimes(1);
 
-      // Move 3: during drag — onValueChange fires
-      firePointerMove(slider, { clientX: 100 });
+      firePointerMove(slider, { clientX: 80 });
       expect(onValueChange).toHaveBeenCalledTimes(2);
+
+      firePointerMove(slider, { clientX: 100 });
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
     });
@@ -335,20 +326,22 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('resets pointing state when no drag occurred', () => {
+    it('resets dragging and pointing on lostpointercapture after pointerdown', () => {
+      const onDragEnd = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el }));
+      const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
+      expect(slider.input.current.dragging).toBe(true);
       expect(slider.input.current.pointing).toBe(true);
 
-      // Lost capture without crossing drag threshold.
       fireLostPointerCapture(slider);
       flush();
 
+      expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(false);
-      expect(slider.input.current.pointerPercent).toBe(25);
+      expect(onDragEnd).toHaveBeenCalledOnce();
 
       slider.destroy();
     });
@@ -873,31 +866,11 @@ describe('createSlider', () => {
     });
   });
 
-  describe('commitThrottle', () => {
-    it('does not fire onValueCommit during drag when commitThrottle is 0', () => {
+  describe('commit semantics', () => {
+    it('does not fire onValueCommit during drag', () => {
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 0 }));
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
-
-      // Pass drag threshold
-      firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
-      firePointerMove(slider, { clientX: 100 });
-
-      expect(onValueCommit).not.toHaveBeenCalled();
-
-      slider.destroy();
-    });
-
-    it('fires throttled onValueCommit during drag when commitThrottle > 0', () => {
-      vi.useFakeTimers();
-
-      const onValueCommit = vi.fn();
-      const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -906,103 +879,214 @@ describe('createSlider', () => {
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 100 });
-      firePointerMove(slider, { clientX: 120 });
 
-      // Not yet — throttle hasn't fired
+      // Commit must not fire during drag — only on release.
       expect(onValueCommit).not.toHaveBeenCalled();
 
-      // Advance timer past throttle
-      vi.advanceTimersByTime(100);
+      slider.destroy();
+    });
+
+    it('fires onValueChange on pointerup before onValueCommit', () => {
+      const order: string[] = [];
+      const onValueChange = vi.fn(() => order.push('change'));
+      const onValueCommit = vi.fn(() => order.push('commit'));
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerMove(slider, { clientX: 60 });
+      firePointerMove(slider, { clientX: 80 });
+
+      onValueChange.mockClear();
+      onValueCommit.mockClear();
+      order.length = 0;
+
+      firePointerUp(slider, { clientX: 100 });
+
+      expect(onValueChange).toHaveBeenCalledWith(50);
+      expect(onValueCommit).toHaveBeenCalledWith(50);
+      expect(order).toEqual(['change', 'commit']);
+
+      slider.destroy();
+    });
+
+    it('fires onValueCommit on stale drag exit with last drag percent', () => {
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerMove(slider, { clientX: 60 });
+      firePointerMove(slider, { clientX: 80 });
+      onValueCommit.mockClear();
+
+      // Stale drag: buttons = 0, mouse pointer
+      firePointerMove(slider, { clientX: 100, buttons: 0, pointerType: 'mouse' });
 
       expect(onValueCommit).toHaveBeenCalledOnce();
-      // Should have the latest drag percent (120/200 = 60%)
-      expect(onValueCommit).toHaveBeenCalledWith(60);
+      // Last drag percent was 40% (80/200) — the stale move doesn't update it.
+      expect(onValueCommit).toHaveBeenCalledWith(40);
+
+      slider.destroy();
+    });
+
+    it('fires onValueCommit on lostpointercapture without pointerup', () => {
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerMove(slider, { clientX: 60 });
+      firePointerMove(slider, { clientX: 80 });
+      onValueCommit.mockClear();
+
+      // Lost capture without pointerup (e.g., tab switch, pointercancel).
+      fireLostPointerCapture(slider);
+
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(40);
+
+      slider.destroy();
+    });
+
+    it('does not double-commit on pointerup followed by lostpointercapture', () => {
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerMove(slider, { clientX: 60 });
+      firePointerMove(slider, { clientX: 80 });
+      onValueCommit.mockClear();
+
+      // Normal flow: pointerup commits, then lostpointercapture cleans up.
+      firePointerUp(slider, { clientX: 100 });
+      fireLostPointerCapture(slider);
+
+      // Only one commit from pointerup.
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(50);
+
+      slider.destroy();
+    });
+
+    it('fires onValueCommit on lostpointercapture if pointerup was missed', () => {
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Lost capture without pointerup — endDrag fires commit as fallback.
+      fireLostPointerCapture(slider);
+
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(25);
+
+      slider.destroy();
+    });
+  });
+
+  describe('changeThrottle', () => {
+    it('fires onValueChange immediately on first drag move (leading edge)', () => {
+      vi.useFakeTimers();
+
+      const onValueChange = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueChange.mockClear();
+
+      // First move fires immediately (leading edge).
+      firePointerMove(slider, { clientX: 60 });
+
+      expect(onValueChange).toHaveBeenCalledOnce();
+      expect(onValueChange).toHaveBeenCalledWith(30);
+
+      // Second move during cooldown — throttled.
+      firePointerMove(slider, { clientX: 80 });
+      expect(onValueChange).toHaveBeenCalledOnce();
 
       slider.destroy();
       vi.useRealTimers();
     });
 
-    it('uses trailing-edge: batches rapid moves into one commit', () => {
+    it('coalesces rapid moves during cooldown to trailing edge', () => {
       vi.useFakeTimers();
 
-      const onValueCommit = vi.fn();
+      const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
+      onValueChange.mockClear();
 
-      // Pass threshold
+      // First move — leading fires.
       firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
+      expect(onValueChange).toHaveBeenCalledOnce();
 
-      // Multiple rapid moves during drag
+      // More moves during cooldown.
       firePointerMove(slider, { clientX: 100 });
       firePointerMove(slider, { clientX: 120 });
       firePointerMove(slider, { clientX: 140 });
 
-      vi.advanceTimersByTime(100);
+      // Still only the leading call.
+      expect(onValueChange).toHaveBeenCalledOnce();
 
-      // Only one commit with the latest value (140/200 = 70%)
-      expect(onValueCommit).toHaveBeenCalledOnce();
-      expect(onValueCommit).toHaveBeenCalledWith(70);
+      // Trailing fires on cooldown expiry with latest value (140/200 = 70%).
+      vi.advanceTimersByTime(100);
+      expect(onValueChange).toHaveBeenCalledTimes(2);
+      expect(onValueChange).toHaveBeenLastCalledWith(70);
 
       slider.destroy();
       vi.useRealTimers();
     });
 
-    it('fires another throttled commit after the first one completes', () => {
-      vi.useFakeTimers();
-
-      const onValueCommit = vi.fn();
+    it('does not throttle onValueChange when changeThrottle is 0', () => {
+      const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 0 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
+      onValueChange.mockClear();
 
-      // Pass threshold and drag
+      // Every drag move fires immediately.
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
-      vi.advanceTimersByTime(100);
-      expect(onValueCommit).toHaveBeenCalledOnce();
+      firePointerMove(slider, { clientX: 100 });
 
-      // Continue dragging — should schedule another throttle
-      firePointerMove(slider, { clientX: 140 });
-      vi.advanceTimersByTime(100);
-
-      expect(onValueCommit).toHaveBeenCalledTimes(2);
-      expect(onValueCommit).toHaveBeenLastCalledWith(70);
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
-      vi.useRealTimers();
     });
 
-    it('cancels throttle and fires final unthrottled commit on pointerup', () => {
+    it('cancels throttled change and fires unthrottled on pointerup', () => {
       vi.useFakeTimers();
 
-      const onValueCommit = vi.fn();
+      const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
+      onValueChange.mockClear();
 
-      // Pass threshold and drag
+      // First move (leading fires) and more moves during cooldown.
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 120 });
 
-      // Release before throttle fires
+      // Release before trailing fires.
       firePointerUp(slider, { clientX: 150 });
 
-      // Final commit with release position (150/200 = 75%)
-      expect(onValueCommit).toHaveBeenCalledOnce();
-      expect(onValueCommit).toHaveBeenCalledWith(75);
+      // Leading + unthrottled pointerup. The coalesced moves were cancelled.
+      expect(onValueChange).toHaveBeenCalledTimes(2);
+      expect(onValueChange).toHaveBeenLastCalledWith(75);
 
-      // Advancing timer should NOT fire a stale throttled commit
+      // Advancing timer should NOT fire a stale trailing change.
       vi.advanceTimersByTime(200);
-      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueChange).toHaveBeenCalledTimes(2);
 
       slider.destroy();
       vi.useRealTimers();
@@ -1011,85 +1095,55 @@ describe('createSlider', () => {
     it('cancels throttle on destroy', () => {
       vi.useFakeTimers();
 
-      const onValueCommit = vi.fn();
+      const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
+      onValueChange.mockClear();
 
-      // Pass threshold
+      // First move (leading fires), more moves pending.
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
+      firePointerMove(slider, { clientX: 120 });
 
       slider.destroy();
 
-      // Advancing timer should NOT fire
+      // Advancing timer should NOT fire the pending trailing change.
       vi.advanceTimersByTime(200);
-      expect(onValueCommit).not.toHaveBeenCalled();
+      expect(onValueChange).toHaveBeenCalledOnce();
 
       vi.useRealTimers();
     });
 
-    it('cancels throttle on lostpointercapture', () => {
-      vi.useFakeTimers();
-
-      const onValueCommit = vi.fn();
-      const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
-
-      // Pass threshold
-      firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
-
-      fireLostPointerCapture(slider);
-
-      // Advancing timer should NOT fire
-      vi.advanceTimersByTime(200);
-      expect(onValueCommit).not.toHaveBeenCalled();
-
-      slider.destroy();
-      vi.useRealTimers();
-    });
-
-    it('does not throttle keyboard commits', () => {
-      const onValueCommit = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, onValueCommit, commitThrottle: 100 }));
+    it('does not throttle keyboard changes', () => {
+      const onValueChange = vi.fn();
+      const slider = createSlider(createOptions({ getPercent: () => 50, onValueChange, changeThrottle: 100 }));
 
       slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
 
-      // Keyboard commits fire immediately, not throttled
-      expect(onValueCommit).toHaveBeenCalledOnce();
-      expect(onValueCommit).toHaveBeenCalledWith(51);
+      expect(onValueChange).toHaveBeenCalledOnce();
+      expect(onValueChange).toHaveBeenCalledWith(51);
 
       slider.destroy();
     });
 
-    it('defaults commitThrottle to 0 when not provided', () => {
-      vi.useFakeTimers();
-
-      const onValueCommit = vi.fn();
+    it('defaults changeThrottle to 0 when not provided', () => {
+      const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      // No commitThrottle option — should default to 0 (disabled)
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueChange }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueCommit.mockClear();
+      onValueChange.mockClear();
 
+      // Every drag move fires immediately (no throttle).
       firePointerMove(slider, { clientX: 60 });
       firePointerMove(slider, { clientX: 80 });
       firePointerMove(slider, { clientX: 100 });
 
-      vi.advanceTimersByTime(200);
-
-      // No throttled commits — default is disabled
-      expect(onValueCommit).not.toHaveBeenCalled();
+      expect(onValueChange).toHaveBeenCalledTimes(3);
 
       slider.destroy();
-      vi.useRealTimers();
     });
   });
 });

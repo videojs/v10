@@ -1,3 +1,5 @@
+import { anyAbortSignal } from '@videojs/utils/events';
+
 export type SignalKey = PropertyKey;
 
 export class AbortControllerRegistry {
@@ -29,6 +31,6 @@ export class AbortControllerRegistry {
     this.#keys.get(key)?.abort();
     const controller = new AbortController();
     this.#keys.set(key, controller);
-    return AbortSignal.any([this.#base.signal, controller.signal]);
+    return anyAbortSignal([this.#base.signal, controller.signal]);
   }
 }

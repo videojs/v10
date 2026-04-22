@@ -1,7 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-
-import type { MediaFeatureAvailability, MediaVolumeState } from '../../../core/media/state';
+import type { MediaVolumeState } from '../../../core/media/state';
+import type { MediaFeatureAvailability } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
+import { isMediaVolumeCapable } from '../../media/predicate';
 
 /** Volume to restore when unmuting at zero. */
 const UNMUTE_VOLUME = 0.25;
@@ -15,9 +16,9 @@ export const volumeFeature = definePlayerFeature({
 
     setVolume(volume: number) {
       const { media } = target();
+      if (!isMediaVolumeCapable(media)) return 0;
       const clamped = Math.max(0, Math.min(1, volume));
 
-      // Auto-unmute when raising volume above zero.
       if (clamped > 0 && media.muted) {
         media.muted = false;
       }
@@ -28,11 +29,11 @@ export const volumeFeature = definePlayerFeature({
 
     toggleMuted() {
       const { media } = target();
+      if (!isMediaVolumeCapable(media)) return false;
       const effectivelyMuted = media.muted || media.volume === 0;
 
       if (effectivelyMuted) {
         media.muted = false;
-        // Restore a sensible volume when unmuting at zero.
         if (media.volume === 0) media.volume = UNMUTE_VOLUME;
       } else {
         media.muted = true;
@@ -44,6 +45,8 @@ export const volumeFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
+
+    if (!isMediaVolumeCapable(media)) return;
 
     set({ volumeAvailability: canSetVolume() });
 

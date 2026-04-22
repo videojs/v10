@@ -106,9 +106,19 @@ Based on the changes and `git` skill conventions:
 - **Existing PR (updated)**: "Updated PR #123: <url>"
 - **New PR**: "Created PR #123: <url>"
 
+## Writing Clear PR Descriptions
+
+A reviewer should understand the PR in 30 seconds. Apply the same rigor as issue bodies:
+
+- **Why over what** -- explain motivation, not mechanics. The diff shows what changed.
+- **Be concise** -- cut filler. Every sentence should carry information.
+- **No file lists** -- reviewers see the diff. Describe behavior changes.
+- **Collapse details** -- use `<details>` for implementation notes, tradeoffs, or architecture decisions that only some reviewers need.
+- **Sections must earn their place** -- omit Testing if covered by existing tests with nothing to add. Omit Changes if the summary says it all.
+- **Don't repeat the title** in the summary.
+
 ## Important
 
 - Always stage ALL changes with `git add -A`
-- Always check for existing PR before creating — avoid duplicate PRs
+- Always check for existing PR before creating -- avoid duplicate PRs
 - Prefer `gh` CLI for GitHub operations; fallback to MCP tools if `gh` unavailable
-- Follow PR description principles: why over what, concise, no file lists

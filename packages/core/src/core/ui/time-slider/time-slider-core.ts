@@ -1,4 +1,3 @@
-import { clamp } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -13,8 +12,8 @@ export interface TimeSliderProps extends SliderProps {
   min?: number | undefined;
   /** @internal Derived from `duration` — not user-settable. */
   max?: number | undefined;
-  /** Trailing-edge throttle (ms) for seek requests during drag. */
-  commitThrottle?: number | undefined;
+  /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
+  changeThrottle?: number | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -27,7 +26,7 @@ export class TimeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     ...SliderCore.defaultProps,
     label: 'Seek',
-    commitThrottle: 100,
+    changeThrottle: 100,
   };
 
   #props = { ...TimeSliderCore.defaultProps };
@@ -50,14 +49,11 @@ export class TimeSliderCore extends SliderCore {
   getState(): TimeSliderState {
     const media = this.#media!;
     const { duration, currentTime, seeking, buffered } = media;
-    const { dragging, dragPercent } = this.input;
 
     // Override min/max for time domain, forwarding all user props so disabled/thumbAlignment aren't lost.
     super.setProps({ ...this.#props, min: 0, max: duration });
 
-    // Raw precision during drag for smooth scrubbing — step snapping only applies to keyboard.
-    const value = dragging ? clamp((dragPercent / 100) * duration, 0, duration) : currentTime;
-    const base = super.getSliderState(value);
+    const base = super.getSliderState(currentTime);
 
     // Use end of the furthest buffered range
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
@@ -78,12 +74,16 @@ export class TimeSliderCore extends SliderCore {
 
   override getAttrs(state: TimeSliderState) {
     const base = super.getAttrs(state);
-    const currentPhrase = formatTimeAsPhrase(state.value);
+
+    // During drag, announce the pointer position the user would seek to.
+    const announceValue = state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
+    const currentPhrase = formatTimeAsPhrase(announceValue);
     const durationPhrase = formatTimeAsPhrase(state.duration);
     const valuetext = durationPhrase ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;
 
     return {
       ...base,
+      'aria-valuenow': announceValue,
       'aria-valuetext': valuetext,
     };
   }

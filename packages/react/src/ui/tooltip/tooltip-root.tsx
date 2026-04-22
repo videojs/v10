@@ -73,8 +73,10 @@ export function TooltipRoot({
     return instance;
   });
 
+  const [content, setContent] = useState<string | undefined>();
+
   const anchorName = useSafeId();
-  const popupId = useSafeId('tooltip-');
+  const popupId = useSafeId('tooltip');
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {
@@ -97,7 +99,9 @@ export function TooltipRoot({
   const state = core.getState();
 
   return (
-    <TooltipContextProvider value={{ core, tooltip, state, stateAttrMap: TooltipDataAttrs, anchorName, popupId }}>
+    <TooltipContextProvider
+      value={{ core, tooltip, state, stateAttrMap: TooltipDataAttrs, anchorName, popupId, content, setContent }}
+    >
       {children}
     </TooltipContextProvider>
   );

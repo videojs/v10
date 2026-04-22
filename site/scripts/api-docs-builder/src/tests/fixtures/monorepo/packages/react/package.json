@@ -1,0 +1,29 @@
+{
+  "name": "@videojs/react",
+  "exports": {
+    "./video": {
+      "types": "./src/presets/video/index.ts",
+      "default": "./src/presets/video/index.ts"
+    },
+    "./video/*": {
+      "types": "./src/presets/video/*.ts",
+      "default": "./src/presets/video/*.ts"
+    },
+    "./audio": {
+      "types": "./src/presets/audio/index.ts",
+      "default": "./src/presets/audio/index.ts"
+    },
+    "./audio/*": {
+      "types": "./src/presets/audio/*.ts",
+      "default": "./src/presets/audio/*.ts"
+    },
+    "./background": {
+      "types": "./src/presets/background/index.ts",
+      "default": "./src/presets/background/index.ts"
+    },
+    "./background/*": {
+      "types": "./src/presets/background/*.ts",
+      "default": "./src/presets/background/*.ts"
+    }
+  }
+}

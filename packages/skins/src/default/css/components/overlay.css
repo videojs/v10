@@ -7,12 +7,11 @@
   inset: 0;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
-  backdrop-filter: blur(0) saturate(1.5);
+  backdrop-filter: blur(0) saturate(1);
   opacity: 0;
   pointer-events: none;
   transition-property: opacity, backdrop-filter;
   transition-duration: var(--media-controls-transition-duration);
-  transition-delay: var(--media-controls-transition-delay);
   transition-timing-function: ease-out;
 }
 

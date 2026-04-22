@@ -1,7 +1,8 @@
 import type { BandwidthState } from '../abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../abr/bandwidth-estimator';
 import { selectQuality } from '../abr/quality-selection';
-import type { WritableState } from '../state/create-state';
+import { effect } from '../signals/effect';
+import { type Signal, update } from '../signals/primitives';
 import type { Presentation, VideoSelectionSet } from '../types';
 
 /**
@@ -84,8 +85,8 @@ function getVideoTracks(presentation: Presentation) {
  * // Later, when done:
  * cleanup();
  */
-export function switchQuality(
-  { state }: { state: WritableState<QualitySwitchingState> },
+export function switchQuality<S extends QualitySwitchingState>(
+  { state }: { state: Signal<S> },
   config: QualitySwitchingConfig = {}
 ): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
@@ -99,7 +100,8 @@ export function switchQuality(
   let lastUpgradeTime = Date.now();
   let firstMeaningfulFire = true;
 
-  return state.subscribe((currentState: QualitySwitchingState) => {
+  return effect(() => {
+    const currentState = state.get();
     const { presentation, bandwidthState, selectedVideoTrackId, abrDisabled } = currentState;
 
     if (abrDisabled === true) return;
@@ -128,6 +130,7 @@ export function switchQuality(
       lastUpgradeTime = now;
     }
 
-    state.patch({ selectedVideoTrackId: optimal.id });
+    const patch: Partial<QualitySwitchingState> = { selectedVideoTrackId: optimal.id };
+    update(state, patch);
   });
 }

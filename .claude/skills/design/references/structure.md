@@ -7,9 +7,7 @@ When to use single-file vs multi-file Design Docs.
 ```
 Is this a single concept with straightforward trade-offs?
 ├─ Yes → Single file
-└─ No → Are there 3+ distinct topics that deserve separate pages?
-         ├─ Yes → Multi-file
-         └─ No → Single file with clear sections
+└─ No → Multi-file (index.md + optional decisions.md)
 ```
 
 ## Single File
@@ -28,79 +26,68 @@ Is this a single concept with straightforward trade-offs?
 
 **Use when:**
 
-- 3+ distinct concepts that deserve separate pages
-- Different audiences need different sections
-- Complex architecture with multiple layers
+- Multiple related concepts that benefit from separate pages
+- The API surface doc is long enough that decisions would overwhelm it
 
 **Structure:**
 
 ```
 internal/design/feature-name/
-├── index.md          # Overview, problem, solution, quick start
-├── architecture.md   # How it works internally
-├── decisions.md      # Design decisions and rationale
-└── examples.md       # Extended usage examples
+├── index.md          # Problem, API surface, state, accessibility
+└── decisions.md      # Only when decisions are raised and debated
 ```
 
-**Add files as needed:**
+**`index.md`** is the design doc. It covers the API surface — what users interact with, what state it needs, and how accessibility works. Think of it as a proto-user-facing doc.
 
-- `primitives.md` — Library author API (if different from user API)
-- `migration.md` — Breaking changes and migration path
-- `alternatives.md` — Rejected approaches (if many)
+**`decisions.md`** is optional. Only create it when real debates happen — alternatives are weighed, trade-offs are discussed. Don't scaffold it upfront. Let the code and implementation speak for themselves.
 
-**Example:** Player API (two stores, multiple features, hooks + controllers).
+**What about architecture?** Internal structure, data flow, and implementation details belong in `.claude/plans/` as implementation plans, not design docs. Design docs focus on the "what" and "why" of the API surface, not the "how" of internals.
+
+**Example:** A compound UI component, a multi-part feature with store integration.
 
 ## index.md Contents
 
-The entry point for multi-file Design Docs:
+The entry point and primary document:
 
 1. **Frontmatter** — Status, date
-2. **Contents table** — Links to all files with one-line descriptions
-3. **Problem** — What pain exists
-4. **Solution overview** — High-level approach
-5. **Quick Start** — Minimal working example
-6. **Surface API** — What users interact with
-7. **Links** — Point to details in other files
+2. **Problem** — What pain exists
+3. **Solution overview** — High-level approach
+4. **Quick Start** — Minimal working example
+5. **API Surface** — Props, data attributes, CSS custom properties, events
+6. **State & Store** — Features/slices required, state shape
+7. **Accessibility** — ARIA, keyboard, focus management
+8. **Open Questions** — Unresolved items
 
-Keep `index.md` focused on "what" — save "why" for `decisions.md` and "how" for `architecture.md`.
+For components, the API surface section can highlight important part-specific details inline — no need for a separate parts file.
 
 ## Splitting Guidance
 
-**Signs you need to split:**
+**Signs you need multi-file:**
 
-- Scrolling past content to find what you need
-- Mixing "how to use" with "how it works"
-- Different readers need different sections
-- Rationale sections are longer than the API they explain
+- Several decisions were debated and deserve documented rationale
+- The API surface doc alone is comprehensive; decisions would double it
 
-**Signs to keep together:**
+**Signs to keep as single file:**
 
-- Everything fits on one screen
+- Everything fits in one readable page
 - Splitting would create tiny files
-- Cross-references would outnumber content
+- No significant decisions were debated
 
 ## File Naming
 
-| File              | Purpose                            |
-| ----------------- | ---------------------------------- |
-| `index.md`        | Entry point, overview              |
-| `architecture.md` | Internals, diagrams                |
-| `decisions.md`    | Rationale, alternatives considered |
-| `examples.md`     | Usage examples beyond quick start  |
-| `primitives.md`   | Library author API                 |
-| `migration.md`    | Breaking changes, upgrade path     |
-| `alternatives.md` | Rejected approaches (rare)         |
+| File           | Purpose                                     |
+| -------------- | ------------------------------------------- |
+| `index.md`     | API surface, state, accessibility           |
+| `decisions.md` | Rationale for debated decisions (optional)   |
 
 Use lowercase with hyphens. Match existing patterns in `internal/design/`.
 
 ## Cross-Linking
 
-In multi-file Design Docs, link between files:
+When using `decisions.md`, link from the main doc:
 
 ```markdown
-See [architecture.md](architecture.md) for internal details.
-
-**Rationale:** Covered in [decisions.md](decisions.md#flat-api-shape).
+See [decisions.md](decisions.md#decision-title) for rationale.
 ```
 
 Use section anchors for precise links. Keep links relative.

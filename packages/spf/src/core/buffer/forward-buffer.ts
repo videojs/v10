@@ -91,7 +91,7 @@ export function calculateForwardFlushPoint(
 
 export function getSegmentsToLoad(
   segments: readonly Segment[],
-  bufferedSegments: readonly Segment[],
+  bufferedSegments: readonly Pick<Segment, 'startTime' | 'duration'>[],
   currentTime: number,
   config: ForwardBufferConfig = DEFAULT_FORWARD_BUFFER_CONFIG
 ): Segment[] {

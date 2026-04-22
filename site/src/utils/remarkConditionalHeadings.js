@@ -4,10 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
+import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from './utilReferenceModel';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENT_REF_DIR = path.resolve(__dirname, '../content/generated-component-reference');
+const FEATURE_REF_DIR = path.resolve(__dirname, '../content/generated-feature-reference');
 const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
 
 function readComponentRefJson(componentName) {
@@ -65,6 +67,8 @@ export default function remarkConditionalHeadings() {
           return;
         } else if (node.name === 'ComponentReference') {
           injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
+        } else if (node.name === 'FeatureReference') {
+          injectFeatureReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
         } else if (node.name === 'UtilReference') {
           injectUtilReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
           return;
@@ -144,6 +148,32 @@ function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSl
 
   headingsWithMetadata.push(...componentHeadings);
   for (const heading of componentHeadings) {
+    reservedSlugs.add(heading.slug);
+  }
+}
+
+function readFeatureRefJson(featureName) {
+  const filePath = path.join(FEATURE_REF_DIR, `${featureName}.json`);
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function injectFeatureReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
+  const featureAttr = node.attributes?.find((a) => a.name === 'feature');
+  const featureName = typeof featureAttr?.value === 'string' ? featureAttr.value : null;
+  if (!featureName) return;
+
+  const json = readFeatureRefJson(featureName);
+  if (!json) return;
+
+  const featureModel = createFeatureReferenceModel(featureName, json);
+  const featureHeadings = buildFeatureReferenceTocHeadings(featureModel);
+
+  headingsWithMetadata.push(...featureHeadings);
+  for (const heading of featureHeadings) {
     reservedSlugs.add(heading.slug);
   }
 }
