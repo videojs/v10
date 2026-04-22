@@ -12,6 +12,7 @@ export default defineConfig({
     string: './src/string/index.ts',
     style: './src/style/index.ts',
     time: './src/time/index.ts',
+    types: './src/types/index.ts',
   },
   platform: 'neutral',
   format: 'es',
