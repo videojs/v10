@@ -8,6 +8,6 @@ interface PlayerOptions {
 }
 
 /** Create a React player instance. */
-export function createPlayer(options?: PlayerOptions): PlayerInstance {
+export function createPlayer(_options?: PlayerOptions): PlayerInstance {
   return {} as PlayerInstance;
 }

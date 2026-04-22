@@ -1,34 +1,66 @@
-/**
- * Centralized component API subsection definitions.
- *
- * Why this exists:
- * API reference headings are produced in two different places:
- * 1) rendered markup in ComponentReference.astro
- * 2) synthetic TOC metadata in remarkConditionalHeadings
- *
- * Historically each side computed ids/slugs independently, which caused drift
- * (TOC links diverging from rendered heading ids). Keeping subsection shape and
- * id pieces here makes both sides consume the same contract.
- */
-const API_REFERENCE_SUBSECTIONS = Object.freeze([
-  {
-    key: 'props',
-    title: 'Props',
-    singleId: 'props',
-    suffix: 'props',
-  },
-  {
-    key: 'state',
-    title: 'State',
-    singleId: 'state',
-    suffix: 'state',
-  },
-  {
-    key: 'dataAttributes',
-    title: 'Data attributes',
-    singleId: 'data-attributes',
-    suffix: 'data-attributes',
-  },
+import type { ComponentReference, PartReference } from '@/types/component-reference';
+import type { SupportedFramework } from '@/types/docs';
+
+export interface ApiReferenceSection {
+  key: string;
+  title: string;
+  id: string;
+  depth: number;
+  tocKind?: string;
+}
+
+export interface PartModel {
+  id: string;
+  name: string;
+  description: string | undefined;
+  componentName: string;
+  labelByFramework: { react: string; html: string };
+  frameworks: SupportedFramework[];
+  sections: ApiReferenceSection[];
+  data: PartReference;
+}
+
+interface ComponentReferenceModelBase {
+  componentName: string;
+  heading: { id: string; depth: number; text: string };
+  data: ComponentReference;
+}
+
+export interface MultiPartModel extends ComponentReferenceModelBase {
+  hasParts: true;
+  sections: [];
+  parts: PartModel[];
+}
+
+export interface SingleModel extends ComponentReferenceModelBase {
+  hasParts: false;
+  sections: ApiReferenceSection[];
+  parts: [];
+}
+
+export type ComponentReferenceModel = MultiPartModel | SingleModel;
+
+export interface TocHeading {
+  depth: number;
+  text: string;
+  slug: string;
+  frameworks?: SupportedFramework[];
+  tocKind?: string;
+}
+
+type SubsectionKey = 'props' | 'state' | 'dataAttributes' | 'cssCustomProperties';
+
+interface SubsectionDef {
+  key: SubsectionKey;
+  title: string;
+  singleId: string;
+  suffix: string;
+}
+
+const API_REFERENCE_SUBSECTIONS: readonly SubsectionDef[] = Object.freeze([
+  { key: 'props', title: 'Props', singleId: 'props', suffix: 'props' },
+  { key: 'state', title: 'State', singleId: 'state', suffix: 'state' },
+  { key: 'dataAttributes', title: 'Data attributes', singleId: 'data-attributes', suffix: 'data-attributes' },
   {
     key: 'cssCustomProperties',
     title: 'CSS custom properties',
@@ -39,11 +71,14 @@ const API_REFERENCE_SUBSECTIONS = Object.freeze([
 
 export const API_REFERENCE_SUBSECTION_TITLES = Object.freeze(API_REFERENCE_SUBSECTIONS.map((section) => section.title));
 
-function hasEntries(value) {
+function hasEntries(value: Record<string, unknown> | undefined): boolean {
   return Object.keys(value ?? {}).length > 0;
 }
 
-function createSections(source, options) {
+function createSections(
+  source: PartReference | ComponentReference,
+  options: { forPart: true; partId: string } | { forPart: false }
+): ApiReferenceSection[] {
   return API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
     if (!hasEntries(source[definition.key])) {
       return [];
@@ -72,17 +107,11 @@ function createSections(source, options) {
   });
 }
 
-/**
- * Create a single source-of-truth model for API reference headings and sections.
- *
- * This model intentionally carries both:
- * - display concerns (heading text/depth/framework label)
- * - identity concerns (exact ids used by anchors + TOC entries)
- *
- * The shared model is what prevents anchor drift: ids are computed once and
- * reused verbatim by the renderer and the remark plugin.
- */
-export function createComponentReferenceModel(componentName, apiReference, partOrder) {
+export function createComponentReferenceModel(
+  componentName: string,
+  apiReference: ComponentReference | null,
+  partOrder?: string[]
+): ComponentReferenceModel | null {
   if (!apiReference) {
     return null;
   }
@@ -90,18 +119,18 @@ export function createComponentReferenceModel(componentName, apiReference, partO
   const hasParts = Boolean(apiReference.parts && Object.keys(apiReference.parts).length > 0);
 
   if (hasParts) {
-    let partEntries = Object.entries(apiReference.parts);
+    let partEntries = Object.entries(apiReference.parts!);
 
     if (partOrder) {
       const orderMap = new Map(partOrder.map((id, i) => [id, i]));
       partEntries = partEntries.slice().sort((a, b) => {
-        const ai = orderMap.has(a[0]) ? orderMap.get(a[0]) : Number.MAX_SAFE_INTEGER;
-        const bi = orderMap.has(b[0]) ? orderMap.get(b[0]) : Number.MAX_SAFE_INTEGER;
+        const ai = orderMap.has(a[0]) ? orderMap.get(a[0])! : Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.has(b[0]) ? orderMap.get(b[0])! : Number.MAX_SAFE_INTEGER;
         return ai - bi;
       });
     }
 
-    const parts = partEntries.map(([partId, part]) => ({
+    const parts: PartModel[] = partEntries.map(([partId, part]) => ({
       id: partId,
       name: part.name,
       description: part.description,
@@ -110,7 +139,10 @@ export function createComponentReferenceModel(componentName, apiReference, partO
         react: part.name,
         html: part.platforms?.html?.tagName ?? part.name,
       },
-      frameworks: [...(part.platforms?.html ? ['html'] : []), ...(part.platforms?.react ? ['react'] : [])],
+      frameworks: [
+        ...(part.platforms?.html ? ['html' as const] : []),
+        ...(part.platforms?.react ? ['react' as const] : []),
+      ],
       sections: createSections(part, { forPart: true, partId }),
       data: part,
     }));
@@ -143,18 +175,12 @@ export function createComponentReferenceModel(componentName, apiReference, partO
   };
 }
 
-/**
- * Build TOC heading metadata from the shared API reference model.
- *
- * Important: this function does not slugify heading text. It uses model ids
- * directly, so TOC slugs are guaranteed to match rendered heading ids.
- */
-export function buildComponentReferenceTocHeadings(apiReferenceModel) {
+export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentReferenceModel | null): TocHeading[] {
   if (!apiReferenceModel) {
     return [];
   }
 
-  const headings = [
+  const headings: TocHeading[] = [
     {
       depth: apiReferenceModel.heading.depth,
       text: apiReferenceModel.heading.text,

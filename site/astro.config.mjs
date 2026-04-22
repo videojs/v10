@@ -150,6 +150,7 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
+    // @ts-expect-error — Astro 5 uses Vite 6 types, but these plugins ship Vite 8 types. Compatible at runtime.
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],

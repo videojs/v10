@@ -1,4 +1,12 @@
-import { applyElementProps, createButton, createPlayer, MediaElement } from '@videojs/html';
+import {
+  applyElementProps,
+  createButton,
+  createPlayer,
+  MediaElement,
+  selectPlayback,
+  selectTime,
+  selectVolume,
+} from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/media/container';
 
@@ -28,7 +36,7 @@ class PlayerActions extends MediaElement {
 
     const bind = (el: HTMLElement, action: () => void) => {
       const props = createButton({ onActivate: action, isDisabled: () => !this.#player.value });
-      applyElementProps(el, props, signal);
+      applyElementProps(el, props, { signal });
     };
 
     bind(playBtn, () => this.#player.value?.play());
@@ -46,20 +54,20 @@ class PlayerActions extends MediaElement {
 class PlayerState extends MediaElement {
   static readonly tagName = 'demo-ctrl-state';
 
-  readonly #state = new PlayerController(this, context, (s) => ({
-    paused: s.paused,
-    currentTime: s.currentTime,
-    volume: s.volume,
-  }));
+  readonly #playback = new PlayerController(this, context, selectPlayback);
+  readonly #time = new PlayerController(this, context, selectTime);
+  readonly #volume = new PlayerController(this, context, selectVolume);
 
-  protected override update(): void {
-    super.update();
-    const state = this.#state.value;
-    if (!state) return;
+  protected override update(changed: Map<string, unknown>): void {
+    super.update(changed);
+    const playback = this.#playback.value;
+    const time = this.#time.value;
+    const volume = this.#volume.value;
+    if (!playback) return;
 
     const el = this.querySelector('.text');
     if (el) {
-      el.textContent = `Paused: ${state.paused ? 'Yes' : 'No'} | Time: ${state.currentTime.toFixed(1)}s | Volume: ${Math.round(state.volume * 100)}%`;
+      el.textContent = `Paused: ${playback.paused ? 'Yes' : 'No'} | Time: ${(time?.currentTime ?? 0).toFixed(1)}s | Volume: ${Math.round((volume?.volume ?? 0) * 100)}%`;
     }
   }
 }

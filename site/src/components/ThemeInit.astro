@@ -3,6 +3,9 @@ import { THEME_KEY } from '@/consts';
 ---
 
 {/* Dark mode initialization script - runs before paint to prevent FOUC */}
+{
+  /* ts(2570) on localStorageKey is expected — astro check can't see define:vars injections (withastro/language-tools#711) */
+}
 <script is:inline define:vars={{ localStorageKey: THEME_KEY }}>
   if (
     typeof localStorage !== "undefined" &&

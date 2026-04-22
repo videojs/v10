@@ -1,5 +1,4 @@
 import { actions } from 'astro:actions';
-import type MuxUploaderElement from '@mux/mux-uploader';
 
 import MuxUploader, {
   MuxUploaderDrop,
@@ -27,7 +26,7 @@ import UploaderOverlay from './UploaderOverlay';
  * 3. If 401: show login overlay, wait for auth, retry
  * 4. Upload begins with returned URL
  * 5. On success: poll for playback ID
- * 6. When ready: update renderer to 'mux-video', store playback ID in nanostore
+ * 6. When ready: update renderer to 'hls', store playback ID in nanostore
  */
 export default function MuxUploaderPanel() {
   // Local state for upload flow (not shared across islands)
@@ -40,7 +39,7 @@ export default function MuxUploaderPanel() {
   // Ref to store the promise resolver for login flow
   const loginResolverRef = useRef<((url: string) => void) | null>(null);
   // Ref to the MuxUploader element for dispatching reset events
-  const uploaderRef = useRef<MuxUploaderElement>(null);
+  const uploaderRef = useRef<HTMLElement>(null);
 
   /**
    * Endpoint function called by MuxUploader when file is selected.
@@ -158,7 +157,7 @@ export default function MuxUploaderPanel() {
     // Success! Update local state and nanostores (for cross-island use)
     setPlaybackId(result.playbackId);
     setState('ready');
-    renderer.set('mux-video');
+    renderer.set('hls');
     muxPlaybackId.set(result.playbackId);
     sourceUrl.set(`https://stream.mux.com/${result.playbackId}.m3u8`);
   }, [uploadId]);
@@ -178,6 +177,7 @@ export default function MuxUploaderPanel() {
   return (
     <div className="flex-1 relative rounded-xs border border-dashed border-light-40 overflow-hidden border-faded-black dark:border-manila-dark">
       <MuxUploader
+        // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
         id="mux-uploader"
         className="hidden"
