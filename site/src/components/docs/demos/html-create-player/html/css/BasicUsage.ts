@@ -38,7 +38,7 @@ class PlayToggle extends MediaElement {
       isDisabled: () => !this.#player.value,
     });
 
-    applyElementProps(this, buttonProps, this.#disconnect.signal);
+    applyElementProps(this, buttonProps, { signal: this.#disconnect.signal });
   }
 
   override disconnectedCallback(): void {
@@ -47,8 +47,8 @@ class PlayToggle extends MediaElement {
     this.#disconnect = null;
   }
 
-  protected override update(): void {
-    super.update();
+  protected override update(changed: Map<string, unknown>): void {
+    super.update(changed);
     const state = this.#player.value;
     if (!state) return;
     applyStateDataAttrs(this, state, { paused: 'data-paused', ended: 'data-ended' });

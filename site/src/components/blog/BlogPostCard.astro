@@ -1,16 +1,14 @@
 ---
 
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import FormattedDate from '@/components/FormattedDate.astro';
 
 interface Props {
   post: CollectionEntry<'blog'>;
   authors: CollectionEntry<'authors'>[];
-  asLink?: boolean;
 }
 
-const { post, authors, asLink } = Astro.props;
+const { post, authors } = Astro.props;
 ---
 
 <article>
