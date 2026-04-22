@@ -1,5 +1,3 @@
-import type { Falsy } from '../types';
-
 /**
  * Finds the first element in a slot's assigned elements that matches a predicate.
  *
@@ -21,7 +19,7 @@ import type { Falsy } from '../types';
 export function getSlottedElement<T extends Element>(
   shadowRoot: ShadowRoot,
   slotName: string,
-  predicate: (el: Element) => Falsy<T>
+  predicate: (el: Element) => T | null | undefined | false | 0 | ''
 ): T | null {
   const slot = querySlot(shadowRoot, slotName);
   if (!slot) return null;
