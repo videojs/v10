@@ -27,10 +27,8 @@ import {
   overlay,
   popup,
   poster,
-  preview,
   root,
   slider,
-  time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
@@ -47,8 +45,6 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
-import { Slider } from '@/ui/slider';
-import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
@@ -82,10 +78,6 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
       {...props}
     />
   );
-});
-
-const SliderBuffer = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderBuffer(props, ref) {
-  return <SliderFill type="buffer" ref={ref} {...props} />;
 });
 
 const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persistent?: boolean }>(function SliderThumb(
@@ -186,21 +178,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
             </Tooltip.Root>
           </div>
 
-          <div className={time.controls}>
-            <TimeSlider.Root render={<SliderRoot />}>
-              <TimeSlider.Track render={<SliderTrack />}>
-                <TimeSlider.Fill render={<SliderFill />} />
-                <TimeSlider.Buffer render={<SliderBuffer />} />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <div className={preview.thumbnailWrapper}>
-                  <Slider.Thumbnail className={preview.thumbnail} />
-                </div>
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
-              </div>
-            </TimeSlider.Root>
-          </div>
+          <div className="grow" aria-hidden="true" />
 
           <div className={buttonGroupEnd}>
             <VolumePopover />

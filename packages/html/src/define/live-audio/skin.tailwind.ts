@@ -9,7 +9,6 @@ import {
   popup,
   root,
   slider,
-  time,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -49,15 +48,7 @@ function getTemplateHTML() {
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
           </div>
 
-          <div class="${time.group}">
-            <media-time-slider class="${slider.root}">
-              <media-slider-track class="${slider.track}">
-                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
-              </media-slider-track>
-              <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
-            </media-time-slider>
-          </div>
+          <div class="grow" aria-hidden="true"></div>
 
           <div class="${buttonGroup}">
             <media-mute-button commandfor="live-audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">

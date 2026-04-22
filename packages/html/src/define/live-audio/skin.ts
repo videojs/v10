@@ -37,15 +37,7 @@ function getTemplateHTML() {
             <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
           </div>
 
-          <div class="media-time-controls">
-            <media-time-slider class="media-slider">
-              <media-slider-track class="media-slider__track">
-                <media-slider-fill class="media-slider__fill"></media-slider-fill>
-                <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
-              </media-slider-track>
-              <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
-            </media-time-slider>
-          </div>
+          <div class="media-time-controls" aria-hidden="true"></div>
 
           <div class="media-button-group">
             <media-mute-button commandfor="live-audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">

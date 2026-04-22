@@ -32,8 +32,6 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
-import { Slider } from '@/ui/slider';
-import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
@@ -82,8 +80,9 @@ function VolumePopover(): ReactNode {
 
 /**
  * Default video skin configured for live playback. Mirrors {@link VideoSkin}
- * but omits the duration and current-time displays; a `TimeSlider` is kept so
- * DVR streams can still expose the seekable window.
+ * but omits the time slider and the duration / current-time displays. A
+ * flexible spacer stretches between the start and end button groups so they
+ * sit at opposite edges of the control bar.
  */
 export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
@@ -137,20 +136,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
             </Tooltip.Root>
           </div>
 
-          <div className="media-time-controls">
-            <TimeSlider.Root className="media-slider">
-              <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
-                <TimeSlider.Buffer className="media-slider__buffer" />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb className="media-slider__thumb" />
-
-              <div className="media-surface media-preview media-slider__preview">
-                <Slider.Thumbnail className="media-preview__thumbnail" />
-                <SpinnerIcon className="media-preview__spinner media-icon" />
-              </div>
-            </TimeSlider.Root>
-          </div>
+          <div className="media-time-controls" aria-hidden="true" />
 
           <div className="media-button-group">
             <VolumePopover />

@@ -13,7 +13,6 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
-import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
@@ -61,8 +60,10 @@ function VolumePopover(): ReactNode {
 
 /**
  * Minimal audio skin configured for live playback. Mirrors
- * {@link MinimalAudioSkin} but omits the current / duration / remaining time
- * displays.
+ * {@link MinimalAudioSkin} but omits the time slider and the current /
+ * duration / remaining time displays. A flexible spacer stretches between
+ * the play and volume controls so they sit at opposite edges of the
+ * control bar.
  */
 export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
@@ -102,15 +103,7 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
             </Tooltip.Root>
           </div>
 
-          <div className="media-time-controls">
-            <TimeSlider.Root className="media-slider">
-              <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
-                <TimeSlider.Buffer className="media-slider__buffer" />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb className="media-slider__thumb" />
-            </TimeSlider.Root>
-          </div>
+          <div className="media-time-controls" aria-hidden="true" />
 
           <div className="media-button-group">
             <VolumePopover />

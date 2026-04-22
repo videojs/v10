@@ -9,7 +9,6 @@ import {
   popup,
   root,
   slider,
-  time,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -18,7 +17,6 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
-import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { LiveAudioSkinProps } from './skin';
@@ -51,10 +49,6 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
       {...props}
     />
   );
-});
-
-const SliderBuffer = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderBuffer(props, ref) {
-  return <SliderFill type="buffer" ref={ref} {...props} />;
 });
 
 const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persistent?: boolean }>(function SliderThumb(
@@ -136,15 +130,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
             </Tooltip.Root>
           </div>
 
-          <div className={time.group}>
-            <TimeSlider.Root render={<SliderRoot />}>
-              <TimeSlider.Track render={<SliderTrack />}>
-                <TimeSlider.Fill render={<SliderFill />} />
-                <TimeSlider.Buffer render={<SliderBuffer />} />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb render={<SliderThumb />} />
-            </TimeSlider.Root>
-          </div>
+          <div className="grow" aria-hidden="true" />
 
           <div className={buttonGroup}>
             <VolumePopover />
