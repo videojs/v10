@@ -1,9 +1,8 @@
-/// <reference types="vitest" />
+/// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 
 export default getViteConfig({
-  // @ts-expect-error — Astro 5 uses Vite 6 types, but @vitejs/plugin-react ships Vite 8 types. Compatible at runtime.
   plugins: [react()],
   test: {
     globals: true,

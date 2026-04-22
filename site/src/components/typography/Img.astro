@@ -20,7 +20,7 @@ const isRemote = typeof src === 'string' && src.startsWith('http');
   ) : (
     <Image
       class={twMerge("my-8 h-auto max-w-full", className)}
-      inferSize
+      inferSize={true}
       src={src}
       {...rest}
     />

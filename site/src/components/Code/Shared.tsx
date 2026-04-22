@@ -12,8 +12,8 @@ export interface SharedProps {
 
 interface Highlighted {
   html: string;
-  preClassName: unknown;
-  codeClassName: unknown;
+  preClassName: string | undefined;
+  codeClassName: string | undefined;
 }
 
 // Build-time memo: identical (code, lang) pairs repeat across pages
@@ -56,8 +56,8 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
 
   const result: Highlighted = {
     html: hastToHtml(hast),
-    preClassName: preProps.class,
-    codeClassName: codeProps.class,
+    preClassName: preProps.class as string | undefined,
+    codeClassName: codeProps.class as string | undefined,
   };
   highlightCache.set(cacheKey, result);
   return result;

@@ -9,6 +9,19 @@ import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
+import astro from 'shiki/langs/astro.mjs';
+import bash from 'shiki/langs/bash.mjs';
+import css from 'shiki/langs/css.mjs';
+import html from 'shiki/langs/html.mjs';
+import http from 'shiki/langs/http.mjs';
+import javascript from 'shiki/langs/javascript.mjs';
+import json from 'shiki/langs/json.mjs';
+import jsx from 'shiki/langs/jsx.mjs';
+import markdown from 'shiki/langs/markdown.mjs';
+import mdxLang from 'shiki/langs/mdx.mjs';
+import ts from 'shiki/langs/ts.mjs';
+import tsx from 'shiki/langs/tsx.mjs';
+import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
@@ -113,21 +126,21 @@ export default defineConfig({
       // Pre-declare only the languages used in MDX code fences. Without this,
       // Astro ships a highlighter that lazily loads grammars on first use,
       // which serializes per-block initialization during build.
+      // `js`/`cjs`/`mjs` are auto-registered as aliases of `javascript` by Shiki.
       langs: [
-        'tsx',
-        'ts',
-        'css',
-        'html',
-        'js',
-        'jsx',
-        'javascript',
-        'bash',
-        'markdown',
-        'mdx',
-        'json',
-        'yaml',
-        'http',
-        'astro',
+        ...tsx,
+        ...ts,
+        ...css,
+        ...html,
+        ...jsx,
+        ...javascript,
+        ...bash,
+        ...markdown,
+        ...mdxLang,
+        ...json,
+        ...yaml,
+        ...http,
+        ...astro,
       ],
       transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
     },
@@ -150,7 +163,6 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    // @ts-expect-error — Astro 5 uses Vite 6 types, but these plugins ship Vite 8 types. Compatible at runtime.
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],
