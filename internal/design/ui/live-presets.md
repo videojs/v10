@@ -5,18 +5,16 @@ date: 2026-04-21
 
 # Live Presets
 
-Dedicated `live-video` and `live-audio` presets for live-capable playback, alongside the existing `video` and `audio` presets for on-demand-only playback.
+Dedicated `live-video` and `live-audio` presets for **live-only** playback, alongside the existing `video` and `audio` presets for on-demand-only playback.
 
 ## Decision
 
-Ship live playback as **separate presets** — `live-video` and `live-audio` — each pairing a live-capable feature set with a skin that adapts to both live and on-demand sources. We do **not** add live-capable state or UI to the existing `video` / `audio` presets.
+Ship live playback as **separate, live-only presets** — `live-video` and `live-audio`. Each pairs a live-capable feature set with a skin that renders live UI unconditionally. We do **not**:
 
-Two things diverge from the base presets:
+- Add live-capable state or UI to the existing `video` / `audio` presets.
+- Branch the live skins on `streamType` to cover VOD inside the same preset.
 
-1. **Feature arrays include `streamTypeFeature`.** `liveVideoFeatures` / `liveAudioFeatures` are supersets of `videoFeatures` / `audioFeatures` with the stream-type slice appended. Base presets omit it entirely.
-2. **Skins branch on `streamType`.** Live skins handle both live and on-demand sources within a single component, switching the time region when `streamType === 'live'`. Base skins assume on-demand and never read `streamType`.
-
-Runtime source switching between live and VOD is a supported flow of the live presets.
+Two presets, two jobs: base presets play VOD, live presets play live. A preset is a commitment to one mode, not a runtime toggle between both. If a live preset ever needs to cover VOD sources too, we can layer that in later — but we're not paying the complexity up front before we've felt the friction.
 
 ## Context
 
@@ -27,13 +25,15 @@ Runtime source switching between live and VOD is a supported flow of the live pr
 - The time slider, if shown at all, represents a DVR window, not `[0, duration]`
 - Live-only affordances are likely to grow (latency badge, "behind live" state, chat slot, etc.)
 
-Not every app needs this. Most VOD-only integrations don't want to pay for stream-type state or live UI code. And because the live skin needs to handle both modes anyway — a live-capable player may be pointed at a VOD replay, or a source may switch between the two — "live-aware" and "VOD-only" are two meaningfully different products. This doc records the split.
+Not every app needs this. Most VOD-only integrations don't want to pay for live UI code. And apps that do play live content almost always know that at embed time — an event page, a channel page, a DVR UI. "Live-aware" and "VOD-only" are two meaningfully different products, and authors pick one at integration time.
+
+This doc records both the split (live vs. VOD as separate presets) and the narrower commitment inside the live presets (live-only, no in-skin VOD fallback).
 
 ## Shape
 
 ### Feature arrays
 
-Base presets stay as today. Live presets are supersets with `streamTypeFeature` appended:
+Base presets stay as today. Live presets start identical in capability and will diverge as live-only needs emerge:
 
 ```ts
 // packages/core/src/dom/store/features/presets.ts
@@ -52,7 +52,7 @@ export const videoFeatures: VideoFeatures = [
   errorFeature,
 ];
 
-export const liveVideoFeatures: LiveVideoFeatures = [...videoFeatures, streamTypeFeature];
+export const liveVideoFeatures: VideoFeatures = videoFeatures;
 
 export const audioFeatures: AudioFeatures = [
   playbackFeature,
@@ -64,15 +64,10 @@ export const audioFeatures: AudioFeatures = [
   errorFeature,
 ];
 
-export const liveAudioFeatures: LiveAudioFeatures = [...audioFeatures, streamTypeFeature];
+export const liveAudioFeatures: AudioFeatures = audioFeatures;
 ```
 
-Types diverge to match. `LiveVideoFeatures` / `LiveAudioFeatures` extend their base arrays with the stream-type slice:
-
-```ts
-export type LiveVideoFeatures = [...VideoFeatures, PlayerFeature<MediaStreamTypeState>];
-export type LiveAudioFeatures = [...AudioFeatures, PlayerFeature<MediaStreamTypeState>];
-```
+`streamTypeFeature` is intentionally **not** included yet. The live skin assumes live, so it doesn't need runtime detection. When a live-only affordance actually needs stream-type state (e.g., surface an error if a VOD source is loaded, or drive a "behind live" badge derived from seekable + streamType), it's an additive, non-breaking change to append it to `liveVideoFeatures` / `liveAudioFeatures`.
 
 ### Preset packages
 
@@ -97,23 +92,19 @@ export { MinimalLiveVideoSkinTailwindElement } from '../define/live-video/minima
 
 `live-audio` mirrors this.
 
-### Live skin adapts to both modes
+### Live skin is live-only
 
-A live skin is a VOD skin plus a conditional time region:
+The live skin renders live controls unconditionally — a live indicator, a "jump to live edge" button, and (where applicable) a DVR-window slider derived from `seekable`. It does not read `streamType`, and it does not attempt to recover to a VOD layout when the source turns out to be on-demand:
 
 ```tsx
-const streamType = usePlayer(selectStreamType);
-
-// ...
-
-{streamType === 'live' ? (
-  <LiveEdgeControls />
-) : (
-  <OnDemandTimeControls />
-)}
+// packages/react/src/presets/live-video/skin.tsx
+<div className="media-time-controls">
+  <LiveEdgeButton />
+  <LiveIndicator />
+</div>
 ```
 
-While `streamType === 'unknown'` the skin shows a neutral placeholder (no duration, no live badge) until detection resolves. This avoids the VOD → live snap that would happen if we optimistically rendered one mode and flipped after manifest load.
+Pointing a `live-video` preset at a VOD source produces the live skin on top of a VOD stream — working playback, but with live affordances that don't match the content. That's an intentional degradation, not a supported configuration — the mirror of pointing `video` at a live source.
 
 ### Base skin is VOD-only
 
@@ -121,58 +112,65 @@ While `streamType === 'unknown'` the skin shows a neutral placeholder (no durati
 
 ## Alternatives Considered
 
-- **Branch the existing `video` / `audio` skins on `streamType`** — Add `streamTypeFeature` to the base feature arrays and swap `.media-time-controls` inside the single skin when `streamType === 'live'`. Pattern already used for `volumeAvailability === 'unsupported'` (see `VolumePopover` in `packages/react/src/presets/video/skin.tsx:60`).
+- **Live skin branches on `streamType` to cover VOD too.** Ship `liveVideoFeatures = [...videoFeatures, streamTypeFeature]` and render live vs. on-demand time controls inside the live skin based on detection, with a neutral placeholder while `streamType === 'unknown'`. Supports runtime source switches between live and VOD within one preset.
+- **Branch the existing `video` / `audio` skins on `streamType`.** One preset per medium, one skin that covers both modes by reading `streamType`. Pattern already used for `volumeAvailability === 'unsupported'` (see `VolumePopover` in `packages/react/src/presets/video/skin.tsx:60`).
+- **Single preset, runtime-selected skin.** Keep one `video` / `audio` preset but have it mount a different skin tree based on `streamType`. Hides the split from the author but retains the unknown-state and dead-code problems.
 
 ## Rationale
 
-Live-as-separate-preset wins on four axes:
+Live-only presets win on four axes:
 
-1. **VOD players don't pay for live.** The dominant case is on-demand. Keeping `streamTypeFeature` out of `videoFeatures` / `audioFeatures` means the VOD store has no `streamType` slice, the VOD skin has no live-branch code, and bundles for VOD-only apps omit both. A branching approach forces every player to carry the stream-type event plumbing and the live-UI tree, even when the source is known to be VOD.
+1. **VOD players don't pay for live.** The dominant case is on-demand. Keeping `streamTypeFeature` and the live UI tree out of `videoFeatures` / `audioFeatures` means the VOD store has no `streamType` slice, the VOD skin has no live-branch code, and bundles for VOD-only apps omit both. A shared-skin approach forces every player to carry the stream-type event plumbing and the live-UI tree, even when the source is known to be VOD.
 
-2. **Explicit opt-in matches author intent.** Authors typically know at embed time whether their product plays live content (event pages, channel pages, DVR UIs). Picking `live-video` is a one-word signal that live is a supported path — clearer than "use `video` and set some prop" and more discoverable than "`video` happens to work if the source is live." It also localises the "does this handle live?" question to preset choice, not to skin internals.
+2. **Explicit opt-in matches author intent.** Authors typically know at embed time whether their product plays live or VOD content. Picking `live-video` is a one-word signal that live is the supported path — clearer than "use `video` and set some prop" and more discoverable than "`video` happens to work if the source is live." It localises the "what kind of player is this?" question to preset choice, not to skin internals or runtime state.
 
-3. **Fork-template clarity.** Skins are designed to be copied and modified. A live-dedicated skin gives live-app authors a starting point that already wires up `streamType`, live-edge controls, and the VOD fallback — no conditional helpers to grow, no dead branches to delete. A VOD-app author forking `VideoSkin` gets a tree with zero live concepts to strip out.
+3. **No unknown-state flash.** If the live skin branched on `streamType`, every load would start in `unknown` and resolve to `live` (or `on-demand`) after manifest detection. Either we render a neutral placeholder during that window — introducing a third UI state to design and test — or we pick a default and flip visibly once detection completes. A live-only skin has one shape from first paint.
 
-4. **Headroom for divergence.** Live UI tends to accumulate bespoke affordances — latency indicator, "behind live" badge, DVR-aware scrubber interactions, live chat/reactions slot, low-latency toggle. Each of those lands naturally inside `LiveVideoSkin` without leaking concepts into `VideoSkin` or swelling the shared store's state shape.
+4. **Fork-template clarity.** Skins are designed to be copied and modified. A live-dedicated, live-only skin gives live-app authors a starting point with only live concepts in the tree — no conditional helpers to grow, no `unknown` placeholder to design around, no dead VOD branches to delete. A VOD-app author forking `VideoSkin` gets the same treatment from the other side.
+
+5. **Headroom for divergence.** Live UI tends to accumulate bespoke affordances — latency indicator, "behind live" badge, DVR-aware scrubber interactions, live chat/reactions slot, low-latency toggle. Each of those lands naturally inside `LiveVideoSkin` without leaking concepts into `VideoSkin` or swelling the shared store's state shape.
+
+6. **Easy to add, hard to remove.** If we ship live-only now and later find authors commonly need one preset that gracefully handles `live` → VOD replay or source swaps across modes, we can add `streamTypeFeature` to the live feature array and branch the skin — an additive change. Going the other way (shipping a dual-mode live skin, then deciding the unknown-state handling and dead code aren't worth it) is a visible breaking change for anyone who was relying on the VOD path.
 
 Secondary wins:
 
 - **Targetable visual regression tests.** `apps/e2e/tests/visual/video-skin.spec.ts` already snapshots per skin; live gets its own snapshot, and the VOD snapshot stays stable without a `streamType` harness.
-- **Smaller type surface in the common store.** `VideoPlayerStore` / `AudioPlayerStore` keep the same state shape they have today. Adding `streamType` to the base would ripple into every consumer of those types.
+- **Smaller type surface in the common store.** `VideoPlayerStore` / `AudioPlayerStore` keep the same state shape they have today. Adding `streamType` to the base (or to the live preset before we need it) would ripple into every consumer of those types.
 
-### What we give up vs. branching
+### What we give up
 
-- **The live skin still has to handle `unknown → live` internally.** The flicker problem doesn't disappear just because live is a separate preset; it just moves inside the live skin, which we address with a neutral placeholder during `unknown`.
-- **Runtime mode switching is live-only.** A base-preset player can't flip into live UI if its source changes. Authors who need that pick a live preset up front.
-- **Live skins are a superset to maintain.** Most of the file is the same JSX; only the time region branches.
+- **Runtime mode switching.** Neither preset adapts if its source's stream type changes. A live preset pointed at a VOD replay shows live UI over a VOD stream; a VOD preset pointed at a live source shows VOD UI over a live stream. Authors that need to handle both modes in one player either wait for a future iteration of the live preset or compose their own.
+- **A story for "live replay / DVR archive" flows.** Some products want a single embed that starts live and keeps playing after the stream ends, or that plays back a recorded segment inside the same UI as the live stream. That's explicitly deferred; we'll revisit when a concrete product need surfaces.
 
 ### Trade-offs
 
-| Gain                                                 | Cost                                                          |
-| ---------------------------------------------------- | ------------------------------------------------------------- |
-| VOD-only apps ship no stream-type state or live UI   | Live skins carry both branches and a neutral `unknown` state  |
-| Live capability is an explicit, single author choice | Two more React skins + four HTML skin elements to maintain    |
-| Base store shape stays minimal and stable            | Shared skin idioms must be kept in sync across trees          |
-| Room to add live-only affordances without churn      | Base presets can't recover if a source unexpectedly goes live |
+| Gain                                                 | Cost                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------- |
+| VOD-only apps ship no stream-type state or live UI   | Source-type switches at runtime aren't covered           |
+| Live-only apps ship no VOD branch or unknown state   | Live replay / post-stream VOD flows aren't served yet    |
+| First paint has a single, correct UI shape           | Two more React skins + four HTML skin elements to ship   |
+| Easy to layer dual-mode support on later if needed   | Shared skin idioms must be kept in sync across trees     |
+| Room to add live-only affordances without churn      | Authors must know their mode at preset-selection time    |
 
 ## Consequences
 
 - In `@videojs/core/dom`:
-  - Add `liveVideoFeatures` and `liveAudioFeatures` exports in `packages/core/src/dom/store/features/presets.ts`, each derived from the base array plus `streamTypeFeature`.
-  - Update the type aliases in `packages/core/src/dom/media/types.ts` so `LiveVideoFeatures` / `LiveAudioFeatures` reflect the appended slice.
-  - Remove `streamTypeFeature` from any base-array usages (it stays a standalone export for custom compositions).
+  - Add `liveVideoFeatures` and `liveAudioFeatures` exports in `packages/core/src/dom/store/features/presets.ts`. Initially they alias `videoFeatures` / `audioFeatures` respectively — no `streamTypeFeature` yet.
+  - `streamTypeFeature` stays a standalone export for custom compositions; it's not wired into any preset feature array.
+  - No change to `VideoFeatures` / `AudioFeatures` or the derived store types.
 - In `@videojs/react`:
   - Add `packages/react/src/presets/live-video/` with `skin.tsx`, `skin.tailwind.tsx`, `minimal-skin.tsx`, `minimal-skin.tailwind.tsx`.
   - Add `packages/react/src/presets/live-audio/` mirroring the above.
-  - Each live skin reads `selectStreamType` and branches the time region between live-edge and on-demand controls; `unknown` renders a neutral placeholder.
+  - Live skins render live controls unconditionally; they do not import `selectStreamType` and do not branch on stream type.
 - In `@videojs/html`:
   - Add `packages/html/src/presets/live-video.ts` and `packages/html/src/presets/live-audio.ts`, plus the corresponding `define/live-video/*` and `define/live-audio/*` custom element wrappers.
-- Site API reference pages for the new presets; update the presets overview to list live variants and clarify that the base presets are VOD-only.
-- `selectStreamType` remains a core export; its existing contract (return `undefined` when the feature isn't configured) covers the base-preset case naturally — base-preset consumers that call it get `undefined` and render as VOD.
+- Site API reference pages for the new presets; update the presets overview to list live variants and clarify that the base presets are VOD-only and the live presets are live-only.
+- `selectStreamType` remains a core export; its existing contract (return `undefined` when the feature isn't configured) covers both presets naturally — neither preset configures `streamTypeFeature` today, so callers get `undefined`.
 
 ## Open Questions
 
-1. **Neutral `unknown` rendering.** Exact shape of the placeholder during `streamType === 'unknown'` — whether it matches the live layout's footprint, the VOD layout's footprint, or a minimal third shape that avoids any layout shift when it resolves.
+1. **When to add `streamTypeFeature` to the live feature arrays.** What signal tells us we're paying for live-only's minimalism — authors writing the same "is this VOD?" guard themselves, Mux-specific mis-configurations we want to surface as an error, or something else? Worth revisiting after the first few live integrations.
+2. **Live replay / post-stream transitions.** Some live flows end with a VOD archive of the stream. Whether that's served by a future dual-mode live preset, by swapping presets at transition time, or by a third preset entirely is explicitly deferred.
 
 ## Prior Art
 
@@ -181,4 +179,4 @@ Secondary wins:
 - **Video.js v8** — Adds a `vjs-live` body class and hides `.vjs-remaining-time` / `.vjs-duration` via CSS when the stream is live; shows `<LiveDisplay>` instead. Single skin, CSS-driven branching — one preset serving both modes.
 - **Plyr** — Hides the progress/time controls and shows a "Live" badge when duration is not finite. Single skin, JS-driven branching.
 
-Our choice is the least common in the ecosystem but aligns with the fork-template philosophy of this project: presets are full reference implementations authors copy and mutate, and the split reflects a real product distinction (VOD-only vs. live-capable) rather than a runtime-only toggle.
+Our choice is the least common in the ecosystem but aligns with the fork-template philosophy of this project: presets are full reference implementations authors copy and mutate, and the split reflects a real product distinction (VOD-only vs. live-only) rather than a runtime-only toggle. We're also biased toward starting narrower than the alternatives — a live skin that covers live only is an easy thing to extend if demand proves us wrong, and a hard thing to retract once shipped.
