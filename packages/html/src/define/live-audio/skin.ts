@@ -62,14 +62,8 @@ function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
-      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
       <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
       <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
-      <media-hotkey keys=">" action="speedUp"></media-hotkey>
-      <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
 }

@@ -108,14 +108,8 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <Hotkey keys="l" action="seekStep" value={10} />
-      <Hotkey keys="j" action="seekStep" value={-10} />
       <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
       <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <Hotkey keys=">" action="speedUp" />
-      <Hotkey keys="<" action="speedDown" />
     </Container>
   );
 }

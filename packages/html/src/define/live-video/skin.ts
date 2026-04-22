@@ -102,21 +102,13 @@ function getTemplateHTML() {
       <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
       <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
       <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
-      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
-      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
       <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
       <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
-      <media-hotkey keys=">" action="speedUp"></media-hotkey>
-      <media-hotkey keys="<" action="speedDown"></media-hotkey>
 
       <!-- Gestures -->
       <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
       <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
-      <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
-      <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
     </media-container>
   `;
 }
