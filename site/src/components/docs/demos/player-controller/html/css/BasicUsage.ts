@@ -2,9 +2,6 @@ import { applyElementProps, createButton, createPlayer, MediaElement, PlayerCont
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/media/container';
 
-// NOTE: We import `PlayerController` directly from `@videojs/html` instead of
-// destructuring it from `createPlayer()` to work around videojs/v10#1111. Once
-// that's fixed, switch back to `const { ..., PlayerController } = createPlayer(...)`.
 const { ProviderMixin, context } = createPlayer({
   features: videoFeatures,
 });
