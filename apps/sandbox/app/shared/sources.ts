@@ -36,6 +36,7 @@ export const SOURCES = {
     url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
     type: 'hls',
     subType: 'mp4',
+    live: true,
   },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
@@ -72,6 +73,8 @@ export function getPosterSrc(source: SourceId): string | undefined {
 }
 
 export function getStoryboardSrc(source: SourceId): string | undefined {
+  const entry = SOURCES[source];
+  if ('live' in entry && entry.live) return undefined;
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt` : undefined;
 }
