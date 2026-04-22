@@ -6,7 +6,7 @@ import { usePoster } from '@app/shared/react/use-poster';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { SOURCES } from '@app/shared/sources';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { NativeHlsVideo } from '@videojs/react/media/native-hls-video';
 import { useMemo } from 'react';
@@ -22,6 +22,7 @@ function App() {
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
   const storyboard = useStoryboard();
+  const live = isLiveSource(source);
 
   return (
     <VideoProvider>
@@ -29,9 +30,10 @@ function App() {
         poster={poster}
         skin={skin}
         styling={styling}
+        live={live}
         className="w-full aspect-video max-w-4xl mx-auto"
       >
-        <NativeHlsVideo src={SOURCES[source].url} playsInline crossOrigin="anonymous">
+        <NativeHlsVideo src={SOURCES[source].url} autoPlay={live} muted={live} playsInline crossOrigin="anonymous">
           <Storyboard src={storyboard} />
         </NativeHlsVideo>
       </VideoSkinComponent>

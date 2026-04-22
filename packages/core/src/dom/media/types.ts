@@ -9,7 +9,6 @@ import type {
   MediaPlaybackState,
   MediaRemotePlaybackState,
   MediaSourceState,
-  MediaStreamTypeState,
   MediaTextTrackState,
   MediaTimeState,
   MediaVolumeState,
@@ -45,7 +44,6 @@ export type VideoFeatures = [
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
-  PlayerFeature<MediaStreamTypeState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
@@ -61,7 +59,6 @@ export type AudioFeatures = [
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
-  PlayerFeature<MediaStreamTypeState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaErrorState>,
 ];
@@ -70,17 +67,35 @@ export type AudioFeatures = [
 export type BackgroundFeatures = [];
 
 /**
- * Features for a live video player. Structurally identical to
- * {@link VideoFeatures} — the "live" presets share the same store but ship a
- * skin that omits duration-oriented UI.
+ * Features for a live video player. Mirrors {@link VideoFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
  */
-export type LiveVideoFeatures = VideoFeatures;
+export type LiveVideoFeatures = [
+  PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaVolumeState>,
+  PlayerFeature<MediaTimeState>,
+  PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaBufferState>,
+  PlayerFeature<MediaFullscreenState>,
+  PlayerFeature<MediaPictureInPictureState>,
+  PlayerFeature<MediaRemotePlaybackState>,
+  PlayerFeature<MediaControlsState>,
+  PlayerFeature<MediaTextTrackState>,
+  PlayerFeature<MediaErrorState>,
+];
 
 /**
- * Features for a live audio player. Structurally identical to
- * {@link AudioFeatures}.
+ * Features for a live audio player. Mirrors {@link AudioFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
  */
-export type LiveAudioFeatures = AudioFeatures;
+export type LiveAudioFeatures = [
+  PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaVolumeState>,
+  PlayerFeature<MediaTimeState>,
+  PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaBufferState>,
+  PlayerFeature<MediaErrorState>,
+];
 
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 

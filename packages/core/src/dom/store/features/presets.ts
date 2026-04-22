@@ -1,4 +1,10 @@
-import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
+import type {
+  AudioFeatures,
+  BackgroundFeatures,
+  LiveAudioFeatures,
+  LiveVideoFeatures,
+  VideoFeatures,
+} from '../../media/types';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
@@ -8,7 +14,6 @@ import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
 import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
-import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -19,7 +24,6 @@ export const videoFeatures: VideoFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
-  streamTypeFeature,
   bufferFeature,
   fullscreenFeature,
   pipFeature,
@@ -35,10 +39,40 @@ export const audioFeatures: AudioFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
-  streamTypeFeature,
   bufferFeature,
   errorFeature,
 ];
 
 // TODO: Add background video features (e.g., playback, source, buffer)
 export const backgroundFeatures: BackgroundFeatures = [];
+
+/**
+ * Features for a live video player. Mirrors {@link videoFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
+ */
+export const liveVideoFeatures: LiveVideoFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  fullscreenFeature,
+  pipFeature,
+  remotePlaybackFeature,
+  controlsFeature,
+  textTrackFeature,
+  errorFeature,
+];
+
+/**
+ * Features for a live audio player. Mirrors {@link audioFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
+ */
+export const liveAudioFeatures: LiveAudioFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  errorFeature,
+];

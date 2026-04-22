@@ -1,10 +1,10 @@
 import '@app/styles.css';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
-import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
 
 const html = String.raw;
@@ -19,7 +19,7 @@ const loadLatest = createLatestLoader();
 // CDN module loading — mirrors the exact import graph of each CDN bundle.
 // ---------------------------------------------------------------------------
 
-async function loadCdnPreset(preset: Preset, skin: Skin) {
+async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
   switch (preset) {
     case 'video':
     case 'hls-video':
@@ -27,8 +27,13 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
     case 'native-hls-video':
     case 'simple-hls-video':
     case 'dash-video':
-      if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
-      else await import('@videojs/html/cdn/video');
+      if (live) {
+        if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
+        else await import('@videojs/html/cdn/live-video');
+      } else {
+        if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
+        else await import('@videojs/html/cdn/video');
+      }
       break;
     case 'audio':
     case 'mux-audio':
@@ -74,9 +79,10 @@ function getPlayerTag(preset: Preset): string {
   return 'video-player';
 }
 
-function getSkinTag(preset: Preset, skin: Skin): string {
+function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (preset === 'background-video') return 'background-video-skin';
   if (preset === 'audio' || preset === 'mux-audio') return CSS_SKIN_TAGS[skin].audio;
+  if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
   return CSS_SKIN_TAGS[skin].video;
 }
 
@@ -112,9 +118,17 @@ function isVideoPreset(preset: Preset): boolean {
   );
 }
 
+function canPlayLive(preset: Preset): boolean {
+  return (
+    preset === 'hls-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
+  );
+}
+
 async function render() {
+  const live = canPlayLive(preset) && isLiveSource(state.source);
+
   await loadLatest(async () => {
-    await loadCdnPreset(preset, state.skin);
+    await loadCdnPreset(preset, state.skin, live);
     await loadCdnMedia(preset);
   });
 
@@ -122,13 +136,14 @@ async function render() {
 
   const root = document.getElementById('root')!;
   const playerTag = getPlayerTag(preset);
-  const skinTag = getSkinTag(preset, state.skin);
+  const skinTag = getSkinTag(preset, state.skin, live);
   const mediaTag = getMediaTag(preset);
   const source = SOURCES[state.source];
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
   const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
+  const liveAttrs = live ? 'autoplay muted' : '';
 
   // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {
@@ -163,7 +178,7 @@ async function render() {
   root.innerHTML = html`
     <${playerTag}>
       <${skinTag} class="aspect-video max-w-4xl mx-auto">
-        <${mediaTag} ${sourceAttr} playsinline crossorigin="anonymous">
+        <${mediaTag} ${sourceAttr} ${liveAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </${mediaTag}>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
