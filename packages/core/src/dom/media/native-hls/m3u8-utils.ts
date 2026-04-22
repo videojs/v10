@@ -47,20 +47,21 @@ export function isMultivariantPlaylist(playlist: string) {
  */
 export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: string): string | null {
   const lines = multivariant.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    if (!lines[i]!.startsWith('#EXT-X-STREAM-INF')) continue;
-    // The URI appears on the first non-blank, non-comment line that follows.
-    for (let j = i + 1; j < lines.length; j++) {
-      const next = lines[j]!.trim();
-      if (!next || next.startsWith('#')) continue;
-      try {
-        return new URL(next, baseUrl).toString();
-      } catch {
-        return null;
-      }
-    }
+  const start = lines.findIndex((l) => l.startsWith('#EXT-X-STREAM-INF'));
+  if (start === -1) return null;
+
+  // The URI appears on the first non-blank, non-comment line that follows.
+  const uri = lines
+    .slice(start + 1)
+    .map((l) => l.trim())
+    .find((l) => l && !l.startsWith('#'));
+  if (!uri) return null;
+
+  try {
+    return new URL(uri, baseUrl).toString();
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /**
@@ -91,7 +92,7 @@ export function parseStreamInfo(playlist: string): StreamInfo {
     } else if (line === '#EXT-X-ENDLIST') {
       hasEndList = true;
     } else if (line.startsWith('#EXT-X-TARGETDURATION:')) {
-      const value = Number(line.slice('#EXT-X-TARGETDURATION:'.length).trim());
+      const value = Number(line.slice('#EXT-X-TARGETDURATION:'.length));
       if (Number.isFinite(value)) targetDuration = value;
     } else if (line.startsWith('#EXT-X-PART-INF')) {
       const match = /PART-TARGET\s*=\s*([0-9.]+)/i.exec(line);
@@ -114,6 +115,12 @@ export function parseStreamInfo(playlist: string): StreamInfo {
   return { targetLiveWindow, liveEdgeStartOffset };
 }
 
+async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
+  const response = await fetch(url, init);
+  if (!response.ok) throw new Error(`Failed to fetch playlist (${response.status}): ${url}`);
+  return { text: await response.text(), url: response.url || url };
+}
+
 /**
  * Fetches the HLS playlist at `src`, following the first variant if it's a
  * multivariant playlist, and parses it into a {@link StreamInfo}.
@@ -121,18 +128,13 @@ export function parseStreamInfo(playlist: string): StreamInfo {
  * @throws when the fetch fails or no media playlist URL can be resolved.
  */
 export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): Promise<StreamInfo> {
-  const init = signal ? { signal } : {};
-  const response = await fetch(src, init);
-  if (!response.ok) throw new Error(`Failed to fetch playlist: ${response.status}`);
-  const text = await response.text();
+  const init: RequestInit = signal ? { signal } : {};
+  const { text, url } = await fetchPlaylist(src, init);
 
-  if (isMultivariantPlaylist(text)) {
-    const mediaPlaylistUrl = resolveFirstMediaPlaylistUrl(text, response.url || src);
-    if (!mediaPlaylistUrl) throw new Error('No media playlist URL found in multivariant playlist');
-    const mediaResponse = await fetch(mediaPlaylistUrl, init);
-    if (!mediaResponse.ok) throw new Error(`Failed to fetch media playlist: ${mediaResponse.status}`);
-    return parseStreamInfo(await mediaResponse.text());
-  }
+  if (!isMultivariantPlaylist(text)) return parseStreamInfo(text);
 
-  return parseStreamInfo(text);
+  const mediaUrl = resolveFirstMediaPlaylistUrl(text, url);
+  if (!mediaUrl) throw new Error('No media playlist URL found in multivariant playlist');
+  const media = await fetchPlaylist(mediaUrl, init);
+  return parseStreamInfo(media.text);
 }

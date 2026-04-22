@@ -11,9 +11,10 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     constructor(...args: any[]) {
       super(...args);
 
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#reset());
-      this.engine?.on(Hls.Events.DESTROYING, () => this.#reset());
-      this.engine?.on(Hls.Events.LEVEL_LOADED, (_event: string, data: LevelLoadedData) => {
+      const { engine } = this;
+      engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#reset());
+      engine?.on(Hls.Events.DESTROYING, () => this.#reset());
+      engine?.on(Hls.Events.LEVEL_LOADED, (_event: string, data: LevelLoadedData) => {
         this.#derive(data.details);
       });
     }
@@ -25,7 +26,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     // Derived from seekable + offset at read time. No cached state, no event.
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
-      const target = this.target ?? null;
+      const { target } = this;
       if (!target) return Number.NaN;
       const { seekable } = target;
       if (!seekable.length) return Number.NaN;
@@ -33,11 +34,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     }
 
     #derive(details: LevelLoadedData['details']) {
-      if (!details.live) {
-        this.#setOffset(undefined);
-        this.#setTargetLiveWindow(Number.NaN);
-        return;
-      }
+      if (!details.live) return this.#reset();
 
       // `EVENT` playlists retain all segments, so the seekable window can grow
       // without bound (DVR). Standard live keeps a fixed sliding window.
@@ -47,21 +44,16 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       // otherwise fall back to the per-spec multiples of the target durations.
       // See https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12
       const lowLatency = !!details.partList?.length;
-      const offset = lowLatency
+      this.#liveEdgeStartOffset = lowLatency
         ? details.partHoldBack || details.partTarget * 2
         : details.holdBack || details.targetduration * 3;
 
-      this.#setOffset(offset);
       this.#setTargetLiveWindow(targetLiveWindow);
     }
 
     #reset() {
-      this.#setOffset(undefined);
+      this.#liveEdgeStartOffset = undefined;
       this.#setTargetLiveWindow(Number.NaN);
-    }
-
-    #setOffset(value: number | undefined) {
-      this.#liveEdgeStartOffset = value;
     }
 
     #setTargetLiveWindow(value: number) {
