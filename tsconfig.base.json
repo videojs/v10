@@ -23,7 +23,6 @@
     "emitDeclarationOnly": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "disableSourceOfProjectReferenceRedirect": true,
     "isolatedDeclarations": false,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
