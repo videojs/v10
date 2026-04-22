@@ -1,4 +1,10 @@
-import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
+import type {
+  AudioFeatures,
+  BackgroundFeatures,
+  LiveAudioFeatures,
+  LiveVideoFeatures,
+  VideoFeatures,
+} from '../../media/types';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
@@ -42,3 +48,15 @@ export const audioFeatures: AudioFeatures = [
 
 // TODO: Add background video features (e.g., playback, source, buffer)
 export const backgroundFeatures: BackgroundFeatures = [];
+
+/**
+ * Features for a live video player. Identical to {@link videoFeatures} — the
+ * "live" presets share the store but ship a skin variant that omits the
+ * duration / remaining time displays.
+ */
+export const liveVideoFeatures: LiveVideoFeatures = videoFeatures;
+
+/**
+ * Features for a live audio player. Identical to {@link audioFeatures}.
+ */
+export const liveAudioFeatures: LiveAudioFeatures = audioFeatures;

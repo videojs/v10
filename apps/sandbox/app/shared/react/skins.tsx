@@ -20,6 +20,22 @@ async function loadVideoSkinComponent(skin: Skin, styling: Styling): Promise<Com
   return module.MinimalVideoSkin;
 }
 
+async function loadLiveVideoSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<VideoSkinProps>> {
+  const module = await import('@videojs/react/live-video');
+
+  if (styling === 'tailwind') {
+    return skin === 'default' ? module.LiveVideoSkinTailwind : module.MinimalLiveVideoSkinTailwind;
+  }
+
+  if (skin === 'default') {
+    await import('@videojs/react/live-video/skin.css');
+    return module.LiveVideoSkin;
+  }
+
+  await import('@videojs/react/live-video/minimal-skin.css');
+  return module.MinimalLiveVideoSkin;
+}
+
 async function loadAudioSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<AudioSkinProps>> {
   const module = await import('@videojs/react/audio');
 
@@ -66,10 +82,17 @@ function useLoadedComponent<Props>(
   return component;
 }
 
-type VideoSkinComponentProps = { skin: Skin; styling: Styling } & VideoSkinProps;
+type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
 
-export function VideoSkinComponent({ skin, styling, ...props }: VideoSkinComponentProps) {
-  const Component = useLoadedComponent(() => loadVideoSkinComponent(skin, styling), [skin, styling]);
+/**
+ * Loads the video skin for the given skin/styling. When `live` is true,
+ * the `live-video` skin variant is used instead.
+ */
+export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
+  const Component = useLoadedComponent(
+    () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),
+    [skin, styling, live]
+  );
 
   if (!Component) return null;
 
