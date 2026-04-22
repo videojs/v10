@@ -14,10 +14,10 @@ if (!paramFramework || !isValidFramework(paramFramework)) {
   throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
 }
 
-const href: string = resolveDocsLinkUrl({
+const { url: href } = resolveDocsLinkUrl({
   targetSlug: slug,
   contextFramework: paramFramework,
-}).url;
+});
 ---
 
-<A href={href} class={className}><slot /></A>
+<A href={href} class={className ?? undefined}><slot /></A>
