@@ -1,19 +1,19 @@
 import type { Constructor } from '@videojs/utils/types';
+import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import type { NativeMediaHost } from './errors';
-import { type StreamType, StreamTypes } from './index';
 
 export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
-    #streamType: StreamType = StreamTypes.UNKNOWN;
+    #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
     #isUserStreamType = false;
     #disconnect: AbortController | null = null;
 
-    get streamType(): StreamType {
+    get streamType(): MediaStreamType {
       return this.#streamType;
     }
 
-    set streamType(value: StreamType) {
-      if (value === StreamTypes.UNKNOWN) {
+    set streamType(value: MediaStreamType) {
+      if (value === MediaStreamTypes.UNKNOWN) {
         this.#isUserStreamType = false;
         this.#setDetected(this.#detect());
         return;
@@ -30,7 +30,7 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
 
     detach(): void {
       this.#destroy();
-      this.#setDetected(StreamTypes.UNKNOWN);
+      this.#setDetected(MediaStreamTypes.UNKNOWN);
       super.detach?.();
     }
 
@@ -53,30 +53,30 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
 
       target.addEventListener('durationchange', detect, { signal });
       target.addEventListener('loadedmetadata', detect, { signal });
-      target.addEventListener('emptied', () => this.#setDetected(StreamTypes.UNKNOWN), { signal });
+      target.addEventListener('emptied', () => this.#setDetected(MediaStreamTypes.UNKNOWN), { signal });
 
       detect();
     }
 
-    #detect(target: HTMLMediaElement | null = this.target as HTMLMediaElement | null): StreamType {
-      if (!target) return StreamTypes.UNKNOWN;
+    #detect(target: HTMLMediaElement | null = this.target as HTMLMediaElement | null): MediaStreamType {
+      if (!target) return MediaStreamTypes.UNKNOWN;
       const { duration } = target;
-      if (duration === Infinity) return StreamTypes.LIVE;
-      if (Number.isFinite(duration) && duration > 0) return StreamTypes.ON_DEMAND;
-      return StreamTypes.UNKNOWN;
+      if (duration === Infinity) return MediaStreamTypes.LIVE;
+      if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;
+      return MediaStreamTypes.UNKNOWN;
     }
 
-    #setDetected(value: StreamType): void {
+    #setDetected(value: MediaStreamType): void {
       if (this.#isUserStreamType) return;
       this.#update(value);
     }
 
-    #update(value: StreamType): void {
+    #update(value: MediaStreamType): void {
       if (this.#streamType === value) return;
       this.#streamType = value;
       this.dispatchEvent(new Event('streamtypechange'));
     }
   }
 
-  return NativeHlsMediaStreamType as unknown as Base & Constructor<{ streamType: StreamType }>;
+  return NativeHlsMediaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
 }
