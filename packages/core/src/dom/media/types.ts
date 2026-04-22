@@ -68,8 +68,10 @@ export type AudioFeatures = [
 export type BackgroundFeatures = [];
 
 /**
- * Features for a live video player. Mirrors {@link VideoFeatures} without the
- * playback-rate feature, which isn't meaningful for live streams.
+ * Features for a live video player. Mirrors {@link VideoFeatures} but drops
+ * the playback-rate feature (not meaningful for live) and adds
+ * `PlayerFeature<MediaLiveState>` so the store exposes `liveEdgeStart` and
+ * `targetLiveWindow`.
  */
 export type LiveVideoFeatures = [
   PlayerFeature<MediaPlaybackState>,
@@ -87,8 +89,10 @@ export type LiveVideoFeatures = [
 ];
 
 /**
- * Features for a live audio player. Mirrors {@link AudioFeatures} without the
- * playback-rate feature, which isn't meaningful for live streams.
+ * Features for a live audio player. Mirrors {@link AudioFeatures} but drops
+ * the playback-rate feature (not meaningful for live) and adds
+ * `PlayerFeature<MediaLiveState>` so the store exposes `liveEdgeStart` and
+ * `targetLiveWindow`.
  */
 export type LiveAudioFeatures = [
   PlayerFeature<MediaPlaybackState>,
