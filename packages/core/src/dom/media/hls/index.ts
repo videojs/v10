@@ -145,6 +145,25 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.dispatchEvent(new Event('streamtypechange'));
   }
 
+  /**
+   * Presentation time marking the start of the Live Edge Window.
+   *
+   * Derived from the delegate on every read; `NaN` when no delegate is
+   * attached or the stream is not live.
+   */
+  get liveEdgeStart() {
+    return this.#delegate?.liveEdgeStart ?? Number.NaN;
+  }
+
+  /**
+   * Seekable range size for live content. `0` for standard live, `Infinity`
+   * for DVR, `NaN` for on-demand or unknown. Fires `targetlivewindowchange`
+   * when the value changes (bridged from the delegate).
+   */
+  get targetLiveWindow() {
+    return this.#delegate?.targetLiveWindow ?? Number.NaN;
+  }
+
   attach(target: HTMLVideoElement) {
     super.attach(target);
     this.#delegate?.attach(target);

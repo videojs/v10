@@ -2,6 +2,7 @@ import Hls, { type HlsConfig } from 'hls.js';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaErrorsMixin } from './errors';
+import { HlsJsMediaLiveMixin } from './live';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
 import { HlsJsMediaStreamTypeMixin } from './stream-type';
@@ -57,7 +58,9 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
 }
 
 export class HlsJsMedia extends HlsJsMediaPreloadMixin(
-  HlsJsMediaStreamTypeMixin(
-    HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
+  HlsJsMediaLiveMixin(
+    HlsJsMediaStreamTypeMixin(
+      HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
+    )
   )
 ) {}

@@ -9,6 +9,7 @@ import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
 import { fullscreenFeature } from './fullscreen';
+import { liveFeature } from './live';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
@@ -62,6 +63,7 @@ export const liveVideoFeatures: LiveVideoFeatures = [
   controlsFeature,
   textTrackFeature,
   errorFeature,
+  liveFeature,
 ];
 
 /**
@@ -75,4 +77,5 @@ export const liveAudioFeatures: LiveAudioFeatures = [
   sourceFeature,
   bufferFeature,
   errorFeature,
+  liveFeature,
 ];

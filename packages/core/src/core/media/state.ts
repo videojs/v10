@@ -135,6 +135,25 @@ export interface MediaStreamTypeState {
   streamType: MediaStreamType;
 }
 
+export interface MediaLiveState {
+  /**
+   * Presentation time marking the start of the Live Edge Window.
+   *
+   * Playing at the live edge when `currentTime >= liveEdgeStart`. `NaN`
+   * when the stream isn't live or the value is unknown.
+   *
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
+   */
+  liveEdgeStart: number;
+  /**
+   * Offset representing the seekable range size for live content.
+   *
+   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand
+   * or unknown.
+   */
+  targetLiveWindow: number;
+}
+
 export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.

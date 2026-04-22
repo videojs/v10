@@ -4,6 +4,7 @@ import type {
   MediaControlsState,
   MediaErrorState,
   MediaFullscreenState,
+  MediaLiveState,
   MediaPictureInPictureState,
   MediaPlaybackRateState,
   MediaPlaybackState,
@@ -82,6 +83,7 @@ export type LiveVideoFeatures = [
   PlayerFeature<MediaControlsState>,
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,
+  PlayerFeature<MediaLiveState>,
 ];
 
 /**
@@ -95,6 +97,7 @@ export type LiveAudioFeatures = [
   PlayerFeature<MediaSourceState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaErrorState>,
+  PlayerFeature<MediaLiveState>,
 ];
 
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
