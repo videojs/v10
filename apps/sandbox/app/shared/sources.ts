@@ -31,6 +31,12 @@ export const SOURCES = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-live': {
+    label: 'HLS - Live Stream Big Buck Bunny',
+    url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',

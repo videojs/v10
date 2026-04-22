@@ -6,6 +6,7 @@ import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
 import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
+import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -22,6 +23,7 @@ export {
   playbackRateFeature as playbackRate,
   remotePlaybackFeature as remotePlayback,
   sourceFeature as source,
+  streamTypeFeature as streamType,
   textTrackFeature as textTrack,
   timeFeature as time,
   volumeFeature as volume,

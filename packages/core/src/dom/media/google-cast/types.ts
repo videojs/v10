@@ -1,4 +1,5 @@
 import type { RemotePlaybackLike } from '../../../core/media/types';
+import type { StreamType } from '../hls/index';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 
@@ -35,7 +36,7 @@ export interface GoogleCastMediaHost extends EventTarget {
   readyState: number;
   volume: number;
   playbackRate: number;
-  streamType?: string;
+  streamType?: StreamType;
   textTracks: TextTrackList;
   disableRemotePlayback: boolean;
   load(): void | Promise<void>;
