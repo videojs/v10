@@ -31,7 +31,7 @@ importers:
         version: 22.19.15
       '@typescript/native-preview':
         specifier: beta
-        version: 7.0.0-dev.20260420.1
+        version: 7.0.0-dev.20260421.1
       esbuild:
         specifier: ^0.27.3
         version: 0.27.3
@@ -216,7 +216,7 @@ importers:
         version: link:../../site
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -253,7 +253,7 @@ importers:
         version: 26.1.0
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -269,7 +269,7 @@ importers:
         version: 18.0.1
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -306,7 +306,7 @@ importers:
         version: 18.0.1
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -377,7 +377,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -390,7 +390,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
 
   packages/spf:
     dependencies:
@@ -418,7 +418,7 @@ importers:
         version: 1.59.1
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -449,7 +449,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@26.1.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -458,7 +458,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2)
+        version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2)
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@8.0.0(@types/node@24.12.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -467,10 +467,10 @@ importers:
     dependencies:
       '@astrojs/mdx':
         specifier: ^5.0.3
-        version: 5.0.3(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))
+        version: 5.0.3(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))
       '@astrojs/netlify':
         specifier: ^7.0.6
-        version: 7.0.6(@types/node@24.12.2)(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.0.6(@types/node@24.12.2)(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
       '@astrojs/react':
         specifier: ^5.0.2
         version: 5.0.3(@types/node@24.12.2)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(lightningcss@1.32.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tsx@4.21.0)(yaml@2.8.2)
@@ -503,7 +503,7 @@ importers:
         version: 2.6.2
       '@sentry/astro':
         specifier: ^10.43.0
-        version: 10.47.0(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))(rollup@4.59.0)
+        version: 10.47.0(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))(rollup@4.59.0)
       '@shikijs/transformers':
         specifier: ^4.0.2
         version: 4.0.2
@@ -518,7 +518,7 @@ importers:
         version: link:../packages/react
       astro:
         specifier: ^6.1.3
-        version: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+        version: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -591,7 +591,7 @@ importers:
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.8
-        version: 0.9.8(prettier-plugin-astro@0.14.1)(prettier@3.8.1)(typescript@6.0.2)
+        version: 0.9.8(@typescript/typescript6@6.0.0)(prettier-plugin-astro@0.14.1)(prettier@3.8.1)
       '@netlify/edge-functions':
         specifier: ^3.0.3
         version: 3.0.3
@@ -647,14 +647,14 @@ importers:
         specifier: ^7.2.2
         version: 7.2.2
       typescript:
-        specifier: ^6.0.2
-        version: 6.0.2
+        specifier: npm:@typescript/typescript6@^6.0.0
+        version: '@typescript/typescript6@6.0.0'
       typescript-api-extractor:
         specifier: ^1.0.0-alpha.13
-        version: 1.0.0-beta.1(typescript@6.0.2)
+        version: 1.0.0-beta.1(@typescript/typescript6@6.0.0)
       vite-plugin-svgr:
         specifier: ^4.5.0
-        version: 4.5.0(rollup@4.59.0)(typescript@6.0.2)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.5.0(@typescript/typescript6@6.0.0)(rollup@4.59.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.1.0)(happy-dom@18.0.1)(jsdom@27.4.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -3530,43 +3530,47 @@ packages:
     resolution: {integrity: sha512-KiROIzYdEV85YygXw6BI/Dx4fnBlFQu6Mq4QE4MOH9fFnhohw6wX/OAvDY2/C+ut0I3RSPKenvZJIVYqJNkhEw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-WMVphWuSmPuDzdutP2OM7ZhvlgdrBQ6ufQia+cJz6jqLd2MjPaYlS+/ACEcTgf6+PsTXygUOUvcqv9j5s7QC8w==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-PD0Is1LGop/6dGGGj2q+SA8UikzVGvB4TGFFq6O9lhyaYedlw9jgG3mqsdF/+6R/kdU+xBsfSxYZjv95901eXA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-ChRf5ZpdM5CmplmtfCHGFd/UjYDkld9Z27h5HeC41NGxkbe7NeNQYjwPcbZynca2swISZvFr8Wwlo4nNZG/51A==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-PAj/v0rQksH619ZWc8fsnxff0zbb2r1oFd0gyWRbFqB/fgVu61PCy/AeH3gaD3CDSk8CfkfnmQbk6EAbx0ou5g==}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-AmRuZ5R1TTrBNMInIACxd3AGvXS8X0PCAheftIMSa/1YOsNbfvPCbzZTleSaIx0ETabPeKQArur0uTPwnKjJbg==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-NPcsItvtSWd9TDaeJsn2dQ+K9Q+NVFN15Nlef6uEXLvuSzZaolYD2WCAOnpf+8LJwKA4iJeki8hMet9+7l2BiA==}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-8+Ey5WZ1jiJXFuN8oQxu3N6pTi6UvigNXTWmB/e+2q6cu6ytFNgiVic6xXtcxOqBpqYMKwXzTZkECjs3NtT6og==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-ticgDfcqJhIAuSZPCHUMir7YMD9MeH3dN0KatnLill9DTnJCc4OTGkMXQT4MOnn5ughG72D1TkpOF2g7/g1EVQ==}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-zk6y0AX1+SjuYXZfIRTkpRttp+gfpnz6ELFDWLuhtTJtnxgm8BRSKPup2rcm4xkfpRrVv9dhPGSjJYGNR9z9tg==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-2k/5/nyJsKR3+Vvvmzh53NjwpTM9781AYRHitYP4hmg4o2dZLn3Yjbp65p1UR8X+/wdaz/nbyh40jCR0mhC/YA==}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-TopcWdHwUGaocYuoj0qEZmZa1SLFm9hY0jKrzi5Xa9Xt/gvUnSLJYRBVblibM+/s8S9ZaV94Gc+CUn9EeSsJ9A==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-PMtBYdXPdgcfBnR6tGYGNpJ3k+QO/nPLVwP69qe8QOheqlQV8pC/Cg6KBUPBlZggkx1zz0sOck/eEKA32UVsDA==}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-9P6DDMOCncgXGbFfxRpZE0sWzjyymRON67T9J1u885NLp+AmIdns8e91nzD6ipB0EdZimyR4ZjdSZfqetAQSrQ==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-OpkmtYkxiT3y4eEnqcG7UJ4W7/Mw93xtMPBL/kT4HXl8qB3oflK0XPeKBpDcL7n5CA+04igr00OvTf/j5qjj5Q==}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260420.1':
-    resolution: {integrity: sha512-XYMYZ1OAvO1OWJMntCGW5yoJvJjdrsgmNJxXEPO3Za2kFmQ69TdHOAzg9adurMgAXNpaDWtf28bfEveMRnvpZA==}
+  '@typescript/native-preview@7.0.0-dev.20260421.1':
+    resolution: {integrity: sha512-j1nJzzUovuy7LJmJk87OqwVIPZIdZysdMBabPBGxIXT+kHltdzc+019G2CtNtGAKV6sxHM6pbxMYi0cI6wZ20g==}
+    hasBin: true
+
+  '@typescript/typescript6@6.0.0':
+    resolution: {integrity: sha512-lPkLZmYG9nNF0Y07ET9arSHw+EWy2TsXZ12SsiV/1SeI1/AzeAhkMzEmR729ExtaBvYEA87C3ga9YB8NE0AbFA==}
     hasBin: true
 
   '@ungap/structured-clone@1.3.0':
@@ -6564,10 +6568,6 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
-    engines: {node: '>=8.6'}
-
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
@@ -8411,12 +8411,12 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@astrojs/check@0.9.8(prettier-plugin-astro@0.14.1)(prettier@3.8.1)(typescript@6.0.2)':
+  '@astrojs/check@0.9.8(@typescript/typescript6@6.0.0)(prettier-plugin-astro@0.14.1)(prettier@3.8.1)':
     dependencies:
-      '@astrojs/language-server': 2.16.6(prettier-plugin-astro@0.14.1)(prettier@3.8.1)(typescript@6.0.2)
+      '@astrojs/language-server': 2.16.6(@typescript/typescript6@6.0.0)(prettier-plugin-astro@0.14.1)(prettier@3.8.1)
       chokidar: 4.0.3
       kleur: 4.1.5
-      typescript: 6.0.2
+      typescript: '@typescript/typescript6@6.0.0'
       yargs: 17.7.2
     transitivePeerDependencies:
       - prettier
@@ -8430,12 +8430,12 @@ snapshots:
     dependencies:
       picomatch: 4.0.4
 
-  '@astrojs/language-server@2.16.6(prettier-plugin-astro@0.14.1)(prettier@3.8.1)(typescript@6.0.2)':
+  '@astrojs/language-server@2.16.6(@typescript/typescript6@6.0.0)(prettier-plugin-astro@0.14.1)(prettier@3.8.1)':
     dependencies:
       '@astrojs/compiler': 2.13.1
       '@astrojs/yaml2ts': 0.2.3
       '@jridgewell/sourcemap-codec': 1.5.5
-      '@volar/kit': 2.4.28(typescript@6.0.2)
+      '@volar/kit': 2.4.28(@typescript/typescript6@6.0.0)
       '@volar/language-core': 2.4.28
       '@volar/language-server': 2.4.28
       '@volar/language-service': 2.4.28
@@ -8482,12 +8482,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@5.0.3(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))':
+  '@astrojs/mdx@5.0.3(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@astrojs/markdown-remark': 7.1.0
       '@mdx-js/mdx': 3.1.1
       acorn: 8.16.0
-      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
       es-module-lexer: 2.0.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -8501,7 +8501,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/netlify@7.0.6(@types/node@24.12.2)(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)':
+  '@astrojs/netlify@7.0.6(@types/node@24.12.2)(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)':
     dependencies:
       '@astrojs/internal-helpers': 0.8.0
       '@astrojs/underscore-redirects': 1.0.3
@@ -8509,7 +8509,7 @@ snapshots:
       '@netlify/functions': 5.1.2
       '@netlify/vite-plugin': 2.10.8(rollup@4.59.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
       '@vercel/nft': 1.5.0(rollup@4.59.0)
-      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
       esbuild: 0.27.3
       tinyglobby: 0.2.15
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
@@ -8924,7 +8924,7 @@ snapshots:
       '@commitlint/types': 20.4.3
       git-raw-commits: 4.0.0
       minimist: 1.2.8
-      tinyexec: 1.0.2
+      tinyexec: 1.0.4
 
   '@commitlint/resolve-extends@20.4.3':
     dependencies:
@@ -10606,13 +10606,13 @@ snapshots:
       '@sentry-internal/browser-utils': 10.47.0
       '@sentry/core': 10.47.0
 
-  '@sentry/astro@10.47.0(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2))(rollup@4.59.0)':
+  '@sentry/astro@10.47.0(astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))(rollup@4.59.0)':
     dependencies:
       '@sentry/browser': 10.47.0
       '@sentry/core': 10.47.0
       '@sentry/node': 10.47.0
       '@sentry/vite-plugin': 5.1.1(rollup@4.59.0)
-      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2)
+      astro: 6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@opentelemetry/exporter-trace-otlp-http'
       - encoding
@@ -10879,6 +10879,17 @@ snapshots:
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.29.0)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.29.0)
 
+  '@svgr/core@8.1.0(@typescript/typescript6@6.0.0)':
+    dependencies:
+      '@babel/core': 7.29.0
+      '@svgr/babel-preset': 8.1.0(@babel/core@7.29.0)
+      camelcase: 6.3.0
+      cosmiconfig: 8.3.6(@typescript/typescript6@6.0.0)
+      snake-case: 3.0.4
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
   '@svgr/core@8.1.0(typescript@6.0.2)':
     dependencies:
       '@babel/core': 7.29.0
@@ -10894,6 +10905,16 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.0
       entities: 4.5.0
+
+  '@svgr/plugin-jsx@8.1.0(@svgr/core@8.1.0(@typescript/typescript6@6.0.0))':
+    dependencies:
+      '@babel/core': 7.29.0
+      '@svgr/babel-preset': 8.1.0(@babel/core@7.29.0)
+      '@svgr/core': 8.1.0(@typescript/typescript6@6.0.0)
+      '@svgr/hast-util-to-babel-ast': 8.0.0
+      svg-parser: 2.0.4
+    transitivePeerDependencies:
+      - supports-color
 
   '@svgr/plugin-jsx@8.1.0(@svgr/core@8.1.0(typescript@6.0.2))':
     dependencies:
@@ -11295,36 +11316,40 @@ snapshots:
       '@typescript-eslint/types': 8.56.1
       eslint-visitor-keys: 5.0.1
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260420.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260421.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260420.1':
+  '@typescript/native-preview@7.0.0-dev.20260421.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260420.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260420.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260421.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260421.1
+
+  '@typescript/typescript6@6.0.0':
+    dependencies:
+      typescript: 6.0.2
 
   '@ungap/structured-clone@1.3.0': {}
 
@@ -11590,12 +11615,12 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@volar/kit@2.4.28(typescript@6.0.2)':
+  '@volar/kit@2.4.28(@typescript/typescript6@6.0.0)':
     dependencies:
       '@volar/language-service': 2.4.28
       '@volar/typescript': 2.4.28
       typesafe-path: 0.2.2
-      typescript: 6.0.2
+      typescript: '@typescript/typescript6@6.0.0'
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.1.0
 
@@ -11862,7 +11887,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.2):
+  astro@6.1.4(@netlify/blobs@10.7.0)(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@astrojs/compiler': 3.0.1
       '@astrojs/internal-helpers': 0.8.0
@@ -11908,7 +11933,7 @@ snapshots:
       tinyclip: 0.1.12
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
-      tsconfck: 3.1.6(typescript@6.0.2)
+      tsconfck: 3.1.6(@typescript/typescript6@6.0.0)
       ultrahtml: 1.6.0
       unifont: 0.7.4
       unist-util-visit: 5.1.0
@@ -12288,6 +12313,15 @@ snapshots:
       cosmiconfig: 9.0.1(typescript@6.0.2)
       jiti: 2.6.1
       typescript: 6.0.2
+
+  cosmiconfig@8.3.6(@typescript/typescript6@6.0.0):
+    dependencies:
+      import-fresh: 3.3.1
+      js-yaml: 4.1.1
+      parse-json: 5.2.0
+      path-type: 4.0.0
+    optionalDependencies:
+      typescript: '@typescript/typescript6@6.0.0'
 
   cosmiconfig@8.3.6(typescript@6.0.2):
     dependencies:
@@ -14638,7 +14672,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -15019,8 +15053,6 @@ snapshots:
   piccolore@0.1.3: {}
 
   picocolors@1.1.1: {}
-
-  picomatch@2.3.1: {}
 
   picomatch@2.3.2: {}
 
@@ -15466,7 +15498,7 @@ snapshots:
       glob: 13.0.6
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.23.2(@typescript/native-preview@7.0.0-dev.20260420.1)(rolldown@1.0.0-rc.16)(typescript@6.0.2):
+  rolldown-plugin-dts@0.23.2(@typescript/native-preview@7.0.0-dev.20260421.1)(rolldown@1.0.0-rc.16)(typescript@6.0.2):
     dependencies:
       '@babel/generator': 8.0.0-rc.3
       '@babel/helper-validator-identifier': 8.0.0-rc.3
@@ -15480,7 +15512,7 @@ snapshots:
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.16
     optionalDependencies:
-      '@typescript/native-preview': 7.0.0-dev.20260420.1
+      '@typescript/native-preview': 7.0.0-dev.20260421.1
       typescript: 6.0.2
     transitivePeerDependencies:
       - oxc-resolver
@@ -16083,11 +16115,11 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tsconfck@3.1.6(typescript@6.0.2):
+  tsconfck@3.1.6(@typescript/typescript6@6.0.0):
     optionalDependencies:
-      typescript: 6.0.2
+      typescript: '@typescript/typescript6@6.0.0'
 
-  tsdown@0.21.9(@typescript/native-preview@7.0.0-dev.20260420.1)(typescript@6.0.2):
+  tsdown@0.21.9(@typescript/native-preview@7.0.0-dev.20260421.1)(typescript@6.0.2):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
@@ -16098,7 +16130,7 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.16
-      rolldown-plugin-dts: 0.23.2(@typescript/native-preview@7.0.0-dev.20260420.1)(rolldown@1.0.0-rc.16)(typescript@6.0.2)
+      rolldown-plugin-dts: 0.23.2(@typescript/native-preview@7.0.0-dev.20260421.1)(rolldown@1.0.0-rc.16)(typescript@6.0.2)
       semver: 7.7.4
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
@@ -16175,10 +16207,10 @@ snapshots:
 
   typesafe-path@0.2.2: {}
 
-  typescript-api-extractor@1.0.0-beta.1(typescript@6.0.2):
+  typescript-api-extractor@1.0.0-beta.1(@typescript/typescript6@6.0.0):
     dependencies:
       es-toolkit: 1.45.1
-      typescript: 6.0.2
+      typescript: '@typescript/typescript6@6.0.0'
 
   typescript-auto-import-cache@0.3.6:
     dependencies:
@@ -16368,11 +16400,11 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite-plugin-svgr@4.5.0(rollup@4.59.0)(typescript@6.0.2)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)):
+  vite-plugin-svgr@4.5.0(@typescript/typescript6@6.0.0)(rollup@4.59.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       '@rollup/pluginutils': 5.3.0(rollup@4.59.0)
-      '@svgr/core': 8.1.0(typescript@6.0.2)
-      '@svgr/plugin-jsx': 8.1.0(@svgr/core@8.1.0(typescript@6.0.2))
+      '@svgr/core': 8.1.0(@typescript/typescript6@6.0.0)
+      '@svgr/plugin-jsx': 8.1.0(@svgr/core@8.1.0(@typescript/typescript6@6.0.0))
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - rollup
