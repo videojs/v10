@@ -176,13 +176,16 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
       bridgeEvents(this.#delegate, this);
 
-      if (this.target) {
-        this.#delegate.attach(this.target);
+      // Apply user `streamType` before `attach()` so native delegates do not run
+      // synchronous duration-based detection first and emit a transient value.
+      if (this.#isUserStreamType) {
+        this.#delegate.streamType = this.#streamType;
       }
 
       this.#delegate.preload = this.preload;
-      if (this.#isUserStreamType) {
-        this.#delegate.streamType = this.#streamType;
+
+      if (this.target) {
+        this.#delegate.attach(this.target);
       }
     }
 

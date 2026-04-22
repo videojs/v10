@@ -190,6 +190,26 @@ describe('HlsMedia', () => {
       expect(media.streamType).toBe('live');
     });
 
+    it('does not emit a transient auto-detected `streamType` before a user override when the native delegate is recreated', () => {
+      const { media, video } = setup();
+
+      Object.defineProperty(video, 'duration', { value: 120, configurable: true });
+      media.streamType = 'live';
+      expect(media.streamType).toBe('live');
+
+      const seen: string[] = [];
+      media.addEventListener('streamtypechange', () => {
+        seen.push(media.streamType);
+      });
+
+      // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
+      media.debug = true;
+      media.load();
+
+      expect(seen).not.toContain('on-demand');
+      expect(media.streamType).toBe('live');
+    });
+
     it('lets user-set values win over auto-detection', () => {
       const { media, video } = setup();
 
