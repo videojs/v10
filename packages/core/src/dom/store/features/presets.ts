@@ -14,7 +14,6 @@ import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
 import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
-import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -25,7 +24,6 @@ export const videoFeatures: VideoFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
-  streamTypeFeature,
   bufferFeature,
   fullscreenFeature,
   pipFeature,
@@ -41,7 +39,6 @@ export const audioFeatures: AudioFeatures = [
   volumeFeature,
   timeFeature,
   sourceFeature,
-  streamTypeFeature,
   bufferFeature,
   errorFeature,
 ];
@@ -50,13 +47,32 @@ export const audioFeatures: AudioFeatures = [
 export const backgroundFeatures: BackgroundFeatures = [];
 
 /**
- * Features for a live video player. Identical to {@link videoFeatures} — the
- * "live" presets share the store but ship a skin variant that omits the
- * duration / remaining time displays.
+ * Features for a live video player. Mirrors {@link videoFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
  */
-export const liveVideoFeatures: LiveVideoFeatures = videoFeatures;
+export const liveVideoFeatures: LiveVideoFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  fullscreenFeature,
+  pipFeature,
+  remotePlaybackFeature,
+  controlsFeature,
+  textTrackFeature,
+  errorFeature,
+];
 
 /**
- * Features for a live audio player. Identical to {@link audioFeatures}.
+ * Features for a live audio player. Mirrors {@link audioFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
  */
-export const liveAudioFeatures: LiveAudioFeatures = audioFeatures;
+export const liveAudioFeatures: LiveAudioFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  errorFeature,
+];
