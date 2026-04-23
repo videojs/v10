@@ -51,6 +51,7 @@ export default defineConfig({
           include: [],
           typecheck: {
             enabled: true,
+            checker: 'tsgo',
             include: ['src/**/*.test-d.ts'],
           },
         },
