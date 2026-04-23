@@ -41,7 +41,7 @@
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
-    "typecheck": "tsc --build",
+    "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
     "check:workspace": "node build/scripts/check-workspace.mjs"
   },
@@ -67,7 +67,7 @@
     "simple-git-hooks": "^2.13.1",
     "tsx": "^4.21.0",
     "turbo": "^2.9.0",
-    "typescript": "^6.0.2"
+    "@typescript/native-preview": "beta"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",

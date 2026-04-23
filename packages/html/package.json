@@ -133,8 +133,7 @@
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^18.0.1",
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

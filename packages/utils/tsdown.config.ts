@@ -20,5 +20,5 @@ export default defineConfig({
   clean: true,
   hash: false,
   unbundle: true,
-  dts: true,
+  dts: { tsgo: true, tsconfig: 'tsconfig.dts.json' },
 });
