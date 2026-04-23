@@ -7,6 +7,5 @@
     "declarationDir": "../../types/core"
   },
   "references": [{ "path": "../../../utils" }],
-  "include": ["./**/*.ts"],
-  "exclude": ["**/tests/**"]
+  "include": ["./**/*.ts"]
 }
