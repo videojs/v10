@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AddressableObject } from '../../media/types';
-import type { ResponseLike } from '../fetch';
+import type { Resource, ResponseLike } from '../fetch';
 import { fetchResolvable, fetchResolvableStream, getResponseText } from '../fetch';
 
 describe('fetchResolvable', () => {
@@ -8,10 +7,10 @@ describe('fetchResolvable', () => {
     vi.restoreAllMocks();
   });
 
-  it('fetches from AddressableObject URL', async () => {
+  it('fetches from Resource URL', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('content'));
 
-    const addressable: AddressableObject = {
+    const addressable: Resource = {
       url: 'https://example.com/playlist.m3u8',
     };
 
@@ -30,20 +29,20 @@ describe('fetchResolvable', () => {
     expect(response).toBe(mockResponse);
   });
 
-  it('accepts AddressableObject with just url', async () => {
+  it('accepts Resource with just url', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 
-    const addressable: AddressableObject = {
+    const addressable: Resource = {
       url: 'https://example.com/playlist.m3u8',
     };
 
     await expect(fetchResolvable(addressable)).resolves.toBeDefined();
   });
 
-  it('accepts AddressableObject with byteRange', async () => {
+  it('accepts Resource with byteRange', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 
-    const addressable: AddressableObject = {
+    const addressable: Resource = {
       url: 'https://example.com/segment.m4s',
       byteRange: { start: 1000, end: 1999 },
     };
@@ -54,7 +53,7 @@ describe('fetchResolvable', () => {
   it('handles zero-offset byte range', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 
-    const addressable: AddressableObject = {
+    const addressable: Resource = {
       url: 'https://example.com/init.mp4',
       byteRange: { start: 0, end: 999 },
     };

@@ -2,12 +2,11 @@
  * HTTP Fetch Wrapper
  *
  * Two-function approach for composability:
- * 1. fetchResolvable() - Fetch AddressableObject (handles byte ranges)
+ * 1. fetchResolvable() - Fetch Resource (handles byte ranges)
  * 2. getResponseText() - Extract text from Response
  * 3. fetchResolvableStream() - Stream body as Uint8Array chunks
  */
 
-import type { AddressableObject } from '../media/types';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from './chunked-stream-iterable';
 
 /**
@@ -19,7 +18,21 @@ export interface ResponseLike {
 }
 
 /**
- * Fetch resolvable from AddressableObject.
+ * An HTTP-addressable resource — URL plus optional byte range.
+ * Media's `AddressableObject` (and anything else with the same shape)
+ * is structurally compatible; kept local so this module stays
+ * domain-agnostic.
+ */
+export interface Resource {
+  url: string;
+  byteRange?: {
+    start: number;
+    end: number;
+  };
+}
+
+/**
+ * Fetch resolvable from a Resource.
  *
  * Handles byte range requests if byteRange is present.
  * Returns native fetch Response for composability (can extract text, stream, etc.).
@@ -38,7 +51,7 @@ export interface ResponseLike {
  *   byteRange: { start: 1000, end: 1999 }
  * });
  */
-export async function fetchResolvable(addressable: AddressableObject, options?: RequestInit): Promise<Response> {
+export async function fetchResolvable(addressable: Resource, options?: RequestInit): Promise<Response> {
   const headers = new Headers(options?.headers);
 
   // Add Range header for byte range requests
@@ -63,10 +76,7 @@ export async function fetchResolvable(addressable: AddressableObject, options?: 
  * ArrayBuffer. Use this when you need the raw bytes (e.g. segment appends).
  * For text or streaming consumption, use fetchResolvable directly.
  */
-export async function fetchResolvableBytes(
-  addressable: AddressableObject,
-  options?: RequestInit
-): Promise<ArrayBuffer> {
+export async function fetchResolvableBytes(addressable: Resource, options?: RequestInit): Promise<ArrayBuffer> {
   const response = await fetchResolvable(addressable, options);
   return response.arrayBuffer();
 }
@@ -82,7 +92,7 @@ export async function fetchResolvableBytes(
  * Errors from the underlying stream propagate naturally as thrown errors.
  */
 export async function* fetchResolvableStream(
-  addressable: AddressableObject,
+  addressable: Resource,
   options?: RequestInit & ChunkedStreamIterableOptions
 ): AsyncGenerator<Uint8Array> {
   const { minChunkSize, ...fetchOptions } = options ?? {};

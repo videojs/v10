@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { AddressableObject, Presentation } from '../../types';
+import type { AddressableObject, MediaElementLike, Presentation } from '../../types';
 import { syncPreloadAttribute } from '../sync-preload-attribute';
 
 describe('syncPreloadAttribute', () => {
@@ -11,7 +11,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     interface Owners {
-      mediaElement?: HTMLMediaElement | undefined;
+      mediaElement?: MediaElementLike | undefined;
     }
 
     const state = signal<State>({
@@ -20,7 +20,7 @@ describe('syncPreloadAttribute', () => {
     });
 
     // Start with media element already set
-    const video = { preload: 'auto' } as HTMLMediaElement;
+    const video = { preload: 'auto' } as MediaElementLike;
     const owners = signal<Owners>({
       mediaElement: video,
     });
@@ -40,7 +40,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     interface Owners {
-      mediaElement?: HTMLMediaElement | undefined;
+      mediaElement?: MediaElementLike | undefined;
     }
 
     const state = signal<State>({
@@ -48,7 +48,7 @@ describe('syncPreloadAttribute', () => {
       preload: undefined,
     });
 
-    const video = { preload: 'auto' } as HTMLMediaElement;
+    const video = { preload: 'auto' } as MediaElementLike;
     const owners = signal<Owners>({
       mediaElement: video,
     });
@@ -60,7 +60,7 @@ describe('syncPreloadAttribute', () => {
 
     // Swap to a different mediaElement with a different preload value.
     // Since preload is already set, the new element's value is ignored.
-    const updatedVideo = { preload: 'metadata' } as HTMLMediaElement;
+    const updatedVideo = { preload: 'metadata' } as MediaElementLike;
     owners.set({ ...owners.get(), mediaElement: updatedVideo });
 
     await vi.waitFor(() => {
@@ -77,7 +77,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     interface Owners {
-      mediaElement?: HTMLMediaElement | undefined;
+      mediaElement?: MediaElementLike | undefined;
     }
 
     const state = signal<State>({ preload: undefined });
@@ -98,12 +98,12 @@ describe('syncPreloadAttribute', () => {
     }
 
     interface Owners {
-      mediaElement?: HTMLMediaElement | undefined;
+      mediaElement?: MediaElementLike | undefined;
     }
 
     const state = signal<State>({ preload: undefined });
     // Browsers return '' when the preload attribute is absent
-    const owners = signal<Owners>({ mediaElement: { preload: '' } as HTMLMediaElement });
+    const owners = signal<Owners>({ mediaElement: { preload: '' } as MediaElementLike });
 
     const cleanup = syncPreloadAttribute({ state, owners });
 
@@ -119,7 +119,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     interface Owners {
-      mediaElement?: HTMLMediaElement | undefined;
+      mediaElement?: MediaElementLike | undefined;
     }
 
     const state = signal<State>({

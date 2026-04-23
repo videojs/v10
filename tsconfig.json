@@ -20,6 +20,8 @@
 
     { "path": "packages/spf" },
     { "path": "packages/spf/src/core" },
+    { "path": "packages/spf/src/network" },
+    { "path": "packages/spf/src/media" },
     { "path": "packages/spf/src/dom" },
 
     { "path": "packages/html" },
