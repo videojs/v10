@@ -81,8 +81,8 @@ export {
   supportsManagedMediaSource,
   supportsMediaSource,
 } from './dom/media/mediasource-setup';
-export type { ResponseLike } from './dom/network/fetch';
-export { fetchResolvable, getResponseText } from './dom/network/fetch';
+export type { ResponseLike } from './network/fetch';
+export { fetchResolvable, getResponseText } from './network/fetch';
 
 // =============================================================================
 // Features (F1)

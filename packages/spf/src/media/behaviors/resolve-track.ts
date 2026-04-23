@@ -1,7 +1,7 @@
 import { effect } from '../../core/signals/effect';
 import type { Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
-import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
+import { fetchResolvable, getResponseText } from '../../network/fetch';
 import { parseMediaPlaylist } from '../hls/parse-media-playlist';
 import type { Presentation, ResolvedTrack, TrackType } from '../types';
 import { isResolvedTrack } from '../types';

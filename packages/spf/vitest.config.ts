@@ -33,6 +33,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'network',
+          include: ['src/network/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'dom',
           include: ['src/dom/**/*.test.ts'],
           browser: {

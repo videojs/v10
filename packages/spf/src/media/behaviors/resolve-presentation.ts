@@ -1,7 +1,7 @@
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type Signal, update } from '../../core/signals/primitives';
-import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
+import { fetchResolvable, getResponseText } from '../../network/fetch';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
 import type { AddressableObject, Presentation } from '../types';
 
