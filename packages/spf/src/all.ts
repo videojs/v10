@@ -91,15 +91,15 @@ export { fetchResolvable, getResponseText } from './dom/network/fetch';
 export type {
   PresentationState,
   UnresolvedPresentation,
-} from './media/features/resolve-presentation';
+} from './media/behaviors/resolve-presentation';
 export {
   canResolve,
   isUnresolved,
   resolvePresentation,
   shouldResolve,
-} from './media/features/resolve-presentation';
-export type { PlatformOwners } from './media/features/sync-preload-attribute';
-export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
+} from './media/behaviors/resolve-presentation';
+export type { PlatformOwners } from './media/behaviors/sync-preload-attribute';
+export { syncPreloadAttribute } from './media/behaviors/sync-preload-attribute';
 
 // =============================================================================
 // Features (F9 - Quality Switching)
@@ -108,5 +108,5 @@ export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
 export type {
   QualitySwitchingConfig,
   QualitySwitchingState,
-} from './media/features/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './media/features/quality-switching';
+} from './media/behaviors/quality-switching';
+export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './media/behaviors/quality-switching';

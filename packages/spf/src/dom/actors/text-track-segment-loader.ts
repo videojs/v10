@@ -4,7 +4,7 @@ import { SerialRunner, Task } from '../../core/tasks/task';
 import { getSegmentsToLoad } from '../../media/buffer/forward-buffer';
 import type { TextTrack } from '../../media/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
-import type { TextTracksActor } from './text-tracks-actor';
+import type { TextTracksActor } from './text-tracks';
 
 // =============================================================================
 // Types

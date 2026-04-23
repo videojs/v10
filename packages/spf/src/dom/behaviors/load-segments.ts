@@ -5,15 +5,15 @@ import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../media/buffer/forward-buffer
 import type { AddressableObject, Presentation, ResolvedTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
-import type { SourceBufferActor } from '../media/source-buffer-actor';
-import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../network/chunked-stream-iterable';
-import { fetchResolvable } from '../network/fetch';
 import {
   type BufferState,
   createSegmentLoaderActor,
   type SegmentLoaderActor,
   type SourceBufferState,
-} from './segment-loader-actor';
+} from '../actors/segment-loader';
+import type { SourceBufferActor } from '../media/source-buffer-actor';
+import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../network/chunked-stream-iterable';
+import { fetchResolvable } from '../network/fetch';
 import type { MediaTrackType } from './setup-sourcebuffer';
 
 // Re-export buffer state types for consumers that import them from this module.

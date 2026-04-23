@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../media/types';
-import type { EndOfStreamOwners, EndOfStreamState } from '../features/end-of-stream';
-import { hasLastSegmentLoaded } from '../features/end-of-stream';
+import type { EndOfStreamOwners, EndOfStreamState } from '../behaviors/end-of-stream';
+import { hasLastSegmentLoaded } from '../behaviors/end-of-stream';
 import { createSourceBufferActor } from '../media/source-buffer-actor';
 
 // ============================================================================

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { CueSegmentMeta } from '../text-tracks-actor';
-import { createTextTracksActor } from '../text-tracks-actor';
+import type { CueSegmentMeta } from '../text-tracks';
+import { createTextTracksActor } from '../text-tracks';
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
   const video = document.createElement('video');

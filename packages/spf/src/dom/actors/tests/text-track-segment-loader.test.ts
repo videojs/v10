@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TextTrack } from '../../../media/types';
-import { createTextTrackSegmentLoaderActor } from '../text-track-segment-loader-actor';
-import { createTextTracksActor } from '../text-tracks-actor';
+import { createTextTrackSegmentLoaderActor } from '../text-track-segment-loader';
+import { createTextTracksActor } from '../text-tracks';
 
 vi.mock('../../text/parse-vtt-segment', () => ({
   parseVttSegment: vi.fn((url: string) => {

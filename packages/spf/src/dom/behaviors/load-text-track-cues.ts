@@ -3,10 +3,10 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
 import type { Presentation, TextTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
-import type { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
-import { createTextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
-import type { TextTracksActor } from './text-tracks-actor';
-import { createTextTracksActor } from './text-tracks-actor';
+import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
+import { createTextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
+import type { TextTracksActor } from '../actors/text-tracks';
+import { createTextTracksActor } from '../actors/text-tracks';
 
 /**
  * FSM states for text track cue loading.
