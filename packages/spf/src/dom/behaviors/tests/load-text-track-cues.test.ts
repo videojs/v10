@@ -299,7 +299,7 @@ describe('loadTextTrackCues', () => {
 
     // Verify error was logged for the failing segment
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to load VTT segment'),
+      expect.stringContaining('Failed to load text-track segment'),
       expect.any(Error)
     );
 

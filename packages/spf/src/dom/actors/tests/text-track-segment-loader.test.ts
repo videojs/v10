@@ -136,7 +136,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     // Segments 0 and 2 succeeded; the failed segment is not recorded
     await vi.waitFor(() => expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2));
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load VTT segment:', expect.any(Error));
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load text-track segment:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
     actor.destroy();

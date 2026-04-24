@@ -1,5 +1,13 @@
 import type { CallbackActor } from '../../core/actors/actor';
-import type { TextTrack } from '../types';
+import { untrack } from '../../core/signals/primitives';
+import { SerialRunner, Task } from '../../core/tasks/task';
+import { getSegmentsToLoad } from '../buffer/forward-buffer';
+import type { Cue, TextTrack } from '../types';
+import type { TextTracksActor } from './text-tracks';
+
+// =============================================================================
+// Message / actor types
+// =============================================================================
 
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';
@@ -7,11 +15,74 @@ export type TextTrackSegmentLoaderMessage = {
   currentTime: number;
 };
 
-/**
- * Host-agnostic text-track segment loader actor type.
- *
- * The concrete factory — which binds a cue parser — lives where the
- * host's parsing capability lives (e.g. `dom/actors/text-track-segment-loader.ts`
- * for a browser VTT parser).
- */
 export type TextTrackSegmentLoaderActor = CallbackActor<TextTrackSegmentLoaderMessage>;
+
+/**
+ * Turns a text-track segment URL into an array of cues.
+ *
+ * Host-agnostic — the concrete parser (e.g. the browser's native VTT
+ * parser) is supplied by the host at engine-assembly time, so this
+ * actor stays DOM-free.
+ */
+export type CueParser<C extends Cue = Cue> = (url: string) => Promise<C[]>;
+
+// =============================================================================
+// Implementation
+// =============================================================================
+
+/**
+ * Loads text-track segments for a track and delegates cue management
+ * to a TextTracksActor. Mirrors the SegmentLoaderActor/SourceBufferActor
+ * pattern for the text-track equivalent.
+ *
+ * Planning is done in the load handler: segments already recorded in
+ * TextTracksActor's context are skipped. Each load preempts in-flight
+ * work via abortAll() before scheduling fresh tasks.
+ *
+ * The cue parser is injected so this factory is host-agnostic. A DOM
+ * host supplies a VTT parser backed by `<track>`/`TextTrack` APIs; a
+ * non-DOM host (worker, test fake, alternate runtime) supplies its own.
+ */
+export function createTextTrackSegmentLoaderActor<C extends Cue>(
+  textTracksActor: TextTracksActor<C>,
+  parseSegment: CueParser<C>
+): TextTrackSegmentLoaderActor {
+  const runner = new SerialRunner();
+  let destroyed = false;
+
+  return {
+    send({ track, currentTime }: TextTrackSegmentLoaderMessage): void {
+      if (destroyed) return;
+      const trackId = track.id;
+      const bufferedSegments = untrack(() => textTracksActor.snapshot.get().context.segments[trackId] ?? []);
+      const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+
+      runner.abortAll();
+      for (const segment of segmentsToLoad) {
+        runner.schedule(
+          new Task(async (signal) => {
+            if (signal.aborted) return;
+            try {
+              const cues = await parseSegment(segment.url);
+              if (signal.aborted) return;
+              textTracksActor.send({
+                type: 'add-cues',
+                meta: { trackId, id: segment.id, startTime: segment.startTime, duration: segment.duration },
+                cues,
+              });
+            } catch (error) {
+              // Graceful degradation: log and continue to the next segment.
+              console.error('Failed to load text-track segment:', error);
+            }
+          })
+        );
+      }
+    },
+
+    destroy(): void {
+      if (destroyed) return;
+      destroyed = true;
+      runner.destroy();
+    },
+  };
+}
