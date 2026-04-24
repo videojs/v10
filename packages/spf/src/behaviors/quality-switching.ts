@@ -1,9 +1,9 @@
-import { effect } from '../../core/signals/effect';
-import { type Signal, update } from '../../core/signals/primitives';
-import type { BandwidthState } from '../abr/bandwidth-estimator';
-import { getBandwidthEstimate } from '../abr/bandwidth-estimator';
-import { selectQuality } from '../abr/quality-selection';
-import type { Presentation, VideoSelectionSet } from '../types';
+import { effect } from '../core/signals/effect';
+import { type Signal, update } from '../core/signals/primitives';
+import type { BandwidthState } from '../media/abr/bandwidth-estimator';
+import { getBandwidthEstimate } from '../media/abr/bandwidth-estimator';
+import { selectQuality } from '../media/abr/quality-selection';
+import type { Presentation, VideoSelectionSet } from '../media/types';
 
 /**
  * State shape for quality switching.

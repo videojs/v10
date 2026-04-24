@@ -1,6 +1,6 @@
-import { effect } from '../../core/signals/effect';
-import { computed, type Signal, update } from '../../core/signals/primitives';
-import type { MediaElementLike } from '../types';
+import { effect } from '../core/signals/effect';
+import { computed, type Signal, update } from '../core/signals/primitives';
+import type { MediaElementLike } from '../media/types';
 import type { PresentationState } from './resolve-presentation';
 
 /**

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '../../../core/signals/primitives';
 import {
   loadTextTrackCues,
   type TextTrackCueLoadingOwners,
   type TextTrackCueLoadingState,
-} from '../../../media/behaviors/load-text-track-cues';
+} from '../../../behaviors/load-text-track-cues';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation, Segment, TextTrack } from '../../../media/types';
 import { resolveVttSegment } from '../../text/resolve-vtt-segment';
 import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../provide-text-track-actors';

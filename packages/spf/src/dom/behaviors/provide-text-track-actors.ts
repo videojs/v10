@@ -1,11 +1,11 @@
-import { effect } from '../../core/signals/effect';
-import { computed, type Signal, update } from '../../core/signals/primitives';
 import {
   createTextTrackSegmentLoaderActor,
   type TextTrackSegmentLoaderActor,
   type TextTrackSegmentResolver,
-} from '../../media/actors/text-track-segment-loader';
-import type { TextTracksActor } from '../../media/actors/text-tracks';
+} from '../../behaviors/actors/text-track-segment-loader';
+import type { TextTracksActor } from '../../behaviors/actors/text-tracks';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 import { createTextTracksActor } from '../actors/text-tracks';
 
 /**
@@ -46,7 +46,7 @@ export interface TextTrackActorProviderConfig {
  * inside the effect does not re-trigger it.
  *
  * Pairs with the host-agnostic `loadTextTrackCues` behavior in
- * `media/behaviors/`: this provider manages actor lifecycle, the loader
+ * `behaviors/`: this provider manages actor lifecycle, the loader
  * orchestrates state transitions and dispatches load messages.
  *
  * @example

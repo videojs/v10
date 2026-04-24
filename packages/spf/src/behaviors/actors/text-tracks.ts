@@ -1,5 +1,5 @@
 import type { TransitionActor } from '../../core/actors/create-transition-actor';
-import type { Cue, Segment } from '../types';
+import type { Cue, Segment } from '../../media/types';
 
 // =============================================================================
 // Message / context shapes

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { signal } from '../../../core/signals/primitives';
-import type { AddressableObject, MediaElementLike, Presentation } from '../../types';
+import { signal } from '../../core/signals/primitives';
+import type { AddressableObject, MediaElementLike, Presentation } from '../../media/types';
 import { syncPreloadAttribute } from '../sync-preload-attribute';
 
 describe('syncPreloadAttribute', () => {

@@ -1,3 +1,10 @@
+import type { TextTrackSegmentLoaderActor } from '../../behaviors/actors/text-track-segment-loader';
+import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
+import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
+import { switchQuality } from '../../behaviors/quality-switching';
+import { resolvePresentation } from '../../behaviors/resolve-presentation';
+import { resolveTrack } from '../../behaviors/resolve-track';
+import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 import { type Composition, createComposition } from '../../core/composition/create-composition';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { TextTracksActor } from '../../dom/actors/text-tracks';
@@ -13,13 +20,6 @@ import { updateDuration } from '../../dom/behaviors/update-duration';
 import type { SourceBufferActor } from '../../dom/media/source-buffer-actor';
 import { destroyVttResolver, resolveVttSegment } from '../../dom/text/resolve-vtt-segment';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
-import type { TextTrackSegmentLoaderActor } from '../../media/actors/text-track-segment-loader';
-import { calculatePresentationDuration } from '../../media/behaviors/calculate-presentation-duration';
-import { loadTextTrackCues } from '../../media/behaviors/load-text-track-cues';
-import { switchQuality } from '../../media/behaviors/quality-switching';
-import { resolvePresentation } from '../../media/behaviors/resolve-presentation';
-import { resolveTrack } from '../../media/behaviors/resolve-track';
-import { syncPreloadAttribute } from '../../media/behaviors/sync-preload-attribute';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../media/primitives/select-tracks';
 
 // ============================================================================

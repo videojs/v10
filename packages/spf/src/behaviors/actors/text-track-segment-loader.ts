@@ -1,8 +1,8 @@
 import type { CallbackActor } from '../../core/actors/actor';
 import { untrack } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/tasks/task';
-import { getSegmentsToLoad } from '../buffer/forward-buffer';
-import type { Cue, TextTrack } from '../types';
+import { getSegmentsToLoad } from '../../media/buffer/forward-buffer';
+import type { Cue, TextTrack } from '../../media/types';
 import type { TextTracksActor } from './text-tracks';
 
 // =============================================================================

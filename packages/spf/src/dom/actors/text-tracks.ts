@@ -1,11 +1,11 @@
-import { createTransitionActor } from '../../core/actors/create-transition-actor';
 import type {
   AddCuesMessage,
   CueSegmentMeta,
   TextTracksActor,
   TextTracksActorContext,
   TextTracksActorMessage,
-} from '../../media/actors/text-tracks';
+} from '../../behaviors/actors/text-tracks';
+import { createTransitionActor } from '../../core/actors/create-transition-actor';
 import type { Cue } from '../../media/types';
 
 // Re-export the host-agnostic types so existing dom-side consumers can keep

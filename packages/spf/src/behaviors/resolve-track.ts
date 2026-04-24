@@ -1,11 +1,11 @@
-import { effect } from '../../core/signals/effect';
-import type { Signal } from '../../core/signals/primitives';
-import { ConcurrentRunner, Task } from '../../core/tasks/task';
-import { fetchResolvable, getResponseText } from '../../network/fetch';
-import { parseMediaPlaylist } from '../hls/parse-media-playlist';
-import type { Presentation, ResolvedTrack, TrackType } from '../types';
-import { isResolvedTrack } from '../types';
-import { getSelectedTrack, type TrackSelectionState } from '../utils/track-selection';
+import { effect } from '../core/signals/effect';
+import type { Signal } from '../core/signals/primitives';
+import { ConcurrentRunner, Task } from '../core/tasks/task';
+import { parseMediaPlaylist } from '../media/hls/parse-media-playlist';
+import type { Presentation, ResolvedTrack, TrackType } from '../media/types';
+import { isResolvedTrack } from '../media/types';
+import { getSelectedTrack, type TrackSelectionState } from '../media/utils/track-selection';
+import { fetchResolvable, getResponseText } from '../network/fetch';
 
 /**
  * State shape for track resolution.

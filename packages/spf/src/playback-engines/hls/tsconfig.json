@@ -11,6 +11,8 @@
     { "path": "../../core" },
     { "path": "../../network" },
     { "path": "../../media" },
+    { "path": "../../behaviors" },
+    { "path": "../../behaviors/actors" },
     { "path": "../../dom" }
   ],
   "include": ["./**/*.ts"]

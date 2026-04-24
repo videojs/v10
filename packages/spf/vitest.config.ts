@@ -40,6 +40,14 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'behaviors',
+          include: ['src/behaviors/**/*.test.ts'],
+          exclude: ['src/behaviors/dom/**', 'src/behaviors/actors/dom/**'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'dom',
           include: ['src/dom/**/*.test.ts'],
           browser: {

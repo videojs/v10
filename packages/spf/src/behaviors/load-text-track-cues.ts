@@ -1,10 +1,10 @@
-import type { Reactor } from '../../core/reactors/create-machine-reactor';
-import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type Signal, untrack } from '../../core/signals/primitives';
-import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
-import type { TextTracksActor } from '../actors/text-tracks';
-import type { Cue, MediaElementWithTextTracks, Presentation, TextTrack } from '../types';
-import { isResolvedTrack } from '../types';
+import type { Reactor } from '../core/reactors/create-machine-reactor';
+import { createMachineReactor } from '../core/reactors/create-machine-reactor';
+import { computed, type Signal, untrack } from '../core/signals/primitives';
+import type { Cue, MediaElementWithTextTracks, Presentation, TextTrack } from '../media/types';
+import { isResolvedTrack } from '../media/types';
+import type { TextTrackSegmentLoaderActor } from './actors/text-track-segment-loader';
+import type { TextTracksActor } from './actors/text-tracks';
 
 /**
  * FSM states for text-track cue loading.

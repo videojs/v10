@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '../../../core/signals/primitives';
+import { signal } from '../../core/signals/primitives';
 import type {
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
-} from '../../types';
-import { isResolvedTrack } from '../../types';
+} from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
 import type { TrackResolutionState } from '../resolve-track';
 import { resolveTrack } from '../resolve-track';
 

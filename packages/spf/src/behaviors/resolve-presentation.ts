@@ -1,9 +1,9 @@
-import type { Reactor } from '../../core/reactors/create-machine-reactor';
-import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type Signal, update } from '../../core/signals/primitives';
-import { fetchResolvable, getResponseText } from '../../network/fetch';
-import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
-import type { AddressableObject, Presentation } from '../types';
+import type { Reactor } from '../core/reactors/create-machine-reactor';
+import { createMachineReactor } from '../core/reactors/create-machine-reactor';
+import { computed, type Signal, update } from '../core/signals/primitives';
+import { parseMultivariantPlaylist } from '../media/hls/parse-multivariant';
+import type { AddressableObject, Presentation } from '../media/types';
+import { fetchResolvable, getResponseText } from '../network/fetch';
 
 /**
  * Unresolved presentation - has a URL but no data yet.

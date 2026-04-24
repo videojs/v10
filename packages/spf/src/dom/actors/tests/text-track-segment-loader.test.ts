@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTextTrackSegmentLoaderActor } from '../../../media/actors/text-track-segment-loader';
+import { createTextTrackSegmentLoaderActor } from '../../../behaviors/actors/text-track-segment-loader';
 import type { TextTrack } from '../../../media/types';
 import { resolveVttSegment } from '../../text/resolve-vtt-segment';
 import { createTextTracksActor } from '../text-tracks';

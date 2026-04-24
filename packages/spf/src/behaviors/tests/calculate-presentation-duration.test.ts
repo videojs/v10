@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { signal } from '../../../core/signals/primitives';
-import type { AudioTrack, Presentation, VideoTrack } from '../../types';
+import { signal } from '../../core/signals/primitives';
+import type { AudioTrack, Presentation, VideoTrack } from '../../media/types';
 import {
   calculatePresentationDuration,
   canCalculateDuration,

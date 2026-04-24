@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '../../../core/signals/primitives';
-import type { AddressableObject, Presentation } from '../../types';
+import { signal } from '../../core/signals/primitives';
+import type { AddressableObject, Presentation } from '../../media/types';
 import { isUnresolved, resolvePresentation, shouldResolve } from '../resolve-presentation';
 
 describe('resolvePresentation', () => {
