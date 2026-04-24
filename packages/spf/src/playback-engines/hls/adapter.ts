@@ -6,7 +6,7 @@ import {
   type HlsPlaybackEngineConfig,
   type HlsPlaybackEngineOwners,
   type HlsPlaybackEngineState,
-} from './hls-engine';
+} from './engine';
 
 export interface SpfMediaProps {
   src: string;

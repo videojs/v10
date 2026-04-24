@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHlsPlaybackEngine } from '../playback-engine/hls-engine';
+import { createHlsPlaybackEngine } from '../engine';
 
 // Mock appendSegment to succeed without real MP4 data
-vi.mock('../media/append-segment', () => ({
+vi.mock('../../../dom/media/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 

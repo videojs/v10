@@ -12,6 +12,4 @@ export type { PlaybackRateOwners, PlaybackRateState } from './behaviors/track-pl
 export { trackPlaybackRate } from './behaviors/track-playback-rate';
 export { appendSegment } from './media/append-segment';
 export { flushBuffer } from './media/buffer-flusher';
-export type { SpfMediaAPI, SpfMediaProps } from './playback-engine/adapter';
-export { SpfMedia, SpfMediaMixin, spfMediaDefaultProps } from './playback-engine/adapter';
 export { destroyVttResolver, resolveVttSegment } from './text/resolve-vtt-segment';

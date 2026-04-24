@@ -1,8 +1,8 @@
 'use client';
 
 import { SimpleHlsMedia } from '@videojs/core/dom/media/simple-hls';
-import type { SpfMediaProps } from '@videojs/spf/dom';
-import { spfMediaDefaultProps } from '@videojs/spf/dom';
+import type { SpfMediaProps } from '@videojs/spf/hls';
+import { spfMediaDefaultProps } from '@videojs/spf/hls';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';

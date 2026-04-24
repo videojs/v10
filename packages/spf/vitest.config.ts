@@ -54,6 +54,20 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'playback-engines',
+          include: ['src/playback-engines/**/*.test.ts'],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            screenshotFailures: false,
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'types',
           include: [],
           typecheck: {
