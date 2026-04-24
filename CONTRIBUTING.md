@@ -180,7 +180,7 @@ pnpm test:e2e:vite               # Chromium only (fast feedback)
 
 ### 🏖 Manual Testing with the Sandbox
 
-The sandbox (`apps/sandbox/`) is a Vite playground for manually exercising player changes in a browser. Run it and open the printed URL for a directory of entry points: `core`, `html`, `html-tailwind`, `html-background`, `react`, `react-tailwind`, `react-background`.
+The sandbox (`apps/sandbox/`) is a Vite playground for manually exercising player changes in a browser. Run it and the root URL will render a dynamic index of every available entry (HTML and React variants for `video`, `audio`, `hls-video`, `background-video`, and more — see `apps/sandbox/templates/` for the full list).
 
 ```sh
 pnpm dev:sandbox                 # just the sandbox (usually what you want)
@@ -190,14 +190,14 @@ pnpm dev                         # sandbox + site + watch all packages
 Sandbox code lives in two parallel directories:
 
 - **`apps/sandbox/templates/`** — source of truth, checked into git.
-- **`apps/sandbox/src/`** — your scratch copy, **gitignored** (except `index.html`).
+- **`apps/sandbox/src/`** — your scratch copy, fully gitignored.
 
 On `pnpm dev:sandbox`, `setup.ts` copies any file from `templates/` that doesn't already exist in `src/`. Existing files in `src/` are never overwritten, so your local changes persist across restarts.
 
 > [!IMPORTANT]
-> Because `src/` is gitignored, edits you make there will not appear in `git status`. When you want to promote a sandbox change into the repo, run `pnpm -F @videojs/sandbox sync` — it shows a diff of every changed file and prompts before copying `src/` → `templates/`.
+> Because `src/` is gitignored, edits you make there will not appear in `git status`. When you want to promote a sandbox change into the repo, run `pnpm -F @videojs/sandbox sync` — it shows a diff of every changed file and prompts before copying `src/` → `templates/`. To throw away local edits and restore from templates, run `pnpm -F @videojs/sandbox reset`.
 
-See [`apps/sandbox/README.md`](./apps/sandbox/README.md) for the full model, including how to add a new sandbox entry point.
+See [`apps/sandbox/README.md`](./apps/sandbox/README.md) for the full model, including the `app/` shell, the `@app/*` alias for shared code, and how to add a new sandbox entry point.
 
 ### ✅ Workspace Consistency
 
