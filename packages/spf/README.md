@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
+> **⚠️ Beta** Experimental adoption in real projects.
 
 ## Overview
 
