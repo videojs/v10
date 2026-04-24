@@ -11,7 +11,7 @@ import type {
   VideoFeatures,
   VideoPlayerStore,
 } from '@videojs/core/dom';
-import { toMediaHost } from '@videojs/core/dom';
+import { toMediaHost } from '@videojs/core/dom/media/host';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';

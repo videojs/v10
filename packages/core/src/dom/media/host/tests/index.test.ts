@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { HTMLAudioElementHost } from '../audio-host';
-import { toMediaHost } from '../to-media-host';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLAudioElementHost, HTMLVideoElementHost, toMediaHost } from '..';
 
 describe('toMediaHost', () => {
   it('wraps a raw HTMLVideoElement in an HTMLVideoElementHost attached to it', () => {

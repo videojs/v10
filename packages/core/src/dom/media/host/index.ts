@@ -1,6 +1,10 @@
-import type { Audio, Media, Video } from '../../core/media/types';
-import { HTMLAudioElementHost } from './audio-host';
-import { HTMLVideoElementHost } from './video-host';
+import type { Audio, Media, Video } from '../../../core/media/types';
+import { HTMLAudioElementHost } from '../audio-host';
+import { HTMLVideoElementHost } from '../video-host';
+
+export { HTMLAudioElementHost } from '../audio-host';
+export { HTMLMediaElementHost } from '../media-host';
+export { HTMLVideoElementHost } from '../video-host';
 
 export interface ToMediaHostResult<M> {
   /**
@@ -23,6 +27,10 @@ export interface ToMediaHostResult<M> {
  * If the input is already a host or any non-element value, it is returned
  * unchanged. The caller owns the lifecycle of any host created here — call
  * `release()` to detach it.
+ *
+ * Lives under `@videojs/core/dom/media/host` (not the main `dom` barrel)
+ * so consumers that don't need to wrap raw elements don't pay the cost of
+ * shipping the host classes.
  *
  * @label Video
  * @param media - A native `HTMLVideoElement` to wrap.

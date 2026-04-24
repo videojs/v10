@@ -1,5 +1,5 @@
 import type { Media, MediaContainer, PlayerStore, PlayerTarget, Video } from '@videojs/core/dom';
-import { toMediaHost } from '@videojs/core/dom';
+import { toMediaHost } from '@videojs/core/dom/media/host';
 import { ContextProvider } from '@videojs/element/context';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
