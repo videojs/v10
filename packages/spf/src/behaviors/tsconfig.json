@@ -13,5 +13,6 @@
     { "path": "../media" },
     { "path": "./actors" }
   ],
-  "include": ["./*.ts", "./tests/**/*.ts"]
+  "include": ["./*.ts", "./tests/**/*.ts"],
+  "exclude": ["./dom/**", "./actors/**"]
 }

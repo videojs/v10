@@ -1,5 +1,16 @@
+import type { SourceBufferActor } from '../../behaviors/actors/dom/source-buffer';
+import type { TextTracksActor } from '../../behaviors/actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor } from '../../behaviors/actors/text-track-segment-loader';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
+import { endOfStream } from '../../behaviors/dom/end-of-stream';
+import { loadSegments } from '../../behaviors/dom/load-segments';
+import { provideTextTrackActors } from '../../behaviors/dom/provide-text-track-actors';
+import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
+import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
+import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
+import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
+import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
+import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
@@ -7,19 +18,8 @@ import { resolveTrack } from '../../behaviors/resolve-track';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 import { type Composition, createComposition } from '../../core/composition/create-composition';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
-import type { TextTracksActor } from '../../dom/actors/text-tracks';
-import { endOfStream } from '../../dom/behaviors/end-of-stream';
-import { loadSegments } from '../../dom/behaviors/load-segments';
-import { provideTextTrackActors } from '../../dom/behaviors/provide-text-track-actors';
-import { setupMediaSource } from '../../dom/behaviors/setup-mediasource';
-import { setupSourceBuffers } from '../../dom/behaviors/setup-sourcebuffer';
-import { syncTextTracks } from '../../dom/behaviors/sync-text-tracks';
-import { trackCurrentTime } from '../../dom/behaviors/track-current-time';
-import { trackPlaybackInitiated } from '../../dom/behaviors/track-playback-initiated';
-import { updateDuration } from '../../dom/behaviors/update-duration';
-import type { SourceBufferActor } from '../../dom/media/source-buffer-actor';
-import { destroyVttResolver, resolveVttSegment } from '../../dom/text/resolve-vtt-segment';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
+import { destroyVttResolver, resolveVttSegment } from '../../media/dom/text/resolve-vtt-segment';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../media/primitives/select-tracks';
 
 // ============================================================================

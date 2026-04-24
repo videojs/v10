@@ -7,5 +7,6 @@
     "declarationDir": "../../types/media"
   },
   "references": [{ "path": "../../../utils" }, { "path": "../core" }, { "path": "../network" }],
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts"],
+  "exclude": ["./dom/**"]
 }

@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "exactOptionalPropertyTypes": false,
+    "declarationDir": "../../../../types/behaviors/actors/dom"
+  },
+  "references": [
+    { "path": "../../../../../utils" },
+    { "path": "../../../core" },
+    { "path": "../../../network" },
+    { "path": "../../../media" },
+    { "path": "../../../media/dom" },
+    { "path": "../" }
+  ],
+  "include": ["./**/*.ts"]
+}

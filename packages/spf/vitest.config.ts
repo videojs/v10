@@ -28,6 +28,7 @@ export default defineConfig({
         test: {
           name: 'media',
           include: ['src/media/**/*.test.ts'],
+          exclude: ['src/media/dom/**'],
         },
       },
       {
@@ -49,7 +50,13 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'dom',
-          include: ['src/dom/**/*.test.ts'],
+          // All DOM-bound tests across the package — MSE/VTT primitives,
+          // DOM-bound behaviors, DOM-bound actor factories.
+          include: [
+            'src/media/dom/**/*.test.ts',
+            'src/behaviors/dom/**/*.test.ts',
+            'src/behaviors/actors/dom/**/*.test.ts',
+          ],
           browser: {
             enabled: true,
             headless: true,

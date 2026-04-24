@@ -1,0 +1,1 @@
+{"version":3,"file":"text-tracks.d.ts","sourceRoot":"","sources":["text-tracks.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,cAAc,EACd,cAAc,EACd,eAAe,EACf,sBAAsB,EACtB,sBAAsB,EACvB,MAAM,oCAAoC,CAAC;AAM5C,YAAY,EAAE,cAAc,EAAE,cAAc,EAAE,eAAe,EAAE,sBAAsB,EAAE,sBAAsB,EAAE,CAAC;AAchH,sFAAsF;AACtF,wBAAgB,qBAAqB,CAAC,YAAY,EAAE,gBAAgB,GAAG,eAAe,CAAC,MAAM,CAAC,CAmC7F"}

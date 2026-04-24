@@ -4,18 +4,13 @@
     "composite": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "exactOptionalPropertyTypes": false,
-    "declarationDir": "../../../types/playback-engines/hls"
+    "declarationDir": "../../../types/media/dom"
   },
   "references": [
     { "path": "../../../../utils" },
     { "path": "../../core" },
     { "path": "../../network" },
-    { "path": "../../media" },
-    { "path": "../../media/dom" },
-    { "path": "../../behaviors" },
-    { "path": "../../behaviors/dom" },
-    { "path": "../../behaviors/actors" },
-    { "path": "../../behaviors/actors/dom" }
+    { "path": "../../media" }
   ],
   "include": ["./**/*.ts"]
 }

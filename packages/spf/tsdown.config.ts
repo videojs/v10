@@ -8,7 +8,7 @@ const buildModes: BuildMode[] = ['dev', 'default'];
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: 'src/index.ts',
-    dom: 'src/dom/index.ts',
+    dom: 'src/dom.ts',
     hls: 'src/playback-engines/hls/index.ts',
   },
   platform: 'neutral',

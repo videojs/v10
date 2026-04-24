@@ -7,5 +7,6 @@
     "declarationDir": "../../../types/behaviors/actors"
   },
   "references": [{ "path": "../../../../utils" }, { "path": "../../core" }, { "path": "../../media" }],
-  "include": ["./*.ts", "./tests/**/*.ts"]
+  "include": ["./*.ts", "./tests/**/*.ts"],
+  "exclude": ["./dom/**"]
 }

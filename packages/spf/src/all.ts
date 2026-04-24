@@ -72,7 +72,7 @@ export { hasPresentationDuration, isResolvedTrack } from './media/types';
 export type {
   AttachMediaSourceResult,
   CreateMediaSourceOptions,
-} from './dom/media/mediasource-setup';
+} from './media/dom/mse/mediasource-setup';
 export {
   attachMediaSource,
   createMediaSource,
@@ -80,7 +80,7 @@ export {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-} from './dom/media/mediasource-setup';
+} from './media/dom/mse/mediasource-setup';
 export type { ResponseLike } from './network/fetch';
 export { fetchResolvable, getResponseText } from './network/fetch';
 
