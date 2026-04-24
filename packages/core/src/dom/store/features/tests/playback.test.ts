@@ -1,13 +1,13 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
-import { createMockVideo } from '../../../tests/test-helpers';
+import { createMockVideoHost } from '../../../tests/test-helpers';
 import { playbackFeature } from '../playback';
 
 describe('playbackFeature', () => {
   describe('attach', () => {
     it('syncs playback state on attach', () => {
-      const video = createMockVideo({
+      const { host } = createMockVideoHost({
         paused: false,
         ended: false,
         currentTime: 30,
@@ -15,7 +15,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.paused).toBe(false);
       expect(store.state.ended).toBe(false);
@@ -24,46 +24,46 @@ describe('playbackFeature', () => {
     });
 
     it('detects waiting state when buffering', () => {
-      const video = createMockVideo({
+      const { host } = createMockVideoHost({
         paused: false,
         readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.waiting).toBe(true);
     });
 
     it('detects started from currentTime', () => {
-      const video = createMockVideo({
+      const { host } = createMockVideoHost({
         paused: true,
         currentTime: 5,
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.started).toBe(true);
     });
 
     it('detects started from playing state', () => {
-      const video = createMockVideo({
+      const { host } = createMockVideoHost({
         paused: false,
         currentTime: 0,
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.started).toBe(true);
     });
 
     it('updates on play event', () => {
-      const video = createMockVideo({ paused: true });
+      const { host, video } = createMockVideoHost({ paused: true });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.paused).toBe(true);
 
@@ -75,10 +75,10 @@ describe('playbackFeature', () => {
     });
 
     it('updates on pause event', () => {
-      const video = createMockVideo({ paused: false });
+      const { host, video } = createMockVideoHost({ paused: false });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.paused).toBe(false);
 
@@ -90,10 +90,10 @@ describe('playbackFeature', () => {
     });
 
     it('updates on ended event', () => {
-      const video = createMockVideo({ ended: false });
+      const { host, video } = createMockVideoHost({ ended: false });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.ended).toBe(false);
 
@@ -105,10 +105,10 @@ describe('playbackFeature', () => {
     });
 
     it('clears ended state on seeked event', () => {
-      const video = createMockVideo({ ended: true });
+      const { host, video } = createMockVideoHost({ ended: true });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.ended).toBe(true);
 
@@ -120,10 +120,10 @@ describe('playbackFeature', () => {
     });
 
     it('stops listening when store is destroyed', () => {
-      const video = createMockVideo({});
+      const { host, video } = createMockVideoHost({});
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       store.destroy();
 
@@ -138,11 +138,11 @@ describe('playbackFeature', () => {
 
   describe('actions', () => {
     it('play() calls play on target', async () => {
-      const video = createMockVideo({});
+      const { host, video } = createMockVideoHost({});
       video.play = vi.fn().mockResolvedValue(undefined);
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       await store.play();
 
@@ -150,11 +150,11 @@ describe('playbackFeature', () => {
     });
 
     it('pause() calls pause on target', () => {
-      const video = createMockVideo({});
+      const { host, video } = createMockVideoHost({});
       video.pause = vi.fn();
 
       const store = createStore<PlayerTarget>()(playbackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       store.pause();
 

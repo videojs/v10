@@ -1,6 +1,7 @@
 import { createStore, flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
+import { HTMLVideoElementHost } from '../../../media/video-host';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { controlsFeature } from '../controls';
 
@@ -406,6 +407,54 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('picture-in-picture interaction', () => {
+    it('keeps controlsVisible true when in picture-in-picture and user goes inactive', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      enterPictureInPicture(video);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('hides controls after leaving picture-in-picture and user is inactive', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      enterPictureInPicture(video);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      leavePictureInPicture(video);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controlsVisible true on mouseleave while in picture-in-picture', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      enterPictureInPicture(video);
+      flush();
+
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+  });
+
   describe('null container', () => {
     it('does not track activity without container', () => {
       const video = createMockVideo({ paused: false });
@@ -434,10 +483,12 @@ describe('controlsFeature', () => {
 
     it('clears idle timer on detach', () => {
       const video = createMockVideo({ paused: false });
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
       const store = createStore<PlayerTarget>()(controlsFeature);
 
       const container = createContainer();
-      const detach = store.attach({ media: video, container });
+      const detach = store.attach({ media: host, container });
       flush();
 
       detach();
@@ -452,10 +503,12 @@ describe('controlsFeature', () => {
 
     it('does not react to media events after detach', () => {
       const video = createMockVideo({ paused: false });
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
       const store = createStore<PlayerTarget>()(controlsFeature);
 
       const container = createContainer();
-      const detach = store.attach({ media: video, container });
+      const detach = store.attach({ media: host, container });
       flush();
 
       vi.advanceTimersByTime(IDLE_DELAY);
@@ -499,6 +552,24 @@ function createMockRemote(): EventTarget & { state: string; prompt: () => Promis
   return target;
 }
 
+function enterPictureInPicture(video: HTMLVideoElement): void {
+  Object.defineProperty(document, 'pictureInPictureElement', {
+    value: video,
+    configurable: true,
+    writable: true,
+  });
+  video.dispatchEvent(new Event('enterpictureinpicture'));
+}
+
+function leavePictureInPicture(video: HTMLVideoElement): void {
+  Object.defineProperty(document, 'pictureInPictureElement', {
+    value: null,
+    configurable: true,
+    writable: true,
+  });
+  video.dispatchEvent(new Event('leavepictureinpicture'));
+}
+
 function createGoogleCastVideo(overrides: Parameters<typeof createMockVideo>[0] = {}) {
   const video = createMockVideo(overrides);
   const remote = createMockRemote();
@@ -509,11 +580,13 @@ function createGoogleCastVideo(overrides: Parameters<typeof createMockVideo>[0] 
 function createPlayerStore(video?: HTMLVideoElement, container?: HTMLElement | null) {
   const store = createStore<PlayerTarget>()(controlsFeature);
 
-  const media = video ?? createMockVideo({ paused: true });
+  const vid = video ?? createMockVideo({ paused: true });
+  const host = new HTMLVideoElementHost();
+  host.attach(vid);
   const cont = container === undefined ? createContainer() : container;
 
-  store.attach({ media, container: cont });
+  store.attach({ media: host, container: cont });
   flush();
 
-  return { store, media, container: cont };
+  return { store, media: host, container: cont };
 }

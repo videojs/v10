@@ -1,15 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
-import {
-  exitPictureInPicture,
-  isPictureInPictureElement,
-  isPictureInPictureEnabled,
-  requestPictureInPicture,
-} from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
+import { isPictureInPictureEnabled } from '../../presentation/pip';
 
 export const pipFeature = definePlayerFeature({
   name: 'pip',
@@ -22,29 +15,29 @@ export const pipFeature = definePlayerFeature({
 
       // Exit fullscreen first if active
       if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+        await exitFullscreen(media);
       }
 
-      return requestPictureInPicture(media);
+      await media.requestPictureInPicture();
     },
 
     async exitPictureInPicture() {
       const { media } = target();
-      return exitPictureInPicture(media);
+      return media.exitPictureInPicture();
     },
 
     async togglePictureInPicture() {
       const { media, container } = target();
 
-      if (isPictureInPictureElement(media)) {
-        return exitPictureInPicture(media);
+      if (media.isPictureInPicture) {
+        return media.exitPictureInPicture();
       }
 
       if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+        await exitFullscreen(media);
       }
 
-      return requestPictureInPicture(media);
+      await media.requestPictureInPicture();
     },
   }),
 
@@ -57,18 +50,12 @@ export const pipFeature = definePlayerFeature({
 
     const sync = () =>
       set({
-        pip: isPictureInPictureElement(media),
+        pip: media.isPictureInPicture,
       });
 
     sync();
 
     listen(media, 'enterpictureinpicture', sync, { signal });
     listen(media, 'leavepictureinpicture', sync, { signal });
-
-    // iOS Safari presentation mode change (covers PiP)
-    const video = media as WebKitVideoElement;
-    if ('webkitPresentationMode' in video) {
-      listen(media, 'webkitpresentationmodechanged', sync, { signal });
-    }
   },
 });

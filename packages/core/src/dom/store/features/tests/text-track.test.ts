@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { HTMLVideoElementHost } from '../../../media/video-host';
 import { textTrackFeature } from '../text-track';
 
 /**
@@ -12,8 +12,11 @@ import { textTrackFeature } from '../text-track';
  * and `loadstart` resync (dispatched on media, which works).
  */
 
-function createVideo(): HTMLVideoElement {
-  return document.createElement('video');
+function createVideo(): { host: HTMLVideoElementHost; video: HTMLVideoElement } {
+  const video = document.createElement('video');
+  const host = new HTMLVideoElementHost();
+  host.attach(video);
+  return { host, video };
 }
 
 function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
@@ -36,9 +39,9 @@ function createMockTrack(kind: TextTrackKind, mode: TextTrackMode = 'disabled'):
 describe('textTrackFeature', () => {
   describe('initial state', () => {
     it('has empty initial state', () => {
-      const video = createVideo();
+      const { host } = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.chaptersCues).toEqual([]);
       expect(store.state.thumbnailCues).toEqual([]);
@@ -50,22 +53,22 @@ describe('textTrackFeature', () => {
 
   describe('attach', () => {
     it('detects chapters track via addTextTrack', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       video.addTextTrack('chapters', 'Chapters', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       // Track detected, but no cues in jsdom
       expect(store.state.chaptersCues).toEqual([]);
     });
 
     it('detects thumbnail track by kind and label', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       video.addTextTrack('metadata', 'thumbnails', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       // Track detected, but no cues or <track> element for src
       expect(store.state.thumbnailCues).toEqual([]);
@@ -73,25 +76,25 @@ describe('textTrackFeature', () => {
     });
 
     it('ignores metadata tracks without thumbnails label', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       video.addTextTrack('metadata', 'ad-cues', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.thumbnailCues).toEqual([]);
       expect(store.state.thumbnailTrackSrc).toBeNull();
     });
 
     it('prefers first matching track when multiple exist', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       video.addTextTrack('chapters', 'Ch1', 'en');
       video.addTextTrack('chapters', 'Ch2', 'fr');
       video.addTextTrack('metadata', 'thumbnails', 'en');
       video.addTextTrack('metadata', 'thumbnails', 'fr');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       // Should not error with multiple matching tracks
       expect(store.state.chaptersCues).toEqual([]);
@@ -99,10 +102,10 @@ describe('textTrackFeature', () => {
     });
 
     it('resyncs on loadstart event', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       // Add a track programmatically (won't trigger textTracks event in jsdom)
       video.addTextTrack('metadata', 'thumbnails', 'en');
@@ -116,7 +119,7 @@ describe('textTrackFeature', () => {
     });
 
     it('resolves thumbnailTrackSrc from track element', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       const trackEl = document.createElement('track');
       trackEl.kind = 'metadata';
       trackEl.label = 'thumbnails';
@@ -127,7 +130,7 @@ describe('textTrackFeature', () => {
       // In jsdom, appending <track> to <video> adds to textTracks.
       // The track.track property links the element to its TextTrack.
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       // findTrackElement maps TextTrack → <track> element → src
       // jsdom's TextTrack from <track> may or may not match addTextTrack
@@ -140,24 +143,24 @@ describe('textTrackFeature', () => {
     });
 
     it('sets subtitlesShowing when a subtitles track is showing', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       mockTextTracks(video, [createMockTrack('subtitles', 'showing')]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.subtitlesShowing).toBe(true);
     });
 
     it('exposes textTrackList for all track kinds', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       const subtitlesTrack = { kind: 'subtitles', mode: 'showing', label: 'English', language: 'en' } as TextTrack;
       const captionsTrack = { kind: 'captions', mode: 'disabled', label: 'CC', language: 'en' } as TextTrack;
       const metadataTrack = createMockTrack('metadata', 'showing');
       mockTextTracks(video, [subtitlesTrack, captionsTrack, metadataTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.textTrackList).toEqual([
         { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
@@ -167,13 +170,13 @@ describe('textTrackFeature', () => {
     });
 
     it('toggleSubtitles() enables and disables caption/subtitle tracks', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       const subtitlesTrack = createMockTrack('subtitles');
       const captionsTrack = createMockTrack('captions');
       mockTextTracks(video, [subtitlesTrack, captionsTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       const enabled = store.state.toggleSubtitles();
       expect(enabled).toBe(true);
@@ -187,20 +190,20 @@ describe('textTrackFeature', () => {
     });
 
     it('toggleSubtitles() returns false when no subtitle tracks exist', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       const metadataTrack = createMockTrack('metadata', 'showing');
       mockTextTracks(video, [metadataTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(false);
     });
 
     it('stops updating after destroy', () => {
-      const video = createVideo();
+      const { host, video } = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       store.destroy();
 

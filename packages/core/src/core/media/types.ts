@@ -174,11 +174,15 @@ export interface MediaTextTrackCapability {
 }
 
 export interface MediaFullscreenCapability {
+  readonly isFullscreen: boolean;
   requestFullscreen(): Promise<void>;
+  exitFullscreen(): Promise<void>;
 }
 
 export interface MediaPictureInPictureCapability {
+  readonly isPictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
+  exitPictureInPicture(): Promise<void>;
 }
 
 export interface MediaRemotePlaybackCapability {

@@ -11,6 +11,7 @@ import type {
   VideoFeatures,
   VideoPlayerStore,
 } from '@videojs/core/dom';
+import { toMediaHost } from '@videojs/core/dom';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
@@ -77,7 +78,13 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     useEffect(() => {
       if (!media) return;
-      return store.attach({ media, container });
+      // Wrap raw <video>/<audio> so features see the full host API.
+      const wrapped = toMediaHost(media);
+      const detach = store.attach({ media: wrapped.media, container });
+      return () => {
+        detach();
+        wrapped.release();
+      };
     }, [media, container, store]);
 
     return (

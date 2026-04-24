@@ -4,7 +4,11 @@ import { isNull } from '@videojs/utils/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
-import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../media/predicate';
+import {
+  isMediaPauseCapable,
+  isMediaPictureInPictureCapable,
+  isMediaRemotePlaybackCapable,
+} from '../../media/predicate';
 import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../presentation/remote-playback';
 
 const IDLE_DELAY = 2000;
@@ -34,7 +38,13 @@ export const controlsFeature = definePlayerFeature({
     }
 
     const computeVisible = (userActive: boolean): boolean => {
-      return userActive || media.paused || isRemotePlaybackConnected(media) || isRemotePlaybackConnecting(media);
+      return (
+        userActive ||
+        media.paused ||
+        isRemotePlaybackConnected(media) ||
+        isRemotePlaybackConnecting(media) ||
+        (isMediaPictureInPictureCapable(media) && media.isPictureInPicture)
+      );
     };
 
     // Idle timer
@@ -131,6 +141,17 @@ export const controlsFeature = definePlayerFeature({
     listen(media, 'play', onPlaybackChange, { signal });
     listen(media, 'pause', onPlaybackChange, { signal });
     listen(media, 'ended', onPlaybackChange, { signal });
+
+    // Recompute visibility when picture-in-picture state changes.
+    if (isMediaPictureInPictureCapable(media)) {
+      const onPipChange = () => {
+        const { userActive } = get();
+        set({ controlsVisible: computeVisible(userActive) });
+      };
+
+      listen(media, 'enterpictureinpicture', onPipChange, { signal });
+      listen(media, 'leavepictureinpicture', onPipChange, { signal });
+    }
 
     // Recompute visibility when cast state changes.
     if (isMediaRemotePlaybackCapable(media)) {

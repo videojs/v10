@@ -1,5 +1,6 @@
 import type { SliderState } from '../../core/ui/slider/slider-core';
 import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
+import { HTMLVideoElementHost } from '../media/video-host';
 
 // ---------------------------------------------------------------------------
 // Mock Video
@@ -51,6 +52,22 @@ export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoEl
   if (overrides.src !== undefined) video.src = overrides.src;
 
   return video;
+}
+
+/**
+ * Create an `HTMLVideoElementHost` attached to a `createMockVideo()` element.
+ *
+ * Returns both the host and the underlying video so tests can stub WebKit
+ * properties on the video while exercising the generic host API.
+ */
+export function createMockVideoHost(overrides: MockVideoOverrides = {}): {
+  host: HTMLVideoElementHost;
+  video: HTMLVideoElement;
+} {
+  const video = createMockVideo(overrides);
+  const host = new HTMLVideoElementHost();
+  host.attach(video);
+  return { host, video };
 }
 
 // ---------------------------------------------------------------------------

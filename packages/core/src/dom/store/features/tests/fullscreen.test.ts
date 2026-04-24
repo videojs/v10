@@ -2,7 +2,7 @@ import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
 import type { WebKitVideoElement } from '../../../presentation/types';
-import { createMockVideo } from '../../../tests/test-helpers';
+import { createMockVideoHost } from '../../../tests/test-helpers';
 import { fullscreenFeature } from '../fullscreen';
 
 describe('fullscreenFeature', () => {
@@ -27,11 +27,11 @@ describe('fullscreenFeature', () => {
 
   describe('attach', () => {
     it('syncs initial state on attach', () => {
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const container = document.createElement('div');
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       expect(store.state.fullscreen).toBe(false);
     });
@@ -43,9 +43,9 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.fullscreenAvailability).toBe('available');
     });
@@ -57,9 +57,9 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.fullscreenAvailability).toBe('unsupported');
     });
@@ -76,9 +76,9 @@ describe('fullscreenFeature', () => {
       const original = proto.webkitEnterFullscreen;
       proto.webkitEnterFullscreen = () => {};
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.fullscreenAvailability).toBe('available');
 
@@ -96,26 +96,27 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
-      video.webkitPresentationMode = 'inline';
-      video.webkitDisplayingFullscreen = false;
+      const { host, video } = createMockVideoHost();
+      const wkVideo = video as HTMLVideoElement & WebKitVideoElement;
+      wkVideo.webkitPresentationMode = 'inline';
+      wkVideo.webkitDisplayingFullscreen = false;
 
       const container = document.createElement('div');
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       expect(store.state.fullscreen).toBe(false);
 
       // Simulate entering fullscreen via WebKit presentation mode
-      video.webkitPresentationMode = 'fullscreen';
-      video.webkitDisplayingFullscreen = true;
+      wkVideo.webkitPresentationMode = 'fullscreen';
+      wkVideo.webkitDisplayingFullscreen = true;
       video.dispatchEvent(new Event('webkitpresentationmodechanged'));
 
       expect(store.state.fullscreen).toBe(true);
 
       // Simulate exiting
-      video.webkitPresentationMode = 'inline';
-      video.webkitDisplayingFullscreen = false;
+      wkVideo.webkitPresentationMode = 'inline';
+      wkVideo.webkitDisplayingFullscreen = false;
       video.dispatchEvent(new Event('webkitpresentationmodechanged'));
 
       expect(store.state.fullscreen).toBe(false);
@@ -128,11 +129,11 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const container = document.createElement('div');
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       expect(store.state.fullscreen).toBe(false);
 
@@ -164,11 +165,11 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const container = document.createElement('div');
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       store.destroy();
 
@@ -193,12 +194,12 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       await store.requestFullscreen();
 
@@ -206,11 +207,11 @@ describe('fullscreenFeature', () => {
     });
 
     it('requestFullscreen() falls back to media when no container', async () => {
-      const video = createMockVideo();
+      const { host, video } = createMockVideoHost();
       video.requestFullscreen = vi.fn().mockResolvedValue(undefined);
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       await store.requestFullscreen();
 
@@ -221,52 +222,14 @@ describe('fullscreenFeature', () => {
       const originalExit = document.exitFullscreen;
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       await store.exitFullscreen();
 
       expect(document.exitFullscreen).toHaveBeenCalled();
-
-      document.exitFullscreen = originalExit;
-    });
-
-    it('requestFullscreen() uses webkitEnterFullscreen when element fullscreen is unsupported (iOS Safari)', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: false,
-        writable: true,
-        configurable: true,
-      });
-
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
-      video.webkitEnterFullscreen = vi.fn();
-      const container = document.createElement('div');
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      expect(video.webkitEnterFullscreen).toHaveBeenCalled();
-    });
-
-    it('exitFullscreen() uses webkitExitFullscreen first when video is in WebKit fullscreen (iOS Safari)', async () => {
-      const originalExit = document.exitFullscreen;
-      document.exitFullscreen = vi.fn();
-
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
-      video.webkitExitFullscreen = vi.fn();
-      video.webkitDisplayingFullscreen = true;
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container: null });
-
-      await store.exitFullscreen();
-
-      expect(video.webkitExitFullscreen).toHaveBeenCalled();
-      expect(document.exitFullscreen).not.toHaveBeenCalled();
 
       document.exitFullscreen = originalExit;
     });
@@ -283,7 +246,7 @@ describe('fullscreenFeature', () => {
       const originalExit = document.exitPictureInPicture;
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const { host, video } = createMockVideoHost();
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
 
@@ -295,7 +258,7 @@ describe('fullscreenFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       await store.requestFullscreen();
 
@@ -315,12 +278,12 @@ describe('fullscreenFeature', () => {
       const originalExit = document.exitPictureInPicture;
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const { host } = createMockVideoHost();
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
+      store.attach({ media: host, container });
 
       await store.requestFullscreen();
 

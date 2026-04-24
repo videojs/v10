@@ -20,7 +20,7 @@ export const remotePlaybackFeature = definePlayerFeature({
       }
 
       if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+        await exitFullscreen(media);
       }
 
       return requestRemotePlayback(media);

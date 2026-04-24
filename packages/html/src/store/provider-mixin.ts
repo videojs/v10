@@ -1,4 +1,5 @@
-import type { Media, MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type { Media, MediaContainer, PlayerStore, PlayerTarget, Video } from '@videojs/core/dom';
+import { toMediaHost } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
@@ -36,6 +37,8 @@ export function createProviderMixin<Store extends PlayerStore>(
     class PlayerProviderElement extends BaseClass implements PlayerProvider<Store> {
       #store: Store | null = config.factory();
       #detach: (() => void) | null = null;
+      #releaseMedia: (() => void) | null = null;
+      #wrappedMedia: Video | null = null;
       #media: Media | null = null;
       #container: MediaContainer | null = null;
       #fallbackQueued = false;
@@ -43,6 +46,8 @@ export function createProviderMixin<Store extends PlayerStore>(
       #setMedia = (media: Media | null): void => {
         if (this.#media === media) return;
         this.#media = media;
+        // Drop any previous auto-host so the next #tryAttach re-wraps.
+        this.#releaseAutoHost();
         this.#mediaProvider.setValue({ media, setMedia: this.#setMedia });
         this.#tryAttach();
       };
@@ -107,8 +112,16 @@ export function createProviderMixin<Store extends PlayerStore>(
           return;
         }
 
+        // Wrap raw <video>/<audio> elements so features see the full host API.
+        // The wrapper is reused until #media changes (see #setMedia).
+        if (!this.#wrappedMedia) {
+          const { media, release } = toMediaHost(this.#media);
+          this.#wrappedMedia = media;
+          this.#releaseMedia = release;
+        }
+
         const target: PlayerTarget = {
-          media: this.#media,
+          media: this.#wrappedMedia,
           container: this.#container,
         };
 
@@ -116,7 +129,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         const hasContainerChanged = store.target?.container !== target.container;
 
         if (hasMediaChanged || hasContainerChanged) {
-          this.#detachStore();
+          this.#detach?.();
           this.#detach = store.attach(target);
         }
       }
@@ -124,6 +137,13 @@ export function createProviderMixin<Store extends PlayerStore>(
       #detachStore(): void {
         this.#detach?.();
         this.#detach = null;
+        this.#releaseAutoHost();
+      }
+
+      #releaseAutoHost(): void {
+        this.#releaseMedia?.();
+        this.#releaseMedia = null;
+        this.#wrappedMedia = null;
       }
 
       #queueFallbackDiscovery(): void {

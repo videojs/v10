@@ -13,14 +13,14 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
-import type { Media } from '../../core/media/types';
+import type { Media, Video } from '../../core/media/types';
 
-export type { Media };
+export type { Media, Video };
 
 export interface MediaContainer extends HTMLElement {}
 
 export interface PlayerTarget {
-  media: Media;
+  media: Video;
   container: MediaContainer | null;
 }
 

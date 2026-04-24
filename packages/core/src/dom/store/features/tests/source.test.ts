@@ -1,21 +1,22 @@
 import { combine, createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
-import { createMockVideo } from '../../../tests/test-helpers';
+import { HTMLVideoElementHost } from '../../../media/video-host';
+import { createMockVideoHost } from '../../../tests/test-helpers';
 import { sourceFeature } from '../source';
 import { timeFeature } from '../time';
 
 describe('sourceFeature', () => {
   describe('attach', () => {
     it('syncs source state on attach', () => {
-      const video = createMockVideo({
+      const { host } = createMockVideoHost({
         currentSrc: 'https://example.com/video.mp4',
         src: 'https://example.com/video.mp4',
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
       expect(store.state.canPlay).toBe(true);
@@ -27,21 +28,24 @@ describe('sourceFeature', () => {
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false });
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
       const store = createStore<PlayerTarget>()(sourceFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.source).toBe(null);
       expect(store.state.canPlay).toBe(false);
     });
 
     it('updates on canplay event', () => {
-      const video = createMockVideo({
+      const { host, video } = createMockVideoHost({
         currentSrc: '',
         readyState: HTMLMediaElement.HAVE_NOTHING,
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.canPlay).toBe(false);
 
@@ -57,12 +61,12 @@ describe('sourceFeature', () => {
     });
 
     it('updates on loadstart event', () => {
-      const video = createMockVideo({
+      const { host, video } = createMockVideoHost({
         currentSrc: 'https://example.com/video.mp4',
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
 
@@ -78,13 +82,13 @@ describe('sourceFeature', () => {
     });
 
     it('updates on emptied event', () => {
-      const video = createMockVideo({
+      const { host, video } = createMockVideoHost({
         currentSrc: 'https://example.com/video.mp4',
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.canPlay).toBe(true);
 
@@ -105,11 +109,11 @@ describe('sourceFeature', () => {
   describe('actions', () => {
     describe('loadSource', () => {
       it('sets src on target and calls load', async () => {
-        const video = createMockVideo({});
+        const { host, video } = createMockVideoHost({});
         video.load = vi.fn();
 
         const store = createStore<PlayerTarget>()(sourceFeature);
-        store.attach({ media: video, container: null });
+        store.attach({ media: host, container: null });
 
         const result = await store.loadSource('https://example.com/new.mp4');
 
@@ -119,13 +123,13 @@ describe('sourceFeature', () => {
       });
 
       it('aborts pending operations when loading new source', async () => {
-        const video = createMockVideo({
+        const { host, video } = createMockVideoHost({
           readyState: HTMLMediaElement.HAVE_METADATA,
         });
         video.load = vi.fn();
 
         const store = createStore<PlayerTarget>()(combine(sourceFeature, timeFeature));
-        store.attach({ media: video, container: null });
+        store.attach({ media: host, container: null });
 
         // Start a seek that will wait for seeked event
         const seekPromise = store.seek(30);

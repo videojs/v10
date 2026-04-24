@@ -1,5 +1,6 @@
 import { isFunction } from '@videojs/utils/predicate';
 
+import type { MediaFullscreenCapability } from '../../core/media/types';
 import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from './types';
 
 export function isFullscreenEnabled(): boolean {
@@ -18,21 +19,14 @@ export function getFullscreenElement(): Element | null {
   return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
-export function isFullscreenElement(container: HTMLElement | null, media: EventTarget): boolean {
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (video.webkitDisplayingFullscreen && video.webkitPresentationMode === 'fullscreen') {
-      return true;
-    }
-  }
+export function isFullscreenElement(container: HTMLElement | null, media: MediaFullscreenCapability) {
+  if (media.isFullscreen) return true;
 
-  const target = container ?? media;
+  if (container && getFullscreenElement() === container) return true;
 
-  if (getFullscreenElement() === target) return true;
-
-  if (target instanceof Element) {
+  if (container) {
     try {
-      return target.matches(':fullscreen');
+      return container.matches(':fullscreen');
     } catch {
       return false;
     }
@@ -41,7 +35,7 @@ export function isFullscreenElement(container: HTMLElement | null, media: EventT
   return false;
 }
 
-export async function requestFullscreen(container: HTMLElement | null, media: EventTarget): Promise<void> {
+export async function requestFullscreen(container: HTMLElement | null, media: MediaFullscreenCapability) {
   const doc = document as WebKitDocument;
 
   if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
@@ -56,32 +50,18 @@ export async function requestFullscreen(container: HTMLElement | null, media: Ev
     }
   }
 
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitEnterFullscreen)) {
-      video.webkitEnterFullscreen();
-      return;
-    }
-
-    if (isFunction(media.requestFullscreen)) {
-      return media.requestFullscreen();
-    }
-  }
-
-  throw new DOMException('Fullscreen not supported', 'NotSupportedError');
+  return media.requestFullscreen();
 }
 
-export async function exitFullscreen(media?: EventTarget): Promise<void> {
-  const doc = document as WebKitDocument;
-
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitExitFullscreen) && video.webkitDisplayingFullscreen) {
-      video.webkitExitFullscreen();
-      return;
-    }
+export async function exitFullscreen(media?: MediaFullscreenCapability) {
+  // If the media element is in fullscreen (including WebKit element-level
+  // fullscreen on iOS Safari), delegate to the media.
+  if (media?.isFullscreen) {
+    return media.exitFullscreen();
   }
 
+  // Otherwise, exit whatever is currently fullscreen at the document level.
+  const doc = document as WebKitDocument;
   if (isFunction(doc.exitFullscreen)) {
     return doc.exitFullscreen();
   }

@@ -4,6 +4,7 @@ import type {
   MediaBufferCapability,
   MediaErrorCapability,
   MediaPauseCapability,
+  MediaPictureInPictureCapability,
   MediaPlaybackRateCapability,
   MediaRemotePlaybackCapability,
   MediaSeekCapability,
@@ -59,6 +60,10 @@ export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrack
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
   return isObject(value) && 'remote' in value && isObject((value as Record<string, unknown>).remote);
+}
+
+export function isMediaPictureInPictureCapable(value: unknown): value is MediaPictureInPictureCapability {
+  return isObject(value) && 'isPictureInPicture' in value;
 }
 
 export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {

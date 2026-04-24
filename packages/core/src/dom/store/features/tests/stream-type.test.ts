@@ -2,43 +2,43 @@ import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 import { type MediaStreamType, MediaStreamTypes } from '../../../../core/media/types';
 import type { PlayerTarget } from '../../../media/types';
-import { createMockVideo } from '../../../tests/test-helpers';
+import { createMockVideoHost } from '../../../tests/test-helpers';
 import { streamTypeFeature } from '../stream-type';
 
 describe('streamTypeFeature', () => {
   describe('fallback (no `streamType` property on media)', () => {
     it('defaults to `unknown` when duration is not known', () => {
-      const video = createMockVideo({ duration: Number.NaN });
+      const { host } = createMockVideoHost({ duration: Number.NaN });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
     });
 
     it('detects `live` from infinite duration', () => {
-      const video = createMockVideo({ duration: Number.POSITIVE_INFINITY });
+      const { host } = createMockVideoHost({ duration: Number.POSITIVE_INFINITY });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.LIVE);
     });
 
     it('detects `on-demand` from a finite duration', () => {
-      const video = createMockVideo({ duration: 120 });
+      const { host } = createMockVideoHost({ duration: 120 });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.ON_DEMAND);
     });
 
     it('updates on `durationchange`', () => {
-      const video = createMockVideo({ duration: Number.NaN });
+      const { host, video } = createMockVideoHost({ duration: Number.NaN });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
 
@@ -49,10 +49,10 @@ describe('streamTypeFeature', () => {
     });
 
     it('resets to `unknown` on `emptied`', () => {
-      const video = createMockVideo({ duration: 120 });
+      const { host, video } = createMockVideoHost({ duration: 120 });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: video, container: null });
+      store.attach({ media: host, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.ON_DEMAND);
 
