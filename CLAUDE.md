@@ -21,7 +21,9 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
 | `packages/react-native` | React Native player (planned, not yet implemented).                 |
+| `packages/cli`          | `@videojs/cli` — CLI for reading docs, and more in the future.      |
 | `apps/sandbox`          | Vite‑based dev playground (private, not published).                  |
+| `apps/e2e`              | Playwright end‑to‑end and visual snapshot tests (private).          |
 | `site/`                 | Astro‑based docs and website.                                       |
 
 ### Dependency Hierarchy
@@ -54,6 +56,7 @@ react-native    ← React Native player (planned, not yet implemented)
 utils ← element
 utils ← store ← core ← html / react
 utils ← spf ← core
+icons, skins → html / react
 ```
 
 ## Workspace
@@ -518,11 +521,12 @@ export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 ## Design Documents
 
-| Location           | Purpose                                                    |
-| ------------------ | ---------------------------------------------------------- |
-| `internal/design/` | Decisions you own — document for posterity                 |
-| `rfc/`             | Proposals needing buy-in — get alignment before committing |
-| `.claude/plans/`   | Implementation notes, AI-agent context, working drafts     |
+| Location              | Purpose                                                    |
+| --------------------- | ---------------------------------------------------------- |
+| `internal/design/`    | Architecture specs and feature designs you own             |
+| `internal/decisions/` | ADR-style records of single tactical decisions             |
+| `rfc/`                | Proposals needing buy-in — get alignment before committing |
+| `.claude/plans/`      | Implementation notes, AI-agent context, working drafts     |
 
 ### Design Doc vs RFC
 
@@ -532,7 +536,9 @@ export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 | **Approval**   | None needed            | Needs buy-in from others         |
 | **Purpose**    | Document for posterity | Get alignment first              |
 
-**Design Docs** — Decisions you own. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture others will build on. See `internal/design/README.md`.
+**Design Docs** — Architecture specs and feature designs in your area. Longer-form, status ranges from `draft` → `decided` → `implemented` → `superseded`. See `internal/design/README.md`.
+
+**Decisions** — ADR-style records of a single tactical decision: what was chosen, why, what was ruled out. Short, always `decided`, often cross-reference each other. See `internal/decisions/README.md`.
 
 **RFCs** — Cross-team alignment. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See `rfc/README.md`.
 

@@ -17,8 +17,8 @@ Video.js v10 is close to stable. Try it out in real projects and share your feed
 ## Timeline
 
 - **Technical Preview (Complete):** Initial showcase for Demuxed.
-- **Alpha (Jan–Feb 2026):** [See milestone](https://github.com/videojs/v10/milestone/3)
-- **Beta (Mar 2026):** [See milestone](https://github.com/videojs/v10/milestone/1)
+- **Alpha (Complete):** [See milestone](https://github.com/videojs/v10/milestone/3)
+- **Beta (Complete):** [See milestone](https://github.com/videojs/v10/milestone/1)
 - **GA (Mid 2026):** [See milestone](https://github.com/videojs/v10/milestone/6) ← WIP
 - **Video.js (End of 2026):** Video.js core/contrib parity and supported plugins migrated.
 
