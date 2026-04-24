@@ -1,5 +1,5 @@
 import { effect } from '../../core/signals/effect';
-import { type Signal, untrack, update } from '../../core/signals/primitives';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 import {
   type CueParser,
   createTextTrackSegmentLoaderActor,
@@ -39,7 +39,11 @@ export interface TextTrackActorProviderConfig {
  *
  * Creates the `TextTracksActor` (bound to the element's `textTracks`) and
  * the `TextTrackSegmentLoaderActor` (bound to the supplied cue parser)
- * on mount, destroys them on change or unmount. Writes both to `owners`.
+ * on mount; the effect's cleanup destroys them on change or unmount.
+ *
+ * Subscribes to a `computed` projection of `mediaElement` rather than the
+ * full owners signal, so writing the actor slots back to `owners` from
+ * inside the effect does not re-trigger it.
  *
  * Pairs with the host-agnostic `loadTextTrackCues` behavior in
  * `media/behaviors/`: this provider manages actor lifecycle, the loader
@@ -57,31 +61,20 @@ export function provideTextTrackActors<O extends TextTrackActorProviderOwners>({
   owners: Signal<O>;
   config: TextTrackActorProviderConfig;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
 
-  const teardown = (): void => {
-    const { textTracksActor, segmentLoaderActor } = untrack(() => owners.get());
-    if (!textTracksActor && !segmentLoaderActor) return;
-    textTracksActor?.destroy();
-    segmentLoaderActor?.destroy();
-    update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
-  };
-
-  const cleanupEffect = effect(() => {
-    const { mediaElement } = owners.get();
-    if (mediaElement === lastMediaElement) return;
-
-    teardown();
-    lastMediaElement = mediaElement;
+  return effect(() => {
+    const mediaElement = mediaElementSignal.get();
     if (!mediaElement) return;
 
     const textTracksActor = createTextTracksActor(mediaElement);
     const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.parseSegment);
     update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
-  });
 
-  return () => {
-    cleanupEffect();
-    teardown();
-  };
+    return () => {
+      textTracksActor.destroy();
+      segmentLoaderActor.destroy();
+      update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
+    };
+  });
 }
