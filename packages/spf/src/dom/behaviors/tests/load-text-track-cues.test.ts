@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { Presentation, Segment, TextTrack } from '../../../media/types';
 import {
   loadTextTrackCues,
   type TextTrackCueLoadingOwners,
   type TextTrackCueLoadingState,
-} from '../load-text-track-cues';
+} from '../../../media/behaviors/load-text-track-cues';
+import type { Presentation, Segment, TextTrack } from '../../../media/types';
+import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../provide-text-track-actors';
+
+// The composed behaviors (provider in dom + loader in media) intersect their
+// owner-shape contracts. The provider narrows `mediaElement` to
+// `HTMLMediaElement`; the loader keeps the abstract actor types. The test
+// signal has to satisfy both.
+type ComposedOwners = TextTrackCueLoadingOwners & TextTrackActorProviderOwners;
 
 // Mock parseVttSegment
 vi.mock('../../text/parse-vtt-segment', () => ({
@@ -56,18 +63,18 @@ function createMockSegments(count: number): Segment[] {
 }
 
 /**
- * Sets up loadTextTrackCues with the given state/owners and returns a
- * combined cleanup that destroys actors from owners before destroying the reactor.
+ * Sets up the composition of `provideTextTrackActors` (DOM-side actor
+ * provider) and `loadTextTrackCues` (host-agnostic orchestrator).
+ * Returns the composed reactive channels and a combined cleanup.
  */
-function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: TextTrackCueLoadingOwners) {
+function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: ComposedOwners) {
   const state = signal<TextTrackCueLoadingState>(initialState);
-  const owners = signal<TextTrackCueLoadingOwners>(initialOwners);
+  const owners = signal<ComposedOwners>(initialOwners);
+  const providerCleanup = provideTextTrackActors({ owners });
   const reactor = loadTextTrackCues({ state, owners });
   const cleanup = () => {
-    const { textTracksActor, segmentLoaderActor } = owners.get();
-    textTracksActor?.destroy();
-    segmentLoaderActor?.destroy();
     reactor.destroy();
+    providerCleanup();
   };
   return { state, owners, cleanup };
 }

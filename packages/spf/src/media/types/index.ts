@@ -189,6 +189,18 @@ export interface Cue {
 }
 
 /**
+ * Media element with an iterable text-track list, host-agnostic.
+ *
+ * Extends `MediaElementLike` with the minimum surface needed to observe
+ * which text tracks are currently mounted on the media. `HTMLMediaElement`
+ * structurally satisfies this (its `textTracks` is a `TextTrackList`,
+ * which is iterable with `{ id }` items).
+ */
+export interface MediaElementWithTextTracks extends MediaElementLike {
+  readonly textTracks: Iterable<{ readonly id: string }>;
+}
+
+/**
  * Partially resolved text track from multivariant playlist.
  * Has metadata but no segments or initialization yet (media playlist not fetched).
  */

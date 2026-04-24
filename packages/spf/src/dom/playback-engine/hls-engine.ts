@@ -2,6 +2,7 @@ import { type Composition, createComposition } from '../../core/composition/crea
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { calculatePresentationDuration } from '../../media/behaviors/calculate-presentation-duration';
+import { loadTextTrackCues } from '../../media/behaviors/load-text-track-cues';
 import { switchQuality } from '../../media/behaviors/quality-switching';
 import { resolvePresentation } from '../../media/behaviors/resolve-presentation';
 import { resolveTrack } from '../../media/behaviors/resolve-track';
@@ -11,7 +12,7 @@ import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-l
 import type { TextTracksActor } from '../actors/text-tracks';
 import { endOfStream } from '../behaviors/end-of-stream';
 import { loadSegments } from '../behaviors/load-segments';
-import { loadTextTrackCues } from '../behaviors/load-text-track-cues';
+import { provideTextTrackActors } from '../behaviors/provide-text-track-actors';
 import { setupMediaSource } from '../behaviors/setup-mediasource';
 import { setupSourceBuffers } from '../behaviors/setup-sourcebuffer';
 import { syncTextTracks } from '../behaviors/sync-text-tracks';
@@ -201,10 +202,11 @@ export function createHlsPlaybackEngine(
 
       // Text tracks
       syncTextTracks,
+      provideTextTrackActors,
       loadTextTrackCues,
 
       // Module-level VTT parser cleanup
-      // TODO: this should be owned by loadTextTrackCues
+      // TODO: this should be owned by provideTextTrackActors
       () => destroyVttParser(),
     ],
     {

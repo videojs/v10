@@ -3,7 +3,7 @@
  */
 
 export { loadSegments } from './behaviors/load-segments';
-export { loadTextTrackCues } from './behaviors/load-text-track-cues';
+export { provideTextTrackActors } from './behaviors/provide-text-track-actors';
 export type { CurrentTimeOwners, CurrentTimeState } from './behaviors/track-current-time';
 export { trackCurrentTime } from './behaviors/track-current-time';
 export type { PlaybackInitiatedOwners, PlaybackInitiatedState } from './behaviors/track-playback-initiated';
