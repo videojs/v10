@@ -20,7 +20,7 @@ Vite-based playground for testing and developing Video.js 10 integrations. Each 
 # From the repo root
 pnpm dev
 # Or just the sandbox
-pnpm -F sandbox dev
+pnpm dev:sandbox
 ```
 
 This runs `setup.ts` first, which mirrors any missing files from `templates/` into `src/`, then starts the Vite dev server. Open the root URL to see links to all sandboxes.
@@ -39,7 +39,7 @@ On `pnpm dev`, `setup.ts` copies any file from `templates/` that doesn't already
 When you've made improvements in `src/` that should become the new baseline:
 
 ```bash
-pnpm -F sandbox sync
+pnpm -F @videojs/sandbox sync
 ```
 
 This shows a colored diff of every changed file, then prompts for confirmation before copying `src/` changes into `templates/`. Files that only exist in `templates/` are left untouched.
