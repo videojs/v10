@@ -6,15 +6,13 @@ Vite-based playground for testing and developing Video.js 10 integrations. Each 
 
 ```bash
 # From the repo root
-pnpm dev:sandbox
-
-# Or run everything (sandbox + site + package watch)
-pnpm dev
+pnpm dev:sandbox             # sandbox + workspace package watch
+pnpm dev                     # also runs the docs site
 ```
 
-Open the printed URL. The root route renders a dynamic index of every available sandbox — browse to one to run it.
+Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hls-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
 
-To see what's available without running the dev server, check `apps/sandbox/templates/`.
+The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `simple-hls-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 
 ## How it works
 

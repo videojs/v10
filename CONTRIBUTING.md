@@ -180,11 +180,11 @@ pnpm test:e2e:vite               # Chromium only (fast feedback)
 
 ### 🏖 Manual Testing with the Sandbox
 
-The sandbox (`apps/sandbox/`) is a Vite playground for manually exercising player changes in a browser. Run it and the root URL will render a dynamic index of every available entry (HTML and React variants for `video`, `audio`, `hls-video`, `background-video`, and more — see `apps/sandbox/templates/` for the full list).
+The sandbox (`apps/sandbox/`) is a Vite playground for manually exercising player changes in a browser. The root URL renders an interactive shell — a navbar with dropdowns for platform, preset, skin, styling, and source — that previews the selected combination in an iframe. One-off templates outside the main matrix are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 
 ```sh
-pnpm dev:sandbox                 # just the sandbox (usually what you want)
-pnpm dev                         # sandbox + site + watch all packages
+pnpm dev:sandbox                 # sandbox + workspace package watch
+pnpm dev                         # also runs the docs site
 ```
 
 Sandbox code lives in two parallel directories:
