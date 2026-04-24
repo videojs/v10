@@ -21,7 +21,7 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
 | `packages/react-native` | React Native player (planned, not yet implemented).                 |
-| `packages/cli`          | `@videojs/cli` — CLI for reading docs and managing preferences.     |
+| `packages/cli`          | `@videojs/cli` — CLI for reading docs, and more in the future.      |
 | `apps/sandbox`          | Vite‑based dev playground (private, not published).                  |
 | `apps/e2e`              | Playwright end‑to‑end and visual snapshot tests (private).          |
 | `site/`                 | Astro‑based docs and website.                                       |
