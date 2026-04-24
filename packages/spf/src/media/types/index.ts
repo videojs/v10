@@ -175,6 +175,20 @@ export type TextTrack = Track & {
 };
 
 /**
+ * Minimal text-track cue shape — start time, end time, and display text.
+ *
+ * Host-agnostic representation. `VTTCue` structurally satisfies this
+ * interface, so DOM consumers pass `VTTCue` values directly. Non-DOM
+ * hosts (workers, test fakes, non-browser engines) can satisfy the same
+ * shape without pulling in DOM types.
+ */
+export interface Cue {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+/**
  * Partially resolved text track from multivariant playlist.
  * Has metadata but no segments or initialization yet (media playlist not fetched).
  */

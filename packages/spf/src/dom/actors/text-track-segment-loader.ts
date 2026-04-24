@@ -1,22 +1,16 @@
-import type { CallbackActor } from '../../core/actors/actor';
 import { untrack } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/tasks/task';
+import type {
+  TextTrackSegmentLoaderActor,
+  TextTrackSegmentLoaderMessage,
+} from '../../media/actors/text-track-segment-loader';
+import type { TextTracksActor } from '../../media/actors/text-tracks';
 import { getSegmentsToLoad } from '../../media/buffer/forward-buffer';
-import type { TextTrack } from '../../media/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
-import type { TextTracksActor } from './text-tracks';
 
-// =============================================================================
-// Types
-// =============================================================================
-
-export type TextTrackSegmentLoaderMessage = {
-  type: 'load';
-  track: TextTrack;
-  currentTime: number;
-};
-
-export type TextTrackSegmentLoaderActor = CallbackActor<TextTrackSegmentLoaderMessage>;
+// Re-export the host-agnostic types so existing dom-side consumers can keep
+// importing from this module.
+export type { TextTrackSegmentLoaderActor, TextTrackSegmentLoaderMessage };
 
 // =============================================================================
 // Implementation
@@ -31,7 +25,9 @@ export type TextTrackSegmentLoaderActor = CallbackActor<TextTrackSegmentLoaderMe
  * TextTracksActor's context are skipped. Each load preempts in-flight work
  * via abortAll() before scheduling fresh tasks.
  */
-export function createTextTrackSegmentLoaderActor(textTracksActor: TextTracksActor): TextTrackSegmentLoaderActor {
+export function createTextTrackSegmentLoaderActor(
+  textTracksActor: TextTracksActor<VTTCue>
+): TextTrackSegmentLoaderActor {
   const runner = new SerialRunner();
   let destroyed = false;
 
