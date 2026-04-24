@@ -6,6 +6,7 @@ import {
   type TextTrackCueLoadingState,
 } from '../../../media/behaviors/load-text-track-cues';
 import type { Presentation, Segment, TextTrack } from '../../../media/types';
+import { parseVttSegment } from '../../text/parse-vtt-segment';
 import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../provide-text-track-actors';
 
 // The composed behaviors (provider in dom + loader in media) intersect their
@@ -70,7 +71,7 @@ function createMockSegments(count: number): Segment[] {
 function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: ComposedOwners) {
   const state = signal<TextTrackCueLoadingState>(initialState);
   const owners = signal<ComposedOwners>(initialOwners);
-  const providerCleanup = provideTextTrackActors({ owners });
+  const providerCleanup = provideTextTrackActors({ owners, config: { parseSegment: parseVttSegment } });
   const reactor = loadTextTrackCues({ state, owners });
   const cleanup = () => {
     reactor.destroy();

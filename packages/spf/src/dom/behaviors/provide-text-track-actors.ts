@@ -1,8 +1,11 @@
 import { effect } from '../../core/signals/effect';
 import { type Signal, untrack, update } from '../../core/signals/primitives';
-import type { TextTrackSegmentLoaderActor } from '../../media/actors/text-track-segment-loader';
+import {
+  type CueParser,
+  createTextTrackSegmentLoaderActor,
+  type TextTrackSegmentLoaderActor,
+} from '../../media/actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../media/actors/text-tracks';
-import { createTextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
 import { createTextTracksActor } from '../actors/text-tracks';
 
 /**
@@ -19,11 +22,23 @@ export interface TextTrackActorProviderOwners {
 }
 
 /**
+ * Config for the text-track actor provider.
+ *
+ * The cue parser is the only piece that genuinely needs the host's
+ * capabilities; injecting it via config means this behavior binds only
+ * `createTextTracksActor` internally (which needs the `HTMLMediaElement`
+ * argument) and relies on the composition assembler to supply the parser.
+ */
+export interface TextTrackActorProviderConfig {
+  parseSegment: CueParser<VTTCue>;
+}
+
+/**
  * Ensures the text-track actors are present in owners whenever a
  * media element is available.
  *
  * Creates the `TextTracksActor` (bound to the element's `textTracks`) and
- * the `TextTrackSegmentLoaderActor` (bound to the browser's VTT parser)
+ * the `TextTrackSegmentLoaderActor` (bound to the supplied cue parser)
  * on mount, destroys them on change or unmount. Writes both to `owners`.
  *
  * Pairs with the host-agnostic `loadTextTrackCues` behavior in
@@ -31,12 +46,16 @@ export interface TextTrackActorProviderOwners {
  * orchestrates state transitions and dispatches load messages.
  *
  * @example
- * createComposition([provideTextTrackActors, loadTextTrackCues, ...], { ... });
+ * createComposition([provideTextTrackActors, loadTextTrackCues, ...], {
+ *   config: { parseSegment: parseVttSegment },
+ * });
  */
 export function provideTextTrackActors<O extends TextTrackActorProviderOwners>({
   owners,
+  config,
 }: {
   owners: Signal<O>;
+  config: TextTrackActorProviderConfig;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
 
@@ -57,7 +76,7 @@ export function provideTextTrackActors<O extends TextTrackActorProviderOwners>({
     if (!mediaElement) return;
 
     const textTracksActor = createTextTracksActor(mediaElement);
-    const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.parseSegment);
     update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
   });
 

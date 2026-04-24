@@ -1,6 +1,7 @@
 import { type Composition, createComposition } from '../../core/composition/create-composition';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
+import type { TextTrackSegmentLoaderActor } from '../../media/actors/text-track-segment-loader';
 import { calculatePresentationDuration } from '../../media/behaviors/calculate-presentation-duration';
 import { loadTextTrackCues } from '../../media/behaviors/load-text-track-cues';
 import { switchQuality } from '../../media/behaviors/quality-switching';
@@ -8,7 +9,6 @@ import { resolvePresentation } from '../../media/behaviors/resolve-presentation'
 import { resolveTrack } from '../../media/behaviors/resolve-track';
 import { syncPreloadAttribute } from '../../media/behaviors/sync-preload-attribute';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../media/primitives/select-tracks';
-import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../actors/text-tracks';
 import { endOfStream } from '../behaviors/end-of-stream';
 import { loadSegments } from '../behaviors/load-segments';
@@ -20,7 +20,7 @@ import { trackCurrentTime } from '../behaviors/track-current-time';
 import { trackPlaybackInitiated } from '../behaviors/track-playback-initiated';
 import { updateDuration } from '../behaviors/update-duration';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
-import { destroyVttParser } from '../text/parse-vtt-segment';
+import { destroyVttParser, parseVttSegment } from '../text/parse-vtt-segment';
 
 // ============================================================================
 // HLS Engine State & Owners
@@ -101,6 +101,9 @@ const loadAudioSegments = (deps: Deps) => loadSegments(deps, { type: 'audio' });
 const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
 const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
+
+const provideDomTextTrackActors = ({ owners }: Deps) =>
+  provideTextTrackActors({ owners, config: { parseSegment: parseVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -202,11 +205,11 @@ export function createHlsPlaybackEngine(
 
       // Text tracks
       syncTextTracks,
-      provideTextTrackActors,
+      provideDomTextTrackActors,
       loadTextTrackCues,
 
       // Module-level VTT parser cleanup
-      // TODO: this should be owned by provideTextTrackActors
+      // TODO: this should be owned by provideDomTextTrackActors
       () => destroyVttParser(),
     ],
     {

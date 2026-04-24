@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTextTrackSegmentLoaderActor } from '../../../media/actors/text-track-segment-loader';
 import type { TextTrack } from '../../../media/types';
-import { createTextTrackSegmentLoaderActor } from '../text-track-segment-loader';
+import { parseVttSegment } from '../../text/parse-vtt-segment';
 import { createTextTracksActor } from '../text-tracks';
 
 vi.mock('../../text/parse-vtt-segment', () => ({
@@ -55,7 +56,7 @@ describe('TextTrackSegmentLoaderActor', () => {
   it('can be created and destroyed without error', () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     actor.destroy();
     textTracksActor.destroy();
   });
@@ -65,7 +66,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     const track = makeResolvedTextTrack('track-en', []);
 
     actor.send({ type: 'load', track, currentTime: 0 });
@@ -79,7 +80,7 @@ describe('TextTrackSegmentLoaderActor', () => {
   it('delegates cue loading to TextTracksActor', async () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
@@ -99,7 +100,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
@@ -125,7 +126,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     const track = makeResolvedTextTrack('track-en', [
       'https://example.com/seg-0.vtt',
       'https://example.com/fail.vtt',
@@ -158,7 +159,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en', 'track-es']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
 
     const track1 = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
     const track2 = makeResolvedTextTrack('track-es', ['https://example.com/seg-1.vtt']);
@@ -190,7 +191,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
     actor.destroy();
