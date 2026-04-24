@@ -18,13 +18,14 @@ export type TextTrackSegmentLoaderMessage = {
 export type TextTrackSegmentLoaderActor = CallbackActor<TextTrackSegmentLoaderMessage>;
 
 /**
- * Turns a text-track segment URL into an array of cues.
+ * Resolves a text-track segment URL into the array of cues it contains.
  *
- * Host-agnostic — the concrete parser (e.g. the browser's native VTT
- * parser) is supplied by the host at engine-assembly time, so this
- * actor stays DOM-free.
+ * "Resolve" because the fn covers both network fetch and parse into the
+ * domain model. Host-agnostic — the concrete resolver (e.g. the
+ * browser's native VTT resolver) is supplied at engine-assembly time,
+ * so this actor stays DOM-free.
  */
-export type CueParser<C extends Cue = Cue> = (url: string) => Promise<C[]>;
+export type TextTrackSegmentResolver<C extends Cue = Cue> = (url: string) => Promise<C[]>;
 
 // =============================================================================
 // Implementation
@@ -45,7 +46,7 @@ export type CueParser<C extends Cue = Cue> = (url: string) => Promise<C[]>;
  */
 export function createTextTrackSegmentLoaderActor<C extends Cue>(
   textTracksActor: TextTracksActor<C>,
-  parseSegment: CueParser<C>
+  resolveSegment: TextTrackSegmentResolver<C>
 ): TextTrackSegmentLoaderActor {
   const runner = new SerialRunner();
   let destroyed = false;
@@ -63,7 +64,7 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
           new Task(async (signal) => {
             if (signal.aborted) return;
             try {
-              const cues = await parseSegment(segment.url);
+              const cues = await resolveSegment(segment.url);
               if (signal.aborted) return;
               textTracksActor.send({
                 type: 'add-cues',

@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTextTrackSegmentLoaderActor } from '../../../media/actors/text-track-segment-loader';
 import type { TextTrack } from '../../../media/types';
-import { parseVttSegment } from '../../text/parse-vtt-segment';
+import { resolveVttSegment } from '../../text/resolve-vtt-segment';
 import { createTextTracksActor } from '../text-tracks';
 
-vi.mock('../../text/parse-vtt-segment', () => ({
-  parseVttSegment: vi.fn((url: string) => {
+vi.mock('../../text/resolve-vtt-segment', () => ({
+  resolveVttSegment: vi.fn((url: string) => {
     if (url.includes('fail')) {
       return Promise.reject(new Error('Network error'));
     }
     return Promise.resolve([new VTTCue(0, 5, `Cue from ${url}`)]);
   }),
-  destroyVttParser: vi.fn(),
+  destroyVttResolver: vi.fn(),
 }));
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
@@ -56,22 +56,22 @@ describe('TextTrackSegmentLoaderActor', () => {
   it('can be created and destroyed without error', () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     actor.destroy();
     textTracksActor.destroy();
   });
 
   it('does not fetch when no segments need loading', async () => {
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', []);
 
     actor.send({ type: 'load', track, currentTime: 0 });
 
-    expect(parseVttSegment).not.toHaveBeenCalled();
+    expect(resolveVttSegment).not.toHaveBeenCalled();
 
     actor.destroy();
     textTracksActor.destroy();
@@ -80,7 +80,7 @@ describe('TextTrackSegmentLoaderActor', () => {
   it('delegates cue loading to TextTracksActor', async () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
@@ -96,28 +96,28 @@ describe('TextTrackSegmentLoaderActor', () => {
   });
 
   it('skips already-loaded segments on repeat send()', async () => {
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
     await vi.waitFor(() => expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2));
-    expect(parseVttSegment).toHaveBeenCalledTimes(2);
+    expect(resolveVttSegment).toHaveBeenCalledTimes(2);
 
     // Repeat send — all segments already in TextTracksActor context
     actor.send({ type: 'load', track, currentTime: 0 });
-    expect(parseVttSegment).toHaveBeenCalledTimes(2);
+    expect(resolveVttSegment).toHaveBeenCalledTimes(2);
 
     actor.destroy();
     textTracksActor.destroy();
   });
 
   it('continues loading remaining segments after a fetch error', async () => {
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-    vi.mocked(parseVttSegment)
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+    vi.mocked(resolveVttSegment)
       .mockResolvedValueOnce([new VTTCue(0, 5, 'Good')])
       .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValueOnce([new VTTCue(20, 25, 'Also good')]);
@@ -126,7 +126,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', [
       'https://example.com/seg-0.vtt',
       'https://example.com/fail.vtt',
@@ -145,10 +145,10 @@ describe('TextTrackSegmentLoaderActor', () => {
   });
 
   it('preempts in-flight work when a new send() arrives', async () => {
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
 
     let resolveSeg0!: (cues: VTTCue[]) => void;
-    vi.mocked(parseVttSegment)
+    vi.mocked(resolveVttSegment)
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
@@ -159,7 +159,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     const video = makeMediaElement(['track-en', 'track-es']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
 
     const track1 = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
     const track2 = makeResolvedTextTrack('track-es', ['https://example.com/seg-1.vtt']);
@@ -168,7 +168,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     actor.send({ type: 'load', track: track1, currentTime: 0 });
 
     // Wait for the Task to actually start running
-    await vi.waitFor(() => expect(parseVttSegment).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
 
     // Switch to track2 — preempts track1
     actor.send({ type: 'load', track: track2, currentTime: 0 });
@@ -187,11 +187,11 @@ describe('TextTrackSegmentLoaderActor', () => {
   });
 
   it('does not schedule work after destroy()', async () => {
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
 
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
-    const actor = createTextTrackSegmentLoaderActor(textTracksActor, parseVttSegment);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
     actor.destroy();
@@ -199,7 +199,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(parseVttSegment).not.toHaveBeenCalled();
+    expect(resolveVttSegment).not.toHaveBeenCalled();
 
     textTracksActor.destroy();
   });

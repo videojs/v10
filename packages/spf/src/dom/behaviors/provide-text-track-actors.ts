@@ -1,9 +1,9 @@
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, update } from '../../core/signals/primitives';
 import {
-  type CueParser,
   createTextTrackSegmentLoaderActor,
   type TextTrackSegmentLoaderActor,
+  type TextTrackSegmentResolver,
 } from '../../media/actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../media/actors/text-tracks';
 import { createTextTracksActor } from '../actors/text-tracks';
@@ -30,7 +30,7 @@ export interface TextTrackActorProviderOwners {
  * argument) and relies on the composition assembler to supply the parser.
  */
 export interface TextTrackActorProviderConfig {
-  parseSegment: CueParser<VTTCue>;
+  resolveTextTrackSegment: TextTrackSegmentResolver<VTTCue>;
 }
 
 /**
@@ -51,7 +51,7 @@ export interface TextTrackActorProviderConfig {
  *
  * @example
  * createComposition([provideTextTrackActors, loadTextTrackCues, ...], {
- *   config: { parseSegment: parseVttSegment },
+ *   config: { resolveTextTrackSegment: resolveVttSegment },
  * });
  */
 export function provideTextTrackActors<O extends TextTrackActorProviderOwners>({
@@ -68,7 +68,7 @@ export function provideTextTrackActors<O extends TextTrackActorProviderOwners>({
     if (!mediaElement) return;
 
     const textTracksActor = createTextTracksActor(mediaElement);
-    const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.parseSegment);
+    const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.resolveTextTrackSegment);
     update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
 
     return () => {

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { destroyVttParser, parseVttSegment } from '../parse-vtt-segment';
+import { destroyVttResolver, resolveVttSegment } from '../resolve-vtt-segment';
 
-describe('parseVttSegment', () => {
+describe('resolveVttSegment', () => {
   beforeEach(() => {
-    destroyVttParser();
+    destroyVttResolver();
   });
 
   it('parses valid VTT segment with single cue', async () => {
@@ -15,7 +15,7 @@ describe('parseVttSegment', () => {
 First subtitle
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(1);
     expect(cues[0]).toBeInstanceOf(VTTCue);
@@ -39,7 +39,7 @@ Second subtitle
 Third subtitle
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(3);
     expect(cues[0]!.text).toBe('First subtitle');
@@ -56,7 +56,7 @@ Third subtitle
 Test subtitle with precise timing
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(1);
     expect(cues[0]!.startTime).toBe(1.5);
@@ -73,7 +73,7 @@ Test subtitle with precise timing
 <v Speaker>Positioned subtitle</v>
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(1);
     expect(cues[0]!.startTime).toBe(0);
@@ -94,7 +94,7 @@ Second line
 Third line
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(1);
     expect(cues[0]!.text).toContain('First line');
@@ -103,7 +103,7 @@ Third line
   });
 
   it('rejects on invalid URL', async () => {
-    await expect(parseVttSegment('https://invalid.example.com/missing.vtt')).rejects.toThrow(
+    await expect(resolveVttSegment('https://invalid.example.com/missing.vtt')).rejects.toThrow(
       'Failed to load VTT segment'
     );
   });
@@ -111,13 +111,13 @@ Third line
   it('rejects on malformed VTT', async () => {
     const invalidVtt = `data:text/vtt,${encodeURIComponent('NOT VALID VTT CONTENT')}`;
 
-    await expect(parseVttSegment(invalidVtt)).rejects.toThrow('Failed to load VTT segment');
+    await expect(resolveVttSegment(invalidVtt)).rejects.toThrow('Failed to load VTT segment');
   });
 
   it('returns empty array for VTT with no cues', async () => {
     const vttDataUrl = `data:text/vtt,${encodeURIComponent('WEBVTT\n\n')}`;
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
 
     expect(cues).toHaveLength(0);
   });
@@ -139,11 +139,11 @@ First
 Second
 `);
 
-    const cues1 = await parseVttSegment(vtt1);
+    const cues1 = await resolveVttSegment(vtt1);
     expect(cues1).toHaveLength(1);
     expect(cues1[0]!.text).toBe('First');
 
-    const cues2 = await parseVttSegment(vtt2);
+    const cues2 = await resolveVttSegment(vtt2);
     expect(cues2).toHaveLength(1);
     expect(cues2[0]!.text).toBe('Second');
   });
@@ -157,27 +157,27 @@ Second
 Test
 `);
 
-    await parseVttSegment(vttDataUrl);
+    await resolveVttSegment(vttDataUrl);
 
-    destroyVttParser();
+    destroyVttResolver();
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
     expect(cues).toHaveLength(1);
     expect(cues[0]!.text).toBe('Test');
   });
 });
 
-describe('destroyVttParser', () => {
+describe('destroyVttResolver', () => {
   it('can be called multiple times safely', () => {
     expect(() => {
-      destroyVttParser();
-      destroyVttParser();
-      destroyVttParser();
+      destroyVttResolver();
+      destroyVttResolver();
+      destroyVttResolver();
     }).not.toThrow();
   });
 
   it('allows parsing after destroy', async () => {
-    destroyVttParser();
+    destroyVttResolver();
 
     const vttDataUrl =
       'data:text/vtt,' +
@@ -187,7 +187,7 @@ describe('destroyVttParser', () => {
 Test
 `);
 
-    const cues = await parseVttSegment(vttDataUrl);
+    const cues = await resolveVttSegment(vttDataUrl);
     expect(cues).toHaveLength(1);
   });
 });

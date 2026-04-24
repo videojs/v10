@@ -6,7 +6,7 @@ import {
   type TextTrackCueLoadingState,
 } from '../../../media/behaviors/load-text-track-cues';
 import type { Presentation, Segment, TextTrack } from '../../../media/types';
-import { parseVttSegment } from '../../text/parse-vtt-segment';
+import { resolveVttSegment } from '../../text/resolve-vtt-segment';
 import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../provide-text-track-actors';
 
 // The composed behaviors (provider in dom + loader in media) intersect their
@@ -15,15 +15,15 @@ import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../pr
 // signal has to satisfy both.
 type ComposedOwners = TextTrackCueLoadingOwners & TextTrackActorProviderOwners;
 
-// Mock parseVttSegment
-vi.mock('../../text/parse-vtt-segment', () => ({
-  parseVttSegment: vi.fn((url: string) => {
+// Mock resolveVttSegment
+vi.mock('../../text/resolve-vtt-segment', () => ({
+  resolveVttSegment: vi.fn((url: string) => {
     if (url.includes('fail')) {
       return Promise.reject(new Error('Failed to load'));
     }
     return Promise.resolve([new VTTCue(0, 5, `Subtitle from ${url}`)]);
   }),
-  destroyVttParser: vi.fn(),
+  destroyVttResolver: vi.fn(),
 }));
 
 function createMockPresentation(tracks: Partial<TextTrack>[]): Presentation {
@@ -71,7 +71,7 @@ function createMockSegments(count: number): Segment[] {
 function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: ComposedOwners) {
   const state = signal<TextTrackCueLoadingState>(initialState);
   const owners = signal<ComposedOwners>(initialOwners);
-  const providerCleanup = provideTextTrackActors({ owners, config: { parseSegment: parseVttSegment } });
+  const providerCleanup = provideTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
   const reactor = loadTextTrackCues({ state, owners });
   const cleanup = () => {
     reactor.destroy();
@@ -87,7 +87,7 @@ describe('loadTextTrackCues', () => {
 
   // Note: We cannot test actual cue addition in unit tests because the vitest
   // browser environment clears manually added cues after async operations.
-  // These tests verify the orchestration logic and that parseVttSegment is called.
+  // These tests verify the orchestration logic and that resolveVttSegment is called.
 
   describe('cue deduplication', () => {
     // Deduplication checks textTrack.cues directly. Since the vitest browser
@@ -118,8 +118,8 @@ describe('loadTextTrackCues', () => {
     }
 
     it('adds all cues when there are no duplicates', async () => {
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      vi.mocked(parseVttSegment)
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(0, 5, 'Cue A')])
         .mockResolvedValueOnce([new VTTCue(5, 10, 'Cue B')])
         .mockResolvedValueOnce([new VTTCue(10, 15, 'Cue C')]);
@@ -140,9 +140,9 @@ describe('loadTextTrackCues', () => {
     });
 
     it('drops a duplicate cue from a subsequent segment', async () => {
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
       // Boundary-spanning cue appears in both adjacent segments per HLS spec
-      vi.mocked(parseVttSegment)
+      vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')])
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')]);
 
@@ -162,8 +162,8 @@ describe('loadTextTrackCues', () => {
     });
 
     it('keeps cues with identical timing but different text', async () => {
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      vi.mocked(parseVttSegment)
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(0, 5, 'Hello')])
         .mockResolvedValueOnce([new VTTCue(0, 5, 'World')]); // same timing, different text — not a duplicate
 
@@ -183,8 +183,8 @@ describe('loadTextTrackCues', () => {
     });
 
     it('handles mixed: boundary duplicate dropped, unique cues kept', async () => {
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      vi.mocked(parseVttSegment)
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(0, 8, 'Unique to seg 0'), new VTTCue(8, 12, 'Boundary cue')])
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue'), new VTTCue(12, 20, 'Unique to seg 1')]);
 
@@ -210,8 +210,8 @@ describe('loadTextTrackCues', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-    expect(parseVttSegment).not.toHaveBeenCalled();
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+    expect(resolveVttSegment).not.toHaveBeenCalled();
 
     cleanup();
   });
@@ -233,9 +233,9 @@ describe('loadTextTrackCues', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-    expect(parseVttSegment).toHaveBeenCalledTimes(1);
-    expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+    expect(resolveVttSegment).toHaveBeenCalledTimes(1);
+    expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
 
     cleanup();
   });
@@ -257,11 +257,11 @@ describe('loadTextTrackCues', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-    expect(parseVttSegment).toHaveBeenCalledTimes(3);
-    expect(parseVttSegment).toHaveBeenNthCalledWith(1, 'https://example.com/segment-0.vtt');
-    expect(parseVttSegment).toHaveBeenNthCalledWith(2, 'https://example.com/segment-1.vtt');
-    expect(parseVttSegment).toHaveBeenNthCalledWith(3, 'https://example.com/segment-2.vtt');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+    expect(resolveVttSegment).toHaveBeenCalledTimes(3);
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(1, 'https://example.com/segment-0.vtt');
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(2, 'https://example.com/segment-1.vtt');
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(3, 'https://example.com/segment-2.vtt');
 
     cleanup();
   });
@@ -298,12 +298,12 @@ describe('loadTextTrackCues', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
     // Verify all segments were attempted
-    expect(parseVttSegment).toHaveBeenCalledTimes(3);
-    expect(parseVttSegment).toHaveBeenNthCalledWith(1, 'https://example.com/segment-0.vtt');
-    expect(parseVttSegment).toHaveBeenNthCalledWith(2, 'https://example.com/fail.vtt');
-    expect(parseVttSegment).toHaveBeenNthCalledWith(3, 'https://example.com/segment-2.vtt');
+    expect(resolveVttSegment).toHaveBeenCalledTimes(3);
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(1, 'https://example.com/segment-0.vtt');
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(2, 'https://example.com/fail.vtt');
+    expect(resolveVttSegment).toHaveBeenNthCalledWith(3, 'https://example.com/segment-2.vtt');
 
     // Verify error was logged for the failing segment
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -331,8 +331,8 @@ describe('loadTextTrackCues', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-    expect(parseVttSegment).not.toHaveBeenCalled();
+    const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+    expect(resolveVttSegment).not.toHaveBeenCalled();
 
     cleanup();
   });
@@ -365,14 +365,14 @@ describe('loadTextTrackCues', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
       // Window [0, 30): seg-0 (0s), seg-1 (10s), seg-2 (20s) — seg-3 starts at 30 (excluded)
-      expect(parseVttSegment).toHaveBeenCalledTimes(3);
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-2.vtt');
-      expect(parseVttSegment).not.toHaveBeenCalledWith('https://example.com/segment-3.vtt');
-      expect(parseVttSegment).not.toHaveBeenCalledWith('https://example.com/segment-4.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledTimes(3);
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-2.vtt');
+      expect(resolveVttSegment).not.toHaveBeenCalledWith('https://example.com/segment-3.vtt');
+      expect(resolveVttSegment).not.toHaveBeenCalledWith('https://example.com/segment-4.vtt');
 
       cleanup();
     });
@@ -383,18 +383,18 @@ describe('loadTextTrackCues', () => {
       // Wait for initial window load (seg-0..seg-2)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      expect(parseVttSegment).toHaveBeenCalledTimes(3);
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      expect(resolveVttSegment).toHaveBeenCalledTimes(3);
 
       // Advance currentTime so seg-3 and seg-4 enter the window [15, 45)
       state.set({ ...state.get(), currentTime: 15 });
 
       await vi.waitFor(() => {
-        expect(parseVttSegment).toHaveBeenCalledTimes(5);
+        expect(resolveVttSegment).toHaveBeenCalledTimes(5);
       });
 
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-3.vtt');
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-4.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-3.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-4.vtt');
 
       cleanup();
     });
@@ -404,17 +404,17 @@ describe('loadTextTrackCues', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      const callsBefore = (parseVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      const callsBefore = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
       expect(callsBefore).toContain('https://example.com/segment-0.vtt');
 
       state.set({ ...state.get(), currentTime: 15 });
       await vi.waitFor(() => {
-        expect(parseVttSegment).toHaveBeenCalledTimes(5);
+        expect(resolveVttSegment).toHaveBeenCalledTimes(5);
       });
 
       // seg-0..seg-2 should each appear exactly once across all calls
-      const allCalls = (parseVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
+      const allCalls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-0.vtt')).toHaveLength(1);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-1.vtt')).toHaveLength(1);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-2.vtt')).toHaveLength(1);
@@ -442,11 +442,11 @@ describe('loadTextTrackCues', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
-      expect(parseVttSegment).toHaveBeenCalledTimes(3);
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
-      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-2.vtt');
+      const { resolveVttSegment } = await import('../../text/resolve-vtt-segment');
+      expect(resolveVttSegment).toHaveBeenCalledTimes(3);
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
+      expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-2.vtt');
 
       cleanup();
     });

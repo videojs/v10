@@ -19,7 +19,7 @@ function ensureDummyVideo(): HTMLVideoElement {
   return dummyVideo;
 }
 
-export function parseVttSegment(url: string): Promise<VTTCue[]> {
+export function resolveVttSegment(url: string): Promise<VTTCue[]> {
   const video = ensureDummyVideo();
   const track = document.createElement('track');
   track.kind = 'subtitles';
@@ -61,6 +61,6 @@ export function parseVttSegment(url: string): Promise<VTTCue[]> {
   });
 }
 
-export function destroyVttParser(): void {
+export function destroyVttResolver(): void {
   dummyVideo = null;
 }

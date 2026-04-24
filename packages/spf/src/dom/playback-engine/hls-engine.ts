@@ -20,7 +20,7 @@ import { trackCurrentTime } from '../behaviors/track-current-time';
 import { trackPlaybackInitiated } from '../behaviors/track-playback-initiated';
 import { updateDuration } from '../behaviors/update-duration';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
-import { destroyVttParser, parseVttSegment } from '../text/parse-vtt-segment';
+import { destroyVttResolver, resolveVttSegment } from '../text/resolve-vtt-segment';
 
 // ============================================================================
 // HLS Engine State & Owners
@@ -103,7 +103,7 @@ const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as 
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
 
 const provideDomTextTrackActors = ({ owners }: Deps) =>
-  provideTextTrackActors({ owners, config: { parseSegment: parseVttSegment } });
+  provideTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -210,7 +210,7 @@ export function createHlsPlaybackEngine(
 
       // Module-level VTT parser cleanup
       // TODO: this should be owned by provideDomTextTrackActors
-      () => destroyVttParser(),
+      () => destroyVttResolver(),
     ],
     {
       config,
