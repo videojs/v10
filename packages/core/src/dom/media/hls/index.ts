@@ -2,8 +2,8 @@ import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
+import { HTMLVideoElementHost } from '../host';
 import { NativeHlsMedia } from '../native-hls';
-import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';

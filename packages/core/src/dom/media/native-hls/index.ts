@@ -1,5 +1,5 @@
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLVideoElementHost } from '../host';
 import { NativeHlsMediaErrorsMixin } from './errors';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 

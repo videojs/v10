@@ -1,6 +1,6 @@
 import Hls, { type HlsConfig } from 'hls.js';
 import type { MediaEngineHost } from '../../../core/media/types';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLVideoElementHost } from '../host';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';

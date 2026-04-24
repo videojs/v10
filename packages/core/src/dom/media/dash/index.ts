@@ -1,6 +1,6 @@
 import * as dashjs from 'dashjs';
 import type { MediaEngineHost } from '../../../core/media/types';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLVideoElementHost } from '../host';
 
 export interface DashMediaProps {
   src: string;
