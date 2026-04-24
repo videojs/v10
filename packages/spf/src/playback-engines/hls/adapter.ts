@@ -2,24 +2,24 @@ import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../core/composition/create-composition';
 import { update } from '../../core/signals/primitives';
 import {
-  createHlsPlaybackEngine,
-  type HlsPlaybackEngineConfig,
-  type HlsPlaybackEngineOwners,
-  type HlsPlaybackEngineState,
+  createSimpleHlsEngine,
+  type SimpleHlsEngineConfig,
+  type SimpleHlsEngineOwners,
+  type SimpleHlsEngineState,
 } from './engine';
 
-export interface SpfMediaProps {
+export interface SimpleHlsMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
 }
 
-export const spfMediaDefaultProps: SpfMediaProps = {
+export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
   src: '',
   preload: '',
 };
 
-export interface SpfMediaAPI extends SpfMediaProps {
-  readonly engine: Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
+export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
+  readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineOwners>;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -38,17 +38,17 @@ export interface SpfMediaAPI extends SpfMediaProps {
  * changes and re-applied to the new engine automatically.
  *
  * @example
- * class SimpleHlsMedia extends SpfMediaMixin(HTMLVideoElementHost) {}
+ * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
  *
  * const media = new SimpleHlsMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
-export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class SpfMediaImpl extends BaseClass {
-    #engine: Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners>;
-    #config: HlsPlaybackEngineConfig;
-    #preload: '' | 'none' | 'metadata' | 'auto' = spfMediaDefaultProps.preload;
+export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class SimpleHlsMediaImpl extends BaseClass {
+    #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineOwners>;
+    #config: SimpleHlsEngineConfig;
+    #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -58,10 +58,10 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
-      this.#engine = createHlsPlaybackEngine(config);
+      this.#engine = createSimpleHlsEngine(config);
     }
 
-    get engine(): Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
+    get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
       return this.#engine;
     }
 
@@ -118,7 +118,7 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
       this.#cancelPendingPlay();
       this.#engine.destroy();
-      this.#engine = createHlsPlaybackEngine(this.#config);
+      this.#engine = createSimpleHlsEngine(this.#config);
 
       // Apply explicit preload before setting owners so syncPreloadAttribute skips
       // element inference and the explicit value is preserved across src changes.
@@ -143,7 +143,7 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
     play(): Promise<void> {
       const { mediaElement } = this.#engine.owners.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('SpfMedia: no media element attached'));
+        return Promise.reject(new Error('SimpleHlsMediaElement: no media element attached'));
       }
 
       // Signal play intent — enables loading even with preload="none"
@@ -179,8 +179,8 @@ export function SpfMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
   }
 
-  return SpfMediaImpl as unknown as MixinReturn<Base, SpfMediaAPI>;
+  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI>;
 }
 
 /** Standalone SPF media adapter with no base class. */
-export class SpfMedia extends SpfMediaMixin(class {}) {}
+export class SimpleHlsMediaElement extends SimpleHlsMediaMixin(class {}) {}

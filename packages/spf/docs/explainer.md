@@ -78,7 +78,7 @@ An HLS playback engine is one specific composition of features. There's nothing 
 ```ts
 import { createPlaybackEngine } from '@videojs/spf';
 
-function createHlsPlaybackEngine(config = {}) {
+function createSimpleHlsEngine(config = {}) {
   return createPlaybackEngine(
     [
       // Preload and playback tracking

@@ -15,7 +15,7 @@ export interface PlatformOwners {
  *
  * Watches the owners signal for mediaElement changes and copies the
  * preload attribute to state when no explicit value has been set.
- * An explicit value (set via SpfMedia.preload) always wins.
+ * An explicit value (set via SimpleHlsMediaElement.preload) always wins.
  *
  * @example
  * const cleanup = syncPreloadAttribute({ state, owners });

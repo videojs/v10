@@ -1,8 +1,8 @@
-export type { SpfMediaAPI, SpfMediaProps } from './adapter';
-export { SpfMedia, SpfMediaMixin, spfMediaDefaultProps } from './adapter';
+export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
+export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
 export type {
-  HlsPlaybackEngineConfig,
-  HlsPlaybackEngineOwners,
-  HlsPlaybackEngineState,
+  SimpleHlsEngineConfig,
+  SimpleHlsEngineOwners,
+  SimpleHlsEngineState,
 } from './engine';
-export { createHlsPlaybackEngine } from './engine';
+export { createSimpleHlsEngine } from './engine';

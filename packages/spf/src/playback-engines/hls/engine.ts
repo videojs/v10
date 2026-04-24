@@ -33,7 +33,7 @@ import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../media
  * the HLS engine. Each behavior declares its own state interface; this
  * type satisfies all of them.
  */
-export interface HlsPlaybackEngineState {
+export interface SimpleHlsEngineState {
   // `any` is intentional: the presentation field transitions from unresolved
   // ({ url: string }) to resolved (Presentation) at runtime. Individual behaviors
   // declare narrower constraints and narrow the type themselves. Using a union
@@ -54,7 +54,7 @@ export interface HlsPlaybackEngineState {
  *
  * Platform objects and actor references managed by HLS behaviors.
  */
-export interface HlsPlaybackEngineOwners {
+export interface SimpleHlsEngineOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
@@ -72,7 +72,7 @@ export interface HlsPlaybackEngineOwners {
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface HlsPlaybackEngineConfig {
+export interface SimpleHlsEngineConfig {
   initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
@@ -82,9 +82,9 @@ export interface HlsPlaybackEngineConfig {
 
 /** Shorthand for the deps shape used by HLS engine behaviors. */
 type Deps = {
-  state: Signal<HlsPlaybackEngineState>;
-  owners: Signal<HlsPlaybackEngineOwners>;
-  config: HlsPlaybackEngineConfig;
+  state: Signal<SimpleHlsEngineState>;
+  owners: Signal<SimpleHlsEngineOwners>;
+  config: SimpleHlsEngineConfig;
 };
 
 // ============================================================================
@@ -152,7 +152,7 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
  *
  * @example
  * ```ts
- * const engine = createHlsPlaybackEngine({
+ * const engine = createSimpleHlsEngine({
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
  * });
@@ -165,9 +165,9 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
  * await engine.destroy();
  * ```
  */
-export function createHlsPlaybackEngine(
-  config: HlsPlaybackEngineConfig = {}
-): Composition<HlsPlaybackEngineState, HlsPlaybackEngineOwners> {
+export function createSimpleHlsEngine(
+  config: SimpleHlsEngineConfig = {}
+): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
   return createComposition(
     [
       syncPreloadAttribute,
@@ -222,8 +222,8 @@ export function createHlsPlaybackEngine(
           slowTotalWeight: 0,
           bytesSampled: 0,
         },
-      } as HlsPlaybackEngineState,
-      initialOwners: {} as HlsPlaybackEngineOwners,
+      } as SimpleHlsEngineState,
+      initialOwners: {} as SimpleHlsEngineOwners,
     }
   );
 }

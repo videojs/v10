@@ -1,5 +1,5 @@
 /**
- * SpfMedia adapter tests.
+ * SimpleHlsMediaElement adapter tests.
  *
  * Covers the HTMLMediaElement-compatible contract for src and play(), per the
  * WHATWG HTML spec (https://html.spec.whatwg.org/multipage/media.html).
@@ -15,9 +15,9 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SpfMedia } from '../adapter';
+import { SimpleHlsMediaElement } from '../adapter';
 
-describe('SpfMedia', () => {
+describe('SimpleHlsMediaElement', () => {
   // Prevent real network calls from engines that auto-trigger resolution
   // (e.g. when a media element with default preload="auto" is attached alongside a src).
   // A never-settling promise avoids unhandled rejections without affecting test assertions.
@@ -37,26 +37,26 @@ describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------
   describe('src', () => {
     it('returns empty string before any src is set', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       expect(media.src).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       // Must be synchronous — no await needed
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
     it('reflects the most recently set value', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.src).toBe('https://example.com/v2.m3u8');
     });
 
     it('reflects empty string when set to empty', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.src).toBe('');
@@ -64,20 +64,20 @@ describe('SpfMedia', () => {
 
     // Setting src triggers the load algorithm — engine state update is synchronous
     it('synchronously updates engine presentation state when src is set', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src changes', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v2.m3u8');
     });
 
     it('clears engine presentation state when src is set to empty string', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.engine.state.get().presentation).toBeUndefined();
@@ -89,12 +89,12 @@ describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       expect(media.engine).not.toBeNull();
     });
 
     it('reuses the same engine instance across attach calls', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
       media.attach(el1);
@@ -104,7 +104,7 @@ describe('SpfMedia', () => {
     });
 
     it('reuses the same engine instance across attach/detach cycles', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       const engine = media.engine;
       media.detach();
@@ -113,14 +113,14 @@ describe('SpfMedia', () => {
     });
 
     it('creates a new engine when src is set', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const initial = media.engine;
       media.src = 'https://example.com/v1.m3u8';
       expect(media.engine).not.toBe(initial);
     });
 
     it('destroys the old engine when src changes', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       const spy = vi.spyOn(media.engine, 'destroy');
       media.src = 'https://example.com/v2.m3u8';
@@ -128,7 +128,7 @@ describe('SpfMedia', () => {
     });
 
     it('re-attaches the media element to the new engine when src changes', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
@@ -136,7 +136,7 @@ describe('SpfMedia', () => {
     });
 
     it('cancels pending play listener when src changes', async () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
@@ -150,21 +150,21 @@ describe('SpfMedia', () => {
     });
 
     it('sets mediaElement in owners when attached', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       expect(media.engine.owners.get().mediaElement).toBe(el);
     });
 
     it('clears mediaElement in owners when detached', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.detach();
       expect(media.engine.owners.get().mediaElement).toBeUndefined();
     });
 
     it('updates mediaElement when re-attached to a different element', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
       media.attach(el1);
@@ -173,7 +173,7 @@ describe('SpfMedia', () => {
     });
 
     it('preserves src across attach/detach cycles', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       media.detach();
@@ -181,14 +181,14 @@ describe('SpfMedia', () => {
     });
 
     it('src set before attach is reflected in engine state', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('detach does not destroy the engine', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       const spy = vi.spyOn(media.engine, 'destroy');
       media.detach();
@@ -201,7 +201,7 @@ describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------
   describe('play()', () => {
     it('returns a Promise', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       const result = media.play();
       expect(result).toBeInstanceOf(Promise);
@@ -210,14 +210,14 @@ describe('SpfMedia', () => {
     });
 
     it('sets playbackInitiated on engine state when called', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
       expect(media.engine.state.get().playbackInitiated).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
@@ -248,7 +248,7 @@ describe('SpfMedia', () => {
     });
 
     it('re-throws when play() rejects and no adapter src is set', async () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       // No src on adapter — nothing pending to wait for
@@ -260,7 +260,7 @@ describe('SpfMedia', () => {
     });
 
     it('removes the pending loadstart listener on detach', async () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
@@ -277,7 +277,7 @@ describe('SpfMedia', () => {
     });
 
     it('removes the pending loadstart listener on destroy', async () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
@@ -303,24 +303,24 @@ describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------
   describe('preload', () => {
     it('returns empty string before any preload is set', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       expect(media.preload).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.preload = 'auto';
       expect(media.preload).toBe('auto');
     });
 
     it('updates engine state immediately when set', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.preload = 'none';
       expect(media.engine.state.get().preload).toBe('none');
     });
 
     it('setting preload to empty string resets the stored value but does not clear current engine state', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.preload = 'auto';
       media.preload = '';
       // '' only clears #preload so the next engine recreation won't re-apply
@@ -329,7 +329,7 @@ describe('SpfMedia', () => {
     });
 
     it('survives src reassignment — explicit preload is preserved across engine recreation', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
       expect(media.preload).toBe('none');
@@ -337,7 +337,7 @@ describe('SpfMedia', () => {
     });
 
     it('explicit preload is re-applied before owners.patch on src change so syncPreloadAttribute skips inference', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.preload = 'none';
@@ -353,7 +353,7 @@ describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
     it('destroys the underlying engine', () => {
-      const media = new SpfMedia();
+      const media = new SimpleHlsMediaElement();
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
