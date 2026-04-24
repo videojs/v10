@@ -21,33 +21,36 @@ npm install -g @videojs/cli
 videojs --help
 ```
 
-> The binary is published under the package name `@videojs/cli`. Scripts in this README use `videojs` for brevity — substitute `npx @videojs/cli` if you don't install globally.
+> Scripts below use `videojs` for brevity — substitute `npx @videojs/cli` if you don't install globally.
 
 ## Commands
 
-### `docs <slug>` — read a doc page
+Run any command with `--help` for full usage and flag reference:
 
-Prints a documentation page as Markdown to stdout.
+```bash
+videojs --help
+videojs docs --help
+videojs config --help
+```
+
+### `docs <slug>` — read a doc page
 
 ```bash
 videojs docs concepts/overview
 videojs docs how-to/customize-skins --framework react
 ```
 
-If you don't pass `--framework`, the CLI uses your saved preference (see `config`), otherwise prompts.
+If `--framework` is omitted, the CLI uses your saved preference (see `config`), otherwise prompts.
 
 ### `docs --list` — list available pages
 
-Prints the framework-specific `llms.txt` index of every available doc slug.
-
 ```bash
-videojs docs --list
 videojs docs --list --framework html
 ```
 
 ### `docs how-to/installation` — generate an installation snippet
 
-The installation page is interactive. It prompts for any option you don't pass as a flag, validates the combination, and emits a ready-to-paste code snippet.
+Interactive: prompts for any option you don't pass as a flag, validates the combination, and emits a ready-to-paste snippet.
 
 ```bash
 videojs docs how-to/installation \
@@ -59,16 +62,6 @@ videojs docs how-to/installation \
   --source-url https://example.com/video.m3u8
 ```
 
-Installation flags:
-
-| Flag               | Values                                                      |
-| ------------------ | ----------------------------------------------------------- |
-| `--preset`         | `video`, `audio`, `background-video`                        |
-| `--skin`           | `default`, `minimal`                                        |
-| `--media`          | `html5-video`, `html5-audio`, `hls`, `background-video`     |
-| `--install-method` | `cdn`, `npm`, `pnpm`, `yarn`, `bun` (CDN is `html` only)    |
-| `--source-url`     | Any URL — the media source used in the generated snippet   |
-
 ### `config <set|get|list>` — manage preferences
 
 Stores CLI preferences at `~/.videojs/config.json`.
@@ -78,21 +71,6 @@ videojs config set framework react
 videojs config get framework
 videojs config list
 ```
-
-Supported keys:
-
-| Key         | Values           | Used by                                    |
-| ----------- | ---------------- | ------------------------------------------ |
-| `framework` | `html`, `react`  | Default for `docs` when `--framework` is omitted |
-
-## Global Options
-
-| Flag              | Alias | Description                        |
-| ----------------- | ----- | ---------------------------------- |
-| `--framework`     | `-f`  | `html` or `react`                  |
-| `--list`          | `-l`  | List available docs (with `docs`)  |
-| `--help`          | `-h`  | Show command help                  |
-| `--version`       | `-v`  | Print CLI version                  |
 
 ## Community
 
