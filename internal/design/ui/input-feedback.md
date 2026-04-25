@@ -11,8 +11,6 @@ Four new standalone components for showing brief visual + accessible feedback wh
 
 YouTube reference: center `role="status"` element with `aria-label="Pause"`, volume island, side seek overlays.
 
----
-
 ## Architecture Overview
 
 ```
@@ -42,7 +40,30 @@ YouTube reference: center `role="status"` element with `aria-label="Pause"`, vol
 
 A shared **AnimationCoordinator** manages the lifecycle (open/dismiss timing, generation counter) across all components. Individual components subscribe and filter for their relevant actions.
 
----
+## Labels
+
+StatusIndicator and StatusAnnouncer share a **single `label` string**. The indicator renders it visually; the announcer reads it for screen readers.
+
+Volume is the only action with a dynamic component. `label` is `"Volume"` (or `"Muted"` when muted) and `value` is always a percentage (e.g. `"0%"`, `"50%"`). The indicator renders only `value` (the icon supplies the rest); the announcer reads `label + " " + value`, or just `"Muted"`.
+
+| Action | Status | Label | Value |
+|---|---|---|---|
+| `togglePaused` (→ paused) | `pause` | `"Paused"` | — |
+| `togglePaused` (→ playing) | `play` | `"Playing"` | — |
+| `volumeStep` / `toggleMuted` (muted) | `volume-off` | `"Muted"` | `"0%"` |
+| `volumeStep` (low) | `volume-low` | `"Volume"` | `"30%"` |
+| `volumeStep` (high) | `volume-high` | `"Volume"` | `"80%"` |
+| `toggleSubtitles` (on) | `captions-on` | `"Captions on"` | — |
+| `toggleSubtitles` (off) | `captions-off` | `"Captions off"` | — |
+| `toggleFullscreen` (→ entered) | `fullscreen` | `"Fullscreen"` | — |
+| `toggleFullscreen` (→ exited) | `exit-fullscreen` | `"Exit fullscreen"` | — |
+| `togglePictureInPicture` (→ entered) | `pip` | `"Picture in picture"` | — |
+| `togglePictureInPicture` (→ exited) | `exit-pip` | `"Exit picture in picture"` | — |
+| `seekStep` / `seekToPercent` | — | — | — |
+
+**Volume announcement.** Indicator renders `value` only (e.g. `"50%"`). Announcer reads `muted ? "Muted" : "Volume " + value`.
+
+**Seek does not announce.** SeekIndicator is visual-only; current time updates are surfaced through normal media state, not the announcer.
 
 ## Shared: AnimationCoordinator
 
@@ -66,8 +87,6 @@ class AnimationCoordinator {
 ```
 
 Each indicator component receives the coordinator and filters for its relevant actions. The coordinator ensures synchronized show/dismiss timing across all active indicators for a given gesture.
-
----
 
 ## 1. StatusIndicator
 
@@ -97,8 +116,8 @@ type IndicatorStatus =
 interface StatusIndicatorState {
   open: boolean;
   status: IndicatorStatus | null;
-  label: string | null;   // "Paused", "50%", "Captions on"
-  value: string | null;   // optional secondary value
+  label: string | null;   // static text, e.g. "Paused", "Captions on", "Fullscreen"
+  value: string | null;   // dynamic value only, e.g. "50%" for volume
 }
 ```
 
@@ -122,12 +141,21 @@ data-ending-style     — exit transition
 </media-status-indicator>
 ```
 
+```tsx
+import { StatusIndicator } from '@videojs/react';
+
+<StatusIndicator.Root>
+  <PlayIcon />
+  <PauseIcon />
+  {/* ... */}
+  <StatusIndicator.Value />
+</StatusIndicator.Root>
+```
+
 ### Triggering
 
 - Responds to ALL actions
 - Maps action + media snapshot → `IndicatorStatus` + label
-
----
 
 ## 2. StatusAnnouncer
 
@@ -135,7 +163,7 @@ data-ending-style     — exit transition
 
 ### Responsibilities
 
-- `role="status"`, `aria-live="polite"`, `aria-atomic="true"`
+- `role="status"`, `aria-live="polite"`
 - Sets `aria-label` to current announcement text
 - Visually hidden — no visual output, no text content
 - Announces ALL actions for screen readers
@@ -144,7 +172,7 @@ data-ending-style     — exit transition
 
 ```ts
 interface StatusAnnouncerState {
-  label: string | null;  // "Paused", "Volume 50%", "Captions on"
+  label: string | null;  // shared with StatusIndicator; for volume, composed as "Volume <value>" or "Muted"
 }
 ```
 
@@ -152,6 +180,12 @@ interface StatusAnnouncerState {
 
 ```html
 <media-status-announcer></media-status-announcer>
+```
+
+```tsx
+import { StatusAnnouncer } from '@videojs/react';
+
+<StatusAnnouncer />
 ```
 
 - `role="status"` (implicit `aria-live="polite"`)
@@ -163,8 +197,6 @@ interface StatusAnnouncerState {
 
 - Responds to ALL actions
 - Maps action + media snapshot → `aria-label` string
-
----
 
 ## 3. VolumeIndicator
 
@@ -193,8 +225,8 @@ interface StatusAnnouncerState {
 ```ts
 interface VolumeIndicatorState {
   open: boolean;
-  volumeLevel: 'off' | 'low' | 'high' | null;
-  label: string | null;      // "50%", "Muted"
+  level: 'off' | 'low' | 'high' | null;
+  label: string | null;      // dynamic value only, e.g. "0%", "50%"
   min: boolean;              // at volume floor
   max: boolean;              // at volume ceiling
 }
@@ -204,7 +236,7 @@ interface VolumeIndicatorState {
 
 ```
 data-open             — visible
-data-volume-level     — "off", "low", "high"
+data-level            — "off", "low", "high"
 data-min              — at volume floor (shake animation)
 data-max              — at volume ceiling (shake animation)
 data-starting-style   — entry transition
@@ -226,11 +258,22 @@ CSS variable: `--media-volume-fill` for gradient fill percentage.
 </media-volume-indicator>
 ```
 
+```tsx
+import { VolumeIndicator } from '@videojs/react';
+
+<VolumeIndicator.Root>
+  <VolumeIndicator.Fill>
+    <VolumeHighIcon />
+    <VolumeLowIcon />
+    <VolumeOffIcon />
+    <VolumeIndicator.Value />
+  </VolumeIndicator.Fill>
+</VolumeIndicator.Root>
+```
+
 ### Triggering
 
 - Filters for `volumeStep`, `toggleMuted` only
-
----
 
 ## 4. SeekIndicator
 
@@ -271,6 +314,15 @@ data-ending-style     — exit transition
   <svg class="media-icon--seek">...</svg>
   <media-seek-indicator-value></media-seek-indicator-value>
 </media-seek-indicator>
+```
+
+```tsx
+import { SeekIndicator } from '@videojs/react';
+
+<SeekIndicator.Root>
+  <SeekIcon />
+  <SeekIndicator.Value />
+</SeekIndicator.Root>
 ```
 
 ### Triggering
