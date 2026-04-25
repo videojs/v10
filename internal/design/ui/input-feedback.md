@@ -56,7 +56,7 @@ Volume is the only action with a dynamic component. `label` is `"Volume"` (or `"
 
 ## Lifecycle
 
-Each indicator owns its own `createTransition()` (see [`packages/core/src/dom/ui/transition.ts`](../../packages/core/src/dom/ui/transition.ts)) and an auto-close timer.
+Each indicator owns its own `createTransition()` (see [`packages/core/src/dom/ui/transition.ts`](../../../packages/core/src/dom/ui/transition.ts)) and an auto-close timer.
 
 On a relevant action: open the transition, (re-)arm the timer; on timer fire, close the transition. Retriggers re-arm. Synchronization across indicators is implicit — same source event, same default delay.
 
