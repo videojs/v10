@@ -15,30 +15,19 @@ YouTube reference: center `role="status"` element with `aria-label="Pause"`, vol
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  Gesture/Hotkey Coordinators                     │
-└──────────────────┬──────────────────────────────-┘
-                   │
-         ┌─────────▼──────────┐
-         │ AnimationCoordinator│
-         │  (shared lifecycle) │
-         └──┬───────┬────┬──┬─┘
-            │       │    │  │
-  ┌─────────▼┐ ┌────▼──┐ │ ┌▼──────────┐
-  │  Status  │ │Status │ │ │   Seek    │
-  │ Indicator│ │Announ.│ │ │ Indicator │
-  │  visual  │ │ ARIA  │ │ │  visual   │
-  └──────────┘ └───────┘ │ └───────────┘
-   ALL actions  ALL       │  seek only
-                actions   │
-              ┌───────────▼┐
-              │   Volume   │
-              │  Indicator │
-              │   visual   │
-              └────────────┘
-               volume/mute only
+│  Gesture/Hotkey Coordinators (subscribe API)    │
+└──┬──────────────┬──────────────┬──────────────┬─┘
+   │              │              │              │
+ ┌─▼────────┐ ┌──▼────┐ ┌────────▼───┐ ┌────────▼───┐
+ │  Status  │ │Status │ │   Volume   │ │    Seek    │
+ │ Indicator│ │Announ.│ │  Indicator │ │  Indicator │
+ │  visual  │ │ ARIA  │ │   visual   │ │   visual   │
+ └──────────┘ └───────┘ └────────────┘ └────────────┘
+  ALL actions  ALL      volume/mute     seek only
+               actions  only
 ```
 
-A shared **AnimationCoordinator** manages the lifecycle (open/dismiss timing, generation counter) across all components. Individual components subscribe and filter for their relevant actions.
+Each indicator subscribes independently to the gesture/hotkey coordinators, filters for its relevant actions, derives display state via the shared [`status.ts`](#derivation) module, and runs its own per-element transition + auto-close timer. There is no shared lifecycle object — synchronization is implicit (same source event, same default `closeDelay`).
 
 ## Labels
 
@@ -65,28 +54,55 @@ Volume is the only action with a dynamic component. `label` is `"Volume"` (or `"
 
 **Seek does not announce.** SeekIndicator is visual-only; current time updates are surfaced through normal media state, not the announcer.
 
-## Shared: AnimationCoordinator
+## Lifecycle
 
-Manages "triggered → briefly visible → auto-dismiss" for all indicators.
+Each indicator owns its own `createTransition()` (see [`packages/core/src/dom/ui/transition.ts`](../../packages/core/src/dom/ui/transition.ts)) and an auto-close timer.
+
+On a relevant action: open the transition, (re-)arm the timer; on timer fire, close the transition. Retriggers re-arm. Synchronization across indicators is implicit — same source event, same default delay.
+
+The auto-close delay is exposed as a `closeDelay` prop (number, ms; default `INDICATOR_CLOSE_DELAY = 800`) — matches Tooltip/Popover's prop-driven timing convention.
+
+Replay on retrigger is a CSS concern: CSS transitions re-interpolate naturally; for keyframe-based entries, toggle `display: none` and use `@starting-style`.
+
+## Action Source
+
+Both `GestureCoordinator` and `HotkeyCoordinator` expose a `subscribe(callback)` method. The callback fires for every activated binding/key with a strongly-typed event:
 
 ```ts
-interface AnimationCoordinatorState {
-  open: boolean;       // any indicator visible
-  generation: number;  // bumps on every trigger, restarts CSS animations
+type InputAction = GestureActionName | HotkeyActionName;
+
+interface InputActionEvent {
+  action: InputAction;
+  source: 'gesture' | 'hotkey';
+  event: PointerEvent | KeyboardEvent;
+}
+
+interface InputCoordinator {
+  subscribe(callback: (event: InputActionEvent) => void): () => void;
 }
 ```
 
+`subscribe()` is an additional broadcast channel — bindings still dispatch their own `onActivate` as before.
+
+Each indicator subscribes to both coordinators on connect, filters by `action`, and unsubscribes on disconnect:
+
+- StatusIndicator / StatusAnnouncer: all actions in the labels table
+- VolumeIndicator: `volumeStep`, `toggleMuted`
+- SeekIndicator: `seekStep`, `seekToPercent`
+
+## Derivation
+
+A pure module — `status.ts` — derives `{ status, label, value, volumeLevel, announcerLabel }` from `(action, snapshot)`. Single source of truth for the labels table. Indicators import only the derivers they need.
+
 ```ts
-class AnimationCoordinator {
-  readonly state: WritableState<AnimationCoordinatorState>;
-  dismissDelay: number;  // default 800ms
-  show(): void;          // open=true, generation++, restart timer
-  hide(): void;          // open=false, clear timer
-  destroy(): void;
-}
+export function deriveStatus(action: InputAction, snapshot: MediaSnapshot): IndicatorStatus | null;
+export function deriveLabel(action: InputAction, snapshot: MediaSnapshot): string | null;
+export function deriveValue(action: InputAction, snapshot: MediaSnapshot): string | null;
+export function deriveAnnouncerLabel(action: InputAction, snapshot: MediaSnapshot): string | null;
+export function deriveVolumeLevel(snapshot: MediaSnapshot): 'off' | 'low' | 'high' | null;
 ```
 
-Each indicator component receives the coordinator and filters for its relevant actions. The coordinator ensures synchronized show/dismiss timing across all active indicators for a given gesture.
+Boundary (volume floor/ceiling) is volume-specific and computed inside VolumeIndicator, not in the shared module.
 
 ## 1. StatusIndicator
 
@@ -152,6 +168,10 @@ import { StatusIndicator } from '@videojs/react';
 </StatusIndicator.Root>
 ```
 
+### Props
+
+- `closeDelay?: number` — auto-close delay in ms. Default `800`.
+
 ### Triggering
 
 - Responds to ALL actions
@@ -192,6 +212,10 @@ import { StatusAnnouncer } from '@videojs/react';
 - `aria-label` set/cleared to announce
 - Hidden with `display: contents` — no visual box, no layout impact
 - No text content, no DOM manipulation tricks — just `aria-label`
+
+### Props
+
+- `closeDelay?: number` — auto-close delay in ms. Default `800`.
 
 ### Triggering
 
@@ -271,6 +295,10 @@ import { VolumeIndicator } from '@videojs/react';
 </VolumeIndicator.Root>
 ```
 
+### Props
+
+- `closeDelay?: number` — auto-close delay in ms. Default `800`.
+
 ### Triggering
 
 - Filters for `volumeStep`, `toggleMuted` only
@@ -298,6 +326,8 @@ interface SeekIndicatorState {
 }
 ```
 
+Accumulator (`count`, `seekTotal`) is local to SeekIndicator. Reset on close.
+
 ### Data Attributes
 
 ```
@@ -324,6 +354,10 @@ import { SeekIndicator } from '@videojs/react';
   <SeekIndicator.Value />
 </SeekIndicator.Root>
 ```
+
+### Props
+
+- `closeDelay?: number` — auto-close delay in ms. Default `800`.
 
 ### Triggering
 
