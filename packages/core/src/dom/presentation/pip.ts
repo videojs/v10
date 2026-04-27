@@ -1,13 +1,8 @@
 import { isFunction } from '@videojs/utils/predicate';
-
+import type { MediaPictureInPictureCapability } from '../../core/media/types';
 import type { WebKitVideoElement } from './types';
 
-function resolveMediaTarget(media: EventTarget): EventTarget {
-  const target = (media as EventTarget & { target?: unknown }).target;
-  return target instanceof HTMLMediaElement ? target : media;
-}
-
-export function isPictureInPictureEnabled(): boolean {
+export function isPictureInPictureEnabled() {
   if (document.pictureInPictureEnabled) {
     const isSafari = /.*Version\/.*Safari\/.*/.test(navigator.userAgent);
     const isPWA = typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches;
@@ -18,56 +13,51 @@ export function isPictureInPictureEnabled(): boolean {
   return isFunction(video.webkitSetPresentationMode);
 }
 
-export function isPictureInPictureElement(media: EventTarget): boolean {
-  const target = resolveMediaTarget(media);
-
-  if (document.pictureInPictureElement === target) {
+export function isPictureInPicture(media: EventTarget) {
+  const webkitVideo = media as WebKitVideoElement;
+  if (webkitVideo.webkitPresentationMode === 'picture-in-picture') {
     return true;
   }
 
-  if (target instanceof HTMLVideoElement) {
-    const video = target as WebKitVideoElement;
-    return video.webkitPresentationMode === 'picture-in-picture';
+  if (document.pictureInPictureElement === media) {
+    return true;
   }
 
-  return false;
+  // isPictureInPicture is a non-standard property that is set by the video host
+  // and checks internally if the video host target is the picture-in-picture element.
+  const video = media as unknown as MediaPictureInPictureCapability;
+  return video.isPictureInPicture ?? false;
 }
 
-export async function requestPictureInPicture(media: EventTarget): Promise<void> {
-  const target = resolveMediaTarget(media);
-
-  if (!(target instanceof HTMLVideoElement)) {
-    throw new DOMException('Picture-in-Picture not supported', 'NotSupportedError');
-  }
-
-  const video = target as HTMLVideoElement & WebKitVideoElement;
-
-  if (isFunction(video.webkitSetPresentationMode)) {
-    video.webkitSetPresentationMode('picture-in-picture');
+export async function requestPictureInPicture(media: EventTarget) {
+  const webkitVideo = media as WebKitVideoElement;
+  if (isFunction(webkitVideo.webkitSetPresentationMode)) {
+    webkitVideo.webkitSetPresentationMode('picture-in-picture');
     return;
   }
 
+  const video = media as unknown as MediaPictureInPictureCapability;
   if (isFunction(video.requestPictureInPicture)) {
-    await video.requestPictureInPicture();
-    return;
+    return video.requestPictureInPicture() as Promise<void>;
   }
-
-  throw new DOMException('Picture-in-Picture not supported', 'NotSupportedError');
 }
 
-export async function exitPictureInPicture(media?: EventTarget): Promise<void> {
-  if (media) {
-    const target = resolveMediaTarget(media);
-    if (target instanceof HTMLVideoElement) {
-      const video = target as WebKitVideoElement;
-      if (isFunction(video.webkitSetPresentationMode) && video.webkitPresentationMode === 'picture-in-picture') {
-        video.webkitSetPresentationMode('inline');
-        return;
-      }
-    }
+export async function exitPictureInPicture(media: EventTarget) {
+  const webkitVideo = media as WebKitVideoElement;
+  if (
+    webkitVideo.webkitPresentationMode === 'picture-in-picture' &&
+    isFunction(webkitVideo.webkitSetPresentationMode)
+  ) {
+    webkitVideo.webkitSetPresentationMode('inline');
+    return;
   }
 
   if (isFunction(document.exitPictureInPicture)) {
     return document.exitPictureInPicture();
+  }
+
+  const video = media as unknown as MediaPictureInPictureCapability;
+  if (isFunction(video.exitPictureInPicture)) {
+    return video.exitPictureInPicture() as Promise<void>;
   }
 }

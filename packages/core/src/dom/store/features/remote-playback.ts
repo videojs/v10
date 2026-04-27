@@ -3,7 +3,7 @@ import { listen } from '@videojs/utils/dom';
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaRemotePlaybackCapable } from '../../media/predicate';
-import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
+import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
 export const remotePlaybackFeature = definePlayerFeature({
@@ -19,8 +19,8 @@ export const remotePlaybackFeature = definePlayerFeature({
         return requestRemotePlayback(media);
       }
 
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+      if (isFullscreen(container, media)) {
+        await exitFullscreen(media);
       }
 
       return requestRemotePlayback(media);
