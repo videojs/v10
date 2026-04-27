@@ -205,3 +205,43 @@ const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as 
 Three behaviors, one shared `resolveTrack`. Each closes over its `type` so the composition list stays flat. From outside, you'd hardly know they share an implementation.
 
 Now `state.presentation` is fully populated for the selected tracks. Everything downstream — duration, MSE, segment loading, end-of-stream — reads from there.
+
+---
+
+## Stage 4 — Presentation duration
+
+```ts
+calculatePresentationDuration,
+```
+
+`calculatePresentationDuration` reads the resolved tracks and computes the presentation's total duration (max of selected track durations). It writes the result back to `state.presentation.duration`. This is a small bookkeeping behavior — the duration is derived from data already in state — but breaking it out keeps the derivation reactive: any downstream behavior that needs to know the duration just reads `state.presentation.duration`, and re-runs when it changes.
+
+It's separated from `resolveTrack` because the duration depends on *which* tracks are selected (the engine could change selection later, in theory, with a different duration). Keeping the derivation in its own behavior means every track-selection change automatically re-derives.
+
+---
+
+## Stage 5 — MSE setup
+
+The next three behaviors stand up the MSE pipeline:
+
+```ts
+setupMediaSource,
+updateDuration,
+setupSourceBuffers,
+```
+
+This is where the engine first touches the media element directly. Up until now, behaviors have been operating on plain data in `state` — manifests, URLs, ids, durations. MSE is the bridge: a `MediaSource` attaches to the `<video>` element via `srcObject` (or an object URL), and `SourceBuffer`s under it accept appended segments.
+
+**`setupMediaSource`** waits for two preconditions: a `mediaElement` in owners and a `presentationUrl` in state. When both arrive, it creates a `MediaSource`, attaches it to the element, and writes both back to owners (`mediaSource`) and state (`mediaSourceReadyState`). The DOM event for "MediaSource is open" is bridged onto `state.mediaSourceReadyState` via the `onMediaSourceReadyStateChange` callback primitive — once that flips to `'open'`, the `mediaSource` is published to owners so downstream behaviors can use it.
+
+The split between owners and state is deliberate. The MediaSource itself is a resource — you call `addSourceBuffer()` on it, you set its `duration` — so it lives in owners. Its readyState is data — a string that other behaviors gate decisions on — so it lives in state. The DOM events that drive readyState changes get bridged into the SPF signal graph by the small primitive in `media/dom/mse/`, keeping `setupMediaSource` clean.
+
+**`updateDuration`** waits for the resolved presentation duration (from stage 4) and a MediaSource that's open with idle source buffers, then writes `mediaSource.duration = presentation.duration`. The order matters: setting duration while a SourceBuffer has `updating === true` throws `InvalidStateError`, so the behavior waits for any in-flight appends to settle before writing.
+
+This is the first place the engine has real coordination concerns: timing among multiple resources. The behavior expresses it declaratively — `effect()` re-runs when any input signal changes, and the gate function checks every precondition. There's no manual sequencing, no callbacks-on-callbacks. Each precondition becomes a signal read; the framework figures out when to fire.
+
+**`setupSourceBuffers`** does the same lifecycle dance as `setupMediaSource`, but per-track: when a video or audio track is resolved and the MediaSource is open, it calls `addSourceBuffer()` with the track's mime/codec, wraps the resulting `SourceBuffer` in a `SourceBufferActor`, and publishes both the raw buffer and the actor onto owners.
+
+The actor wrapping is worth pausing on. A raw `SourceBuffer` is imperative: you call `appendBuffer(data)`, you wait for the `updateend` event, you handle errors. Multiple appends can collide. An actor — a state machine that owns the buffer — gives every consumer a single point of contact. They send a message ("append this segment"); the actor serializes the work, exposes its current state via a snapshot signal, and behaves predictably even when several behaviors want to write at once.
+
+So owners ends up with both `videoBuffer` (the raw `SourceBuffer`, used by `endOfStream` to read `buffered` ranges) and `videoBufferActor` (the wrapper, used by `loadSegments` to send append messages). Same lifetime, two roles.
