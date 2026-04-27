@@ -1,5 +1,39 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.22...@videojs/react@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Bug Fixes
+
+* **react:** rename MediaGesture and MediaHotkey to Gesture and Hotkey ([#1374](https://github.com/videojs/v10/issues/1374)) ([5e9a02c](https://github.com/videojs/v10/commit/5e9a02c85194e80f84571a3147ca30d4ce045de1))
+
+
+### Code Refactoring
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.23
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.23
+    * @videojs/skins bumped to 10.0.0-beta.23
+
 ## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.21...@videojs/react@10.0.0-beta.22) (2026-04-18)
 
 
