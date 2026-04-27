@@ -6,7 +6,7 @@
     "exactOptionalPropertyTypes": false,
     "declarationDir": "../../types/media"
   },
-  "references": [{ "path": "../../../utils" }, { "path": "../core" }, { "path": "../network" }],
+  "references": [{ "path": "../../../utils" }],
   "include": ["./**/*.ts"],
   "exclude": ["./dom/**"]
 }
