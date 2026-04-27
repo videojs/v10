@@ -7,8 +7,6 @@
  * Global ManagedMediaSource types are defined in ./mediasource.d.ts
  */
 
-import { type ReadonlySignal, signal } from '../../../core/signals/primitives';
-
 /**
  * Check if MediaSource API is supported.
  */
@@ -160,34 +158,31 @@ export function isCodecSupported(mimeCodec: string): boolean {
 }
 
 /**
- * Create a reactive signal that mirrors `mediaSource.readyState`.
+ * Observe `mediaSource.readyState` changes via DOM events.
  *
- * Listens to `sourceopen`, `sourceended`, and `sourceclose` events and updates
- * the signal accordingly, making readyState visible to the TC39 signal graph.
- * Listeners are automatically removed when `signal` is aborted.
+ * Listens to `sourceopen`, `sourceended`, and `sourceclose` and invokes
+ * `onChange` with the current `readyState` after each event. Listeners
+ * are automatically removed when `abortSignal` is aborted.
  *
  * @param mediaSource - The MediaSource to observe
- * @param signal - AbortSignal that controls listener lifetime
- * @returns A `Signal.ReadonlyState` that reflects the current `readyState`
+ * @param abortSignal - AbortSignal that controls listener lifetime
+ * @param onChange - Called with the current readyState after each change
  *
  * @example
  * const controller = new AbortController();
- * const readyState = observeMediaSourceReadyState(mediaSource, controller.signal);
- * effect(() => {
- *   if (readyState.get() === 'open') { ... }
+ * onMediaSourceReadyStateChange(mediaSource, controller.signal, (state) => {
+ *   if (state === 'open') { ... }
  * });
- * // Later:
- * controller.abort();
+ * // Later: controller.abort();
  */
-export function observeMediaSourceReadyState(
+export function onMediaSourceReadyStateChange(
   mediaSource: MediaSource,
-  abortSignal: AbortSignal
-): ReadonlySignal<MediaSource['readyState']> {
-  const readyState = signal<MediaSource['readyState']>(mediaSource.readyState);
-  const update = () => readyState.set(mediaSource.readyState);
+  abortSignal: AbortSignal,
+  onChange: (readyState: MediaSource['readyState']) => void
+): void {
+  const update = () => onChange(mediaSource.readyState);
   const options = { signal: abortSignal };
   mediaSource.addEventListener('sourceopen', update, options);
   mediaSource.addEventListener('sourceended', update, options);
   mediaSource.addEventListener('sourceclose', update, options);
-  return readyState;
 }

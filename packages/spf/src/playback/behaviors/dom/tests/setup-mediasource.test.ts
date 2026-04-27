@@ -4,9 +4,9 @@ import type { Presentation } from '../../../../media/types';
 import { type MediaSourceOwners, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
 // Mock the DOM utilities.
-// observeMediaSourceReadyState returns 'open' immediately — simulates the
-// MediaSource having opened, which is the condition the inner effect waits on
-// before writing to owners.
+// onMediaSourceReadyStateChange fires `onChange('open')` immediately — simulates
+// the MediaSource having opened, which is the condition the inner effect waits
+// on before writing to owners.
 vi.mock('../../../../media/dom/mse/mediasource-setup', () => ({
   createMediaSource: vi.fn(() => ({
     addEventListener: vi.fn(),
@@ -16,9 +16,11 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', () => ({
   attachMediaSource: vi.fn(() => ({
     detach: vi.fn(),
   })),
-  observeMediaSourceReadyState: vi.fn((_ms: MediaSource, _signal: AbortSignal) => ({
-    get: () => 'open' as MediaSource['readyState'],
-  })),
+  onMediaSourceReadyStateChange: vi.fn(
+    (_ms: MediaSource, _signal: AbortSignal, onChange: (state: MediaSource['readyState']) => void) => {
+      onChange('open');
+    }
+  ),
 }));
 
 function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {

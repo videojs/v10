@@ -1,9 +1,9 @@
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
 import {
   attachMediaSource,
   createMediaSource,
-  observeMediaSourceReadyState,
+  onMediaSourceReadyStateChange,
 } from '../../../media/dom/mse/mediasource-setup';
 import type { Presentation } from '../../../media/types';
 
@@ -59,11 +59,12 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
   const cleanupEffect = effect(() => {
     if (!canSetupSignal.get() || !shouldSetupSignal.get()) return;
     const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
-    const { signal } = abortController;
+    const { signal: abortSignal } = abortController;
 
     const mediaSource = createMediaSource({ preferManaged: true });
     // NOTE: Consider making MediaSource an Actor and using this in it.
-    const mediaSourceReadyState = observeMediaSourceReadyState(mediaSource, signal);
+    const mediaSourceReadyState = signal<MediaSource['readyState']>(mediaSource.readyState);
+    onMediaSourceReadyStateChange(mediaSource, abortSignal, (state) => mediaSourceReadyState.set(state));
     attachMediaSource(mediaSource, mediaElement);
 
     const cleanupOwnersUpdateEffect = effect(() => {
