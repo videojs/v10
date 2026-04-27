@@ -148,25 +148,60 @@ A pattern shows up here that recurs throughout: **behaviors gate themselves on p
 
 ---
 
-## Two ways to call `createComposition`
+## Stage 2 — Track selection
 
-The HLS engine uses the *explicit* form — passing `<S, O, C>` type arguments to fix the engine's shape directly:
-
-```ts
-return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
-  [...behaviors],
-  { config, initialState, initialOwners }
-);
-```
-
-The minimal/inferred form lets TypeScript intersect each behavior's deps to compute the engine's shape:
+Once the manifest is resolved, the engine picks one track per type:
 
 ```ts
-const engine = createComposition([myBehavior]);
+selectVideoTrackFromConfig,
+selectAudioTrackFromConfig,
+selectTextTrackFromConfig,
 ```
 
-For engines that aggregate many wrapper-style behaviors (`(deps: Deps) => behavior(deps, {...})`) all sharing the same `Behavior<S, O, C>` type, TypeScript's distributive intersection inference can drop fields — e.g. for the HLS engine, `bandwidthState` would silently disappear from the inferred state, and `initialState: { bandwidthState: ... }` would be flagged as an unknown property. The explicit form sidesteps the inference and uses the engine's declared shapes directly.
+Each of these is a *wrapper* defined in `engine.ts`. The actual behavior — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack` — lives in `playback/behaviors/select-tracks.ts` and accepts its own configuration parameter (initial bandwidth for video, preferred language for audio, and so on). The wrapper closes over the engine's config and threads the relevant fields into the behavior:
 
-(Earlier drafts of this doc kept an `as SimpleHlsEngineState` cast to paper over the inference collapse. The explicit overload is the cleaner answer — the cast is gone.)
+```ts
+const selectVideoTrackFromConfig = ({ config, ...deps }: Deps) =>
+  selectVideoTrack(deps, {
+    type: 'video',
+    ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
+  });
+```
 
-The inferred form remains the right call for small or single-behavior compositions where the per-feature state slices are the source of truth.
+This is the **wrapper pattern** that recurs throughout the engine. Two kinds, both visible in the composition list:
+
+- **Media-type wrappers** (`loadVideoSegments`, `resolveVideoTrack`, …) close over a fixed `type: 'video' | 'audio' | 'text'` value so each appears as a flat, self-describing entry in the composition list.
+- **Config-aware wrappers** (`selectVideoTrackFromConfig`, `switchQualityFromConfig`, …) close over the engine's config and pass relevant fields to the underlying behavior's own config parameter.
+
+The wrappers exist because the underlying behaviors are **engine-agnostic** — `selectVideoTrack` doesn't know about `SimpleHlsEngineConfig` or that `bandwidthState` lives on engine state. It accepts a `VideoSelectionConfig` from its caller. The engine wrapper is the thin layer that says "for this engine's config, the initial bandwidth comes from `config.initialBandwidth`."
+
+The behaviors themselves are split across two locations on purpose:
+
+- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack`, `canSelectTrack`, `shouldSelectTrack`. No signals, no effects. Just functions that take a `Presentation` and a config and return an id.
+- **Orchestrations** live in `playback/behaviors/select-tracks.ts` — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack`. These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
+
+The split keeps the SPF-free CML-style helpers reusable outside SPF, while the SPF-integrated behaviors stay thin and easy to swap.
+
+---
+
+## Stage 3 — Track resolution
+
+A selected track is just an id at first — its segment list still has to come from a *media playlist*. The next three behaviors fetch and parse those:
+
+```ts
+resolveVideoTrack,
+resolveAudioTrack,
+resolveTextTrack,
+```
+
+These are media-type wrappers around the same `resolveTrack` behavior:
+
+```ts
+const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
+```
+
+`resolveTrack` watches `state.presentation` and the matching `selectedXTrackId` for its type. When both are set, it finds the partially-resolved track, fetches its media playlist, parses it into segments, and writes the now-resolved track back into `state.presentation`. (The `Presentation` type allows tracks to hold either a partially-resolved or fully-resolved shape — the URL is enough to find a track; the segments are what loadSegments needs.)
+
+Three behaviors, one shared `resolveTrack`. Each closes over its `type` so the composition list stays flat. From outside, you'd hardly know they share an implementation.
+
+Now `state.presentation` is fully populated for the selected tracks. Everything downstream — duration, MSE, segment loading, end-of-stream — reads from there.
