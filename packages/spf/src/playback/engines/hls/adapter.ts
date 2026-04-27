@@ -110,7 +110,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // -------------------------------------------------------------------------
 
     get src(): string {
-      return this.#engine.state.get().presentation?.url ?? '';
+      return this.#engine.state.get().presentationUrl ?? '';
     }
 
     set src(value: string) {
@@ -131,7 +131,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       }
 
       if (value) {
-        update(this.#engine.state, { presentation: { url: value } });
+        update(this.#engine.state, { presentationUrl: value });
       }
     }
 

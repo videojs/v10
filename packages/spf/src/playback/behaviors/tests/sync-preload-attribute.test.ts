@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { AddressableObject, MediaElementLike, Presentation } from '../../../media/types';
+import type { MediaElementLike } from '../../../media/types';
 import { syncPreloadAttribute } from '../sync-preload-attribute';
 
 describe('syncPreloadAttribute', () => {
   it('syncs preload from mediaElement to state', async () => {
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -15,7 +15,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentation: undefined,
+      presentationUrl: undefined,
       preload: undefined,
     });
 
@@ -35,7 +35,7 @@ describe('syncPreloadAttribute', () => {
 
   it('does not override preload when mediaElement changes and preload is already set', async () => {
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -44,7 +44,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentation: undefined,
+      presentationUrl: undefined,
       preload: undefined,
     });
 
@@ -114,7 +114,7 @@ describe('syncPreloadAttribute', () => {
 
   it('does not clear preload when mediaElement is removed and preload is already set', async () => {
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -123,7 +123,7 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentation: undefined,
+      presentationUrl: undefined,
       preload: 'auto',
     });
 

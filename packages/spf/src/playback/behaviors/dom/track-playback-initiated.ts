@@ -9,8 +9,8 @@ import { computed, type Signal, update } from '../../../core/signals/primitives'
 export interface PlaybackInitiatedState {
   /** True once play has been requested for the current presentation URL. */
   playbackInitiated?: boolean;
-  /** Current presentation — URL is used to detect source changes. */
-  presentation?: { url?: string };
+  /** Current presentation URL — used to detect source changes. */
+  presentationUrl?: string;
 }
 
 /**
@@ -38,7 +38,7 @@ function deriveState(
   state: PlaybackInitiatedState,
   owners: PlaybackInitiatedOwners
 ): 'preconditions-unmet' | 'monitoring' | 'playback-initiated' {
-  if (!owners.mediaElement || !state.presentation?.url) return 'preconditions-unmet';
+  if (!owners.mediaElement || !state.presentationUrl) return 'preconditions-unmet';
   if (state.playbackInitiated) return 'playback-initiated';
   return 'monitoring';
 }
@@ -67,7 +67,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
 }): Reactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated' | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
   const mediaElementSignal = computed(() => owners.get().mediaElement);
-  const urlSignal = computed(() => state.get().presentation?.url);
+  const urlSignal = computed(() => state.get().presentationUrl);
 
   return createMachineReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
     initial: 'preconditions-unmet',

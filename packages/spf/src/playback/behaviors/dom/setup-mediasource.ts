@@ -5,13 +5,12 @@ import {
   createMediaSource,
   onMediaSourceReadyStateChange,
 } from '../../../media/dom/mse/mediasource-setup';
-import type { Presentation } from '../../../media/types';
 
 /**
  * State shape required for MediaSource setup.
  */
 export interface MediaSourceState {
-  presentation?: Presentation;
+  presentationUrl?: string;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
   mediaSourceReadyState?: MediaSource['readyState'];
 }
@@ -29,7 +28,7 @@ export interface MediaSourceOwners {
  *
  * Creates and attaches MediaSource when:
  * - mediaElement exists in owners
- * - presentation.url exists in state
+ * - presentationUrl exists in state
  *
  * Updates owners.mediaSource after successful setup.
  */
@@ -45,7 +44,7 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
   // Get the latest mediaElement (even if nullish)
   const mediaElementSignal = computed(() => owners.get().mediaElement);
   // Get the latest presentationUrl (even if nullish)
-  const presentationUrlSignal = computed(() => state.get().presentation?.url);
+  const presentationUrlSignal = computed(() => state.get().presentationUrl);
 
   const canSetupSignal = computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
 

@@ -88,16 +88,8 @@ export { fetchResolvable, getResponseText } from './network/fetch';
 // Features (F1)
 // =============================================================================
 
-export type {
-  PresentationState,
-  UnresolvedPresentation,
-} from './playback/behaviors/resolve-presentation';
-export {
-  canResolve,
-  isUnresolved,
-  resolvePresentation,
-  shouldResolve,
-} from './playback/behaviors/resolve-presentation';
+export type { PresentationState } from './playback/behaviors/resolve-presentation';
+export { canResolve, resolvePresentation, shouldResolve } from './playback/behaviors/resolve-presentation';
 export type { PlatformOwners } from './playback/behaviors/sync-preload-attribute';
 export { syncPreloadAttribute } from './playback/behaviors/sync-preload-attribute';
 

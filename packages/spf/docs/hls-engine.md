@@ -81,7 +81,10 @@ Every SPF composition is parameterized by three shapes:
 
 ```ts
 export interface SimpleHlsEngineState {
-  presentation?: any;
+  /** Input: URL of the manifest to play. */
+  presentationUrl?: string;
+  /** Output: parsed manifest, written by `resolvePresentation`. */
+  presentation?: Presentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -139,7 +142,7 @@ resolvePresentation,
 
 **`trackPlaybackInitiated`** sets `state.playbackInitiated` to `true` once the user has tried to play (the element is no longer paused). It's a small reactor that watches the media element's `play`/`pause` events. Why it matters: behaviors that should only run after the user interacts (or after autoplay fires) can gate on `state.playbackInitiated`.
 
-**`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentation` for a `{ url }` shape, fetches the multivariant playlist, parses it, and writes the resolved `Presentation` back to `state.presentation`. The presentation is now reactive — anything downstream that needs the parsed manifest just reads `state.presentation`.
+**`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentationUrl` (the input slot, written by the caller) and on change fetches the multivariant playlist, parses it, and writes the parsed `Presentation` back to `state.presentation` (the output slot). The two-slot split keeps the input shape (`string`) and the output shape (`Presentation`) honest with each other, and lets every downstream behavior declare `presentation?: Presentation` without a union or `any`. Setting `presentationUrl` to a different URL after resolution transitions back through `'resolving'` to refetch.
 
 A pattern shows up here that recurs throughout: **behaviors gate themselves on preconditions and write their results back to state.** They don't take inputs as function arguments. They read from a known signal slot, do their work, and write to a known signal slot. The composition is wired through state, not through call ordering.
 
@@ -149,11 +152,11 @@ A pattern shows up here that recurs throughout: **behaviors gate themselves on p
 
 A running list of awkward bits we hit while writing prose. Each one is a candidate for code cleanup.
 
-- **`presentation?: any`** in `SimpleHlsEngineState`. The interface declares it as `any` because the field transitions from `{ url: string }` (unresolved) to `Presentation` (resolved) during runtime, and Signal invariance makes a union shape break behavior-interface compatibility. The doc has to wave its hands at "it's a `{ url }` shape that becomes a `Presentation`." A cleaner shape would let the doc just say what's there.
 - **`as SimpleHlsEngineState` cast on `initialState`**. TypeScript's inference of the composition list collapses the engine's state shape when every behavior takes typed deps — fields like `bandwidthState` get dropped from the inferred state. The cast reasserts the full shape, but the underlying inference quirk in `createComposition` deserves investigation.
 
 ### Resolved during drafting
 
+- ~~`presentation?: any` in `SimpleHlsEngineState`.~~ Split into two slots: `presentationUrl?: string` (caller's input) and `presentation?: Presentation` (resolver's output). Every downstream behavior now declares `presentation?: Presentation` without a union or `any`. `resolvePresentation` watches `presentationUrl` and (re-)resolves on change.
 - ~~The trailing `() => destroyVttResolver()` line in the composition list.~~ Removed — it was a no-op anyway (the dummy-video singleton is lazy, so calling `destroy` at engine setup did nothing). The singleton lives for the page lifetime; callers who really need to free it can call `destroyVttResolver` from `@videojs/spf/dom` directly. Made visible the *real* missing concept: per-engine VTT resolver lifecycle, owned by `setupTextTrackActors`.
 - ~~`mediaSourceReadyState` is a `ReadonlySignal` slot on `owners`.~~ Moved to state as a plain `MediaSource['readyState']` value, written by `setupMediaSource` via `update(state, …)`. Owners now holds only resources; data flows through state.
 - ~~`as SimpleHlsEngineOwners` cast on `initialOwners`.~~ Removed — the empty `{}` is assignable directly. The state cast still has to stay (see above).

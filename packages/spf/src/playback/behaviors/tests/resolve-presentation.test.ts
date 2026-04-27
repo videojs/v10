@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { AddressableObject, Presentation } from '../../../media/types';
-import { isUnresolved, resolvePresentation, shouldResolve } from '../resolve-presentation';
+import type { Presentation } from '../../../media/types';
+import { resolvePresentation, shouldResolve } from '../resolve-presentation';
 
 describe('resolvePresentation', () => {
   afterEach(() => {
@@ -10,7 +10,8 @@ describe('resolvePresentation', () => {
   it('resolves unresolved presentation', async () => {
     // Arrange
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string;
+      presentation?: Presentation;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -32,7 +33,7 @@ variant2.m3u8`)
     const reactor = resolvePresentation({ state });
 
     // Trigger resolution by setting unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
+    state.set({ ...state.get(), presentationUrl: 'http://example.com/playlist.m3u8' });
 
     // Wait for resolution
     await vi.waitFor(() => {
@@ -61,7 +62,8 @@ variant2.m3u8`)
   it('does not trigger resolution when other state fields change', async () => {
     // Arrange
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string;
+      presentation?: Presentation;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
       volume: number;
     }
@@ -89,7 +91,7 @@ variant1.m3u8`)
     expect(fetchSpy).not.toHaveBeenCalled();
 
     // Now add unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
+    state.set({ ...state.get(), presentationUrl: 'http://example.com/playlist.m3u8' });
 
     // Wait for resolution
     await vi.waitFor(() => {
@@ -113,7 +115,8 @@ variant1.m3u8`)
   it('resolves presentation initialized as unresolved', async () => {
     // Arrange
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string;
+      presentation?: Presentation;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -125,7 +128,7 @@ variant1.m3u8`)
 
     // State starts with unresolved presentation
     const state = signal<State>({
-      presentation: { url: 'http://example.com/initial.m3u8' },
+      presentationUrl: 'http://example.com/initial.m3u8',
       preload: 'auto',
     });
 
@@ -151,7 +154,8 @@ variant1.m3u8`)
   it('does not re-resolve presentation initialized as resolved', async () => {
     // Arrange
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string;
+      presentation?: Presentation;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -209,7 +213,8 @@ variant1.m3u8`)
   it('resolves new unresolved presentation after resolved one', async () => {
     // Arrange
     interface State {
-      presentation?: AddressableObject | Presentation | undefined;
+      presentationUrl?: string;
+      presentation?: Presentation;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -236,7 +241,7 @@ variant2.m3u8`)
     const reactor = resolvePresentation({ state });
 
     // Replace with unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
+    state.set({ ...state.get(), presentationUrl: 'http://example.com/second.m3u8' });
 
     // Wait for resolution
     await vi.waitFor(() => {
@@ -258,7 +263,8 @@ variant2.m3u8`)
   describe('preload policy', () => {
     it('resolves when preload is "auto"', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
@@ -269,7 +275,7 @@ variant1.m3u8`)
       );
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'auto',
       });
 
@@ -284,7 +290,8 @@ variant1.m3u8`)
 
     it('resolves when preload is "metadata"', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
@@ -295,7 +302,7 @@ variant1.m3u8`)
       );
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'metadata',
       });
 
@@ -310,14 +317,15 @@ variant1.m3u8`)
 
     it('does not resolve when preload is "none"', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'none',
       });
 
@@ -326,21 +334,23 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toBeUndefined();
+      expect(state.get().presentationUrl).toBe('http://example.com/playlist.m3u8');
 
       reactor.destroy();
     });
 
     it('does not resolve when preload is undefined', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: undefined,
       });
 
@@ -349,7 +359,8 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toBeUndefined();
+      expect(state.get().presentationUrl).toBe('http://example.com/playlist.m3u8');
 
       reactor.destroy();
     });
@@ -358,7 +369,8 @@ variant1.m3u8`)
   describe('playbackInitiated resolution', () => {
     it('resolves when playbackInitiated is set to true with preload "none"', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
         playbackInitiated?: boolean;
       }
@@ -370,7 +382,7 @@ variant1.m3u8`)
       );
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'none',
       });
 
@@ -394,7 +406,8 @@ variant1.m3u8`)
 
     it('does not resolve when playbackInitiated is false with preload "none"', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
         playbackInitiated?: boolean;
       }
@@ -402,7 +415,7 @@ variant1.m3u8`)
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'none',
       });
 
@@ -411,7 +424,8 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toBeUndefined();
+      expect(state.get().presentationUrl).toBe('http://example.com/playlist.m3u8');
 
       reactor.destroy();
     });
@@ -420,7 +434,8 @@ variant1.m3u8`)
   describe('deduplication', () => {
     it('does not trigger multiple fetches for same presentation', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
@@ -431,7 +446,7 @@ variant1.m3u8`)
       );
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
+        presentationUrl: 'http://example.com/playlist.m3u8',
         preload: 'auto',
       });
 
@@ -454,7 +469,8 @@ variant1.m3u8`)
 
     it('allows resolving different presentations sequentially', async () => {
       interface State {
-        presentation?: AddressableObject | Presentation | undefined;
+        presentationUrl?: string;
+        presentation?: Presentation;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
@@ -466,7 +482,7 @@ variant1.m3u8`)
       );
 
       const state = signal<State>({
-        presentation: { url: 'http://example.com/first.m3u8' },
+        presentationUrl: 'http://example.com/first.m3u8',
         preload: 'auto',
       });
 
@@ -480,7 +496,7 @@ variant1.m3u8`)
       expect(fetchSpy).toHaveBeenCalledOnce();
 
       // Now load a different presentation
-      state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
+      state.set({ ...state.get(), presentationUrl: 'http://example.com/second.m3u8' });
 
       // Wait for second resolution — check id to confirm the fetch actually completed
       await vi.waitFor(() => {
@@ -499,20 +515,20 @@ variant1.m3u8`)
 
 describe('shouldResolve', () => {
   it('returns true when preload is "auto"', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' });
+    const result = shouldResolve({ presentationUrl: 'http://example.com/playlist.m3u8', preload: 'auto' });
 
     expect(result).toBe(true);
   });
 
   it('returns true when preload is "metadata"', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'metadata' });
+    const result = shouldResolve({ presentationUrl: 'http://example.com/playlist.m3u8', preload: 'metadata' });
 
     expect(result).toBe(true);
   });
 
   it('returns true when playbackInitiated is true with preload "none"', () => {
     const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
+      presentationUrl: 'http://example.com/playlist.m3u8',
       preload: 'none',
       playbackInitiated: true,
     });
@@ -521,43 +537,16 @@ describe('shouldResolve', () => {
   });
 
   it('returns false when preload is "none" and playbackInitiated is false', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' });
+    const result = shouldResolve({ presentationUrl: 'http://example.com/playlist.m3u8', preload: 'none' });
 
     expect(result).toBe(false);
   });
 
   it('returns false when preload is undefined', () => {
     const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
+      presentationUrl: 'http://example.com/playlist.m3u8',
       preload: undefined,
     });
-
-    expect(result).toBe(false);
-  });
-});
-
-describe('isUnresolved', () => {
-  const resolvedPresentation: Presentation = {
-    id: 'pres-1',
-    url: 'http://example.com/resolved.m3u8',
-    selectionSets: [],
-    startTime: 0,
-  };
-
-  it('returns true for unresolved presentation', () => {
-    const result = isUnresolved({ url: 'http://example.com/playlist.m3u8' });
-
-    expect(result).toBe(true);
-  });
-
-  it('returns false for resolved presentation', () => {
-    const result = isUnresolved(resolvedPresentation);
-
-    expect(result).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
-    const result = isUnresolved(undefined);
 
     expect(result).toBe(false);
   });

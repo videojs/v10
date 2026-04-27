@@ -2,6 +2,7 @@ import { type Composition, createComposition } from '../../../core/composition/c
 import type { Signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
+import type { Presentation } from '../../../media/types';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
@@ -34,11 +35,10 @@ import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
  * type satisfies all of them.
  */
 export interface SimpleHlsEngineState {
-  // `any` is intentional: the presentation field transitions from unresolved
-  // ({ url: string }) to resolved (Presentation) at runtime. Individual behaviors
-  // declare narrower constraints and narrow the type themselves. Using a union
-  // here would break Signal invariance against the behavior interfaces.
-  presentation?: any;
+  /** Input: URL of the manifest to play. The engine watches this slot. */
+  presentationUrl?: string;
+  /** Output: parsed manifest, written by `resolvePresentation`. */
+  presentation?: Presentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -158,7 +158,7 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
  * });
  *
  * engine.owners.set({ ...engine.owners.get(), mediaElement: videoEl });
- * engine.state.set({ ...engine.state.get(), presentation: { url: 'https://example.com/stream.m3u8' } });
+ * engine.state.set({ ...engine.state.get(), presentationUrl: 'https://example.com/stream.m3u8' });
  *
  * videoEl.play();
  *
