@@ -1,5 +1,42 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.22...@videojs/html@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **html:** observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/issues/1386)) ([76a1e4a](https://github.com/videojs/v10/commit/76a1e4a8c9b85151070b3b10c87692131b529c92))
+* **html:** re-export reactive primitives from @videojs/element ([#1472](https://github.com/videojs/v10/issues/1472)) ([466abb6](https://github.com/videojs/v10/commit/466abb6d200b790d9de64be0e0c87c56d60e64a5))
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Bug Fixes
+
+* **html:** raise testTimeout to 15s for parallel-load reliability ([#1448](https://github.com/videojs/v10/issues/1448)) ([b934937](https://github.com/videojs/v10/commit/b9349375cbcd8436173afc0d6a03cab182829718))
+
+
+### Code Refactoring
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.23
+    * @videojs/element bumped to 10.0.0-beta.23
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.23
+    * @videojs/skins bumped to 10.0.0-beta.23
+
 ## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.21...@videojs/html@10.0.0-beta.22) (2026-04-18)
 
 
