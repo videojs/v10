@@ -29,7 +29,7 @@ Build a custom component when you need new behavior, a new state display, or int
 
 ## Use player state and actions
 
-Each <DocsLink slug="concepts/features">feature</DocsLink> exposes state properties and actions. Common features:
+Need access to player state or actions? You'll want to familiarize yourself with <DocsLink slug="concepts/features">features</DocsLink>. Each feature exposes a set. Here are some features you might reach for first:
 
 | State | Actions | Feature |
 |-------|---------|---------|
@@ -101,29 +101,29 @@ this.#store.value.setVolume(0.5);
 Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player.Provider>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
-<Player.Provider>
-  <Player.Container>
+<Player.Provider> // [!code focus]
+  <Player.Container> // [!code focus]
     <VideoSkin>
       <Video src="video.mp4" />
     </VideoSkin>
     <SkipIntroButton /> // [!code focus]
-  </Player.Container>
-</Player.Provider>
+  </Player.Container> // [!code focus]
+</Player.Provider> // [!code focus]
 ```
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
-Your element needs to be inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> to access state:
+Your element needs to be inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
 
 ```html
-<video-player>
-  <video-skin>
+<video-player> <!-- [!code focus] -->
+  <video-skin> <!-- [!code focus] -->
     <video slot="media" src="video.mp4"></video>
-  </video-skin>
-  <skip-intro-button>Skip intro</skip-intro-button> <!-- [!code focus] -->
-</video-player>
+    <skip-intro-button>Skip intro</skip-intro-button> <!-- [!code focus] -->
+  </video-skin> <!-- [!code focus] -->
+</video-player> <!-- [!code focus] -->
 ```
 
 Extend `MediaElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
@@ -145,9 +145,7 @@ class SkipIntroButtonElement extends MediaElement {
 
 ## Make it accessible
 
-Use semantic HTML elements (`<button>`, not `<div>`), add ARIA attributes where needed, and support keyboard interaction.
-
-<DocsLinkCard slug="concepts/accessibility">Learn more about accessibility in Video.js</DocsLinkCard>
+<DocsLinkCard slug="concepts/accessibility">Learn more about accessibility in video players</DocsLinkCard>
 
 ## Full example
 
