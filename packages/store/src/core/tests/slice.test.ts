@@ -74,7 +74,7 @@ describe('defineSlice', () => {
   });
 
   it('attach is optional', () => {
-    const slice = defineSlice<HTMLVideoElement>()({
+    const slice = defineSlice<EventTarget>()({
       state: () => ({ playing: false }),
     });
 

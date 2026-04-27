@@ -15,12 +15,29 @@ interface Props {
 }
 
 const { files } = Astro.props;
+
+function hash(input: string): string {
+  let value = 5381;
+  for (let i = 0; i < input.length; i++) {
+    value = ((value << 5) + value) ^ input.charCodeAt(i);
+  }
+  return Math.abs(value >>> 0).toString(36);
+}
+
+const cssFile = files.find((file) => file.lang === 'css');
+const scopeSeed = files.map((file) => `${file.title}:${file.lang}\n${file.code}`).join('\n\n');
+const scopeId = cssFile ? `demo-${hash(scopeSeed)}` : null;
+const scopedCss = cssFile && scopeId ? `@scope ([data-demo-scope="${scopeId}"]) {\n${cssFile.code}\n}` : null;
 ---
 
 <div
   class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-faded-black dark:border-manila-dark"
 >
-  <div class="relative z-20 bg-manila-light dark:bg-faded-black">
+  {scopedCss && <style is:inline set:html={scopedCss} />}
+  <div
+    class="relative z-20 bg-manila-light dark:bg-faded-black"
+    data-demo-scope={scopeId}
+  >
     <slot />
   </div>
   <TabsRoot

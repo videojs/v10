@@ -1,0 +1,6 @@
+playwright-report/
+test-results/
+blob-report/
+apps/vite/src/_generated/
+apps/vite/src/pages/
+apps/vite/src/index.html

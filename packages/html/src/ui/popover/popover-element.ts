@@ -16,6 +16,7 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
+import { PositionController } from '../position-controller';
 
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
@@ -45,6 +46,7 @@ export class PopoverElement extends MediaElement {
   closeDelay = PopoverCore.defaultProps.closeDelay;
 
   readonly #core = new PopoverCore();
+  readonly #position = new PositionController(this);
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
 
@@ -52,10 +54,6 @@ export class PopoverElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
-  #positionAbort: AbortController | null = null;
-  #positionFrame = 0;
-  #resizeObserver: ResizeObserver | null = null;
-  #positionTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -104,13 +102,11 @@ export class PopoverElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupPositioning();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#cleanupPositioning();
     this.#cleanupTrigger();
     this.#popover?.destroy();
     super.destroyCallback();
@@ -138,7 +134,7 @@ export class PopoverElement extends MediaElement {
     if (!this.#popover) return;
 
     // Discover trigger via commandfor linkage.
-    const triggerEl = this.#findTrigger();
+    const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
 
     // Derive state from core + input.
@@ -166,7 +162,7 @@ export class PopoverElement extends MediaElement {
 
     // Skip positioning when closed — no rects to measure.
     if (!state.open) {
-      this.#cleanupPositioning();
+      this.#position.cleanup();
       return;
     }
 
@@ -185,21 +181,15 @@ export class PopoverElement extends MediaElement {
       applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
     }
 
-    this.#syncPositioning();
+    this.#position.sync(this.#currentTrigger);
   }
 
-  // --- Trigger discovery ---
-
-  #findTrigger(): HTMLElement | null {
-    if (!this.id) return null;
-    const root = this.getRootNode() as Document | ShadowRoot;
-    return root.querySelector<HTMLElement>(`[commandfor="${this.id}"]`);
-  }
+  // --- Trigger management ---
 
   #syncTrigger(triggerEl: HTMLElement | null): void {
     if (triggerEl === this.#currentTrigger) return;
 
-    this.#cleanupPositioning();
+    this.#position.cleanup();
     this.#cleanupTrigger();
     this.#currentTrigger = triggerEl;
     this.#popover?.setTriggerElement(triggerEl);
@@ -224,50 +214,5 @@ export class PopoverElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
-  }
-
-  #syncPositioning(): void {
-    if (supportsAnchorPositioning()) return;
-
-    const triggerEl = this.#currentTrigger;
-
-    if (!triggerEl) return;
-    if (this.#positionAbort && this.#positionTrigger === triggerEl) return;
-
-    this.#cleanupPositioning();
-    this.#positionAbort = new AbortController();
-    this.#positionTrigger = triggerEl;
-    const { signal } = this.#positionAbort;
-
-    const reposition = () => {
-      cancelAnimationFrame(this.#positionFrame);
-      this.#positionFrame = requestAnimationFrame(() => {
-        if (signal.aborted) return;
-        this.requestUpdate();
-      });
-    };
-
-    window.addEventListener('scroll', reposition, { capture: true, passive: true, signal });
-    window.addEventListener('resize', reposition, { signal });
-
-    if (typeof ResizeObserver === 'function') {
-      this.#resizeObserver = new ResizeObserver(() => {
-        reposition();
-      });
-      this.#resizeObserver.observe(triggerEl);
-      this.#resizeObserver.observe(this);
-    }
-
-    reposition();
-  }
-
-  #cleanupPositioning(): void {
-    this.#positionAbort?.abort();
-    this.#positionAbort = null;
-    this.#positionTrigger = null;
-    cancelAnimationFrame(this.#positionFrame);
-    this.#positionFrame = 0;
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
   }
 }

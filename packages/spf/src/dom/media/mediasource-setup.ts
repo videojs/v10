@@ -7,6 +7,8 @@
  * Global ManagedMediaSource types are defined in ./mediasource.d.ts
  */
 
+import { type ReadonlySignal, signal } from '../../core/signals/primitives';
+
 /**
  * Check if MediaSource API is supported.
  */
@@ -78,7 +80,6 @@ export interface AttachMediaSourceResult {
  * @example
  * const mediaSource = createMediaSource();
  * const { detach } = attachMediaSource(mediaSource, videoElement);
- * await waitForSourceOpen(mediaSource);
  * // Use mediaSource...
  * // Later, to clean up:
  * detach();
@@ -117,57 +118,6 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
 }
 
 /**
- * Wait for a MediaSource to reach the 'open' state.
- * Resolves immediately if already open.
- *
- * @param mediaSource - The MediaSource to wait for
- * @param signal - Optional AbortSignal for cancellation
- * @returns Promise that resolves when the MediaSource is open
- *
- * @example
- * const mediaSource = createMediaSource();
- * attachMediaSource(mediaSource, videoElement);
- * await waitForSourceOpen(mediaSource);
- * // MediaSource is now ready for SourceBuffer creation
- */
-export function waitForSourceOpen(mediaSource: MediaSource, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (mediaSource.readyState === 'open') {
-      resolve();
-      return;
-    }
-
-    // Check if already aborted
-    if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'));
-      return;
-    }
-
-    // Use internal AbortController for cleanup coordination
-    const controller = new AbortController();
-    const options = { signal: controller.signal };
-
-    mediaSource.addEventListener(
-      'sourceopen',
-      () => {
-        controller.abort();
-        resolve();
-      },
-      options
-    );
-
-    signal?.addEventListener(
-      'abort',
-      () => {
-        controller.abort();
-        reject(new DOMException('Aborted', 'AbortError'));
-      },
-      options
-    );
-  });
-}
-
-/**
  * Create a SourceBuffer on a MediaSource.
  *
  * @param mediaSource - The MediaSource (must be in 'open' state)
@@ -176,7 +126,6 @@ export function waitForSourceOpen(mediaSource: MediaSource, signal?: AbortSignal
  * @throws Error if MediaSource is not open or codec is unsupported
  *
  * @example
- * await waitForSourceOpen(mediaSource);
  * const buffer = createSourceBuffer(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
  */
 export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string): SourceBuffer {
@@ -208,4 +157,37 @@ export function isCodecSupported(mimeCodec: string): boolean {
   }
 
   return MediaSource.isTypeSupported(mimeCodec);
+}
+
+/**
+ * Create a reactive signal that mirrors `mediaSource.readyState`.
+ *
+ * Listens to `sourceopen`, `sourceended`, and `sourceclose` events and updates
+ * the signal accordingly, making readyState visible to the TC39 signal graph.
+ * Listeners are automatically removed when `signal` is aborted.
+ *
+ * @param mediaSource - The MediaSource to observe
+ * @param signal - AbortSignal that controls listener lifetime
+ * @returns A `Signal.ReadonlyState` that reflects the current `readyState`
+ *
+ * @example
+ * const controller = new AbortController();
+ * const readyState = observeMediaSourceReadyState(mediaSource, controller.signal);
+ * effect(() => {
+ *   if (readyState.get() === 'open') { ... }
+ * });
+ * // Later:
+ * controller.abort();
+ */
+export function observeMediaSourceReadyState(
+  mediaSource: MediaSource,
+  abortSignal: AbortSignal
+): ReadonlySignal<MediaSource['readyState']> {
+  const readyState = signal<MediaSource['readyState']>(mediaSource.readyState);
+  const update = () => readyState.set(mediaSource.readyState);
+  const options = { signal: abortSignal };
+  mediaSource.addEventListener('sourceopen', update, options);
+  mediaSource.addEventListener('sourceended', update, options);
+  mediaSource.addEventListener('sourceclose', update, options);
+  return readyState;
 }

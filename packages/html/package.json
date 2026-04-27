@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.9",
+  "version": "10.0.0-beta.21",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -97,12 +97,12 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rm -rf dist cdn types"
+    "clean": "rimraf --glob dist cdn types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/spf": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
+    "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
@@ -111,9 +111,9 @@
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^18.0.1",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "tsdown": "^0.21.4",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.0"
   },
   "publishConfig": {
     "access": "public"

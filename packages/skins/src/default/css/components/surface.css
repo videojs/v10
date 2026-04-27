@@ -20,12 +20,4 @@
     box-shadow: inset 0 0 0 1px var(--media-surface-inner-border-color);
     pointer-events: none;
   }
-
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: oklch(from var(--media-surface-background-color) l c h / 0.7);
-  }
-
-  @media (prefers-contrast: more) {
-    background-color: oklch(from var(--media-surface-background-color) l c h / 0.9);
-  }
 }

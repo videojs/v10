@@ -1,8 +1,8 @@
 import { useStore } from '@nanostores/react';
 import { Globe, Image } from 'lucide-react';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
-import type { UseCase } from '@/stores/installation';
 import { useCase } from '@/stores/installation';
+import type { UseCase } from '@/utils/installation/types';
 
 export default function UseCasePicker() {
   const $useCase = useStore(useCase);

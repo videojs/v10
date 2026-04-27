@@ -1,31 +1,33 @@
 /**
  * Generic actor types.
  *
- * An actor owns its snapshot (finite status + non-finite context) and
+ * An actor owns its snapshot (finite state + non-finite context) and
  * notifies observers when it changes. Mirrors the XState snapshot model:
- * `snapshot.status` is the bounded operational mode, `snapshot.context`
+ * `snapshot.value` is the bounded operational mode, `snapshot.context`
  * holds arbitrary non-finite data.
  */
 
-/** Complete actor snapshot: finite status + non-finite context. */
-export interface ActorSnapshot<Status extends string, Context> {
-  status: Status;
+import type { Machine, MachineSnapshot } from './machine';
+
+/**
+ * Complete actor snapshot: finite state + non-finite context.
+ * Extends `MachineSnapshot` with context — the non-finite data managed by the actor.
+ */
+export interface ActorSnapshot<State extends string, Context extends object> extends MachineSnapshot<State> {
   context: Context;
 }
 
-/** Generic actor interface: owns its snapshot and notifies observers. */
-export interface Actor<Status extends string, Context> {
-  /** Current snapshot. */
-  readonly snapshot: ActorSnapshot<Status, Context>;
+/** Generic actor interface: owns its snapshot as a reactive signal. */
+export interface SignalActor<State extends string, Context extends object>
+  extends Machine<ActorSnapshot<State, Context>> {}
 
-  /**
-   * Subscribe to snapshot changes. Fires immediately with the current
-   * snapshot, then on every subsequent change.
-   *
-   * @returns Unsubscribe function.
-   */
-  subscribe(listener: (snapshot: ActorSnapshot<Status, Context>) => void): () => void;
-
-  /** Tear down the actor. */
+/**
+ * A message-driven actor with no reactive snapshot.
+ *
+ * Use for actors that coordinate async work but have no state that external
+ * consumers need to observe. Analogous to XState's `fromCallback`.
+ */
+export interface CallbackActor<Message extends { type: string }> {
+  send(message: Message): void;
   destroy(): void;
 }

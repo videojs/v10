@@ -1,17 +1,9 @@
 import { ReactiveElement } from '@videojs/element';
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { ensureGlobalStyle, namedNodeMapToObject } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
 import styles from './skin.css?inline';
 
 const STYLES_ID = '__media-background-styles';
-
-function ensureBackgroundStyles(): void {
-  if (document.getElementById(STYLES_ID)) return;
-  const style = document.createElement('style');
-  style.id = STYLES_ID;
-  style.textContent = styles;
-  document.head.appendChild(style);
-}
 
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
@@ -31,7 +23,7 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
   constructor() {
     super();
 
-    ensureBackgroundStyles();
+    ensureGlobalStyle(STYLES_ID, styles);
 
     if (!this.shadowRoot) {
       this.attachShadow((this.constructor as typeof BackgroundVideoSkinElement).shadowRootOptions);

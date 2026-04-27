@@ -207,8 +207,10 @@ describe('ConcurrentRunner', () => {
       { id: 'track-1' }
     );
 
-    runner.schedule(first);
-    runner.schedule(second); // same id — should be ignored
+    const p1 = runner.schedule(first);
+    const p2 = runner.schedule(second); // same id — should return existing promise
+
+    expect(p2).toBe(p1); // deduplicated: same promise returned
 
     resolveFirst();
     await vi.waitFor(() => expect(first.status).toBe('done'));
@@ -216,6 +218,104 @@ describe('ConcurrentRunner', () => {
     // second was never run
     expect(ran).not.toHaveBeenCalled();
     expect(second.status).toBe('pending');
+  });
+
+  it('whenSettled fires after all tasks complete', async () => {
+    const runner = new ConcurrentRunner();
+    const cb = vi.fn();
+
+    let resolveA!: () => void;
+    let resolveB!: () => void;
+    const a = new Task(
+      () =>
+        new Promise<void>((r) => {
+          resolveA = r;
+        }),
+      { id: 'a' }
+    );
+    const b = new Task(
+      () =>
+        new Promise<void>((r) => {
+          resolveB = r;
+        }),
+      { id: 'b' }
+    );
+
+    runner.schedule(a);
+    runner.schedule(b);
+    await vi.waitFor(() => expect(resolveA).toBeDefined());
+    await vi.waitFor(() => expect(resolveB).toBeDefined());
+
+    runner.whenSettled(cb);
+    expect(cb).not.toHaveBeenCalled();
+
+    resolveA();
+    await vi.waitFor(() => expect(a.status).toBe('done'));
+    expect(cb).not.toHaveBeenCalled(); // b still in flight
+
+    resolveB();
+    await vi.waitFor(() => expect(cb).toHaveBeenCalledOnce());
+  });
+
+  it('whenSettled does not fire when runner is already idle', async () => {
+    const runner = new ConcurrentRunner();
+    const cb = vi.fn();
+
+    runner.whenSettled(cb);
+    await Promise.resolve();
+
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('whenSettled is superseded by abortAll()', async () => {
+    const runner = new ConcurrentRunner();
+    const cb = vi.fn();
+
+    const task = new Task(
+      async () => {
+        await new Promise<void>(() => {}); // never resolves on its own
+      },
+      { id: 'x' }
+    );
+
+    runner.schedule(task);
+    runner.whenSettled(cb);
+
+    runner.abortAll();
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('whenSettled fires for a new batch registered after abortAll()', async () => {
+    const runner = new ConcurrentRunner();
+    const cb = vi.fn();
+
+    runner.schedule(new Task(async () => {}, { id: 'first' }));
+    runner.abortAll();
+
+    runner.schedule(new Task(async () => {}, { id: 'second' }));
+    runner.whenSettled(cb);
+
+    await vi.waitFor(() => expect(cb).toHaveBeenCalledOnce());
+  });
+
+  it('destroy() aborts all in-flight tasks', async () => {
+    const runner = new ConcurrentRunner();
+    let signal: AbortSignal | undefined;
+    const task = new Task(
+      async (s) => {
+        signal = s;
+        await new Promise(() => {});
+      },
+      { id: 'x' }
+    );
+
+    runner.schedule(task);
+    await vi.waitFor(() => expect(signal).toBeDefined());
+
+    runner.destroy();
+    expect(signal!.aborted).toBe(true);
   });
 
   it('abortAll() cancels all in-flight tasks', async () => {
@@ -379,6 +479,78 @@ describe('SerialRunner', () => {
     // second runs but receives an already-aborted signal
     await p2;
     expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it('abortPending() aborts queued tasks but not the in-flight task', async () => {
+    const runner = new SerialRunner();
+
+    let resolveFirst!: () => void;
+    let firstSignal: AbortSignal | undefined;
+    const first = new Task(
+      async (signal) => {
+        firstSignal = signal;
+        await new Promise<void>((resolve) => {
+          resolveFirst = resolve;
+        });
+      },
+      { id: '1' }
+    );
+
+    let secondSignal: AbortSignal | undefined;
+    const second = new Task(
+      async (signal) => {
+        secondSignal = signal;
+      },
+      { id: '2' }
+    );
+
+    runner.schedule(first);
+    const p2 = runner.schedule(second);
+
+    await vi.waitFor(() => expect(first.status).toBe('running'));
+
+    runner.abortPending();
+
+    // In-flight task is unaffected
+    expect(firstSignal?.aborted).toBe(false);
+
+    // Queued task receives aborted signal when it runs
+    resolveFirst();
+    await p2;
+    expect(secondSignal?.aborted).toBe(true);
+  });
+
+  it('abortPending() does not affect the in-flight task — it completes normally', async () => {
+    const runner = new SerialRunner();
+    const results: string[] = [];
+
+    let resolveFirst!: () => void;
+    const first = new Task(
+      async () => {
+        await new Promise<void>((r) => {
+          resolveFirst = r;
+        });
+        results.push('first-done');
+      },
+      { id: '1' }
+    );
+    const second = new Task(
+      async () => {
+        results.push('second-done');
+      },
+      { id: '2' }
+    );
+
+    runner.schedule(first);
+    runner.schedule(second);
+
+    await vi.waitFor(() => expect(first.status).toBe('running'));
+    runner.abortPending();
+    resolveFirst();
+
+    await vi.waitFor(() => expect(first.status).toBe('done'));
+    // first completed, second ran (with aborted signal) but we only assert first completed
+    expect(results).toContain('first-done');
   });
 
   it('abortAll() aborts the in-flight task', async () => {

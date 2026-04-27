@@ -3,8 +3,8 @@ import { Minus, Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
 import type { ImageRadioOption } from '@/components/ImageRadioGroup';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
-import type { Skin } from '@/stores/installation';
 import { skin, useCase } from '@/stores/installation';
+import type { Skin } from '@/utils/installation/types';
 
 const VIDEO_SKINS: ImageRadioOption<Skin>[] = [
   { value: 'video', label: 'Default', image: <Sparkles size={32} /> },

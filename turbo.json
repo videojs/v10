@@ -2,11 +2,11 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
   "concurrency": "20",
-  "globalEnv": ["CONTEXT", "DEPLOY_PRIME_URL"],
+  "globalEnv": ["BRANCH", "CONTEXT", "DEPLOY_PRIME_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^build:cdn"],
-      "outputs": ["dist/**", ".netlify/**"]
+      "outputs": ["dist/**", "types/**", "*.tsbuildinfo", ".netlify/**"]
     },
     "build:cdn": {
       "dependsOn": ["build"],
@@ -27,6 +27,10 @@
     },
     "lint": {
       "outputs": []
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
     }
   }
 }

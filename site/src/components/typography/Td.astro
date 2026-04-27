@@ -10,6 +10,6 @@ type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'td', class: className, ...props } = Astro.props;
 ---
 
-<Tag class={twMerge("px-4 py-2 text-p2", className)} {...props}>
+<Tag class={twMerge("px-4 py-2", className)} {...props}>
   <slot />
 </Tag>

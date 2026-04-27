@@ -1,5 +1,109 @@
 # Changelog
 
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.20...@videojs/utils@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.19...@videojs/utils@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.18...@videojs/utils@10.0.0-beta.19) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.18](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.17...@videojs/utils@10.0.0-beta.18) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292))
+
+### Bug Fixes
+
+* **packages:** ignore gestures on interactive child elements ([#1327](https://github.com/videojs/v10/issues/1327)) ([b768c29](https://github.com/videojs/v10/commit/b768c29f98043a41c6272683e240bf1948238042))
+
+
+### Code Refactoring
+
+* **packages:** replace DelegateMixin & ProxyMixin with MediaHost base classes ([#1292](https://github.com/videojs/v10/issues/1292)) ([8f1653e](https://github.com/videojs/v10/commit/8f1653efcd0a3a8cc75881bc6b4c0b87599a3b8d))
+
+## [10.0.0-beta.17](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.16...@videojs/utils@10.0.0-beta.17) (2026-04-11)
+
+
+### Features
+
+* **packages:** add gesture bindings to default skins and presets ([#1310](https://github.com/videojs/v10/issues/1310)) ([1509a66](https://github.com/videojs/v10/commit/1509a66f60fc0598452f21af396c4b6f3569be5b))
+
+## [10.0.0-beta.16](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.15...@videojs/utils@10.0.0-beta.16) (2026-04-10)
+
+
+### Features
+
+* **packages:** add hotkey system with coordinator, actions, and ARIA support ([#1238](https://github.com/videojs/v10/issues/1238)) ([627ea20](https://github.com/videojs/v10/commit/627ea204fcadb50d8cd0878ae816fabdaee470d0))
+
+
+### Bug Fixes
+
+* **utils:** stable sort comparator and orphaned JSDoc ([#1286](https://github.com/videojs/v10/issues/1286)) ([071325d](https://github.com/videojs/v10/commit/071325de4dee666a09e305399ea95e163c5d8de4))
+
+## [10.0.0-beta.15](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.14...@videojs/utils@10.0.0-beta.15) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.14](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.13...@videojs/utils@10.0.0-beta.14) (2026-04-03)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.13](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.12...@videojs/utils@10.0.0-beta.13) (2026-04-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.11...@videojs/utils@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+
+
+### Bug Fixes
+
+* **utils:** polyfill AbortSignal.any for Chromium ≤115 ([#1142](https://github.com/videojs/v10/issues/1142)) ([c3641c8](https://github.com/videojs/v10/commit/c3641c888c9630b2780cdda556431512d9ca5b81))
+
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.10...@videojs/utils@10.0.0-beta.11) (2026-03-24)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.9...@videojs/utils@10.0.0-beta.10) (2026-03-23)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
 ## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.8...@videojs/utils@10.0.0-beta.9) (2026-03-23)
 
 

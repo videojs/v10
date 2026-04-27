@@ -12,6 +12,7 @@ function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPla
     waiting: false,
     play: vi.fn(async () => {}),
     pause: vi.fn(),
+    togglePaused: vi.fn(() => true),
     ...overrides,
   };
 }
@@ -21,6 +22,7 @@ function createState(overrides: Partial<PlayButtonState> = {}): PlayButtonState 
     paused: true,
     ended: false,
     started: false,
+    label: '',
     ...overrides,
   };
 }

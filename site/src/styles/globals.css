@@ -151,6 +151,11 @@
   --text-p1--letter-spacing: var(--tracking-tight);
   --text-p1--font-weight: var(--font-weight-normal);
 
+  --text-p15: 1.125rem; /* 18px */
+  --text-p15--line-height: 1.5;
+  --text-p15--letter-spacing: var(--tracking-normal);
+  --text-p15--font-weight: var(--font-weight-normal);
+
   --text-p2: 1rem; /* 16px */
   --text-p2--line-height: 1.5;
   --text-p2--letter-spacing: var(--tracking-normal);

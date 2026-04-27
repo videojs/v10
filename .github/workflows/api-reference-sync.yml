@@ -1,7 +1,6 @@
 name: API Reference Sync
 
 on:
-  workflow_dispatch:
   pull_request:
     types: [closed]
 
@@ -10,7 +9,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
-  repository-projects: write
   id-token: write
 
 concurrency:
@@ -18,62 +16,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── Job 0: Lightweight shell gate ───────────────────────────────────
+  # ─── Job 0: Build API JSON at HEAD~1 and HEAD, diff them ─────────────
   analyze:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
 
     outputs:
-      has_changes: ${{ steps.check.outputs.has_changes }}
-      pr_number: ${{ steps.context.outputs.pr_number }}
-      pr_title: ${{ steps.context.outputs.pr_title }}
-      pr_url: ${{ steps.context.outputs.pr_url }}
-      pr_body: ${{ steps.context.outputs.pr_body }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set PR context
-        id: context
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title || '' }}
-          PR_BODY: ${{ github.event.pull_request.body || '' }}
-        run: |
-          echo "pr_number=${{ github.event.pull_request.number || '' }}" >> "$GITHUB_OUTPUT"
-          echo "pr_title=$PR_TITLE" >> "$GITHUB_OUTPUT"
-          echo "pr_url=${{ github.event.pull_request.html_url || '' }}" >> "$GITHUB_OUTPUT"
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "pr_body<<$EOF" >> "$GITHUB_OUTPUT"
-          echo "$PR_BODY" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Check for API-relevant changes
-        id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "workflow_dispatch — full scan"
-            exit 0
-          fi
-
-          CHANGED=$(gh pr diff ${{ github.event.pull_request.number }} --name-only || true)
-
-          if echo "$CHANGED" | grep -qE '^packages/(core/src/core/(ui|selectors)|html/src/ui|react/src/ui|store/src)/'; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "API-relevant files changed"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No API-relevant changes detected"
-          fi
-
-  # ─── Job 1: Reference copy drift (Claude Opus) ──────────────────────
-  docs-reference-copy:
-    needs: analyze
-    if: needs.analyze.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+      has_diff: ${{ steps.classify.outputs.has_diff }}
+      has_new: ${{ steps.classify.outputs.has_new }}
 
     steps:
       - name: Checkout code
@@ -81,204 +31,397 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check reference copy drift
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Collect PR metadata
+        id: meta
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || 'manual run' }}
+        run: |
+          mkdir -p /tmp/api-sync
+
+          jq -n \
+            --arg number "${{ github.event.pull_request.number || '' }}" \
+            --arg url "${{ github.event.pull_request.html_url || '' }}" \
+            --arg author "${{ github.event.pull_request.user.login || '' }}" \
+            --arg title "$PR_TITLE" \
+            '{number: $number, url: $url, author: $author, title: $title}' \
+            > /tmp/api-sync/pr-meta.json
+
+          cat /tmp/api-sync/pr-meta.json
+
+      - name: Build API JSON at HEAD
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm -C site api-docs
+
+          mkdir -p /tmp/api-sync/after-components /tmp/api-sync/after-utils
+          cp -r site/src/content/generated-component-reference/* /tmp/api-sync/after-components/ 2>/dev/null || true
+          cp -r site/src/content/generated-util-reference/* /tmp/api-sync/after-utils/ 2>/dev/null || true
+
+      - name: Build API JSON at HEAD~1
+        run: |
+          git checkout HEAD~1
+
+          # If install or build fails (e.g. api-docs-builder itself changed),
+          # treat everything as new by leaving before dirs empty
+          mkdir -p /tmp/api-sync/before-components /tmp/api-sync/before-utils
+
+          if pnpm install --frozen-lockfile && pnpm -C site api-docs; then
+            cp -r site/src/content/generated-component-reference/* /tmp/api-sync/before-components/ 2>/dev/null || true
+            cp -r site/src/content/generated-util-reference/* /tmp/api-sync/before-utils/ 2>/dev/null || true
+          else
+            echo "::warning::HEAD~1 build failed — treating all components/utils as new"
+          fi
+
+          git checkout -
+
+      - name: Classify changes
+        id: classify
+        run: |
+          # Unified diff of both JSON directories
+          diff -ruN /tmp/api-sync/before-components /tmp/api-sync/after-components > /tmp/api-sync/diff.patch || true
+          diff -ruN /tmp/api-sync/before-utils /tmp/api-sync/after-utils >> /tmp/api-sync/diff.patch || true
+
+          # New: files in after but not in before
+          comm -23 \
+            <(ls /tmp/api-sync/after-components/ 2>/dev/null | sort) \
+            <(ls /tmp/api-sync/before-components/ 2>/dev/null | sort) \
+            > /tmp/api-sync/new-components.txt
+
+          comm -23 \
+            <(ls /tmp/api-sync/after-utils/ 2>/dev/null | sort) \
+            <(ls /tmp/api-sync/before-utils/ 2>/dev/null | sort) \
+            > /tmp/api-sync/new-utils.txt
+
+          # Changed: files in both, but content differs
+          comm -12 \
+            <(ls /tmp/api-sync/after-components/ 2>/dev/null | sort) \
+            <(ls /tmp/api-sync/before-components/ 2>/dev/null | sort) \
+            | while read -r f; do
+                if ! diff -q "/tmp/api-sync/before-components/$f" "/tmp/api-sync/after-components/$f" >/dev/null 2>&1; then
+                  echo "$f"
+                fi
+              done > /tmp/api-sync/changed-components.txt
+
+          comm -12 \
+            <(ls /tmp/api-sync/after-utils/ 2>/dev/null | sort) \
+            <(ls /tmp/api-sync/before-utils/ 2>/dev/null | sort) \
+            | while read -r f; do
+                if ! diff -q "/tmp/api-sync/before-utils/$f" "/tmp/api-sync/after-utils/$f" >/dev/null 2>&1; then
+                  echo "$f"
+                fi
+              done > /tmp/api-sync/changed-utils.txt
+
+          # Log results
+          echo "=== New components ===" && cat /tmp/api-sync/new-components.txt
+          echo "=== New utils ===" && cat /tmp/api-sync/new-utils.txt
+          echo "=== Changed components ===" && cat /tmp/api-sync/changed-components.txt
+          echo "=== Changed utils ===" && cat /tmp/api-sync/changed-utils.txt
+          echo "=== Diff ===" && head -100 /tmp/api-sync/diff.patch
+
+          # Set outputs
+          if [ -s /tmp/api-sync/diff.patch ]; then
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -s /tmp/api-sync/new-components.txt ] || [ -s /tmp/api-sync/new-utils.txt ]; then
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload artifact
+        if: steps.classify.outputs.has_diff == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-diff
+          path: /tmp/api-sync/
+          retention-days: 1
+
+  # ─── Job 1: Open issues for new components/utils without reference pages
+  new-references:
+    needs: analyze
+    if: needs.analyze.outputs.has_new == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-diff
+          path: /tmp/api-sync
+
+      - name: Open issues for missing reference pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          PR_NUMBER=$(jq -r .number /tmp/api-sync/pr-meta.json)
+          PR_URL=$(jq -r .url /tmp/api-sync/pr-meta.json)
+          PR_AUTHOR=$(jq -r .author /tmp/api-sync/pr-meta.json)
+
+          REF_DIR="site/src/content/docs/reference"
+
+          # --- New components ---
+          if [ -s /tmp/api-sync/new-components.txt ]; then
+            while read -r filename; do
+              JSON_PATH="/tmp/api-sync/after-components/$filename"
+              NAME=$(jq -r .name "$JSON_PATH")
+              SLUG="${filename%.json}"
+
+              # Check if a reference page already uses this component
+              if grep -rq "<ComponentReference component=\"$NAME\"" "$REF_DIR/"; then
+                echo "Reference exists for component $NAME — skipping"
+                continue
+              fi
+
+              # Check for existing open issue (dedup by drift-type + component name)
+              EXISTING=$(gh issue list \
+                --label "docs" \
+                --search "docs(reference): add $NAME API reference page" \
+                --state open \
+                --json number \
+                --jq 'length')
+              if [ "$EXISTING" -gt 0 ]; then
+                echo "Open issue already exists for $NAME — skipping"
+                continue
+              fi
+
+              ASSIGNEE_FLAG=""
+              if [ -n "$PR_AUTHOR" ]; then
+                ASSIGNEE_FLAG="--assignee $PR_AUTHOR"
+              fi
+
+              BODY="$(cat <<EOF
+          <!-- drift-type:new-reference -->
+          <!-- trigger-pr:$PR_NUMBER -->
+          <!-- component:$NAME -->
+
+          ## New Component: \`$NAME\`
+
+          A new component \`$NAME\` was added in #${PR_NUMBER} but has no API reference page yet.
+
+          ### What's needed
+          - [ ] Create reference page with anatomy, prose, demos, and \`<ComponentReference component="$NAME" />\`
+          - [ ] Add sidebar entry in \`site/src/docs.config.ts\`
+          - [ ] Verify build: \`pnpm -C site build\`
+
+          ### Context
+          - Triggering PR: $PR_URL
+          - Generated JSON: \`site/src/content/generated-component-reference/$filename\`
+
+          > Use the \`/api-reference $SLUG\` skill to scaffold this page.
+          EOF
+          )"
+
+              gh issue create \
+                --title "docs(reference): add $NAME API reference page" \
+                --body "$BODY" \
+                --label "docs,site,components" \
+                $ASSIGNEE_FLAG
+
+              echo "Created issue for component $NAME"
+
+            done < /tmp/api-sync/new-components.txt
+          fi
+
+          # --- New utils ---
+          if [ -s /tmp/api-sync/new-utils.txt ]; then
+            while read -r filename; do
+              JSON_PATH="/tmp/api-sync/after-utils/$filename"
+              NAME=$(jq -r .name "$JSON_PATH")
+              SLUG="${filename%.json}"
+
+              # Check if a reference page already uses this util
+              if grep -rq "<UtilReference util=\"$NAME\"" "$REF_DIR/"; then
+                echo "Reference exists for util $NAME — skipping"
+                continue
+              fi
+
+              # Check for existing open issue
+              EXISTING=$(gh issue list \
+                --label "docs" \
+                --search "docs(reference): add $NAME API reference page" \
+                --state open \
+                --json number \
+                --jq 'length')
+              if [ "$EXISTING" -gt 0 ]; then
+                echo "Open issue already exists for $NAME — skipping"
+                continue
+              fi
+
+              ASSIGNEE_FLAG=""
+              if [ -n "$PR_AUTHOR" ]; then
+                ASSIGNEE_FLAG="--assignee $PR_AUTHOR"
+              fi
+
+              BODY="$(cat <<EOF
+          <!-- drift-type:new-reference -->
+          <!-- trigger-pr:$PR_NUMBER -->
+          <!-- util:$NAME -->
+
+          ## New Utility: \`$NAME\`
+
+          A new utility \`$NAME\` was added in #${PR_NUMBER} but has no API reference page yet.
+
+          ### What's needed
+          - [ ] Create reference page with usage examples and \`<UtilReference util="$NAME" />\`
+          - [ ] Add sidebar entry in \`site/src/docs.config.ts\`
+          - [ ] Verify build: \`pnpm -C site build\`
+
+          ### Context
+          - Triggering PR: $PR_URL
+          - Generated JSON: \`site/src/content/generated-util-reference/$filename\`
+
+          > Use the \`/api-reference $SLUG\` skill to scaffold this page.
+          EOF
+          )"
+
+              gh issue create \
+                --title "docs(reference): add $NAME API reference page" \
+                --body "$BODY" \
+                --label "docs,site" \
+                $ASSIGNEE_FLAG
+
+              echo "Created issue for util $NAME"
+
+            done < /tmp/api-sync/new-utils.txt
+          fi
+
+  # ─── Job 2: Detect stale docs (Claude Opus) ─────────────────────────
+  stale-docs:
+    needs: analyze
+    if: needs.analyze.outputs.has_diff == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-diff
+          path: /tmp/api-sync
+
+      - name: Detect stale docs
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model opus
-            --max-turns 20
-            --allowedTools "Bash(pnpm:*)" "Bash(node:*)" "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
+            --max-turns 25
+            --allowedTools "Read" "Glob" "Grep" "Bash(gh:*)" "Bash(cat:*)" "Bash(jq:*)" "Bash(diff:*)" "Bash(ls:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(wc:*)" "Bash(sort:*)"
           prompt: |
-            You are the API reference copy-sync agent.
-            Your sole job: detect drift between auto-generated API JSON and hand-written MDX prose in reference pages.
+            You are the stale-docs detection agent. Your job: given a pre-computed API diff,
+            find documentation that may need updating and open ONE GitHub issue summarizing all findings.
 
-            Trigger context:
-            - Event: ${{ github.event_name }}
-            - PR Number: #${{ needs.analyze.outputs.pr_number }}
-            - PR Title: ${{ needs.analyze.outputs.pr_title }}
-            - PR URL: ${{ needs.analyze.outputs.pr_url }}
-            - PR Body:
-              ${{ needs.analyze.outputs.pr_body }}
+            ## Inputs
 
-            Load context before acting:
-            - Read `CLAUDE.md` and `.claude/skills/README.md`.
-            - Load and follow these skills in order:
-              1. `.claude/skills/api-reference/SKILL.md`
-              2. `.claude/skills/docs/SKILL.md`
-              3. `.claude/skills/commit-pr/SKILL.md`
+            The following files are at /tmp/api-sync/:
+            - `diff.patch` — unified diff of API JSON between HEAD~1 and HEAD
+            - `changed-components.txt` — filenames of changed component JSONs (one per line, may be empty)
+            - `changed-utils.txt` — filenames of changed util JSONs (one per line, may be empty)
+            - `after-components/` — current component JSON files
+            - `after-utils/` — current util JSON files
+            - `pr-meta.json` — `{number, url, author, title}` of the triggering PR
 
-            Step 1 — Identify impacted components:
-            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components/utils changed.
-            - Focus only on those components for the rest of the analysis.
+            Important: Focus on items in `changed-components.txt` and `changed-utils.txt`.
+            Skip any components/utils listed in `new-components.txt` or `new-utils.txt` —
+            a separate job already opens issues for those.
 
-            Step 2 — Build API JSON:
-            - Run `pnpm install` and `pnpm -C site api-docs`.
-            - The generated JSON files are the source of truth — they are always current.
+            ## Process
 
-            Step 3 — Compare JSON against MDX:
-            - For each impacted component, compare the generated API JSON with the hand-written MDX in `site/src/content/docs/reference/`.
-            - "Drift" means the MDX prose doesn't match the JSON. Look for:
-              - Missing or removed props/state fields in prose sections.
-              - Outdated descriptions that contradict JSON.
-              - Missing data attributes in Styling sections.
-              - Stale type signatures in prose.
-              - Missing sidebar entry in `site/src/docs.config.ts`.
-            - For new components with no MDX yet: open an issue noting scaffold is needed, don't attempt it.
+            Step 1: Read `pr-meta.json` and `diff.patch`. Understand what API surfaces changed and how.
 
-            Step 4 — Create/update issues and PRs:
-            - Create/update one canonical issue per component using `.github/templates/docs/reference-copy-issue.md`.
-            - Issue title: `docs(site): {component_name} api reference update`.
-            - Keep at most one active canonical issue per component.
-            - If a canonical issue exists, update it and append new trigger references.
-            - Fully render template fields; no placeholders.
-            - If drift is clear and actionable, create or update one canonical PR per component.
-            - PR title: `docs(site): {component_name} api reference update`.
-            - PR body must use `.github/templates/api-reference-update-pr.md`.
-            - Do not open a PR when analysis is uncertain — use `triage` label instead.
+            Step 2: For each changed component/util, read the "after" JSON to understand the current API shape.
 
-            Labels:
-            - Required: `docs`, `api`, `site`, `docs:reference-copy`.
-            - Add `components` for component pages.
-            - Add `triage` when uncertain.
+            Step 3: Search for documentation that references these APIs. Check ALL of:
+            - `site/src/content/docs/reference/` — MDX reference pages (look for stale prop descriptions,
+              missing new props/state/data-attributes, outdated type signatures)
+            - `site/src/content/docs/concepts/` — concept pages mentioning these APIs
+            - `site/src/content/docs/how-to/` — how-to guides mentioning these APIs
+            - `site/src/components/docs/demos/` — demo code using changed props/state/signatures
+            - `packages/*/README.md` — package READMEs mentioning these APIs
 
-            Scope restrictions:
-            - ONLY check `site/src/content/docs/reference/` — no demos, no concept pages.
-            - Do NOT check demo code (separate job handles that).
-            - Do NOT check concept/how-to pages (separate job handles that).
+            Use Grep and Glob to search efficiently. Look for:
+            - The component/util name (PascalCase, camelCase)
+            - Specific prop/state/parameter names that were added, removed, or changed in the diff
+            - HTML element names from `platforms.html.tagName` in the JSON (e.g. `media-play-button`)
+            - Data attribute names that changed
 
-  # ─── Job 2: Demo code drift (Claude Sonnet) ─────────────────────────
-  docs-demos:
-    needs: analyze
-    if: needs.analyze.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+            Step 4: For each file with hits, read the relevant section and assess:
+            - `high` — definitely stale (references a removed/renamed prop by old name, shows old signature)
+            - `medium` — likely stale (mentions API whose behavior/type changed)
+            - `low` — possibly stale (mentions the component but may not be affected)
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+            Discard clear false positives. Include borderline cases for human review.
 
-      - name: Check demo code drift
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --model sonnet
-            --max-turns 14
-            --allowedTools "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
-          prompt: |
-            You are the API reference demo-sync agent.
-            Your sole job: check if demo code uses APIs that changed in a recent PR.
+            Step 5: If you found ANY stale references, open exactly ONE issue using `gh issue create`.
+            If you found NOTHING stale, do NOT create an issue — just output "No stale docs detected."
 
-            Trigger context:
-            - Event: ${{ github.event_name }}
-            - PR Number: #${{ needs.analyze.outputs.pr_number }}
-            - PR Title: ${{ needs.analyze.outputs.pr_title }}
-            - PR URL: ${{ needs.analyze.outputs.pr_url }}
+            ## Issue format
 
-            Load context before acting:
-            - Read `CLAUDE.md`.
+            Read `pr-meta.json` to get PR_NUMBER, PR_URL, PR_AUTHOR, and PR_TITLE.
 
-            Step 1 — Identify impacted components:
-            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components changed.
-            - Then use `gh pr diff ${{ needs.analyze.outputs.pr_number }}` to see what specifically changed in their APIs (renamed props, removed options, changed signatures, new data attributes).
+            Assign the issue to the PR author: `--assignee $PR_AUTHOR` (skip if author is empty).
 
-            Step 2 — Check demos:
-            - For each impacted component, read all demo files in `site/src/components/docs/demos/{component}/`.
-            - Check both `html/css/` and `react/css/` variants.
-            - Look for: renamed props, removed options, changed signatures, deprecated patterns, new data attributes demos should show.
-            - Skip components with no demo directory.
+            Title: `docs(site): stale docs from #$PR_NUMBER`
 
-            Step 3 — Create/update issues:
-            - Create issues ONLY (no PRs — demo fixes need human judgment).
-            - Use `.github/templates/docs/demos-issue.md`.
-            - Issue title: `docs(site): {component_name} demo code update`.
-            - Keep at most one active canonical issue per component.
-            - If a canonical issue exists, update it and append new trigger references.
-            - Fully render template fields; no placeholders.
-            - Do NOT create an issue if no drift is found.
+            Labels: `docs,site`
 
-            Labels (always all of these):
-            - `docs`, `api`, `site`, `docs:demos`, `components`, `triage`.
+            Body (use this structure exactly):
+            ```
+            <!-- drift-type:stale-docs -->
+            <!-- trigger-pr:{PR_NUMBER} -->
 
-            Scope restrictions:
-            - ONLY check `site/src/components/docs/demos/` — no MDX prose, no concept pages.
-            - Do NOT check reference page content (separate job handles that).
-            - Do NOT check concept/how-to pages (separate job handles that).
+            ## Summary
+            API changes in #{PR_NUMBER} ({PR_TITLE}) may have made the following documentation stale.
 
-  # ─── Job 3: Guide references drift (Claude Sonnet) ──────────────────
-  docs-guide-references:
-    needs: analyze
-    if: needs.analyze.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+            ## Triggering PR
+            {PR_URL}
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+            ## API Changes
+            {Brief summary of what changed in the API — new props, removed props, type changes, etc.}
 
-      - name: Check cross-site references
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --model sonnet
-            --max-turns 14
-            --allowedTools "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
-          prompt: |
-            You are the cross-site reference sync agent.
-            Your sole job: find mentions of changed APIs in docs OUTSIDE `/reference/` that may be stale.
+            ## Stale Documentation Found
 
-            Trigger context:
-            - Event: ${{ github.event_name }}
-            - PR Number: #${{ needs.analyze.outputs.pr_number }}
-            - PR Title: ${{ needs.analyze.outputs.pr_title }}
-            - PR URL: ${{ needs.analyze.outputs.pr_url }}
+            ### High Confidence
+            | File | Line(s) | Issue | API Change |
+            |---|---|---|---|
+            {rows or "None found"}
 
-            Load context before acting:
-            - Read `CLAUDE.md`.
+            ### Medium Confidence
+            | File | Line(s) | Issue | API Change |
+            |---|---|---|---|
+            {rows or "None found"}
 
-            Step 1 — Identify changed APIs:
-            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components/utils changed.
-            - Then use `gh pr diff ${{ needs.analyze.outputs.pr_number }}` to identify the specific API changes (renamed props, removed exports, changed signatures, etc.).
-            - Build a list of API names to search for (PascalCase, camelCase, kebab-case, `media-{name}` variants).
+            ### Low Confidence
+            | File | Line(s) | Issue | API Change |
+            |---|---|---|---|
+            {rows or "None found"}
 
-            Step 2 — Grep for references:
-            - Run targeted `rg` commands to find files mentioning changed APIs in:
-              - `site/src/content/docs/concepts/`
-              - `site/src/content/docs/how-to/`
-              - `packages/*/README.md`
-            - Search for all name variants (kebab, PascalCase, camelCase, `media-{name}` element names).
-            - Do NOT search in `site/src/content/docs/reference/` (separate job handles that).
-            - Do NOT search in `site/src/components/docs/demos/` (separate job handles that).
+            ## Recommended Actions
+            {Bulleted list of specific things to fix}
+            ```
 
-            Step 3 — Analyze hits:
-            - For each file with grep hits, read the surrounding context and determine:
-              - `high` confidence: definitely stale (references removed/renamed API by old name).
-              - `medium` confidence: likely stale (references API whose behavior changed).
-              - `low` confidence / false positive: grep hit in unrelated context.
-            - Be conservative — include borderline cases for human review.
-            - Discard clear false positives.
-
-            Step 4 — Create/update triage issues:
-            - Create issues ONLY (no PRs).
-            - Use `.github/templates/docs/guide-references-issue.md`.
-            - Issue title: `docs(site): cross-site api references update`.
-            - Group related APIs into one issue when they affect the same files.
-            - Keep at most one active canonical issue (search for existing open issues with `drift-type:cross-site-refs` in body).
-            - If a canonical issue exists, update it and append new trigger references.
-            - Fully render template fields; no placeholders.
-            - Do NOT create an issue if no stale references are found.
-
-            Labels (always all of these):
-            - `docs`, `site`, `docs:guide-references`, `triage`.
-
-            Scope restrictions:
-            - ONLY check docs outside `/reference/` and package READMEs.
-            - Do NOT check reference pages (separate job handles that).
-            - Do NOT check demo files (separate job handles that).
+            ## Rules
+            - Open at most ONE issue per run. Group everything into one issue.
+            - Do NOT create or modify any files. Do NOT create PRs. Issues only.
+            - Do NOT open an issue if there is nothing stale.
+            - Before creating an issue, check for existing open issues that have BOTH
+              `<!-- drift-type:stale-docs -->` and `<!-- trigger-pr:{PR_NUMBER} -->` in their body.
+              If one exists, skip creation to avoid duplicates.
+            - Be thorough but efficient — use Grep to find files, then Read only relevant sections.

@@ -1,12 +1,12 @@
-.react-seek-button-basic {
+.media-container {
   position: relative;
 }
 
-.react-seek-button-basic video {
+.media-container video {
   width: 100%;
 }
 
-.react-seek-button-basic__buttons {
+.buttons {
   display: flex;
   gap: 8px;
   position: absolute;
@@ -14,7 +14,7 @@
   left: 10px;
 }
 
-.react-seek-button-basic__button {
+.media-seek-button {
   padding-block: 8px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);

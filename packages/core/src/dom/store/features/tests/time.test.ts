@@ -196,6 +196,88 @@ describe('timeFeature', () => {
         expect(store.state.seeking).toBe(false);
         expect(store.state.currentTime).toBe(45);
       });
+
+      it('timeupdate during seek does not overwrite optimistic currentTime', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        expect(store.state.currentTime).toBe(10);
+
+        // Start a seek — optimistic update sets currentTime to 60.
+        store.seek(60);
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+
+        // Browser fires timeupdate with a stale currentTime while still seeking.
+        video.currentTime = 12;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        // Optimistic value must be preserved — not overwritten by the stale timeupdate.
+        expect(store.state.currentTime).toBe(60);
+        expect(store.state.seeking).toBe(true);
+      });
+
+      it('timeupdate resumes syncing after seeked', async () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        const resultPromise = store.seek(60);
+
+        // Complete the seek.
+        video.currentTime = 60;
+        Object.defineProperty(video, 'seeking', { value: false, configurable: true });
+        video.dispatchEvent(new Event('seeked'));
+
+        await resultPromise;
+
+        expect(store.state.seeking).toBe(false);
+        expect(store.state.currentTime).toBe(60);
+
+        // Playback advances — timeupdate should sync normally again.
+        video.currentTime = 62;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        expect(store.state.currentTime).toBe(62);
+      });
+
+      it('rapid seeks during drag preserve latest optimistic value', () => {
+        const video = createMockVideo({
+          currentTime: 10,
+          duration: 120,
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        // Simulate rapid drag: multiple seeks without waiting for seeked.
+        store.seek(30);
+        expect(store.state.currentTime).toBe(30);
+
+        store.seek(50);
+        expect(store.state.currentTime).toBe(50);
+
+        store.seek(70);
+        expect(store.state.currentTime).toBe(70);
+
+        // Stale timeupdate fires — should not snap back.
+        video.currentTime = 15;
+        video.dispatchEvent(new Event('timeupdate'));
+
+        expect(store.state.currentTime).toBe(70);
+      });
     });
   });
 });

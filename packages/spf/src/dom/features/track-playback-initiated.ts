@@ -1,15 +1,15 @@
 import { listen } from '@videojs/utils/dom';
-import type { EventStream } from '../../core/events/create-event-stream';
-import type { PresentationAction } from '../../core/features/resolve-presentation';
-import type { WritableState } from '../../core/state/create-state';
+import type { Reactor } from '../../core/create-machine-reactor';
+import { createMachineReactor } from '../../core/create-machine-reactor';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
  */
 export interface PlaybackInitiatedState {
-  /** True once the user has initiated playback (play event fired). */
+  /** True once play has been requested for the current presentation URL. */
   playbackInitiated?: boolean;
-  /** Current presentation — watched for URL changes to reset playbackInitiated. */
+  /** Current presentation — URL is used to detect source changes. */
   presentation?: { url?: string };
 }
 
@@ -21,70 +21,88 @@ export interface PlaybackInitiatedOwners {
 }
 
 /**
- * Track whether playback has been initiated by the user.
+ * FSM states for playback initiation tracking.
  *
- * Sets `state.playbackInitiated = true` when the media element fires a `play`
- * event (via `element.play()`, native controls, or autoplay) and simultaneously
- * dispatches `{ type: 'play' }` to the event stream so `resolvePresentation`
- * can react.
+ * ```
+ * 'preconditions-unmet' ──── element + URL ────→ 'monitoring'
+ *         ↑                        ↑                  │
+ *         │   preconditions lost   │             play / !paused
+ *         │                        │                  ↓
+ *         └────────────── 'playback-initiated' ←──────┘
+ *                (exit cleanup resets state.playbackInitiated → false)
  *
- * Resets `state.playbackInitiated = false` when `presentation.url` changes,
- * so a new source with `preload="none"` won't load segments until play is
- * triggered again.
+ * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
+ * ```
+ */
+function deriveState(
+  state: PlaybackInitiatedState,
+  owners: PlaybackInitiatedOwners
+): 'preconditions-unmet' | 'monitoring' | 'playback-initiated' {
+  if (!owners.mediaElement || !state.presentation?.url) return 'preconditions-unmet';
+  if (state.playbackInitiated) return 'playback-initiated';
+  return 'monitoring';
+}
+
+/**
+ * Track whether playback has been initiated for the current presentation URL.
  *
- * This flag is used by `shouldLoadSegments` to allow segment loading after
- * play is initiated regardless of the initial `preload` setting — `preload`
- * is a startup hint, not a runtime gate.
+ * A three-state Reactor FSM driven by `state.playbackInitiated` and the
+ * `deriveState` pattern:
+ * - `'preconditions-unmet'` — no element or URL yet; no effects.
+ * - `'monitoring'` — checks `!el.paused` on entry; listens for `play`.
+ * - `'playback-initiated'` — tracks element and URL; exit cleanup resets
+ *   `state.playbackInitiated` to `false` on any change or lost preconditions.
  *
  * @example
- * const cleanup = trackPlaybackInitiated({ state, owners, events });
+ * const reactor = trackPlaybackInitiated({ state, owners });
+ * // later:
+ * reactor.destroy();
  */
-export function trackPlaybackInitiated({
+export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
   state,
   owners,
-  events,
 }: {
-  state: WritableState<PlaybackInitiatedState>;
-  owners: WritableState<PlaybackInitiatedOwners>;
-  events: EventStream<PresentationAction>;
-}): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
-  let lastPresentationUrl: string | undefined;
+  state: Signal<S>;
+  owners: Signal<O>;
+}): Reactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated' | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const urlSignal = computed(() => state.get().presentation?.url);
 
-  // Watch for presentation URL changes to reset playbackInitiated
-  const unsubscribeState = state.subscribe((currentState) => {
-    const url = currentState.presentation?.url;
-    if (url !== lastPresentationUrl) {
-      if (lastPresentationUrl !== undefined) {
-        // URL changed to a new value — reset so new source requires play again
-        state.patch({ playbackInitiated: false });
-      }
-      lastPresentationUrl = url;
-    }
+  return createMachineReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
+    initial: 'preconditions-unmet',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      'preconditions-unmet': {},
+
+      monitoring: {
+        // Entry: check if already playing; otherwise listen for play.
+        // The fn body is automatically untracked — el is read at entry time only.
+        entry: () => {
+          const el = mediaElementSignal.get()!;
+          update(state, { playbackInitiated: !el.paused } as Partial<S>);
+          return listen(el, 'play', () => {
+            update(state, { playbackInitiated: !el.paused } as Partial<S>);
+          });
+        },
+      },
+
+      'playback-initiated': {
+        // Reaction: tracks element and URL while initiated. When either changes,
+        // the effect re-runs — the exit cleanup fires first, resetting
+        // state.playbackInitiated to false. deriveState then returns 'monitoring'
+        // on the next microtask, and the always monitor drives the transition.
+        //
+        // This covers both the preconditions-lost path (element/URL → undefined,
+        // which also triggers a deriveState → 'preconditions-unmet' transition)
+        // and the URL-change / element-swap path (preconditions still met but
+        // values changed, handled entirely by this effect's cleanup).
+        effects: () => {
+          mediaElementSignal.get(); // tracked — re-run on element change
+          urlSignal.get(); // tracked — re-run on URL change
+          return () => update(state, { playbackInitiated: false } as Partial<S>);
+        },
+      },
+    },
   });
-
-  // Bridge media element play event → state flag + event stream
-  const unsubscribeOwners = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
-
-    if (mediaElement === lastMediaElement) return;
-
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    removeListener = listen(mediaElement, 'play', () => {
-      state.patch({ playbackInitiated: true });
-      events.dispatch({ type: 'play' });
-    });
-  });
-
-  return () => {
-    removeListener?.();
-    unsubscribeState();
-    unsubscribeOwners();
-  };
 }

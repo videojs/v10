@@ -1,5 +1,5 @@
-export * from './media/proxy';
 export * from './media/state';
+export * from './media/types';
 export * from './ui/alert-dialog/alert-dialog-core';
 export * from './ui/alert-dialog/alert-dialog-data-attrs';
 export * from './ui/buffering-indicator/buffering-indicator-core';
@@ -8,6 +8,8 @@ export * from './ui/captions-button/captions-button-core';
 export * from './ui/captions-button/captions-button-data-attrs';
 export * from './ui/controls/controls-core';
 export * from './ui/controls/controls-data-attrs';
+export * from './ui/error-dialog/error-dialog-core';
+export * from './ui/error-dialog/error-dialog-data-attrs';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
 export * from './ui/mute-button/mute-button-core';

@@ -1,9 +1,10 @@
 ---
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
-import Discord from '@/components/icons/discord.svg?react';
-import GitHub from '@/components/icons/github.svg?react';
-import Logo from '@/components/icons/logo.svg?react';
+import Discord from '@/assets/logos/discord.svg?react';
+import GitHub from '@/assets/logos/github.svg?react';
+import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import Search from '../Search';
 import GetStartedLink from './GetStartedLink';
@@ -32,18 +33,17 @@ const { class: className, dark = false } = Astro.props;
 ---
 
 <nav
+  aria-label="Video.js"
   class:list={[
     "flex justify-between",
     "mx-auto w-full max-w-305 items-center px-5 py-7 md:py-10",
     className,
   ]}
 >
-  <a
-    href="/"
-    class="flex w-40 items-center lg:w-56"
-    aria-label="Video.js v10 home"
-  >
-    <Logo width="100%" />
+  <a href="/" class="flex h-7 items-center gap-3 lg:h-10 lg:gap-4">
+    <Logo height="100%" />
+    <span class="sr-only">Video.js video player</span>
+    <BetaPill className="hidden sm:inline-flex" />
   </a>
   <Search client:load className="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
@@ -65,7 +65,10 @@ const { class: className, dark = false } = Astro.props;
             "flex items-center rounded-xs px-5 py-2 font-display font-bold uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
           ]}
         >
-          {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+          {link.label}{" "}
+          {link.external ? (
+            <ArrowUpRight size="1em" aria-hidden="true" />
+          ) : null}
         </a>
       ))
     }

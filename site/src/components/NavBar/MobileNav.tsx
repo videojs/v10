@@ -1,8 +1,9 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
+import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import Logo from '../icons/logo.svg?react';
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
@@ -49,7 +50,11 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
           {/* Header with close button */}
           <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <Logo width="10rem" />
+            <a href="/" className="flex h-7 items-center gap-3 lg:gap-4 lg:h-10">
+              <Logo height="100%" />
+              <span className="sr-only">Video.js video player</span>
+              <BetaPill className="hidden sm:inline-flex" />
+            </a>
             <Dialog.Close
               className={clsx(
                 'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
@@ -91,7 +96,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                     className={className}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+                    {link.label} {link.external ? <ArrowUpRight size="1em" aria-hidden="true" /> : null}
                   </a>
                 );
               })}
@@ -101,6 +106,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                   'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
                 )}
                 target="_blank"
+                rel="noopener"
               >
                 Discord
               </a>
@@ -111,6 +117,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                   'border-b'
                 )}
                 target="_blank"
+                rel="noopener"
               >
                 GitHub
               </a>

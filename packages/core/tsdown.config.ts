@@ -1,5 +1,6 @@
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import packageJson from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'default';
 
@@ -12,6 +13,8 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls/index': './src/dom/media/hls/index.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
+    'dom/media/mux/index': './src/dom/media/mux/index.ts',
+    'dom/media/native-hls/index': './src/dom/media/native-hls/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
   },
   platform: 'neutral',
@@ -20,19 +23,17 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   clean: true,
   hash: false,
   unbundle: true,
-  alias: {
-    '@': new URL('./src/core', import.meta.url).pathname,
-  },
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   dts:
     mode === 'dev'
       ? {
           build: true,
-          // Unified tsconfig covering both core and dom sources.
-          // Needs DOM libs to preserve MediaApiMixin return types.
+          // Unified tsconfig covering both core and dom sources
+          // so DOM lib types are available for dom subpath exports.
           tsconfig: 'tsconfig.dts.json',
         }
       : false,

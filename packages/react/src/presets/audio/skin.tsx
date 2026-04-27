@@ -10,6 +10,8 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
+import { ErrorDialog } from '@/ui/error-dialog';
+import { MediaHotkey } from '@/ui/hotkey/media-hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -19,20 +21,9 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { ErrorDialog } from '../error-dialog';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: 'media-error',
-  dialog: 'media-error__dialog',
-  content: 'media-error__content',
-  title: 'media-error__title',
-  description: 'media-error__description',
-  actions: 'media-error__actions',
-  close: 'media-button media-button--subtle',
-};
 
 export type AudioSkinProps = BaseSkinProps;
 
@@ -46,13 +37,6 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
     />
   );
 });
-
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
 
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
@@ -89,55 +73,67 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
     <Container className={cn('media-default-skin media-default-skin--audio', className)} {...rest}>
       {children}
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className="media-error">
+          <div className="media-error__dialog">
+            <div className="media-error__content">
+              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className="media-error__description" />
+            </div>
+            <div className="media-error__actions">
+              <ErrorDialog.Close className="media-button media-button--subtle">OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <div className="media-surface media-controls">
         <Tooltip.Provider>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlayButton className="media-button--play" render={<Button />}>
-                  <RestartIcon className="media-icon media-icon--restart" />
-                  <PlayIcon className="media-icon media-icon--play" />
-                  <PauseIcon className="media-icon media-icon--pause" />
-                </PlayButton>
-              }
-            />
-            <Tooltip.Popup className="media-surface media-tooltip">
-              <PlayLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+          <div className="media-button-group">
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlayButton className="media-button--play" render={<Button />}>
+                    <RestartIcon className="media-icon media-icon--restart" />
+                    <PlayIcon className="media-icon media-icon--play" />
+                    <PauseIcon className="media-icon media-icon--pause" />
+                  </PlayButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip" />
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
-                  <span className="media-icon__container">
-                    <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                    <span className="media-icon__label">{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
-                  <span className="media-icon__container">
-                    <SeekIcon className="media-icon media-icon--seek" />
-                    <span className="media-icon__label">{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
 
-          <Time.Group className="media-time">
-            <Time.Value type="current" className="media-time__value" />
+          <div className="media-time-controls">
+            <Time.Value type="current" className="media-time" />
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
                 <TimeSlider.Fill className="media-slider__fill" />
@@ -145,19 +141,37 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
             </TimeSlider.Root>
-            <Time.Value type="duration" className="media-time__value" />
-          </Time.Group>
+            <Time.Value type="duration" className="media-time" />
+          </div>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
-            />
-            <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
-          </Tooltip.Root>
+          <div className="media-button-group">
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
+              />
+              <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <VolumePopover />
+            <VolumePopover />
+          </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <MediaHotkey keys="Space" action="togglePaused" />
+      <MediaHotkey keys="k" action="togglePaused" />
+      <MediaHotkey keys="m" action="toggleMuted" />
+      <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
+      <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <MediaHotkey keys="l" action="seekStep" value={10} />
+      <MediaHotkey keys="j" action="seekStep" value={-10} />
+      <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <MediaHotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <MediaHotkey keys="0-9" action="seekToPercent" />
+      <MediaHotkey keys="Home" action="seekToPercent" value={0} />
+      <MediaHotkey keys="End" action="seekToPercent" value={100} />
+      <MediaHotkey keys=">" action="speedUp" />
+      <MediaHotkey keys="<" action="speedDown" />
     </Container>
   );
 }

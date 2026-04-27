@@ -1,0 +1,41 @@
+{
+  "name": "@videojs/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:browsers": "playwright install",
+    "install:deps": "playwright install-deps || echo \"Note: Playwright system deps could not be installed. If e2e tests fail, run with sudo: sudo playwright install-deps (or sudo pnpm test:e2e:install from the workspace root)\"",
+    "postinstall": "node -e \"process.env.CI || process.exit(1)\" || (pnpm run install:browsers && pnpm run install:deps)",
+    "generate-pages": "tsx scripts/generate-pages.ts",
+    "sync-ejected-skins": "tsx scripts/sync-ejected-skins.ts",
+    "e2e": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:update": "playwright test --update-snapshots",
+    "test:chromium": "playwright test --project=vite-chromium",
+    "test:webkit": "playwright test --project=vite-webkit",
+    "test:vite": "playwright test --project=vite-chromium",
+    "test:all": "playwright test --project=vite-chromium --project=vite-webkit",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@videojs/core": "workspace:*",
+    "@videojs/html": "workspace:*",
+    "@videojs/icons": "workspace:*",
+    "@videojs/react": "workspace:*",
+    "@videojs/skins": "workspace:*",
+    "@videojs/spf": "workspace:*",
+    "@videojs/store": "workspace:*",
+    "@videojs/utils": "workspace:*",
+    "@vitejs/plugin-react": "^6.0.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0"
+  }
+}

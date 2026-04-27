@@ -1,5 +1,5 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
 import { hasPresentationDuration } from '../../core/types';
 
@@ -9,6 +9,8 @@ export interface DurationUpdateState {
 
 export interface DurationUpdateOwners {
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   videoSourceBuffer?: SourceBuffer;
   audioSourceBuffer?: SourceBuffer;
 }
@@ -52,8 +54,10 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   const { mediaSource } = owners;
   const { presentation } = state;
 
-  // MediaSource must be open
-  if (mediaSource!.readyState !== 'open') return false;
+  // MediaSource must be open — use reactive readyState signal when available
+  // so the effect re-evaluates when readyState changes from 'closed' to 'open'.
+  const readyState = owners.mediaSourceReadyState?.get() ?? owners.mediaSource?.readyState;
+  if (readyState !== 'open') return false;
 
   const duration = presentation!.duration!;
 
@@ -91,46 +95,51 @@ function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> 
 /**
  * Update MediaSource duration when presentation duration becomes available.
  */
-export function updateDuration({
+export function updateDuration<S extends DurationUpdateState, O extends DurationUpdateOwners>({
   state,
   owners,
 }: {
-  state: WritableState<DurationUpdateState>;
-  owners: WritableState<DurationUpdateOwners>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   let destroyed = false;
+  let running = false;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
-      if (!shouldUpdateDuration(currentState, currentOwners)) return;
+  const cleanupEffect = effect(() => {
+    const currentState = state.get();
+    const currentOwners = owners.get();
 
-      const { mediaSource } = currentOwners;
+    if (!shouldUpdateDuration(currentState, currentOwners) || running) return;
 
-      // MSE spec: duration cannot be set while any SourceBuffer is updating
-      await waitForSourceBuffersReady(currentOwners);
+    const { mediaSource } = currentOwners;
+    running = true;
 
-      // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
-      // already called endOfStream(), transitioning 'open' → 'ended').
-      if (destroyed || mediaSource!.readyState !== 'open') return;
+    // MSE spec: duration cannot be set while any SourceBuffer is updating.
+    // Capture the snapshot; the async helper does not read signals.
+    waitForSourceBuffersReady(currentOwners)
+      .then(() => {
+        // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
+        // already called endOfStream(), transitioning 'open' → 'ended').
+        if (destroyed || mediaSource!.readyState !== 'open') return;
 
-      let duration = currentState.presentation!.duration!;
+        let duration = currentState.presentation!.duration!;
 
-      // Get max buffered end time across all SourceBuffers
-      const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+        // MSE spec: duration cannot be less than any buffered range.
+        // If buffered ranges exceed calculated duration, extend to match.
+        const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+        if (maxBufferedEnd > duration) {
+          duration = maxBufferedEnd;
+        }
 
-      // MSE spec: duration cannot be less than any buffered range
-      // If buffered ranges exceed calculated duration, extend to match
-      if (maxBufferedEnd > duration) {
-        duration = maxBufferedEnd;
-      }
-
-      // Set duration on MediaSource
-      mediaSource!.duration = duration;
-    }
-  );
+        mediaSource!.duration = duration;
+      })
+      .finally(() => {
+        running = false;
+      });
+  });
 
   return () => {
     destroyed = true;
-    unsubscribe();
+    cleanupEffect();
   };
 }

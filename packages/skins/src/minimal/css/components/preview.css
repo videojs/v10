@@ -2,6 +2,8 @@
    Media preview
    ========================================================================== */
 .media-minimal-skin .media-preview {
+  pointer-events: none;
+
   & .media-preview__thumbnail-wrapper {
     position: relative;
     border-radius: 0.5rem;
@@ -12,9 +14,8 @@
     border-radius: inherit;
   }
 
-  & .media-preview__timestamp {
+  & .media-preview__time {
     display: block;
-    font-variant-numeric: tabular-nums;
     text-align: center;
     margin-top: 0.5rem;
   }

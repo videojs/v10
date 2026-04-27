@@ -1,20 +1,32 @@
-import type { MediaApi } from '@videojs/core/dom';
-import type { VideoHTMLAttributes } from 'react';
+import type { Media } from '@videojs/core';
 
-interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
+type AnyClass = abstract new (...args: any[]) => any;
 
-export function mediaProps(media: MediaApi, props: VideoProps) {
-  const { src, ...remainingProps } = props;
+function getSettableProps(DelegateClass: AnyClass): Set<string> {
+  const props = new Set<string>();
+  for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      const desc = Object.getOwnPropertyDescriptor(proto, key);
+      if (desc?.set) props.add(key);
+    }
+  }
+  return props;
+}
 
-  // Preload can still be passed as a prop to the native media element
-  if (props.preload && media.preload !== props.preload) {
-    media.preload = props.preload as '' | 'none' | 'metadata' | 'auto';
+export function mediaProps(media: Media, DelegateClass: AnyClass, props: Record<string, any>) {
+  const delegateKeys = getSettableProps(DelegateClass);
+  const rest: Record<string, any> = {};
+
+  for (const key of Object.keys(props)) {
+    if (delegateKeys.has(key)) {
+      const value = props[key];
+      if ((media as any)[key] !== value) {
+        (media as any)[key] = value;
+      }
+    } else {
+      rest[key] = props[key];
+    }
   }
 
-  if (media.src !== src) {
-    media.src = src ?? '';
-  }
-
-  // The remaining props are passed to the native media element
-  return remainingProps;
+  return rest;
 }

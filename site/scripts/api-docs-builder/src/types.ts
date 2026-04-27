@@ -13,6 +13,12 @@ export type {
 
 export { ComponentReferenceSchema, PartReferenceSchema } from '../../../src/types/component-reference.js';
 
+export type { FeatureActionDef, FeatureReference, FeatureStateDef } from '../../../src/types/feature-reference.js';
+export { FeatureReferenceSchema } from '../../../src/types/feature-reference.js';
+
+export type { PresetReference, PresetSkinDef } from '../../../src/types/preset-reference.js';
+export { PresetReferenceSchema } from '../../../src/types/preset-reference.js';
+
 /**
  * Discovered part within a multi-part component.
  */

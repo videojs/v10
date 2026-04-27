@@ -1,10 +1,10 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { playbackRate } from '@videojs/skins/default/tailwind/audio.tailwind';
 import {
   button,
   buttonGroup,
   controls,
+  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -14,23 +14,14 @@ import {
   seek,
   slider,
   time,
-  tooltipState,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
+import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
-import { SkinMixin } from '../skin-mixin';
+import { safeDefine } from '../safe-define';
+import { SkinElement } from '../skin-element';
 
-// Side-effect imports: register all custom elements used in the template.
-import '../media/container';
-import '../ui/mute-button';
-import '../ui/play-button';
-import '../ui/playback-rate-button';
-import '../ui/popover';
-import '../ui/seek-button';
-import '../ui/time';
-import '../ui/time-slider';
-import '../ui/tooltip';
-import '../ui/tooltip-group';
-import '../ui/volume-slider';
+// Register the player, container, and all UI custom elements.
+import './minimal-ui';
 
 const SEEK_TIME = 10;
 
@@ -41,23 +32,29 @@ function getTemplateHTML() {
       <slot name="media"></slot>
       <slot></slot>
 
+      <media-error-dialog class="${error.root}">
+        <div class="${error.dialog}">
+          <div class="${error.content}">
+            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
+          </div>
+          <div class="${error.actions}">
+            <media-alert-dialog-close class="${cn(button.base, button.subtle)}">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
+
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-            <span class="${tooltipState.play.wrapper}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
-                <span class="${tooltipState.play.replay}">Replay</span>
-                <span class="${tooltipState.play.play}">Play</span>
-                <span class="${tooltipState.play.pause}">Pause</span>
-              </media-tooltip>
-            </span>
+              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -67,7 +64,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
@@ -122,12 +119,12 @@ function getTemplateHTML() {
   `;
 }
 
-export class MinimalAudioSkinTailwindElement extends SkinMixin(ReactiveElement) {
+export class MinimalAudioSkinTailwindElement extends SkinElement {
   static readonly tagName = 'audio-minimal-skin-tailwind';
-  static getTemplateHTML = getTemplateHTML;
+  static template = createTemplate(getTemplateHTML());
 }
 
-customElements.define(MinimalAudioSkinTailwindElement.tagName, MinimalAudioSkinTailwindElement);
+safeDefine(MinimalAudioSkinTailwindElement);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -15,7 +15,7 @@ export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { core, tooltip, state, stateAttrMap, anchorName, popupId } = useTooltipContext();
+  const { tooltip, state, stateAttrMap, anchorName } = useTooltipContext();
 
   const triggerRef = useCallback(
     (el: HTMLButtonElement | null) => {
@@ -42,7 +42,6 @@ export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>
       props: [
         {
           type: 'button' as const,
-          ...core.getTriggerAttrs(state, popupId),
         },
         { ...restTriggerProps, onFocus: onFocusIn, onBlur: onFocusOut },
         elementProps,

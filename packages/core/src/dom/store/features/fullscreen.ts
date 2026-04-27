@@ -32,6 +32,20 @@ export const fullscreenFeature = definePlayerFeature({
       const { media } = target();
       return exitFullscreen(media);
     },
+
+    async toggleFullscreen() {
+      const { media, container } = target();
+
+      if (isFullscreenElement(container, media)) {
+        return exitFullscreen(media);
+      }
+
+      if (isPictureInPictureElement(media)) {
+        await exitPictureInPicture(media);
+      }
+
+      return requestFullscreen(container, media);
+    },
   }),
 
   attach({ target, signal, set }) {

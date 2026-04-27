@@ -18,8 +18,13 @@
 
     { "path": "packages/skins" },
 
+    { "path": "packages/spf" },
+    { "path": "packages/spf/src/dom" },
+
     { "path": "packages/html" },
-    { "path": "packages/react" }
+    { "path": "packages/react" },
+
+    { "path": "packages/cli" }
   ],
   "files": []
 }

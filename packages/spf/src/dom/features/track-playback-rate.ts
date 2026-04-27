@@ -1,5 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback rate tracking.
@@ -16,16 +17,6 @@ export interface PlaybackRateOwners {
 }
 
 /**
- * Check if we can track playback rate.
- *
- * Requires:
- * - mediaElement exists in owners
- */
-export function canTrackPlaybackRate(owners: PlaybackRateOwners): boolean {
-  return !!owners.mediaElement;
-}
-
-/**
  * Track playback rate from the media element.
  *
  * Mirrors `mediaElement.playbackRate` into reactive state on each `ratechange`
@@ -34,36 +25,28 @@ export function canTrackPlaybackRate(owners: PlaybackRateOwners): boolean {
  * @example
  * const cleanup = trackPlaybackRate({ state, owners });
  */
-export function trackPlaybackRate({
+export function trackPlaybackRate<O extends PlaybackRateOwners>({
   state,
   owners,
 }: {
-  state: WritableState<PlaybackRateState>;
-  owners: WritableState<PlaybackRateOwners>;
+  state: Signal<PlaybackRateState>;
+  owners: Signal<O>;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const canTrackPlaybackRate = computed(() => !!mediaElementSignal.get());
 
-  const unsubscribe = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
+  const cleanupEffect = effect(() => {
+    if (!canTrackPlaybackRate.get()) return;
+    const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
 
-    if (mediaElement === lastMediaElement) return;
+    update(state, { playbackRate: mediaElement.playbackRate });
 
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    state.patch({ playbackRate: mediaElement.playbackRate });
-
-    removeListener = listen(mediaElement, 'ratechange', () => {
-      state.patch({ playbackRate: mediaElement.playbackRate });
+    return listen(mediaElement, 'ratechange', () => {
+      update(state, { playbackRate: mediaElement.playbackRate });
     });
   });
 
   return () => {
-    removeListener?.();
-    unsubscribe();
+    cleanupEffect();
   };
 }

@@ -45,40 +45,50 @@ jobs:
               ${{ github.event.issue.body }}
 
             Triage responsibilities:
-            1. Classify and label:
+            1. Ensure title prefix:
+            - Every issue title must start with a type prefix. If the prefix is missing or wrong, fix the title. Preserve the rest of the title as-is.
+            - Use Title Case for the description after the prefix (e.g., "Bug: Playback Stalls on iOS Safari").
+            - Prefixes:
+              - `Feature:` — New capability or behavior
+              - `Bug:` — Something broken or not working as expected
+              - `Docs:` — Writing or improving documentation content (not tooling)
+              - `Architecture:` — Internal structure, design patterns, core refactoring
+              - `Chore:` — Maintenance, deps, tooling, CI
+              - `Design:` — Design docs, component specs, discovery/research
+            2. Classify and label:
             - Determine best-fit labels from issue content and template sections.
-            - Review existing repository labels first and align to established taxonomy.
             - Review labels used on related/cross-referenced issues before deciding.
             - Add missing useful labels and remove clearly incorrect labels.
-            - Do not create new labels unless absolutely necessary; prefer no label over inventing a new one.
-            2. Detect probable duplicates:
+            - Do not create new labels; only use existing labels.
+            3. Detect probable duplicates:
             - Search for existing issues with the same bug/request symptoms, stack traces, repro steps, or scope.
             - If a likely duplicate is found, leave one concise comment linking the likely canonical issue and why it appears duplicated.
             - If confidence is not high, do not mark as duplicate; instead add `triage` label for human review.
             - Do not auto-close duplicates unless there is very high confidence and no meaningful unique information.
-            3. Escalate uncertainty:
+            4. Escalate uncertainty:
             - Add `triage` label when classification is ambiguous, conflicting, or needs human judgment.
-            4. Suggest docs/resources when helpful:
+            5. Suggest docs/resources when helpful:
             - Use https://videojs.org/llms.txt as the primary source to discover relevant docs links.
             - If likely already documented, suggest 1-3 relevant docs links with a short reason.
             - Prioritize repository/site docs over random sources.
-            5. Ask for missing critical info only when needed:
+            6. Ask for missing critical info only when needed:
             - If reproduction or environment details are insufficient, post a short targeted follow-up.
-            6. Help users unblock when issue is about usage:
+            7. Help users unblock when issue is about usage:
             - If the issue suggests the user is struggling to achieve something with the library, provide practical guidance.
             - Suggest the most relevant documented approach with 1-3 links (from https://videojs.org/llms.txt discovery).
             - Include concise next steps or a minimal example/snippet when it materially helps.
             - If docs appear incomplete or unclear, call that out and add `triage` for human follow-up.
-            7. Planning recommendations (comment-only):
+            8. Planning recommendations (comment-only):
             - Review roadmap context at https://github.com/orgs/videojs/projects/7 and current repository milestones.
             - Identify likely related epics/issues and related open PRs.
             - Recommend whether this issue should be added to the roadmap.
             - Recommend a milestone if one is a strong fit.
             - Recommend related epic linkage if one clearly fits.
             - Recommend obvious `blocked by` relationships when clearly implied.
+            - Recommend a priority level (P0–P2) when clearly implied by severity or urgency.
             - Recommend other existing issues that should be included in project planning alongside this one when relevant (for example, skin integration, docs API reference coverage, or other adjacent planning gaps).
-            - Do not directly add the issue to roadmap/projects, milestones, epics, or blocked-by links.
+            - Do not directly add the issue to roadmap/projects, milestones, epics, blocked-by links, or priority labels.
             - Instead, leave one concise comment with recommendations only when meaningful.
-            8. Avoid noise:
+            9. Avoid noise:
             - Do not comment if there is no meaningful action or new information.
             - Keep comments concise and action-oriented.

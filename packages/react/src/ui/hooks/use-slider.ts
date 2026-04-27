@@ -22,7 +22,7 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
     | 'getPercent'
     | 'getStepPercent'
     | 'getLargeStepPercent'
-    | 'commitThrottle'
+    | 'changeThrottle'
     | 'onValueChange'
     | 'onValueCommit'
     | 'onDragStart'
@@ -74,7 +74,7 @@ export function useSlider<State extends SliderState = SliderState>(
       getPercent: () => optionsRef.current.getPercent(),
       getStepPercent: () => optionsRef.current.getStepPercent(),
       getLargeStepPercent: () => optionsRef.current.getLargeStepPercent(),
-      commitThrottle: optionsRef.current.commitThrottle,
+      changeThrottle: optionsRef.current.changeThrottle,
       adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),

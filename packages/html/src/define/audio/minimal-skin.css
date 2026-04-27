@@ -1,1 +1,3 @@
+@import "../base.css";
+@import "../shared.css";
 @import "@videojs/skins/minimal/css/audio.css";

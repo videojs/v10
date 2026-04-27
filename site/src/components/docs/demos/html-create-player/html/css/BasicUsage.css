@@ -1,12 +1,12 @@
-.html-create-player-basic {
+.demo-video-player {
   position: relative;
 }
 
-.html-create-player-basic video {
+.demo-video-player video {
   width: 100%;
 }
 
-.html-create-player-basic__button {
+.media-play-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,18 +20,18 @@
   cursor: pointer;
 }
 
-.html-create-player-basic__button .show-when-paused {
+.media-play-button .paused {
   display: none;
 }
 
-.html-create-player-basic__button .show-when-playing {
+.media-play-button .playing {
   display: none;
 }
 
-.html-create-player-basic__button[data-paused] .show-when-paused {
+.media-play-button[data-paused] .paused {
   display: inline;
 }
 
-.html-create-player-basic__button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .playing {
   display: inline;
 }

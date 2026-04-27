@@ -19,6 +19,8 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Getting started',
+    // May change when we revisit this section's boundary with Concepts (#1105)
+    llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
       { slug: 'concepts/overview' },
@@ -29,6 +31,8 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Concepts',
+    llmsDescription:
+      'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
       { slug: 'concepts/features' },
       { slug: 'concepts/skins' },
@@ -39,10 +43,13 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'How to',
+    llmsDescription:
+      'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
     contents: [{ slug: 'how-to/customize-skins' }, { slug: 'how-to/build-your-own-component' }],
   },
   {
     sidebarLabel: 'Components',
+    llmsDescription: 'API Reference for UI components for building media player interfaces.',
     contents: [
       { slug: 'reference/player-provider' },
       { slug: 'reference/player-container' },
@@ -68,6 +75,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Hooks & Utilities',
+    llmsDescription: 'API Reference for React hooks and utilities for player integration.',
     frameworks: ['react'],
     contents: [
       { slug: 'reference/create-player' },
@@ -91,6 +99,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Controllers & Mixins',
+    llmsDescription: 'API Reference for controllers and mixins for HTML custom element integration.',
     frameworks: ['html'],
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
@@ -111,6 +120,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Features',
+    llmsDescription: 'API reference for feature modules that provide player capabilities and state.',
     contents: [
       { slug: 'reference/create-selector' },
       { slug: 'reference/feature-buffer' },

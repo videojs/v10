@@ -9,6 +9,7 @@ import {
 } from '@videojs/icons/react';
 import {
   button,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -25,6 +26,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -34,20 +36,9 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { ErrorDialog } from '../error-dialog';
 import type { AudioSkinProps } from './skin';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: error.root,
-  dialog: error.dialog,
-  content: error.content,
-  title: error.title,
-  description: error.description,
-  actions: error.actions,
-  close: cn(button.base, button.subtle),
-};
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -98,13 +89,6 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
-function PlayLabel(): string {
-  const paused = usePlayer((s) => Boolean(s.paused));
-  const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return 'Replay';
-  return paused ? 'Play' : 'Pause';
-}
-
 function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
@@ -142,54 +126,66 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
     <Container className={cn(root, className)} {...rest}>
       {children}
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className={error.root}>
+          <div className={error.dialog}>
+            <div className={error.content}>
+              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className={error.description} />
+            </div>
+            <div className={error.actions}>
+              <ErrorDialog.Close className={cn(button.base, button.subtle)}>OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <div className={controls}>
         <Tooltip.Provider>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlayButton className={iconState.play.button} render={<Button />}>
-                  <RestartIcon className={cn(icon, iconState.play.restart)} />
-                  <PlayIcon className={cn(icon, iconState.play.play)} />
-                  <PauseIcon className={cn(icon, iconState.play.pause)} />
-                </PlayButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <PlayLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlayButton className={iconState.play.button} render={<Button />}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </PlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={cn(icon, iconFlipped)} />
-                    <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={icon} />
-                    <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
 
-          <Time.Group className={time.group}>
+          <div className={time.group}>
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
@@ -199,14 +195,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               <TimeSlider.Thumb render={<SliderThumb />} />
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
-          </Time.Group>
+          </div>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <VolumePopover />
+            <VolumePopover />
+          </div>
         </Tooltip.Provider>
       </div>
     </Container>

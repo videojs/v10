@@ -15,43 +15,43 @@ const skin = entry.data;
 
 {
   skin.platform === "react" ? (
-    <TabsRoot client:visible>
-      <TabsList client:visible label={`${skin.name} implementation`}>
-        <Tab client:visible value="tsx" initial>
+    <TabsRoot client:idle>
+      <TabsList client:idle label={`${skin.name} implementation`}>
+        <Tab client:idle value="tsx" initial>
           Skin.tsx
         </Tab>
         {skin.css && (
-          <Tab client:visible value="css">
+          <Tab client:idle value="css">
             skin.css
           </Tab>
         )}
       </TabsList>
-      <TabsPanel client:visible value="tsx" initial>
+      <TabsPanel client:idle value="tsx" initial>
         <ServerCode code={skin.tsx!} lang="tsx" />
       </TabsPanel>
       {skin.css && (
-        <TabsPanel client:visible value="css">
+        <TabsPanel client:idle value="css">
           <ServerCode code={skin.css} lang="css" />
         </TabsPanel>
       )}
     </TabsRoot>
   ) : (
-    <TabsRoot client:visible>
-      <TabsList client:visible label={`${skin.name} implementation`}>
-        <Tab client:visible value="html" initial>
+    <TabsRoot client:idle>
+      <TabsList client:idle label={`${skin.name} implementation`}>
+        <Tab client:idle value="html" initial>
           HTML
         </Tab>
         {skin.css && (
-          <Tab client:visible value="css">
+          <Tab client:idle value="css">
             CSS
           </Tab>
         )}
       </TabsList>
-      <TabsPanel client:visible value="html" initial>
+      <TabsPanel client:idle value="html" initial>
         <ServerCode code={skin.html!} lang="html" />
       </TabsPanel>
       {skin.css && (
-        <TabsPanel client:visible value="css">
+        <TabsPanel client:idle value="css">
           <ServerCode code={skin.css} lang="css" />
         </TabsPanel>
       )}

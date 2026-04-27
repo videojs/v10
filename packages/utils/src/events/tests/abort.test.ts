@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { abortable } from '../abort';
+import { abortable, anyAbortSignal } from '../abort';
 
 describe('abortable', () => {
   it('resolves when promise resolves before abort', async () => {
@@ -67,5 +67,134 @@ describe('abortable', () => {
     await promise.catch(() => {});
 
     expect(removeEventListenerSpy).toHaveBeenCalled();
+  });
+});
+
+describe('anyAbortSignal', () => {
+  it('returns an AbortSignal', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal]);
+
+    expect(signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('is not aborted initially when no input is aborted', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal]);
+
+    expect(signal.aborted).toBe(false);
+  });
+
+  it('aborts immediately if the first input signal is already aborted', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const reason = new Error('already aborted');
+
+    a.abort(reason);
+
+    const signal = anyAbortSignal([a.signal, b.signal]);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+  });
+
+  it('aborts immediately if the second input signal is already aborted', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const reason = new Error('already aborted');
+
+    b.abort(reason);
+
+    const signal = anyAbortSignal([a.signal, b.signal]);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+  });
+
+  it('aborts when the first input signal fires', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal]);
+    const reason = new Error('a aborted');
+
+    a.abort(reason);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+  });
+
+  it('aborts when the second input signal fires', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal]);
+    const reason = new Error('b aborted');
+
+    b.abort(reason);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+  });
+
+  it('propagates the reason from the triggering signal', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal]);
+    const reason = 'custom reason';
+
+    a.abort(reason);
+
+    expect(signal.reason).toBe(reason);
+  });
+
+  it('works with more than two signals', () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const c = new AbortController();
+    const signal = anyAbortSignal([a.signal, b.signal, c.signal]);
+    const reason = new Error('c aborted');
+
+    c.abort(reason);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+  });
+
+  describe('fallback path', () => {
+    const nativeAny = AbortSignal.any;
+
+    beforeEach(() => {
+      // @ts-expect-error -- removing native to test fallback
+      delete AbortSignal.any;
+    });
+
+    afterEach(() => {
+      AbortSignal.any = nativeAny;
+    });
+
+    it('works without native AbortSignal.any', () => {
+      const a = new AbortController();
+      const b = new AbortController();
+      const signal = anyAbortSignal([a.signal, b.signal]);
+
+      expect(signal.aborted).toBe(false);
+
+      a.abort(new Error('fallback'));
+
+      expect(signal.aborted).toBe(true);
+      expect(signal.reason).toEqual(new Error('fallback'));
+    });
+
+    it('aborts immediately if input is already aborted (fallback)', () => {
+      const a = new AbortController();
+
+      a.abort(new Error('pre-aborted'));
+
+      const signal = anyAbortSignal([a.signal]);
+
+      expect(signal.aborted).toBe(true);
+      expect(signal.reason).toEqual(new Error('pre-aborted'));
+    });
   });
 });

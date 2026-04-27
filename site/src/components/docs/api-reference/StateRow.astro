@@ -9,11 +9,12 @@ interface Props {
   detailedType?: string;
   description?: string;
   componentName: string;
+  kind?: string;
 }
 
-const { name, type, detailedType, description, componentName } = Astro.props;
+const { name, type, detailedType, description, componentName, kind = 'state' } = Astro.props;
 
-const id = `${componentName}-state-${name}`;
+const id = `${componentName}-${kind}-${name}`;
 ---
 
 <DetailRow

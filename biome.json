@@ -67,6 +67,10 @@
               {
                 "name": "useForceRender",
                 "stableResult": true
+              },
+              {
+                "name": "useLatestRef",
+                "stableResult": true
               }
             ]
           }

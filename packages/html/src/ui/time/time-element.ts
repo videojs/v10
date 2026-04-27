@@ -25,18 +25,15 @@ export class TimeElement extends MediaElement {
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');
 
-  constructor() {
-    super();
-
-    this.#signSpan.setAttribute('aria-hidden', 'true');
-    this.#signSpan.hidden = true;
-
-    this.appendChild(this.#signSpan);
-    this.appendChild(this.#textNode);
-  }
-
   override connectedCallback(): void {
     super.connectedCallback();
+
+    if (!this.#signSpan.parentNode) {
+      this.#signSpan.setAttribute('aria-hidden', 'true');
+      this.#signSpan.hidden = true;
+      this.appendChild(this.#signSpan);
+      this.appendChild(this.#textNode);
+    }
 
     if (__DEV__ && !this.#state.value) {
       logMissingFeature(this.localName, this.#state.displayName!);

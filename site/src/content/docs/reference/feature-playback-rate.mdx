@@ -3,26 +3,15 @@ title: Playback rate
 description: Playback speed state and actions for the player store
 ---
 
-import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Controls speed of playback.
 
-## State
+<FeatureReference feature="playbackRate" />
 
-| State | Type | Description |
-|---|---|---|
-| `playbackRate` | `number` | Current playback speed (1 = normal) |
-| `playbackRates` | `readonly number[]` | Available playback rates |
-
-## Actions
-
-| Action | Description |
-|---|---|
-| `setPlaybackRate(rate)` | Set the playback speed |
-
-## Selector
+### Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectPlaybackRate` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback rate state. Returns `undefined` if the playback rate feature is not configured.
@@ -57,5 +46,3 @@ class RateDisplay extends MediaElement {
 }
 ```
 </FrameworkCase>
-
-<UtilReference util="selectPlaybackRate" />

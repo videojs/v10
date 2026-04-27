@@ -2,7 +2,7 @@
   "name": "@videojs/icons",
   "type": "module",
   "private": true,
-  "version": "10.0.0-beta.9",
+  "version": "10.0.0-beta.21",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -50,7 +50,7 @@
     "build": "node --import tsx scripts/build.ts",
     "build:watch": "pnpm run build -- --watch",
     "dev": "pnpm run build:watch",
-    "clean": "rm -rf dist"
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "svgo": "^4.0.1"
@@ -63,7 +63,7 @@
     "@videojs/utils": "workspace:*",
     "react": "^19.2.4",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "publishConfig": {
     "access": "public"

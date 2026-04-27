@@ -76,16 +76,10 @@ export class TooltipCore {
     };
   }
 
-  getTriggerAttrs(state: TooltipState, popupId?: string) {
-    return {
-      'aria-describedby': state.open ? popupId : undefined,
-    };
-  }
-
   getPopupAttrs(_state: TooltipState) {
     return {
       popover: 'manual' as const,
-      role: 'tooltip',
+      role: 'presentation' as const,
     };
   }
 }

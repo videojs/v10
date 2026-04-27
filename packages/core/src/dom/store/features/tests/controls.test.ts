@@ -287,6 +287,73 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('toggleControls', () => {
+    it('hides controls when visible and playing', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      const result = store.state.toggleControls();
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+      expect(result).toBe(false);
+    });
+
+    it('shows controls when hidden', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      // First toggle to hide
+      store.state.toggleControls();
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Second toggle to show
+      const result = store.state.toggleControls();
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+      expect(result).toBe(true);
+    });
+
+    it('reschedules idle timer when showing controls', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      // Hide controls
+      store.state.toggleControls();
+      flush();
+
+      // Show controls
+      store.state.toggleControls();
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Should hide again after idle delay
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controlsVisible true when toggling off while paused', () => {
+      const video = createMockVideo({ paused: true });
+      const { store } = createPlayerStore(video);
+
+      const result = store.state.toggleControls();
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+      expect(result).toBe(true);
+    });
+  });
+
   describe('null container', () => {
     it('does not track activity without container', () => {
       const video = createMockVideo({ paused: false });

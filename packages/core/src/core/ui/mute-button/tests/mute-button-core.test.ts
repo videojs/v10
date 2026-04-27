@@ -19,6 +19,7 @@ function createState(overrides: Partial<MuteButtonState> = {}): MuteButtonState 
   return {
     muted: false,
     volumeLevel: 'high',
+    label: '',
     ...overrides,
   };
 }

@@ -39,7 +39,7 @@ import withPartsHtmlTs from "@/components/docs/demos/time-slider/html/css/WithPa
 
 Displays and controls the current playback position. Dragging the slider seeks the media. The fill level reflects `currentTime / duration` as a percentage, and the buffer level shows how much media has been buffered.
 
-Seeking is throttled via the `commitThrottle` prop (default 100ms) to avoid overwhelming the media element during drag operations.
+Value changes during drag are throttled via the `changeThrottle` prop (default 100ms) using a leading+trailing throttle to keep the UI responsive without overwhelming the media element.
 
 ## Styling
 

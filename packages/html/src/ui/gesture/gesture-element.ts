@@ -1,0 +1,96 @@
+import {
+  createDoubleTapGesture,
+  createTapGesture,
+  type GestureActionName,
+  type GesturePointerType,
+  type GestureRegion,
+  resolveGestureAction,
+} from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
+
+import { containerContext, playerContext } from '../../player/context';
+import { PlayerController } from '../../player/player-controller';
+import { MediaElement } from '../media-element';
+
+export class GestureElement extends MediaElement {
+  static readonly tagName = 'media-gesture';
+
+  static override properties: PropertyDeclarationMap = {
+    type: { type: String },
+    action: { type: String },
+    value: { type: Number },
+    pointer: { type: String },
+    region: { type: String },
+    disabled: { type: Boolean },
+  };
+
+  type: 'tap' | 'doubletap' | (string & {}) = '';
+  action: GestureActionName | (string & {}) = '';
+  value: number | undefined = undefined;
+  pointer: GesturePointerType | undefined = undefined;
+  region: GestureRegion | undefined = undefined;
+  disabled = false;
+
+  readonly #player = new PlayerController(this, playerContext);
+  readonly #container = new ContextConsumer(this, {
+    context: containerContext,
+    callback: () => this.requestUpdate(),
+    subscribe: true,
+  });
+  #cleanup: (() => void) | null = null;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.style.display = 'none';
+    this.#register();
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#unregister();
+  }
+
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
+
+    // Re-register when attributes change.
+    if (this.isConnected) {
+      this.#unregister();
+      this.#register();
+    }
+  }
+
+  #register(): void {
+    const store = this.#player.value;
+    const container = this.#container.value?.container;
+    if (!this.type || !this.action || !store || !container) return;
+
+    const resolver = resolveGestureAction(this.action);
+    if (!resolver) return;
+
+    const { value } = this;
+
+    const onActivate = (event: PointerEvent) => {
+      resolver({ store, value, event });
+    };
+
+    const options = {
+      pointer: this.pointer,
+      region: this.region,
+      disabled: this.disabled,
+      action: this.action,
+    };
+
+    if (this.type === 'doubletap') {
+      this.#cleanup = createDoubleTapGesture(container, onActivate, options);
+    } else {
+      this.#cleanup = createTapGesture(container, onActivate, options);
+    }
+  }
+
+  #unregister(): void {
+    this.#cleanup?.();
+    this.#cleanup = null;
+  }
+}

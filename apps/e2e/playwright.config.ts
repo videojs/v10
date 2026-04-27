@@ -1,0 +1,92 @@
+import { defineConfig, devices } from '@playwright/test';
+
+const CI = !!process.env.CI;
+
+export default defineConfig({
+  testDir: './tests',
+  // Strip the OS suffix from snapshot paths so one set of baselines works
+  // on both macOS (local) and Linux (CI). The generous thresholds below
+  // absorb minor cross-platform rendering differences.
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
+  timeout: 60_000,
+  retries: CI ? 2 : 0,
+  fullyParallel: true,
+
+  reporter: CI ? [['html', { open: 'never' }], ['github'], ['blob']] : [['html', { open: 'on-failure' }]],
+
+  expect: {
+    timeout: 10_000,
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.05,
+      threshold: 0.3,
+      animations: 'disabled',
+    },
+  },
+
+  use: {
+    trace: CI ? 'on-first-retry' : 'on',
+    screenshot: 'only-on-failure',
+    video: CI ? 'on-first-retry' : 'off',
+    actionTimeout: 10_000,
+  },
+
+  projects: [
+    // --- Chromium ---
+    {
+      name: 'vite-chromium',
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5180' },
+    },
+
+    // --- WebKit ---
+    {
+      name: 'vite-webkit',
+      use: { ...devices['Desktop Safari'], baseURL: 'http://localhost:5180' },
+    },
+
+    // --- Firefox ---
+    {
+      name: 'vite-firefox',
+      use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
+    },
+
+    // --- Future: Next.js ---
+    // {
+    //   name: 'next-chromium',
+    //   use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:3100' },
+    // },
+
+    // --- Future: Astro ---
+    // {
+    //   name: 'astro-chromium',
+    //   use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4400' },
+    // },
+  ],
+
+  webServer: [
+    {
+      command: 'npx vite --port 5180',
+      cwd: './apps/vite',
+      port: 5180,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
+    },
+
+    // --- Future: Next.js ---
+    // {
+    //   command: 'pnpm next dev --port 3100',
+    //   cwd: './apps/next',
+    //   port: 3100,
+    //   reuseExistingServer: !CI,
+    //   timeout: 120_000,
+    // },
+
+    // --- Future: Astro ---
+    // {
+    //   command: 'pnpm astro dev --port 4400',
+    //   cwd: './apps/astro',
+    //   port: 4400,
+    //   reuseExistingServer: !CI,
+    //   timeout: 120_000,
+    // },
+  ],
+});

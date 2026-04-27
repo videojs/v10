@@ -30,6 +30,7 @@ export const PlayButton = createMediaButton<PlayButtonCore, PlayButtonProps>({
   stateAttrMap: PlayButtonDataAttrs,
   selector: selectPlayback,
   action: (core, state) => core.toggle(state),
+  hotkeyAction: 'togglePaused',
 });
 
 export namespace PlayButton {

@@ -3,6 +3,7 @@ title: Skins
 description: Packaged player designs that include both UI components and their styles.
 ---
 
+import PresetReference from '@/components/docs/api-reference/PresetReference.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { FrostedSkinDemo } from '@/examples/react/FrostedSkin/FrostedSkinDemo';
 import { MinimalSkinDemo } from '@/examples/react/MinimalSkin/MinimalSkinDemo';
@@ -88,31 +89,15 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 
 ## Skins, features, and presets
 
-Each skin is built with specific <DocsLink slug="concepts/features">features</DocsLink> in mind. For example, a video skin renders fullscreen and picture-in-picture controls. An audio skin doesn't. The features associated with a skin are called a **feature bundle**.
+Each skin is built with specific <DocsLink slug="concepts/features">features</DocsLink> in mind. For example, a video skin renders fullscreen and picture-in-picture controls. An audio skin doesn't.
 
-<FrameworkCase frameworks={["html"]}>
+You'll find both a skin and the feature bundle it expects exported from the same path. We call these paths **presets**. 
 
-| Player with feature bundle | Available skins | Import |
-| ---------- | ----------------- | -------- |
-| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` | `@videojs/html/video/*` |
-| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` | `@videojs/html/audio/*` |
-| `<background-video-player>` | `<background-video-skin>` | `@videojs/html/background/*` |
+<PresetReference />
 
-</FrameworkCase>
+Presets are a topic quite a bit bigger than just this guide. To learn more, check out the guide:
 
-<FrameworkCase frameworks={["react"]}>
-
-| Feature bundle | Available skins | Import |
-| ---------- | ----------------- | -------- |
-| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `@videojs/react/video` |
-| `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `@videojs/react/audio` |
-| `backgroundFeatures` | `<BackgroundVideoSkin>` | `@videojs/react/background` |
-
-</FrameworkCase>
-
-Want to learn more about skins and feature bundles? Check out the presets guide:
-
-<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
+<DocsLinkCard slug="concepts/presets">Read about presets</DocsLinkCard>
 
 ## Styling
 

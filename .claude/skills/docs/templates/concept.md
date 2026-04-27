@@ -11,12 +11,13 @@ description: 'One-sentence summary for search and metadata'
 ---
 ```
 
-Optional — override the title per framework:
+Optional fields:
 
 ```yaml
 ---
 title: 'State management'
 description: 'How Video.js manages player state'
+ogTitle: 'State management' # Shorter title for OG image (if page title is long)
 frameworkTitle:
   html: 'State management in HTML'
   react: 'State management in React'

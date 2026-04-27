@@ -155,7 +155,7 @@ describe('createPopover', () => {
         openOnHover: () => true,
       });
 
-      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
       expect(onOpenChange).not.toHaveBeenCalled();
 
@@ -172,7 +172,7 @@ describe('createPopover', () => {
         openOnHover: () => true,
       });
 
-      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
       expect(onOpenChange).not.toHaveBeenCalled();
 
@@ -189,7 +189,7 @@ describe('createPopover', () => {
         openOnHover: () => true,
       });
 
-      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
 

@@ -1,12 +1,20 @@
-import type { InferComponentState, InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
+import type {
+  ButtonState,
+  InferComponentState,
+  InferMediaState,
+  MediaButtonComponent,
+  StateAttrMap,
+} from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { State } from '@videojs/store';
 
 import type { PlayerController } from '../player/player-controller';
+import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that render a media-control button. */
-export abstract class MediaButtonElement<Core extends MediaUIComponent> extends MediaElement {
+export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
     disabled: { type: Boolean },
@@ -21,10 +29,23 @@ export abstract class MediaButtonElement<Core extends MediaUIComponent> extends 
 
   protected abstract activate(state: InferMediaState<Core>): void;
 
+  /** Override to set the hotkey action name for `aria-keyshortcuts`. */
+  protected readonly hotkeyAction: string | undefined = undefined;
+
+  get $state(): State<ButtonState> {
+    return this.core.state;
+  }
+
   #disconnect: AbortController | null = null;
+  #hotkeyRegistry: AriaKeyShortcutsController | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
+
+    if (this.hotkeyAction && !this.#hotkeyRegistry) {
+      this.#hotkeyRegistry = new AriaKeyShortcutsController(this, this.hotkeyAction);
+    }
 
     this.#disconnect = new AbortController();
 
@@ -46,6 +67,11 @@ export abstract class MediaButtonElement<Core extends MediaUIComponent> extends 
     this.#disconnect = null;
   }
 
+  /** Returns the button's current label derived from media state. */
+  getLabel(): string | undefined {
+    return this.core.state.current.label || undefined;
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.core.setProps?.(this);
@@ -60,7 +86,10 @@ export abstract class MediaButtonElement<Core extends MediaUIComponent> extends 
 
     this.core.setMedia(media);
     const state = this.core.getState();
-    applyElementProps(this, this.core.getAttrs?.(state) ?? {});
+    applyElementProps(this, {
+      ...this.core.getAttrs?.(state),
+      'aria-keyshortcuts': this.#hotkeyRegistry?.value,
+    });
     applyStateDataAttrs(this, state, this.stateAttrMap);
   }
 }

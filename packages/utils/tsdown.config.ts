@@ -20,8 +20,5 @@ export default defineConfig({
   clean: true,
   hash: false,
   unbundle: true,
-  alias: {
-    '@': new URL('./src', import.meta.url).pathname,
-  },
   dts: true,
 });

@@ -20,6 +20,7 @@ function createState(overrides: Partial<CaptionsButtonState> = {}): CaptionsButt
   return {
     subtitlesShowing: false,
     availability: 'available',
+    label: '',
     ...overrides,
   };
 }

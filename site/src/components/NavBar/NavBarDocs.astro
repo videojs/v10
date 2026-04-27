@@ -1,9 +1,10 @@
 ---
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
-import Discord from '@/components/icons/discord.svg?react';
-import GitHub from '@/components/icons/github.svg?react';
-import LogoDocs from '@/components/icons/logo-docs.svg?react';
+import Discord from '@/assets/logos/discord.svg?react';
+import GitHub from '@/assets/logos/github.svg?react';
+import Logo from '@/assets/logos/videojs.svg?react';
+import BetaPill from '@/components/BetaPill';
 import Search from '@/components/Search';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import GetStartedLink from './GetStartedLink';
@@ -31,16 +32,17 @@ const { class: className } = Astro.props;
 ---
 
 <nav
+  aria-label="Video.js"
   class:list={[
     "sticky top-0 z-30 mx-auto flex w-full items-center justify-between border-b border-b-manila-75 bg-manila-light px-5 dark:border-warm-gray dark:bg-faded-black",
     className,
   ]}
   style="height:var(--nav-h)"
 >
-  <a href="/" class="flex items-center" aria-label="Video.js v10 home">
-    <div class="relative w-40 md:w-49.5">
-      <LogoDocs width="100%" />
-    </div>
+  <a href="/" class="flex h-5 items-center gap-2 sm:h-6 sm:gap-3">
+    <Logo height="100%" />
+    <span class="sr-only">Video.js video player</span>
+    <BetaPill compact />
   </a>
   <Search client:load className="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
@@ -54,7 +56,10 @@ const { class: className } = Astro.props;
       aria-current={isDocsActive ? "page" : undefined}
     >
       Docs
-      <hr class="absolute right-0 -bottom-px left-0 h-px bg-orange" />
+      <hr
+        aria-hidden="true"
+        class="absolute right-0 -bottom-px left-0 h-px bg-orange"
+      />
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
@@ -64,7 +69,10 @@ const { class: className } = Astro.props;
             "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
           ]}
         >
-          {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+          {link.label}{" "}
+          {link.external ? (
+            <ArrowUpRight size="1em" aria-hidden="true" />
+          ) : null}
         </a>
       ))
     }

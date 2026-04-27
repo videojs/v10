@@ -21,7 +21,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { core, tooltip, state, stateAttrMap, anchorName, popupId } = useTooltipContext();
+  const { core, tooltip, state, stateAttrMap, anchorName, popupId, content } = useTooltipContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -156,6 +156,8 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
           style: positioningStyle,
           ...core.getPopupAttrs(state),
         },
+        // Forwarded content as default children — explicit children override.
+        { children: content },
         { ...restPopupProps, onBlur: onFocusOut },
         elementProps,
       ],

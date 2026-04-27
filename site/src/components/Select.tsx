@@ -1,7 +1,7 @@
 import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
-import Check from '@/components/icons/check.svg?react';
-import DropdownArrow from '@/components/icons/dropdown-arrow.svg?react';
+import Check from '@/assets/icons/check.svg?react';
+import DropdownArrow from '@/assets/icons/dropdown-arrow.svg?react';
 import { twMerge } from '@/utils/twMerge';
 
 export interface SelectOption<T = string> {

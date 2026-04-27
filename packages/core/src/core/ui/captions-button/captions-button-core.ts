@@ -1,8 +1,10 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTextTrackState } from '../../media/state';
+import type { ButtonState } from '../types';
 
 export interface CaptionsButtonProps {
   /** Custom label for the button. */
@@ -11,7 +13,7 @@ export interface CaptionsButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'> {
+export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
   availability: 'available' | 'unavailable';
 }
 
@@ -20,6 +22,12 @@ export class CaptionsButtonCore {
     label: '',
     disabled: false,
   };
+
+  readonly state = createState<CaptionsButtonState>({
+    subtitlesShowing: false,
+    availability: 'unavailable',
+    label: '',
+  });
 
   #props = { ...CaptionsButtonCore.defaultProps };
   #media: MediaTextTrackState | null = null;
@@ -58,12 +66,16 @@ export class CaptionsButtonCore {
 
   getState(): CaptionsButtonState {
     const media = this.#media!;
-    return {
-      subtitlesShowing: media.subtitlesShowing,
-      availability: media.textTrackList.some((t) => t.kind === 'captions' || t.kind === 'subtitles')
-        ? 'available'
-        : 'unavailable',
-    };
+    const availability: CaptionsButtonState['availability'] = media.textTrackList.some(
+      (t) => t.kind === 'captions' || t.kind === 'subtitles'
+    )
+      ? 'available'
+      : 'unavailable';
+
+    this.state.patch({ subtitlesShowing: media.subtitlesShowing, availability });
+    this.state.patch({ label: this.getLabel(this.state.current) });
+
+    return this.state.current;
   }
 
   toggle(media: MediaTextTrackState): void {
