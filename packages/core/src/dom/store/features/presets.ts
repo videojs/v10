@@ -9,6 +9,7 @@ import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
 import { fullscreenFeature } from './fullscreen';
+import { liveFeature } from './live';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
@@ -47,8 +48,10 @@ export const audioFeatures: AudioFeatures = [
 export const backgroundFeatures: BackgroundFeatures = [];
 
 /**
- * Features for a live video player. Mirrors {@link videoFeatures} without the
- * playback-rate feature, which isn't meaningful for live streams.
+ * Features for a live video player. Mirrors {@link videoFeatures} but drops
+ * {@link playbackRateFeature} (not meaningful for live) and adds
+ * {@link liveFeature} so store consumers can read `liveEdgeStart` and
+ * `targetLiveWindow`.
  */
 export const liveVideoFeatures: LiveVideoFeatures = [
   playbackFeature,
@@ -62,11 +65,14 @@ export const liveVideoFeatures: LiveVideoFeatures = [
   controlsFeature,
   textTrackFeature,
   errorFeature,
+  liveFeature,
 ];
 
 /**
- * Features for a live audio player. Mirrors {@link audioFeatures} without the
- * playback-rate feature, which isn't meaningful for live streams.
+ * Features for a live audio player. Mirrors {@link audioFeatures} but drops
+ * {@link playbackRateFeature} (not meaningful for live) and adds
+ * {@link liveFeature} so store consumers can read `liveEdgeStart` and
+ * `targetLiveWindow`.
  */
 export const liveAudioFeatures: LiveAudioFeatures = [
   playbackFeature,
@@ -75,4 +81,5 @@ export const liveAudioFeatures: LiveAudioFeatures = [
   sourceFeature,
   bufferFeature,
   errorFeature,
+  liveFeature,
 ];

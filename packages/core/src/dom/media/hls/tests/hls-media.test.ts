@@ -290,6 +290,29 @@ describe('HlsMedia', () => {
       expect(media.streamType).toBe('unknown');
     });
   });
+
+  describe('live edge', () => {
+    it('defaults to `NaN` for both values before load', () => {
+      const media = new HlsMedia();
+      expect(media.liveEdgeStart).toBeNaN();
+      expect(media.targetLiveWindow).toBeNaN();
+    });
+
+    it('forwards `NaN` from the native delegate', () => {
+      const { media } = setup();
+      expect(media.liveEdgeStart).toBeNaN();
+      expect(media.targetLiveWindow).toBeNaN();
+    });
+
+    it('returns `NaN` again after destroy', () => {
+      const { media } = setup();
+
+      media.destroy();
+
+      expect(media.liveEdgeStart).toBeNaN();
+      expect(media.targetLiveWindow).toBeNaN();
+    });
+  });
 });
 
 describe('NativeHlsMedia streamType', () => {

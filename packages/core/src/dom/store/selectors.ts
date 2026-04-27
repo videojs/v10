@@ -4,6 +4,7 @@ import { bufferFeature } from './features/buffer';
 import { controlsFeature } from './features/controls';
 import { errorFeature } from './features/error';
 import { fullscreenFeature } from './features/fullscreen';
+import { liveFeature } from './features/live';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
@@ -22,6 +23,8 @@ export const selectControls = createSelector(controlsFeature);
 export const selectError = createSelector(errorFeature);
 /** Select the fullscreen state (fullscreen active, availability). */
 export const selectFullscreen = createSelector(fullscreenFeature);
+/** Select the live state (`liveEdgeStart`, `targetLiveWindow`). */
+export const selectLive = createSelector(liveFeature);
 /** Select the PiP state (picture-in-picture active, availability). */
 export const selectPiP = createSelector(pipFeature);
 /** Select the playback state (paused, ended, play, pause, toggle). */

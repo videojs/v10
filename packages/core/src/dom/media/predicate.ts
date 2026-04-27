@@ -3,6 +3,7 @@ import { isFunction, isObject } from '@videojs/utils/predicate';
 import type {
   MediaBufferCapability,
   MediaErrorCapability,
+  MediaLiveCapability,
   MediaPauseCapability,
   MediaPlaybackRateCapability,
   MediaRemotePlaybackCapability,
@@ -63,6 +64,10 @@ export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemo
 
 export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
   return isObject(value) && 'streamType' in value;
+}
+
+export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {
+  return isObject(value) && 'liveEdgeStart' in value && 'targetLiveWindow' in value;
 }
 
 export function isQuerySelectorAllCapable<T extends string>(
