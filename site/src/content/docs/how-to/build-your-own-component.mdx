@@ -129,21 +129,16 @@ Your element needs to be inside <DocsLink slug="reference/player-provider">`<vid
 Extend `MediaElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
 
 ```ts
-import { MediaElement, PlayerController, playerContext, selectTime } from '@videojs/html';
+import { MediaElement, PlayerController, playerContext, selectTime, type PropertyValues } from '@videojs/html';
 
-// Extend MediaElement for reactive updates and lifecycle cleanup
 class SkipIntroButtonElement extends MediaElement {
-  // Subscribe to a feature — calls update() when its state changes
   #player = new PlayerController(this, playerContext, selectTime);
 
-  update() {
-    super.update();
-    // Read state and update the DOM here
+  update(changed: PropertyValues) {
+    super.update(changed);
     const time = this.#player.value;
   }
 }
-
-customElements.define('skip-intro-button', SkipIntroButtonElement);
 ```
 
 </FrameworkCase>
@@ -221,11 +216,16 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
   </TabsList>
   <TabsPanel client:idle value="ts" initial>
     ```ts
-    import { MediaElement, PlayerController, playerContext, selectTime, selectPlayback } from '@videojs/html';
+    import {
+      MediaElement,
+      PlayerController,
+      playerContext,
+      selectTime,
+      selectPlayback,
+      type PropertyValues,
+    } from '@videojs/html';
 
     class SkipIntroButtonElement extends MediaElement {
-      static tagName = 'skip-intro-button';
-
       #time = new PlayerController(this, playerContext, selectTime);
       #playback = new PlayerController(this, playerContext, selectPlayback);
       #disconnect: AbortController | null = null;
@@ -251,8 +251,8 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
         this.#disconnect = null;
       }
 
-      update() {
-        super.update();
+      update(changed: PropertyValues) {
+        super.update(changed);
         const time = this.#time.value;
         const playback = this.#playback.value;
 
