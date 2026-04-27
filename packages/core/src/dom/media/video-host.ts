@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import type { Video, VideoEvents } from '../../core/media/types';
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
 import { HTMLMediaElementHost } from './media-host';
@@ -18,39 +19,40 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
   get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
     const target = this.target as unknown as WebKitVideoElement | null;
     const fn = target?.webkitSetPresentationMode;
-    return typeof fn === 'function' ? fn.bind(target) : undefined;
+    return isFunction(fn) ? fn.bind(target) : undefined;
   }
 
   get isPictureInPicture(): boolean {
     return (
-      (!!this.target && document.pictureInPictureElement === this.target) ||
+      (!!this.target && globalThis.document?.pictureInPictureElement === this.target) ||
       this.webkitPresentationMode === 'picture-in-picture'
     );
   }
 
   get isFullscreen(): boolean {
-    if (this.webkitPresentationMode === 'fullscreen') return true;
     if (!this.target) return false;
-    const doc = document as WebKitDocument;
-    return doc.fullscreenElement === this.target || doc.webkitFullscreenElement === this.target;
+    if (this.webkitPresentationMode === 'fullscreen') return true;
+    const doc = globalThis.document as WebKitDocument;
+    return doc?.fullscreenElement === this.target || doc?.webkitFullscreenElement === this.target;
   }
 
-  async requestPictureInPicture(): Promise<void> {
+  async requestPictureInPicture() {
     if (!this.target) return Promise.reject();
-    await this.target.requestPictureInPicture();
+    return this.target.requestPictureInPicture();
   }
 
-  async exitPictureInPicture(): Promise<void> {
-    if (document.pictureInPictureElement === this.target) {
-      await document.exitPictureInPicture();
-    }
+  async exitPictureInPicture() {
+    if (!this.target) return Promise.reject();
+    return globalThis.document?.exitPictureInPicture();
   }
 
-  requestFullscreen(): Promise<void> {
-    return this.target?.requestFullscreen() ?? Promise.reject();
+  requestFullscreen() {
+    if (!this.target) return Promise.reject();
+    return this.target.requestFullscreen();
   }
 
-  exitFullscreen(): Promise<void> {
-    return document.exitFullscreen();
+  exitFullscreen() {
+    if (!this.target) return Promise.reject();
+    return globalThis.document?.exitFullscreen();
   }
 }

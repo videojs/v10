@@ -17,7 +17,7 @@ export function getFullscreenElement() {
   return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
-function matchesFullscreen(element: EventTarget | null): boolean {
+function matchesFullscreen(element: EventTarget | null) {
   if (!(element instanceof Element)) return false;
   try {
     return element.matches(':fullscreen');
@@ -51,7 +51,7 @@ export function isFullscreen(container: HTMLElement | null, media: EventTarget) 
   return video.isFullscreen ?? false;
 }
 
-export async function requestFullscreen(container: HTMLElement | null, media: EventTarget): Promise<void> {
+export async function requestFullscreen(container: HTMLElement | null, media: EventTarget) {
   const doc = document as WebKitDocument;
 
   if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
@@ -74,17 +74,15 @@ export async function requestFullscreen(container: HTMLElement | null, media: Ev
 
   const video = media as unknown as MediaFullscreenCapability;
   if (isFunction(video.requestFullscreen)) {
-    return video.requestFullscreen();
+    return video.requestFullscreen() as Promise<void>;
   }
-
-  throw new DOMException('Fullscreen not supported', 'NotSupportedError');
 }
 
-export async function exitFullscreen(media: EventTarget): Promise<void> {
+export async function exitFullscreen(media: EventTarget) {
   const doc = document as WebKitDocument;
 
   const webkitVideo = media as WebKitVideoElement;
-  if (isFunction(webkitVideo.webkitSetPresentationMode)) {
+  if (webkitVideo.webkitPresentationMode === 'fullscreen' && isFunction(webkitVideo.webkitSetPresentationMode)) {
     webkitVideo.webkitSetPresentationMode('inline');
     return;
   }
@@ -99,8 +97,6 @@ export async function exitFullscreen(media: EventTarget): Promise<void> {
 
   const video = media as unknown as MediaFullscreenCapability;
   if (isFunction(video.exitFullscreen)) {
-    return video.exitFullscreen();
+    return video.exitFullscreen() as Promise<void>;
   }
-
-  throw new DOMException('Fullscreen not supported', 'NotSupportedError');
 }

@@ -38,15 +38,16 @@ export async function requestPictureInPicture(media: EventTarget) {
 
   const video = media as unknown as MediaPictureInPictureCapability;
   if (isFunction(video.requestPictureInPicture)) {
-    return video.requestPictureInPicture();
+    return video.requestPictureInPicture() as Promise<void>;
   }
-
-  throw new DOMException('Picture-in-Picture not supported', 'NotSupportedError');
 }
 
 export async function exitPictureInPicture(media: EventTarget) {
   const webkitVideo = media as WebKitVideoElement;
-  if (isFunction(webkitVideo.webkitSetPresentationMode)) {
+  if (
+    webkitVideo.webkitPresentationMode === 'picture-in-picture' &&
+    isFunction(webkitVideo.webkitSetPresentationMode)
+  ) {
     webkitVideo.webkitSetPresentationMode('inline');
     return;
   }
@@ -57,8 +58,6 @@ export async function exitPictureInPicture(media: EventTarget) {
 
   const video = media as unknown as MediaPictureInPictureCapability;
   if (isFunction(video.exitPictureInPicture)) {
-    return video.exitPictureInPicture();
+    return video.exitPictureInPicture() as Promise<void>;
   }
-
-  throw new DOMException('Picture-in-Picture not supported', 'NotSupportedError');
 }
