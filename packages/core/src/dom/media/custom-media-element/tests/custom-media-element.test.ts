@@ -393,11 +393,11 @@ describe('CustomMediaElement', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      el.setAttribute('poster', 'https://example.com/poster.jpg');
-      expect(target.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+      el.setAttribute('preload', 'metadata');
+      expect(target.getAttribute('preload')).toBe('metadata');
 
-      el.removeAttribute('poster');
-      expect(target.hasAttribute('poster')).toBe(false);
+      el.removeAttribute('preload');
+      expect(target.hasAttribute('preload')).toBe(false);
     });
 
     it('updates forwarded attribute value when changed', () => {
@@ -454,22 +454,22 @@ describe('CustomMediaElement', () => {
 
     it('string property getter returns null when attribute is absent', () => {
       const el = create(defineVideoElement());
-      expect(el.poster).toBeNull();
       expect(el.preload).toBeNull();
+      expect(el.controlsList).toBeNull();
     });
 
     it('string property setter sets the attribute and forwards to target', () => {
       const el = create(defineVideoElement());
-      el.poster = 'https://example.com/poster.jpg';
-      expect(el.getAttribute('poster')).toBe('https://example.com/poster.jpg');
-      expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+      el.preload = 'metadata';
+      expect(el.getAttribute('preload')).toBe('metadata');
+      expect(el.target!.getAttribute('preload')).toBe('metadata');
     });
 
     it('removing attribute resets string property getter to null', () => {
       const el = create(defineVideoElement());
-      el.poster = 'https://example.com/poster.jpg';
-      el.removeAttribute('poster');
-      expect(el.poster).toBeNull();
+      el.preload = 'metadata';
+      el.removeAttribute('preload');
+      expect(el.preload).toBeNull();
     });
 
     it('property accessors work for all non-MediaHost video attributes', () => {
@@ -486,10 +486,6 @@ describe('CustomMediaElement', () => {
       el.playsInline = true;
       expect(el.playsInline).toBe(true);
       expect(el.hasAttribute('playsinline')).toBe(true);
-
-      el.poster = 'poster.jpg';
-      expect(el.poster).toBe('poster.jpg');
-      expect(el.getAttribute('poster')).toBe('poster.jpg');
 
       el.preload = 'metadata';
       expect(el.preload).toBe('metadata');
@@ -516,6 +512,24 @@ describe('CustomMediaElement', () => {
 
       expect(Object.getOwnPropertyDescriptor(Ctor, 'autoplay')).toBeUndefined();
       expect(Object.getOwnPropertyDescriptor(Ctor, 'poster')).toBeUndefined();
+    });
+  });
+
+  describe('MediaHost-backed string properties', () => {
+    it('poster property reads through to the target', () => {
+      const el = create(defineVideoElement());
+      expect(el.poster).toBe('');
+
+      el.setAttribute('poster', 'https://example.com/poster.jpg');
+      expect(el.poster).toBe('https://example.com/poster.jpg');
+      expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+    });
+
+    it('poster setter forwards through MediaHost to the target', () => {
+      const el = create(defineVideoElement());
+      el.poster = 'https://example.com/poster.jpg';
+      expect(el.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+      expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     });
   });
 

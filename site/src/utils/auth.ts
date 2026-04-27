@@ -105,6 +105,7 @@ export function getJWKS() {
  * Decrypt and unseal session data from an encrypted cookie value
  */
 export async function unseal<T>(cookieValue: string): Promise<T> {
+  if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
   return unsealData<T>(cookieValue, {
     password: SESSION_COOKIE_PASSWORD,
   });
@@ -114,6 +115,7 @@ export async function unseal<T>(cookieValue: string): Promise<T> {
  * Encrypt and seal session data for secure cookie storage
  */
 export async function seal<T>(data: T): Promise<string> {
+  if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
   return sealData(data, {
     password: SESSION_COOKIE_PASSWORD,
     ttl: INACTIVITY_EXPIRY,

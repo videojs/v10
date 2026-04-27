@@ -18,6 +18,8 @@
 .media-button--fullscreen .media-icon--fullscreen-exit,
 .media-button--pip .media-icon--pip-enter,
 .media-button--pip .media-icon--pip-exit,
+.media-button--cast .media-icon--cast-enter,
+.media-button--cast .media-icon--cast-exit,
 .media-button--captions .media-icon--captions-off,
 .media-button--captions .media-icon--captions-on {
   display: none;
@@ -46,6 +48,10 @@
 .media-button--pip:not([data-pip]) .media-icon--pip-enter,
 /* Picture-in-Picture: active → exit */
 .media-button--pip[data-pip] .media-icon--pip-exit,
+/* Cast: not connected → enter */
+.media-button--cast:not([data-cast-state="connected"]) .media-icon--cast-enter,
+/* Cast: connected → exit */
+.media-button--cast[data-cast-state="connected"] .media-icon--cast-exit,
 /* Captions: not active → captions off */
 .media-button--captions:not([data-active]) .media-icon--captions-off,
 /* Captions: active → captions on */

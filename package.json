@@ -8,7 +8,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/videojs/vjs-10-monorepo.git"
+    "url": "https://github.com/videojs/v10.git"
   },
   "engines": {
     "node": ">=22.19.0",
@@ -34,13 +34,14 @@
     "lint:fix:file": "biome check --write",
     "link:aliases": "node build/scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
-    "test": "turbo run test --filter='./packages/*'",
+    "test": "turbo run test --filter='./packages/*' --filter='!@videojs/cli'",
+    "test:cli": "turbo run test --filter=@videojs/cli",
     "test:e2e": "pnpm --dir apps/e2e test:all",
     "test:e2e:vite": "pnpm --dir apps/e2e test:vite",
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
-    "typecheck": "tsc --build",
+    "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
     "check:workspace": "node build/scripts/check-workspace.mjs"
   },
@@ -66,7 +67,7 @@
     "simple-git-hooks": "^2.13.1",
     "tsx": "^4.21.0",
     "turbo": "^2.9.0",
-    "typescript": "^6.0.2"
+    "@typescript/native-preview": "beta"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",

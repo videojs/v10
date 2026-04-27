@@ -1,24 +1,28 @@
 'use client';
 
-import { MuxVideoMedia } from '@videojs/core/dom/media/mux';
-import type { InferClassProps } from '@videojs/utils/types';
-import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
+import type { MuxMediaProps } from '@videojs/core/dom/media/mux';
+import { MuxVideoMedia, muxMediaDefaultProps } from '@videojs/core/dom/media/mux';
+import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { attachMediaElement } from '../../utils/attach-media-element';
-import { mediaProps } from '../../utils/media-props';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
+import { useSyncProps } from '../../utils/use-sync-props';
 
-export type MuxVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
-  InferClassProps<typeof MuxVideoMedia>;
+export interface MuxVideoProps
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof MuxMediaProps>,
+    Partial<MuxMediaProps> {
+  children?: ReactNode;
+}
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
-  const mediaApi = useMediaInstance(MuxVideoMedia);
-
-  const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+  const media = useMediaInstance(MuxVideoMedia);
+  const attachRef = useAttachMedia(media);
+  const composedRef = useComposedRefs(attachRef, ref);
+  const htmlProps = useSyncProps(media, props, muxMediaDefaultProps);
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, MuxVideoMedia, props)}>
+    <video ref={composedRef} {...htmlProps}>
       {children}
     </video>
   );

@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
+import { NativeHlsMedia } from '../../native-hls';
 import { HlsMedia, SourceTypes } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+function fireDurationChange(video: HTMLVideoElement, duration: number) {
+  Object.defineProperty(video, 'duration', { value: duration, configurable: true });
+  video.dispatchEvent(new Event('durationchange'));
+}
 
 function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
   Object.defineProperty(video, 'error', {
@@ -119,5 +125,207 @@ describe('HlsMedia', () => {
       media.volume = 0.5;
       expect(video.volume).toBe(0.5);
     });
+  });
+
+  describe('streamType', () => {
+    it('defaults to `unknown` before load', () => {
+      const media = new HlsMedia();
+      expect(media.streamType).toBe('unknown');
+    });
+
+    it('auto-detects `live` from a native delegate with infinite duration', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      fireDurationChange(video, Infinity);
+
+      expect(media.streamType).toBe('live');
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('auto-detects `on-demand` from a native delegate with finite duration', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      fireDurationChange(video, 120);
+
+      expect(media.streamType).toBe('on-demand');
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('dedupes `streamtypechange` when the detected value does not change', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      fireDurationChange(video, 120);
+      fireDurationChange(video, 240);
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('dispatches `streamtypechange` once per transition when the engine is recreated', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      handler.mockClear();
+      // `debug` is part of `HlsMedia`'s engine props — toggling it recreates the
+      // native delegate without switching playback engines.
+      media.debug = true;
+      media.load();
+
+      // Teardown: a single `live` → `unknown`, then the new delegate re-detects
+      // `live` from the same element during `attach`.
+      expect(handler).toHaveBeenCalledTimes(2);
+      expect(media.streamType).toBe('live');
+    });
+
+    it('does not emit a transient auto-detected `streamType` before a user override when the native delegate is recreated', () => {
+      const { media, video } = setup();
+
+      Object.defineProperty(video, 'duration', { value: 120, configurable: true });
+      media.streamType = 'live';
+      expect(media.streamType).toBe('live');
+
+      const seen: string[] = [];
+      media.addEventListener('streamtypechange', () => {
+        seen.push(media.streamType);
+      });
+
+      // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
+      media.debug = true;
+      media.load();
+
+      expect(seen).not.toContain('on-demand');
+      expect(media.streamType).toBe('live');
+    });
+
+    it('lets user-set values win over auto-detection', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.streamType = 'live';
+      expect(media.streamType).toBe('live');
+      expect(handler).toHaveBeenCalledOnce();
+
+      fireDurationChange(video, 120);
+      expect(media.streamType).toBe('live');
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('clears the user override when set back to `unknown`', () => {
+      const { media, video } = setup();
+
+      media.streamType = 'live';
+      fireDurationChange(video, 120);
+      expect(media.streamType).toBe('live');
+
+      media.streamType = 'unknown';
+
+      expect(media.streamType).toBe('on-demand');
+    });
+
+    it('dispatches `streamtypechange` when set before a delegate exists', () => {
+      const media = new HlsMedia();
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.streamType = 'live';
+
+      expect(media.streamType).toBe('live');
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('preserves a user-set value across `load()` on the same engine', () => {
+      const { media, video } = setup();
+
+      media.streamType = 'live';
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.load();
+
+      expect(media.streamType).toBe('live');
+      expect(handler).not.toHaveBeenCalled();
+
+      fireDurationChange(video, 120);
+      expect(media.streamType).toBe('live');
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('preserves a user-set value across engine recreation', () => {
+      const { media } = setup();
+
+      media.streamType = 'live';
+      expect(media.streamType).toBe('live');
+
+      media.preferPlayback = 'mse';
+      media.load();
+
+      expect(media.streamType).toBe('live');
+    });
+
+    it('stops preserving after the user override is cleared with `unknown`', () => {
+      const { media } = setup();
+
+      media.streamType = 'live';
+      media.streamType = 'unknown';
+
+      media.preferPlayback = 'mse';
+      media.load();
+
+      expect(media.streamType).toBe('unknown');
+    });
+  });
+});
+
+describe('NativeHlsMedia streamType', () => {
+  function setupNative() {
+    const video = document.createElement('video');
+    document.body.appendChild(video);
+    const media = new NativeHlsMedia();
+    media.attach(video);
+    return { media, video };
+  }
+
+  it('defaults to `unknown`', () => {
+    const media = new NativeHlsMedia();
+    expect(media.streamType).toBe('unknown');
+  });
+
+  it('detects `live` and fires `streamtypechange`', () => {
+    const { media, video } = setupNative();
+
+    const handler = vi.fn();
+    media.addEventListener('streamtypechange', handler);
+
+    fireDurationChange(video, Infinity);
+
+    expect(media.streamType).toBe('live');
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('honors a user override and clears it on `unknown`', () => {
+    const { media, video } = setupNative();
+
+    media.streamType = 'live';
+    fireDurationChange(video, 120);
+    expect(media.streamType).toBe('live');
+
+    media.streamType = 'unknown';
+    expect(media.streamType).toBe('on-demand');
   });
 });

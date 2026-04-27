@@ -7,6 +7,7 @@ import type {
   MediaPictureInPictureState,
   MediaPlaybackRateState,
   MediaPlaybackState,
+  MediaRemotePlaybackState,
   MediaSourceState,
   MediaTextTrackState,
   MediaTimeState,
@@ -46,6 +47,7 @@ export type VideoFeatures = [
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
+  PlayerFeature<MediaRemotePlaybackState>,
   PlayerFeature<MediaControlsState>,
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,
@@ -64,8 +66,43 @@ export type AudioFeatures = [
 // TODO: Define background video features (e.g., playback, source, buffer)
 export type BackgroundFeatures = [];
 
+/**
+ * Features for a live video player. Mirrors {@link VideoFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
+ */
+export type LiveVideoFeatures = [
+  PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaVolumeState>,
+  PlayerFeature<MediaTimeState>,
+  PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaBufferState>,
+  PlayerFeature<MediaFullscreenState>,
+  PlayerFeature<MediaPictureInPictureState>,
+  PlayerFeature<MediaRemotePlaybackState>,
+  PlayerFeature<MediaControlsState>,
+  PlayerFeature<MediaTextTrackState>,
+  PlayerFeature<MediaErrorState>,
+];
+
+/**
+ * Features for a live audio player. Mirrors {@link AudioFeatures} without the
+ * playback-rate feature, which isn't meaningful for live streams.
+ */
+export type LiveAudioFeatures = [
+  PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaVolumeState>,
+  PlayerFeature<MediaTimeState>,
+  PlayerFeature<MediaSourceState>,
+  PlayerFeature<MediaBufferState>,
+  PlayerFeature<MediaErrorState>,
+];
+
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
 
 export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;
+
+export type LiveVideoPlayerStore = PlayerStore<LiveVideoFeatures>;
+
+export type LiveAudioPlayerStore = PlayerStore<LiveAudioFeatures>;

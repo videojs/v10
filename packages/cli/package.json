@@ -1,7 +1,7 @@
 {
   "name": "@videojs/cli",
   "type": "module",
-  "version": "10.0.0-beta.21",
+  "version": "10.0.0-beta.22",
   "description": "Video.js documentation CLI",
   "license": "Apache-2.0",
   "repository": {
@@ -30,8 +30,7 @@
   },
   "devDependencies": {
     "site": "workspace:*",
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   }
 }

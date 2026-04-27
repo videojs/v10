@@ -4,7 +4,15 @@ import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 export class MuxVideo extends MediaAttachMixin(CustomMediaElement('video', MuxVideoMedia)) {
   static get observedAttributes() {
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return [...super.observedAttributes, 'type', 'prefer-playback', 'debug'];
+    return [
+      // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+      ...super.observedAttributes,
+      'type',
+      'prefer-playback',
+      'debug',
+      'cast-src',
+      'cast-receiver',
+      'cast-content-type',
+    ];
   }
 }

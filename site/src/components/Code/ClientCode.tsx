@@ -34,7 +34,7 @@ export default function ClientCode({ code, lang }: ClientCodeProps) {
   return (
     <Suspense
       fallback={
-        <pre className={shared.pre}>
+        <pre className={shared.pre} data-llms-ignore="true" data-search-ignore="true">
           <code className={shared.codeBlock}>{code}</code>
         </pre>
       }

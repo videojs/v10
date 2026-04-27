@@ -215,9 +215,13 @@ export function createSlider(options: SliderOptions): SliderApi {
     },
 
     onPointerUp(event) {
-      if (isNull(capturedPointerId)) return;
+      if (options.isDisabled()) return;
 
+      // The slider fully owns pointer interactions — prevent parent gesture
+      // coordinators from misinterpreting slider taps as surface gestures.
       event.stopPropagation();
+
+      if (isNull(capturedPointerId)) return;
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 

@@ -1,6 +1,8 @@
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -41,6 +43,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
@@ -259,6 +262,18 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                     <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
                     <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
                   </CaptionsButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CastButton className={iconState.cast.button} render={<Button />}>
+                    <CastEnterIcon className={cn(icon, iconState.cast.enter)} />
+                    <CastExitIcon className={cn(icon, iconState.cast.exit)} />
+                  </CastButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>

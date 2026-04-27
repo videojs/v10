@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replaceMarker } from '../replace.js';
+import { replaceMarker, stripOmitMarkers } from '../replace.js';
 
 describe('replaceMarker', () => {
   it('replaces content between markers', () => {
@@ -61,5 +61,59 @@ end`;
 
     const result = replaceMarker(markdown, 'multi', 'single line');
     expect(result).toBe('start\nsingle line\nend');
+  });
+});
+
+describe('stripOmitMarkers', () => {
+  it('removes content between omit markers', () => {
+    const markdown = `# Title
+
+<!-- cli:omit installation -->
+CLI-only hint
+<!-- /cli:omit installation -->
+
+## Footer`;
+
+    const result = stripOmitMarkers(markdown);
+    expect(result).not.toContain('CLI-only hint');
+    expect(result).not.toContain('cli:omit');
+    expect(result).toContain('# Title');
+    expect(result).toContain('## Footer');
+  });
+
+  it('returns unchanged markdown when no markers are present', () => {
+    const markdown = '# Title\n\nSome content';
+    expect(stripOmitMarkers(markdown)).toBe(markdown);
+  });
+
+  it('removes multiple omit blocks with different ids', () => {
+    const markdown = `before
+<!-- cli:omit one -->
+alpha
+<!-- /cli:omit one -->
+middle
+<!-- cli:omit two -->
+beta
+<!-- /cli:omit two -->
+after`;
+
+    const result = stripOmitMarkers(markdown);
+    expect(result).not.toContain('alpha');
+    expect(result).not.toContain('beta');
+    expect(result).toContain('before');
+    expect(result).toContain('middle');
+    expect(result).toContain('after');
+  });
+
+  it('handles multiline content inside an omit block', () => {
+    const markdown = `start
+<!-- cli:omit multi -->
+line 1
+line 2
+line 3
+<!-- /cli:omit multi -->
+end`;
+
+    expect(stripOmitMarkers(markdown)).toBe('start\nend');
   });
 });

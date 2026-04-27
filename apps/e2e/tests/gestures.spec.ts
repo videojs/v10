@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 /**
@@ -51,6 +51,55 @@ test.describe('Mouse Gestures', () => {
     await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
     await player.playButton.click();
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  });
+
+  test('click on slider does not trigger container gesture', async ({ page }) => {
+    // Start playback so the slider has a seekable range
+    await player.play();
+    await page.waitForTimeout(500);
+
+    // Click the time slider — should seek, not toggle play/pause.
+    // Wait briefly after seek to give any leaked gesture time to fire.
+    await player.seekTo(50);
+    await page.waitForTimeout(300);
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
+  });
+});
+
+// --- React gestures (verify slider interaction isolation) ---
+
+test.describe('React Mouse Gestures', () => {
+  let player: PlayerPage;
+
+  test.beforeEach(async ({ page }) => {
+    player = new PlayerPage(page);
+    await page.goto('/pages/react-video-mp4.html');
+    await player.waitForMediaReady();
+  });
+
+  test('click center of container toggles play/pause', async ({ page }) => {
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+
+    const { x, y } = await getCenter(player);
+    await page.mouse.click(x, y);
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  });
+
+  test('click on button does not trigger container gesture', async () => {
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+    await player.playButton.click();
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  });
+
+  test('click on slider does not trigger container gesture', async ({ page }) => {
+    await player.play();
+    await page.waitForTimeout(500);
+
+    // Click the time slider — should seek, not toggle play/pause.
+    // Wait briefly after seek to give any leaked gesture time to fire.
+    await player.seekTo(50);
+    await page.waitForTimeout(300);
+    await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
   });
 });
 

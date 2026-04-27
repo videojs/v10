@@ -14,6 +14,13 @@ export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike
   dispatchEvent(event: EventLike): boolean;
 }
 
+export interface RemotePlaybackLike extends EventTarget {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
 export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
   return EventTarget as unknown as { new (): EventTargetLike<Events> };
 }
@@ -172,6 +179,36 @@ export interface MediaFullscreenCapability {
 
 export interface MediaPictureInPictureCapability {
   requestPictureInPicture(): Promise<unknown>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
+}
+
+export interface MediaStreamTypeEvents {
+  streamtypechange: EventLike;
+}
+
+/**
+ * Canonical values for {@link MediaStreamType}.
+ *
+ * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally
+ *   supported across the full timeline.
+ * - `LIVE` — a live or DVR stream. The seekable window may slide as new
+ *   segments are published, and `duration` is typically `Infinity`.
+ * - `UNKNOWN` — the stream type has not been determined yet (no source,
+ *   or metadata has not loaded).
+ */
+export const MediaStreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
+export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
+
+export interface MediaStreamTypeCapability {
+  readonly streamType: MediaStreamType;
 }
 
 interface MediaEvents extends MediaPlaybackEvents {}

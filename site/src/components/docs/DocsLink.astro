@@ -20,4 +20,4 @@ const { url: href } = resolveDocsLinkUrl({
 });
 ---
 
-<A href={href} class={className}><slot /></A>
+<A href={href} class={className ?? undefined}><slot /></A>

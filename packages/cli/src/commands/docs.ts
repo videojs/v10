@@ -6,7 +6,7 @@ import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
 import { mapRawSkin, type PartialInstallFlags, promptFramework, promptInstallOptions } from '../utils/prompts.js';
-import { replaceMarker } from '../utils/replace.js';
+import { replaceMarker, stripOmitMarkers } from '../utils/replace.js';
 
 interface ParsedFlags {
   framework?: string;
@@ -178,7 +178,7 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
     }
 
     const generated = formatInstallationCode(opts);
-    const output = replaceMarker(markdown, 'installation', generated);
+    const output = stripOmitMarkers(replaceMarker(markdown, 'installation', generated));
     printVersionHeader();
     console.log(output);
     return;
@@ -186,5 +186,5 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
 
   // Regular doc: print as-is
   printVersionHeader();
-  console.log(markdown);
+  console.log(stripOmitMarkers(markdown));
 }

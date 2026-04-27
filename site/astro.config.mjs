@@ -9,6 +9,19 @@ import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
+import astro from 'shiki/langs/astro.mjs';
+import bash from 'shiki/langs/bash.mjs';
+import css from 'shiki/langs/css.mjs';
+import html from 'shiki/langs/html.mjs';
+import http from 'shiki/langs/http.mjs';
+import javascript from 'shiki/langs/javascript.mjs';
+import json from 'shiki/langs/json.mjs';
+import jsx from 'shiki/langs/jsx.mjs';
+import markdown from 'shiki/langs/markdown.mjs';
+import mdxLang from 'shiki/langs/mdx.mjs';
+import ts from 'shiki/langs/ts.mjs';
+import tsx from 'shiki/langs/tsx.mjs';
+import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
@@ -37,7 +50,7 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify({
-    devFeatures: { images: false, environmentVariables: true },
+    devFeatures: { images: false, environmentVariables: false },
   }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
@@ -65,11 +78,19 @@ export default defineConfig({
     // Redirects are configured in netlify.toml
   },
   integrations: [
-    sentry({
-      project: 'videojsorg',
-      org: 'mux',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-    }),
+    // Only register Sentry when the upload token is present (i.e. production
+    // deploys). Without a token the integration still initializes the vite
+    // plugin and emits telemetry/init noise during every local and PR build,
+    // all for a "can't upload source maps" warning. Gate it at the source.
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [
+          sentry({
+            project: 'videojsorg',
+            org: 'mux',
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+          }),
+        ]
+      : []),
     mdx({ extendMarkdownConfig: true }),
     sitemap({
       // llms-markdown.ts auto-generates per-framework sub-indexes, but sitemap
@@ -102,6 +123,25 @@ export default defineConfig({
         light: 'gruvbox-dark-hard',
         dark: 'gruvbox-dark-soft',
       },
+      // Pre-declare only the languages used in MDX code fences. Without this,
+      // Astro ships a highlighter that lazily loads grammars on first use,
+      // which serializes per-block initialization during build.
+      // `js`/`cjs`/`mjs` are auto-registered as aliases of `javascript` by Shiki.
+      langs: [
+        ...tsx,
+        ...ts,
+        ...css,
+        ...html,
+        ...jsx,
+        ...javascript,
+        ...bash,
+        ...markdown,
+        ...mdxLang,
+        ...json,
+        ...yaml,
+        ...http,
+        ...astro,
+      ],
       transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
     },
     remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],

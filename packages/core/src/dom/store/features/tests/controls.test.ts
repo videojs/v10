@@ -354,6 +354,58 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('cast interaction', () => {
+    it('keeps controlsVisible true when casting and user goes inactive', () => {
+      const { video, remote } = createGoogleCastVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      remote.state = 'connected';
+      remote.dispatchEvent(new Event('connect'));
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('hides controls after cast disconnects and user is inactive', () => {
+      const { video, remote } = createGoogleCastVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      remote.state = 'connected';
+      remote.dispatchEvent(new Event('connect'));
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      remote.state = 'disconnected';
+      remote.dispatchEvent(new Event('disconnect'));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controlsVisible true on mouseleave while casting', () => {
+      const { video, remote } = createGoogleCastVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      remote.state = 'connected';
+      remote.dispatchEvent(new Event('connect'));
+      flush();
+
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+  });
+
   describe('null container', () => {
     it('does not track activity without container', () => {
       const video = createMockVideo({ paused: false });
@@ -438,6 +490,20 @@ function createPointerEvent(type: string, init?: { pointerType?: string }): Even
   const event = new Event(type, { bubbles: true });
   (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
   return event;
+}
+
+function createMockRemote(): EventTarget & { state: string; prompt: () => Promise<void> } {
+  const target = new EventTarget() as EventTarget & { state: string; prompt: () => Promise<void> };
+  target.state = 'disconnected';
+  target.prompt = () => Promise.resolve();
+  return target;
+}
+
+function createGoogleCastVideo(overrides: Parameters<typeof createMockVideo>[0] = {}) {
+  const video = createMockVideo(overrides);
+  const remote = createMockRemote();
+  Object.defineProperty(video, 'remote', { value: remote, configurable: true });
+  return { video, remote };
 }
 
 function createPlayerStore(video?: HTMLVideoElement, container?: HTMLElement | null) {

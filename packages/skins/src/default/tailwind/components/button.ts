@@ -9,7 +9,8 @@ export const button = {
     'active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'focus-visible:outline-current focus-visible:outline-offset-2',
-    'data-[availability=unavailable]:hidden'
+    'data-[availability=unavailable]:hidden',
+    'data-[availability=unsupported]:hidden'
   ),
   primary: 'bg-white text-black font-medium text-shadow-none',
   subtle: cn(

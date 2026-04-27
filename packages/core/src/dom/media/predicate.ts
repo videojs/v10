@@ -5,8 +5,10 @@ import type {
   MediaErrorCapability,
   MediaPauseCapability,
   MediaPlaybackRateCapability,
+  MediaRemotePlaybackCapability,
   MediaSeekCapability,
   MediaSourceCapability,
+  MediaStreamTypeCapability,
   MediaTextTrackCapability,
   MediaVolumeCapability,
 } from '../../core/media/types';
@@ -53,6 +55,14 @@ export function isMediaErrorCapable(value: unknown): value is MediaErrorCapabili
 
 export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrackCapability {
   return isObject(value) && 'textTracks' in value;
+}
+
+export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
+  return isObject(value) && 'remote' in value && isObject((value as Record<string, unknown>).remote);
+}
+
+export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
+  return isObject(value) && 'streamType' in value;
 }
 
 export function isQuerySelectorAllCapable<T extends string>(

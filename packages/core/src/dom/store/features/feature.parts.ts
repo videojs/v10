@@ -4,7 +4,9 @@ import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
+import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -19,7 +21,9 @@ export {
   pipFeature as pip,
   playbackFeature as playback,
   playbackRateFeature as playbackRate,
+  remotePlaybackFeature as remotePlayback,
   sourceFeature as source,
+  streamTypeFeature as streamType,
   textTrackFeature as textTrack,
   timeFeature as time,
   volumeFeature as volume,

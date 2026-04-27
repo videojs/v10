@@ -32,9 +32,9 @@ Video.js is an **HTML video player built on custom elements** &mdash; lightweigh
 </FrameworkCase>
 
 <LLMCase>
-<div data-cli-replace="installation">
+<div data-cli-omit="installation">
 
-Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
+The code examples in this guide can be tailored to your use case. Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
 
 ```bash
 npx @videojs/cli docs how-to/installation \
@@ -45,7 +45,6 @@ npx @videojs/cli docs how-to/installation \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
-
 </div>
 </LLMCase>
 
@@ -80,6 +79,10 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 <ContentWidth margins="lg">
   <RendererPicker client:idle />
 </ContentWidth>
+
+</HumanCase>
+
+<div data-cli-replace="installation" class="contents">
 
 ## Install Video.js
 
@@ -142,7 +145,7 @@ Add it to your components folder in a new file.
 </ContentWidth>
 </FrameworkCase>
 
-</HumanCase>
+</div>
 
 ## CSP
 

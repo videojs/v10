@@ -1,7 +1,7 @@
 {
   "name": "@videojs/utils",
   "type": "module",
-  "version": "10.0.0-beta.21",
+  "version": "10.0.0-beta.22",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -68,8 +68,7 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   },
   "publishConfig": {
