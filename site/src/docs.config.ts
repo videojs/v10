@@ -45,7 +45,7 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'How to',
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
-    contents: [{ slug: 'how-to/customize-skins' }],
+    contents: [{ slug: 'how-to/customize-skins' }, { slug: 'how-to/build-your-own-component' }],
   },
   {
     sidebarLabel: 'Components',
