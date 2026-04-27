@@ -296,3 +296,84 @@ When the preconditions are met, the behavior:
 The pure planner from `media/buffer/` is the same kind of split we saw in track selection: framework-free logic that takes data and returns data, lifted out of the orchestration. The behavior wraps it in `effect()`, gates on preconditions, and pushes the results to the actor.
 
 A subtle bit: `loadSegments` doesn't await the actor's append messages serially in JS — it sends them and lets the actor own ordering. The actor's `SerialRunner` ensures `appendBuffer` calls happen one at a time on the underlying `SourceBuffer`, which is what the MSE spec requires. The behavior just sends.
+
+---
+
+## Stage 8 — End of stream
+
+```ts
+endOfStream,
+```
+
+A single behavior, but one that has to coordinate across the rest of the pipeline. Calling `MediaSource.endOfStream()` tells the browser the stream is done — without it, playback stalls at the end of the buffered range waiting for data that will never arrive. Calling it too early (or while a SourceBuffer is updating) causes errors that crash the demuxer.
+
+`endOfStream` reads:
+- `state.presentation` and `state.selected{Video,Audio}TrackId` — to know which tracks' last segments to wait for
+- `state.mediaSourceReadyState` — must be `'open'` (not `'ended'` or `'closed'`)
+- `owners.mediaElement` — to check `readyState >= HAVE_METADATA` (a precondition Chrome enforces)
+- `owners.{video,audio}Buffer` — must exist for selected tracks
+- `owners.{video,audio}BufferActor` — to know if any are still updating
+- `owners.{video,audio}BufferActor.snapshot.context.segments` — to verify the last segment of each selected track has been appended
+
+Every one of those reads happens inside an `effect()`. When *any* changes, the gate function reruns. When all preconditions line up, the behavior calls `mediaSource.endOfStream()`.
+
+Two things this behavior makes visible about SPF compositions:
+
+- **Coordination is just reading.** No callbacks, no publish/subscribe, no event bus. The behavior reads from state and owners; the reactive graph re-runs it whenever any read changes. A composition with N behaviors and one shared state signal has N inputs to coordinate, not N² connections.
+- **Actor snapshots are signals too.** `owners.videoBufferActor?.snapshot.get()` is a regular signal read inside the effect. When the actor transitions from `'updating'` to `'idle'`, the snapshot signal fires, the effect re-runs, and `endOfStream` re-evaluates whether the gate is now passable. Actor state and engine state are the same kind of channel from a behavior's point of view.
+
+The behavior also handles the seek-back case: if `appendBuffer` re-opens an `'ended'` MediaSource (per the MSE spec, a fresh append on an ended buffer transitions readyState back to `'open'`), `endOfStream` re-evaluates and may call `endOfStream()` again once the new last segment lands.
+
+---
+
+## Stage 9 — Text tracks
+
+```ts
+syncTextTracks,
+setupDomTextTrackActors,
+loadTextTrackCues,
+```
+
+Text tracks are an interesting wrinkle. They don't go through MSE — VTT cues land directly on the `<track>` elements of the media element. The shape of this stage is therefore different from the MSE pipeline above: there are no source buffers, no append serialization, no end-of-stream gate. But the SPF patterns are the same.
+
+**`syncTextTracks`** mirrors the resolved text-track list onto `<track>` elements under the media element. When a text track is selected (`state.selectedTextTrackId`), the matching `<track>` element gets `mode = 'showing'`; others go to `'disabled'`. This is reactive: changing the selection in state re-runs the effect, which flips the modes.
+
+**`setupDomTextTrackActors`** is the actor-provider for text tracks, parallel to `setupSourceBuffers` for video/audio. It creates two actors — `TextTracksActor` (owns the cue list per track) and `TextTrackSegmentLoaderActor` (orchestrates per-segment fetches via the VTT resolver) — and publishes them onto owners.
+
+In the engine, this is a wrapper that closes over the DOM-bound VTT resolver (`resolveVttSegment`):
+
+```ts
+const setupDomTextTrackActors = ({ owners }: Deps) =>
+  setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+```
+
+The underlying `setupTextTrackActors` (in `playback/behaviors/dom/`) is parser-agnostic — it accepts any `resolveTextTrackSegment` function. The DOM-specific binding (using a hidden `<video>` + `<track>` element to leverage the browser's VTT parser) happens at the engine layer. A different engine could supply a different parser without changing the behavior.
+
+**`loadTextTrackCues`** is the orchestrator. It watches the resolved text track and the actors, and dispatches `load` messages to the segment loader actor whenever new segments need fetching. The actor handles per-segment fetching (and abort on track switch); the orchestrator decides *when* to ask.
+
+This is the same pattern as MSE: actor-as-resource (`setupDomTextTrackActors` puts it on owners), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
+
+---
+
+## Two ways to call `createComposition`
+
+A note on the engine's call to `createComposition` itself.
+
+The HLS engine uses the *explicit* form — passing `<S, O, C>` type arguments to fix the engine's shape directly:
+
+```ts
+return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
+  [...behaviors],
+  { config, initialState, initialOwners }
+);
+```
+
+The minimal/inferred form lets TypeScript intersect each behavior's deps to compute the engine's shape:
+
+```ts
+const engine = createComposition([myBehavior]);
+```
+
+For engines that aggregate many wrapper-style behaviors (`(deps: Deps) => behavior(deps, {...})`) all sharing the same `Behavior<S, O, C>` type, TypeScript's distributive intersection inference can drop fields — e.g. for the HLS engine, `bandwidthState` would silently disappear from the inferred state, and `initialState: { bandwidthState: ... }` would be flagged as an unknown property. The explicit form sidesteps the inference and uses the engine's declared shapes directly.
+
+The inferred form remains the right call for small or single-behavior compositions where the per-feature state slices are the source of truth. For aggregating engines, prefer explicit.
