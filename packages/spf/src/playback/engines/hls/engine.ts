@@ -2,7 +2,6 @@ import { type Composition, createComposition } from '../../../core/composition/c
 import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { destroyVttResolver, resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../../media/primitives/select-tracks';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
@@ -20,6 +19,7 @@ import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveTrack } from '../../behaviors/resolve-track';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
