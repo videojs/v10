@@ -1,5 +1,15 @@
 // Core
 export * from '@videojs/core/dom';
+export type {
+  Destroyable,
+  PropertyDeclaration,
+  PropertyDeclarationMap,
+  PropertyValues,
+  ReactiveController,
+  ReactiveControllerHost,
+} from '@videojs/element';
+// Element — reactive primitives for users extending MediaElement
+export { DestroyMixin, ReactiveElement } from '@videojs/element';
 
 // Store
 export type { Comparator, Selector } from '@videojs/store';
