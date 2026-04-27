@@ -10,7 +10,10 @@ import {
 } from '../update-duration';
 
 function setupUpdateDuration(initialState: DurationUpdateState, initialOwners: DurationUpdateOwners) {
-  const state = signal<DurationUpdateState>(initialState);
+  // Default mediaSourceReadyState to 'open' to mirror what setupMediaSource
+  // would have written. Tests that exercise other readyState values pass it
+  // explicitly.
+  const state = signal<DurationUpdateState>({ mediaSourceReadyState: 'open', ...initialState });
   const owners = signal<DurationUpdateOwners>(initialOwners);
   const cleanup = updateDuration({ state, owners });
   return { state, owners, cleanup };
@@ -89,6 +92,7 @@ describe('shouldUpdateDuration', () => {
   it('returns true when MediaSource duration is NaN (initial state)', () => {
     const state: DurationUpdateState = {
       presentation: { duration: 60 } as Presentation,
+      mediaSourceReadyState: 'open',
     };
     const owners: DurationUpdateOwners = {
       mediaSource: { readyState: 'open', duration: NaN } as MediaSource,
@@ -100,6 +104,7 @@ describe('shouldUpdateDuration', () => {
   it('returns false when MediaSource is not open', () => {
     const state: DurationUpdateState = {
       presentation: { duration: 60 } as Presentation,
+      mediaSourceReadyState: 'closed',
     };
     const owners: DurationUpdateOwners = {
       mediaSource: { readyState: 'closed', duration: 0 } as MediaSource,

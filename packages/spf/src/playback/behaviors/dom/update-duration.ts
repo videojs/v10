@@ -1,16 +1,16 @@
 import { effect } from '../../../core/signals/effect';
-import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
+import type { Signal } from '../../../core/signals/primitives';
 import type { Presentation } from '../../../media/types';
 import { hasPresentationDuration } from '../../../media/types';
 
 export interface DurationUpdateState {
   presentation?: Presentation;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 export interface DurationUpdateOwners {
   mediaSource?: MediaSource;
-  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   videoSourceBuffer?: SourceBuffer;
   audioSourceBuffer?: SourceBuffer;
 }
@@ -54,10 +54,9 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   const { mediaSource } = owners;
   const { presentation } = state;
 
-  // MediaSource must be open — use reactive readyState signal when available
-  // so the effect re-evaluates when readyState changes from 'closed' to 'open'.
-  const readyState = owners.mediaSourceReadyState?.get() ?? owners.mediaSource?.readyState;
-  if (readyState !== 'open') return false;
+  // MediaSource must be open — read from state.mediaSourceReadyState so the
+  // effect re-evaluates when readyState changes from 'closed' to 'open'.
+  if (state.mediaSourceReadyState !== 'open') return false;
 
   const duration = presentation!.duration!;
 

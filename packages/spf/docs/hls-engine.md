@@ -90,12 +90,12 @@ export interface SimpleHlsEngineState {
   abrDisabled?: boolean;
   currentTime?: number;
   playbackInitiated?: boolean;
+  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 export interface SimpleHlsEngineOwners {
   mediaElement?: HTMLMediaElement;
   mediaSource?: MediaSource;
-  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
@@ -151,5 +151,8 @@ A running list of awkward bits we hit while writing prose. Each one is a candida
 
 - **`presentation?: any`** in `SimpleHlsEngineState`. The interface declares it as `any` because the field transitions from `{ url: string }` (unresolved) to `Presentation` (resolved) during runtime, and Signal invariance makes a union shape break behavior-interface compatibility. The doc has to wave its hands at "it's a `{ url }` shape that becomes a `Presentation`." A cleaner shape would let the doc just say what's there.
 - **The trailing `() => destroyVttResolver()` line in the composition list**. It's a one-shot module-level cleanup, not a composable behavior — but it sits in the composition list as if it were one. Keeping the composition list uniform (every entry is a behavior) would let the doc describe one shape, not "behaviors plus a singleton destructor."
-- **`as SimpleHlsEngineState` / `as SimpleHlsEngineOwners` casts** on the partial initial values. The doc would read better if the types accepted the partial shape directly.
-- **`mediaSourceReadyState` is a `ReadonlySignal` slot on `owners`**. Owners holds resources — values with imperative interfaces. A signal isn't a resource; it's reactive data, and data lives on state. This either belongs on state, or there's a missing concept (the actor-shaped wrapper around `MediaSource` that the inline TODO in `setup-mediasource.ts` gestures at).
+
+### Resolved during drafting
+
+- ~~`as SimpleHlsEngineState` / `as SimpleHlsEngineOwners` casts on the partial initial values.~~ Removed — the cast was unnecessary noise; the interfaces are already all-optional.
+- ~~`mediaSourceReadyState` is a `ReadonlySignal` slot on `owners`.~~ Moved to state as a plain `MediaSource['readyState']` value, written by `setupMediaSource` via `update(state, …)`. Owners now holds only resources; data flows through state.

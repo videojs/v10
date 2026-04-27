@@ -1,5 +1,5 @@
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
+import { computed, type Signal, update } from '../../../core/signals/primitives';
 import {
   attachMediaSource,
   createMediaSource,
@@ -12,6 +12,8 @@ import type { Presentation } from '../../../media/types';
  */
 export interface MediaSourceState {
   presentation?: Presentation;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 /**
@@ -20,8 +22,6 @@ export interface MediaSourceState {
 export interface MediaSourceOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
-  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
 }
 
 /**
@@ -63,14 +63,16 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 
     const mediaSource = createMediaSource({ preferManaged: true });
     // NOTE: Consider making MediaSource an Actor and using this in it.
-    const mediaSourceReadyState = signal<MediaSource['readyState']>(mediaSource.readyState);
-    onMediaSourceReadyStateChange(mediaSource, abortSignal, (state) => mediaSourceReadyState.set(state));
+    update(state, { mediaSourceReadyState: mediaSource.readyState } as Partial<S>);
+    onMediaSourceReadyStateChange(mediaSource, abortSignal, (readyState) => {
+      update(state, { mediaSourceReadyState: readyState } as Partial<S>);
+    });
     attachMediaSource(mediaSource, mediaElement);
 
     const cleanupOwnersUpdateEffect = effect(() => {
       // If we already have a MediaSource or the *internal* mediaSource is not yet fully attached, wait to add it to owners;
-      if (!!mediaSourceSignal.get() || mediaSourceReadyState.get() !== 'open') return;
-      owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState }) as O);
+      if (!!mediaSourceSignal.get() || state.get().mediaSourceReadyState !== 'open') return;
+      owners.set(Object.assign({}, owners.get(), { mediaSource }) as O);
     });
 
     return () => {

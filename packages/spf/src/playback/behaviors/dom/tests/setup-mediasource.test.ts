@@ -79,7 +79,7 @@ describe('setupMediaSource', () => {
     cleanup();
   });
 
-  it('updates owners with mediaSource and mediaSourceReadyState', async () => {
+  it('publishes mediaSource on owners and mediaSourceReadyState on state', async () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const mockMediaSource = {
@@ -99,7 +99,7 @@ describe('setupMediaSource', () => {
 
     await vi.waitFor(() => {
       expect(owners.get().mediaSource).toBe(mockMediaSource);
-      expect(owners.get().mediaSourceReadyState).toBeDefined();
+      expect(state.get().mediaSourceReadyState).toBe('open');
     });
 
     cleanup();

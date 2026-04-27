@@ -1,5 +1,5 @@
 import { type Composition, createComposition } from '../../../core/composition/create-composition';
-import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
+import type { Signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { destroyVttResolver, resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -47,6 +47,7 @@ export interface SimpleHlsEngineState {
   abrDisabled?: boolean;
   currentTime?: number;
   playbackInitiated?: boolean;
+  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 /**
@@ -57,7 +58,6 @@ export interface SimpleHlsEngineState {
 export interface SimpleHlsEngineOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
-  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
@@ -222,8 +222,8 @@ export function createSimpleHlsEngine(
           slowTotalWeight: 0,
           bytesSampled: 0,
         },
-      } as SimpleHlsEngineState,
-      initialOwners: {} as SimpleHlsEngineOwners,
+      },
+      initialOwners: {},
     }
   );
 }

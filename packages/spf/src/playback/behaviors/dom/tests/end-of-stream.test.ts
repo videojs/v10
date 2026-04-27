@@ -12,7 +12,10 @@ import {
 } from '../end-of-stream';
 
 function setupEndOfStream(initialState: EndOfStreamState, initialOwners: EndOfStreamOwners) {
-  const state = signal<EndOfStreamState>(initialState);
+  // Default mediaSourceReadyState to 'open' to mirror what setupMediaSource
+  // would have written. Tests that exercise other readyState values pass it
+  // explicitly.
+  const state = signal<EndOfStreamState>({ mediaSourceReadyState: 'open', ...initialState });
   const owners = signal<EndOfStreamOwners>(initialOwners);
   const cleanup = endOfStream({ state, owners });
   return { state, owners, cleanup };
@@ -278,6 +281,7 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
+      mediaSourceReadyState: 'ended',
     };
     expect(
       shouldEndStream(state, {
@@ -333,6 +337,7 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
+      mediaSourceReadyState: 'open',
     };
     expect(
       shouldEndStream(state, {
@@ -348,6 +353,7 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
+      mediaSourceReadyState: 'open',
     };
     expect(
       shouldEndStream(state, {
@@ -454,24 +460,25 @@ describe('endOfStream', () => {
   it('calls endOfStream() again after seek-back re-opens the MediaSource', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
-    // Reactive readyState signal — drives re-evaluation when MSE transitions readyState.
-    const msReadyState = signal<MediaSource['readyState']>('open');
 
-    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
-    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      (mockMs as unknown as { readyState: string }).readyState = 'ended';
-      msReadyState.set('ended');
-    });
-
-    const { cleanup } = setupEndOfStream(
-      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+    const { state, cleanup } = setupEndOfStream(
+      {
+        selectedVideoTrackId: 'video-1',
+        presentation: makePresentation(track),
+        mediaSourceReadyState: 'open',
+      },
       {
         mediaSource: mockMs,
-        mediaSourceReadyState: msReadyState,
         videoBuffer: makeSourceBuffer(),
         videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
       }
     );
+
+    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
+    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (mockMs as unknown as { readyState: string }).readyState = 'ended';
+      state.set({ ...state.get(), mediaSourceReadyState: 'ended' });
+    });
 
     // First play-through: endOfStream() is called, readyState transitions to 'ended'.
     await vi.waitFor(() => {
@@ -479,11 +486,11 @@ describe('endOfStream', () => {
     });
 
     // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec.
-    // The reactive signal update drives re-evaluation — no owners.patch needed.
+    // The state update drives re-evaluation.
     (mockMs as unknown as { readyState: string }).readyState = 'open';
-    msReadyState.set('open');
+    state.set({ ...state.get(), mediaSourceReadyState: 'open' });
 
-    // endOfStream() should be called again driven purely by the readyState signal.
+    // endOfStream() should be called again driven purely by the state update.
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(2);
     });

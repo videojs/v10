@@ -1,5 +1,5 @@
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, type Signal } from '../../../core/signals/primitives';
 import type { Presentation } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
@@ -7,12 +7,12 @@ import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 
 export interface EndOfStreamState extends TrackSelectionState {
   presentation?: Presentation;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 export interface EndOfStreamOwners {
   mediaSource?: MediaSource;
-  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
@@ -111,10 +111,9 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
 
   const { mediaElement } = owners;
 
-  // MediaSource must be open — use reactive readyState signal when available
-  // so the computed re-evaluates when readyState changes (e.g. 'ended' → 'open' on seek-back).
-  const readyState = owners.mediaSourceReadyState?.get() ?? owners.mediaSource?.readyState;
-  if (readyState !== 'open') return false;
+  // MediaSource must be open — read from state.mediaSourceReadyState so the
+  // computed re-evaluates when readyState changes (e.g. 'ended' → 'open' on seek-back).
+  if (state.mediaSourceReadyState !== 'open') return false;
 
   // CRITICAL: MediaElement must have metadata before calling endOfStream
   // Calling endOfStream before HAVE_METADATA causes DEMUXER_ERROR
@@ -286,8 +285,7 @@ export function endOfStream<S extends EndOfStreamState, O extends EndOfStreamOwn
       // readyState is 'ended' automatically transitions it back to 'open'.
       // This happens on seek-back after end-of-stream — allow endOfStream()
       // to be called again once the last segment is reloaded.
-      const readyState = currentOwners.mediaSourceReadyState?.get() ?? currentOwners.mediaSource?.readyState;
-      if (readyState !== 'open') return;
+      if (state.get().mediaSourceReadyState !== 'open') return;
       hasEnded = false;
     }
 
