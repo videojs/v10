@@ -42,8 +42,8 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'behaviors',
-          include: ['src/behaviors/**/*.test.ts'],
-          exclude: ['src/behaviors/dom/**', 'src/behaviors/actors/dom/**'],
+          include: ['src/playback/behaviors/**/*.test.ts', 'src/playback/actors/**/*.test.ts'],
+          exclude: ['src/playback/behaviors/dom/**', 'src/playback/actors/dom/**'],
         },
       },
       {
@@ -54,8 +54,8 @@ export default defineConfig({
           // DOM-bound behaviors, DOM-bound actor factories.
           include: [
             'src/media/dom/**/*.test.ts',
-            'src/behaviors/dom/**/*.test.ts',
-            'src/behaviors/actors/dom/**/*.test.ts',
+            'src/playback/behaviors/dom/**/*.test.ts',
+            'src/playback/actors/dom/**/*.test.ts',
           ],
           browser: {
             enabled: true,
@@ -70,7 +70,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'playback-engines',
-          include: ['src/playback-engines/**/*.test.ts'],
+          include: ['src/playback/engines/**/*.test.ts'],
           browser: {
             enabled: true,
             headless: true,

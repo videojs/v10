@@ -6,14 +6,17 @@
  * in `behaviors/` (with `dom/` subdirs where applicable) and `media/dom/`.
  */
 
-export { loadSegments } from './behaviors/dom/load-segments';
-export { provideTextTrackActors } from './behaviors/dom/provide-text-track-actors';
-export type { CurrentTimeOwners, CurrentTimeState } from './behaviors/dom/track-current-time';
-export { trackCurrentTime } from './behaviors/dom/track-current-time';
-export type { PlaybackInitiatedOwners, PlaybackInitiatedState } from './behaviors/dom/track-playback-initiated';
-export { trackPlaybackInitiated } from './behaviors/dom/track-playback-initiated';
-export type { PlaybackRateOwners, PlaybackRateState } from './behaviors/dom/track-playback-rate';
-export { trackPlaybackRate } from './behaviors/dom/track-playback-rate';
 export { appendSegment } from './media/dom/mse/append-segment';
 export { flushBuffer } from './media/dom/mse/buffer-flusher';
 export { destroyVttResolver, resolveVttSegment } from './media/dom/text/resolve-vtt-segment';
+export { loadSegments } from './playback/behaviors/dom/load-segments';
+export { provideTextTrackActors } from './playback/behaviors/dom/provide-text-track-actors';
+export type { CurrentTimeOwners, CurrentTimeState } from './playback/behaviors/dom/track-current-time';
+export { trackCurrentTime } from './playback/behaviors/dom/track-current-time';
+export type {
+  PlaybackInitiatedOwners,
+  PlaybackInitiatedState,
+} from './playback/behaviors/dom/track-playback-initiated';
+export { trackPlaybackInitiated } from './playback/behaviors/dom/track-playback-initiated';
+export type { PlaybackRateOwners, PlaybackRateState } from './playback/behaviors/dom/track-playback-rate';
+export { trackPlaybackRate } from './playback/behaviors/dom/track-playback-rate';
