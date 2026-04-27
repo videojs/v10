@@ -326,6 +326,7 @@ describe('fullscreenFeature', () => {
       document.exitFullscreen = vi.fn();
 
       const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitPresentationMode = 'fullscreen';
       video.webkitSetPresentationMode = vi.fn();
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
