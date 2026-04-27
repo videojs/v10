@@ -245,3 +245,54 @@ This is the first place the engine has real coordination concerns: timing among 
 The actor wrapping is worth pausing on. A raw `SourceBuffer` is imperative: you call `appendBuffer(data)`, you wait for the `updateend` event, you handle errors. Multiple appends can collide. An actor — a state machine that owns the buffer — gives every consumer a single point of contact. They send a message ("append this segment"); the actor serializes the work, exposes its current state via a snapshot signal, and behaves predictably even when several behaviors want to write at once.
 
 So owners ends up with both `videoBuffer` (the raw `SourceBuffer`, used by `endOfStream` to read `buffered` ranges) and `videoBufferActor` (the wrapper, used by `loadSegments` to send append messages). Same lifetime, two roles.
+
+---
+
+## Stage 6 — Playback tracking and ABR
+
+Once buffers are live and segments can be appended, the engine starts watching playback:
+
+```ts
+trackCurrentTime,
+switchQualityFromConfig,
+```
+
+**`trackCurrentTime`** mirrors the media element's `currentTime` onto `state.currentTime`. Same shape as `syncPreloadAttribute` from stage 1: the DOM event becomes a signal write, and downstream behaviors gate on the reactive value rather than polling the element. `loadSegments` reads it to know how far ahead to fetch; `endOfStream` reads it to know whether the user has reached the end.
+
+**`switchQualityFromConfig`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadSegments` to start fetching from the new variant.
+
+Two patterns worth pausing on:
+
+- **State is the bus.** The bandwidth estimator doesn't push to the quality switcher. The quality switcher doesn't pull from the loader. Both read `state.bandwidthState` and respond. Adding a third behavior that needs the estimate (a buffer-health probe, a telemetry stream) is the same: another reader, no rewiring.
+- **Selection cascades.** Changing `selectedVideoTrackId` doesn't tell anything to "re-resolve, re-buffer, re-load." It just changes the value. The behaviors downstream were already reading it; they'll re-run because `effect()` tracked their reads. Re-resolution and re-buffering happen because the framework noticed.
+
+The engine has no orchestrator. Each behavior is a small reactor plus a cleanup. The composition is the dataflow.
+
+---
+
+## Stage 7 — Segment loading
+
+```ts
+loadVideoSegments,
+loadAudioSegments,
+```
+
+Two media-type wrappers around `loadSegments`. This is the busiest behavior — the one that actually fetches segments, samples bandwidth, and pushes data into the source buffers.
+
+`loadSegments` watches:
+- `state.presentation` — for the resolved track of its type
+- `state.selectedVideoTrackId` (or audio) — to know which track's segments to load
+- `state.currentTime` — to know how far ahead to fetch
+- `state.bandwidthState` — to keep a running estimate after each fetch
+- `owners.videoBufferActor` (or audio) — to send append messages
+- `owners.mediaSource` — to know it's safe to operate on the buffer
+
+When the preconditions are met, the behavior:
+
+1. **Plans** which segments to fetch using a forward-buffer policy (look ahead from currentTime by some target buffer length, find segments whose ranges aren't already buffered). The planner is a pure function from `media/buffer/forward-buffer.ts` — given the segments, the buffered ranges, and currentTime, return the list of segments to fetch.
+2. **Fetches and appends** each segment via the network layer, sampling timing to update `state.bandwidthState`. The `SourceBufferActor` receives `append` messages and serializes them; multiple in-flight calls don't collide.
+3. **Records** segment metadata (id, byte size, timestamp) into the actor's context so `endOfStream` later knows the last segment is loaded.
+
+The pure planner from `media/buffer/` is the same kind of split we saw in track selection: framework-free logic that takes data and returns data, lifted out of the orchestration. The behavior wraps it in `effect()`, gates on preconditions, and pushes the results to the actor.
+
+A subtle bit: `loadSegments` doesn't await the actor's append messages serially in JS — it sends them and lets the actor own ordering. The actor's `SerialRunner` ensures `appendBuffer` calls happen one at a time on the underlying `SourceBuffer`, which is what the MSE spec requires. The behavior just sends.
