@@ -8,21 +8,21 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
-Custom components subscribe to player state and dispatch actions, just like built-in controls.
+Custom components subscribe to player state and dispatch actions, like built-in controls.
 
 ## You might not need a custom component
 
 Before building from scratch, check if an existing approach covers your use case:
 
 <FrameworkCase frameworks={["react"]}>
-- **Change what a control renders** — use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+- **Change what a control renders**: use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+- **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 </FrameworkCase>
 
 Build a custom component when you need new behavior, a new state display, or integration with an external system.
