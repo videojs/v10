@@ -11,16 +11,20 @@ import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
-import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { setupTextTrackActors as _setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
-import { switchQuality } from '../../behaviors/quality-switching';
+import { switchQuality as _switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
+import {
+  selectAudioTrack as _selectAudioTrack,
+  selectTextTrack as _selectTextTrack,
+  selectVideoTrack as _selectVideoTrack,
+} from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
@@ -102,8 +106,8 @@ const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as 
 const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
 
-const setupDomTextTrackActors = ({ owners }: Deps) =>
-  setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+const setupTextTrackActors = ({ owners }: Deps) =>
+  _setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -112,22 +116,22 @@ const setupDomTextTrackActors = ({ owners }: Deps) =>
 // relevant config fields into the behavior's own config parameter.
 // ============================================================================
 
-const selectVideoTrackFromConfig = ({ config, ...deps }: Deps) =>
-  selectVideoTrack(deps, {
+const selectVideoTrack = ({ config, ...deps }: Deps) =>
+  _selectVideoTrack(deps, {
     type: 'video',
     ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
   });
 
-const selectAudioTrackFromConfig = ({ config, ...deps }: Deps) =>
-  selectAudioTrack(deps, {
+const selectAudioTrack = ({ config, ...deps }: Deps) =>
+  _selectAudioTrack(deps, {
     type: 'audio',
     ...(config.preferredAudioLanguage !== undefined && {
       preferredAudioLanguage: config.preferredAudioLanguage,
     }),
   });
 
-const selectTextTrackFromConfig = ({ config, ...deps }: Deps) =>
-  selectTextTrack(deps, {
+const selectTextTrack = ({ config, ...deps }: Deps) =>
+  _selectTextTrack(deps, {
     type: 'text',
     ...(config.preferredSubtitleLanguage !== undefined && {
       preferredSubtitleLanguage: config.preferredSubtitleLanguage,
@@ -136,8 +140,8 @@ const selectTextTrackFromConfig = ({ config, ...deps }: Deps) =>
     ...(config.enableDefaultTrack !== undefined && { enableDefaultTrack: config.enableDefaultTrack }),
   });
 
-const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
-  switchQuality(deps, config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {});
+const switchQuality = ({ config, ...deps }: Deps) =>
+  _switchQuality(deps, config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {});
 
 // ============================================================================
 // HLS Playback Engine
@@ -175,9 +179,9 @@ export function createSimpleHlsEngine(
       resolvePresentation,
 
       // Track selection (reads config for initial preferences)
-      selectVideoTrackFromConfig,
-      selectAudioTrackFromConfig,
-      selectTextTrackFromConfig,
+      selectVideoTrack,
+      selectAudioTrack,
+      selectTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
       resolveVideoTrack,
@@ -194,7 +198,7 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchQualityFromConfig,
+      switchQuality,
 
       // Segment loading
       loadVideoSegments,
@@ -205,7 +209,7 @@ export function createSimpleHlsEngine(
 
       // Text tracks
       syncTextTracks,
-      setupDomTextTrackActors,
+      setupTextTrackActors,
       loadTextTrackCues,
     ],
     {

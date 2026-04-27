@@ -25,9 +25,9 @@ export function createSimpleHlsEngine(
       resolvePresentation,
 
       // Track selection (reads config for initial preferences)
-      selectVideoTrackFromConfig,
-      selectAudioTrackFromConfig,
-      selectTextTrackFromConfig,
+      selectVideoTrack,
+      selectAudioTrack,
+      selectTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
       resolveVideoTrack,
@@ -44,7 +44,7 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchQualityFromConfig,
+      switchQuality,
 
       // Segment loading
       loadVideoSegments,
@@ -55,7 +55,7 @@ export function createSimpleHlsEngine(
 
       // Text tracks
       syncTextTracks,
-      setupDomTextTrackActors,
+      setupTextTrackActors,
       loadTextTrackCues,
     ],
     { config, initialState, initialOwners }
@@ -153,27 +153,31 @@ A pattern shows up here that recurs throughout: **behaviors gate themselves on p
 Once the manifest is resolved, the engine picks one track per type:
 
 ```ts
-selectVideoTrackFromConfig,
-selectAudioTrackFromConfig,
-selectTextTrackFromConfig,
+selectVideoTrack,
+selectAudioTrack,
+selectTextTrack,
 ```
 
-Each of these is a *wrapper* defined in `engine.ts`. The actual behavior — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack` — lives in `playback/behaviors/select-tracks.ts` and accepts its own configuration parameter (initial bandwidth for video, preferred language for audio, and so on). The wrapper closes over the engine's config and threads the relevant fields into the behavior:
+These are *wrappers* defined in `engine.ts` that share their names with — and close over — the imported behaviors from `playback/behaviors/select-tracks.ts`. The imported behaviors accept their own configuration parameter (initial bandwidth for video, preferred language for audio, and so on); the wrapper closes over the engine's config and threads the relevant fields into the behavior:
 
 ```ts
-const selectVideoTrackFromConfig = ({ config, ...deps }: Deps) =>
-  selectVideoTrack(deps, {
+import { selectVideoTrack as _selectVideoTrack } from '../../behaviors/select-tracks';
+
+const selectVideoTrack = ({ config, ...deps }: Deps) =>
+  _selectVideoTrack(deps, {
     type: 'video',
     ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
   });
 ```
 
+The wrapper takes the natural name; the imported behavior gets a leading-underscore alias for local use. The composition list reads as a flat list of behaviors at the right level of abstraction — the wrappers vanish into anonymity, which is exactly right since they're just adapter glue.
+
 This is the **wrapper pattern** that recurs throughout the engine. Two kinds, both visible in the composition list:
 
-- **Media-type wrappers** (`loadVideoSegments`, `resolveVideoTrack`, …) close over a fixed `type: 'video' | 'audio' | 'text'` value so each appears as a flat, self-describing entry in the composition list.
-- **Config-aware wrappers** (`selectVideoTrackFromConfig`, `switchQualityFromConfig`, …) close over the engine's config and pass relevant fields to the underlying behavior's own config parameter.
+- **Media-type wrappers** (`loadVideoSegments`, `resolveVideoTrack`, …) close over a fixed `type: 'video' | 'audio' | 'text'` value. Their underlying behavior takes the type as config; the wrapper makes it concrete.
+- **Config-aware wrappers** (`selectVideoTrack`, `switchQuality`, the engine-local versions) close over the engine's config and pass relevant fields to the underlying behavior's own config parameter.
 
-The wrappers exist because the underlying behaviors are **engine-agnostic** — `selectVideoTrack` doesn't know about `SimpleHlsEngineConfig` or that `bandwidthState` lives on engine state. It accepts a `VideoSelectionConfig` from its caller. The engine wrapper is the thin layer that says "for this engine's config, the initial bandwidth comes from `config.initialBandwidth`."
+The wrappers exist because the underlying behaviors are **engine-agnostic** — `_selectVideoTrack` doesn't know about `SimpleHlsEngineConfig` or that `bandwidthState` lives on engine state. It accepts a `VideoSelectionConfig` from its caller. The engine wrapper is the thin layer that says "for this engine's config, the initial bandwidth comes from `config.initialBandwidth`."
 
 The behaviors themselves are split across two locations on purpose:
 
@@ -254,12 +258,12 @@ Once buffers are live and segments can be appended, the engine starts watching p
 
 ```ts
 trackCurrentTime,
-switchQualityFromConfig,
+switchQuality,
 ```
 
 **`trackCurrentTime`** mirrors the media element's `currentTime` onto `state.currentTime`. Same shape as `syncPreloadAttribute` from stage 1: the DOM event becomes a signal write, and downstream behaviors gate on the reactive value rather than polling the element. `loadSegments` reads it to know how far ahead to fetch; `endOfStream` reads it to know whether the user has reached the end.
 
-**`switchQualityFromConfig`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadSegments` to start fetching from the new variant.
+**`switchQuality`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadSegments` to start fetching from the new variant. (Like the track-selection wrappers, this is the engine's local version that closes over engine config; the underlying behavior is imported as `_switchQuality`.)
 
 Two patterns worth pausing on:
 
@@ -330,7 +334,7 @@ The behavior also handles the seek-back case: if `appendBuffer` re-opens an `'en
 
 ```ts
 syncTextTracks,
-setupDomTextTrackActors,
+setupTextTrackActors,
 loadTextTrackCues,
 ```
 
@@ -338,20 +342,22 @@ Text tracks are an interesting wrinkle. They don't go through MSE — VTT cues l
 
 **`syncTextTracks`** mirrors the resolved text-track list onto `<track>` elements under the media element. When a text track is selected (`state.selectedTextTrackId`), the matching `<track>` element gets `mode = 'showing'`; others go to `'disabled'`. This is reactive: changing the selection in state re-runs the effect, which flips the modes.
 
-**`setupDomTextTrackActors`** is the actor-provider for text tracks, parallel to `setupSourceBuffers` for video/audio. It creates two actors — `TextTracksActor` (owns the cue list per track) and `TextTrackSegmentLoaderActor` (orchestrates per-segment fetches via the VTT resolver) — and publishes them onto owners.
+**`setupTextTrackActors`** is the actor-provider for text tracks, parallel to `setupSourceBuffers` for video/audio. It creates two actors — `TextTracksActor` (owns the cue list per track) and `TextTrackSegmentLoaderActor` (orchestrates per-segment fetches via the VTT resolver) — and publishes them onto owners.
 
 In the engine, this is a wrapper that closes over the DOM-bound VTT resolver (`resolveVttSegment`):
 
 ```ts
-const setupDomTextTrackActors = ({ owners }: Deps) =>
-  setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+import { setupTextTrackActors as _setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+
+const setupTextTrackActors = ({ owners }: Deps) =>
+  _setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
 ```
 
-The underlying `setupTextTrackActors` (in `playback/behaviors/dom/`) is parser-agnostic — it accepts any `resolveTextTrackSegment` function. The DOM-specific binding (using a hidden `<video>` + `<track>` element to leverage the browser's VTT parser) happens at the engine layer. A different engine could supply a different parser without changing the behavior.
+The underlying `_setupTextTrackActors` (in `playback/behaviors/dom/`) is parser-agnostic — it accepts any `resolveTextTrackSegment` function. The DOM-specific binding (using a hidden `<video>` + `<track>` element to leverage the browser's VTT parser) happens at the engine layer. A different engine could supply a different parser without changing the behavior.
 
 **`loadTextTrackCues`** is the orchestrator. It watches the resolved text track and the actors, and dispatches `load` messages to the segment loader actor whenever new segments need fetching. The actor handles per-segment fetching (and abort on track switch); the orchestrator decides *when* to ask.
 
-This is the same pattern as MSE: actor-as-resource (`setupDomTextTrackActors` puts it on owners), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
+This is the same pattern as MSE: actor-as-resource (`setupTextTrackActors` puts it on owners), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
 
 ---
 
