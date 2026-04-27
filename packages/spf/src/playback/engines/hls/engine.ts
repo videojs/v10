@@ -1,7 +1,7 @@
 import { type Composition, createComposition } from '../../../core/composition/create-composition';
 import type { Signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
-import { destroyVttResolver, resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
+import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
@@ -207,13 +207,14 @@ export function createSimpleHlsEngine(
       syncTextTracks,
       setupDomTextTrackActors,
       loadTextTrackCues,
-
-      // Module-level VTT parser cleanup
-      // TODO: this should be owned by setupDomTextTrackActors
-      () => destroyVttResolver(),
     ],
     {
       config,
+      // The cast is a workaround for a TypeScript inference quirk in the
+      // composition list — when every behavior in the array takes typed
+      // deps, the inferred state shape collapses and drops fields like
+      // `bandwidthState`. Casting reasserts the engine's full state shape.
+      // See friction list in docs/hls-engine.md.
       initialState: {
         bandwidthState: {
           fastEstimate: 0,
@@ -222,7 +223,7 @@ export function createSimpleHlsEngine(
           slowTotalWeight: 0,
           bytesSampled: 0,
         },
-      },
+      } as SimpleHlsEngineState,
       initialOwners: {},
     }
   );

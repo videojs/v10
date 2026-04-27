@@ -150,9 +150,10 @@ A pattern shows up here that recurs throughout: **behaviors gate themselves on p
 A running list of awkward bits we hit while writing prose. Each one is a candidate for code cleanup.
 
 - **`presentation?: any`** in `SimpleHlsEngineState`. The interface declares it as `any` because the field transitions from `{ url: string }` (unresolved) to `Presentation` (resolved) during runtime, and Signal invariance makes a union shape break behavior-interface compatibility. The doc has to wave its hands at "it's a `{ url }` shape that becomes a `Presentation`." A cleaner shape would let the doc just say what's there.
-- **The trailing `() => destroyVttResolver()` line in the composition list**. It's a one-shot module-level cleanup, not a composable behavior — but it sits in the composition list as if it were one. Keeping the composition list uniform (every entry is a behavior) would let the doc describe one shape, not "behaviors plus a singleton destructor."
+- **`as SimpleHlsEngineState` cast on `initialState`**. TypeScript's inference of the composition list collapses the engine's state shape when every behavior takes typed deps — fields like `bandwidthState` get dropped from the inferred state. The cast reasserts the full shape, but the underlying inference quirk in `createComposition` deserves investigation.
 
 ### Resolved during drafting
 
-- ~~`as SimpleHlsEngineState` / `as SimpleHlsEngineOwners` casts on the partial initial values.~~ Removed — the cast was unnecessary noise; the interfaces are already all-optional.
+- ~~The trailing `() => destroyVttResolver()` line in the composition list.~~ Removed — it was a no-op anyway (the dummy-video singleton is lazy, so calling `destroy` at engine setup did nothing). The singleton lives for the page lifetime; callers who really need to free it can call `destroyVttResolver` from `@videojs/spf/dom` directly. Made visible the *real* missing concept: per-engine VTT resolver lifecycle, owned by `setupTextTrackActors`.
 - ~~`mediaSourceReadyState` is a `ReadonlySignal` slot on `owners`.~~ Moved to state as a plain `MediaSource['readyState']` value, written by `setupMediaSource` via `update(state, …)`. Owners now holds only resources; data flows through state.
+- ~~`as SimpleHlsEngineOwners` cast on `initialOwners`.~~ Removed — the empty `{}` is assignable directly. The state cast still has to stay (see above).
