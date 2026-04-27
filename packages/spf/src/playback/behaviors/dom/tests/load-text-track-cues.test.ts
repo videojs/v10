@@ -7,13 +7,13 @@ import {
   type TextTrackCueLoadingOwners,
   type TextTrackCueLoadingState,
 } from '../../load-text-track-cues';
-import { provideTextTrackActors, type TextTrackActorProviderOwners } from '../provide-text-track-actors';
+import { setupTextTrackActors, type TextTrackActorsOwners } from '../setup-text-track-actors';
 
-// The composed behaviors (provider in dom + loader in media) intersect their
-// owner-shape contracts. The provider narrows `mediaElement` to
+// The composed behaviors (setup in dom + loader in media) intersect their
+// owner-shape contracts. The setup narrows `mediaElement` to
 // `HTMLMediaElement`; the loader keeps the abstract actor types. The test
 // signal has to satisfy both.
-type ComposedOwners = TextTrackCueLoadingOwners & TextTrackActorProviderOwners;
+type ComposedOwners = TextTrackCueLoadingOwners & TextTrackActorsOwners;
 
 // Mock resolveVttSegment
 vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
@@ -64,18 +64,18 @@ function createMockSegments(count: number): Segment[] {
 }
 
 /**
- * Sets up the composition of `provideTextTrackActors` (DOM-side actor
- * provider) and `loadTextTrackCues` (host-agnostic orchestrator).
- * Returns the composed reactive channels and a combined cleanup.
+ * Sets up the composition of `setupTextTrackActors` (DOM-side actor
+ * setup) and `loadTextTrackCues` (host-agnostic orchestrator). Returns
+ * the composed reactive channels and a combined cleanup.
  */
 function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: ComposedOwners) {
   const state = signal<TextTrackCueLoadingState>(initialState);
   const owners = signal<ComposedOwners>(initialOwners);
-  const providerCleanup = provideTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+  const setupCleanup = setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
   const reactor = loadTextTrackCues({ state, owners });
   const cleanup = () => {
     reactor.destroy();
-    providerCleanup();
+    setupCleanup();
   };
   return { state, owners, cleanup };
 }

@@ -8,9 +8,9 @@ import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segmen
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadSegments } from '../../behaviors/dom/load-segments';
-import { provideTextTrackActors } from '../../behaviors/dom/provide-text-track-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
+import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
@@ -102,8 +102,8 @@ const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as 
 const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
 
-const provideDomTextTrackActors = ({ owners }: Deps) =>
-  provideTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+const setupDomTextTrackActors = ({ owners }: Deps) =>
+  setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -205,11 +205,11 @@ export function createSimpleHlsEngine(
 
       // Text tracks
       syncTextTracks,
-      provideDomTextTrackActors,
+      setupDomTextTrackActors,
       loadTextTrackCues,
 
       // Module-level VTT parser cleanup
-      // TODO: this should be owned by provideDomTextTrackActors
+      // TODO: this should be owned by setupDomTextTrackActors
       () => destroyVttResolver(),
     ],
     {

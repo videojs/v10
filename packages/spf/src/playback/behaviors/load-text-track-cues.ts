@@ -21,7 +21,7 @@ import type { TextTracksActor } from '../actors/text-tracks';
  *
  * Actor lifecycle is NOT managed by this behavior — it reads
  * `textTracksActor` and `segmentLoaderActor` from owners. A host-side
- * provider behavior (e.g. `provideTextTrackActors` in dom/) is
+ * setup behavior (e.g. `setupTextTrackActors` in dom/) is
  * responsible for creating and destroying them when the media element
  * appears/disappears.
  */
