@@ -168,7 +168,7 @@ const switchQualityFromConfig = ({ config, ...deps }: Deps) =>
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
-  return createComposition(
+  return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
     [
       syncPreloadAttribute,
       trackPlaybackInitiated,
@@ -210,11 +210,6 @@ export function createSimpleHlsEngine(
     ],
     {
       config,
-      // The cast is a workaround for a TypeScript inference quirk in the
-      // composition list — when every behavior in the array takes typed
-      // deps, the inferred state shape collapses and drops fields like
-      // `bandwidthState`. Casting reasserts the engine's full state shape.
-      // See friction list in docs/hls-engine.md.
       initialState: {
         bandwidthState: {
           fastEstimate: 0,
@@ -223,7 +218,7 @@ export function createSimpleHlsEngine(
           slowTotalWeight: 0,
           bytesSampled: 0,
         },
-      } as SimpleHlsEngineState,
+      },
       initialOwners: {},
     }
   );

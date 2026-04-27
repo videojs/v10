@@ -148,15 +148,25 @@ A pattern shows up here that recurs throughout: **behaviors gate themselves on p
 
 ---
 
-## Friction surfaced by writing this doc
+## Two ways to call `createComposition`
 
-A running list of awkward bits we hit while writing prose. Each one is a candidate for code cleanup.
+The HLS engine uses the *explicit* form — passing `<S, O, C>` type arguments to fix the engine's shape directly:
 
-- **`as SimpleHlsEngineState` cast on `initialState`**. TypeScript's inference of the composition list collapses the engine's state shape when every behavior takes typed deps — fields like `bandwidthState` get dropped from the inferred state. The cast reasserts the full shape, but the underlying inference quirk in `createComposition` deserves investigation.
+```ts
+return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
+  [...behaviors],
+  { config, initialState, initialOwners }
+);
+```
 
-### Resolved during drafting
+The minimal/inferred form lets TypeScript intersect each behavior's deps to compute the engine's shape:
 
-- ~~`presentation?: any` in `SimpleHlsEngineState`.~~ Split into two slots: `presentationUrl?: string` (caller's input) and `presentation?: Presentation` (resolver's output). Every downstream behavior now declares `presentation?: Presentation` without a union or `any`. `resolvePresentation` watches `presentationUrl` and (re-)resolves on change.
-- ~~The trailing `() => destroyVttResolver()` line in the composition list.~~ Removed — it was a no-op anyway (the dummy-video singleton is lazy, so calling `destroy` at engine setup did nothing). The singleton lives for the page lifetime; callers who really need to free it can call `destroyVttResolver` from `@videojs/spf/dom` directly. Made visible the *real* missing concept: per-engine VTT resolver lifecycle, owned by `setupTextTrackActors`.
-- ~~`mediaSourceReadyState` is a `ReadonlySignal` slot on `owners`.~~ Moved to state as a plain `MediaSource['readyState']` value, written by `setupMediaSource` via `update(state, …)`. Owners now holds only resources; data flows through state.
-- ~~`as SimpleHlsEngineOwners` cast on `initialOwners`.~~ Removed — the empty `{}` is assignable directly. The state cast still has to stay (see above).
+```ts
+const engine = createComposition([myBehavior]);
+```
+
+For engines that aggregate many wrapper-style behaviors (`(deps: Deps) => behavior(deps, {...})`) all sharing the same `Behavior<S, O, C>` type, TypeScript's distributive intersection inference can drop fields — e.g. for the HLS engine, `bandwidthState` would silently disappear from the inferred state, and `initialState: { bandwidthState: ... }` would be flagged as an unknown property. The explicit form sidesteps the inference and uses the engine's declared shapes directly.
+
+(Earlier drafts of this doc kept an `as SimpleHlsEngineState` cast to paper over the inference collapse. The explicit overload is the cleaner answer — the cast is gone.)
+
+The inferred form remains the right call for small or single-behavior compositions where the per-feature state slices are the source of truth.

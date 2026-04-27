@@ -189,25 +189,29 @@ export interface CompositionOptions<S extends object, O extends object, C extend
  * or any specific protocol. It creates shared reactive state, wires
  * each behavior to that state, and returns the composition interface.
  *
- * The state, owners, and config types are inferred from the behaviors:
- * each behavior declares what it needs via its parameter type, and the
- * engine computes the intersection of all requirements.
+ * Two ways to call:
+ *
+ * 1. **Inferred** — pass behaviors and let TypeScript intersect their
+ *    deps to compute the engine's state, owners, and config shapes.
+ *    Best when behaviors declare narrow per-feature shapes.
+ * 2. **Explicit** — supply `<S, O, C>` type arguments and the engine
+ *    uses those shapes directly. Best for engines that aggregate many
+ *    wrapper-style behaviors all sharing the same `Behavior<S, O, C>`
+ *    type — TypeScript's distributive intersection inference can drop
+ *    types in that case, so explicit arguments are more reliable.
  *
  * @param behaviors - Array of behavior functions
  * @param options - Optional config, initial state, and initial owners
  *
  * @example
  * ```ts
- * // Minimal — just behaviors
- * const engine = createComposition([myBehavior]);
+ * // 1. Inferred
+ * const engine = createComposition([resolvePresentation, selectVideoTrack]);
  *
- * // With config and initial state
- * const engine = createComposition(
- *   [resolvePresentation, selectVideoTrack, loadVideoSegments],
- *   {
- *     config: { initialBandwidth: 2_000_000 },
- *     initialState: { bandwidthState: initialBandwidthState() },
- *   }
+ * // 2. Explicit (engine declares its full state/owners/config up front)
+ * const engine = createComposition<MyState, MyOwners, MyConfig>(
+ *   [behavior1, behavior2, ...],
+ *   { config, initialState, initialOwners }
  * );
  * ```
  */
@@ -218,19 +222,21 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
     ResolveBehaviorOwners<Behaviors>,
     ResolveBehaviorConfig<Behaviors>
   >
-): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorOwners<Behaviors>> {
-  type S = ResolveBehaviorState<Behaviors>;
-  type O = ResolveBehaviorOwners<Behaviors>;
-  type C = ResolveBehaviorConfig<Behaviors>;
+): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorOwners<Behaviors>>;
+export function createComposition<S extends object, O extends object, C extends object>(
+  behaviors: readonly Behavior<S, O, C>[],
+  options?: CompositionOptions<S, O, C>
+): Composition<S, O>;
+export function createComposition(
+  behaviors: readonly AnyBehavior[],
+  options?: CompositionOptions<object, object, object>
+): Composition<object, object> {
+  const state = signal(options?.initialState ?? {});
+  const owners = signal(options?.initialOwners ?? {});
+  const config = options?.config ?? {};
 
-  const state = signal((options?.initialState ?? {}) as S);
-  const owners = signal((options?.initialOwners ?? {}) as O);
-  const config = (options?.config ?? {}) as C;
-
-  const deps: BehaviorDeps<S, O, C> = { state, owners, config };
-  // ValidateComposition resolves to [...Behaviors] for valid compositions;
-  // the cast is needed because the type is unresolved in the generic context.
-  const cleanups = (behaviors as unknown as AnyBehavior[]).map((f) => f(deps));
+  const deps: BehaviorDeps<object, object, object> = { state, owners, config };
+  const cleanups = behaviors.map((f) => f(deps));
 
   return {
     state,
@@ -248,7 +254,7 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
       await Promise.all(results);
       // Clear any keys behaviors registered — or callers seeded via
       // initialOwners — so the composition ends with an empty owners map.
-      owners.set({} as O);
+      owners.set({});
     },
   };
 }
