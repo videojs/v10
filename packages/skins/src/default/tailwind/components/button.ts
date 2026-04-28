@@ -6,7 +6,7 @@ export const button = {
     'py-2 px-4 rounded-full',
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
-    'active:scale-[0.98]',
+    'not-disabled:not-data-disabled:active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:grayscale',
     'focus-visible:outline-current focus-visible:outline-offset-2'
@@ -18,5 +18,5 @@ export const button = {
     'focus-visible:bg-current/10',
     'aria-expanded:bg-current/10'
   ),
-  icon: cn('grid w-9 aspect-square p-0', 'active:scale-90'),
+  icon: cn('grid w-9 aspect-square p-0', 'not-disabled:not-data-disabled:active:scale-90'),
 };
