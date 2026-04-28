@@ -38,11 +38,6 @@
     filter: grayscale(1);
     cursor: not-allowed;
   }
-
-  /* Override the skin's `display: flex/grid` so the native `hidden` attribute hides the button. */
-  &[hidden] {
-    display: none;
-  }
 }
 
 /* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */

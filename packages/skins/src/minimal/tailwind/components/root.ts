@@ -10,5 +10,7 @@ export const root = cn(
   // Resets
   '**:box-border',
   '[&_button]:font-[inherit]',
+  // Keep authored templates hidden even when component classes set `display`.
+  '[&_[hidden][hidden]]:hidden',
   'motion-safe:[interpolate-size:allow-keywords]'
 );
