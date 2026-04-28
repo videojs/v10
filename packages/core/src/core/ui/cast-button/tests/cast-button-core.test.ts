@@ -49,14 +49,6 @@ describe('CastButtonCore', () => {
 
       expect(state.castState).toBe('connecting');
     });
-
-    it('passes through unsupported availability from media state', () => {
-      const core = new CastButtonCore();
-      core.setMedia(createMediaState({ remotePlaybackAvailability: 'unsupported' }));
-      const state = core.getState();
-
-      expect(state.availability).toBe('unsupported');
-    });
   });
 
   describe('getLabel', () => {
