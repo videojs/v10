@@ -11,7 +11,7 @@ export interface LiveButtonProps extends UIComponentProps<'button', LiveButtonCo
 /**
  * A button that indicates live status and seeks to the live edge when
  * pressed. Exposes `data-live` while the stream is live (or DVR) and
- * `data-edge` while playing at the live edge so skins can style a
+ * `data-live-edge` while playing at the live edge so skins can style a
  * red-dot ↔ grey-dot treatment.
  *
  * @example

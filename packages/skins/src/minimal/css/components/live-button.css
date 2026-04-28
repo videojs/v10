@@ -24,7 +24,7 @@
   transition: background-color 150ms ease-out;
 }
 
-.media-minimal-skin .media-button--live[data-edge] .media-live-indicator {
+.media-minimal-skin .media-button--live[data-live-edge] .media-live-indicator {
   background-color: oklch(0.65 0.22 27);
 }
 

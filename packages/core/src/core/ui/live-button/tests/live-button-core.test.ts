@@ -17,7 +17,7 @@ function createMediaState(overrides: Partial<LiveButtonMediaState> = {}): LiveBu
 function createState(overrides: Partial<LiveButtonState> = {}): LiveButtonState {
   return {
     live: false,
-    timeIsLive: false,
+    liveEdge: false,
     label: '',
     ...overrides,
   };
@@ -44,7 +44,7 @@ describe('LiveButtonCore', () => {
       core.setMedia(createMediaState({ targetLiveWindow: Number.NaN }));
       const state = core.getState();
       expect(state.live).toBe(false);
-      expect(state.timeIsLive).toBe(false);
+      expect(state.liveEdge).toBe(false);
     });
 
     it('reports live for low-latency live (`targetLiveWindow === 0`)', () => {
@@ -66,7 +66,7 @@ describe('LiveButtonCore', () => {
       expect(core.getState().live).toBe(true);
     });
 
-    it('flags timeIsLive when currentTime >= liveEdgeStart', () => {
+    it('flags liveEdge when currentTime >= liveEdgeStart', () => {
       const core = new LiveButtonCore();
       core.setMedia(
         createMediaState({
@@ -76,10 +76,10 @@ describe('LiveButtonCore', () => {
           currentTime: 96,
         })
       );
-      expect(core.getState().timeIsLive).toBe(true);
+      expect(core.getState().liveEdge).toBe(true);
     });
 
-    it('clears timeIsLive when behind live', () => {
+    it('clears liveEdge when behind live', () => {
       const core = new LiveButtonCore();
       core.setMedia(
         createMediaState({
@@ -89,7 +89,7 @@ describe('LiveButtonCore', () => {
           currentTime: 50,
         })
       );
-      expect(core.getState().timeIsLive).toBe(false);
+      expect(core.getState().liveEdge).toBe(false);
     });
 
     it('falls back to seekable end when liveEdgeStart is unknown', () => {
@@ -102,7 +102,7 @@ describe('LiveButtonCore', () => {
           currentTime: 95,
         })
       );
-      expect(core.getState().timeIsLive).toBe(true);
+      expect(core.getState().liveEdge).toBe(true);
     });
 
     it('respects custom liveEdgeOffset fallback', () => {
@@ -115,10 +115,10 @@ describe('LiveButtonCore', () => {
           currentTime: 95,
         })
       );
-      expect(core.getState().timeIsLive).toBe(false);
+      expect(core.getState().liveEdge).toBe(false);
     });
 
-    it('flags timeIsLive within the default 5s tolerance before liveEdgeStart', () => {
+    it('flags liveEdge within the default 5s tolerance before liveEdgeStart', () => {
       const core = new LiveButtonCore();
       core.setMedia(
         createMediaState({
@@ -128,10 +128,10 @@ describe('LiveButtonCore', () => {
           currentTime: 91,
         })
       );
-      expect(core.getState().timeIsLive).toBe(true);
+      expect(core.getState().liveEdge).toBe(true);
     });
 
-    it('clears timeIsLive when beyond the tolerance before liveEdgeStart', () => {
+    it('clears liveEdge when beyond the tolerance before liveEdgeStart', () => {
       const core = new LiveButtonCore();
       core.setMedia(
         createMediaState({
@@ -141,7 +141,7 @@ describe('LiveButtonCore', () => {
           currentTime: 89,
         })
       );
-      expect(core.getState().timeIsLive).toBe(false);
+      expect(core.getState().liveEdge).toBe(false);
     });
 
     it('respects custom liveEdgeTolerance', () => {
@@ -154,19 +154,19 @@ describe('LiveButtonCore', () => {
           currentTime: 94,
         })
       );
-      expect(core.getState().timeIsLive).toBe(false);
+      expect(core.getState().liveEdge).toBe(false);
     });
   });
 
   describe('getLabel', () => {
     it('returns "Seek to live edge" when behind live', () => {
       const core = new LiveButtonCore();
-      expect(core.getLabel(createState({ live: true, timeIsLive: false }))).toBe('Seek to live edge');
+      expect(core.getLabel(createState({ live: true, liveEdge: false }))).toBe('Seek to live edge');
     });
 
     it('returns "Playing live" when at live edge', () => {
       const core = new LiveButtonCore();
-      expect(core.getLabel(createState({ live: true, timeIsLive: true }))).toBe('Playing live');
+      expect(core.getLabel(createState({ live: true, liveEdge: true }))).toBe('Playing live');
     });
 
     it('returns custom string label', () => {
@@ -175,16 +175,16 @@ describe('LiveButtonCore', () => {
     });
 
     it('returns custom function label', () => {
-      const core = new LiveButtonCore({ label: (state) => (state.timeIsLive ? 'LIVE' : 'GO LIVE') });
-      expect(core.getLabel(createState({ timeIsLive: true }))).toBe('LIVE');
-      expect(core.getLabel(createState({ timeIsLive: false }))).toBe('GO LIVE');
+      const core = new LiveButtonCore({ label: (state) => (state.liveEdge ? 'LIVE' : 'GO LIVE') });
+      expect(core.getLabel(createState({ liveEdge: true }))).toBe('LIVE');
+      expect(core.getLabel(createState({ liveEdge: false }))).toBe('GO LIVE');
     });
   });
 
   describe('getAttrs', () => {
     it('sets aria-disabled when at live edge', () => {
       const core = new LiveButtonCore();
-      const attrs = core.getAttrs(createState({ timeIsLive: true, live: true }));
+      const attrs = core.getAttrs(createState({ liveEdge: true, live: true }));
       expect(attrs['aria-disabled']).toBe('true');
     });
 

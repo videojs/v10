@@ -34,7 +34,7 @@ export interface LiveButtonState extends ButtonState {
   /** Whether the stream is live (or DVR). */
   live: boolean;
   /** Whether playback is at the live edge. */
-  timeIsLive: boolean;
+  liveEdge: boolean;
 }
 
 /**
@@ -53,7 +53,7 @@ export class LiveButtonCore {
 
   readonly state = createState<LiveButtonState>({
     live: false,
-    timeIsLive: false,
+    liveEdge: false,
     label: '',
   });
 
@@ -78,12 +78,12 @@ export class LiveButtonCore {
       return label;
     }
 
-    if (state.timeIsLive) return 'Playing live';
+    if (state.liveEdge) return 'Playing live';
     return 'Seek to live edge';
   }
 
   getAttrs(state: LiveButtonState) {
-    const inactive = this.#props.disabled || state.timeIsLive;
+    const inactive = this.#props.disabled || state.liveEdge;
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': inactive ? 'true' : undefined,
@@ -97,9 +97,9 @@ export class LiveButtonCore {
   getState(): LiveButtonState {
     const media = this.#media!;
     const live = isLiveMedia(media);
-    const timeIsLive = live && this.#isAtLiveEdge(media);
+    const liveEdge = live && this.#isAtLiveEdge(media);
 
-    this.state.patch({ live, timeIsLive });
+    this.state.patch({ live, liveEdge });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
