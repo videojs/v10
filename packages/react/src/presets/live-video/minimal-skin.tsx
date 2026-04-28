@@ -25,6 +25,7 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -131,6 +132,11 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
               />
               <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
+
+            <LiveButton className="media-button media-button--subtle media-button--live">
+              <span className="media-live-indicator" aria-hidden="true" />
+              <span className="media-live-label">LIVE</span>
+            </LiveButton>
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />

@@ -4,6 +4,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey/hotkey';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
@@ -94,6 +95,11 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
               />
               <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
+
+            <LiveButton className="media-button media-button--subtle media-button--live">
+              <span className="media-live-indicator" aria-hidden="true" />
+              <span className="media-live-label">LIVE</span>
+            </LiveButton>
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />

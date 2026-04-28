@@ -13,6 +13,7 @@ import {
   error,
   icon,
   iconState,
+  liveButton,
   popup,
   root,
   slider,
@@ -21,6 +22,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
@@ -135,6 +137,11 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
+
+            <LiveButton className={cn(button.base, button.subtle, liveButton.button)}>
+              <span className={liveButton.indicator} aria-hidden="true" />
+              <span className={liveButton.label}>LIVE</span>
+            </LiveButton>
           </div>
 
           <div className="grow" aria-hidden="true" />

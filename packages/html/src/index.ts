@@ -41,6 +41,7 @@ export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-butto
 export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
+export { LiveButtonElement } from './ui/live-button/live-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';

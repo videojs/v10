@@ -14,6 +14,8 @@ export * from './ui/error-dialog/error-dialog-core';
 export * from './ui/error-dialog/error-dialog-data-attrs';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
+export * from './ui/live-button/live-button-core';
+export * from './ui/live-button/live-button-data-attrs';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/pip-button/pip-button-core';

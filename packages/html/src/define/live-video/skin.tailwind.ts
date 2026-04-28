@@ -8,6 +8,7 @@ import {
   error,
   icon,
   iconState,
+  liveButton,
   overlay,
   popup,
   poster,
@@ -19,8 +20,8 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Reuse the video preset's UI element registrations.
-import '../video/ui';
+// Register the live video player, container, and all UI custom elements.
+import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -60,6 +61,11 @@ function getTemplateHTML() {
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+
+              <media-live-button class="${cn(button.base, button.subtle, liveButton.button)}">
+                <span class="${liveButton.indicator}" aria-hidden="true"></span>
+                <span class="${liveButton.label}">LIVE</span>
+              </media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>

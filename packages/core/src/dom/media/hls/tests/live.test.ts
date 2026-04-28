@@ -212,6 +212,130 @@ describe('HlsJsMediaLiveMixin', () => {
     });
   });
 
+  describe('seek-to-live on first play', () => {
+    function emitManifestLoading(engine: Hls) {
+      (engine as any).emit(Hls.Events.MANIFEST_LOADING);
+    }
+
+    it('seeks to `liveEdgeStart` on the first `play` event', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18, targetduration: 6 }));
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(42);
+    });
+
+    it('does not seek when `autoplay` is set', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+      video.autoplay = true;
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('only seeks on the first play (subsequent plays are ignored)', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      video.dispatchEvent(new Event('play'));
+      expect(video.currentTime).toBe(42);
+
+      video.currentTime = 30;
+      video.dispatchEvent(new Event('play'));
+      expect(video.currentTime).toBe(30);
+    });
+
+    it('does not seek backwards when already at or past the live edge', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      video.currentTime = 50;
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(50);
+    });
+
+    it('does not seek when stream is on-demand', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('defers the seek until `liveEdgeStart` becomes finite (preload="none")', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      // Manifest is requested at startup but `LEVEL_LOADED` only arrives after `play`.
+      emitManifestLoading(engine);
+      video.dispatchEvent(new Event('play'));
+      expect(video.currentTime).toBe(0);
+
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      expect(video.currentTime).toBe(42);
+    });
+
+    it('re-arms on a subsequent source load', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+      video.dispatchEvent(new Event('play'));
+      expect(video.currentTime).toBe(42);
+
+      video.currentTime = 0;
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(42);
+    });
+
+    it('disarms on `DESTROYING`', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      const video = setTargetSeekable(host, [[0, 60]]);
+
+      emitManifestLoading(engine);
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      (engine as any).emit(Hls.Events.DESTROYING);
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(video.currentTime).toBe(0);
+    });
+  });
+
   describe('reset', () => {
     it('resets on `MANIFEST_LOADING`', () => {
       const engine = createEngine();

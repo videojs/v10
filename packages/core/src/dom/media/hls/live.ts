@@ -7,15 +7,28 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
   class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
+    #seekToLiveAbort: AbortController | null = null;
+    #seekToLivePending = false;
 
     constructor(...args: any[]) {
       super(...args);
 
       const { engine } = this;
-      engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#reset());
-      engine?.on(Hls.Events.DESTROYING, () => this.#reset());
+      engine?.on(Hls.Events.MANIFEST_LOADING, () => {
+        this.#reset();
+        this.#armSeekToLive();
+      });
+      engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#armSeekToLive());
+      engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#disarmSeekToLive());
+      engine?.on(Hls.Events.DESTROYING, () => {
+        this.#reset();
+        this.#disarmSeekToLive();
+      });
       engine?.on(Hls.Events.LEVEL_LOADED, (_event: string, data: LevelLoadedData) => {
         this.#derive(data.details);
+        // For `preload="none"`/`"metadata"` the manifest only loads after the
+        // first play, so retry the seek once `liveEdgeStart` becomes finite.
+        if (this.#seekToLivePending) this.#trySeekToLive();
       });
     }
 
@@ -60,6 +73,46 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       if (Object.is(this.#targetLiveWindow, value)) return;
       this.#targetLiveWindow = value;
       this.dispatchEvent(new Event('targetlivewindowchange'));
+    }
+
+    /**
+     * Arm a one-shot seek-to-live on the first user-initiated `play`. Skipped
+     * when `autoplay` is set, since hls.js positions at the live edge during
+     * its own startup sequence and a programmatic seek would race that.
+     */
+    #armSeekToLive() {
+      this.#disarmSeekToLive();
+
+      const target = this.target as HTMLMediaElement | null;
+      if (!target || target.autoplay) return;
+
+      this.#seekToLiveAbort = new AbortController();
+      target.addEventListener(
+        'play',
+        () => {
+          this.#seekToLivePending = true;
+          this.#trySeekToLive();
+        },
+        { signal: this.#seekToLiveAbort.signal, once: true }
+      );
+    }
+
+    #disarmSeekToLive() {
+      this.#seekToLiveAbort?.abort();
+      this.#seekToLiveAbort = null;
+      this.#seekToLivePending = false;
+    }
+
+    #trySeekToLive() {
+      const target = this.target as HTMLMediaElement | null;
+      if (!target) return;
+      const { liveEdgeStart } = this;
+      if (!Number.isFinite(liveEdgeStart)) return;
+
+      if (target.currentTime < liveEdgeStart) {
+        target.currentTime = liveEdgeStart;
+      }
+      this.#seekToLivePending = false;
     }
   }
 

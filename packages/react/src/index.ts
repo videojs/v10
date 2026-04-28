@@ -47,6 +47,7 @@ export { useSlider } from './ui/hooks/use-slider';
 export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
 export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
+export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
