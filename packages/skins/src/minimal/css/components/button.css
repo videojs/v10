@@ -29,7 +29,7 @@
     outline-offset: 2px;
   }
 
-  &:active {
+  &:active:not([disabled]):not([data-disabled]) {
     scale: 0.98;
   }
 
@@ -76,7 +76,7 @@
   aspect-ratio: 1;
   padding: 0;
 
-  &:active {
+  &:active:not([disabled]):not([data-disabled]) {
     scale: 0.9;
   }
 
