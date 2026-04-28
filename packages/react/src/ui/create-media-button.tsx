@@ -59,13 +59,14 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const { getButtonProps, buttonRef } = useButton({
       displayName,
-      onActivate: async () => {
-        try {
-          await action(core, feature!);
-        } catch (error) {
+      // `useButton` invokes `onActivate` synchronously from click/keyup
+      // handlers, so any rejection here would be unhandled. Log in dev for
+      // visibility but absorb the failure at this UI boundary — callers
+      // awaiting `core.toggle(...)` directly still see the rejection.
+      onActivate: () => {
+        Promise.resolve(action(core, feature!)).catch((error) => {
           if (__DEV__) console.error(`[${displayName}]`, error);
-          throw error;
-        }
+        });
       },
       isDisabled: () => !!coreProps.disabled || !feature,
     });
