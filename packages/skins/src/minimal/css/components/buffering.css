@@ -11,6 +11,10 @@
   color: oklch(1 0 0);
   pointer-events: none;
 
+  &:not([data-visible]) {
+    --media-spinner-animation: none;
+  }
+
   &[data-visible] {
     display: flex;
   }
