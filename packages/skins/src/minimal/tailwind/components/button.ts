@@ -11,10 +11,9 @@ export const button = {
     'focus-visible:outline-current focus-visible:outline-offset-2',
     'active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
+    'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:grayscale',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
-    'supports-[corner-shape:squircle]:[corner-shape:squircle]',
-    'data-[availability=unavailable]:hidden',
-    'data-[availability=unsupported]:hidden'
+    'supports-[corner-shape:squircle]:[corner-shape:squircle]'
   ),
   primary: 'bg-white text-black font-medium text-shadow-none',
   subtle: cn(
