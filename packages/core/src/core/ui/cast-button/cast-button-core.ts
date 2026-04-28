@@ -15,7 +15,9 @@ export interface CastButtonProps {
 }
 
 export interface CastButtonState extends ButtonState {
+  /** Current cast connection state (`disconnected`, `connecting`, or `connected`). */
   castState: RemotePlaybackConnectionState;
+  /** Whether casting is `available` (a device is reachable), `unavailable` (no device), or `unsupported`. */
   availability: MediaFeatureAvailability;
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
