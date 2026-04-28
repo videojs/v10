@@ -7,7 +7,7 @@ date: 2026-04-24
 
 ## Context
 
-Four new standalone components for showing brief visual + accessible feedback when users trigger actions via gestures or hotkeys. Replaces the monolithic `InputFeedback` overlay with focused, composable primitives.
+Standalone components for showing brief visual + accessible feedback when users trigger actions via gestures or hotkeys. The API is built from focused observer primitives: `StatusIndicator`, `StatusAnnouncer`, `VolumeIndicator`, and `SeekIndicator`.
 
 YouTube reference: center `role="status"` element with `aria-label="Pause"`, volume island, side seek overlays.
 
@@ -27,7 +27,7 @@ YouTube reference: center `role="status"` element with `aria-label="Pause"`, vol
                actions  only
 ```
 
-Each indicator subscribes independently to the gesture/hotkey coordinators, filters for its relevant actions, derives display state via the shared [`status.ts`](#derivation) module, and runs its own per-element transition + auto-close timer. There is no shared lifecycle object — synchronization is implicit (same source event, same default `closeDelay`).
+Each indicator subscribes independently to the gesture/hotkey coordinators, filters for its relevant actions, derives display state via the shared [`status.ts`](#derivation) module, and runs its own per-element transition + auto-close timer. Visual indicators also share a small per-container visibility coordinator so only one visual surface is open at a time. `StatusAnnouncer` remains independent because it is not a visual surface.
 
 ## Labels
 
@@ -58,7 +58,11 @@ Volume is the only action with a dynamic component. `label` is `"Volume"` (or `"
 
 Each indicator owns its own `createTransition()` (see [`packages/core/src/dom/ui/transition.ts`](../../../packages/core/src/dom/ui/transition.ts)) and an auto-close timer.
 
-On a relevant action: open the transition, (re-)arm the timer; on timer fire, close the transition. Retriggers re-arm. Synchronization across indicators is implicit — same source event, same default delay.
+On a relevant action: open the transition, (re-)arm the timer; on timer fire, close the transition. Retriggers re-arm.
+
+Visual indicators coordinate visibility through a per-player-container `IndicatorVisibilityCoordinator`. When `StatusIndicator`, `VolumeIndicator`, or `SeekIndicator` accepts an action, it asks the coordinator to close any other registered visual indicator before showing itself. Closing another indicator uses that indicator's normal transition lifecycle, so the previous payload remains available during `data-ending-style`. React visual indicators return `null` after exit completes; HTML visual indicators keep the authored custom element as the stable host and set `hidden` after exit completes.
+
+This prevents overlapping visual surfaces, for example a volume island and seek bubble being visible at the same time. The coordinator does not include `StatusAnnouncer`, because announcements should still be emitted for every supported action regardless of which visual indicator is currently shown.
 
 The auto-close delay is exposed as a `closeDelay` prop (number, ms; default `INDICATOR_CLOSE_DELAY = 800`) — matches Tooltip/Popover's prop-driven timing convention.
 
@@ -84,25 +88,58 @@ interface InputCoordinator {
 
 `subscribe()` is an additional broadcast channel — bindings still dispatch their own `onActivate` as before.
 
+**Order.** Subscriber callbacks run **before** `onActivate` (hotkeys) or the wrapped gesture `binding.onActivate`. Input-feedback derivation therefore reads the player **`MediaSnapshot` before the action is applied**. Toggle-style rows in [`status.ts`](../../../packages/core/src/core/ui/input-feedback/status.ts) express the **next** UI state from that pre-action snapshot (e.g. `paused → !paused`). Volume stepping prediction mirrors [`volumeFeature.setVolume`](../../../packages/core/src/dom/store/features/volume.ts): mute clears when the clamped volume after the step is greater than zero.
+
+**Isolation.** Each subscriber invocation is wrapped in `try/catch` so one throwing observer cannot prevent media handlers from running.
+
 Each indicator subscribes to both coordinators on connect, filters by `action`, and unsubscribes on disconnect:
 
 - StatusIndicator / StatusAnnouncer: all actions in the labels table
 - VolumeIndicator: `volumeStep`, `toggleMuted`
 - SeekIndicator: `seekStep`, `seekToPercent`
 
+Preset skins use multiple filtered `StatusIndicator` instances to keep each visual surface focused:
+
+- Top status island: `toggleSubtitles`, `toggleFullscreen`, `togglePictureInPicture`
+- Center status bubble: `togglePaused`
+
+Fullscreen and picture-in-picture feedback intentionally use the top status island instead of the center bubble so enter/exit actions feel like mode/status changes alongside captions, while play/pause remains the only centered status confirmation.
+
 ## Derivation
 
-A pure module — `status.ts` — derives `{ status, label, value, volumeLevel, announcerLabel }` from `(action, snapshot)`. Single source of truth for the labels table. Indicators import only the derivers they need.
+A pure module — [`status.ts`](../../../packages/core/src/core/ui/input-feedback/status.ts) — is the single source of truth for label/value/status rows used by StatusIndicator, StatusAnnouncer, and shared volume math.
+
+Exports relevant to input feedback:
 
 ```ts
-export function deriveStatus(action: InputAction, snapshot: MediaSnapshot): IndicatorStatus | null;
-export function deriveLabel(action: InputAction, snapshot: MediaSnapshot): string | null;
-export function deriveValue(action: InputAction, snapshot: MediaSnapshot): string | null;
-export function deriveAnnouncerLabel(action: InputAction, snapshot: MediaSnapshot): string | null;
-export function deriveVolumeLevel(snapshot: MediaSnapshot): 'off' | 'low' | 'high' | null;
+export function deriveStatus(
+  event: InputActionEvent,
+  snapshot: MediaSnapshot,
+  labels?: InputIndicatorLabels
+): StatusDetails | null;
+
+export function deriveAnnouncerLabel(
+  event: InputActionEvent,
+  snapshot: MediaSnapshot,
+  labels?: InputIndicatorLabels
+): string | null;
+
+/** Predicted mute/volume after `toggleMuted` / `volumeStep`; aligns with `volumeFeature.setVolume`. */
+export function predictVolumeActionOutcome(
+  event: InputActionEvent,
+  snapshot: MediaSnapshot
+): VolumeActionPrediction;
+
+/** Shared by deriveStatus (volume branches) and VolumeIndicatorCore — optional cached prediction avoids duplicate work. */
+export function deriveVolumeStatus(
+  event: InputActionEvent,
+  snapshot: MediaSnapshot,
+  labels?: InputIndicatorLabels,
+  cachedPrediction?: VolumeActionPrediction
+): StatusDetails;
 ```
 
-Boundary (volume floor/ceiling) is volume-specific and computed inside VolumeIndicator, not in the shared module.
+Seek overlays use `getSeekDirection`, `formatCurrentTime`, etc. Boundary shake (volume floor/ceiling) uses the same prediction as `deriveVolumeStatus` but min/max flags live on `VolumeIndicatorCore`, not in this module.
 
 ## 1. StatusIndicator
 
@@ -183,9 +220,10 @@ import { StatusIndicator } from '@videojs/react';
 
 ### Responsibilities
 
-- `role="status"`, `aria-live="polite"`
+- `role="status"` for implicit polite live-region semantics
 - Sets `aria-label` to current announcement text
-- Visually hidden — no visual output, no text content
+- Always mounted, with no transitions, animations, or skin classes
+- No visual output and no text content
 - Announces ALL actions for screen readers
 
 ### State
@@ -210,8 +248,8 @@ import { StatusAnnouncer } from '@videojs/react';
 
 - `role="status"` (implicit `aria-live="polite"`)
 - `aria-label` set/cleared to announce
-- Hidden with `display: contents` — no visual box, no layout impact
-- No text content, no DOM manipulation tricks — just `aria-label`
+- Presets render the announcer outside the visual feedback overlay
+- No text content — announcements use `aria-label` only
 
 ### Props
 

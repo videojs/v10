@@ -83,7 +83,9 @@
     }
 
     @media (prefers-reduced-motion: no-preference) {
-      translate: 0 -25%;
+      &[data-ending-style] {
+        translate: 0 -25%;
+      }
     }
   }
 }
@@ -92,35 +94,39 @@
   width: min(80%, 12rem);
 
   .media-input-feedback-island__content {
-    --media-progress-fill-percentage: var(--media-volume-percentage);
+    --media-progress-fill: var(--media-volume-fill);
     background-image: linear-gradient(
       to right,
       currentColor 0%,
-      currentColor var(--media-progress-fill-percentage),
-      transparent var(--media-progress-fill-percentage),
+      currentColor var(--media-progress-fill),
+      transparent var(--media-progress-fill),
       transparent 100%
     );
     border-radius: inherit;
-    transition: --media-progress-fill-percentage 200ms linear;
+    transition: --media-progress-fill 200ms linear;
   }
 }
 
-.media-default-skin .media-input-feedback-island--volume[data-volume-level="high"] .media-icon--volume-high,
-.media-default-skin .media-input-feedback-island--volume[data-volume-level="low"] .media-icon--volume-low,
-.media-default-skin .media-input-feedback-island--volume[data-volume-level="off"] .media-icon--volume-off {
+.media-default-skin .media-input-feedback-island--volume[data-level="high"] .media-icon--volume-high,
+.media-default-skin .media-input-feedback-island--volume[data-level="low"] .media-icon--volume-low,
+.media-default-skin .media-input-feedback-island--volume[data-level="off"] .media-icon--volume-off {
   display: block;
 }
 
-.media-default-skin .media-input-feedback-island--captions[data-captions] .media-icon--captions-on,
-.media-default-skin .media-input-feedback-island--captions:not([data-captions]) .media-icon--captions-off {
+.media-default-skin .media-input-feedback-island--status[data-status="captions-on"] .media-icon--captions-on,
+.media-default-skin .media-input-feedback-island--status[data-status="captions-off"] .media-icon--captions-off,
+.media-default-skin .media-input-feedback-island--status[data-status="fullscreen"] .media-icon--fullscreen-enter,
+.media-default-skin .media-input-feedback-island--status[data-status="exit-fullscreen"] .media-icon--fullscreen-exit,
+.media-default-skin .media-input-feedback-island--status[data-status="pip"] .media-icon--pip-enter,
+.media-default-skin .media-input-feedback-island--status[data-status="exit-pip"] .media-icon--pip-exit {
   display: block;
 }
 
 /* --- Boundary shake ------------------------------------------------------- */
 
 @media (prefers-reduced-motion: no-preference) {
-  .media-default-skin .media-input-feedback-island--volume[data-boundary="min"],
-  .media-default-skin .media-input-feedback-island--volume[data-boundary="max"] {
+  .media-default-skin .media-input-feedback-island--volume[data-min],
+  .media-default-skin .media-input-feedback-island--volume[data-max] {
     animation: media-shake 300ms ease-in-out;
   }
 }
@@ -131,7 +137,7 @@
   display: flex;
   flex-direction: column;
   grid-row: 1;
-  grid-column: 2; /* default to center when no region is set */
+  grid-column: 2; /* default to center for status bubbles and undirected seeks */
   align-items: center;
   justify-content: center;
   padding: 1rem;
@@ -149,13 +155,13 @@
   }
 }
 
-/* Region placement — gesture provides data-region, hotkey infers from data-direction */
-.media-default-skin .media-input-feedback-bubble[data-region="left"] {
+/* Direction placement — seek bubbles move to the side implied by their direction. */
+.media-default-skin .media-input-feedback-bubble[data-direction="backward"] {
   grid-column: 1;
   justify-self: left;
 }
 
-.media-default-skin .media-input-feedback-bubble[data-region="center"] {
+.media-default-skin .media-input-feedback-bubble:not([data-direction]) {
   grid-column: 2;
   transition-timing-function:
     ease-out, linear(0, 0.12 1.5%, 1.35 9.7%, 2.2 13.9%, 3 19.9%, 2.7 21.8%, 0.62 37.5%, 0.96 50.9%, 1);
@@ -175,7 +181,7 @@
   }
 }
 
-.media-default-skin .media-input-feedback-bubble[data-region="right"] {
+.media-default-skin .media-input-feedback-bubble[data-direction="forward"] {
   grid-column: 3;
   justify-self: right;
 }
@@ -189,7 +195,7 @@
 }
 
 /* seek: seek icon, flipped for backward */
-.media-default-skin .media-input-feedback-bubble[data-group="seek"] .media-icon--seek {
+.media-default-skin .media-input-feedback-bubble[data-direction] .media-icon--seek {
   display: block;
 }
 
@@ -199,35 +205,24 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .media-default-skin
-    .media-input-feedback-bubble[data-active][data-action="seekStep"][data-direction="forward"]
+    .media-input-feedback-bubble[data-direction="forward"]:not([data-starting-style])
     .media-icon--seek {
     animation: media-slide-in-forward 300ms ease-in-out;
   }
 
   .media-default-skin
-    .media-input-feedback-bubble[data-active][data-action="seekStep"][data-direction="backward"]
+    .media-input-feedback-bubble[data-direction="backward"]:not([data-starting-style])
     .media-icon--seek {
     animation: media-slide-in-backward 300ms ease-in-out;
   }
 
-  .media-default-skin .media-input-feedback-bubble[data-group="playback"] .media-icon--play,
-  .media-default-skin .media-input-feedback-bubble[data-group="playback"] .media-icon--pause {
+  .media-default-skin .media-input-feedback-island--status[data-status]:not([data-starting-style]) .media-icon,
+  .media-default-skin .media-input-feedback-bubble[data-status]:not([data-starting-style]) .media-icon {
     animation: media-pop-in 250ms ease-out;
   }
 }
 
-/* togglePaused: pause icon when now paused, play icon when now playing */
-.media-default-skin .media-input-feedback-bubble[data-group="playback"][data-paused] .media-icon--pause,
-.media-default-skin .media-input-feedback-bubble[data-group="playback"]:not([data-paused]) .media-icon--play {
+.media-default-skin .media-input-feedback-bubble[data-status="pause"] .media-icon--pause,
+.media-default-skin .media-input-feedback-bubble[data-status="play"] .media-icon--play {
   display: block;
-}
-
-/* --- Time display ---------------------------------------------------------- */
-
-.media-default-skin .media-input-feedback-bubble[data-value] .media-time {
-  display: block;
-}
-
-.media-default-skin .media-input-feedback-bubble:not([data-value]) .media-time {
-  display: none;
 }

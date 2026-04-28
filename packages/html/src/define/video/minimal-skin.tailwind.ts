@@ -181,42 +181,43 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
 
       <!-- Input Feedback -->
-      <media-input-feedback class="${inputFeedback.root}">
-        <media-input-feedback-item
-          group="volume"
+      <media-status-announcer></media-status-announcer>
+      <div class="${inputFeedback.root}">
+        <media-volume-indicator
+          hidden
           class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}"
         >
-          <div data-feedback-island-content="" class="${inputFeedback.island.content}">
+          <media-volume-indicator-fill data-feedback-island-content="" class="${inputFeedback.island.content}">
             ${renderIcon('volume-high', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh) })}
             ${renderIcon('volume-low', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow) })}
             ${renderIcon('volume-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff) })}
             <div aria-hidden="true" class="${inputFeedback.island.volumeProgress}"></div>
-            <media-input-feedback-value class="${inputFeedback.island.value}"></media-input-feedback-value>
-          </div>
-        </media-input-feedback-item>
+            <media-volume-indicator-value class="${inputFeedback.island.value}"></media-volume-indicator-value>
+          </media-volume-indicator-fill>
+        </media-volume-indicator>
 
-        <media-input-feedback-item group="captions" class="${cn(inputFeedback.island.base, inputFeedback.island.shownCaptions)}">
+        <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="${cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}">
           <div class="${inputFeedback.island.content}">
             ${renderIcon('captions-on', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn) })}
             ${renderIcon('captions-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff) })}
-            <media-input-feedback-value class="${inputFeedback.island.value}"></media-input-feedback-value>
+            ${renderIcon('fullscreen-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter) })}
+            ${renderIcon('fullscreen-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit) })}
+            ${renderIcon('pip-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter) })}
+            ${renderIcon('pip-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit) })}
+            <media-status-indicator-value class="${inputFeedback.island.value}"></media-status-indicator-value>
           </div>
-        </media-input-feedback-item>
+        </media-status-indicator>
 
-        <media-input-feedback-item group="seek" class="${inputFeedback.bubble.base}">
-          <media-input-feedback-icon>
-            ${renderIcon('chevron', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek) })}
-          </media-input-feedback-icon>
-          <media-input-feedback-time class="${inputFeedback.bubble.time}"></media-input-feedback-time>
-        </media-input-feedback-item>
+        <media-seek-indicator hidden class="${inputFeedback.bubble.base}">
+          ${renderIcon('chevron', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek) })}
+          <media-seek-indicator-value class="${inputFeedback.bubble.time}"></media-seek-indicator-value>
+        </media-seek-indicator>
 
-        <media-input-feedback-item group="playback" class="${inputFeedback.bubble.base}">
-          <media-input-feedback-icon>
-            ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
-            ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
-          </media-input-feedback-icon>
-        </media-input-feedback-item>
-      </media-input-feedback>
+        <media-status-indicator hidden actions="togglePaused" class="${inputFeedback.bubble.base}">
+          ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
+          ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
+        </media-status-indicator>
+      </div>
     </media-container>
   `;
 }

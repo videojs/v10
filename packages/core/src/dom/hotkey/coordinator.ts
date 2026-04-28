@@ -5,6 +5,7 @@ import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
 
 export interface HotkeyActivateEvent {
+  source: 'hotkey';
   action?: string | undefined;
   value?: number | undefined;
   event: KeyboardEvent;
@@ -155,11 +156,18 @@ export class HotkeyCoordinator {
 
         if (this.#subscribers.size > 0) {
           const activateEvent: HotkeyActivateEvent = {
+            source: 'hotkey',
             action: options.action,
             value: options.value,
             event,
           };
-          for (const cb of this.#subscribers) cb(activateEvent);
+          for (const cb of this.#subscribers) {
+            try {
+              cb(activateEvent);
+            } catch (error) {
+              if (__DEV__) console.warn('[vjs-hotkey] subscribe callback threw:', error);
+            }
+          }
         }
         event.preventDefault();
         options.onActivate(event, p.originalKey);

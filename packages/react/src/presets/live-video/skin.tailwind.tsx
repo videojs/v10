@@ -7,6 +7,7 @@ import {
   error,
   icon,
   iconState,
+  inputFeedback,
   overlay,
   popup,
   poster,
@@ -40,16 +41,24 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { LiveVideoSkinProps } from './skin';
+
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
@@ -240,6 +249,56 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className={overlay} />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className={inputFeedback.root}>
+        <VolumeIndicator.Root
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <VolumeIndicator.Fill className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <VolumeIndicator.Value className={inputFeedback.island.value} />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+            <StatusIndicator.Value className={inputFeedback.island.value} />
+          </div>
+        </StatusIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
+          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

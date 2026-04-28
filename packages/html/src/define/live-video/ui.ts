@@ -17,7 +17,14 @@ import { PosterElement } from '../../ui/poster/poster-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineControls, defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineTime,
+  defineTimeSlider,
+  defineVolumeSlider,
+} from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { LiveVideoPlayerElement } from './player';
@@ -30,6 +37,7 @@ safeDefine(MediaContainerElement);
 // Compound groups.
 defineControls();
 defineErrorDialog();
+defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();

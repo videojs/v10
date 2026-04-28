@@ -36,10 +36,8 @@
 
   & > * {
     font-size: 0.75rem; /* 12px at 100% font size */
-  }
 
-  @container media-root (width > 48rem) {
-    & > * {
+    @container media-root (width > 48rem) {
       font-size: 0.875rem; /* 14px at 100% font size */
     }
   }

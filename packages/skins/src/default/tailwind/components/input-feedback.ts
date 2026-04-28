@@ -1,12 +1,9 @@
 import { cn } from '@videojs/utils/style';
 
 /**
- * NOTE: Keyframes (`media-shake`, `media-slide-in-forward`,
- * `media-slide-in-backward`, `media-pop-in`) and the
- * `@property --media-progress-fill-percentage`
- * registration are defined in `@videojs/skins/default/css/components/input-feedback.css`.
- * Tailwind consumers should import that file (or redefine the animations) for the
- * boundary-shake and slide-in animations to work.
+ * NOTE: tailwind.css is required to support the `@property --media-progress-fill` registration and animation keyframes. You should import from either:
+- "@videojs/html/tailwind.css" for HTML skins
+- "@videojs/react/tailwind.css" for React skins
  */
 export const inputFeedback = {
   root: cn(
@@ -21,7 +18,7 @@ export const inputFeedback = {
 
   island: {
     base: cn(
-      'group/input-feedback-item',
+      'group/input-indicator',
       // Surface override (darker than default)
       '[--media-surface-background-color:oklch(0_0_0/0.25)]',
       // Layout
@@ -31,9 +28,9 @@ export const inputFeedback = {
       'duration-100 ease-out',
       'data-starting-style:opacity-0',
       'data-ending-style:opacity-0',
-      'data-starting-style:duration-[250ms]',
+      'data-starting-style:duration-250',
       'data-starting-style:ease-in',
-      'data-ending-style:duration-[250ms]',
+      'data-ending-style:duration-250',
       'data-ending-style:ease-in',
       'pointer-coarse:will-change-[scale,translate,opacity]',
       'pointer-coarse:transition-[scale,translate,opacity]',
@@ -43,8 +40,7 @@ export const inputFeedback = {
       'pointer-fine:motion-safe:data-starting-style:scale-90',
       'pointer-fine:motion-safe:data-ending-style:blur-sm',
       'pointer-fine:motion-safe:data-ending-style:scale-90',
-      'motion-safe:data-starting-style:[translate:0_-25%]',
-      'motion-safe:data-ending-style:[translate:0_-25%]',
+      'motion-safe:data-ending-style:-translate-y-1/4',
       // Reduced transparency / high contrast: solid surface background
       '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
       'contrast-more:[--media-surface-background-color:oklch(0_0_0)]'
@@ -52,88 +48,104 @@ export const inputFeedback = {
     content: cn(
       'flex justify-between items-center gap-2 px-2.5 py-1 w-full',
       // Increase contrast of content via blend mode
-      '**:[mix-blend-mode:difference]'
+      '**:mix-blend-difference'
     ),
     // Volume island sizing + progress-fill gradient on the content child
     volume: cn(
       'w-[min(80%,12rem)]',
-      '[&>*]:[--media-progress-fill-percentage:var(--media-volume-percentage)]',
-      '[&>*]:rounded-[inherit]',
-      '[&>*]:[background-image:linear-gradient(to_right,currentColor_0%,currentColor_var(--media-progress-fill-percentage),transparent_var(--media-progress-fill-percentage),transparent_100%)]',
-      '[&>*]:[transition:--media-progress-fill-percentage_200ms_linear]'
+      '*:[--media-progress-fill:var(--media-volume-fill)]',
+      '*:rounded-[inherit]',
+      '*:[background-image:linear-gradient(to_right,currentColor_0%,currentColor_var(--media-progress-fill),transparent_var(--media-progress-fill),transparent_100%)]',
+      '*:[transition:--media-progress-fill_200ms_linear]'
     ),
     // Shown state — applied on the active item itself
     shownVolume: cn(
-      'data-active:data-[group=volume]:duration-100',
+      'data-open:duration-100',
       // Boundary shake (keyframes must be registered and media-shake added to @theme — see note at top)
-      'data-[boundary=min]:animate-media-shake',
-      'data-[boundary=max]:animate-media-shake',
-      'motion-reduce:data-[boundary]:animate-none'
+      'data-min:animate-media-shake',
+      'data-max:animate-media-shake',
+      'motion-reduce:data-min:animate-none',
+      'motion-reduce:data-max:animate-none'
     ),
-    shownCaptions: cn('data-active:data-[group=captions]:duration-100'),
+    shownStatus: cn('data-open:duration-100'),
     // Icon inside island — hidden by default; specific icons opt in via shown* below.
     icon: cn('hidden shrink-0'),
     // Volume level → which icon shows
-    shownVolumeHigh: 'group-data-[volume-level=high]/input-feedback-item:block',
-    shownVolumeLow: 'group-data-[volume-level=low]/input-feedback-item:block',
-    shownVolumeOff: 'group-data-[volume-level=off]/input-feedback-item:block',
+    shownVolumeHigh: 'group-data-[level=high]/input-indicator:block',
+    shownVolumeLow: 'group-data-[level=low]/input-indicator:block',
+    shownVolumeOff: 'group-data-[level=off]/input-indicator:block',
     // Captions state → which icon shows
-    shownCaptionsOn: 'group-data-captions/input-feedback-item:block',
-    shownCaptionsOff: 'group-not-data-captions/input-feedback-item:block',
+    shownCaptionsOn: 'group-data-[status=captions-on]/input-indicator:block',
+    shownCaptionsOff: 'group-data-[status=captions-off]/input-indicator:block',
+    shownFullscreenEnter: cn(
+      'group-data-[status=fullscreen]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=fullscreen]/input-indicator:animate-media-pop-in'
+    ),
+    shownFullscreenExit: cn(
+      'group-data-[status=exit-fullscreen]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=exit-fullscreen]/input-indicator:animate-media-pop-in'
+    ),
+    shownPipEnter: cn(
+      'group-data-[status=pip]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=pip]/input-indicator:animate-media-pop-in'
+    ),
+    shownPipExit: cn(
+      'group-data-[status=exit-pip]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=exit-pip]/input-indicator:animate-media-pop-in'
+    ),
     value: 'ml-auto',
   },
 
   bubble: {
     base: cn(
-      'group/input-feedback-item',
-      // Default placement — center column when no region set
+      'group/input-indicator',
+      // Default placement — center column for status bubbles and undirected seeks
       'col-start-2 row-start-1',
       'flex flex-col items-center justify-center p-4',
-      'transition-opacity duration-[250ms] ease-out',
+      'transition-opacity duration-250 ease-out',
       'data-starting-style:opacity-0',
       'data-ending-style:opacity-0',
-      'data-starting-style:duration-[200ms]',
+      'data-starting-style:duration-200',
       'data-starting-style:ease-in',
-      'data-ending-style:duration-[200ms]',
+      'data-ending-style:duration-200',
       'data-ending-style:ease-in',
       '@2xl/media-root:p-8',
-      'data-[region=center]:[transition-property:opacity,scale]',
-      'data-[region=center]:duration-[600ms]',
-      'data-[region=center]:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',
-      'motion-reduce:data-[region=center]:[transition:opacity_100ms_ease-out]',
-      'data-[region=center]:data-starting-style:scale-[0.8]',
-      'data-[region=center]:data-ending-style:scale-[0.8]',
-      'data-[region=center]:data-starting-style:duration-[200ms]',
-      'data-[region=center]:data-starting-style:ease-in',
-      'data-[region=center]:data-ending-style:duration-[200ms]',
-      'data-[region=center]:data-ending-style:ease-in',
-      // Region placement
-      'data-[region=left]:col-start-1 data-[region=left]:justify-self-start',
-      'data-[region=center]:col-start-2',
-      'data-[region=right]:col-start-3 data-[region=right]:justify-self-end',
-      'data-[region=center]:justify-self-center'
+      'not-data-direction:[transition-property:opacity,scale]',
+      'not-data-direction:duration-600',
+      'not-data-direction:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',
+      'motion-reduce:not-data-direction:transition-opacity',
+      'motion-reduce:not-data-direction:duration-100',
+      'motion-reduce:not-data-direction:ease-out',
+      'not-data-direction:data-starting-style:scale-80',
+      'not-data-direction:data-ending-style:scale-80',
+      'not-data-direction:data-starting-style:duration-200',
+      'not-data-direction:data-starting-style:ease-in',
+      'not-data-direction:data-ending-style:duration-200',
+      'not-data-direction:data-ending-style:ease-in',
+      // Direction placement
+      'data-[direction=backward]:col-start-1 data-[direction=backward]:justify-self-start',
+      'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end'
     ),
     // Icons in the bubble
     icon: 'hidden w-9 h-9',
     // seek icon: shown for seekStep + seekToPercent; flipped for backward; slides in on active
     shownSeek: cn(
-      'group-data-[group=seek]/input-feedback-item:block',
-      'group-data-[direction=backward]/input-feedback-item:-scale-x-100',
+      'group-data-direction/input-indicator:block',
+      'group-data-[direction=backward]/input-indicator:-scale-x-100',
       // Slide animation (keyframes registered in companion CSS)
-      'group-data-active/input-feedback-item:group-data-[action=seekStep]/input-feedback-item:group-data-[direction=forward]/input-feedback-item:animate-media-slide-in-forward',
-      'group-data-active/input-feedback-item:group-data-[action=seekStep]/input-feedback-item:group-data-[direction=backward]/input-feedback-item:animate-media-slide-in-backward',
-      'motion-reduce:group-data-active/input-feedback-item:group-data-[action=seekStep]/input-feedback-item:animate-none'
+      'group-not-data-starting-style/input-indicator:group-data-[direction=forward]/input-indicator:animate-media-slide-in-forward',
+      'group-not-data-starting-style/input-indicator:group-data-[direction=backward]/input-indicator:animate-media-slide-in-backward',
+      'motion-reduce:group-data-direction/input-indicator:animate-none'
     ),
     // togglePaused: pause icon when paused, play icon when playing
     shownPause: cn(
-      'group-data-[group=playback]/input-feedback-item:group-data-paused/input-feedback-item:block',
-      'motion-safe:group-data-[group=playback]/input-feedback-item:group-data-paused/input-feedback-item:animate-media-pop-in'
+      'group-data-[status=pause]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=pause]/input-indicator:animate-media-pop-in'
     ),
     shownPlay: cn(
-      'group-data-[group=playback]/input-feedback-item:group-not-data-paused/input-feedback-item:block',
-      'motion-safe:group-data-[group=playback]/input-feedback-item:group-not-data-paused/input-feedback-item:animate-media-pop-in'
+      'group-data-[status=play]/input-indicator:block',
+      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=play]/input-indicator:animate-media-pop-in'
     ),
-    // Time display: visible for seekStep only
-    time: cn('group-data-value/input-feedback-item:block', 'group-not-data-value/input-feedback-item:hidden'),
+    time: 'tabular-nums',
   },
 };

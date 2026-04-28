@@ -2,7 +2,7 @@
 /* Global @properties for all video skins (CSS & Tailwind)                    */
 /* -------------------------------------------------------------------------- */
 
-@property --media-progress-fill-percentage {
+@property --media-progress-fill {
   syntax: "<percentage>";
   inherits: true;
   initial-value: 0%;

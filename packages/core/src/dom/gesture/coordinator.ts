@@ -39,13 +39,20 @@ export class GestureCoordinator {
         if (this.#subscribers.size > 0) {
           const activateEvent: GestureActivateEvent = {
             type: binding.type,
+            source: 'gesture',
             action: binding.action,
             value: binding.value,
             region: binding.region,
             pointer: binding.pointer,
             event,
           };
-          for (const cb of this.#subscribers) cb(activateEvent);
+          for (const cb of this.#subscribers) {
+            try {
+              cb(activateEvent);
+            } catch (error) {
+              if (__DEV__) console.warn('[vjs-gesture] subscribe callback threw:', error);
+            }
+          }
         }
         binding.onActivate(event);
       },

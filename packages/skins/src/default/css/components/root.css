@@ -19,7 +19,12 @@
     sans-serif;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
+  line-height: 1.5;
+  letter-spacing: normal;
+  outline: 2px solid transparent;
   outline-offset: -4px;
+  border-radius: var(--media-border-radius, 2rem);
+  isolation: isolate;
   transition-timing-function: ease-out;
   transition-duration: 100ms;
   transition-property: outline-offset, outline-color;
@@ -31,10 +36,8 @@
 
   & > * {
     font-size: 0.75rem; /* 12px at 100% font size */
-  }
 
-  @container media-root (width > 48rem) {
-    & > * {
+    @container media-root (width > 48rem) {
       font-size: 0.875rem; /* 14px at 100% font size */
     }
   }

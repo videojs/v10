@@ -27,9 +27,8 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
-import { Gesture } from '@/ui/gesture/gesture';
-import { Hotkey } from '@/ui/hotkey/hotkey';
-import { InputFeedback } from '@/ui/input-feedback';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -37,15 +36,21 @@ import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
+import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
+import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
@@ -280,42 +285,43 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
       {/* Input Feedback */}
-      <InputFeedback.Root className="media-input-feedback">
-        <InputFeedback.Item group="volume" className="media-input-feedback-island media-input-feedback-island--volume">
-          <div className="media-input-feedback-island__content">
+      <StatusAnnouncer />
+      <div className="media-input-feedback">
+        <VolumeIndicator.Root className="media-input-feedback-island media-input-feedback-island--volume">
+          <VolumeIndicator.Fill className="media-input-feedback-island__content">
             <VolumeHighIcon className="media-icon media-icon--volume-high" />
             <VolumeLowIcon className="media-icon media-icon--volume-low" />
             <VolumeOffIcon className="media-icon media-icon--volume-off" />
             <div className="media-input-feedback-island__progress" aria-hidden="true" />
-            <InputFeedback.Value className="media-input-feedback-island__value" />
-          </div>
-        </InputFeedback.Item>
+            <VolumeIndicator.Value className="media-input-feedback-island__value" />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
 
-        <InputFeedback.Item
-          group="captions"
-          className="media-input-feedback-island media-input-feedback-island--captions"
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className="media-input-feedback-island media-input-feedback-island--status"
         >
           <div className="media-input-feedback-island__content">
             <CaptionsOnIcon className="media-icon media-icon--captions-on" />
             <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-            <InputFeedback.Value className="media-input-feedback-island__value" />
+            <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+            <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+            <PipEnterIcon className="media-icon media-icon--pip-enter" />
+            <PipExitIcon className="media-icon media-icon--pip-exit" />
+            <StatusIndicator.Value className="media-input-feedback-island__value" />
           </div>
-        </InputFeedback.Item>
+        </StatusIndicator.Root>
 
-        <InputFeedback.Item group="seek" className="media-input-feedback-bubble">
-          <InputFeedback.Icon>
-            <ChevronIcon className="media-icon media-icon--seek" />
-          </InputFeedback.Icon>
-          <InputFeedback.Time className="media-time" />
-        </InputFeedback.Item>
+        <SeekIndicator.Root className="media-input-feedback-bubble">
+          <ChevronIcon className="media-icon media-icon--seek" />
+          <SeekIndicator.Value className="media-time" />
+        </SeekIndicator.Root>
 
-        <InputFeedback.Item group="playback" className="media-input-feedback-bubble">
-          <InputFeedback.Icon>
-            <PlayIcon className="media-icon media-icon--play" />
-            <PauseIcon className="media-icon media-icon--pause" />
-          </InputFeedback.Icon>
-        </InputFeedback.Item>
-      </InputFeedback.Root>
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className="media-input-feedback-bubble">
+          <PlayIcon className="media-icon media-icon--play" />
+          <PauseIcon className="media-icon media-icon--pause" />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

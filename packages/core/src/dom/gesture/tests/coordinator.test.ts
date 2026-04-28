@@ -90,6 +90,22 @@ describe('GestureCoordinator.subscribe', () => {
     expect(subscriber).not.toHaveBeenCalled();
   });
 
+  it('still invokes binding onActivate when a subscriber throws', () => {
+    const container = setup();
+    const bindingActivate = vi.fn();
+
+    getGestureCoordinator(container).subscribe(() => {
+      throw new Error('subscriber boom');
+    });
+    createTapGesture(container, bindingActivate, { action: 'togglePaused' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(bindingActivate).toHaveBeenCalledOnce();
+  });
+
   it('does not fire subscriber when gesture binding does not match', () => {
     const container = setup();
     const subscriber = vi.fn();

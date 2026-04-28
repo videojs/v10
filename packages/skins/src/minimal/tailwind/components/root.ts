@@ -1,6 +1,8 @@
 import { cn } from '@videojs/utils/style';
+import { reset } from './reset';
 
 export const root = cn(
+  reset,
   // Layout & containment
   'block relative isolate @container/media-root',
   // Appearance
@@ -15,9 +17,5 @@ export const root = cn(
   '[--media-current-shadow-color:oklch(from_currentColor_0_0_0/clamp(0,calc((l-0.5)*0.5),0.15))]',
   '[--media-current-shadow-color-subtle:oklch(from_var(--media-current-shadow-color)_l_c_h/calc(alpha*0.4))]',
   // Icon sizing
-  '[--media-icon-size:18px]',
-  // Resets
-  '**:box-border',
-  '[&_button]:font-[inherit]',
-  'motion-safe:[interpolate-size:allow-keywords]'
+  '[--media-icon-size:18px]'
 );

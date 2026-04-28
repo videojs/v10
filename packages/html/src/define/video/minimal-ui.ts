@@ -21,7 +21,7 @@ import { safeDefine } from '../safe-define';
 import {
   defineControls,
   defineErrorDialog,
-  defineInputFeedback,
+  defineInputIndicators,
   defineTime,
   defineTimeSlider,
   defineVolumeSlider,
@@ -38,7 +38,7 @@ safeDefine(MediaContainerElement);
 // Compound groups.
 defineControls();
 defineErrorDialog();
-defineInputFeedback();
+defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();

@@ -25,6 +25,7 @@ export interface GestureBinding {
 
 export interface GestureActivateEvent {
   type: GestureType;
+  source: 'gesture';
   action?: string | undefined;
   value?: number | undefined;
   region?: GestureRegion | undefined;

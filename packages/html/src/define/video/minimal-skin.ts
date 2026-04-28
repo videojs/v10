@@ -162,39 +162,40 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
 
       <!-- Input Feedback -->
-      <media-input-feedback class="media-input-feedback">
-        <media-input-feedback-item group="volume" class="media-input-feedback-island media-input-feedback-island--volume">
-          <div class="media-input-feedback-island__content">
+      <media-status-announcer></media-status-announcer>
+      <div class="media-input-feedback">
+        <media-volume-indicator hidden class="media-input-feedback-island media-input-feedback-island--volume">
+          <media-volume-indicator-fill class="media-input-feedback-island__content">
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
             <div class="media-input-feedback-island__progress" aria-hidden="true"></div>
-            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
-          </div>
-        </media-input-feedback-item>
+            <media-volume-indicator-value class="media-input-feedback-island__value"></media-volume-indicator-value>
+          </media-volume-indicator-fill>
+        </media-volume-indicator>
 
-        <media-input-feedback-item group="captions" class="media-input-feedback-island media-input-feedback-island--captions">
+        <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="media-input-feedback-island media-input-feedback-island--status">
           <div class="media-input-feedback-island__content">
             ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
-            <media-input-feedback-value class="media-input-feedback-island__value"></media-input-feedback-value>
+            ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
+            ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
+            ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
+            ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
+            <media-status-indicator-value class="media-input-feedback-island__value"></media-status-indicator-value>
           </div>
-        </media-input-feedback-item>
+        </media-status-indicator>
 
-        <media-input-feedback-item group="seek" class="media-input-feedback-bubble">
-          <media-input-feedback-icon>
-            ${renderIcon('chevron', { class: 'media-icon media-icon--seek' })}
-          </media-input-feedback-icon>
-          <media-input-feedback-time class="media-time"></media-input-feedback-time>
-        </media-input-feedback-item>
+        <media-seek-indicator hidden class="media-input-feedback-bubble">
+          ${renderIcon('chevron', { class: 'media-icon media-icon--seek' })}
+          <media-seek-indicator-value class="media-time"></media-seek-indicator-value>
+        </media-seek-indicator>
 
-        <media-input-feedback-item group="playback" class="media-input-feedback-bubble">
-          <media-input-feedback-icon>
-            ${renderIcon('play', { class: 'media-icon media-icon--play' })}
-            ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
-          </media-input-feedback-icon>
-        </media-input-feedback-item>
-      </media-input-feedback>
+        <media-status-indicator hidden actions="togglePaused" class="media-input-feedback-bubble">
+          ${renderIcon('play', { class: 'media-icon media-icon--play' })}
+          ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
+        </media-status-indicator>
+      </div>
     </media-container>
   `;
 }

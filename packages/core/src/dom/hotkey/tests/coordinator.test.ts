@@ -325,6 +325,35 @@ describe('HotkeyCoordinator', () => {
     });
   });
 
+  describe('subscribe', () => {
+    it('still invokes onActivate when a subscriber throws', () => {
+      const c = setup();
+      const onActivate = vi.fn();
+      c.subscribe(() => {
+        throw new Error('subscriber boom');
+      });
+      c.add({ keys: 'k', onActivate });
+
+      keydown(container, 'k');
+
+      expect(onActivate).toHaveBeenCalledOnce();
+    });
+
+    it('runs subsequent subscribers after one throws', () => {
+      const c = setup();
+      const second = vi.fn();
+      c.subscribe(() => {
+        throw new Error('first');
+      });
+      c.subscribe(second);
+      c.add({ keys: 'k', onActivate: vi.fn() });
+
+      keydown(container, 'k');
+
+      expect(second).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('ARIA registry', () => {
     it('returns undefined for unregistered action', () => {
       const c = setup();
