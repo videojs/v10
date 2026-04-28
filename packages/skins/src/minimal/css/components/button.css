@@ -33,15 +33,11 @@
     scale: 0.98;
   }
 
-  &[disabled] {
-    cursor: not-allowed;
+  &[disabled],
+  &[data-disabled] {
     opacity: 0.5;
     filter: grayscale(1);
-  }
-
-  &[data-availability="unavailable"],
-  &[data-availability="unsupported"] {
-    display: none;
+    cursor: not-allowed;
   }
 }
 
