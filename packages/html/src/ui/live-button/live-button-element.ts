@@ -12,6 +12,13 @@ export class LiveButtonElement extends MediaButtonElement<LiveButtonCore> {
   protected readonly stateAttrMap = LiveButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectLiveButton);
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (!this.textContent?.trim()) {
+      this.textContent = LiveButtonCore.defaultText;
+    }
+  }
+
   protected activate(state: LiveButtonMediaState): void {
     this.core.seekToLive(state);
   }

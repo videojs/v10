@@ -36,10 +36,7 @@ function getTemplateHTML() {
             </media-play-button>
             <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
-            <media-live-button class="media-button media-button--subtle media-button--live">
-              <span class="media-live-indicator" aria-hidden="true"></span>
-              <span class="media-live-label">LIVE</span>
-            </media-live-button>
+            <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
           </div>
 
           <div class="media-time-controls" aria-hidden="true"></div>

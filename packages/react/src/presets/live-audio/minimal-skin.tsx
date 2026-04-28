@@ -103,10 +103,7 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
               <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
-            <LiveButton className="media-button media-button--subtle media-button--live">
-              <span className="media-live-indicator" aria-hidden="true" />
-              <span className="media-live-label">LIVE</span>
-            </LiveButton>
+            <LiveButton className="media-button media-button--subtle media-button--live" />
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />

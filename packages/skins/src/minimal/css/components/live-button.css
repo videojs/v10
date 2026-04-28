@@ -2,7 +2,7 @@
    Live Button
 
    Wide button with a status indicator (gray → red at the live edge) and a
-   "LIVE" text label.
+   "LIVE" text label rendered as the button's own text content.
    ========================================================================== */
 
 .media-minimal-skin .media-button--live {
@@ -12,9 +12,15 @@
   width: auto;
   aspect-ratio: auto;
   padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-.media-minimal-skin .media-live-indicator {
+.media-minimal-skin .media-button--live::before {
+  content: "";
   display: inline-block;
   flex-shrink: 0;
   width: 0.5rem;
@@ -24,14 +30,6 @@
   transition: background-color 150ms ease-out;
 }
 
-.media-minimal-skin .media-button--live[data-live-edge] .media-live-indicator {
+.media-minimal-skin .media-button--live[data-live-edge]::before {
   background-color: oklch(0.65 0.22 27);
-}
-
-.media-minimal-skin .media-live-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1;
 }

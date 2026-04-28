@@ -44,6 +44,16 @@ export interface LiveButtonState extends ButtonState {
  * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
  */
 export class LiveButtonCore {
+  /**
+   * Default visible text. Auto-inserted by `media-live-button` and `<LiveButton>`
+   * when no children are provided. Override globally for i18n:
+   *
+   * ```ts
+   * LiveButtonCore.defaultText = 'En Vivo';
+   * ```
+   */
+  static defaultText = 'Live';
+
   static readonly defaultProps: NonNullableObject<LiveButtonProps> = {
     label: '',
     disabled: false,

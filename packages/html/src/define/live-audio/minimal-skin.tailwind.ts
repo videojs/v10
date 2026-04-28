@@ -48,10 +48,7 @@ function getTemplateHTML() {
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
 
-              <media-live-button class="${cn(button.base, button.subtle, liveButton.button)}">
-                <span class="${liveButton.indicator}" aria-hidden="true"></span>
-                <span class="${liveButton.label}">LIVE</span>
-              </media-live-button>
+              <media-live-button class="${cn(button.base, button.subtle, liveButton.button)}"></media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>

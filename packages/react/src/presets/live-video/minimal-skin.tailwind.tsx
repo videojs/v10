@@ -179,10 +179,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
-            <LiveButton className={cn(button.base, button.subtle, liveButton.button)}>
-              <span className={liveButton.indicator} aria-hidden="true" />
-              <span className={liveButton.label}>LIVE</span>
-            </LiveButton>
+            <LiveButton className={cn(button.base, button.subtle, liveButton.button)} />
           </div>
 
           <div className="grow" aria-hidden="true" />
