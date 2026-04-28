@@ -45,6 +45,12 @@
     transition: opacity 150ms ease-out;
   }
 
+  &:not(:has(.media-preview__thumbnail[data-loading])) {
+    & .media-preview__spinner {
+      --media-spinner-animation: none;
+    }
+  }
+
   &:has(.media-preview__thumbnail[data-loading]) {
     & .media-preview__thumbnail {
       opacity: 0;

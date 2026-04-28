@@ -1,11 +1,19 @@
-import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
+import type {
+  AudioFeatures,
+  BackgroundFeatures,
+  LiveAudioFeatures,
+  LiveVideoFeatures,
+  VideoFeatures,
+} from '../../media/types';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
 import { fullscreenFeature } from './fullscreen';
+import { liveFeature } from './live';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
@@ -20,6 +28,7 @@ export const videoFeatures: VideoFeatures = [
   bufferFeature,
   fullscreenFeature,
   pipFeature,
+  remotePlaybackFeature,
   controlsFeature,
   textTrackFeature,
   errorFeature,
@@ -37,3 +46,40 @@ export const audioFeatures: AudioFeatures = [
 
 // TODO: Add background video features (e.g., playback, source, buffer)
 export const backgroundFeatures: BackgroundFeatures = [];
+
+/**
+ * Features for a live video player. Mirrors {@link videoFeatures} but drops
+ * {@link playbackRateFeature} (not meaningful for live) and adds
+ * {@link liveFeature} so store consumers can read `liveEdgeStart` and
+ * `targetLiveWindow`.
+ */
+export const liveVideoFeatures: LiveVideoFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  fullscreenFeature,
+  pipFeature,
+  remotePlaybackFeature,
+  controlsFeature,
+  textTrackFeature,
+  errorFeature,
+  liveFeature,
+];
+
+/**
+ * Features for a live audio player. Mirrors {@link audioFeatures} but drops
+ * {@link playbackRateFeature} (not meaningful for live) and adds
+ * {@link liveFeature} so store consumers can read `liveEdgeStart` and
+ * `targetLiveWindow`.
+ */
+export const liveAudioFeatures: LiveAudioFeatures = [
+  playbackFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+  errorFeature,
+  liveFeature,
+];

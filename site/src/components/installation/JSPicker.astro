@@ -1,13 +1,12 @@
 ---
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { SupportedFramework } from '@/types/docs';
 import JSPickerClient from './JSPickerClient';
 
-const { framework, style, slug } = Astro.params;
+const { framework, slug } = Astro.params;
 ---
 
 <JSPickerClient
   client:idle
   currentFramework={framework as SupportedFramework}
-  currentStyle={style as SupportedStyle<SupportedFramework>}
   currentSlug={slug as string}
 />

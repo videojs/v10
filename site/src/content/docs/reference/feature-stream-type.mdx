@@ -1,0 +1,50 @@
+---
+title: Stream type
+description: Stream delivery type (live / on-demand) state for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks the current stream delivery type so components can toggle live-specific UI (a live indicator, "jump to live edge" affordance, hiding the time display, etc.).
+
+When the media exposes its own `streamType` (e.g. HLS sources derive it from the manifest), the feature syncs on `streamtypechange`. For plain media elements without that capability, it falls back to duration-based detection: an infinite `duration` reports `'live'`, a finite positive `duration` reports `'on-demand'`, and anything else reports `'unknown'`.
+
+<FeatureReference feature="streamType" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectStreamType` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectStreamType` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="LiveIndicator.tsx"
+import { selectStreamType, usePlayer } from '@videojs/react';
+
+function LiveIndicator() {
+  const stream = usePlayer(selectStreamType);
+  if (stream?.streamType !== 'live') return null;
+
+  return <span className="live-indicator">LIVE</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="live-indicator.ts"
+import { createPlayer, MediaElement, selectStreamType } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class LiveIndicator extends MediaElement {
+  readonly #stream = new PlayerController(this, context, selectStreamType);
+}
+```
+</FrameworkCase>

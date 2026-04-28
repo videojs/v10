@@ -6,6 +6,10 @@ const INSTALLATION_DOC = `# Installation
 
 Intro paragraph.
 
+<!-- cli:omit installation -->
+Run the CLI to generate install code.
+<!-- /cli:omit installation -->
+
 <!-- cli:replace installation -->
 Placeholder for CLI-generated code.
 <!-- /cli:replace installation -->
@@ -205,6 +209,8 @@ describe('handleDocs', () => {
         expect(out).toContain('## HTML');
         expect(out).toContain('<video-player>');
         expect(out).not.toContain('<!-- cli:replace');
+        expect(out).not.toContain('<!-- cli:omit');
+        expect(out).not.toContain('Run the CLI to generate install code');
         expect(out).toContain('Intro paragraph');
         expect(out).toContain('## Next steps');
       });

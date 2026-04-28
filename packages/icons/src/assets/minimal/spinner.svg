@@ -1,35 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-  <rect width="2" height="5" x="8" y=".5" rx="1" opacity="0.5">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="2" height="5" x="12.243" y="2.257" rx="1" transform="rotate(45 13.243 4.757)" opacity="0.45">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.125s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="5" height="2" x="12.5" y="8" rx="1" opacity="0.4">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.25s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="5" height="2" x="10.743" y="12.243" rx="1" transform="rotate(45 13.243 13.243)" opacity="0.35">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.375s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="2" height="5" x="8" y="12.5" rx="1" opacity="0.3">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.5s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="2" height="5" x="3.757" y="10.743" rx="1" transform="rotate(45 4.757 13.243)" opacity="0.25">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.625s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect width="5" height="2" x=".5" y="8" rx="1" opacity="0.15">
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.75s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
-  <rect
-    width="5"
-    height="2"
-    x="2.257"
-    y="3.757"
-    fill-rule="nonzero"
-    rx="1"
-    transform="rotate(45 4.757 4.757)"
-    opacity="0.1"
-  >
-    <animate attributeName="opacity" values="1;0" dur="1s" begin="0.875s" repeatCount="indefinite" calcMode="linear" />
-  </rect>
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+  <style>
+    @keyframes media-spinner-fade {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .media-spinner__segment {
+      animation: var(--media-spinner-animation, media-spinner-fade 1s linear infinite);
+      animation-delay: var(--media-spinner-delay);
+    }
+  </style>
+  <line class="media-spinner__segment" x1="9" y1="1.5" x2="9" y2="4.5" opacity="0.5" style="--media-spinner-delay:0s" />
+  <line class="media-spinner__segment" x1="14.5" y1="3.5" x2="12.5" y2="5.5" opacity="0.45" style="--media-spinner-delay:0.125s" />
+  <line class="media-spinner__segment" x1="16.5" y1="9" x2="13.5" y2="9" opacity="0.4" style="--media-spinner-delay:0.25s" />
+  <line class="media-spinner__segment" x1="14.5" y1="14.5" x2="12.5" y2="12.5" opacity="0.35" style="--media-spinner-delay:0.375s" />
+  <line class="media-spinner__segment" x1="9" y1="16.5" x2="9" y2="13.5" opacity="0.3" style="--media-spinner-delay:0.5s" />
+  <line class="media-spinner__segment" x1="3.5" y1="14.5" x2="5.5" y2="12.5" opacity="0.25" style="--media-spinner-delay:0.625s" />
+  <line class="media-spinner__segment" x1="1.5" y1="9" x2="4.5" y2="9" opacity="0.15" style="--media-spinner-delay:0.75s" />
+  <line class="media-spinner__segment" x1="3.5" y1="3.5" x2="5.5" y2="5.5" opacity="0.1" style="--media-spinner-delay:0.875s" />
 </svg>

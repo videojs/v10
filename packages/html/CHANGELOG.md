@@ -1,5 +1,115 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.22...@videojs/html@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **html:** observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/issues/1386)) ([76a1e4a](https://github.com/videojs/v10/commit/76a1e4a8c9b85151070b3b10c87692131b529c92))
+* **html:** re-export reactive primitives from @videojs/element ([#1472](https://github.com/videojs/v10/issues/1472)) ([466abb6](https://github.com/videojs/v10/commit/466abb6d200b790d9de64be0e0c87c56d60e64a5))
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Bug Fixes
+
+* **html:** raise testTimeout to 15s for parallel-load reliability ([#1448](https://github.com/videojs/v10/issues/1448)) ([b934937](https://github.com/videojs/v10/commit/b9349375cbcd8436173afc0d6a03cab182829718))
+
+
+### Code Refactoring
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.23
+    * @videojs/element bumped to 10.0.0-beta.23
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.23
+    * @videojs/skins bumped to 10.0.0-beta.23
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.21...@videojs/html@10.0.0-beta.22) (2026-04-18)
+
+
+### Features
+
+* **packages:** add chromecast support via remote playback API ([#1348](https://github.com/videojs/v10/issues/1348)) ([31a005e](https://github.com/videojs/v10/commit/31a005eeef4cee496c15f6f6be0129ef0006a5a8))
+
+
+### Bug Fixes
+
+* **packages:** add server-only bundles  ([#1349](https://github.com/videojs/v10/issues/1349)) ([3331fda](https://github.com/videojs/v10/commit/3331fdaf25c8a89ea6d36c2972631df589fc0ad3))
+
+
+### Reverts
+
+* **packages:** add server-only bundles ([#1349](https://github.com/videojs/v10/issues/1349)) ([#1354](https://github.com/videojs/v10/issues/1354)) ([8530316](https://github.com/videojs/v10/commit/8530316987b5122a2e455b0db3bad6fd3ffa8186))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.22
+    * @videojs/element bumped to 10.0.0-beta.22
+    * @videojs/spf bumped to 10.0.0-beta.22
+    * @videojs/store bumped to 10.0.0-beta.22
+    * @videojs/utils bumped to 10.0.0-beta.22
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.22
+    * @videojs/skins bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.20...@videojs/html@10.0.0-beta.21) (2026-04-14)
+
+
+### Features
+
+* **site:** feature and preset reference UI + docs integration ([#1258](https://github.com/videojs/v10/issues/1258)) ([d4b805e](https://github.com/videojs/v10/commit/d4b805ea699bd33234c817a7519ff9efbd4753fd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.21
+    * @videojs/element bumped to 10.0.0-beta.21
+    * @videojs/spf bumped to 10.0.0-beta.21
+    * @videojs/store bumped to 10.0.0-beta.21
+    * @videojs/utils bumped to 10.0.0-beta.21
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.21
+    * @videojs/skins bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.19...@videojs/html@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/html:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.20
+    * @videojs/element bumped to 10.0.0-beta.20
+    * @videojs/spf bumped to 10.0.0-beta.20
+    * @videojs/store bumped to 10.0.0-beta.20
+    * @videojs/utils bumped to 10.0.0-beta.20
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.20
+    * @videojs/skins bumped to 10.0.0-beta.20
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.18...@videojs/html@10.0.0-beta.19) (2026-04-14)
 
 

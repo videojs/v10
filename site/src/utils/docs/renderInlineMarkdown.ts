@@ -32,7 +32,7 @@ const renderer: MarkedExtension['renderer'] = {
   },
 
   listitem(item: Tokens.ListItem) {
-    let body = this.parser.parse(item.tokens, !!item.loose);
+    let body = this.parser.parse(item.tokens);
     if (!item.loose) {
       body = body.replace(/^<p class="[^"]*">/, '').replace(/<\/p>$/, '');
     }

@@ -8,6 +8,6 @@ export const preview = {
   spinner: cn(
     'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0',
     'transition-opacity duration-150 ease-out',
-    'group-has-[[role=img][data-loading]]/preview:opacity-100'
+    'group-not-has-[[role=img][data-loading]]/preview:[--media-spinner-animation:none] group-has-[[role=img][data-loading]]/preview:opacity-100'
   ),
 };

@@ -27,6 +27,10 @@
     },
     "lint": {
       "outputs": []
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
     }
   }
 }

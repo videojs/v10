@@ -1,0 +1,52 @@
+---
+title: Remote Playback
+description: Remote playback state and actions for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls remote playback to devices like Chromecast. Exits fullscreen before initiating a remote playback session.
+
+<FeatureReference feature="remotePlayback" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectRemotePlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectRemotePlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="CastButton.tsx"
+import { selectRemotePlayback, usePlayer } from '@videojs/react';
+
+function CastButton() {
+  const remotePlayback = usePlayer(selectRemotePlayback);
+  if (!remotePlayback || remotePlayback.remotePlaybackAvailability !== 'available') return null;
+
+  return (
+    <button onClick={remotePlayback.toggleRemotePlayback}>
+      {remotePlayback.remotePlaybackState === 'connected' ? 'Disconnect' : 'Cast'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="cast-button.ts"
+import { createPlayer, MediaElement, selectRemotePlayback } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class CastButton extends MediaElement {
+  readonly #remotePlayback = new PlayerController(this, context, selectRemotePlayback);
+}
+```
+</FrameworkCase>

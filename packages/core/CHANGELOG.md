@@ -1,5 +1,94 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** unify fullscreen and pip on media capabilities ([#1469](https://github.com/videojs/v10/issues/1469))
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **core:** add HLS stream-type detection and live duration ([#1387](https://github.com/videojs/v10/issues/1387)) ([587c302](https://github.com/videojs/v10/commit/587c302fe5c9f5f558c7358cd84f6438b9b890b7))
+* **core:** add liveEdgeStart and targetLiveWindow properties ([#1445](https://github.com/videojs/v10/issues/1445)) ([e3d4ff9](https://github.com/videojs/v10/commit/e3d4ff9d681ec4c31247542f7c2136d341e05303))
+* **html:** observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/issues/1386)) ([76a1e4a](https://github.com/videojs/v10/commit/76a1e4a8c9b85151070b3b10c87692131b529c92))
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Code Refactoring
+
+* **core:** unify fullscreen and pip on media capabilities ([#1469](https://github.com/videojs/v10/issues/1469)) ([bb72a84](https://github.com/videojs/v10/commit/bb72a84dc1a6d125befeb136fd114d29e2180854))
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.21...@videojs/core@10.0.0-beta.22) (2026-04-18)
+
+
+### Features
+
+* **packages:** add chromecast support via remote playback API ([#1348](https://github.com/videojs/v10/issues/1348)) ([31a005e](https://github.com/videojs/v10/commit/31a005eeef4cee496c15f6f6be0129ef0006a5a8))
+
+
+### Bug Fixes
+
+* **packages:** add server-only bundles  ([#1349](https://github.com/videojs/v10/issues/1349)) ([3331fda](https://github.com/videojs/v10/commit/3331fdaf25c8a89ea6d36c2972631df589fc0ad3))
+* **react:** prevent gesture tap from firing on slider interactions ([#1361](https://github.com/videojs/v10/issues/1361)) ([769d436](https://github.com/videojs/v10/commit/769d436f4ec78b71d18e0028a606114af48b7afb))
+
+
+### Reverts
+
+* **packages:** add server-only bundles ([#1349](https://github.com/videojs/v10/issues/1349)) ([#1354](https://github.com/videojs/v10/issues/1354)) ([8530316](https://github.com/videojs/v10/commit/8530316987b5122a2e455b0db3bad6fd3ffa8186))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.22
+    * @videojs/store bumped to 10.0.0-beta.22
+    * @videojs/utils bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.20...@videojs/core@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/core:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.21
+    * @videojs/store bumped to 10.0.0-beta.21
+    * @videojs/utils bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.19...@videojs/core@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/core:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.20
+    * @videojs/store bumped to 10.0.0-beta.20
+    * @videojs/utils bumped to 10.0.0-beta.20
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.18...@videojs/core@10.0.0-beta.19) (2026-04-14)
 
 

@@ -1,12 +1,13 @@
 // @vitest-environment node
 
-import type { AstroActionContext } from 'astro:actions';
 import { getActionContext } from 'astro:actions';
 import type { APIContext } from 'astro';
 import { jwtVerify } from 'jose';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { onRequest } from '@/middleware/index';
 import { refreshToken, seal, unseal } from '@/utils/auth';
+
+type AstroActionContext = ReturnType<typeof getActionContext>;
 
 vi.stubEnv('PROD', false);
 

@@ -73,7 +73,7 @@ export function extractDefaultProps(
 
   const defaultProps: Record<string, string> = {};
 
-  function visit(node: ts.Node) {
+  const visit = (node: ts.Node) => {
     // Look for class declaration
     if (ts.isClassDeclaration(node) && node.name?.text === `${componentName}Core`) {
       for (const member of node.members) {
@@ -103,7 +103,7 @@ export function extractDefaultProps(
     }
 
     ts.forEachChild(node, visit);
-  }
+  };
 
   visit(sourceFile);
 

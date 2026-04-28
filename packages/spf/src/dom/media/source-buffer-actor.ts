@@ -1,6 +1,6 @@
-import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/create-machine-actor';
-import { SerialRunner, Task } from '../../core/task';
-import type { Segment, Track } from '../../core/types';
+import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/actors/create-machine-actor';
+import { SerialRunner, Task } from '../../core/tasks/task';
+import type { Segment, Track } from '../../media/types';
 import { type AppendData, appendSegment } from './append-segment';
 import { flushBuffer } from './buffer-flusher';
 

@@ -1,8 +1,8 @@
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, update } from '../../core/signals/primitives';
-import type { Presentation, ResolvedTrack } from '../../core/types';
-import { isResolvedTrack } from '../../core/types';
-import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import type { Presentation, ResolvedTrack } from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
+import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import { createSourceBuffer } from '../media/mediasource-setup';
 import { createSourceBufferActor, type SourceBufferActor } from '../media/source-buffer-actor';
 

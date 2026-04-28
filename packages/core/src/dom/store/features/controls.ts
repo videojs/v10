@@ -4,7 +4,8 @@ import { isNull } from '@videojs/utils/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
-import { isMediaPauseCapable } from '../../media/predicate';
+import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../media/predicate';
+import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../presentation/remote-playback';
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
@@ -33,7 +34,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     const computeVisible = (userActive: boolean): boolean => {
-      return userActive || media.paused;
+      return userActive || media.paused || isRemotePlaybackConnected(media) || isRemotePlaybackConnecting(media);
     };
 
     // Idle timer
@@ -84,6 +85,7 @@ export const controlsFeature = definePlayerFeature({
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
         // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
         const coordinator = findGestureCoordinator(container as HTMLElement);
+
         if (
           coordinator?.bindings.some(
             (b) => b.type === 'tap' && b.action === 'toggleControls' && (!b.pointer || b.pointer === 'touch')
@@ -129,6 +131,18 @@ export const controlsFeature = definePlayerFeature({
     listen(media, 'play', onPlaybackChange, { signal });
     listen(media, 'pause', onPlaybackChange, { signal });
     listen(media, 'ended', onPlaybackChange, { signal });
+
+    // Recompute visibility when cast state changes.
+    if (isMediaRemotePlaybackCapable(media)) {
+      const onCastChange = () => {
+        const { userActive } = get();
+        set({ controlsVisible: computeVisible(userActive) });
+      };
+
+      listen(media.remote, 'connect', onCastChange, { signal });
+      listen(media.remote, 'connecting', onCastChange, { signal });
+      listen(media.remote, 'disconnect', onCastChange, { signal });
+    }
 
     // Clean up timer on signal abort.
     signal.addEventListener('abort', clearIdle, { once: true });

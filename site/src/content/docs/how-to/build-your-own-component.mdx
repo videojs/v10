@@ -1,0 +1,309 @@
+---
+title: Build your own UI component
+description: Create custom player controls that read state, dispatch actions, and stay accessible.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+
+Custom components subscribe to player state and dispatch actions, like built-in controls.
+
+## You might not need a custom component
+
+Before building from scratch, check if an existing approach covers your use case:
+
+<FrameworkCase frameworks={["react"]}>
+- **Change what a control renders**: use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+</FrameworkCase>
+
+Build a custom component when you need new behavior, a new state display, or integration with an external system.
+
+## Use player state and actions
+
+Need access to player state or actions? You'll want to familiarize yourself with <DocsLink slug="concepts/features">features</DocsLink>. Each feature exposes a set. Here are some features you might reach for first:
+
+| State | Actions | Feature |
+|-------|---------|---------|
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> |
+
+Browse the full list in the **Features** section of the sidebar.
+
+Each feature also has an **availability** property (`'available'`, `'unavailable'`, or `'unsupported'`) for hiding controls the platform does not support. See <DocsLink slug="concepts/features">Features</DocsLink> for details.
+
+<FrameworkCase frameworks={["react"]}>
+
+Access state and actions with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
+
+```tsx
+import { usePlayer } from '@videojs/react';
+
+// Subscribe to state — re-renders only when selected values change
+const paused = usePlayer((s) => s.paused);
+const currentTime = usePlayer((s) => s.currentTime);
+
+// Get the store for dispatching actions (does not subscribe)
+const store = usePlayer();
+
+await store.play();
+store.setVolume(0.5);
+store.seek(30);
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Access state and actions with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a feature selector:
+
+```ts
+import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
+
+// Subscribe to a feature — triggers update() when its state changes
+#playback = new PlayerController(this, playerContext, selectPlayback);
+
+// In update():
+const playback = this.#playback.value;
+if (playback?.paused) {
+  playback.play();
+}
+```
+
+Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
+
+Without a selector, `PlayerController` returns the full store without subscribing to changes:
+
+```ts
+#store = new PlayerController(this, playerContext);
+
+// Call any action
+this.#store.value.play();
+this.#store.value.setVolume(0.5);
+```
+
+</FrameworkCase>
+
+## Place your component in the player
+
+<FrameworkCase frameworks={["react"]}>
+
+Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player.Provider>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
+
+```tsx
+<Player.Provider> // [!code focus]
+  <Player.Container> // [!code focus]
+    <VideoSkin>
+      <Video src="video.mp4" />
+    </VideoSkin>
+    <SkipIntroButton /> // [!code focus]
+  </Player.Container> // [!code focus]
+</Player.Provider> // [!code focus]
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Your element needs to be inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
+
+```html
+<video-player> <!-- [!code focus] -->
+  <video-skin> <!-- [!code focus] -->
+    <video slot="media" src="video.mp4"></video>
+    <skip-intro-button>Skip intro</skip-intro-button> <!-- [!code focus] -->
+  </video-skin> <!-- [!code focus] -->
+</video-player> <!-- [!code focus] -->
+```
+
+Extend `MediaElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
+
+```ts
+import { MediaElement, PlayerController, playerContext, selectTime, type PropertyValues } from '@videojs/html';
+
+class SkipIntroButtonElement extends MediaElement {
+  #player = new PlayerController(this, playerContext, selectTime);
+
+  update(changed: PropertyValues) {
+    super.update(changed);
+    const time = this.#player.value;
+  }
+}
+```
+
+</FrameworkCase>
+
+## Make it accessible
+
+<DocsLinkCard slug="concepts/accessibility">Learn more about accessibility in video players</DocsLinkCard>
+
+## Full example
+
+A "skip intro" button that appears during the first 30 seconds of playback and seeks past the intro when clicked.
+
+<FrameworkCase frameworks={["react"]}>
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="React skip intro example">
+    <Tab client:idle value="component" initial>SkipIntroButton.tsx</Tab>
+    <Tab client:idle value="css">SkipIntroButton.css</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="component" initial>
+    ```tsx
+    import { usePlayer } from '@videojs/react';
+
+    function SkipIntroButton() {
+      const store = usePlayer();
+      const currentTime = usePlayer((s) => s.currentTime);
+      const paused = usePlayer((s) => s.paused);
+
+      const visible = currentTime < 30 && !paused;
+
+      return (
+        <button
+          className="skip-intro-button"
+          onClick={() => store.seek(30)}
+          aria-label="Skip intro"
+          // `undefined` removes the attribute; `false` would render data-visible="false"
+          data-visible={visible || undefined}
+          tabIndex={visible ? 0 : -1}
+        >
+          Skip intro
+        </button>
+      );
+    }
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="css">
+    ```css
+    .skip-intro-button {
+      position: absolute;
+      bottom: 5rem;
+      right: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms;
+    }
+
+    .skip-intro-button[data-visible] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    ```
+  </TabsPanel>
+</TabsRoot>
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="HTML skip intro example">
+    <Tab client:idle value="ts" initial>skip-intro-button.ts</Tab>
+    <Tab client:idle value="css">skip-intro-button.css</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="ts" initial>
+    ```ts
+    import {
+      MediaElement,
+      PlayerController,
+      playerContext,
+      selectTime,
+      selectPlayback,
+      type PropertyValues,
+    } from '@videojs/html';
+
+    class SkipIntroButtonElement extends MediaElement {
+      #time = new PlayerController(this, playerContext, selectTime);
+      #playback = new PlayerController(this, playerContext, selectPlayback);
+      #disconnect: AbortController | null = null;
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.#disconnect?.abort();
+        this.#disconnect = new AbortController();
+        const { signal } = this.#disconnect;
+
+        this.setAttribute('role', 'button');
+        this.setAttribute('aria-label', 'Skip intro');
+        this.setAttribute('tabindex', '0');
+        this.addEventListener('click', this.#handleActivate, { signal });
+        this.addEventListener('keydown', this.#handleKeydown, { signal });
+        this.addEventListener('keyup', this.#handleKeyup, { signal });
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        // Removes all listeners registered with this signal
+        this.#disconnect?.abort();
+        this.#disconnect = null;
+      }
+
+      update(changed: PropertyValues) {
+        super.update(changed);
+        const time = this.#time.value;
+        const playback = this.#playback.value;
+
+        // Features are configured per-player, so a feature may not be available
+        if (!time || !playback) return;
+
+        const visible = time.currentTime < 30 && !playback.paused;
+        this.toggleAttribute('data-visible', visible);
+        this.setAttribute('tabindex', visible ? '0' : '-1');
+      }
+
+      #handleActivate = () => {
+        this.#time.value?.seek(30);
+      };
+
+      #handleKeydown = (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          this.#handleActivate();
+        } else if (event.key === ' ') {
+          // Prevent Space from scrolling the page
+          event.preventDefault();
+        }
+      };
+
+      // ARIA button pattern: Space activates on keyup, not keydown
+      #handleKeyup = (event: KeyboardEvent) => {
+        if (event.key === ' ') {
+          this.#handleActivate();
+        }
+      };
+    }
+
+    customElements.define('skip-intro-button', SkipIntroButtonElement);
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="css">
+    ```css
+    skip-intro-button {
+      position: absolute;
+      bottom: 5rem;
+      right: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms;
+    }
+
+    skip-intro-button[data-visible] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    ```
+  </TabsPanel>
+</TabsRoot>
+
+</FrameworkCase>

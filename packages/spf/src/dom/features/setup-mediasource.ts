@@ -1,6 +1,6 @@
 import { effect } from '../../core/signals/effect';
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import type { Presentation } from '../../core/types';
+import type { Presentation } from '../../media/types';
 import { attachMediaSource, createMediaSource, observeMediaSourceReadyState } from '../media/mediasource-setup';
 
 /**

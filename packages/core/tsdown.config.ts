@@ -31,9 +31,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   dts:
     mode === 'dev'
       ? {
-          build: true,
-          // Unified tsconfig covering both core and dom sources
-          // so DOM lib types are available for dom subpath exports.
+          tsgo: true,
           tsconfig: 'tsconfig.dts.json',
         }
       : false,
