@@ -83,7 +83,10 @@ for (const mode of buildModes) {
     noExternal: [/.*/],
     inlineOnly: false,
     treeshake: {
-      moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
+      moduleSideEffects: [
+        { test: /\/define\//, sideEffects: true },
+        { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
+      ],
     },
     outDir,
     alias: {

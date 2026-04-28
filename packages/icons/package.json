@@ -41,6 +41,10 @@
     "./element": {
       "types": "./dist/element/index.d.ts",
       "default": "./dist/element/index.js"
+    },
+    "./element/*": {
+      "types": "./dist/element/*/index.d.ts",
+      "default": "./dist/element/*/index.js"
     }
   },
   "files": [
