@@ -38,6 +38,11 @@
     filter: grayscale(1);
     cursor: not-allowed;
   }
+
+  /* Override the skin's `display: flex/grid` so the native `hidden` attribute hides the button. */
+  &[hidden] {
+    display: none;
+  }
 }
 
 /* Primary button variant */

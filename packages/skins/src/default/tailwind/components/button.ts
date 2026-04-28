@@ -9,6 +9,8 @@ export const button = {
     'active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:grayscale',
+    // Override `flex` so the native `hidden` attribute hides the button.
+    '[&[hidden]]:hidden',
     'focus-visible:outline-current focus-visible:outline-offset-2'
   ),
   primary: 'bg-white text-black font-medium text-shadow-none',
