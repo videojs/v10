@@ -1,8 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-
+import { isMediaErrorCapable } from '../../../core/media/predicate';
 import type { MediaErrorState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaErrorCapable } from '../../media/predicate';
 
 export const errorFeature = definePlayerFeature({
   name: 'error',
