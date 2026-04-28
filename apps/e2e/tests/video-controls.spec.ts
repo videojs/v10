@@ -25,7 +25,11 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
       await expect(player.seekBackward).toHaveAttribute(DATA_ATTRS.direction, 'backward');
       await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
       await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
-      await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
+      // PiP is unsupported on WebKit and the button receives the `hidden` attribute.
+      // Only assert `data-availability` when the pip button is visible.
+      if (await player.pipButton.isVisible()) {
+        await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
+      }
       await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
       await expect(player.duration).not.toHaveText('');
       await player.showControls();
