@@ -12,6 +12,8 @@ export const button = {
     'active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:grayscale',
+    // Override `flex` so the native `hidden` attribute hides the button.
+    '[&[hidden]]:hidden',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]'
   ),
