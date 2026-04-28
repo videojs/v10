@@ -1,20 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaRemotePlaybackState } from '../../../media/state';
 import type { CastButtonState } from '../cast-button-core';
 import { CastButtonCore } from '../cast-button-core';
-
-// CastButtonCore reports `availability: 'unsupported'` outside Chromium
-// (detected via `globalThis.chrome`). Tests run in jsdom which lacks that
-// global, so stub it for every test and let individual tests override.
-function stubChrome(present: boolean) {
-  const key = 'chrome';
-  if (present) {
-    (globalThis as unknown as Record<string, unknown>)[key] = {};
-  } else {
-    delete (globalThis as unknown as Record<string, unknown>)[key];
-  }
-}
 
 function createMediaState(overrides: Partial<MediaRemotePlaybackState> = {}): MediaRemotePlaybackState {
   return {
@@ -35,9 +23,6 @@ function createState(overrides: Partial<CastButtonState> = {}): CastButtonState 
 }
 
 describe('CastButtonCore', () => {
-  beforeEach(() => stubChrome(true));
-  afterEach(() => stubChrome(false));
-
   describe('getState', () => {
     it('projects castState and availability', () => {
       const core = new CastButtonCore();
@@ -65,10 +50,9 @@ describe('CastButtonCore', () => {
       expect(state.castState).toBe('connecting');
     });
 
-    it('reports unsupported outside Chromium', () => {
-      stubChrome(false);
+    it('passes through unsupported availability from media state', () => {
       const core = new CastButtonCore();
-      core.setMedia(createMediaState({ remotePlaybackAvailability: 'available' }));
+      core.setMedia(createMediaState({ remotePlaybackAvailability: 'unsupported' }));
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
