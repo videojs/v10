@@ -25,7 +25,11 @@ export interface LiveButtonProps {
   liveEdgeTolerance?: number | undefined;
 }
 
-/** Media state slice consumed by `LiveButtonCore`. */
+/**
+ * Media state slice consumed by `LiveButtonCore` — composed by the HTML
+ * and React `LiveButton` adapters from the `live`, `time`, and `buffer`
+ * store slices.
+ */
 export type LiveButtonMediaState = Pick<MediaTimeState, 'currentTime' | 'seek'> &
   Pick<MediaBufferState, 'seekable'> &
   MediaLiveState;

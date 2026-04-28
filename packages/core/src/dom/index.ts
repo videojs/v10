@@ -14,7 +14,6 @@ export * from './ui/alert-dialog';
 export * from './ui/button';
 export * from './ui/dismiss-layer';
 export * from './ui/event';
-export * from './ui/live-button';
 export * from './ui/popover/popover';
 export * from './ui/popover/popover-positioning';
 export * from './ui/slider';
