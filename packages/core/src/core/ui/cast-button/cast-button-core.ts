@@ -34,7 +34,9 @@ export class CastButtonCore {
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
     availability: 'unavailable',
-    disabled: false,
+    // No cast device available yet — derived `disabled` matches the invariant
+    // `disabled = props.disabled || availability !== 'available'`.
+    disabled: true,
     hidden: false,
     label: '',
   });
