@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { signal } from '../../signals/primitives';
 import { createMachineReactor } from '../create-machine-reactor';
-import { signal } from '../signals/primitives';
 
 // One microtask tick — enough for the signal-polyfill watcher to flush pending effects.
 const tick = () => new Promise<void>((resolve) => queueMicrotask(resolve));

@@ -1,7 +1,7 @@
-import type { Machine, MachineSnapshot } from './machine';
-import { createMachineCore } from './machine';
-import { effect } from './signals/effect';
-import { untrack } from './signals/primitives';
+import type { Machine, MachineSnapshot } from '../machine';
+import { createMachineCore } from '../machine';
+import { effect } from '../signals/effect';
+import { untrack } from '../signals/primitives';
 
 // =============================================================================
 // Definition types

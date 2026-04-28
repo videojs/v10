@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { Segment } from '../../../core/types';
+import type { Segment } from '../../../media/types';
 import { createSourceBufferActor } from '../../media/source-buffer-actor';
 import { loadSegments, type SegmentLoadingOwners, type SegmentLoadingState } from '../load-segments';
 

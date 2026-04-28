@@ -1,12 +1,80 @@
 /**
  * Stream Processing Framework (SPF) for Video.js 10
  *
- * Bundle size target: < 20KB (minified + gzipped)
- * Primary use case: CMAF HLS playback with Video.js v10
+ * The compositional primitives: createComposition, signals, tasks, actors,
+ * reactors. Media-domain helpers and the HLS playback engine live behind
+ * the `./dom` and `./playback-engine` subpaths.
  *
  * @packageDocumentation
  */
 
-// Public API exports will be added here as features are implemented
-
 export const VERSION = '0.1.0';
+
+// =============================================================================
+// Composition
+// =============================================================================
+
+export type {
+  Behavior,
+  BehaviorCleanup,
+  BehaviorDeps,
+  Composition,
+  CompositionOptions,
+  InferBehaviorConfig,
+  InferBehaviorOwners,
+  InferBehaviorState,
+  ResolveBehaviorConfig,
+  ResolveBehaviorOwners,
+  ResolveBehaviorState,
+} from './core/composition/create-composition';
+export { createComposition } from './core/composition/create-composition';
+
+// =============================================================================
+// Signals
+// =============================================================================
+
+export { effect } from './core/signals/effect';
+export type { Computed, ReadonlySignal, Signal, SignalOptions } from './core/signals/primitives';
+export { computed, signal, untrack, update } from './core/signals/primitives';
+
+// =============================================================================
+// Tasks
+// =============================================================================
+
+export type { TaskConfig, TaskLike, TaskStatus } from './core/tasks/task';
+export { ConcurrentRunner, SerialRunner, Task } from './core/tasks/task';
+
+// =============================================================================
+// Machine (shared by actors and reactors)
+// =============================================================================
+
+export type { Machine, MachineSnapshot } from './core/machine';
+
+// =============================================================================
+// Actors
+// =============================================================================
+
+export type { ActorSnapshot, CallbackActor, SignalActor } from './core/actors/actor';
+export type {
+  ActorDefinition,
+  ActorStateDefinition,
+  HandlerContext,
+  MessageActor,
+  RunnerLike,
+} from './core/actors/create-machine-actor';
+export { createMachineActor } from './core/actors/create-machine-actor';
+export type { TransitionActor } from './core/actors/create-transition-actor';
+export { createTransitionActor } from './core/actors/create-transition-actor';
+
+// =============================================================================
+// Reactors
+// =============================================================================
+
+export type {
+  Reactor,
+  ReactorDefinition,
+  ReactorDeriveFn,
+  ReactorEffectFn,
+  ReactorStateDefinition,
+} from './core/reactors/create-machine-reactor';
+export { createMachineReactor } from './core/reactors/create-machine-reactor';

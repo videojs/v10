@@ -1,3 +1,4 @@
+import { generateId } from '../../core/utils/generate-id';
 import type {
   AddressableObject,
   AudioSelectionSet,
@@ -13,7 +14,6 @@ import type {
   VideoSelectionSet,
   VideoSwitchingSet,
 } from '../types';
-import { generateId } from '../utils/generate-id';
 import { matchTag, parseCodecs } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
 

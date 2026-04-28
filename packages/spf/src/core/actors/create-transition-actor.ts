@@ -1,7 +1,7 @@
+import type { Machine } from '../machine';
+import { createMachineCore } from '../machine';
+import { untrack, update } from '../signals/primitives';
 import type { ActorSnapshot } from './actor';
-import type { Machine } from './machine';
-import { createMachineCore } from './machine';
-import { untrack, update } from './signals/primitives';
 
 // =============================================================================
 // Definition types

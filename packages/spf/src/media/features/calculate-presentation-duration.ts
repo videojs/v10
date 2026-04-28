@@ -1,5 +1,5 @@
-import { effect } from '../signals/effect';
-import type { Signal } from '../signals/primitives';
+import { effect } from '../../core/signals/effect';
+import type { Signal } from '../../core/signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../types';
 import { isResolvedTrack } from '../types';
 import { getSelectedTrack } from '../utils/track-selection';

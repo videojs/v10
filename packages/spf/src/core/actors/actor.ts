@@ -7,7 +7,7 @@
  * holds arbitrary non-finite data.
  */
 
-import type { Machine, MachineSnapshot } from './machine';
+import type { Machine, MachineSnapshot } from '../machine';
 
 /**
  * Complete actor snapshot: finite state + non-finite context.

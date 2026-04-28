@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { signal } from '../../signals/primitives';
+import { signal } from '../../../core/signals/primitives';
 import type {
   AudioSelectionSet,
   PartiallyResolvedAudioTrack,

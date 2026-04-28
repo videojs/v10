@@ -1,5 +1,5 @@
 import { anyAbortSignal } from '@videojs/utils/events';
-import { generateId } from './utils/generate-id';
+import { generateId } from '../utils/generate-id';
 
 // =============================================================================
 // DeepReadonly

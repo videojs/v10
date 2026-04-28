@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { signal } from '../../signals/primitives';
+import { signal } from '../../../core/signals/primitives';
 import type { AddressableObject, Presentation } from '../../types';
 import { syncPreloadAttribute } from '../sync-preload-attribute';
 

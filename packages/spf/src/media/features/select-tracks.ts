@@ -1,6 +1,6 @@
+import { effect } from '../../core/signals/effect';
+import { type Signal, update } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import { effect } from '../signals/effect';
-import { type Signal, update } from '../signals/primitives';
 import type { AudioSelectionSet, Presentation, TrackType, VideoSelectionSet } from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 

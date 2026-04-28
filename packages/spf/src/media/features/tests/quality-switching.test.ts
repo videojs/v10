@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../abr/bandwidth-estimator';
-import { signal } from '../../signals/primitives';
 import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../types';
 import {
   DEFAULT_SWITCHING_CONFIG,

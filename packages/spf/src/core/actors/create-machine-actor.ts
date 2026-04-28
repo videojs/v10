@@ -1,7 +1,7 @@
+import { createMachineCore } from '../machine';
+import { untrack, update } from '../signals/primitives';
+import type { TaskLike } from '../tasks/task';
 import type { ActorSnapshot, SignalActor } from './actor';
-import { createMachineCore } from './machine';
-import { untrack, update } from './signals/primitives';
-import type { TaskLike } from './task';
 
 // =============================================================================
 // Runner interfaces

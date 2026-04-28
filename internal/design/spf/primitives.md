@@ -43,7 +43,7 @@ A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute
 
 ### Current approach
 
-`core/task.ts` — thin wrapper around a function with an `AbortController`. The shape is approximately right; the question is how much structure to add.
+`core/tasks/task.ts` — thin wrapper around a function with an `AbortController`. The shape is approximately right; the question is how much structure to add.
 
 > **See also:** [actor-reactor-factories.md](actor-reactor-factories.md) — decided design for `createMachineActor` / `createMachineReactor`, including how runners are declared and lifecycle-managed.
 
@@ -75,7 +75,7 @@ Runners are internal to Actors and Reactors. An Actor may own one or more Runner
 
 ### Current approach
 
-`SerialRunner` and `ConcurrentRunner` in `core/task.ts`. The core abstraction is right.
+`SerialRunner` and `ConcurrentRunner` in `core/tasks/task.ts`. The core abstraction is right.
 
 ### Open questions
 
@@ -107,7 +107,7 @@ An Actor does not know about state outside itself. It receives messages and prod
 
 ### Current approach
 
-`createMachineActor` in `core/create-machine-actor.ts` — a declarative factory replacing bespoke closures.
+`createMachineActor` in `core/actors/create-machine-actor.ts` — a declarative factory replacing bespoke closures.
 Actors define state, context, message handlers per state, and an optional runner factory in
 a definition object. The factory manages the snapshot signal, runner lifecycle, and
 `'destroyed'` terminal state. See [actor-reactor-factories.md](actor-reactor-factories.md).
@@ -154,7 +154,7 @@ A Reactor is typically the bridge between reactive state and one or more Actors.
 
 ### Current approach
 
-`createMachineReactor` in `core/create-machine-reactor.ts` — a declarative factory. The first Reactor
+`createMachineReactor` in `core/reactors/create-machine-reactor.ts` — a declarative factory. The first Reactor
 implementations are in `dom/features/` as part of the text track spike (videojs/v10#1158):
 `syncTextTracks` and `loadTextTrackCues`. See [text-track-architecture.md](text-track-architecture.md)
 for the reference implementation.

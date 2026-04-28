@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { SerialRunner, Task } from '../../tasks/task';
 import { createMachineActor } from '../create-machine-actor';
-import { SerialRunner, Task } from '../task';
 
 // =============================================================================
 // Helpers
