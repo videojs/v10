@@ -27,7 +27,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
 
-  protected abstract activate(state: InferMediaState<Core>): void;
+  protected abstract activate(state: InferMediaState<Core>): void | Promise<void>;
 
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */
   protected readonly hotkeyAction: string | undefined = undefined;
@@ -50,7 +50,15 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.#disconnect = new AbortController();
 
     const buttonProps = createButton({
-      onActivate: () => this.activate(this.mediaState.value!),
+      // `createButton` invokes `onActivate` synchronously from click/keyup
+      // handlers, so any rejection here would be unhandled. Log in dev for
+      // visibility but absorb the failure at this UI boundary — callers
+      // awaiting `core.toggle(...)` directly still see the rejection.
+      onActivate: () => {
+        Promise.resolve(this.activate(this.mediaState.value!)).catch((error) => {
+          if (__DEV__) console.error(`[${this.localName}]`, error);
+        });
+      },
       isDisabled: () => this.disabled || !this.mediaState.value,
     });
 

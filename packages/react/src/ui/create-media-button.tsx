@@ -18,15 +18,17 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
-  action: (core: Core, state: InferMediaState<Core>) => void;
+  action: (core: Core, state: InferMediaState<Core>) => void | Promise<void>;
   hotkeyAction?: string;
+  /** Returns `false` to render `null` (e.g., when the underlying feature is unsupported). */
+  isSupported?: (state: InferComponentState<Core>) => boolean;
 }
 
 /** Creates a media button React component from a core class and config. */
 export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
   config: MediaButtonConfig<Core>
 ): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
-  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction } = config;
+  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction, isSupported } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
@@ -57,7 +59,15 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const { getButtonProps, buttonRef } = useButton({
       displayName,
-      onActivate: () => action(core, feature!),
+      // `useButton` invokes `onActivate` synchronously from click/keyup
+      // handlers, so any rejection here would be unhandled. Log in dev for
+      // visibility but absorb the failure at this UI boundary — callers
+      // awaiting `core.toggle(...)` directly still see the rejection.
+      onActivate: () => {
+        Promise.resolve(action(core, feature!)).catch((error) => {
+          if (__DEV__) console.error(`[${displayName}]`, error);
+        });
+      },
       isDisabled: () => !!coreProps.disabled || !feature,
     });
 
@@ -79,6 +89,8 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
       return null;
     }
+
+    if (isSupported && !isSupported(state)) return null;
 
     const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcuts };
 

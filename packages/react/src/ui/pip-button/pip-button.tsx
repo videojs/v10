@@ -16,6 +16,7 @@ export const PiPButton = createMediaButton<PiPButtonCore, PiPButtonProps>({
   selector: selectPiP,
   action: (core, state) => core.toggle(state),
   hotkeyAction: 'togglePictureInPicture',
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace PiPButton {

@@ -28,19 +28,15 @@
     outline-offset: 2px;
   }
 
-  &:active {
+  &:active:not([disabled]):not([data-disabled]) {
     scale: 0.98;
   }
 
-  &[disabled] {
+  &[disabled],
+  &[data-disabled] {
     opacity: 0.5;
     filter: grayscale(1);
     cursor: not-allowed;
-  }
-
-  &[data-availability="unavailable"],
-  &[data-availability="unsupported"] {
-    display: none;
   }
 }
 
@@ -73,7 +69,7 @@
   padding: 0;
   aspect-ratio: 1;
 
-  &:active {
+  &:active:not([disabled]):not([data-disabled]) {
     scale: 0.9;
   }
 
