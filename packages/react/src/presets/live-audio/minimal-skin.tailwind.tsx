@@ -13,7 +13,6 @@ import {
   error,
   icon,
   iconState,
-  liveButton,
   popup,
   root,
   slider,
@@ -138,7 +137,7 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
-            <LiveButton className={cn(button.base, button.subtle, liveButton.button)} />
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />

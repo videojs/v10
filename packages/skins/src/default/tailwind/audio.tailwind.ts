@@ -104,7 +104,6 @@ export { iconState } from '../../shared/tailwind/icon-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { liveButton } from './components/live-button';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';

@@ -93,7 +93,6 @@ export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { liveButton } from './components/live-button';
 export { seek } from './components/seek';
 export { slider } from './components/slider';
 export { time } from './components/time';

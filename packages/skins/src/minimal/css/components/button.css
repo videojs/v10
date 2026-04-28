@@ -117,3 +117,35 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Live button — wide pill button with a status dot (gray → red at the live
+   edge) rendered via ::before, and "LIVE" text rendered as the button's own
+   text content. */
+.media-minimal-skin .media-button--live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: auto;
+  aspect-ratio: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: oklch(from currentColor l c h / 0.4);
+    transition: background-color 150ms ease-out;
+  }
+
+  &[data-live-edge]::before {
+    background-color: oklch(0.65 0.22 27);
+  }
+}

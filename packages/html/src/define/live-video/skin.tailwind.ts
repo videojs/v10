@@ -8,7 +8,6 @@ import {
   error,
   icon,
   iconState,
-  liveButton,
   overlay,
   popup,
   poster,
@@ -62,7 +61,7 @@ function getTemplateHTML() {
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
 
-              <media-live-button class="${cn(button.base, button.subtle, liveButton.button)}"></media-live-button>
+              <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>

@@ -24,7 +24,6 @@ import {
   error,
   icon,
   iconState,
-  liveButton,
   overlay,
   popup,
   poster,
@@ -181,7 +180,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
-            <LiveButton className={cn(button.base, button.subtle, liveButton.button)} />
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />
