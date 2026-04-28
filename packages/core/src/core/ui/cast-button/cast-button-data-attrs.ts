@@ -14,4 +14,8 @@ export const CastButtonDataAttrs = {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
    */
   availability: 'data-availability',
+  /** Present when the button is non-interactive (mirrors `aria-disabled`). */
+  disabled: 'data-disabled',
+  /** Present when the button is hidden because the feature is unsupported. */
+  hidden: 'data-hidden',
 } as const satisfies StateAttrMap<CastButtonState>;
