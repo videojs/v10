@@ -1,4 +1,12 @@
-import { getInitialSkin, getInitialSource } from '@app/shared/sandbox-listener';
+import {
+  getInitialAutoplay,
+  getInitialLoop,
+  getInitialMuted,
+  getInitialPreload,
+  getInitialSkin,
+  getInitialSource,
+  type PreloadValue,
+} from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Skin, Styling } from '@app/types';
 
@@ -10,6 +18,10 @@ export type HtmlSandboxState = {
   skin: Skin;
   source: SourceId;
   styling: Styling;
+  autoplay: boolean;
+  muted: boolean;
+  loop: boolean;
+  preload: PreloadValue;
 };
 
 export function createHtmlSandboxState(audioOnly?: boolean): HtmlSandboxState {
@@ -17,7 +29,23 @@ export function createHtmlSandboxState(audioOnly?: boolean): HtmlSandboxState {
     skin: getInitialSkin(),
     source: getInitialSource(audioOnly),
     styling: getInitialStyling(),
+    autoplay: getInitialAutoplay(),
+    muted: getInitialMuted(),
+    loop: getInitialLoop(),
+    preload: getInitialPreload(),
   };
+}
+
+/** Render the user-controlled media attributes (autoplay/muted/loop/preload) as HTML attributes. */
+export function renderMediaAttrs(state: HtmlSandboxState): string {
+  return [
+    state.autoplay ? 'autoplay' : '',
+    state.muted ? 'muted' : '',
+    state.loop ? 'loop' : '',
+    `preload="${state.preload}"`,
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export function createLatestLoader() {

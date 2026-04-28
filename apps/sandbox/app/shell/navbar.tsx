@@ -1,6 +1,8 @@
 import type { SKINS } from '@app/constants';
+import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Platform, Preset, Skin, Styling } from '@app/types';
+import { useEffect, useId, useRef, useState } from 'react';
 
 type NavbarProps = {
   platform: Platform;
@@ -13,6 +15,14 @@ type NavbarProps = {
   onSkinChange: (value: Skin) => void;
   source: SourceId;
   onSourceChange: (value: string) => void;
+  autoplay: boolean;
+  onAutoplayChange: (value: boolean) => void;
+  muted: boolean;
+  onMutedChange: (value: boolean) => void;
+  loop: boolean;
+  onLoopChange: (value: boolean) => void;
+  preload: PreloadValue;
+  onPreloadChange: (value: PreloadValue) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
@@ -55,6 +65,14 @@ export function Navbar({
   onSkinChange,
   source,
   onSourceChange,
+  autoplay,
+  onAutoplayChange,
+  muted,
+  onMutedChange,
+  loop,
+  onLoopChange,
+  preload,
+  onPreloadChange,
   availableSources,
   isBackgroundVideo,
   isSimpleHlsVideo,
@@ -122,7 +140,17 @@ export function Navbar({
         />
       </div>
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <SettingsMenu
+          autoplay={autoplay}
+          onAutoplayChange={onAutoplayChange}
+          muted={muted}
+          onMutedChange={onMutedChange}
+          loop={loop}
+          onLoopChange={onLoopChange}
+          preload={preload}
+          onPreloadChange={onPreloadChange}
+        />
         <a
           href="https://github.com/videojs/v10"
           target="_blank"
@@ -147,6 +175,177 @@ export function Navbar({
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+type SettingsMenuProps = {
+  autoplay: boolean;
+  onAutoplayChange: (value: boolean) => void;
+  muted: boolean;
+  onMutedChange: (value: boolean) => void;
+  loop: boolean;
+  onLoopChange: (value: boolean) => void;
+  preload: PreloadValue;
+  onPreloadChange: (value: PreloadValue) => void;
+};
+
+function SettingsMenu({
+  autoplay,
+  onAutoplayChange,
+  muted,
+  onMutedChange,
+  loop,
+  onLoopChange,
+  preload,
+  onPreloadChange,
+}: SettingsMenuProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  const autoplayId = useId();
+  const mutedId = useId();
+  const loopId = useId();
+  const preloadId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    // Clicks inside the preview iframe don't bubble to the parent document, so
+    // also close when the parent window loses focus (e.g. iframe takes focus).
+    const handleBlur = () => setOpen(false);
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        aria-label="Player settings"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex items-center justify-center size-8 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors aria-expanded:bg-zinc-100 dark:aria-expanded:bg-zinc-800 aria-expanded:text-zinc-950 dark:aria-expanded:text-zinc-50"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-4"
+          aria-hidden="true"
+        >
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5"
+        >
+          <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
+          <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
+          <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
+          <SelectItem
+            id={preloadId}
+            label="Preload"
+            value={preload}
+            onChange={(value) => onPreloadChange(value as PreloadValue)}
+            options={PRELOAD_VALUES.map((value) => ({ value, label: value }))}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+type CheckboxItemProps = {
+  id: string;
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+};
+
+function CheckboxItem({ id, label, checked, onChange }: CheckboxItemProps) {
+  return (
+    <>
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="justify-self-start size-3.5 rounded border-zinc-300 dark:border-zinc-700 accent-zinc-950 dark:accent-zinc-50 cursor-pointer"
+      />
+    </>
+  );
+}
+
+type SelectItemProps = {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+};
+
+function SelectItem({ id, label, value, onChange, options }: SelectItemProps) {
+  return (
+    <>
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+        {label}
+      </label>
+      <div className="relative justify-self-start">
+        <select
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-7 appearance-none rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 pl-2 pr-7 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2 cursor-pointer"
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <svg
+          className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 dark:text-zinc-400"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </div>
+    </>
+  );
 }
 
 type SelectOption = {
