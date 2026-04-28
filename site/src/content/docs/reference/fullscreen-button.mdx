@@ -37,7 +37,10 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
 
 ## Behavior
 
-Toggles fullscreen mode. Detects platform support through `availability` — when fullscreen is `"unsupported"`, the toggle does nothing.
+Toggles fullscreen mode. The button derives two state hooks from `availability`:
+
+- **`disabled`** (`true` when the API is available but not currently usable, or when the `disabled` prop is set) — sets `aria-disabled="true"` and `data-disabled` so the button stays focusable but does not activate.
+- **`hidden`** (`true` when fullscreen is `"unsupported"`) — applies the native HTML `hidden` attribute on the custom element; the React component returns `null`.
 
 ## Styling
 
@@ -48,6 +51,12 @@ You can style the button based on fullscreen state:
 /* In fullscreen */
 media-fullscreen-button[data-fullscreen] {
   background: red;
+}
+
+/* Non-interactive (disabled prop or temporarily unavailable) */
+media-fullscreen-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>
@@ -60,26 +69,16 @@ React renders a `<button>` element. Add a `className` to style it:
 .fullscreen-button[data-fullscreen] {
   background: red;
 }
-```
-</FrameworkCase>
 
-Consider hiding the button when unsupported:
-
-<FrameworkCase frameworks={["html"]}>
-```css
-media-fullscreen-button[data-availability="unsupported"] {
-  display: none;
+/* Non-interactive (disabled prop or temporarily unavailable) */
+.fullscreen-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["react"]}>
-```css
-.fullscreen-button[data-availability="unsupported"] {
-  display: none;
-}
-```
-</FrameworkCase>
+Unsupported environments hide the button automatically — the HTML element receives the native `hidden` attribute, and the React component returns `null`. No extra CSS is required.
 
 ## Accessibility
 

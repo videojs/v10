@@ -160,19 +160,27 @@ Volume, fullscreen, and picture-in-picture expose an `*Availability` property be
 | `'unavailable'` | Could work, not ready yet |
 | `'unsupported'` | Platform can never do this |
 
-Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) expose a `data-availability` attribute, so you can hide unsupported controls with CSS:
+Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) handle the three states for you:
+
+- **`unsupported`** — the HTML custom element receives the native `hidden` attribute (and `data-hidden`); React buttons return `null`. No CSS needed.
+- **`unavailable`** or the `disabled` prop — the button stays visible and focusable with `aria-disabled="true"` plus `data-disabled` for styling.
+- **`available`** — fully interactive.
+
+Use `data-disabled` to style the non-interactive state:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-pip-button[data-availability="unsupported"] {
-  display: none;
+media-pip-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```css
-.pip-button[data-availability="unsupported"] {
-  display: none;
+.pip-button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 ```
 </FrameworkCase>
