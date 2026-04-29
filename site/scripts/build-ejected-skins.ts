@@ -1328,7 +1328,7 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
     parts.push(declarations.join('\n\n'));
   }
 
-  return `${parts.join('\n\n')}\n`;
+  return `'use client';\n\n${parts.join('\n\n')}\n`;
 }
 
 /**
