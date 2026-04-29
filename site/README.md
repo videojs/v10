@@ -156,6 +156,12 @@ const sidebar: Sidebar = [
 ];
 ```
 
+### Social previews
+
+By default, pages get branded OG/Twitter images at `/og/{slug}.png` and `/og/twitter/{slug}.png`. Those images are rendered on demand by [`src/pages/og/[...path].png.ts`](src/pages/og/[...path].png.ts), limited to known internal routes, and cached by Netlify until the next deploy.
+
+Use `ogTitle` in docs/blog frontmatter when the page title is too long for the social card. For fully custom art, use the existing manual image overrides (`ogImage`, `twitterImage`, or layout `image` props).
+
 ### References
 
 API reference pages are generated from TypeScript source code by the builder in [`scripts/api-docs-builder/`](scripts/api-docs-builder/). It extracts props, state, data attributes, and part information, then outputs JSON to `src/content/generated-api-reference/` (gitignored).

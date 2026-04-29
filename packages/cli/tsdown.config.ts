@@ -12,7 +12,7 @@ export default defineConfig({
   format: 'es',
   clean: true,
   banner: { js: '#!/usr/bin/env node' },
-  noExternal: ['site'],
+  deps: { alwaysBundle: ['site'] },
   define: {
     __CLI_VERSION__: JSON.stringify(pkg.version),
   },

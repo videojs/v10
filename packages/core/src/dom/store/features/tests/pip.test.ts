@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
+import { HTMLVideoElementHost } from '../../../media/video-host';
 import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
@@ -104,39 +105,6 @@ describe('pipFeature', () => {
       video.dispatchEvent(new Event('webkitpresentationmodechanged'));
 
       expect(store.state.pip).toBe(false);
-    });
-
-    it('syncs pip when media element proxies to an internal target video', () => {
-      Object.defineProperty(document, 'pictureInPictureEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const targetVideo = createMockVideo();
-      const mediaHost = document.createElement('div') as unknown as HTMLVideoElement & {
-        target: HTMLVideoElement;
-      };
-
-      Object.defineProperty(mediaHost, 'target', {
-        value: targetVideo,
-        writable: true,
-        configurable: true,
-      });
-
-      const store = createStore<PlayerTarget>()(pipFeature);
-      store.attach({ media: mediaHost, container: null });
-
-      expect(store.state.pip).toBe(false);
-
-      Object.defineProperty(document, 'pictureInPictureElement', {
-        value: targetVideo,
-        writable: true,
-        configurable: true,
-      });
-      mediaHost.dispatchEvent(new Event('enterpictureinpicture'));
-
-      expect(store.state.pip).toBe(true);
     });
   });
 
@@ -253,6 +221,205 @@ describe('pipFeature', () => {
       await store.requestPictureInPicture();
 
       expect(document.exitFullscreen).not.toHaveBeenCalled();
+      expect(video.requestPictureInPicture).toHaveBeenCalled();
+
+      document.exitFullscreen = originalExit;
+    });
+  });
+});
+
+describe('pipFeature with HTMLVideoElementHost', () => {
+  let originalPictureInPictureEnabled: boolean | undefined;
+
+  beforeEach(() => {
+    originalPictureInPictureEnabled = document.pictureInPictureEnabled;
+  });
+
+  afterEach(() => {
+    Object.defineProperty(document, 'pictureInPictureEnabled', {
+      value: originalPictureInPictureEnabled,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(document, 'pictureInPictureElement', {
+      value: null,
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  describe('attach', () => {
+    it('syncs initial state on attach', () => {
+      const video = createMockVideo();
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      expect(store.state.pip).toBe(false);
+    });
+
+    it('reflects host.isPictureInPicture when document PiP element is the underlying video', () => {
+      Object.defineProperty(document, 'pictureInPictureEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
+      const video = createMockVideo();
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: video,
+        writable: true,
+        configurable: true,
+      });
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      expect(store.state.pip).toBe(true);
+    });
+
+    it('updates pip on PiP events forwarded from target', () => {
+      Object.defineProperty(document, 'pictureInPictureEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
+      const video = createMockVideo();
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      expect(store.state.pip).toBe(false);
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: video,
+        writable: true,
+        configurable: true,
+      });
+      video.dispatchEvent(new Event('enterpictureinpicture'));
+
+      expect(store.state.pip).toBe(true);
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: null,
+        writable: true,
+        configurable: true,
+      });
+      video.dispatchEvent(new Event('leavepictureinpicture'));
+
+      expect(store.state.pip).toBe(false);
+    });
+
+    it('syncs pip on webkitpresentationmodechanged forwarded from target (iOS Safari)', () => {
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitPresentationMode = 'inline';
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      expect(store.state.pip).toBe(false);
+
+      video.webkitPresentationMode = 'picture-in-picture';
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.pip).toBe(true);
+
+      video.webkitPresentationMode = 'inline';
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.pip).toBe(false);
+    });
+  });
+
+  describe('actions', () => {
+    it('requestPictureInPicture() delegates to underlying video', async () => {
+      const video = createMockVideo();
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      await store.requestPictureInPicture();
+
+      expect(video.requestPictureInPicture).toHaveBeenCalled();
+    });
+
+    it('requestPictureInPicture() prefers webkitSetPresentationMode on the underlying video (iOS Safari)', async () => {
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
+      video.webkitSetPresentationMode = vi.fn();
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      await store.requestPictureInPicture();
+
+      expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('picture-in-picture');
+      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
+    });
+
+    it('exitPictureInPicture() calls document.exitPictureInPicture when underlying video is the PiP element', async () => {
+      const originalExit = document.exitPictureInPicture;
+      document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
+
+      const video = createMockVideo();
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: video,
+        writable: true,
+        configurable: true,
+      });
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container: null });
+
+      await store.exitPictureInPicture();
+
+      expect(document.exitPictureInPicture).toHaveBeenCalled();
+
+      document.exitPictureInPicture = originalExit;
+    });
+  });
+
+  describe('transitions', () => {
+    it('requestPictureInPicture() exits fullscreen first if active', async () => {
+      const originalExit = document.exitFullscreen;
+      document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
+
+      const video = createMockVideo();
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
+      const container = document.createElement('div');
+      const host = new HTMLVideoElementHost();
+      host.attach(video);
+
+      Object.defineProperty(document, 'fullscreenElement', {
+        value: container,
+        writable: true,
+        configurable: true,
+      });
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: host, container });
+
+      await store.requestPictureInPicture();
+
+      expect(document.exitFullscreen).toHaveBeenCalled();
       expect(video.requestPictureInPicture).toHaveBeenCalled();
 
       document.exitFullscreen = originalExit;

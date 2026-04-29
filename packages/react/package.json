@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "10.0.0-beta.19",
+  "version": "10.0.0-beta.23",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -59,6 +59,28 @@
       "types": "./dist/dev/presets/background/*.d.ts",
       "development": "./dist/dev/presets/background/*.js",
       "default": "./dist/default/presets/background/*.js"
+    },
+    "./live-video": {
+      "types": "./dist/dev/presets/live-video/index.d.ts",
+      "development": "./dist/dev/presets/live-video/index.js",
+      "default": "./dist/default/presets/live-video/index.js"
+    },
+    "./live-video/*.css": "./dist/default/presets/live-video/*.css",
+    "./live-video/*": {
+      "types": "./dist/dev/presets/live-video/*.d.ts",
+      "development": "./dist/dev/presets/live-video/*.js",
+      "default": "./dist/default/presets/live-video/*.js"
+    },
+    "./live-audio": {
+      "types": "./dist/dev/presets/live-audio/index.d.ts",
+      "development": "./dist/dev/presets/live-audio/index.js",
+      "default": "./dist/default/presets/live-audio/index.js"
+    },
+    "./live-audio/*.css": "./dist/default/presets/live-audio/*.css",
+    "./live-audio/*": {
+      "types": "./dist/dev/presets/live-audio/*.d.ts",
+      "development": "./dist/dev/presets/live-audio/*.js",
+      "default": "./dist/default/presets/live-audio/*.js"
     }
   },
   "scripts": {
@@ -86,8 +108,7 @@
     "jsdom": "^26.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

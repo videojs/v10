@@ -1,47 +1,57 @@
 import { isFunction } from '@videojs/utils/predicate';
-
+import type { MediaFullscreenCapability } from '../../core/media/types';
 import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from './types';
 
-export function isFullscreenEnabled(): boolean {
+export function isFullscreenEnabled() {
   const doc = document as WebKitDocument;
-
   if (doc.fullscreenEnabled || doc.webkitFullscreenEnabled) {
     return true;
   }
 
   const video = document.createElement('video') as WebKitVideoElement;
-  return isFunction(video.webkitEnterFullscreen);
+  return isFunction(video.webkitSetPresentationMode);
 }
 
-export function getFullscreenElement(): Element | null {
+export function getFullscreenElement() {
   const doc = document as WebKitDocument;
   return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
-export function isFullscreenElement(container: HTMLElement | null, media: EventTarget): boolean {
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (video.webkitDisplayingFullscreen && video.webkitPresentationMode === 'fullscreen') {
-      return true;
-    }
+function matchesFullscreen(element: EventTarget | null) {
+  if (!(element instanceof Element)) return false;
+  try {
+    return element.matches(':fullscreen');
+  } catch {
+    return false;
   }
-
-  const target = container ?? media;
-
-  if (getFullscreenElement() === target) return true;
-
-  if (target instanceof Element) {
-    try {
-      return target.matches(':fullscreen');
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
 }
 
-export async function requestFullscreen(container: HTMLElement | null, media: EventTarget): Promise<void> {
+export function isFullscreen(container: HTMLElement | null, media: EventTarget) {
+  const webkitVideo = media as WebKitVideoElement;
+  if (webkitVideo.webkitPresentationMode === 'fullscreen') {
+    return true;
+  }
+
+  const fullscreenElement = getFullscreenElement();
+  if (fullscreenElement && (fullscreenElement === container || fullscreenElement === media)) {
+    return true;
+  }
+
+  // `:fullscreen` matches the fullscreen element AND its ancestors (across
+  // shadow boundaries), so this covers cases where fullscreen was requested
+  // on a descendant — e.g. the inner `<video>` via native controls — rather
+  // than the container itself.
+  if (matchesFullscreen(container) || matchesFullscreen(media)) {
+    return true;
+  }
+
+  // isFullscreen is a non-standard property that is set by the video host
+  // and checks internally if the video host target is the fullscreen element.
+  const video = media as unknown as MediaFullscreenCapability;
+  return video.isFullscreen ?? false;
+}
+
+export async function requestFullscreen(container: HTMLElement | null, media: EventTarget) {
   const doc = document as WebKitDocument;
 
   if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
@@ -56,30 +66,25 @@ export async function requestFullscreen(container: HTMLElement | null, media: Ev
     }
   }
 
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitEnterFullscreen)) {
-      video.webkitEnterFullscreen();
-      return;
-    }
-
-    if (isFunction(media.requestFullscreen)) {
-      return media.requestFullscreen();
-    }
+  const webkitVideo = media as WebKitVideoElement;
+  if (isFunction(webkitVideo.webkitSetPresentationMode)) {
+    webkitVideo.webkitSetPresentationMode('fullscreen');
+    return;
   }
 
-  throw new DOMException('Fullscreen not supported', 'NotSupportedError');
+  const video = media as unknown as MediaFullscreenCapability;
+  if (isFunction(video.requestFullscreen)) {
+    return video.requestFullscreen() as Promise<void>;
+  }
 }
 
-export async function exitFullscreen(media?: EventTarget): Promise<void> {
+export async function exitFullscreen(media: EventTarget) {
   const doc = document as WebKitDocument;
 
-  if (media instanceof HTMLMediaElement) {
-    const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitExitFullscreen) && video.webkitDisplayingFullscreen) {
-      video.webkitExitFullscreen();
-      return;
-    }
+  const webkitVideo = media as WebKitVideoElement;
+  if (webkitVideo.webkitPresentationMode === 'fullscreen' && isFunction(webkitVideo.webkitSetPresentationMode)) {
+    webkitVideo.webkitSetPresentationMode('inline');
+    return;
   }
 
   if (isFunction(doc.exitFullscreen)) {
@@ -88,5 +93,10 @@ export async function exitFullscreen(media?: EventTarget): Promise<void> {
 
   if (isFunction(doc.webkitExitFullscreen)) {
     return doc.webkitExitFullscreen();
+  }
+
+  const video = media as unknown as MediaFullscreenCapability;
+  if (isFunction(video.exitFullscreen)) {
+    return video.exitFullscreen() as Promise<void>;
   }
 }

@@ -1,7 +1,7 @@
 import { effect } from '../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
-import type { Presentation } from '../../core/types';
-import { hasPresentationDuration } from '../../core/types';
+import type { Presentation } from '../../media/types';
+import { hasPresentationDuration } from '../../media/types';
 
 export interface DurationUpdateState {
   presentation?: Presentation;

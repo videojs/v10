@@ -5,15 +5,6 @@ import { Hls, type HlsMedia } from '../hls';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
-const MUX_VIDEO_DOMAIN = 'mux.com';
-
-export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
-  readonly debug: boolean;
-  attach(target: HTMLMediaElement): void;
-  detach(): void;
-  load(): void;
-}
-
 export interface MuxDataMediaProps {
   MuxDataSdk: MuxDataSdk | undefined;
   beaconCollectionDomain: string | undefined;
@@ -23,6 +14,26 @@ export interface MuxDataMediaProps {
   playerSoftwareVersion: string | undefined;
   playerInitTime: number | undefined;
   metadata: MuxDataOptions['data'] | undefined;
+}
+
+export const muxDataMediaDefaultProps: MuxDataMediaProps = {
+  MuxDataSdk: undefined,
+  beaconCollectionDomain: undefined,
+  disableCookies: false,
+  envKey: undefined,
+  playerSoftwareName: undefined,
+  playerSoftwareVersion: undefined,
+  playerInitTime: undefined,
+  metadata: undefined,
+};
+
+const MUX_VIDEO_DOMAIN = 'mux.com';
+
+export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
+  readonly debug: boolean;
+  attach(target: HTMLMediaElement): void;
+  detach(): void;
+  load(): void;
 }
 
 export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (BaseClass) => {

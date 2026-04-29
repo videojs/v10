@@ -76,6 +76,7 @@ skin-theming.md
 
 ## See Also
 
+- [Decisions](/internal/decisions/README.md) — ADR-style single-decision records
 - [RFCs](/rfc/README.md) — Proposals needing buy-in
 - [Plans](/.claude/plans/README.md) — Implementation details
 - [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate

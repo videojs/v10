@@ -3,7 +3,9 @@ import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
+import { FeatureReferenceSchema } from './types/feature-reference';
 import { MediaReferenceSchema } from './types/media-reference';
+import { PresetReferenceSchema } from './types/preset-reference';
 import { UtilReferenceSchema } from './types/util-reference';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
@@ -60,6 +62,7 @@ const blog = defineCollection({
       authors: z.array(reference('authors')),
       canonical: z.url().optional(),
       devOnly: z.boolean().optional(), // only visible in development mode
+      ogTitle: z.string().optional(),
       ogImage: image().or(z.url()).optional(),
       twitterImage: image().or(z.url()).optional(),
     }),
@@ -88,6 +91,7 @@ const docs = defineCollection({
     title: z.string(),
     description: z.string(),
     updatedDate: z.coerce.date().optional(),
+    ogTitle: z.string().optional(),
     frameworkTitle: z.partialRecord(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
   }),
 });
@@ -128,12 +132,28 @@ const utilReference = defineCollection({
   schema: UtilReferenceSchema,
 });
 
+const featureReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-feature-reference',
+  }),
+  schema: FeatureReferenceSchema,
+});
+
 const mediaReference = defineCollection({
   loader: glob({
     pattern: '*.json',
     base: './src/content/generated-media-reference',
   }),
   schema: MediaReferenceSchema,
+});
+
+const presetReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-preset-reference',
+  }),
+  schema: PresetReferenceSchema,
 });
 
 const ejectedSkins = defineCollection({
@@ -150,4 +170,14 @@ const ejectedSkins = defineCollection({
   }),
 });
 
-export const collections = { blog, docs, authors, componentReference, utilReference, mediaReference, ejectedSkins };
+export const collections = {
+  blog,
+  docs,
+  authors,
+  componentReference,
+  utilReference,
+  featureReference,
+  mediaReference,
+  presetReference,
+  ejectedSkins,
+};

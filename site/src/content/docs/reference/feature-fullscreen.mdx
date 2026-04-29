@@ -3,27 +3,15 @@ title: Fullscreen
 description: Fullscreen state and actions for the player store
 ---
 
-import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Controls fullscreen mode. Tries the container element first, falls back to the media element.
 
-## State
+<FeatureReference feature="fullscreen" />
 
-| State | Type | Description |
-|---|---|---|
-| `fullscreen` | `boolean` | Whether fullscreen is active |
-| `fullscreenAvailability` | `MediaFeatureAvailability` | Whether fullscreen is supported |
-
-## Actions
-
-| Action | Description |
-|---|---|
-| `requestFullscreen()` | Enter fullscreen (returns a `Promise`) |
-| `exitFullscreen()` | Exit fullscreen (returns a `Promise`) |
-
-## Selector
+### Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectFullscreen` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
@@ -62,5 +50,3 @@ class FullscreenButton extends MediaElement {
 }
 ```
 </FrameworkCase>
-
-<UtilReference util="selectFullscreen" />

@@ -5,7 +5,7 @@ import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/san
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -13,16 +13,18 @@ const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
+  const live = isLiveSource(state.source);
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
   if (!tag) return;
 
   const storyboard = getStoryboardSrc(state.source);
   const poster = getPosterSrc(state.source);
+  const liveAttrs = live ? 'autoplay muted' : '';
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <mux-video src="${SOURCES[state.source].url}" debug playsinline crossorigin="anonymous">
+        <mux-video src="${SOURCES[state.source].url}" debug ${liveAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </mux-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

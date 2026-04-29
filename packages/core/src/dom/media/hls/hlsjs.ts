@@ -2,8 +2,10 @@ import Hls, { type HlsConfig } from 'hls.js';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaErrorsMixin } from './errors';
+import { HlsJsMediaLiveMixin } from './live';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
+import { HlsJsMediaStreamTypeMixin } from './stream-type';
 import { HlsJsMediaTextTracksMixin } from './text-tracks';
 
 export const defaultHlsConfig: Partial<HlsConfig> = {
@@ -56,5 +58,9 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
 }
 
 export class HlsJsMedia extends HlsJsMediaPreloadMixin(
-  HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
+  HlsJsMediaLiveMixin(
+    HlsJsMediaStreamTypeMixin(
+      HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
+    )
+  )
 ) {}

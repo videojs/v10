@@ -14,6 +14,13 @@ export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike
   dispatchEvent(event: EventLike): boolean;
 }
 
+export interface RemotePlaybackLike extends EventTarget {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
 export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
   return EventTarget as unknown as { new (): EventTargetLike<Events> };
 }
@@ -167,11 +174,69 @@ export interface MediaTextTrackCapability {
 }
 
 export interface MediaFullscreenCapability {
-  requestFullscreen(): Promise<void>;
+  readonly isFullscreen: boolean;
+  requestFullscreen(): Promise<unknown>;
+  exitFullscreen(): Promise<unknown>;
 }
 
 export interface MediaPictureInPictureCapability {
+  readonly isPictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
+  exitPictureInPicture(): Promise<unknown>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
+}
+
+export interface MediaStreamTypeEvents {
+  streamtypechange: EventLike;
+}
+
+/**
+ * Canonical values for {@link MediaStreamType}.
+ *
+ * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally
+ *   supported across the full timeline.
+ * - `LIVE` — a live or DVR stream. The seekable window may slide as new
+ *   segments are published, and `duration` is typically `Infinity`.
+ * - `UNKNOWN` — the stream type has not been determined yet (no source,
+ *   or metadata has not loaded).
+ */
+export const MediaStreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
+export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
+
+export interface MediaStreamTypeCapability {
+  readonly streamType: MediaStreamType;
+}
+
+export interface MediaLiveEvents {
+  targetlivewindowchange: EventLike;
+}
+
+export interface MediaLiveCapability {
+  /**
+   * Presentation time marking the start of the Live Edge Window. Playing at
+   * the live edge when `currentTime >= liveEdgeStart`. `NaN` when the stream
+   * isn't live or the value is unknown.
+   *
+   * Derived — no dedicated change event; re-read when `seekable`,
+   * `targetLiveWindow`, or `streamType` change.
+   *
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
+   */
+  readonly liveEdgeStart: number;
+  /**
+   * Offset representing the seekable range size for live content. `0` for
+   * standard latency live, `Infinity` for DVR, `NaN` for on-demand or
+   * unknown. Fires `targetlivewindowchange` when the value changes.
+   */
+  readonly targetLiveWindow: number;
 }
 
 interface MediaEvents extends MediaPlaybackEvents {}

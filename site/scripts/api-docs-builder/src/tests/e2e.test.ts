@@ -894,6 +894,11 @@ describe('Preset pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
 
   describe('video preset', () => {
+    it('extracts description from file-level JSDoc', () => {
+      const ref = findPreset('video')!.reference;
+      expect(ref.description).toContain('Mock React video preset');
+    });
+
     it('identifies the feature bundle', () => {
       const ref = findPreset('video')!.reference;
       expect(ref.featureBundle).toBe('videoFeatures');

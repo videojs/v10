@@ -3,14 +3,8 @@ export type WebKitPresentationMode = 'inline' | 'fullscreen' | 'picture-in-pictu
 
 /** Extended HTMLVideoElement with WebKit vendor APIs. */
 export interface WebKitVideoElement extends HTMLVideoElement {
-  /** Whether the video is displaying in fullscreen (iOS Safari). */
-  webkitDisplayingFullscreen?: boolean;
   /** Current WebKit presentation mode (iOS Safari). */
   webkitPresentationMode?: WebKitPresentationMode;
-  /** Enter fullscreen using WebKit API (iOS Safari). */
-  webkitEnterFullscreen?: () => void;
-  /** Exit fullscreen using WebKit API (iOS Safari). */
-  webkitExitFullscreen?: () => void;
   /** Set WebKit presentation mode (iOS Safari). */
   webkitSetPresentationMode?: (mode: WebKitPresentationMode) => void;
 }

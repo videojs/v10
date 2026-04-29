@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { AudioTrack, Presentation, VideoTrack } from '../../../core/types';
+import type { AudioTrack, Presentation, VideoTrack } from '../../../media/types';
 import {
   buildMimeCodec,
   type SourceBufferOwners,

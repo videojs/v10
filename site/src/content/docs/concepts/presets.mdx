@@ -3,15 +3,16 @@ title: Presets
 description: Pre-packaged player configurations that bundle state management, skins, and media elements for specific use cases.
 ---
 
+import PresetReference from '@/components/docs/api-reference/PresetReference.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
 A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
 
-For example, the `/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
-
 <FrameworkCase frameworks={["react"]}>
+For example, the `@videojs/react/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
+
 ```tsx title="App.tsx"
 import { createPlayer } from '@videojs/react';
 import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
@@ -30,6 +31,8 @@ function Hero() {
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+For example, the `@videojs/html/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
+    
 ```html title="index.html"
 <script type="module">
   import '@videojs/html/background/player';
@@ -49,24 +52,7 @@ function Hero() {
 
 The default presets are `/video` and `/audio`. These cover the baseline controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases — the `/background` preset, for example, needs layout but not controls. Over time we'll add more: short-form players, podcast players, TV streaming players, and others.
 
-<FrameworkCase frameworks={["react"]}>
-
-| Preset | Feature bundle | Skins | Default media element |
-|--------|---------------|-------|-----------------------|
-| `/video` | `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `<Video>` |
-| `/audio` | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `<Audio>` |
-| `/background` | `backgroundFeatures` | `<BackgroundVideoSkin>` | `<BackgroundVideo>` |
-
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-
-| Preset | Skins | Default media element |
-|--------|-------|-----------------------|
-| `/video` | `<video-skin>`, `<video-minimal-skin>` | `<video>` |
-| `/audio` | `<audio-skin>`, `<audio-minimal-skin>` | `<audio>` |
-| `/background` | `<background-video-skin>` | `<background-video>` |
-
-</FrameworkCase>
+<PresetReference />
 
 ## What's in a preset
 

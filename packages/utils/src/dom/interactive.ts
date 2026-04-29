@@ -1,6 +1,7 @@
 import { resolveEventTarget } from './event';
 
-export const INTERACTIVE_SELECTOR = 'button,input,select,textarea,a[href],[role="slider"],[role="button"]';
+export const INTERACTIVE_SELECTOR =
+  'button,input,select,textarea,a[href],[role="slider"],[role="button"],[data-interactive]';
 
 const EDITABLE_INPUT_TYPES = ['text', 'search', 'url', 'tel', 'email', 'password', 'number'];
 

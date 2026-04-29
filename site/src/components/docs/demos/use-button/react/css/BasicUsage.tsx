@@ -1,4 +1,5 @@
 import { useButton } from '@videojs/react';
+import type { Ref } from 'react';
 import { useState } from 'react';
 
 export default function BasicUsage() {
@@ -13,7 +14,7 @@ export default function BasicUsage() {
 
   return (
     <div className="demo">
-      <button ref={buttonRef} {...getButtonProps()} className="button" disabled={disabled}>
+      <button ref={buttonRef as Ref<HTMLButtonElement>} {...getButtonProps()} className="button" disabled={disabled}>
         Activated {count} times
       </button>
       <label className="label">

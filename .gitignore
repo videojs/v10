@@ -2,6 +2,7 @@
 # Dependencies & Logs
 # -------------------------
 node_modules/
+.pnpm-store/
 logs/
 .yarn/*
 *.log
@@ -32,7 +33,9 @@ __tests__/coverage/
 site/src/content/generated-api-reference/
 site/src/content/generated-component-reference/
 site/src/content/generated-util-reference/
+site/src/content/generated-feature-reference/
 site/src/content/generated-media-reference/
+site/src/content/generated-preset-reference/
 site/src/content/ejected-skins.json
 packages/cli/docs/
 

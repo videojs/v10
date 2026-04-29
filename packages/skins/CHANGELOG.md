@@ -1,5 +1,65 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.22...@videojs/skins@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Code Refactoring
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.23
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.21...@videojs/skins@10.0.0-beta.22) (2026-04-18)
+
+
+### Features
+
+* **packages:** add chromecast support via remote playback API ([#1348](https://github.com/videojs/v10/issues/1348)) ([31a005e](https://github.com/videojs/v10/commit/31a005eeef4cee496c15f6f6be0129ef0006a5a8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.20...@videojs/skins@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.19...@videojs/skins@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/skins:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.20
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.18...@videojs/skins@10.0.0-beta.19) (2026-04-14)
 
 

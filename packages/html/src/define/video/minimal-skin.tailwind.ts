@@ -138,6 +138,11 @@ function getTemplateHTML() {
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
               <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
+                ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
+                ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
+              </media-cast-button>
+              <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
                 ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
                 ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}

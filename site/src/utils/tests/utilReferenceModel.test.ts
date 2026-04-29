@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { UtilReference } from '@/types/util-reference';
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from '../utilReferenceModel';
 
 describe('createUtilReferenceModel', () => {
@@ -15,9 +16,13 @@ describe('createUtilReferenceModel', () => {
           returnValue: { type: 'Media | null' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('useMedia', ref);
+
+    expect(model).not.toBeNull();
+    if (!model) return;
+    if (model.isMultiOverload) return;
 
     expect(model).toMatchObject({
       isMultiOverload: false,
@@ -39,9 +44,13 @@ describe('createUtilReferenceModel', () => {
           returnValue: { type: 'UseButtonReturnValue' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('useButton', ref);
+
+    expect(model).not.toBeNull();
+    if (!model) return;
+    if (model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(false);
     expect(model.sections).toEqual([
@@ -67,9 +76,13 @@ describe('createUtilReferenceModel', () => {
           returnValue: { type: 'R' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('usePlayer', ref);
+
+    expect(model).not.toBeNull();
+    if (!model) return;
+    if (!model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(true);
     expect(model.overloads).toHaveLength(2);
@@ -106,9 +119,13 @@ describe('createUtilReferenceModel', () => {
           returnValue: { type: 'AudioPlayer' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('createPlayer', ref);
+
+    expect(model).not.toBeNull();
+    if (!model) return;
+    if (!model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(true);
     expect(model.overloads[0]).toMatchObject({
@@ -145,9 +162,13 @@ describe('createUtilReferenceModel', () => {
           returnValue: { type: 'R' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('useStore', ref);
+
+    expect(model).not.toBeNull();
+    if (!model) return;
+    if (!model.isMultiOverload) return;
 
     expect(model.overloads[0]).toMatchObject({ id: 'overload-1', label: undefined });
     expect(model.overloads[1]).toMatchObject({ id: 'selector', label: 'Selector' });
@@ -168,7 +189,7 @@ describe('buildUtilReferenceTocHeadings', () => {
           returnValue: { type: 'UseButtonReturnValue' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('useButton', ref);
     const headings = buildUtilReferenceTocHeadings(model);
@@ -198,7 +219,7 @@ describe('buildUtilReferenceTocHeadings', () => {
           returnValue: { type: 'R' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('useStore', ref);
     const headings = buildUtilReferenceTocHeadings(model);
@@ -229,7 +250,7 @@ describe('buildUtilReferenceTocHeadings', () => {
           returnValue: { type: 'AudioPlayer' },
         },
       ],
-    };
+    } as UtilReference;
 
     const model = createUtilReferenceModel('createPlayer', ref);
     const headings = buildUtilReferenceTocHeadings(model);

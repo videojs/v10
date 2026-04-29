@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.22...@videojs/cli@10.0.0-beta.23) (2026-04-27)
+
+
+### Features
+
+* **packages:** support cli:omit markers for llm-only doc content ([#1466](https://github.com/videojs/v10/issues/1466)) ([85e28a5](https://github.com/videojs/v10/commit/85e28a59205c4b008f693a6ceb5821487a3fedfa))
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.21...@videojs/cli@10.0.0-beta.22) (2026-04-18)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.20...@videojs/cli@10.0.0-beta.21) (2026-04-14)
+
+
+### Bug Fixes
+
+* **cli:** normalize repository URL to match npm convention ([#1340](https://github.com/videojs/v10/issues/1340)) ([5301202](https://github.com/videojs/v10/commit/5301202a181e2ce572d274e0e2310e5cc7f5d60b))
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.19...@videojs/cli@10.0.0-beta.20) (2026-04-14)
+
+
+### Bug Fixes
+
+* **cli:** replace deprecated noExternal with deps.alwaysBundle ([#1338](https://github.com/videojs/v10/issues/1338)) ([ef71209](https://github.com/videojs/v10/commit/ef712093d45caf9dc86b3c9b251174ecef2bc61f))
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.18...@videojs/cli@10.0.0-beta.19) (2026-04-14)
 
 

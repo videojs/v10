@@ -4,6 +4,7 @@
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
+import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
@@ -37,6 +38,7 @@ defineTime();
 // Standalone elements.
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
+safeDefine(CastButtonElement);
 safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);

@@ -33,4 +33,10 @@ export const iconState = {
     off: 'hidden opacity-0 group-not-data-pip:block group-not-data-pip:opacity-100',
     on: 'hidden opacity-0 group-data-pip:block group-data-pip:opacity-100',
   },
+  cast: {
+    button: 'group',
+    enter:
+      'hidden opacity-0 group-not-data-[cast-state=connected]:block group-not-data-[cast-state=connected]:opacity-100',
+    exit: 'hidden opacity-0 group-data-[cast-state=connected]:block group-data-[cast-state=connected]:opacity-100',
+  },
 };

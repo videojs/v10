@@ -1,5 +1,38 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.22...@videojs/element@10.0.0-beta.23) (2026-04-27)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.21...@videojs/element@10.0.0-beta.22) (2026-04-18)
+
+
+### Bug Fixes
+
+* **packages:** add server-only bundles  ([#1349](https://github.com/videojs/v10/issues/1349)) ([3331fda](https://github.com/videojs/v10/commit/3331fdaf25c8a89ea6d36c2972631df589fc0ad3))
+
+
+### Reverts
+
+* **packages:** add server-only bundles ([#1349](https://github.com/videojs/v10/issues/1349)) ([#1354](https://github.com/videojs/v10/issues/1354)) ([8530316](https://github.com/videojs/v10/commit/8530316987b5122a2e455b0db3bad6fd3ffa8186))
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.20...@videojs/element@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.19...@videojs/element@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.18...@videojs/element@10.0.0-beta.19) (2026-04-14)
 
 

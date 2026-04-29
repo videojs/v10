@@ -1,5 +1,61 @@
 # Changelog
 
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.22...@videojs/icons@10.0.0-beta.23) (2026-04-27)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.23
+
+## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.21...@videojs/icons@10.0.0-beta.22) (2026-04-18)
+
+
+### Features
+
+* **packages:** add chromecast support via remote playback API ([#1348](https://github.com/videojs/v10/issues/1348)) ([31a005e](https://github.com/videojs/v10/commit/31a005eeef4cee496c15f6f6be0129ef0006a5a8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.22
+
+## [10.0.0-beta.21](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.20...@videojs/icons@10.0.0-beta.21) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.21
+
+## [10.0.0-beta.20](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.19...@videojs/icons@10.0.0-beta.20) (2026-04-14)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.20
+
 ## [10.0.0-beta.19](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.18...@videojs/icons@10.0.0-beta.19) (2026-04-14)
 
 

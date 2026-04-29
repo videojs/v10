@@ -1,6 +1,8 @@
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -20,11 +22,12 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
-import { MediaGesture } from '@/ui/gesture/media-gesture';
-import { MediaHotkey } from '@/ui/hotkey/media-hotkey';
+import { Gesture } from '@/ui/gesture/gesture';
+import { Hotkey } from '@/ui/hotkey/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -206,6 +209,18 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
+                  <CastButton className="media-button--cast" render={<Button />}>
+                    <CastEnterIcon className="media-icon media-icon--cast-enter" />
+                    <CastExitIcon className="media-icon media-icon--cast-exit" />
+                  </CastButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
                   <PiPButton className="media-button--pip" render={<Button />}>
                     <PipEnterIcon className="media-icon media-icon--pip-enter" />
                     <PipExitIcon className="media-icon media-icon--pip-exit" />
@@ -233,30 +248,30 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <div className="media-overlay" />
 
       {/* Hotkeys */}
-      <MediaHotkey keys="Space" action="togglePaused" />
-      <MediaHotkey keys="k" action="togglePaused" />
-      <MediaHotkey keys="m" action="toggleMuted" />
-      <MediaHotkey keys="f" action="toggleFullscreen" />
-      <MediaHotkey keys="c" action="toggleSubtitles" />
-      <MediaHotkey keys="i" action="togglePictureInPicture" />
-      <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
-      <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <MediaHotkey keys="l" action="seekStep" value={10} />
-      <MediaHotkey keys="j" action="seekStep" value={-10} />
-      <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <MediaHotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <MediaHotkey keys="0-9" action="seekToPercent" />
-      <MediaHotkey keys="Home" action="seekToPercent" value={0} />
-      <MediaHotkey keys="End" action="seekToPercent" value={100} />
-      <MediaHotkey keys=">" action="speedUp" />
-      <MediaHotkey keys="<" action="speedDown" />
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <Hotkey keys="l" action="seekStep" value={10} />
+      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
 
       {/* Gestures */}
-      <MediaGesture type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <MediaGesture type="tap" action="toggleControls" pointer="touch" />
-      <MediaGesture type="doubletap" action="seekStep" value={-10} region="left" />
-      <MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
-      <MediaGesture type="doubletap" action="seekStep" value={10} region="right" />
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+      <Gesture type="doubletap" action="seekStep" value={10} region="right" />
     </Container>
   );
 }

@@ -1,3 +1,5 @@
+import type { MediaFeatureAvailability, MediaStreamType } from './types';
+
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -36,8 +38,6 @@ export interface MediaPlaybackState {
   /** Toggle play/pause. Returns `true` if playback started. */
   togglePaused(): boolean;
 }
-
-import type { MediaFeatureAvailability } from './types';
 
 export interface MediaVolumeState {
   /**
@@ -120,6 +120,38 @@ export interface MediaSourceState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load
    */
   loadSource(src: string): string;
+}
+
+export interface MediaStreamTypeState {
+  /**
+   * Current stream delivery type.
+   *
+   * Components use this to toggle live-specific UI (e.g. a live indicator,
+   * a "jump to live edge" affordance, or hiding the time display).
+   *
+   * @see {@link MediaStreamTypes} for the canonical string values.
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
+   */
+  streamType: MediaStreamType;
+}
+
+export interface MediaLiveState {
+  /**
+   * Presentation time marking the start of the Live Edge Window.
+   *
+   * Playing at the live edge when `currentTime >= liveEdgeStart`. `NaN`
+   * when the stream isn't live or the value is unknown.
+   *
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
+   */
+  liveEdgeStart: number;
+  /**
+   * Offset representing the seekable range size for live content.
+   *
+   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand
+   * or unknown.
+   */
+  targetLiveWindow: number;
 }
 
 export interface MediaBufferState {
@@ -272,6 +304,25 @@ export interface MediaErrorState {
   error: MediaError | null;
   /** Dismiss the current error by clearing it. */
   dismissError(): void;
+}
+
+export type RemotePlaybackConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+export interface MediaRemotePlaybackState {
+  /**
+   * Current remote playback connection state.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/state
+   */
+  remotePlaybackState: RemotePlaybackConnectionState;
+  /**
+   * Whether remote playback can be requested on this platform.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
+   */
+  remotePlaybackAvailability: MediaFeatureAvailability;
+  /** Toggle the remote playback connection. */
+  toggleRemotePlayback(): Promise<void>;
 }
 
 export interface MediaPictureInPictureState {
