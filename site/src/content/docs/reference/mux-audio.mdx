@@ -10,10 +10,10 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
-{/* React demos */}
-import BasicUsageDemoReact from "@/components/docs/demos/mux-audio/react/css/BasicUsage";
-import basicUsageReactTsx from "@/components/docs/demos/mux-audio/react/css/BasicUsage.tsx?raw";
-import basicUsageReactCss from "@/components/docs/demos/mux-audio/react/css/BasicUsage.css?raw";
+{/* React demos — commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* import BasicUsageDemoReact from "@/components/docs/demos/mux-audio/react/css/BasicUsage"; */}
+{/* import basicUsageReactTsx from "@/components/docs/demos/mux-audio/react/css/BasicUsage.tsx?raw"; */}
+{/* import basicUsageReactCss from "@/components/docs/demos/mux-audio/react/css/BasicUsage.css?raw"; */}
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/mux-audio/html/css/BasicUsage.astro";
@@ -27,7 +27,8 @@ Audio element for playing Mux-hosted HLS streams. Built on top of hls.js with Mu
 
 ### Basic Usage
 
-<FrameworkCase frameworks={["react"]}>
+{/* React demo commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
@@ -36,7 +37,7 @@ Audio element for playing Mux-hosted HLS streams. Built on top of hls.js with Mu
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
-</FrameworkCase>
+</FrameworkCase> */}
 
 <FrameworkCase frameworks={["html"]}>
   <StyleCase styles={["css"]}>
