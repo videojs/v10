@@ -9,10 +9,10 @@
 .panel {
   display: flex;
   gap: 16px;
+  align-items: center;
   padding: 12px;
   background: rgba(0, 0, 0, 0.05);
   border-top: 1px solid rgba(0, 0, 0, 0.1);
-  align-items: center;
 }
 
 .actions {
@@ -22,15 +22,15 @@
 
 .actions button {
   padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
   font-size: 0.8125rem;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 .state {
   font-size: 0.8125rem;
-  color: #374151;
   font-variant-numeric: tabular-nums;
+  color: #374151;
 }

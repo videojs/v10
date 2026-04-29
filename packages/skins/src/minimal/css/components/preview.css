@@ -6,8 +6,8 @@
 
   & .media-preview__thumbnail-wrapper {
     position: relative;
-    border-radius: 0.5rem;
     background-color: oklch(0 0 0 / 0.9);
+    border-radius: 0.5rem;
   }
   & .media-preview__thumbnail {
     display: block;
@@ -16,8 +16,8 @@
 
   & .media-preview__time {
     display: block;
-    text-align: center;
     margin-top: 0.5rem;
+    text-align: center;
   }
 
   & .media-overlay {
@@ -28,8 +28,8 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    translate: -50% -50%;
     opacity: 0;
+    translate: -50% -50%;
   }
 
   & .media-preview__thumbnail,

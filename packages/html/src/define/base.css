@@ -18,10 +18,10 @@ video-player [slot="poster"] {
 }
 
 video-player video::-webkit-media-text-track-container {
-  transition: translate var(--media-caption-track-duration, 0) ease-out;
-  transition-delay: var(--media-caption-track-delay, 0);
-  translate: 0 var(--media-caption-track-y, 0);
-  scale: 0.98;
   z-index: 1;
   font-family: inherit;
+  scale: 0.98;
+  translate: 0 var(--media-caption-track-y, 0);
+  transition: translate var(--media-caption-track-duration, 0) ease-out;
+  transition-delay: var(--media-caption-track-delay, 0);
 }

@@ -5,7 +5,10 @@
   },
   "assist": {
     "actions": {
-      "source": { "organizeImports": "on" }
+      "source": {
+        "organizeImports": "on",
+        "useSortedProperties": "on"
+      }
     }
   },
   "formatter": {
@@ -140,13 +143,17 @@
       "**",
       "!**/.astro",
       "!**/.netlify",
+      "!**/.pnpm-store",
       "!**/.vercel",
       "!**/.turbo",
       "!**/.next",
       "!**/.opencode",
       "!**/.github",
+      "!**/build/AGENTS.md",
+      "!**/build/agents",
       "!**/dist",
       "!**/examples",
+      "!**/packages/html/cdn",
       "!**/styles/vjs.css",
       "!**/packages/*/types"
     ]

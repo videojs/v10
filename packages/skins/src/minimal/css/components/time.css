@@ -3,18 +3,18 @@
    ========================================================================== */
 
 .media-minimal-skin .media-time-controls {
-  container: media-time-controls / inline-size;
   display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
   flex: 1;
+  flex-direction: row-reverse;
   gap: 0.75rem;
+  align-items: center;
+  container: media-time-controls / inline-size;
 }
 
 .media-minimal-skin .media-time-group {
   display: flex;
-  align-items: center;
   gap: 0.25rem;
+  align-items: center;
 }
 
 .media-minimal-skin .media-time {

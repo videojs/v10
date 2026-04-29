@@ -6,8 +6,8 @@
     <title>Sandbox — SPF Segment Loading POC</title>
     <style>
       body {
-        padding: 20px;
         max-width: 1200px;
+        padding: 20px;
         margin: 0 auto;
         font-family: monospace;
       }
@@ -15,19 +15,19 @@
       p { margin: 0 0 12px; }
 
       video {
-        margin: 12px 0 4px;
-        border: 2px solid #333;
         display: block;
         width: 100%;
         max-width: 640px;
+        margin: 12px 0 4px;
+        border: 2px solid #333;
       }
 
       /* ── Src controls ── */
       #src-controls {
         display: flex;
         gap: 8px;
-        margin-bottom: 10px;
         align-items: center;
+        margin-bottom: 10px;
       }
       #src-input {
         flex: 1;
@@ -48,11 +48,11 @@
         margin-bottom: 10px;
         font-size: 12px;
       }
-      #playback-config label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+      #playback-config label { display: flex; gap: 4px; align-items: center; cursor: pointer; }
       #playback-config select {
+        padding: 2px 6px;
         font-family: monospace;
         font-size: 12px;
-        padding: 2px 6px;
         border: 1px solid #999;
         border-radius: 4px;
       }
@@ -60,19 +60,19 @@
       /* ── Share URL ── */
       #share-url-section {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-bottom: 10px;
-        font-size: 11px;
         font-family: monospace;
+        font-size: 11px;
       }
       #share-link {
-        color: #0070f3;
-        text-decoration: none;
+        max-width: 520px;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: #0070f3;
         white-space: nowrap;
-        max-width: 520px;
+        text-decoration: none;
       }
       #share-link:hover { text-decoration: underline; }
 
@@ -81,28 +81,28 @@
       button {
         padding: 8px 16px;
         margin-right: 8px;
-        cursor: pointer;
-        border: 1px solid #333;
-        background: #f0f0f0;
-        border-radius: 4px;
         font-family: monospace;
         font-size: 12px;
+        cursor: pointer;
+        background: #f0f0f0;
+        border: 1px solid #333;
+        border-radius: 4px;
       }
       button:hover { background: #e0e0e0; }
 
       /* ── Video info strip ── */
       #now-playing-quality {
-        font-size: 12px;
-        font-family: monospace;
-        color: #555;
         margin-bottom: 2px;
-      }
-      #now-playing-quality.has-quality { color: #0070f3; font-weight: bold; }
-      #throughput-display {
-        font-size: 12px;
         font-family: monospace;
+        font-size: 12px;
         color: #555;
+      }
+      #now-playing-quality.has-quality { font-weight: bold; color: #0070f3; }
+      #throughput-display {
         margin-bottom: 12px;
+        font-family: monospace;
+        font-size: 12px;
+        color: #555;
       }
       #throughput-display.has-data { color: #16a34a; }
       #throughput-display.warming { color: #d97706; }
@@ -110,68 +110,70 @@
       /* ── Rendition / resolution panels ── */
       #rendition-picker,
       #resolution-status {
-        margin: 16px 0;
         padding: 12px 15px;
+        margin: 16px 0;
+        font-size: 12px;
         background: #f5f5f5;
         border: 1px solid #ddd;
         border-radius: 4px;
-        font-size: 12px;
       }
       #rendition-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
 
       #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
       .rendition-btn {
         padding: 6px 12px;
-        cursor: pointer;
-        border: 2px solid #999;
-        background: #fff;
-        border-radius: 4px;
         font-family: monospace;
         font-size: 11px;
+        cursor: pointer;
+        background: #fff;
+        border: 2px solid #999;
+        border-radius: 4px;
       }
-      .rendition-btn:hover { border-color: #555; background: #eee; }
-      .rendition-btn.selected-abr  { border-color: #0070f3; background: #e6f0ff; font-weight: bold; }
-      .rendition-btn.selected-manual { border-color: #d97706; background: #fef3c7; font-weight: bold; }
+      .rendition-btn:hover { background: #eee; border-color: #555; }
+      .rendition-btn.selected-abr  { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
+      .rendition-btn.selected-manual { font-weight: bold; background: #fef3c7; border-color: #d97706; }
 
-      .abr-status { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-      .mode-abr    { color: #0070f3; font-weight: bold; }
-      .mode-manual { color: #d97706; font-weight: bold; }
+      .abr-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+      .mode-abr    { font-weight: bold; color: #0070f3; }
+      .mode-manual { font-weight: bold; color: #d97706; }
       .enable-abr-btn {
-        padding: 4px 10px; font-size: 11px; cursor: pointer;
-        border: 1px solid #0070f3; background: #e6f0ff; color: #0070f3; border-radius: 4px;
+        padding: 4px 10px; font-size: 11px; color: #0070f3; cursor: pointer;background: #e6f0ff; 
+        border: 1px solid #0070f3; border-radius: 4px;
       }
       .enable-abr-btn:hover { background: #cce0ff; }
 
       #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
       .resolution-item {
-        padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px;
-        font-family: monospace; font-size: 11px;
+        padding: 4px 10px; 
+        font-family: monospace; font-size: 11px;border: 1px solid #ccc; border-radius: 4px;
       }
-      .resolution-item.resolved   { border-color: green; color: green; }
-      .resolution-item.unresolved { border-color: #aaa; color: #888; }
+      .resolution-item.resolved   { color: green; border-color: green; }
+      .resolution-item.unresolved { color: #888; border-color: #aaa; }
 
       /* ── Logs ── */
       #logs-section { margin: 16px 0; }
-      #logs-section h2 { font-size: 14px; margin-bottom: 6px; }
+      #logs-section h2 { margin-bottom: 6px; font-size: 14px; }
       #logs {
-        background: #f5f5f5; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
-        max-height: 400px; overflow-y: auto; font-size: 12px;
+        max-height: 400px; padding: 10px; overflow-y: auto; font-size: 12px;
+        background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
       }
       #logs div { padding: 2px 0; border-bottom: 1px solid #eee; }
 
       /* ── State inspector ── */
       #state {
-        background: #f5f5f5; padding: 15px; margin: 16px 0;
-        border: 1px solid #ddd; border-radius: 4px; font-size: 12px;
+        padding: 15px; margin: 16px 0;font-size: 12px;
+        background: #f5f5f5; 
+        border: 1px solid #ddd; border-radius: 4px;
       }
       #state h2 { margin-top: 0; font-size: 14px; }
       #state pre {
-        margin: 10px 0; padding: 10px; background: #fff;
-        border: 1px solid #ddd; border-radius: 4px; overflow-x: auto;
+        padding: 10px; 
+        margin: 10px 0; overflow-x: auto;background: #fff;
+        border: 1px solid #ddd; border-radius: 4px;
       }
 
       /* ── Log colours ── */
-      .error   { color: red; font-weight: bold; }
+      .error   { font-weight: bold; color: red; }
       .success { color: green; }
       .warning { color: orange; }
     </style>

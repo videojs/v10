@@ -3,29 +3,29 @@
    ========================================================================== */
 
 .media-default-skin {
-  container: media-root / inline-size;
   position: relative;
-  isolation: isolate;
   display: block;
-  height: 100%;
   width: 100%;
-  border-radius: var(--media-border-radius, 2rem);
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-
-  &:focus-visible {
-    outline-color: currentColor;
-  }
+  height: 100%;
+  container: media-root / inline-size;
   font-family:
     Inter Variable,
     Inter,
     ui-sans-serif,
     system-ui,
     sans-serif;
-  line-height: 1.5;
-  letter-spacing: normal;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
+  line-height: 1.5;
+  letter-spacing: normal;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-radius: var(--media-border-radius, 2rem);
+  isolation: isolate;
+
+  &:focus-visible {
+    outline-color: currentColor;
+  }
 
   & > * {
     font-size: 0.75rem; /* 12px at 100% font size */

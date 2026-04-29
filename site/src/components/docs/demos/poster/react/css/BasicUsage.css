@@ -11,8 +11,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   pointer-events: none;
+  object-fit: cover;
   transition: opacity 0.25s;
 }
 
@@ -25,11 +25,11 @@
   bottom: 10px;
   left: 10px;
   padding-block: 8px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
+  padding-inline: 16px;
   color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 9999px;
-  padding-inline: 16px;
-  cursor: pointer;
+  backdrop-filter: blur(10px);
 }
