@@ -3,12 +3,12 @@
    ========================================================================== */
 
 .media-default-skin .media-time-controls {
-  container: media-time-controls / inline-size;
   display: flex;
-  align-items: center;
   flex: 1;
   gap: 0.75rem;
+  align-items: center;
   padding-inline: 0.5rem;
+  container: media-time-controls / inline-size;
 }
 
 .media-default-skin .media-time {

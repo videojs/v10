@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Firefox MSE Init Order Repro</title>
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: monospace; font-size: 13px; background: #1a1a1a; color: #e0e0e0; padding: 16px; }
-      h1 { font-size: 15px; margin-bottom: 4px; color: #fff; }
-      .subtitle { color: #888; font-size: 11px; margin-bottom: 14px; }
-      h2 { font-size: 11px; font-weight: bold; margin: 12px 0 5px; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
+      * { box-sizing: border-box; padding: 0; margin: 0; }
+      body { padding: 16px; font-family: monospace; font-size: 13px; color: #e0e0e0; background: #1a1a1a; }
+      h1 { margin-bottom: 4px; font-size: 15px; color: #fff; }
+      .subtitle { margin-bottom: 14px; font-size: 11px; color: #888; }
+      h2 { margin: 12px 0 5px; font-size: 11px; font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
       .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
-      .state { background: #222; border-radius: 3px; padding: 6px 8px; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+      video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
+      .state { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; padding: 6px 8px; margin-top: 8px; background: #222; border-radius: 3px; }
       .state-row { display: flex; justify-content: space-between; font-size: 11px; }
       .state-key { color: #777; }
       .val { color: #6cf; }
@@ -21,23 +21,23 @@
       .val-none { color: #666; }
       .btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0; }
       button {
-        background: #2a2a2a; color: #ccc; border: 1px solid #444; border-radius: 3px;
-        padding: 4px 10px; cursor: pointer; font-family: monospace; font-size: 11px;
+        padding: 4px 10px; font-family: monospace; font-size: 11px;color: #ccc; cursor: pointer; 
+        background: #2a2a2a; border: 1px solid #444; border-radius: 3px;
       }
       button:hover:not(:disabled) { background: #383838; border-color: #666; }
-      button:disabled { opacity: 0.35; cursor: default; }
-      button.ok { background: #162516; border-color: #3a6a3a; color: #8f8; }
-      button.bad { background: #251616; border-color: #6a3a3a; color: #f88; }
-      .log { background: #111; border-radius: 3px; padding: 6px 8px; height: 500px; overflow-y: auto; font-size: 11px; line-height: 1.7; }
+      button:disabled { cursor: default; opacity: 0.35; }
+      button.ok { color: #8f8; background: #162516; border-color: #3a6a3a; }
+      button.bad { color: #f88; background: #251616; border-color: #6a3a3a; }
+      .log { height: 500px; padding: 6px 8px; overflow-y: auto; font-size: 11px; line-height: 1.7; background: #111; border-radius: 3px; }
       .info { color: #6cf; }
       .ok { color: #6f6; }
       .err { color: #f66; }
       .warn { color: #fa6; }
-      .sep { color: #555; border-top: 1px solid #2a2a2a; margin-top: 2px; padding-top: 4px; }
-      input { background: #222; border: 1px solid #444; color: #e0e0e0; padding: 4px 8px; border-radius: 3px; font-family: monospace; font-size: 11px; width: 100%; }
-      .scenario { background: #1e1e1e; border: 1px solid #333; border-radius: 3px; padding: 8px; margin: 5px 0; }
-      .scenario p { color: #888; font-size: 11px; margin-bottom: 5px; line-height: 1.4; }
-      .codec-info { background: #1a2a1a; border: 1px solid #2a4a2a; border-radius: 3px; padding: 6px 8px; margin: 5px 0; font-size: 11px; color: #8a8; display: none; }
+      .sep { padding-top: 4px; margin-top: 2px; color: #555; border-top: 1px solid #2a2a2a; }
+      input { width: 100%; padding: 4px 8px; font-family: monospace; font-size: 11px; color: #e0e0e0; background: #222; border: 1px solid #444; border-radius: 3px; }
+      .scenario { padding: 8px; margin: 5px 0; background: #1e1e1e; border: 1px solid #333; border-radius: 3px; }
+      .scenario p { margin-bottom: 5px; font-size: 11px; line-height: 1.4; color: #888; }
+      .codec-info { display: none; padding: 6px 8px; margin: 5px 0; font-size: 11px; color: #8a8; background: #1a2a1a; border: 1px solid #2a4a2a; border-radius: 3px; }
       .codec-info.visible { display: block; }
     </style>
   </head>

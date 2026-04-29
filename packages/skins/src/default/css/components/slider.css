@@ -5,16 +5,16 @@
 .media-default-skin .media-slider {
   position: relative;
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  border-radius: calc(infinity * 1px);
-  outline: none;
   cursor: pointer;
+  outline: none;
+  border-radius: calc(infinity * 1px);
 
   &[data-orientation="horizontal"] {
-    min-width: 5rem;
     width: 100%;
+    min-width: 5rem;
     height: 2rem;
   }
 
@@ -27,10 +27,10 @@
 /* Track */
 .media-default-skin .media-slider__track {
   position: relative;
-  isolation: isolate;
   overflow: hidden;
-  border-radius: inherit;
   user-select: none;
+  border-radius: inherit;
+  isolation: isolate;
 
   &[data-orientation="horizontal"] {
     width: 100%;
@@ -45,11 +45,13 @@
 
 /* Thumb */
 .media-default-skin .media-slider__thumb {
-  z-index: 10;
   position: absolute;
-  translate: -50% -50%;
+  z-index: 10;
   width: 0.625rem;
   height: 0.625rem;
+  user-select: none;
+  outline: 4px solid transparent;
+  outline-offset: -4px;
   background-color: currentColor;
   border-radius: calc(infinity * 1px);
   box-shadow:
@@ -57,12 +59,10 @@
     0 1px 3px 0 oklch(0 0 0 / 0.15),
     0 1px 2px -1px oklch(0 0 0 / 0.15);
   opacity: 0;
-  transition-property: opacity, height, width, outline-offset;
-  transition-duration: 150ms;
+  translate: -50% -50%;
   transition-timing-function: ease-out;
-  user-select: none;
-  outline: 4px solid transparent;
-  outline-offset: -4px;
+  transition-duration: 150ms;
+  transition-property: opacity, height, width, outline-offset;
 
   &[data-orientation="horizontal"] {
     top: 50%;
@@ -70,8 +70,8 @@
   }
 
   &[data-orientation="vertical"] {
-    left: 50%;
     top: calc(100% - var(--media-slider-fill));
+    left: 50%;
   }
 
   &:hover,
@@ -81,19 +81,19 @@
   }
 
   &::after {
-    content: "";
     position: absolute;
     inset: -4px;
+    content: "";
     border-radius: inherit;
     box-shadow: 0 0 0 2px oklch(1 0 0);
-    transition-property: opacity, scale;
-    transition-duration: 150ms;
     transition-timing-function: ease-out;
+    transition-duration: 150ms;
+    transition-property: opacity, scale;
   }
 
   &:not(:focus-visible)::after {
-    scale: 0.5;
     opacity: 0;
+    scale: 0.5;
   }
 }
 
@@ -113,8 +113,8 @@
 .media-default-skin .media-slider__buffer,
 .media-default-skin .media-slider__fill {
   position: absolute;
-  border-radius: inherit;
   pointer-events: none;
+  border-radius: inherit;
 }
 
 .media-default-skin .media-slider__buffer[data-orientation="horizontal"],
@@ -132,8 +132,8 @@
 /* Buffer */
 .media-default-skin .media-slider__buffer {
   background-color: oklch(from currentColor l c h / 0.2);
-  transition-duration: 0.25s;
   transition-timing-function: ease-out;
+  transition-duration: 0.25s;
 
   &[data-orientation="horizontal"] {
     width: var(--media-slider-buffer);

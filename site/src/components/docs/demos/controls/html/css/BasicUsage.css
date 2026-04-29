@@ -1,6 +1,6 @@
 .video-player {
-  display: block;
   position: relative;
+  display: block;
 }
 
 .video-player video {
@@ -28,16 +28,16 @@
 
 .time {
   display: inline-flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding-block: 8px;
   padding-inline: 16px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
-  color: black;
-  border: 1px solid rgba(255, 255, 255, 0.25);
   font-size: 14px;
+  color: black;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
 }
 
 .controls-group {
@@ -49,14 +49,14 @@
 
 .button {
   padding-block: 8px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
-  color: black;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 9999px;
   padding-inline: 16px;
   font-size: 14px;
+  color: black;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
 }
 
 .button .paused,

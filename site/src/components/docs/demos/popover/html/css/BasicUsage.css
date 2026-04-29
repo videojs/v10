@@ -1,7 +1,7 @@
 .video-player,
 .video-player media-container {
-  display: block;
   position: relative;
+  display: block;
 }
 
 .video-player video {
@@ -16,20 +16,20 @@
 
 .trigger {
   padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
   color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 9999px;
-  cursor: pointer;
+  backdrop-filter: blur(10px);
 }
 
 .media-popover {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  color: white;
-  border-radius: 8px;
   padding: 12px 16px;
   font-size: 14px;
+  color: white;
   white-space: nowrap;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
 }

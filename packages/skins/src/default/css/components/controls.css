@@ -3,16 +3,16 @@
    ========================================================================== */
 
 .media-default-skin .media-controls {
-  container: media-controls / inline-size;
-  display: flex;
-  align-items: center;
-  column-gap: 0.075rem;
-  padding: 0.375rem;
-  border-radius: 1.5rem;
   --media-controls-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-controls-current-shadow-color-subtle: oklch(
     from var(--media-controls-current-shadow-color) l c h /
     calc(alpha * 0.4)
   );
+  display: flex;
+  column-gap: 0.075rem;
+  align-items: center;
+  padding: 0.375rem;
+  container: media-controls / inline-size;
   text-shadow: 0 1px 0 var(--media-controls-current-shadow-color);
+  border-radius: 1.5rem;
 }

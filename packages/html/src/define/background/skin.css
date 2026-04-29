@@ -3,11 +3,11 @@ background-video-player {
 }
 
 background-video-skin {
-  display: block;
+  --media-object-fit: cover;
   position: relative;
+  display: block;
   width: 100%;
   height: 100%;
-  --media-object-fit: cover;
   object-fit: var(--media-object-fit);
 }
 
