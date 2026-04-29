@@ -1,0 +1,116 @@
+import { Window } from 'happy-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+describe('@videojs/html/icons', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('exports SVG strings without registering media-icon', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    const { playIcon } = await import('../index');
+
+    expect(playIcon).toContain('<svg');
+    expect(customElements.get('media-icon')).toBeUndefined();
+  });
+
+  it('renders icons that exist before the registry module loads', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    document.body.innerHTML = '<media-icon name="play"></media-icon>';
+
+    await import('../element');
+    await customElements.whenDefined('media-icon');
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('media-icon')?.innerHTML).toContain('<svg');
+    });
+  });
+
+  it('renders minimal icons from the lazy family loader', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    document.body.innerHTML = '<media-icon family="minimal" name="play"></media-icon>';
+
+    await import('../element');
+    await customElements.whenDefined('media-icon');
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('media-icon')?.innerHTML).toContain('<svg');
+    });
+  });
+
+  it('does not microtask-loop when icon name is missing from a loaded family', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    document.body.innerHTML = `
+      <media-icon id="good" name="play"></media-icon>
+      <media-icon id="bad" name="__no_such_icon__"></media-icon>
+    `;
+
+    await import('../element');
+    await customElements.whenDefined('media-icon');
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('#good')?.innerHTML).toContain('<svg');
+    });
+
+    expect(document.querySelector('#bad')?.innerHTML).toBe('');
+  });
+
+  it('does not microtask-loop when family has no loader', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    document.body.innerHTML = '<media-icon family="__unknown_family__" name="play"></media-icon>';
+
+    await import('../element');
+    await customElements.whenDefined('media-icon');
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.querySelector('media-icon')?.innerHTML).toBe('');
+  });
+
+  it('renders icons from a family-specific import', async () => {
+    const testWindow = new Window();
+
+    vi.stubGlobal('window', testWindow);
+    vi.stubGlobal('document', testWindow.document);
+    vi.stubGlobal('customElements', testWindow.customElements);
+    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
+
+    document.body.innerHTML = '<media-icon family="minimal" name="play"></media-icon>';
+
+    await import('../element/minimal');
+    await customElements.whenDefined('media-icon');
+
+    expect(document.querySelector('media-icon')?.innerHTML).toContain('<svg');
+  });
+});

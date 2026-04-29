@@ -14,6 +14,8 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
     "./dist/*/define/**/*.js",
+    "./dist/*/icons/element/**/*.js",
+    "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
   ],
   "files": [
@@ -25,6 +27,16 @@
       "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
+    },
+    "./icons": {
+      "types": "./dist/dev/icons/index.d.ts",
+      "development": "./dist/dev/icons/index.js",
+      "default": "./dist/default/icons/index.js"
+    },
+    "./icons/*": {
+      "types": "./dist/dev/icons/*/index.d.ts",
+      "development": "./dist/dev/icons/*/index.js",
+      "default": "./dist/default/icons/*/index.js"
     },
     "./video": {
       "types": "./dist/dev/presets/video.d.ts",

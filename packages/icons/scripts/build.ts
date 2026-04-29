@@ -128,19 +128,43 @@ function buildIconMap(icons: { name: string; content: string }[]): string {
 }
 
 function buildElementIndex(sets: string[]): string {
-  const varName = (set: string) => `${camelCase(set)}Icons`;
-  const imports = sets.map((set) => `import { icons as ${varName(set)} } from './${set}/icons.js';`).join('\n');
-  const registers = sets.map((set) => `MediaIconElement.register('${set}', ${varName(set)});`).join('\n');
+  const loaders = sets
+    .map(
+      (set) =>
+        `  mediaIconElement.registerLoader?.('${set}', () => import('./${set}/icons.js').then((module) => module.icons));`
+    )
+    .join('\n');
 
   return [
     `import { MediaIconElement } from './base.js';`,
-    imports,
     ``,
-    `if (!customElements.get('media-icon')) {`,
-    `  customElements.define('media-icon', MediaIconElement);`,
+    `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,
+    `  const mediaIconElement = customElements.get('media-icon') || MediaIconElement;`,
+    ``,
+    loaders,
+    ``,
+    `  if (!customElements.get('media-icon')) {`,
+    `    customElements.define('media-icon', MediaIconElement);`,
+    `  }`,
     `}`,
     ``,
-    registers,
+  ].join('\n');
+}
+
+function buildElementFamilyIndex(set: string): string {
+  return [
+    `import { MediaIconElement } from '../base.js';`,
+    `import { icons } from './icons.js';`,
+    ``,
+    `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,
+    `  const mediaIconElement = customElements.get('media-icon') || MediaIconElement;`,
+    ``,
+    `  mediaIconElement.register?.('${set}', icons);`,
+    ``,
+    `  if (!customElements.get('media-icon')) {`,
+    `    customElements.define('media-icon', MediaIconElement);`,
+    `  }`,
+    `}`,
     ``,
   ].join('\n');
 }
@@ -149,6 +173,9 @@ function buildElementBase(): string {
   return [
     `export class MediaIconElement extends HTMLElement {`,
     `  static #families = new Map();`,
+    `  static #loaders = new Map();`,
+    `  static #loading = new Map();`,
+    `  static #instances = new Set();`,
     ``,
     `  static register(family, icons) {`,
     `    const map = MediaIconElement.#families.get(family) ?? new Map();`,
@@ -156,6 +183,37 @@ function buildElementBase(): string {
     `      map.set(name, svg);`,
     `    }`,
     `    MediaIconElement.#families.set(family, map);`,
+    `    MediaIconElement.#renderFamily(family);`,
+    `  }`,
+    ``,
+    `  static registerLoader(family, load) {`,
+    `    MediaIconElement.#loaders.set(family, load);`,
+    `  }`,
+    ``,
+    `  static load(family) {`,
+    `    if (MediaIconElement.#families.has(family)) return Promise.resolve();`,
+    ``,
+    `    const pending = MediaIconElement.#loading.get(family);`,
+    `    if (pending) return pending;`,
+    ``,
+    `    const loader = MediaIconElement.#loaders.get(family);`,
+    `    if (!loader) return Promise.resolve();`,
+    ``,
+    `    const loading = Promise.resolve()`,
+    `      .then(() => loader())`,
+    `      .then((icons) => {`,
+    `        if (icons) MediaIconElement.register(family, icons);`,
+    `      })`,
+    `      .finally(() => MediaIconElement.#loading.delete(family));`,
+    ``,
+    `    MediaIconElement.#loading.set(family, loading);`,
+    `    return loading;`,
+    `  }`,
+    ``,
+    `  static #renderFamily(family) {`,
+    `    for (const icon of MediaIconElement.#instances) {`,
+    `      if (icon.#family === family) icon.#render();`,
+    `    }`,
     `  }`,
     ``,
     `  static get observedAttributes() {`,
@@ -167,17 +225,41 @@ function buildElementBase(): string {
     `  }`,
     ``,
     `  connectedCallback() {`,
+    `    MediaIconElement.#instances.add(this);`,
     `    this.#render();`,
+    `  }`,
+    ``,
+    `  disconnectedCallback() {`,
+    `    MediaIconElement.#instances.delete(this);`,
+    `  }`,
+    ``,
+    `  get #family() {`,
+    `    return this.getAttribute('family') || 'default';`,
     `  }`,
     ``,
     `  #render() {`,
     `    const name = this.getAttribute('name');`,
     `    if (!name) return;`,
     ``,
-    `    const family = this.getAttribute('family') || 'default';`,
+    `    const family = this.#family;`,
     `    const icons = MediaIconElement.#families.get(family);`,
     `    const svg = icons?.get(name);`,
-    `    if (!svg) return;`,
+    `    if (!svg) {`,
+    `      if (MediaIconElement.#families.has(family)) return;`,
+    ``,
+    `      MediaIconElement.load(family).then(() => {`,
+    `        if (`,
+    `          !this.isConnected ||`,
+    `          this.getAttribute('name') !== name ||`,
+    `          this.#family !== family ||`,
+    `          !MediaIconElement.#families.has(family)`,
+    `        ) {`,
+    `          return;`,
+    `        }`,
+    `        this.#render();`,
+    `      }, () => {});`,
+    `      return;`,
+    `    }`,
     ``,
     `    this.innerHTML = svg;`,
     `  }`,
@@ -189,10 +271,14 @@ function buildElementBase(): string {
 function buildElementBaseTypes(): string {
   return [
     `export type IconMap = Record<string, string>;`,
+    `export type IconLoader = () => IconMap | Promise<IconMap>;`,
     ``,
     `export declare class MediaIconElement extends HTMLElement {`,
     `  static register(family: string, icons: IconMap): void;`,
+    `  static registerLoader(family: string, load: IconLoader): void;`,
+    `  static load(family: string): Promise<void>;`,
     `  connectedCallback(): void;`,
+    `  disconnectedCallback(): void;`,
     `  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;`,
     `}`,
     ``,
@@ -288,6 +374,8 @@ async function buildIconSet(setName: string): Promise<void> {
 
   writeFileSync(join(elementDir, 'icons.js'), buildIconMap(icons));
   writeFileSync(join(elementDir, 'icons.d.ts'), `export declare const icons: Record<string, string>;\n`);
+  writeFileSync(join(elementDir, 'index.js'), buildElementFamilyIndex(setName));
+  writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
 }
 
 async function build(): Promise<void> {

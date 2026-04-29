@@ -1,22 +1,4 @@
 import {
-  CaptionsOffIcon,
-  CaptionsOnIcon,
-  CastEnterIcon,
-  CastExitIcon,
-  FullscreenEnterIcon,
-  FullscreenExitIcon,
-  PauseIcon,
-  PipEnterIcon,
-  PipExitIcon,
-  PlayIcon,
-  RestartIcon,
-  SeekIcon,
-  SpinnerIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeOffIcon,
-} from '@videojs/icons/react';
-import {
   bufferingIndicator,
   button,
   buttonGroupEnd,
@@ -40,6 +22,24 @@ import {
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
+  FullscreenEnterIcon,
+  FullscreenExitIcon,
+  PauseIcon,
+  PipEnterIcon,
+  PipExitIcon,
+  PlayIcon,
+  RestartIcon,
+  SeekIcon,
+  SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
+} from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';

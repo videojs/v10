@@ -22,6 +22,16 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./icons": {
+      "types": "./dist/dev/icons/index.d.ts",
+      "development": "./dist/dev/icons/index.js",
+      "default": "./dist/default/icons/index.js"
+    },
+    "./icons/*": {
+      "types": "./dist/dev/icons/*/index.d.ts",
+      "development": "./dist/dev/icons/*/index.js",
+      "default": "./dist/default/icons/*/index.js"
+    },
     "./media/*": {
       "types": "./dist/dev/media/*/index.d.ts",
       "development": "./dist/dev/media/*/index.js",

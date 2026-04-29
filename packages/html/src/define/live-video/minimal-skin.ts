@@ -67,9 +67,7 @@ function getTemplateHTML() {
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-button>
-            <media-tooltip id="captions-tooltip" side="top" class="media-tooltip">
-              Toggle captions
-            </media-tooltip>
+            <media-tooltip id="captions-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
             <media-cast-button commandfor="cast-tooltip" class="media-button media-button--subtle media-button--icon media-button--cast">
               ${renderIcon('cast-enter', { class: 'media-icon media-icon--cast-enter' })}

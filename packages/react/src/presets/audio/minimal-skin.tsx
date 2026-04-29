@@ -1,3 +1,5 @@
+import { cn } from '@videojs/utils/style';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
   PauseIcon,
   PlayIcon,
@@ -6,9 +8,7 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@videojs/icons/react/minimal';
-import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+} from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';

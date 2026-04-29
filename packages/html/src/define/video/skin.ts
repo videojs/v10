@@ -54,9 +54,7 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip">
-              Seek backward ${SEEK_TIME} seconds
-            </media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -64,9 +62,7 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip">
-              Seek forward ${SEEK_TIME} seconds
-            </media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
           </div>
 
           <div class="media-time-controls">
@@ -89,9 +85,7 @@ function getTemplateHTML() {
 
           <div class="media-button-group">
             <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
-            <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip">
-              Toggle playback rate
-            </media-tooltip>
+            <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
