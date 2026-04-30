@@ -29,8 +29,13 @@ export const popup = {
   tooltip: cn(
     base,
     'py-1 px-2.5 rounded-full text-[0.75rem] whitespace-nowrap',
+    /* Flex only while open — unconditional `flex` overrides UA `[popover]` `display:none`. */
+    'data-[open]:flex data-[open]:items-center data-[open]:gap-1',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
   ),
   volume: 'py-3 px-0 rounded-full',
+  tooltipShortcut: cn(
+    'min-w-[1.5em] p-[0.1em] bg-current/30 text-[90%] font-semibold font-[inherit] leading-[1.25] text-center rounded'
+  ),
 };

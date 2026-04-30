@@ -155,7 +155,10 @@ function CaptionsTrigger(): ReactNode {
             </CaptionsButton>
           }
         />
-        <Tooltip.Popup className={cn(popup.tooltip)} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
       </Tooltip.Root>
     );
   }
@@ -245,7 +248,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
@@ -267,7 +273,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -279,7 +288,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -291,7 +303,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -303,7 +318,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

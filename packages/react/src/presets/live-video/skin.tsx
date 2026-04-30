@@ -114,7 +114,10 @@ function CaptionsTrigger(): ReactNode {
             </CaptionsButton>
           }
         />
-        <Tooltip.Popup className="media-surface media-tooltip" />
+        <Tooltip.Popup className="media-surface media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
       </Tooltip.Root>
     );
   }
@@ -201,7 +204,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
@@ -223,7 +229,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -235,7 +244,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -247,7 +259,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -259,7 +274,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

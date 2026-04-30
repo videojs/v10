@@ -16,7 +16,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
-import { TooltipContextProvider } from './context';
+import { type TooltipContent, TooltipContextProvider } from './context';
 import { useTooltipGroup } from './group-context';
 
 export interface TooltipRootProps extends CoreTooltipProps {
@@ -85,7 +85,7 @@ export function TooltipRoot({
     return instance;
   });
 
-  const [content, setContent] = useState<string | undefined>();
+  const [content, setContent] = useState<TooltipContent | undefined>();
 
   const anchorName = useSafeId();
   const popupId = useSafeId('tooltip');

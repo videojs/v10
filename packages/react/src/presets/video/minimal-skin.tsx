@@ -328,7 +328,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -342,7 +345,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -356,7 +362,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
@@ -401,7 +410,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -413,7 +425,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -425,7 +440,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -437,7 +455,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

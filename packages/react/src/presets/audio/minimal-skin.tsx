@@ -136,7 +136,10 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -150,7 +153,10 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -164,7 +170,10 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 

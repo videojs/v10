@@ -1,4 +1,7 @@
+import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vitest';
+import { containerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
 import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';
 import { HotkeyElement } from '../hotkey-element';
 
@@ -42,6 +45,16 @@ describe('HotkeyElement', () => {
 });
 
 describe('AriaKeyShortcutsController', () => {
+  class TestContainerProviderElement extends MediaElement {
+    readonly provider = new ContextProvider(this, {
+      context: containerContext,
+      initialValue: {
+        container: this,
+        setContainer: () => {},
+      },
+    });
+  }
+
   it('returns undefined when no coordinator exists', () => {
     const el = createElement(HotkeyElement);
     document.body.appendChild(el);
@@ -49,5 +62,15 @@ describe('AriaKeyShortcutsController', () => {
     const controller = new AriaKeyShortcutsController(el, 'togglePaused');
 
     expect(controller.value).toBeUndefined();
+  });
+
+  it('connects when context is available during construction', () => {
+    const provider = createElement(TestContainerProviderElement);
+    const el = createElement(HotkeyElement);
+
+    provider.append(el);
+    document.body.append(provider);
+
+    expect(() => new AriaKeyShortcutsController(el, 'togglePaused')).not.toThrow();
   });
 });

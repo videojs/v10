@@ -46,7 +46,10 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -54,7 +57,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -62,7 +68,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
 
           <div class="media-time-controls">
@@ -199,25 +208,37 @@ function getTemplateHTML() {
               ${renderIcon('cast-enter', { class: 'media-icon media-icon--cast-enter' })}
               ${renderIcon('cast-exit', { class: 'media-icon media-icon--cast-exit' })}
             </media-cast-button>
-            <media-tooltip id="cast-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="cast-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-airplay-button commandfor="airplay-tooltip" class="media-button media-button--subtle media-button--icon media-button--airplay">
               ${renderIcon('airplay-enter', { class: 'media-icon media-icon--airplay-enter' })}
               ${renderIcon('airplay-exit', { class: 'media-icon media-icon--airplay-exit' })}
             </media-airplay-button>
-            <media-tooltip id="airplay-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="airplay-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
               ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
             </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
               ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
               ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
         </media-tooltip-group>
       </media-controls>

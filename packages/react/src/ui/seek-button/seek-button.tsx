@@ -31,6 +31,8 @@ export const SeekButton = createMediaButton<SeekButtonCore, SeekButtonProps>({
   stateAttrMap: SeekButtonDataAttrs,
   selector: selectTime,
   action: (core, state) => core.seek(state),
+  hotkeyAction: 'seekStep',
+  hotkeyValue: (props) => (typeof props.seconds === 'number' ? props.seconds : SeekButtonCore.defaultProps.seconds),
 });
 
 export namespace SeekButton {
