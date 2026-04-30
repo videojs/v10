@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const button = {
   base: cn(
-    'flex items-center justify-center shrink-0 border-none cursor-pointer select-none text-center touch-manipulation',
+    'flex items-center justify-center shrink-0 border-none cursor-pointer select-none text-center touch-manipulation min-h-0',
     'py-2 px-4 rounded-full',
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',

@@ -8,6 +8,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  min-height: 0;
   padding: 0.5rem 1rem;
   text-align: center;
   touch-action: manipulation;
