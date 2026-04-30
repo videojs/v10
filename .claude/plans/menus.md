@@ -5,17 +5,17 @@ Branch: `feat/menu-ui-component` (PR #1078)
 
 ## Overview
 
-Four PRs along the dependency chain:
+Three PRs along the dependency chain:
 
 ```
-PR 1 (Core) → PR 2 (DOM flat) → PR 3 (UI flat) → PR 4 (Submenus)
+PR 1 (Core + DOM) → PR 2 (UI flat) → PR 3 (Submenus)
 ```
 
 ---
 
-## PR 1 — Core layer
+## PR 1 — Core + DOM layer
 
-**Status:** IN PROGRESS
+**Status:** DONE — `feat/menu-core-dom` (PR #1503)
 
 ### Files
 
@@ -25,39 +25,32 @@ PR 1 (Core) → PR 2 (DOM flat) → PR 3 (UI flat) → PR 4 (Submenus)
 - `packages/core/src/core/ui/menu/menu-item-data-attrs.ts`
 - `packages/core/src/core/ui/menu/menu-css-vars.ts`
 - `packages/core/src/core/ui/menu/tests/menu-core.test.ts`
+- `packages/core/src/dom/ui/menu/create-menu.ts`
+- `packages/core/src/dom/ui/menu/tests/create-menu.test.ts`
+- `packages/core/src/dom/ui/menu/tests/create-menu-helpers.ts`
 
 **Modified:**
 - `packages/core/src/core/index.ts` — add menu exports
+- `packages/core/src/dom/index.ts` — add menu exports
+- `packages/core/src/core/ui/transition.ts` — extract `TransitionDataAttrs`
+- `packages/core/src/core/ui/popover/popover-data-attrs.ts` — spread `TransitionDataAttrs`
+- `packages/core/src/core/ui/tooltip/tooltip-data-attrs.ts` — spread `TransitionDataAttrs`
+- `packages/core/src/core/ui/alert-dialog/alert-dialog-data-attrs.ts` — spread `TransitionDataAttrs`
 
 ### Key decisions
 - `MenuCore` follows `PopoverCore` pattern: `setProps` + `setInput(TransitionState)` + `getState()`
 - `isSubmenu` prop on `MenuCore` — suppresses `popover="manual"` in `getContentAttrs` and disables positioning props for nested menus
 - `MenuItemDataAttrs` is not constrained by `StateAttrMap` since items have their own state, not `MenuState`
 - `data-direction` belongs in DOM layer alongside `NavigationState`, not in core constants
+- `createMenu()` composes `createPopover()` internally; items stored as ordered array (registration order matches DOM order for standard React list rendering)
+- `destroy()` cancels the open RAF and typeahead timer before delegating to `popover.destroy()`
+- Open RAF guards against `status === 'ending'` to prevent highlight firing during a rapid open/close
 
 ---
 
-## PR 2 — DOM layer: flat menu
+## PR 2 — UI layer: flat menu (React + HTML)
 
-**Status:** PENDING
-
-### Files
-
-**New:**
-- `packages/core/src/dom/ui/menu/create-menu.ts`
-- `packages/core/src/dom/ui/menu/tests/create-menu.test.ts`
-
-**Modified:**
-- `packages/core/src/dom/index.ts` — add menu exports
-
-### Scope
-- `createMenu()` factory: keyboard nav (`ArrowUp/Down/Home/End/Enter/Space/Escape`), roving tabindex, item self-registration via `registerItem(el) → cleanup`, type-ahead (500ms debounce), focus management on open/close
-- Composes `createPopover()` internally for open/close, positioning, dismiss (root only)
-- Submenu `push`/`pop` NOT included — that comes in PR 4
-
----
-
-## PR 3 — UI layer: flat menu (React + HTML)
+**Status:** PENDING — branch off `feat/menu-core-dom`
 
 **Status:** PENDING
 
@@ -83,7 +76,7 @@ PR 1 (Core) → PR 2 (DOM flat) → PR 3 (UI flat) → PR 4 (Submenus)
 
 ---
 
-## PR 4 — Submenu navigation
+## PR 3 — Submenu navigation
 
 **Status:** PENDING
 
@@ -107,6 +100,8 @@ PR 1 (Core) → PR 2 (DOM flat) → PR 3 (UI flat) → PR 4 (Submenus)
 - `packages/core/src/dom/index.ts` — add transition export
 - `packages/react/src/ui/index.ts` — add Back to Menu exports
 - `packages/html/src/define/ui/menu.ts` — register `<media-menu-back>`
+
+**Status:** PENDING — branch off `feat/menu-react-html`
 
 ### Scope
 - `NavigationState`: stack of `{ menuId, triggerId }`, direction, exitingMenuId, transitioning
