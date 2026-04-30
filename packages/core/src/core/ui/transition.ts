@@ -1,3 +1,5 @@
+import type { StateAttrMap } from './types';
+
 export type TransitionStatus = 'idle' | 'starting' | 'ending';
 
 export interface TransitionState {
@@ -20,3 +22,11 @@ export function getTransitionFlags(status: TransitionStatus): TransitionFlags {
     transitionEnding: status === 'ending',
   };
 }
+
+/** Shared data attributes for open/close transition state. Spread into component data-attrs objects. */
+export const TransitionDataAttrs = {
+  /** Present during the open transition. */
+  transitionStarting: 'data-starting-style',
+  /** Present during the close transition. */
+  transitionEnding: 'data-ending-style',
+} as const satisfies StateAttrMap<TransitionFlags>;
