@@ -515,5 +515,66 @@ describe('createMenu', () => {
       menu.destroy();
       expect(() => menu.destroy()).not.toThrow();
     });
+
+    it('cancels the open RAF so highlight/focus do not fire after destroy', () => {
+      vi.useFakeTimers();
+
+      const { menu, onHighlightChange } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.open();
+      menu.destroy();
+      onHighlightChange.mockClear();
+
+      // Flush all pending timers and animation frames
+      vi.runAllTimers();
+
+      expect(onHighlightChange).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
+    it('clears a pending typeahead timer on destroy', () => {
+      vi.useFakeTimers();
+
+      const { menu, onHighlightChange } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('a'));
+      menu.destroy();
+      onHighlightChange.mockClear();
+
+      vi.advanceTimersByTime(600);
+
+      expect(onHighlightChange).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // open/close race conditions
+  // -------------------------------------------------------------------------
+
+  describe('open/close race conditions', () => {
+    it('does not highlight when close is called before the open RAF fires', () => {
+      vi.useFakeTimers();
+
+      const { menu, onHighlightChange } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.open();
+      menu.close();
+      onHighlightChange.mockClear();
+
+      vi.runAllTimers();
+
+      expect(onHighlightChange).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
   });
 });
