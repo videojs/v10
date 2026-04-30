@@ -105,14 +105,14 @@ describe('LiveButtonCore', () => {
       expect(core.getState().liveEdge).toBe(true);
     });
 
-    it('respects custom liveEdgeOffset fallback', () => {
-      const core = new LiveButtonCore({ liveEdgeOffset: 2 });
+    it('clears liveEdge when behind the default 10s offset fallback', () => {
+      const core = new LiveButtonCore();
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
           seekable: [[0, 100]],
           liveEdgeStart: Number.NaN,
-          currentTime: 95,
+          currentTime: 89,
         })
       );
       expect(core.getState().liveEdge).toBe(false);
@@ -139,19 +139,6 @@ describe('LiveButtonCore', () => {
           seekable: [[0, 100]],
           liveEdgeStart: 95,
           currentTime: 89,
-        })
-      );
-      expect(core.getState().liveEdge).toBe(false);
-    });
-
-    it('respects custom liveEdgeTolerance', () => {
-      const core = new LiveButtonCore({ liveEdgeTolerance: 0 });
-      core.setMedia(
-        createMediaState({
-          targetLiveWindow: 0,
-          seekable: [[0, 100]],
-          liveEdgeStart: 95,
-          currentTime: 94,
         })
       );
       expect(core.getState().liveEdge).toBe(false);

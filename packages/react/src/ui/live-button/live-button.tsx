@@ -36,8 +36,7 @@ export interface LiveButtonProps extends UIComponentProps<'button', LiveButtonCo
  */
 export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
   function LiveButton(componentProps, forwardedRef): ReactNode {
-    const { children, render, className, style, label, disabled, liveEdgeOffset, liveEdgeTolerance, ...elementProps } =
-      componentProps;
+    const { children, render, className, style, label, disabled, ...elementProps } = componentProps;
 
     const live = usePlayer(selectLive);
     const time = usePlayer(selectTime);
@@ -56,7 +55,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     const tooltipCtx = useOptionalTooltipContext();
     const [core] = useState(() => new LiveButtonCore());
-    core.setProps({ label, disabled, liveEdgeOffset, liveEdgeTolerance });
+    core.setProps({ label, disabled });
 
     const { getButtonProps, buttonRef } = useButton({
       displayName: DISPLAY_NAME,

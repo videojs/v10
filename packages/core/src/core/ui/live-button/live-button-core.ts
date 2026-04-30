@@ -11,19 +11,21 @@ export interface LiveButtonProps {
   label?: string | ((state: LiveButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
-  /**
-   * Fallback offset (in seconds) from the end of the seekable window used to
-   * decide "at live edge" when `liveEdgeStart` is unavailable. Default `10`.
-   */
-  liveEdgeOffset?: number | undefined;
-  /**
-   * Grace window (in seconds) before `liveEdgeStart` that still counts as
-   * "at the live edge". Absorbs the small gap between the player's initial
-   * playback position (e.g. hls.js `liveSyncDuration`) and the manifest's
-   * `HOLD-BACK`, so autoplay reliably reports live. Default `5`.
-   */
-  liveEdgeTolerance?: number | undefined;
 }
+
+/**
+ * Fallback offset (in seconds) from the end of the seekable window used to
+ * decide "at live edge" when `liveEdgeStart` is unavailable.
+ */
+const LIVE_EDGE_OFFSET = 10;
+
+/**
+ * Grace window (in seconds) before `liveEdgeStart` that still counts as
+ * "at the live edge". Absorbs the small gap between the player's initial
+ * playback position (e.g. hls.js `liveSyncDuration`) and the manifest's
+ * `HOLD-BACK`, so autoplay reliably reports live.
+ */
+const LIVE_EDGE_TOLERANCE = 5;
 
 /**
  * Media state slice consumed by `LiveButtonCore` — composed by the HTML
@@ -61,8 +63,6 @@ export class LiveButtonCore {
   static readonly defaultProps: NonNullableObject<LiveButtonProps> = {
     label: '',
     disabled: false,
-    liveEdgeOffset: 10,
-    liveEdgeTolerance: 5,
   };
 
   readonly state = createState<LiveButtonState>({
@@ -134,13 +134,13 @@ export class LiveButtonCore {
   #isAtLiveEdge(media: LiveButtonMediaState): boolean {
     const { currentTime, liveEdgeStart } = media;
     if (Number.isFinite(liveEdgeStart)) {
-      return currentTime >= liveEdgeStart - this.#props.liveEdgeTolerance;
+      return currentTime >= liveEdgeStart - LIVE_EDGE_TOLERANCE;
     }
 
-    // Fallback: treat the trailing `liveEdgeOffset` window as the live edge.
+    // Fallback: treat the trailing `LIVE_EDGE_OFFSET` window as the live edge.
     const target = liveEdgeTarget(media);
     if (target == null) return false;
-    return currentTime >= target - this.#props.liveEdgeOffset;
+    return currentTime >= target - LIVE_EDGE_OFFSET;
   }
 }
 
