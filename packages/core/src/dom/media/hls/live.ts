@@ -1,7 +1,8 @@
 import type { Constructor } from '@videojs/utils/types';
 import type { LevelLoadedData } from 'hls.js';
 import Hls from 'hls.js';
-import type { HlsEngineHost } from './types';
+import { MediaStreamTypes } from '../../../core/media/types';
+import type { HlsEngineHost, HlsPlaylistTypes } from './types';
 
 export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
@@ -49,24 +50,34 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     #derive(details: LevelLoadedData['details']) {
       if (!details.live) return this.#reset();
 
-      // `EVENT` playlists retain all segments, so the seekable window can grow
-      // without bound (DVR). Standard live keeps a fixed sliding window.
-      const targetLiveWindow = details.type === 'EVENT' ? Number.POSITIVE_INFINITY : 0;
+      const info = getStreamInfoFromHlsjsLevelDetails(details);
 
-      // Prefer manifest-declared HOLD-BACK / PART-HOLD-BACK when present;
-      // otherwise fall back to the per-spec multiples of the target durations.
-      // See https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12
-      const lowLatency = !!details.partList?.length;
-      this.#liveEdgeStartOffset = lowLatency
-        ? details.partHoldBack || details.partTarget * 2
-        : details.holdBack || details.targetduration * 3;
-
-      this.#setTargetLiveWindow(targetLiveWindow);
+      this.#liveEdgeStartOffset = info.liveEdgeStartOffset;
+      this.#updateConfig(info);
+      this.#setTargetLiveWindow(info.targetLiveWindow);
     }
 
     #reset() {
       this.#liveEdgeStartOffset = undefined;
       this.#setTargetLiveWindow(Number.NaN);
+    }
+
+    #updateConfig({ streamType, lowLatency }: StreamInfo) {
+      if (streamType === MediaStreamTypes.LIVE) {
+        // Update hls.js config for live/ll-live
+        const hls = this.engine;
+        if (!hls) return;
+
+        if (lowLatency) {
+          hls.config.backBufferLength = hls.userConfig.backBufferLength ?? 4;
+          hls.config.maxFragLookUpTolerance = hls.userConfig.maxFragLookUpTolerance ?? 0.001;
+          // For ll-hls, ensure that up switches are weighted the same as down switches to mitigate
+          // cases of getting stuck at lower bitrates.
+          hls.config.abrBandWidthUpFactor = hls.userConfig.abrBandWidthUpFactor ?? hls.config.abrBandWidthFactor;
+        } else {
+          hls.config.backBufferLength = hls.userConfig.backBufferLength ?? 8;
+        }
+      }
     }
 
     #setTargetLiveWindow(value: number) {
@@ -119,3 +130,38 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
   return HlsJsMediaLive as unknown as Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }
+
+type StreamInfo = ReturnType<typeof getStreamInfoFromHlsjsLevelDetails>;
+
+const getStreamInfoFromHlsjsLevelDetails = (levelDetails: LevelLoadedData['details']) => {
+  const playlistType: HlsPlaylistTypes = levelDetails.type as HlsPlaylistTypes;
+  const streamType = toStreamTypeFromPlaylistType(playlistType);
+  const targetLiveWindow = toTargetLiveWindowFromPlaylistType(playlistType);
+  const lowLatency = !!levelDetails.partList?.length;
+  let liveEdgeStartOffset: number | undefined;
+  if (streamType === MediaStreamTypes.LIVE) {
+    // Prefer manifest-declared HOLD-BACK / PART-HOLD-BACK when present;
+    // otherwise fall back to the per-spec multiples of the target durations.
+    // See https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12
+    liveEdgeStartOffset = lowLatency
+      ? levelDetails.partHoldBack || levelDetails.partTarget * 2
+      : levelDetails.holdBack || levelDetails.targetduration * 3;
+  }
+
+  return {
+    streamType,
+    targetLiveWindow,
+    liveEdgeStartOffset,
+    lowLatency,
+  };
+};
+
+const toStreamTypeFromPlaylistType = (playlistType: HlsPlaylistTypes) => {
+  return playlistType === 'VOD' ? MediaStreamTypes.ON_DEMAND : MediaStreamTypes.LIVE;
+};
+
+const toTargetLiveWindowFromPlaylistType = (playlistType: HlsPlaylistTypes) => {
+  if (playlistType === 'EVENT') return Number.POSITIVE_INFINITY;
+  if (playlistType === 'VOD') return Number.NaN;
+  return 0;
+};
