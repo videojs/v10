@@ -55,6 +55,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   let triggerElement: HTMLElement | null = null;
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
+  let openRafId = 0;
 
   // --- Highlight ---
 
@@ -127,8 +128,12 @@ export function createMenu(options: MenuOptions): MenuApi {
       if (open) {
         // Focus the first item after the popover element becomes visible.
         // One RAF ensures the element has been shown via the Popover API.
-        requestAnimationFrame(() => {
-          if (!popover.input.current.active) return;
+        cancelAnimationFrame(openRafId);
+        openRafId = requestAnimationFrame(() => {
+          openRafId = 0;
+          // Guard against close() being called before the RAF fires — active
+          // stays true during the closing animation, so also check status.
+          if (!popover.input.current.active || popover.input.current.status === 'ending') return;
           highlight(items[0] ?? null);
         });
       } else {
@@ -221,6 +226,13 @@ export function createMenu(options: MenuOptions): MenuApi {
     };
   }
 
+  function destroy(): void {
+    cancelAnimationFrame(openRafId);
+    openRafId = 0;
+    clearTypeahead();
+    popover.destroy();
+  }
+
   return {
     input: popover.input as State<MenuInput>,
     // Menus open/close on trigger click — forward the popover's click handler.
@@ -235,6 +247,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     highlight,
     open: popover.open,
     close: popover.close,
-    destroy: popover.destroy,
+    destroy,
   };
 }
