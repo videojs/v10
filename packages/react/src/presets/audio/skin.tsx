@@ -1,14 +1,6 @@
-import {
-  PauseIcon,
-  PlayIcon,
-  RestartIcon,
-  SeekIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeOffIcon,
-} from '@videojs/icons/react';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { PauseIcon, PlayIcon, RestartIcon, SeekIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey/hotkey';

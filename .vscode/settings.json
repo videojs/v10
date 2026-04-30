@@ -10,6 +10,7 @@
     // Auto fix all Biome issues on save.
     "source.fixAll.biome": "always",
     "source.organizeImports.biome": "always",
+    "source.action.useSortedProperties.biome": "always",
     // Disable built-in organize imports to avoid conflicts with Biome.
     "source.organizeImports": "never"
   },

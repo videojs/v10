@@ -5,23 +5,23 @@
 /* Base button */
 .media-minimal-skin .media-button {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
+  text-align: center;
+  touch-action: manipulation;
+  cursor: pointer;
+  user-select: none;
   outline: 2px solid transparent;
   outline-offset: -2px;
+  border: none;
+  border-radius: 0.5rem;
+  transition-timing-function: ease-out;
+  transition-duration: 150ms;
   transition-property: background-color, outline-offset, scale;
   /* Fix weird jumping when clicking on the buttons in Safari. */
   will-change: scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
-  cursor: pointer;
-  user-select: none;
-  text-align: center;
-  touch-action: manipulation;
 
   &:focus-visible {
     outline-color: currentColor;
@@ -33,9 +33,9 @@
   }
 
   &[disabled] {
+    cursor: not-allowed;
     opacity: 0.5;
     filter: grayscale(1);
-    cursor: not-allowed;
   }
 
   &[data-availability="unavailable"],
@@ -55,17 +55,17 @@
 
 /* Primary button variant */
 .media-minimal-skin .media-button--primary {
-  background: oklch(1 0 0);
-  color: oklch(0 0 0);
   font-weight: 500;
+  color: oklch(0 0 0);
   text-shadow: none;
+  background: oklch(1 0 0);
 }
 
 /* Subtle button variant */
 .media-minimal-skin .media-button--subtle {
-  background: transparent;
   color: inherit;
   text-shadow: inherit;
+  background: transparent;
 
   &:hover,
   &:focus-visible,
@@ -78,8 +78,8 @@
 .media-minimal-skin .media-button--icon {
   display: grid;
   width: 2.375rem;
-  padding: 0;
   aspect-ratio: 1;
+  padding: 0;
 
   &:active {
     scale: 0.9;
@@ -112,9 +112,9 @@
   padding: 0;
 
   &::after {
-    content: attr(data-rate) "\00D7";
     width: 4ch;
     font-variant-numeric: tabular-nums;
+    content: attr(data-rate) "\00D7";
   }
 }
 

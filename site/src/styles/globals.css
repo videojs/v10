@@ -71,6 +71,7 @@
 }
 
 /* theme inline tells tailwind to reference the value of these properties */
+/* biome-ignore assist/source/useSortedProperties: Tailwind theme namespace resets are order-sensitive. */
 @theme inline {
   --font-*: initial;
   /* --font-instrument-sans and --font-ibm-plex-mono are defined in Base.astro */
@@ -80,6 +81,7 @@
   --font-display: "Eurostile LT Pro Extended", "Eurostile LT Pro Extended Fallback", sans-serif;
 }
 
+/* biome-ignore assist/source/useSortedProperties: Tailwind theme namespace resets are order-sensitive. */
 @theme {
   --color-*: initial;
 
@@ -212,8 +214,8 @@
   }
 
   .font-mono {
-    text-underline-offset: 0.125em;
     font-variant-ligatures: none;
+    text-underline-offset: 0.125em;
   }
 
   [id] {
@@ -227,8 +229,8 @@
   }
 
   mark {
-    background-color: var(--color-bright-yellow);
     color: var(--color-faded-black);
+    background-color: var(--color-bright-yellow);
   }
 
   .dark * {
@@ -246,8 +248,8 @@
 }
 
 @utility data-bar {
-  height: 2.5rem;
   width: var(--data-bar-width, 100%);
+  height: 2.5rem;
   background-image: url("/data-bar-white.svg");
   background-repeat: repeat-x;
   background-size: auto 100%;
@@ -281,19 +283,19 @@
 }
 
 @utility built-bg-gray {
+  padding: 8px 10px 0 10px;
   background-image: url("/built-bg-horizontal-line-gray.svg");
   background-repeat: repeat-y;
-  background-size: 100% 9px;
   background-clip: content-box;
-  padding: 8px 10px 0 10px;
+  background-size: 100% 9px;
 }
 
 @utility built-bg-black {
+  padding: 8px 10px 0 10px;
   background-image: url("/built-bg-horizontal-line-black.svg");
   background-repeat: repeat-y;
-  background-size: 100% 9px;
   background-clip: content-box;
-  padding: 8px 10px 0 10px;
+  background-size: 100% 9px;
 }
 
 @utility text-stroke-faded-black {
@@ -320,33 +322,33 @@
   position: relative;
 
   &::before {
+    position: absolute;
     top: 0;
     left: 0%;
+    z-index: 1000;
     width: 100%;
     height: 100%;
+    pointer-events: none;
     content: "";
-    position: absolute;
     border: 10px solid;
     border-color: inherit;
-    z-index: 1000;
-    pointer-events: none;
   }
 }
 
 @utility grid-separators {
-  border-right: 1px solid;
-  border-bottom: 1px solid;
   border-color: inherit;
+  border-style: solid;
+  border-width: 0 1px 1px 0;
 
   &::after {
-    content: "";
     position: absolute;
-    bottom: -5px;
     right: -5px;
-    height: 10px;
-    width: 10px;
-    background: inherit;
+    bottom: -5px;
     z-index: 10;
+    width: 10px;
+    height: 10px;
+    content: "";
+    background: inherit;
   }
 }
 

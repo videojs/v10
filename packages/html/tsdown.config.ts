@@ -29,9 +29,17 @@ const presetEntries = Object.fromEntries(
   })
 );
 
+const iconEntries = Object.fromEntries(
+  globSync('src/icons/**/index.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
+
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: 'src/index.ts',
+    ...iconEntries,
     ...defineEntries,
     ...presetEntries,
   },
@@ -45,7 +53,10 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     // The sideEffects field in package.json uses dist paths, but the build
     // runs against source. Ensure define/* modules (which register custom
     // elements as a side effect) are never tree-shaken from skin bundles.
-    moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
+    moduleSideEffects: [
+      { test: /\/define\//, sideEffects: true },
+      { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
+    ],
   },
   noExternal: [/^@videojs\/icons/, /^@videojs\/skins/],
   alias: {

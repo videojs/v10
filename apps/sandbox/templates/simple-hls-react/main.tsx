@@ -1,4 +1,5 @@
 import '@app/styles.css';
+
 // SimpleHlsVideo + Video.js integration sandbox — React
 // http://localhost:5173/simple-hls-react/
 //
@@ -6,8 +7,8 @@ import '@app/styles.css';
 // player with play/mute controls. SimpleHlsVideo registers itself via
 // useMediaAttach so the store discovers it without any querySelector.
 
-import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/icons/react';
 import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';
+import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { SimpleHlsVideo } from '@videojs/react/media/simple-hls-video';
 import { videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';

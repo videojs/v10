@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
-import type { Presentation, Segment, VideoTrack } from '../../../core/types';
+import type { Presentation, Segment, VideoTrack } from '../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../media/source-buffer-actor';
 import {
   canEndStream,

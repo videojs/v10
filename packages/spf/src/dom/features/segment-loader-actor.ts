@@ -1,9 +1,9 @@
-import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
-import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
-import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/create-machine-actor';
+import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/actors/create-machine-actor';
 import { effect } from '../../core/signals/effect';
-import { SerialRunner, Task } from '../../core/task';
-import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
+import { SerialRunner, Task } from '../../core/tasks/task';
+import { calculateBackBufferFlushPoint } from '../../media/buffer/back-buffer';
+import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../media/buffer/forward-buffer';
+import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../media/types';
 import type {
   AppendInitMessage,
   AppendSegmentMessage,

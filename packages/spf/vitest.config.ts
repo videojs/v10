@@ -26,6 +26,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'media',
+          include: ['src/media/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'dom',
           include: ['src/dom/**/*.test.ts'],
           browser: {
@@ -34,6 +41,18 @@ export default defineConfig({
             provider: playwright(),
             screenshotFailures: false,
             instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'types',
+          include: [],
+          typecheck: {
+            enabled: true,
+            checker: 'tsgo',
+            include: ['src/**/*.test-d.ts'],
           },
         },
       },

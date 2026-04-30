@@ -2,29 +2,29 @@
    Media preview
    ========================================================================== */
 .media-default-skin .media-preview {
+  pointer-events: none;
   background-color: oklch(0 0 0 / 0.9);
   border-radius: 0.75rem;
-  pointer-events: none;
 
   & .media-preview__thumbnail {
-    display: block;
     position: relative;
-    border-radius: inherit;
+    display: block;
     overflow: clip;
+    border-radius: inherit;
 
     &::after {
-      content: "";
       position: absolute;
       inset: 0;
-      border-radius: inherit;
+      content: "";
       background-image: linear-gradient(to top, oklch(0 0 0 / 0.8), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+      border-radius: inherit;
     }
   }
 
   & .media-preview__time {
     position: absolute;
-    bottom: 0.5rem;
     inset-inline: 0;
+    bottom: 0.5rem;
     text-align: center;
   }
 
@@ -36,13 +36,19 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    translate: -50% -50%;
     opacity: 0;
+    translate: -50% -50%;
   }
 
   & .media-preview__thumbnail,
   & .media-preview__spinner {
     transition: opacity 150ms ease-out;
+  }
+
+  &:not(:has(.media-preview__thumbnail[data-loading])) {
+    & .media-preview__spinner {
+      --media-spinner-animation: none;
+    }
   }
 
   &:has(.media-preview__thumbnail[data-loading]) {

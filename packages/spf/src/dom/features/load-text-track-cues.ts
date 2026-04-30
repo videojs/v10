@@ -1,8 +1,8 @@
-import type { Reactor } from '../../core/create-machine-reactor';
-import { createMachineReactor } from '../../core/create-machine-reactor';
+import type { Reactor } from '../../core/reactors/create-machine-reactor';
+import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type Signal, untrack, update } from '../../core/signals/primitives';
-import type { Presentation, TextTrack } from '../../core/types';
-import { isResolvedTrack } from '../../core/types';
+import type { Presentation, TextTrack } from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
 import type { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
 import { createTextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
 import type { TextTracksActor } from './text-tracks-actor';

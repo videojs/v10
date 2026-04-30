@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TextTrack } from '../../../core/types';
+import type { TextTrack } from '../../../media/types';
 import { createTextTrackSegmentLoaderActor } from '../text-track-segment-loader-actor';
 import { createTextTracksActor } from '../text-tracks-actor';
 

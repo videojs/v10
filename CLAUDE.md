@@ -14,7 +14,7 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).         |
 | `packages/element`      | Custom element base class for web components.                       |
 | `packages/store`        | State management (`/html`, `/react` subpaths for platforms).        |
-| `packages/spf`          | Stream Processing Framework (`/dom` subpath for DOM bindings).      |
+| `packages/spf`          | Stream Processing Framework (`/dom` and `/playback-engine` subpaths for DOM bindings and the HLS engine). |
 | `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
 | `packages/icons`        | SVG icon library (private, consumed by html and react).             |
 | `packages/skins`        | Shared skin CSS and Tailwind tokens (private).                      |
@@ -38,8 +38,9 @@ store           ← state management
 store/html      ← HTML bindings (controllers, mixins)
 store/react     ← React bindings
 
-spf             ← stream processing framework
-spf/dom         ← DOM bindings for SPF
+spf                  ← framework primitives (composition, signals, tasks, actors, reactors)
+spf/dom              ← DOM bindings for SPF
+spf/playback-engine  ← HLS playback engine + SpfMedia adapter
 
 core            ← runtime-agnostic logic
 core/dom        ← DOM bindings

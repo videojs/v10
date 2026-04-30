@@ -4,8 +4,8 @@
 
 .media-minimal-skin .media-button-group {
   display: flex;
-  align-items: center;
   gap: 0.075rem;
+  align-items: center;
 
   @container media-root (width > 42rem) {
     gap: 0.125rem;

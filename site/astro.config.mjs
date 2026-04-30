@@ -165,7 +165,9 @@ export default defineConfig({
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
-      exclude: ['@videojs/react', '@videojs/html'],
+      // @resvg/resvg-js loads a native .node binding for the server-only OG
+      // image route, so Vite's dev optimizer must leave it external.
+      exclude: ['@videojs/react', '@videojs/html', '@resvg/resvg-js'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

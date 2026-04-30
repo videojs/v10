@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../core/signals/primitives';
-import type { Presentation, VideoSelectionSet } from '../../core/types';
+import type { Presentation, VideoSelectionSet } from '../../media/types';
 import type { SegmentLoadingOwners, SegmentLoadingState } from '../features/load-segments';
 import { loadSegments } from '../features/load-segments';
 import { createSourceBufferActor } from '../media/source-buffer-actor';

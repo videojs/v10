@@ -62,17 +62,17 @@
   inset: 0;
   z-index: 20;
   display: flex;
-  align-items: center;
   gap: 0.75rem;
+  align-items: center;
   padding-inline: 1.25rem 0.125rem;
-  transition-property: opacity, filter;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  color: var(--media-text-color);
+  background-color: var(--media-surface-background-color);
+  border-radius: calc(infinity * 1px);
+  backdrop-filter: var(--media-surface-backdrop-filter);
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: ease-out;
-  border-radius: calc(infinity * 1px);
-  background-color: var(--media-surface-background-color);
-  backdrop-filter: var(--media-surface-backdrop-filter);
-  color: var(--media-text-color);
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-property: opacity, filter;
 }
 
 .media-default-skin .media-error[data-starting-style] .media-error__dialog,
@@ -85,8 +85,8 @@
 }
 
 .media-default-skin--audio .media-error__content {
-  flex: 1;
   display: flex;
+  flex: 1;
   gap: 0.5rem;
   align-items: center;
 }

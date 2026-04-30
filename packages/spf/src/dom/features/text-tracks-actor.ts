@@ -1,6 +1,6 @@
-import type { TransitionActor } from '../../core/create-transition-actor';
-import { createTransitionActor } from '../../core/create-transition-actor';
-import type { Segment } from '../../core/types';
+import type { TransitionActor } from '../../core/actors/create-transition-actor';
+import { createTransitionActor } from '../../core/actors/create-transition-actor';
+import type { Segment } from '../../media/types';
 
 // =============================================================================
 // Types

@@ -1,8 +1,8 @@
-import type { CallbackActor } from '../../core/actor';
-import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
+import type { CallbackActor } from '../../core/actors/actor';
 import { untrack } from '../../core/signals/primitives';
-import { SerialRunner, Task } from '../../core/task';
-import type { TextTrack } from '../../core/types';
+import { SerialRunner, Task } from '../../core/tasks/task';
+import { getSegmentsToLoad } from '../../media/buffer/forward-buffer';
+import type { TextTrack } from '../../media/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
 import type { TextTracksActor } from './text-tracks-actor';
 

@@ -22,7 +22,6 @@
    ========================================================================== */
 
 .media-default-skin--video {
-  background: oklch(0 0 0);
   --media-spring-transition: linear(
     0,
     0.034 1.5%,
@@ -50,6 +49,7 @@
   --media-popup-transition-timing-function: ease-out;
   --media-tooltip-side-offset: 0.75rem;
   --media-popover-side-offset: 0.5rem;
+  background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -83,13 +83,13 @@
 
   /* Inner border ring */
   &::after {
-    content: "";
     position: absolute;
     inset: 0;
     z-index: 10;
+    pointer-events: none;
+    content: "";
     border-radius: inherit;
     box-shadow: inset 0 0 0 1px var(--media-border-color);
-    pointer-events: none;
   }
 
   &:fullscreen {
@@ -116,13 +116,13 @@
   gap: 0.75rem;
   max-width: 18rem;
   padding: 0.75rem;
-  border-radius: 1.75rem;
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
-  transition-property: opacity, scale;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  border-radius: 1.75rem;
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: var(--media-error-dialog-transition-timing-function);
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-property: opacity, scale;
 }
 
 .media-default-skin--video .media-error[data-starting-style] .media-error__dialog,
@@ -151,29 +151,29 @@
    ========================================================================== */
 
 .media-default-skin--video .media-controls {
-  flex-wrap: wrap;
   position: absolute;
-  bottom: 0.5rem;
   inset-inline: 0.5rem;
+  bottom: 0.5rem;
   z-index: 10;
+  flex-wrap: wrap;
   color: var(--media-color-primary, oklch(1 0 0));
-  transition-duration: var(--media-controls-transition-duration);
-  transition-timing-function: var(--media-controls-transition-timing-function);
   transform-origin: bottom;
+  transition-timing-function: var(--media-controls-transition-timing-function);
+  transition-duration: var(--media-controls-transition-duration);
 
   @media (pointer: fine) {
-    will-change: scale, filter, opacity;
     transition-property: scale, filter, opacity;
+    will-change: scale, filter, opacity;
   }
 
   @media (pointer: coarse) {
-    will-change: scale, opacity;
     transition-property: scale, opacity;
+    will-change: scale, opacity;
   }
 
   &:not([data-visible]) {
-    opacity: 0;
     pointer-events: none;
+    opacity: 0;
     scale: 0.9;
 
     @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -186,8 +186,8 @@
   }
 
   & .media-time-controls {
-    order: -1;
     flex: 0 0 100%;
+    order: -1;
     padding-inline: 0.625rem;
   }
 
@@ -202,15 +202,15 @@
   }
 
   @container media-root (width > 42rem) {
-    bottom: 0.75rem;
     inset-inline: 0.75rem;
+    bottom: 0.75rem;
     flex-wrap: nowrap;
     column-gap: 0.125rem;
     padding: 0.25rem;
 
     & .media-time-controls {
-      order: unset;
       flex: 1;
+      order: unset;
     }
 
     & .media-button-group:first-child,
@@ -248,21 +248,21 @@
   --media-preview-inset: calc((100cqi - 100%) / 2);
 
   position: absolute;
+  bottom: calc(100% + 1.2rem);
   left: clamp(
     calc(var(--media-preview-max-width) / 2 + var(--media-preview-padding) - var(--media-preview-inset)),
     var(--media-slider-pointer),
     calc(100% - var(--media-preview-max-width) / 2 - var(--media-preview-padding) + var(--media-preview-inset))
   );
-  bottom: calc(100% + 1.2rem);
-  translate: -50%;
-  opacity: 0;
-  scale: 0.8;
-  filter: blur(8px);
-  transition-property: scale, opacity, filter;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
-  transform-origin: bottom;
   pointer-events: none;
+  opacity: 0;
+  filter: blur(8px);
+  transform-origin: bottom;
+  scale: 0.8;
+  translate: -50%;
+  transition-timing-function: ease-out;
+  transition-duration: 150ms;
+  transition-property: scale, opacity, filter;
 
   & .media-preview__thumbnail {
     max-width: var(--media-preview-max-width);
@@ -274,6 +274,6 @@
 }
 .media-default-skin--video .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
   opacity: 1;
-  scale: 1;
   filter: blur(0);
+  scale: 1;
 }

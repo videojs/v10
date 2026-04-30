@@ -2,15 +2,15 @@
  * Build ejected skin snippets for copy-paste usage.
  *
  * Produces `site/src/content/ejected-skins.json` with:
- * - HTML skins: rendered HTML templates with inline SVGs and resolved classes
- * - React skins: TSX (with types) and JSX (types stripped) with inline SVGs
+ * - HTML skins: rendered HTML templates with <media-icon> elements and resolved classes
+ * - React skins: TSX (with types) and JSX (types stripped) with public icon imports
  * - CSS variants include a `css` field with all @imports resolved
  * - Tailwind variants omit the `css` field (users bring their own Tailwind)
  *
- * Prerequisites: `pnpm build:packages` (at minimum icons, skins, utils).
+ * Prerequisites: `pnpm build:packages` (at minimum html, react, icons, skins, utils).
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, relative as relativePath, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
@@ -284,7 +284,7 @@ function resolveRelativeModulePath(importerPath: string, specifier: string): str
   ];
 
   for (const candidate of candidates) {
-    if (existsSync(candidate)) {
+    if (existsSync(candidate) && statSync(candidate).isFile()) {
       return candidate;
     }
   }
@@ -410,7 +410,8 @@ function inlineModuleExport(
   return `${exportText}\n\n${aliasKeyword} ${localName} = ${importName};`;
 }
 
-function inlineRelativeImports(source: string, sourcePath: string): string {
+function inlineRelativeImports(source: string, sourcePath: string, rewriteSource = (value: string) => value): string {
+  source = rewriteSource(source);
   const sourceFile = createSourceFile(sourcePath, source);
   const declarationsToInline: string[] = [];
   const extraImports = new Set<string>();
@@ -433,9 +434,9 @@ function inlineRelativeImports(source: string, sourcePath: string): string {
     }
 
     const targetPath = resolveRelativeModulePath(sourcePath, specifier);
-    const targetSource = readFileSync(targetPath, 'utf-8');
+    const targetSource = rewriteSource(readFileSync(targetPath, 'utf-8'));
     validatePackageImports(targetSource, toRepoPath(targetPath));
-    const transformedTargetSource = inlineRelativeImports(targetSource, targetPath);
+    const transformedTargetSource = inlineRelativeImports(targetSource, targetPath, rewriteSource);
     const transformedTargetFile = createSourceFile(targetPath, transformedTargetSource);
 
     for (const targetStatement of transformedTargetFile.statements) {
@@ -736,13 +737,6 @@ function parseImportedNames(source: string): Map<string, string> {
   return imports;
 }
 
-async function loadRenderIcon(
-  iconSet: 'default' | 'minimal'
-): Promise<(name: string, attrs?: Record<string, string>) => string> {
-  const mod = await import(pkgDistUrl(`@videojs/icons/render/${iconSet}`));
-  return mod.renderIcon;
-}
-
 async function loadCn(): Promise<(...args: unknown[]) => string> {
   const mod = await import(pkgDistUrl('@videojs/utils/style'));
   return mod.cn;
@@ -779,6 +773,21 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
     .trim();
 }
 
+function escapeAttributeValue(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+}
+
+function createRenderMediaIcon(iconSet: 'default' | 'minimal') {
+  return (name: string, attrs?: Record<string, string>): string => {
+    const family = iconSet === 'minimal' ? ' family="minimal"' : '';
+    const attrText = Object.entries(attrs ?? {})
+      .map(([key, value]) => ` ${key}="${escapeAttributeValue(value)}"`)
+      .join('');
+
+    return `<media-icon name="${escapeAttributeValue(name)}"${family}${attrText}></media-icon>`;
+  };
+}
+
 /**
  * Replace `<slot name="media">`, `<slot>` (default slot), and
  * `<slot name="poster">` with concrete elements so the ejected HTML is
@@ -812,12 +821,11 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
 
-  const renderIcon = await loadRenderIcon(skin.iconSet);
   const cn = await loadCn();
 
   // Build context object with all the variables the template needs
   const context: Record<string, unknown> = {
-    renderIcon,
+    renderIcon: createRenderMediaIcon(skin.iconSet),
     cn,
     SEEK_TIME: 10,
   };
@@ -853,47 +861,8 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
-// React skin processing — inline SVGs, resolve imports, produce TSX + JSX
+// React skin processing - resolve imports, produce TSX + JSX
 // ---------------------------------------------------------------------------
-
-/** Convert PascalCase icon component name to kebab-case icon name. */
-function componentToIconName(name: string): string {
-  return name
-    .replace(/Icon$/, '')
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .toLowerCase();
-}
-
-/** Convert HTML SVG attribute names to JSX camelCase equivalents. */
-function svgToJsx(svg: string): string {
-  return svg
-    .replace(/\bstroke-width=/g, 'strokeWidth=')
-    .replace(/\bstroke-linecap=/g, 'strokeLinecap=')
-    .replace(/\bstroke-linejoin=/g, 'strokeLinejoin=')
-    .replace(/\bstroke-dasharray=/g, 'strokeDasharray=')
-    .replace(/\bstroke-dashoffset=/g, 'strokeDashoffset=')
-    .replace(/\bstroke-miterlimit=/g, 'strokeMiterlimit=')
-    .replace(/\bfill-rule=/g, 'fillRule=')
-    .replace(/\bclip-rule=/g, 'clipRule=')
-    .replace(/\bfill-opacity=/g, 'fillOpacity=')
-    .replace(/\bstroke-opacity=/g, 'strokeOpacity=');
-}
-
-/** Load the raw icons map from a render dist module. */
-async function loadIconsMap(iconSet: 'default' | 'minimal'): Promise<Record<string, string>> {
-  const mod = await import(pkgDistUrl(`@videojs/icons/render/${iconSet}`));
-  const renderIcon = mod.renderIcon as (name: string) => string;
-  const assetsDir = resolve(PACKAGES_ROOT, 'icons/src/assets', iconSet);
-  const iconNames = readdirSync(assetsDir)
-    .filter((f) => f.endsWith('.svg'))
-    .map((f) => f.replace(/\.svg$/, ''));
-  const map: Record<string, string> = {};
-  for (const name of iconNames) {
-    const svg = renderIcon(name);
-    if (svg) map[name] = svg;
-  }
-  return map;
-}
 
 /** Serialize a JS value to source code. */
 function serializeValue(value: unknown, indent = 0): string {
@@ -1019,46 +988,18 @@ function splitTopLevelCommas(str: string): string[] {
   return result;
 }
 
-/** Remove icon imports and generate icon component definitions. */
-async function inlineReactIcons(source: string): Promise<{ source: string; iconComponents: string[] }> {
-  const sourceFile = createSourceFile('react-skin.tsx', source);
-  const iconImport = sourceFile.statements.find((statement) => {
-    if (!ts.isImportDeclaration(statement)) {
-      return false;
-    }
-
-    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-    return /^@videojs\/icons\/react(?:\/(default|minimal))?$/.test(specifier);
-  });
-
-  if (!iconImport || !ts.isImportDeclaration(iconImport)) {
-    return { source, iconComponents: [] };
-  }
-
-  const iconSpecifier = iconImport.moduleSpecifier.getText(sourceFile).slice(1, -1);
-  const iconSetMatch = iconSpecifier.match(/@videojs\/icons\/react(?:\/(default|minimal))?/);
-  const iconSet = (iconSetMatch?.[1] || 'default') as 'default' | 'minimal';
-  const namedBindings = iconImport.importClause?.namedBindings;
-  const iconNames =
-    namedBindings && ts.isNamedImports(namedBindings) ? namedBindings.elements.map((element) => element.name.text) : [];
-
-  const iconsMap = await loadIconsMap(iconSet);
-  const iconComponents: string[] = [];
-
-  for (const componentName of iconNames) {
-    const iconName = componentToIconName(componentName);
-    const rawSvg = iconsMap[iconName];
-    if (!rawSvg) {
-      log.warn(`No SVG found for ${componentName} (icon: ${iconName})`);
-      continue;
-    }
-    const jsxSvg = svgToJsx(rawSvg).replace(/^(<svg[^>]*)>/, '$1 {...props}>');
-    iconComponents.push(`function ${componentName}(props: ComponentProps<'svg'>): ReactNode {\n  return ${jsxSvg};\n}`);
-  }
-
-  // Remove the icon import, keep JSX component calls as-is
-  source = `${source.slice(0, iconImport.getFullStart())}${source.slice(iconImport.getEnd())}`;
-  return { source, iconComponents };
+/**
+ * Rewrite package-private or local React icon imports to public package
+ * re-exports for ejected skins.
+ */
+function rewriteReactIconImports(source: string): string {
+  return source
+    .replace(/from\s+['"]@videojs\/icons\/react(?:\/default)?['"]/g, "from '@videojs/react/icons'")
+    .replace(/from\s+['"]@videojs\/icons\/react\/minimal['"]/g, "from '@videojs/react/icons/minimal'")
+    .replace(/from\s+['"]@\/icons['"]/g, "from '@videojs/react/icons'")
+    .replace(/from\s+['"]@\/icons\/minimal['"]/g, "from '@videojs/react/icons/minimal'")
+    .replace(/from\s+['"]\.\.\/\.\.\/icons['"]/g, "from '@videojs/react/icons'")
+    .replace(/from\s+['"]\.\.\/\.\.\/icons\/minimal['"]/g, "from '@videojs/react/icons/minimal'");
 }
 
 /**
@@ -1387,7 +1328,7 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
     parts.push(declarations.join('\n\n'));
   }
 
-  return `${parts.join('\n\n')}\n`;
+  return `'use client';\n\n${parts.join('\n\n')}\n`;
 }
 
 /**
@@ -1535,55 +1476,52 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
 }
 
 /**
- * Process a React skin: inline SVG icons, resolve all imports,
+ * Process a React skin: rewrite icon imports, resolve imports,
  * and produce both TSX and JSX versions.
  */
 async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx: string }> {
   const absPath = resolve(ROOT, skin.source);
   let source = readFileSync(absPath, 'utf-8');
+  source = rewriteReactIconImports(source);
   validatePackageImports(source, skin.source);
   const postImport: string[] = [];
 
   // 1. Inline relative imports recursively so the output is self-contained.
-  source = inlineRelativeImports(source, absPath);
+  source = inlineRelativeImports(source, absPath, rewriteReactIconImports);
 
-  // 2. Extract icon components (remove import, keep JSX calls, generate components)
-  const icons = await inlineReactIcons(source);
-  source = icons.source;
-
-  // 3. Resolve @videojs/skins/* tokens (Tailwind skins only, private package)
+  // 2. Resolve @videojs/skins/* tokens (Tailwind skins only, private package)
   source = await inlineSkinTokens(source, postImport);
 
-  // 4. Replace cn calls with template literals
+  // 3. Replace cn calls with template literals
   source = inlineCn(source);
 
-  // 5. Consolidate @/ path aliases → @videojs/react
+  // 4. Consolidate @/ path aliases → @videojs/react
   source = rewritePathAliases(source);
 
-  // 6. Inline private package imports (core/dom → react, predicates, isRenderProp)
+  // 5. Inline private package imports (core/dom → react, predicates, isRenderProp)
   const privates = inlinePrivatePackages(source);
   source = privates.source;
 
-  // 7. Insert collected non-import code after the final import statement
+  // 6. Insert collected non-import code after the final import statement
   if (postImport.length > 0) {
     const insertPos = findLastImportEnd(source);
     const block = `\n${postImport.join('\n\n')}\n`;
     source = `${source.slice(0, insertPos)}${block}${source.slice(insertPos)}`;
   }
 
-  // 8. Replace Base*SkinProps chain with a clean interface
+  // 7. Replace Base*SkinProps chain with a clean interface
   source = resolvePropsInterface(source);
 
-  // 9. Flatten ERROR_CLASSNAMES into ErrorDialog JSX (@temporary — remove with flattenErrorClasses)
+  // 8. Flatten ERROR_CLASSNAMES into ErrorDialog JSX (@temporary — remove with flattenErrorClasses)
   source = flattenErrorClasses(source);
 
-  // 10. Reorganize into sections with comment headers
-  let tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+  // 9. Reorganize into sections with comment headers
+  let tsx = reorganizeReactOutput(source, privates.utilities, []);
 
-  // 11. Destructure skin props in function argument instead of body
+  // 10. Destructure skin props in function argument instead of body
   tsx = destructureSkinProps(tsx);
 
-  // 12. Flatten skin into player (merge props, inline body, wrap in Player.Provider)
+  // 11. Flatten skin into player (merge props, inline body, wrap in Player.Provider)
   tsx = flattenSkinIntoPlayer(tsx, getSkinMediaType(skin));
 
   const jsx = tsxToJsx(tsx);

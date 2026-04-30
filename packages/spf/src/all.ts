@@ -14,9 +14,9 @@ export * from './index';
 // HLS Parsing (P1, P2, P3)
 // =============================================================================
 
-export { parseMediaPlaylist } from './core/hls/parse-media-playlist';
-export { parseMultivariantPlaylist } from './core/hls/parse-multivariant';
-export { resolveUrl } from './core/hls/resolve-url';
+export { parseMediaPlaylist } from './media/hls/parse-media-playlist';
+export { parseMultivariantPlaylist } from './media/hls/parse-multivariant';
+export { resolveUrl } from './media/hls/resolve-url';
 
 // =============================================================================
 // ABR (P6, P7)
@@ -25,24 +25,24 @@ export { resolveUrl } from './core/hls/resolve-url';
 export type {
   BandwidthConfig,
   BandwidthState,
-} from './core/abr/bandwidth-estimator';
+} from './media/abr/bandwidth-estimator';
 export {
   DEFAULT_BANDWIDTH_CONFIG,
   getBandwidthEstimate,
   hasGoodEstimate,
   sampleBandwidth,
-} from './core/abr/bandwidth-estimator';
-export type { QualityConfig } from './core/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './core/abr/quality-selection';
+} from './media/abr/bandwidth-estimator';
+export type { QualityConfig } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
 
 // =============================================================================
 // Buffer Management (P8, P9)
 // =============================================================================
 
-export type { BackBufferConfig } from './core/buffer/back-buffer';
-export { calculateBackBufferFlushPoint, DEFAULT_BACK_BUFFER_CONFIG } from './core/buffer/back-buffer';
-export type { ForwardBufferConfig } from './core/buffer/forward-buffer';
-export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './core/buffer/forward-buffer';
+export type { BackBufferConfig } from './media/buffer/back-buffer';
+export { calculateBackBufferFlushPoint, DEFAULT_BACK_BUFFER_CONFIG } from './media/buffer/back-buffer';
+export type { ForwardBufferConfig } from './media/buffer/forward-buffer';
+export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './media/buffer/forward-buffer';
 
 // =============================================================================
 // Types (P15)
@@ -62,8 +62,8 @@ export type {
   TextTrack,
   Track,
   VideoTrack,
-} from './core/types';
-export { hasPresentationDuration, isResolvedTrack } from './core/types';
+} from './media/types';
+export { hasPresentationDuration, isResolvedTrack } from './media/types';
 
 // =============================================================================
 // DOM APIs (P4, P12, P16)
@@ -91,15 +91,15 @@ export { fetchResolvable, getResponseText } from './dom/network/fetch';
 export type {
   PresentationState,
   UnresolvedPresentation,
-} from './core/features/resolve-presentation';
+} from './media/features/resolve-presentation';
 export {
   canResolve,
   isUnresolved,
   resolvePresentation,
   shouldResolve,
-} from './core/features/resolve-presentation';
-export type { PlatformOwners } from './core/features/sync-preload-attribute';
-export { syncPreloadAttribute } from './core/features/sync-preload-attribute';
+} from './media/features/resolve-presentation';
+export type { PlatformOwners } from './media/features/sync-preload-attribute';
+export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
 
 // =============================================================================
 // Features (F9 - Quality Switching)
@@ -108,5 +108,5 @@ export { syncPreloadAttribute } from './core/features/sync-preload-attribute';
 export type {
   QualitySwitchingConfig,
   QualitySwitchingState,
-} from './core/features/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './core/features/quality-switching';
+} from './media/features/quality-switching';
+export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './media/features/quality-switching';
