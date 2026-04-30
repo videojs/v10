@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { HlsJsMediaLiveMixin } from '../live';
 import type { HlsEngineHost } from '../types';
 
-function createEngine(): Hls {
+function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
   return {
+    config: { ...userConfig },
+    userConfig: { ...userConfig },
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
       listeners.get(event)!.add(fn);
@@ -333,6 +335,50 @@ describe('HlsJsMediaLiveMixin', () => {
       video.dispatchEvent(new Event('play'));
 
       expect(video.currentTime).toBe(0);
+    });
+  });
+
+  describe('hls.js config updates', () => {
+    it('applies low-latency defaults when partList is present', () => {
+      const engine = createEngine({ abrBandWidthFactor: 0.95 });
+      const host = new HlsJsMediaLive(engine);
+      setTargetSeekable(host, [[0, 60]]);
+
+      emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
+
+      expect((engine as any).config.backBufferLength).toBe(4);
+      expect((engine as any).config.maxFragLookUpTolerance).toBe(0.001);
+      expect((engine as any).config.abrBandWidthUpFactor).toBe(0.95);
+    });
+
+    it('applies standard live defaults when partList is absent', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      setTargetSeekable(host, [[0, 60]]);
+
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      expect((engine as any).config.backBufferLength).toBe(8);
+    });
+
+    it('respects user-supplied overrides', () => {
+      const engine = createEngine({ backBufferLength: 30 });
+      const host = new HlsJsMediaLive(engine);
+      setTargetSeekable(host, [[0, 60]]);
+
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+
+      expect((engine as any).config.backBufferLength).toBe(30);
+    });
+
+    it('does not touch config for non-live streams', () => {
+      const engine = createEngine();
+      const host = new HlsJsMediaLive(engine);
+      setTargetSeekable(host, [[0, 60]]);
+
+      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
+
+      expect((engine as any).config.backBufferLength).toBeUndefined();
     });
   });
 
