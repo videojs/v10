@@ -22,7 +22,7 @@ export interface HotkeyOptions {
   disabled?: boolean | undefined;
   /** Action name for the ARIA registry and subscriber events. */
   action?: string | undefined;
-  /** Numeric magnitude passed to subscriber events (e.g. 10 for `seekStep`). */
+  /** Action value for matching UI controls and subscriber events. */
   value?: number | undefined;
 }
 

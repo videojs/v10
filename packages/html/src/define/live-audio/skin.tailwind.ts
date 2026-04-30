@@ -45,7 +45,10 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
+                <media-tooltip-label></media-tooltip-label>
+                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              </media-tooltip>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>

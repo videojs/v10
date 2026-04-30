@@ -19,6 +19,11 @@ export class SeekButtonElement extends MediaButtonElement<SeekButtonCore> {
   protected readonly core = new SeekButtonCore();
   protected readonly stateAttrMap = SeekButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectTime);
+  protected override readonly hotkeyAction = 'seekStep';
+
+  protected override get hotkeyValue(): number | undefined {
+    return this.seconds;
+  }
 
   protected activate(state: MediaTimeState): void {
     this.core.seek(state);

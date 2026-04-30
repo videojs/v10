@@ -17,6 +17,8 @@ import { PosterElement } from '../../ui/poster/poster-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
+import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
+import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -57,5 +59,7 @@ safeDefine(PlaybackRateButtonElement);
 safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(SeekButtonElement);
+safeDefine(TooltipLabelElement);
+safeDefine(TooltipShortcutElement);
 safeDefine(TooltipElement);
 safeDefine(TooltipGroupElement);

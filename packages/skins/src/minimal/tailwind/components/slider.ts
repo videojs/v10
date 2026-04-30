@@ -22,9 +22,11 @@ export const slider = {
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0',
       'data-[orientation=horizontal]:w-(--media-slider-fill,0)',
+      'group-data-dragging/slider:data-[orientation=horizontal]:w-(--media-slider-pointer)',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0',
-      'data-[orientation=vertical]:h-(--media-slider-fill,0)'
+      'data-[orientation=vertical]:h-(--media-slider-fill,0)',
+      'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)'
     ),
     buffer: cn(
       'bg-current/20 duration-250 ease-out',
@@ -46,8 +48,10 @@ export const slider = {
       'focus-visible:outline-current focus-visible:outline-offset-2',
       // Horizontal
       'data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:left-(--media-slider-fill,0)',
+      'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
       // Vertical
-      'data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill,0))]'
+      'data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill,0))]',
+      'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]'
     ),
     interactive: cn(
       'opacity-0 scale-70 origin-center',

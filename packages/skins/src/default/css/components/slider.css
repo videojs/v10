@@ -76,7 +76,7 @@
 
   &:hover,
   &:focus {
-    outline-color: oklch(from currentColor l c h / 0.25);
+    outline-color: oklch(from currentColor l c h / 0.2);
     outline-offset: 0;
   }
 
@@ -85,7 +85,7 @@
     inset: -4px;
     content: "";
     border-radius: inherit;
-    box-shadow: 0 0 0 2px oklch(1 0 0);
+    box-shadow: 0 0 0 2px currentColor;
     transition-timing-function: ease-out;
     transition-duration: 150ms;
     transition-property: opacity, scale;

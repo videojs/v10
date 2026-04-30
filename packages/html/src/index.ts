@@ -76,6 +76,8 @@ export { TimeSliderElement } from './ui/time-slider/time-slider-element';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';
+export { TooltipLabelElement } from './ui/tooltip/tooltip-label-element';
+export { TooltipShortcutElement } from './ui/tooltip/tooltip-shortcut-element';
 export { VolumeIndicatorElement } from './ui/volume-indicator/volume-indicator-element';
 export { VolumeIndicatorFillElement } from './ui/volume-indicator/volume-indicator-fill-element';
 export { VolumeIndicatorValueElement } from './ui/volume-indicator/volume-indicator-value-element';

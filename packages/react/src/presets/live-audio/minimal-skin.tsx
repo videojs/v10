@@ -3,6 +3,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
@@ -52,6 +53,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 /**
  * Minimal audio skin configured for live playback. Mirrors
  * {@link MinimalAudioSkin} but omits the time slider and the current /
@@ -93,7 +103,7 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
@@ -106,6 +116,13 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
     </Container>
   );
 }

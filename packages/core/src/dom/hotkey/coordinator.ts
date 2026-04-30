@@ -1,6 +1,7 @@
 import { isEditableTarget, isInteractiveActivation, listen } from '@videojs/utils/dom';
+import { isUndefined } from '@videojs/utils/predicate';
 
-import { toAriaKeyShortcut } from './aria';
+import { toAriaKeyShortcut, toDisplayKeyShortcut } from './aria';
 import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
 
@@ -18,15 +19,19 @@ interface HotkeyBinding {
   id: number;
 }
 
+export interface HotkeyShortcutDetails {
+  aria?: string | undefined;
+  shortcut?: string | undefined;
+}
+
 export class HotkeyCoordinator {
   #target: HTMLElement;
   #bindings: HotkeyBinding[] = [];
   #nextId = 0;
   #disconnect: AbortController | null = null;
   #docDisconnect: AbortController | null = null;
-  /** Action name → bound keys. Controls query this to set `aria-keyshortcuts`. */
-  #ariaRegistry = new Map<string, ParsedHotkeyBinding[]>();
-  #subscribers = new Set<(event: HotkeyActivateEvent) => void>();
+  #activationSubscribers = new Set<(event: HotkeyActivateEvent) => void>();
+  #shortcutSubscribers = new Set<() => void>();
   #destroyed = false;
 
   constructor(target: HTMLElement) {
@@ -34,8 +39,13 @@ export class HotkeyCoordinator {
   }
 
   subscribe(callback: (event: HotkeyActivateEvent) => void): () => void {
-    this.#subscribers.add(callback);
-    return () => this.#subscribers.delete(callback);
+    this.#activationSubscribers.add(callback);
+    return () => this.#activationSubscribers.delete(callback);
+  }
+
+  subscribeShortcutChanges(callback: () => void): () => void {
+    this.#shortcutSubscribers.add(callback);
+    return () => this.#shortcutSubscribers.delete(callback);
   }
 
   add(options: HotkeyOptions): () => void {
@@ -45,16 +55,14 @@ export class HotkeyCoordinator {
     this.#bindings.push(binding);
     this.#sortBindings();
 
-    if (options.action) {
-      this.#addToAriaRegistry(options.action, parsed);
-    }
-
     // Lazily connect listeners.
     if (options.target === 'document') {
       this.#connectDocument();
     } else {
       this.#connect();
     }
+
+    this.#notify();
 
     let removed = false;
     return () => {
@@ -64,18 +72,26 @@ export class HotkeyCoordinator {
       const idx = this.#bindings.indexOf(binding);
       if (idx !== -1) this.#bindings.splice(idx, 1);
 
-      if (options.action) {
-        this.#removeFromAriaRegistry(options.action, parsed);
-      }
-
       this.#maybeDisconnect();
+      this.#notify();
     };
   }
 
   getAriaKeys(action: string): string | undefined {
-    const bindings = this.#ariaRegistry.get(action);
-    if (!bindings?.length) return undefined;
-    return toAriaKeyShortcut(bindings);
+    return this.getShortcut(action).aria;
+  }
+
+  getShortcut(action: string, value?: number | undefined): HotkeyShortcutDetails {
+    const bindings = this.#getActionBindings(action, value);
+    if (!bindings.length) return {};
+
+    const parsed = bindings.flatMap((binding) => binding.parsed);
+    const preferred = bindings[bindings.length - 1]!;
+
+    return {
+      aria: toAriaKeyShortcut(parsed),
+      shortcut: this.#formatDisplayShortcut(preferred),
+    };
   }
 
   destroy(): void {
@@ -86,7 +102,9 @@ export class HotkeyCoordinator {
     this.#docDisconnect?.abort();
     this.#docDisconnect = null;
     this.#bindings = [];
-    this.#ariaRegistry.clear();
+    this.#notify();
+    this.#activationSubscribers.clear();
+    this.#shortcutSubscribers.clear();
   }
 
   // --- Private ---
@@ -154,14 +172,14 @@ export class HotkeyCoordinator {
         // Input safety: single-key shortcuts suppressed in editable fields.
         if (editable && p.modifiers.size === 0) continue;
 
-        if (this.#subscribers.size > 0) {
+        if (this.#activationSubscribers.size > 0) {
           const activateEvent: HotkeyActivateEvent = {
             source: 'hotkey',
             action: options.action,
             value: options.value,
             event,
           };
-          for (const cb of this.#subscribers) {
+          for (const cb of this.#activationSubscribers) {
             try {
               cb(activateEvent);
             } catch (error) {
@@ -176,25 +194,25 @@ export class HotkeyCoordinator {
     }
   };
 
-  #addToAriaRegistry(action: string, bindings: ParsedHotkeyBinding[]): void {
-    let existing = this.#ariaRegistry.get(action);
-    if (!existing) {
-      existing = [];
-      this.#ariaRegistry.set(action, existing);
-    }
-    existing.push(...bindings);
+  #getActionBindings(action: string, value?: number | undefined): HotkeyBinding[] {
+    return this.#bindings
+      .filter((binding) => {
+        if (binding.options.disabled) return false;
+        if (binding.options.action !== action) return false;
+        if (isUndefined(value)) return true;
+        return binding.options.value === value;
+      })
+      .sort((a, b) => a.id - b.id);
   }
 
-  #removeFromAriaRegistry(action: string, bindings: ParsedHotkeyBinding[]): void {
-    const existing = this.#ariaRegistry.get(action);
-    if (!existing) return;
+  #formatDisplayShortcut(binding: HotkeyBinding): string {
+    if (binding.options.keys === '0-9') return binding.options.keys;
+    return toDisplayKeyShortcut(binding.parsed[0]!);
+  }
 
-    const filtered = existing.filter((b) => !bindings.includes(b));
-
-    if (filtered.length === 0) {
-      this.#ariaRegistry.delete(action);
-    } else {
-      this.#ariaRegistry.set(action, filtered);
+  #notify(): void {
+    for (const subscriber of this.#shortcutSubscribers) {
+      subscriber();
     }
   }
 }
