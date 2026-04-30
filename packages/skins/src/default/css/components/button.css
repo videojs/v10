@@ -115,25 +115,25 @@
    text content. */
 .media-default-skin .media-button--live {
   display: inline-flex;
-  align-items: center;
   gap: 0.4rem;
+  align-items: center;
   width: auto;
   aspect-ratio: auto;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 
   &::before {
-    content: "";
     display: inline-block;
     flex-shrink: 0;
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: 50%;
+    content: "";
     background-color: oklch(from currentColor l c h / 0.4);
+    border-radius: 50%;
     transition: background-color 150ms ease-out;
   }
 
