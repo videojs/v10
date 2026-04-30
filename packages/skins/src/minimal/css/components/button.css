@@ -45,11 +45,9 @@
   }
 }
 
-/* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
 @supports (corner-shape: squircle) {
   .media-minimal-skin .media-button {
     border-radius: 1rem;
-    /* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
     corner-shape: squircle;
   }
 }
