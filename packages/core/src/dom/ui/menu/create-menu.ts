@@ -219,10 +219,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     return () => {
       const index = items.indexOf(element);
       if (index !== -1) items.splice(index, 1);
-      if (highlightedItem === element) {
-        highlightedItem = null;
-        options.onHighlightChange?.(null);
-      }
+      if (highlightedItem === element) clearHighlight();
     };
   }
 

@@ -171,17 +171,18 @@ describe('createMenu', () => {
       expect(menu.input.current.active).toBe(true); // still open
     });
 
-    it('clears highlight tracking when highlighted item is unregistered', () => {
+    it('removes highlight DOM state when highlighted item is unregistered', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
 
-      menu.registerItem(element);
+      const cleanup = menu.registerItem(element);
       menu.highlight(element);
       onHighlightChange.mockClear();
 
-      const cleanup = menu.registerItem(element);
       cleanup();
 
+      expect(element.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(element.tabIndex).toBe(-1);
       expect(onHighlightChange).toHaveBeenCalledWith(null);
     });
   });
