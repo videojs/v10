@@ -4,6 +4,15 @@ import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-titl
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
+import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
+import { MenuElement } from '../../ui/menu/menu-element';
+import { MenuGroupElement } from '../../ui/menu/menu-group-element';
+import { MenuItemElement } from '../../ui/menu/menu-item-element';
+import { MenuItemIndicatorElement } from '../../ui/menu/menu-item-indicator-element';
+import { MenuLabelElement } from '../../ui/menu/menu-label-element';
+import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
+import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
+import { MenuSeparatorElement } from '../../ui/menu/menu-separator-element';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
 import { SliderElement } from '../../ui/slider/slider-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
@@ -20,6 +29,19 @@ import { VolumeSliderElement } from '../../ui/volume-slider/volume-slider-elemen
 import { safeDefine } from '../safe-define';
 
 // ── Define functions ────────────────────────────────────────────────────
+
+export function defineMenu(): void {
+  // Root first — part elements consume its context.
+  safeDefine(MenuElement);
+  safeDefine(MenuItemElement);
+  safeDefine(MenuLabelElement);
+  safeDefine(MenuSeparatorElement);
+  safeDefine(MenuGroupElement);
+  safeDefine(MenuRadioGroupElement);
+  safeDefine(MenuRadioItemElement);
+  safeDefine(MenuCheckboxItemElement);
+  safeDefine(MenuItemIndicatorElement);
+}
 
 export function defineControls(): void {
   safeDefine(ControlsElement);

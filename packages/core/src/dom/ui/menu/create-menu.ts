@@ -36,6 +36,8 @@ export interface MenuApi {
   triggerProps: MenuTriggerProps;
   /** Attach to the content element. */
   contentProps: MenuContentProps;
+  /** The currently registered trigger element, if any. */
+  readonly triggerElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
   /** Register a navigable item. Returns a cleanup function. */
@@ -238,6 +240,9 @@ export function createMenu(options: MenuOptions): MenuApi {
       onClick: popover.triggerProps.onClick,
     },
     contentProps,
+    get triggerElement(): HTMLElement | null {
+      return triggerElement;
+    },
     setTriggerElement,
     setContentElement,
     registerItem,
