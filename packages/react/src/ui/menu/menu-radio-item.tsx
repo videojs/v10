@@ -5,7 +5,7 @@ import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext, useMenuRadioGroupContext } from './context';
+import { useMenuContext, useMenuRadioGroupContext, useSubMenuContext } from './context';
 
 export interface MenuRadioItemProps extends UIComponentProps<'div', MenuState> {
   /** The value this item represents. */
@@ -21,6 +21,7 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
 ) {
   const { menu, state, stateAttrMap } = useMenuContext();
   const { value: groupValue, onValueChange } = useMenuRadioGroupContext();
+  const subMenuCtx = useSubMenuContext();
   const elementRef = useRef<HTMLDivElement>(null);
   const checked = groupValue === value;
 
@@ -35,9 +36,14 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
       if (disabled) return;
       onClick?.(event);
       onValueChange(value);
-      menu.close();
+      // In a submenu, auto-navigate back to the parent view after selection.
+      if (subMenuCtx) {
+        subMenuCtx.parentMenu.pop();
+      } else {
+        menu.close();
+      }
     },
-    [disabled, onClick, onValueChange, value, menu]
+    [disabled, onClick, onValueChange, value, menu, subMenuCtx]
   );
 
   const handlePointerEnter = useCallback(() => {

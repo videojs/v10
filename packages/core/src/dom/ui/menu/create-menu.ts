@@ -1,4 +1,4 @@
-import type { State } from '@videojs/store';
+import { createState, type State } from '@videojs/store';
 import type { MenuInput } from '../../../core/ui/menu/menu-core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../event';
@@ -8,6 +8,20 @@ import type { TransitionApi } from '../transition';
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
 export type MenuChangeDetails = PopoverChangeDetails;
+
+export interface NavigationEntry {
+  /** ID of the nested menu (submenu) that was pushed. */
+  menuId: string;
+  /** ID of the Trigger element that initiated the push, for focus restoration. */
+  triggerId: string;
+}
+
+export interface NavigationState {
+  /** Stack of active submenus (last = current). */
+  stack: NavigationEntry[];
+  /** Direction of the most recent navigation. */
+  direction: 'forward' | 'back';
+}
 
 export interface MenuOptions {
   transition: TransitionApi;
@@ -32,18 +46,26 @@ export interface MenuContentProps {
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
+  /** Reactive navigation state for submenu stack. */
+  navigationInput: State<NavigationState>;
   /** Attach to the trigger element. */
   triggerProps: MenuTriggerProps;
   /** Attach to the content element. */
   contentProps: MenuContentProps;
   /** The currently registered trigger element, if any. */
   readonly triggerElement: HTMLElement | null;
+  /** The currently registered content element, if any. */
+  readonly contentElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
   highlight: (element: HTMLElement | null) => void;
+  /** Push a submenu onto the navigation stack. */
+  push: (menuId: string, triggerId: string) => void;
+  /** Pop the current submenu from the navigation stack. */
+  pop: () => void;
   open: (reason?: MenuOpenChangeReason) => void;
   close: (reason?: MenuOpenChangeReason) => void;
   destroy: () => void;
@@ -55,9 +77,35 @@ export function createMenu(options: MenuOptions): MenuApi {
   const items: HTMLElement[] = [];
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
+  let contentElement: HTMLElement | null = null;
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
   let openRafId = 0;
+
+  const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
+
+  function push(menuId: string, triggerId: string): void {
+    const stack = navigationState.current.stack;
+    const topEntry = stack[stack.length - 1];
+
+    if (topEntry?.menuId === menuId) return;
+
+    navigationState.patch({
+      stack: [...stack, { menuId, triggerId }],
+      direction: 'forward',
+    });
+  }
+
+  function pop(): void {
+    const stack = navigationState.current.stack;
+
+    if (stack.length === 0) return;
+
+    navigationState.patch({
+      stack: stack.slice(0, -1),
+      direction: 'back',
+    });
+  }
 
   // --- Highlight ---
 
@@ -141,6 +189,8 @@ export function createMenu(options: MenuOptions): MenuApi {
       } else {
         clearHighlight();
         clearTypeahead();
+        // Reset navigation stack so the menu starts at root next time it opens.
+        navigationState.patch({ stack: [], direction: 'forward' });
       }
     },
     onOpenChangeComplete(open) {
@@ -208,6 +258,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function setContentElement(element: HTMLElement | null): void {
+    contentElement = element;
     popover.setPopupElement(element);
   }
 
@@ -234,6 +285,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   return {
     input: popover.input as State<MenuInput>,
+    navigationInput: navigationState,
     // Menus open/close on trigger click — forward the popover's click handler.
     // Hover and focus-based open are disabled (openOnHover not set).
     triggerProps: {
@@ -243,10 +295,15 @@ export function createMenu(options: MenuOptions): MenuApi {
     get triggerElement(): HTMLElement | null {
       return triggerElement;
     },
+    get contentElement(): HTMLElement | null {
+      return contentElement;
+    },
     setTriggerElement,
     setContentElement,
     registerItem,
     highlight,
+    push,
+    pop,
     open: popover.open,
     close: popover.close,
     destroy,

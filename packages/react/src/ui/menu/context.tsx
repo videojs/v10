@@ -11,6 +11,16 @@ export interface MenuContextValue {
   stateAttrMap: StateAttrMap<MenuState>;
   contentId: string;
   anchorName: string;
+  /** ID of the currently visible submenu, or null when at root view. */
+  activeSubMenuId: string | null;
+  /** Triggerer ID of the active submenu entry (for focus restoration on pop). */
+  activeSubMenuTriggerId: string | null;
+  /** Direction of the most recent navigation. */
+  navigationDirection: 'forward' | 'back';
+  /** Push a submenu onto the navigation stack. */
+  push: (menuId: string, triggerId: string) => void;
+  /** Pop the current submenu from the navigation stack. */
+  pop: () => void;
 }
 
 const MenuContext = createContext<MenuContextValue | null>(null);
@@ -25,6 +35,27 @@ export function useMenuContext(): MenuContextValue {
 
 export function useOptionalMenuContext(): MenuContextValue | null {
   return useContext(MenuContext);
+}
+
+// ---------------------------------------------------------------------------
+// Sub-menu identity context — provided by a nested Menu.Root so child parts
+// (Trigger, Content) can read the submenu ID and access the parent menu for
+// push/pop and item registration.
+// ---------------------------------------------------------------------------
+
+export interface SubMenuContextValue {
+  /** Stable ID for this submenu (matches the contentId of the nested Root). */
+  subMenuId: string;
+  /** The parent menu's context — used by Trigger to register and push. */
+  parentMenu: MenuContextValue;
+}
+
+const SubMenuContext = createContext<SubMenuContextValue | null>(null);
+
+export const SubMenuContextProvider = SubMenuContext.Provider;
+
+export function useSubMenuContext(): SubMenuContextValue | null {
+  return useContext(SubMenuContext);
 }
 
 // ---------------------------------------------------------------------------

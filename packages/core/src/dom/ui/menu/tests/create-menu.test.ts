@@ -411,6 +411,42 @@ describe('createMenu', () => {
   });
 
   // -------------------------------------------------------------------------
+  // Submenu navigation
+  // -------------------------------------------------------------------------
+
+  describe('submenu navigation', () => {
+    it('pushes and pops submenu entries', () => {
+      const { menu } = createTestMenu();
+
+      menu.push('quality-menu', 'quality-trigger');
+      menu.pop();
+
+      expect(menu.navigationInput.current).toEqual({ stack: [], direction: 'back' });
+    });
+
+    it('ignores duplicate pushes for the active submenu', () => {
+      const { menu } = createTestMenu();
+
+      menu.push('quality-menu', 'quality-trigger');
+      menu.push('quality-menu', 'quality-trigger');
+      menu.pop();
+
+      expect(menu.navigationInput.current.stack).toEqual([]);
+    });
+
+    it('does not emit a navigation update when popping at root', () => {
+      const { menu } = createTestMenu();
+      const listener = vi.fn();
+      const cleanup = menu.navigationInput.subscribe(listener);
+
+      menu.pop();
+
+      expect(listener).not.toHaveBeenCalled();
+      cleanup();
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Type-ahead
   // -------------------------------------------------------------------------
 

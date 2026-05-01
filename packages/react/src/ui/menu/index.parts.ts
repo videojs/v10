@@ -1,3 +1,4 @@
+export { MenuBack as Back, type MenuBackProps as BackProps } from './menu-back';
 export {
   MenuCheckboxItem as CheckboxItem,
   type MenuCheckboxItemProps as CheckboxItemProps,
@@ -15,3 +16,4 @@ export { MenuRadioItem as RadioItem, type MenuRadioItemProps as RadioItemProps }
 export { MenuRoot as Root, type MenuRootProps as RootProps } from './menu-root';
 export { MenuSeparator as Separator, type MenuSeparatorProps as SeparatorProps } from './menu-separator';
 export { MenuTrigger as Trigger, type MenuTriggerProps as TriggerProps } from './menu-trigger';
+export { MenuView as View, type MenuViewProps as ViewProps } from './menu-view';

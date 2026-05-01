@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
-import { MenuContextProvider } from './context';
+import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
 export interface MenuRootProps extends CoreMenuProps {
   /** Called when the menu open state changes (fires immediately, before animations). */
@@ -27,8 +27,13 @@ export function MenuRoot({
   children,
   ...coreProps
 }: MenuRootProps): ReactNode {
-  const [core] = useState(() => new MenuCore(coreProps));
-  core.setProps(coreProps);
+  // Detect if we are nested inside a parent Menu.Content — if so, operate as
+  // a submenu: no popover positioning, Trigger acts as a parent item.
+  const parentMenu = useOptionalMenuContext();
+  const isSubmenu = parentMenu !== null;
+
+  const [core] = useState(() => new MenuCore({ ...coreProps, isSubmenu }));
+  core.setProps({ ...coreProps, isSubmenu });
 
   const isControlled = controlledOpen !== undefined;
 
@@ -80,11 +85,38 @@ export function MenuRoot({
   core.setInput(input);
   const state = core.getState();
 
-  return (
-    <MenuContextProvider value={{ core, menu, state, stateAttrMap: MenuDataAttrs, contentId, anchorName }}>
-      {children}
-    </MenuContextProvider>
-  );
+  // Subscribe to navigation state — used by Content/Trigger when this is a root menu.
+  const navigationInput = useSnapshot(menu.navigationInput);
+  const topEntry = navigationInput.stack[navigationInput.stack.length - 1];
+  const activeSubMenuId = topEntry?.menuId ?? null;
+  const activeSubMenuTriggerId = topEntry?.triggerId ?? null;
+  const navigationDirection = navigationInput.direction;
+
+  const contextValue = {
+    core,
+    menu,
+    state,
+    stateAttrMap: MenuDataAttrs,
+    contentId,
+    anchorName,
+    activeSubMenuId,
+    activeSubMenuTriggerId,
+    navigationDirection,
+    push: menu.push,
+    pop: menu.pop,
+  };
+
+  // When acting as a submenu, expose its content ID and the parent menu context
+  // through SubMenuContext so Trigger can register/push and Content can show/hide.
+  if (isSubmenu && parentMenu) {
+    return (
+      <MenuContextProvider value={contextValue}>
+        <SubMenuContextProvider value={{ subMenuId: contentId, parentMenu }}>{children}</SubMenuContextProvider>
+      </MenuContextProvider>
+    );
+  }
+
+  return <MenuContextProvider value={contextValue}>{children}</MenuContextProvider>;
 }
 
 export namespace MenuRoot {

@@ -1,11 +1,14 @@
 import type { MenuState, StateAttrMap } from '@videojs/core';
-import type { MenuApi } from '@videojs/core/dom';
+import type { MenuApi, NavigationState } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
 export interface MenuContextValue {
   menu: MenuApi;
   state: MenuState;
   stateAttrMap: StateAttrMap<MenuState>;
+  navigation: NavigationState;
+  /** The parent menu's API — set by nested submenus for pop-on-select behavior. */
+  parentMenu: MenuApi | null;
 }
 
 export interface MenuRadioGroupContextValue {

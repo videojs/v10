@@ -56,7 +56,12 @@ export class MenuRadioItemElement extends MediaElement {
           onClick: () => {
             if (this.disabled) return;
             groupCtx.onValueChange(this.value);
-            menuCtx.menu.close();
+            // In a submenu (parentMenu is set), auto-pop back to parent view.
+            if (menuCtx.parentMenu) {
+              menuCtx.parentMenu.pop();
+            } else {
+              menuCtx.menu.close();
+            }
           },
           onPointerenter: () => {
             if (!this.disabled) menuCtx.menu.highlight(this);
