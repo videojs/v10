@@ -1,5 +1,6 @@
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal, update } from '../../../core/signals/primitives';
+import { computed } from '../../../core/signals/primitives';
 import { createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
@@ -15,7 +16,7 @@ export type MediaTrackType = 'video' | 'audio';
 const ActorKeyByType = {
   video: 'videoBufferActor',
   audio: 'audioBufferActor',
-} as const satisfies Record<MediaTrackType, keyof SourceBufferOwners>;
+} as const satisfies Record<MediaTrackType, keyof SourceBufferContext>;
 
 /**
  * State shape for SourceBuffer setup.
@@ -27,9 +28,9 @@ export interface SourceBufferState extends TrackSelectionState {
 }
 
 /**
- * Owners shape for SourceBuffer setup.
+ * Context shape for SourceBuffer setup.
  */
-export interface SourceBufferOwners {
+export interface SourceBufferContext {
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
@@ -57,7 +58,7 @@ export function buildMimeCodec(track: ResolvedTrack): string {
  *
  * Waits until ALL media tracks in the presentation are resolved with codecs,
  * then creates every SourceBuffer in one synchronous block before setting
- * owners. This guarantees that downstream consumers (e.g. loadSegments) never
+ * context. This guarantees that downstream consumers (e.g. loadSegments) never
  * see a partial set of SourceBuffers — preventing the Firefox bug where
  * appending to a video SourceBuffer before the audio SourceBuffer exists
  * causes mozHasAudio to be permanently false.
@@ -66,18 +67,18 @@ export function buildMimeCodec(track: ResolvedTrack): string {
  * track types are derived from the presentation rather than hardcoded.
  *
  * @example
- * const cleanup = setupSourceBuffers({ state, owners });
+ * const cleanup = setupSourceBuffers({ state, context });
  */
-export function setupSourceBuffers<S extends SourceBufferState, O extends SourceBufferOwners>({
+export function setupSourceBuffers({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: StateSignals<SourceBufferState>;
+  context: ContextSignals<SourceBufferContext>;
 }): () => void {
   // Derive which media track types this presentation actually contains
   const presentationTypesSignal = computed((): MediaTrackType[] => {
-    const { presentation } = state.get();
+    const presentation = state.presentation.get();
     if (!presentation?.selectionSets) return [];
     return presentation.selectionSets
       .map(({ type }) => type)
@@ -87,38 +88,41 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
   // All presentation track types must have a selected, resolved track with codecs
   const canSetupSignal = computed(() => {
     const types = presentationTypesSignal.get();
-    if (!owners.get().mediaSource || types.length === 0) return false;
-    const s = state.get();
+    if (!context.mediaSource.get() || types.length === 0) return false;
+    const s: SourceBufferState = {
+      presentation: state.presentation.get(),
+      selectedVideoTrackId: state.selectedVideoTrackId.get(),
+      selectedAudioTrackId: state.selectedAudioTrackId.get(),
+    };
     return types.every((type) => {
       const track = getSelectedTrack(s, type);
       return track && isResolvedTrack(track) && !!track.codecs?.length;
     });
   });
 
-  // DOM-observable "already done" guard — once all presentation buffers exist in owners, setup has run
+  // DOM-observable "already done" guard — once all presentation buffers exist in context, setup has run
   const shouldSetupSignal = computed(() => {
-    const o = owners.get();
-    return presentationTypesSignal.get().every((type) => !o[BufferKeyByType[type]]);
+    return presentationTypesSignal.get().every((type) => !context[BufferKeyByType[type]].get());
   });
 
   const cleanupEffect = effect(() => {
     if (!canSetupSignal.get() || !shouldSetupSignal.get()) return;
 
-    const s = state.get();
-    const o = owners.get();
+    const s: SourceBufferState = {
+      presentation: state.presentation.get(),
+      selectedVideoTrackId: state.selectedVideoTrackId.get(),
+      selectedAudioTrackId: state.selectedAudioTrackId.get(),
+    };
+    const mediaSource = context.mediaSource.get()!;
 
     // Create all SourceBuffers synchronously — no await between addSourceBuffer
-    // calls — then set owners once so subscribers see all buffers simultaneously.
-    const patch: Partial<SourceBufferOwners> = {};
-
+    // calls — then set context once so subscribers see all buffers simultaneously.
     for (const type of presentationTypesSignal.get()) {
       const track = getSelectedTrack(s, type) as ResolvedTrack;
-      const buffer = createSourceBuffer(o.mediaSource!, buildMimeCodec(track));
-      patch[BufferKeyByType[type]] = buffer;
-      patch[ActorKeyByType[type]] = createSourceBufferActor(buffer);
+      const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
+      context[BufferKeyByType[type]].set(buffer);
+      context[ActorKeyByType[type]].set(createSourceBufferActor(buffer));
     }
-
-    update(owners, patch);
   });
 
   return cleanupEffect;

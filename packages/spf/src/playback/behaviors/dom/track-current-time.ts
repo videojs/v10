@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { type Signal, update } from '../../../core/signals/primitives';
 
 /**
  * State shape for current time tracking.
@@ -10,9 +10,9 @@ export interface CurrentTimeState {
 }
 
 /**
- * Owners shape for current time tracking.
+ * Context shape for current time tracking.
  */
-export interface CurrentTimeOwners {
+export interface CurrentTimeContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
@@ -20,10 +20,10 @@ export interface CurrentTimeOwners {
  * Check if we can track current time.
  *
  * Requires:
- * - mediaElement exists in owners
+ * - mediaElement exists in context
  */
-export function canTrackCurrentTime(owners: CurrentTimeOwners): boolean {
-  return !!owners.mediaElement;
+export function canTrackCurrentTime(context: CurrentTimeContext): boolean {
+  return !!context.mediaElement;
 }
 
 /**
@@ -39,20 +39,20 @@ export function canTrackCurrentTime(owners: CurrentTimeOwners): boolean {
  * Also syncs immediately when a media element becomes available.
  *
  * @example
- * const cleanup = trackCurrentTime({ state, owners });
+ * const cleanup = trackCurrentTime({ state, context });
  */
-export function trackCurrentTime<S extends CurrentTimeState, O extends CurrentTimeOwners>({
+export function trackCurrentTime({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: StateSignals<CurrentTimeState>;
+  context: ContextSignals<CurrentTimeContext>;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
   let removeListeners: (() => void) | null = null;
 
   const cleanupEffect = effect(() => {
-    const { mediaElement } = owners.get();
+    const mediaElement = context.mediaElement.get();
 
     if (mediaElement === lastMediaElement) return;
 
@@ -63,8 +63,7 @@ export function trackCurrentTime<S extends CurrentTimeState, O extends CurrentTi
     if (!mediaElement) return;
 
     const sync = () => {
-      const patch: Partial<CurrentTimeState> = { currentTime: mediaElement.currentTime };
-      update(state, patch);
+      state.currentTime.set(mediaElement.currentTime);
     };
 
     // Sync immediately so consumers don't wait for the first event

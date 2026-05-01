@@ -1,5 +1,10 @@
-import { type Composition, createComposition } from '../../../core/composition/create-composition';
-import type { Signal } from '../../../core/signals/primitives';
+import {
+  type Composition,
+  type ContextSignals,
+  createComposition,
+  type StateSignals,
+} from '../../../core/composition/create-composition';
+import { signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -28,7 +33,7 @@ import {
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
-// HLS Engine State & Owners
+// HLS Engine State & Context
 // ============================================================================
 
 /**
@@ -56,11 +61,11 @@ export interface SimpleHlsEngineState {
 }
 
 /**
- * Owners shape for the HLS playback engine.
+ * Context shape for the HLS playback engine.
  *
  * Platform objects and actor references managed by HLS behaviors.
  */
-export interface SimpleHlsEngineOwners {
+export interface SimpleHlsEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
@@ -87,8 +92,8 @@ export interface SimpleHlsEngineConfig {
 
 /** Shorthand for the deps shape used by HLS engine behaviors. */
 type Deps = {
-  state: Signal<SimpleHlsEngineState>;
-  owners: Signal<SimpleHlsEngineOwners>;
+  state: StateSignals<SimpleHlsEngineState>;
+  context: ContextSignals<SimpleHlsEngineContext>;
   config: SimpleHlsEngineConfig;
 };
 
@@ -107,8 +112,8 @@ const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as 
 const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
 
-const setupTextTrackActors = ({ owners }: Deps) =>
-  _setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
+const setupTextTrackActors = ({ context }: Deps) =>
+  _setupTextTrackActors({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -145,6 +150,44 @@ const switchQuality = ({ config, ...deps }: Deps) =>
   _switchQuality(deps, config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {});
 
 // ============================================================================
+// Signal-map factories
+// ============================================================================
+
+function createStateSignals(): StateSignals<SimpleHlsEngineState> {
+  return {
+    presentation: signal<MaybeResolvedPresentation | undefined>(undefined),
+    preload: signal<'auto' | 'metadata' | 'none' | undefined>(undefined),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    selectedAudioTrackId: signal<string | undefined>(undefined),
+    selectedTextTrackId: signal<string | undefined>(undefined),
+    bandwidthState: signal<BandwidthState | undefined>({
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    }),
+    abrDisabled: signal<boolean | undefined>(undefined),
+    currentTime: signal<number | undefined>(undefined),
+    playbackInitiated: signal<boolean | undefined>(undefined),
+    mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(undefined),
+  };
+}
+
+function createContextSignals(): ContextSignals<SimpleHlsEngineContext> {
+  return {
+    mediaElement: signal<HTMLMediaElement | undefined>(undefined),
+    mediaSource: signal<MediaSource | undefined>(undefined),
+    videoBuffer: signal<SourceBuffer | undefined>(undefined),
+    audioBuffer: signal<SourceBuffer | undefined>(undefined),
+    videoBufferActor: signal<SourceBufferActor | undefined>(undefined),
+    audioBufferActor: signal<SourceBufferActor | undefined>(undefined),
+    textTracksActor: signal<TextTracksActor | undefined>(undefined),
+    segmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(undefined),
+  };
+}
+
+// ============================================================================
 // HLS Playback Engine
 // ============================================================================
 
@@ -162,8 +205,8 @@ const switchQuality = ({ config, ...deps }: Deps) =>
  *   preferredAudioLanguage: 'en',
  * });
  *
- * engine.owners.set({ ...engine.owners.get(), mediaElement: videoEl });
- * engine.state.set({ ...engine.state.get(), presentation: { url: 'https://example.com/stream.m3u8' } });
+ * engine.context.mediaElement.set(videoEl);
+ * engine.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  *
  * videoEl.play();
  *
@@ -172,8 +215,8 @@ const switchQuality = ({ config, ...deps }: Deps) =>
  */
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
-): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
-  return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
+): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  return createComposition<SimpleHlsEngineState, SimpleHlsEngineContext, SimpleHlsEngineConfig>(
     [
       syncPreloadAttribute,
       trackPlaybackInitiated,
@@ -215,16 +258,8 @@ export function createSimpleHlsEngine(
     ],
     {
       config,
-      initialState: {
-        bandwidthState: {
-          fastEstimate: 0,
-          fastTotalWeight: 0,
-          slowEstimate: 0,
-          slowTotalWeight: 0,
-          bytesSampled: 0,
-        },
-      },
-      initialOwners: {},
+      state: createStateSignals(),
+      context: createContextSignals(),
     }
   );
 }

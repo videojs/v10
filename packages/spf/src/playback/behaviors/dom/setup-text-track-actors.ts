@@ -1,5 +1,6 @@
+import type { ContextSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal, update } from '../../../core/signals/primitives';
+import { computed } from '../../../core/signals/primitives';
 import { createTextTracksActor } from '../../actors/dom/text-tracks';
 import {
   createTextTrackSegmentLoaderActor,
@@ -9,13 +10,13 @@ import {
 import type { TextTracksActor } from '../../actors/text-tracks';
 
 /**
- * Owners shape for text-track actors setup.
+ * Context shape for text-track actors setup.
  *
  * Mirrors the shape `loadTextTrackCues` expects, but with `mediaElement`
  * typed as `HTMLMediaElement` (the concrete input the DOM factory needs)
  * and the actors parameterized over `VTTCue` (what the DOM factory produces).
  */
-export interface TextTrackActorsOwners {
+export interface TextTrackActorsContext {
   mediaElement?: HTMLMediaElement | undefined;
   textTracksActor?: TextTracksActor<VTTCue> | undefined;
   segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
@@ -42,7 +43,7 @@ export interface TextTrackActorsConfig {
  * on change or unmount.
  *
  * Subscribes to a `computed` projection of `mediaElement` rather than the
- * full owners signal, so writing the actor slots back to `owners` from
+ * full context signal, so writing the actor slots back to `context` from
  * inside the effect does not re-trigger it.
  *
  * Pairs with the host-agnostic `loadTextTrackCues` behavior in
@@ -54,14 +55,14 @@ export interface TextTrackActorsConfig {
  *   config: { resolveTextTrackSegment: resolveVttSegment },
  * });
  */
-export function setupTextTrackActors<O extends TextTrackActorsOwners>({
-  owners,
+export function setupTextTrackActors({
+  context,
   config,
 }: {
-  owners: Signal<O>;
+  context: ContextSignals<TextTrackActorsContext>;
   config: TextTrackActorsConfig;
 }): () => void {
-  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const mediaElementSignal = computed(() => context.mediaElement.get());
 
   return effect(() => {
     const mediaElement = mediaElementSignal.get();
@@ -69,12 +70,14 @@ export function setupTextTrackActors<O extends TextTrackActorsOwners>({
 
     const textTracksActor = createTextTracksActor(mediaElement);
     const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.resolveTextTrackSegment);
-    update(owners, { textTracksActor, segmentLoaderActor } as Partial<O>);
+    context.textTracksActor.set(textTracksActor);
+    context.segmentLoaderActor.set(segmentLoaderActor);
 
     return () => {
       textTracksActor.destroy();
       segmentLoaderActor.destroy();
-      update(owners, { textTracksActor: undefined, segmentLoaderActor: undefined } as Partial<O>);
+      context.textTracksActor.set(undefined);
+      context.segmentLoaderActor.set(undefined);
     };
   });
 }

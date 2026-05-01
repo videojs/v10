@@ -1,38 +1,38 @@
+import type { ContextSignals, StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal, update } from '../../core/signals/primitives';
+import { computed } from '../../core/signals/primitives';
 import type { MediaElementLike } from '../../media/types';
 import type { PresentationState } from './resolve-presentation';
 
 /**
- * Owners shape for preload attribute sync.
+ * Context shape for preload attribute sync.
  */
-export interface PlatformOwners {
+export interface PlatformContext {
   mediaElement?: MediaElementLike | undefined;
 }
 
 /**
  * Syncs preload attribute from mediaElement to state.
  *
- * Watches the owners signal for mediaElement changes and copies the
+ * Watches the context signal for mediaElement changes and copies the
  * preload attribute to state when no explicit value has been set.
  * An explicit value (set via SimpleHlsMediaElement.preload) always wins.
  *
  * @example
- * const cleanup = syncPreloadAttribute({ state, owners });
+ * const cleanup = syncPreloadAttribute({ state, context });
  */
-export function syncPreloadAttribute<S extends PresentationState, O extends PlatformOwners>({
+export function syncPreloadAttribute({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: StateSignals<PresentationState>;
+  context: ContextSignals<PlatformContext>;
 }): () => void {
-  const mediaElement = computed(() => owners.get().mediaElement);
+  const mediaElement = computed(() => context.mediaElement.get());
   return effect(() => {
-    if (state.get().preload !== undefined) return;
+    if (state.preload.get() !== undefined) return;
     const preload = mediaElement.get()?.preload || undefined;
     if (preload === undefined) return;
-    const patch: Partial<PresentationState> = { preload: preload as 'auto' | 'metadata' | 'none' };
-    update(state, patch);
+    state.preload.set(preload as 'auto' | 'metadata' | 'none');
   });
 }

@@ -11,12 +11,12 @@ export { flushBuffer } from './media/dom/mse/buffer-flusher';
 export { destroyVttResolver, resolveVttSegment } from './media/dom/text/resolve-vtt-segment';
 export { loadSegments } from './playback/behaviors/dom/load-segments';
 export { setupTextTrackActors } from './playback/behaviors/dom/setup-text-track-actors';
-export type { CurrentTimeOwners, CurrentTimeState } from './playback/behaviors/dom/track-current-time';
+export type { CurrentTimeContext, CurrentTimeState } from './playback/behaviors/dom/track-current-time';
 export { trackCurrentTime } from './playback/behaviors/dom/track-current-time';
 export type {
-  PlaybackInitiatedOwners,
+  PlaybackInitiatedContext,
   PlaybackInitiatedState,
 } from './playback/behaviors/dom/track-playback-initiated';
 export { trackPlaybackInitiated } from './playback/behaviors/dom/track-playback-initiated';
-export type { PlaybackRateOwners, PlaybackRateState } from './playback/behaviors/dom/track-playback-rate';
+export type { PlaybackRateContext, PlaybackRateState } from './playback/behaviors/dom/track-playback-rate';
 export { trackPlaybackRate } from './playback/behaviors/dom/track-playback-rate';

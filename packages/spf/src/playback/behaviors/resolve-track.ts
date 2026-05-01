@@ -1,5 +1,6 @@
+import type { StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import type { Signal } from '../../core/signals/primitives';
+import { snapshot } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
@@ -69,8 +70,8 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
  */
-export function resolveTrack<S extends TrackResolutionState, T extends TrackType>(
-  { state }: { state: Signal<S> },
+export function resolveTrack<T extends TrackType>(
+  { state }: { state: StateSignals<TrackResolutionState> },
   config: TrackResolutionConfig<T>
 ): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
@@ -79,7 +80,7 @@ export function resolveTrack<S extends TrackResolutionState, T extends TrackType
   const runner = new ConcurrentRunner();
 
   const cleanup = effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     if (!canResolve(currentState, config)) return;
 
     const track = getSelectedTrack(currentState, config.type);
@@ -96,16 +97,16 @@ export function resolveTrack<S extends TrackResolutionState, T extends TrackType
           const text = await getResponseText(response);
           const mediaTrack = parseMediaPlaylist(text, resolvedTrack);
 
-          // IMPORTANT: Read state.get().presentation at write time, not from the
+          // IMPORTANT: Read state.presentation.get() at write time, not from the
           // captured currentState snapshot. Multiple Tasks may be running concurrently
           // (one per track being resolved), so the snapshot is likely already stale by
           // the time a task completes — a sibling task may have already written the
           // presentation with its own resolved track. Reading live state ensures each
           // task builds on top of whatever has been committed so far.
-          const latest = state.get();
-          if (!isResolvedPresentation(latest.presentation)) return;
-          const updatedPresentation = updateTrackInPresentation(latest.presentation, mediaTrack);
-          state.set({ ...latest, presentation: updatedPresentation } as S);
+          const latestPresentation = state.presentation.get();
+          if (!isResolvedPresentation(latestPresentation)) return;
+          const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
+          state.presentation.set(updatedPresentation);
         },
         { id: track.id }
       )

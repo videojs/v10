@@ -1,5 +1,6 @@
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import type { Signal } from '../../../core/signals/primitives';
+import { snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { hasPresentationDuration } from '../../../media/types';
 
@@ -9,28 +10,26 @@ export interface DurationUpdateState {
   mediaSourceReadyState?: MediaSource['readyState'];
 }
 
-export interface DurationUpdateOwners {
+export interface DurationUpdateContext {
   mediaSource?: MediaSource;
-  videoSourceBuffer?: SourceBuffer;
-  audioSourceBuffer?: SourceBuffer;
+  videoBuffer?: SourceBuffer;
+  audioBuffer?: SourceBuffer;
 }
 
 /**
  * Check if we can update MediaSource duration (have required data).
  */
-export function canUpdateDuration(state: DurationUpdateState, owners: DurationUpdateOwners): boolean {
-  return !!(owners.mediaSource && state.presentation && hasPresentationDuration(state.presentation));
+export function canUpdateDuration(state: DurationUpdateState, context: DurationUpdateContext): boolean {
+  return !!(context.mediaSource && state.presentation && hasPresentationDuration(state.presentation));
 }
 
 /**
  * Get the maximum buffered end time across all SourceBuffers.
  */
-export function getMaxBufferedEnd(owners: DurationUpdateOwners): number {
+export function getMaxBufferedEnd(context: DurationUpdateContext): number {
   let maxEnd = 0;
 
-  const buffers = [owners.videoSourceBuffer, owners.audioSourceBuffer].filter(
-    (buf): buf is SourceBuffer => buf !== undefined
-  );
+  const buffers = [context.videoBuffer, context.audioBuffer].filter((buf): buf is SourceBuffer => buf !== undefined);
 
   for (const buffer of buffers) {
     const { buffered } = buffer;
@@ -48,10 +47,10 @@ export function getMaxBufferedEnd(owners: DurationUpdateOwners): number {
 /**
  * Check if we should update MediaSource duration (conditions met).
  */
-export function shouldUpdateDuration(state: DurationUpdateState, owners: DurationUpdateOwners): boolean {
-  if (!canUpdateDuration(state, owners)) return false;
+export function shouldUpdateDuration(state: DurationUpdateState, context: DurationUpdateContext): boolean {
+  if (!canUpdateDuration(state, context)) return false;
 
-  const { mediaSource } = owners;
+  const { mediaSource } = context;
   const { presentation } = state;
 
   // MediaSource must be open — read from state.mediaSourceReadyState so the
@@ -77,8 +76,8 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
  * The MSE spec forbids setting MediaSource.duration while any attached
  * SourceBuffer has updating === true. This defers until all are idle.
  */
-function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> {
-  const updating = [owners.videoSourceBuffer, owners.audioSourceBuffer].filter(
+function waitForSourceBuffersReady(context: DurationUpdateContext): Promise<void> {
+  const updating = [context.videoBuffer, context.audioBuffer].filter(
     (buf): buf is SourceBuffer => buf?.updating === true
   );
 
@@ -94,28 +93,28 @@ function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> 
 /**
  * Update MediaSource duration when presentation duration becomes available.
  */
-export function updateDuration<S extends DurationUpdateState, O extends DurationUpdateOwners>({
+export function updateDuration({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: StateSignals<DurationUpdateState>;
+  context: ContextSignals<DurationUpdateContext>;
 }): () => void {
   let destroyed = false;
   let running = false;
 
   const cleanupEffect = effect(() => {
-    const currentState = state.get();
-    const currentOwners = owners.get();
+    const currentState = snapshot(state);
+    const currentContext = snapshot(context);
 
-    if (!shouldUpdateDuration(currentState, currentOwners) || running) return;
+    if (!shouldUpdateDuration(currentState, currentContext) || running) return;
 
-    const { mediaSource } = currentOwners;
+    const { mediaSource } = currentContext;
     running = true;
 
     // MSE spec: duration cannot be set while any SourceBuffer is updating.
     // Capture the snapshot; the async helper does not read signals.
-    waitForSourceBuffersReady(currentOwners)
+    waitForSourceBuffersReady(currentContext)
       .then(() => {
         // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
         // already called endOfStream(), transitioning 'open' → 'ended').
@@ -125,7 +124,7 @@ export function updateDuration<S extends DurationUpdateState, O extends Duration
 
         // MSE spec: duration cannot be less than any buffered range.
         // If buffered ranges exceed calculated duration, extend to match.
-        const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+        const maxBufferedEnd = getMaxBufferedEnd(currentContext);
         if (maxBufferedEnd > duration) {
           duration = maxBufferedEnd;
         }

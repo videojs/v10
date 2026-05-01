@@ -1,5 +1,6 @@
+import type { StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { type Signal, update } from '../../core/signals/primitives';
+import { snapshot } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
@@ -85,8 +86,8 @@ function getVideoTracks(presentation: MaybeResolvedPresentation) {
  * // Later, when done:
  * cleanup();
  */
-export function switchQuality<S extends QualitySwitchingState>(
-  { state }: { state: Signal<S> },
+export function switchQuality(
+  { state }: { state: StateSignals<QualitySwitchingState> },
   config: QualitySwitchingConfig = {}
 ): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
@@ -101,7 +102,7 @@ export function switchQuality<S extends QualitySwitchingState>(
   let firstMeaningfulFire = true;
 
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     const { presentation, bandwidthState, selectedVideoTrackId, abrDisabled } = currentState;
 
     if (abrDisabled === true) return;
@@ -130,7 +131,6 @@ export function switchQuality<S extends QualitySwitchingState>(
       lastUpgradeTime = now;
     }
 
-    const patch: Partial<QualitySwitchingState> = { selectedVideoTrackId: optimal.id };
-    update(state, patch);
+    state.selectedVideoTrackId.set(optimal.id);
   });
 }

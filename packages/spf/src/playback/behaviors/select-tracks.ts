@@ -1,5 +1,6 @@
+import type { StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { type Signal, update } from '../../core/signals/primitives';
+import { snapshot } from '../../core/signals/primitives';
 import {
   type AudioSelectionConfig,
   canSelectTrack,
@@ -23,16 +24,16 @@ import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
  *
  * @example
  * const cleanup = selectVideoTrack(
- *   { state, owners, events },
+ *   { state, context, events },
  *   { initialBandwidth: 2_000_000 }
  * );
  */
-export function selectVideoTrack<S extends TrackSelectionState>(
-  { state }: { state: Signal<S> },
+export function selectVideoTrack(
+  { state }: { state: StateSignals<TrackSelectionState> },
   config: VideoSelectionConfig = { type: 'video' }
 ): () => void {
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
     // Just to have basic functionality/POC, simply selecting the first track
@@ -41,8 +42,7 @@ export function selectVideoTrack<S extends TrackSelectionState>(
 
     if (selectedTrackId) {
       const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-      const patch: Partial<TrackSelectionState> = { [selectedTrackKey]: selectedTrackId };
-      update(state, patch);
+      state[selectedTrackKey].set(selectedTrackId);
     }
   });
 }
@@ -58,16 +58,16 @@ export function selectVideoTrack<S extends TrackSelectionState>(
  *
  * @example
  * const cleanup = selectAudioTrack(
- *   { state, owners, events },
+ *   { state, context, events },
  *   { preferredAudioLanguage: 'en' }
  * );
  */
-export function selectAudioTrack<S extends TrackSelectionState>(
-  { state }: { state: Signal<S> },
+export function selectAudioTrack(
+  { state }: { state: StateSignals<TrackSelectionState> },
   config: AudioSelectionConfig = { type: 'audio' }
 ): () => void {
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
     // Just to have basic functionality/POC, simply selecting the first track
@@ -75,8 +75,7 @@ export function selectAudioTrack<S extends TrackSelectionState>(
       ?.switchingSets[0]?.tracks[0]?.id;
 
     if (selectedTrackId) {
-      const patch: Partial<TrackSelectionState> = { selectedAudioTrackId: selectedTrackId };
-      update(state, patch);
+      state.selectedAudioTrackId.set(selectedTrackId);
     }
   });
 }
@@ -91,14 +90,14 @@ export function selectAudioTrack<S extends TrackSelectionState>(
  * Note: Currently does not auto-select (user opt-in).
  *
  * @example
- * const cleanup = selectTextTrack({ state, owners, events }, {});
+ * const cleanup = selectTextTrack({ state, context, events }, {});
  */
-export function selectTextTrack<S extends TrackSelectionState>(
-  { state }: { state: Signal<S> },
+export function selectTextTrack(
+  { state }: { state: StateSignals<TrackSelectionState> },
   config: TextSelectionConfig = { type: 'text' }
 ): () => void {
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
     if (!isResolvedPresentation(currentState.presentation)) return;
@@ -107,8 +106,7 @@ export function selectTextTrack<S extends TrackSelectionState>(
     const selectedTextTrackId = pickTextTrack(currentState.presentation, config);
 
     if (selectedTextTrackId) {
-      const patch: Partial<TrackSelectionState> = { selectedTextTrackId };
-      update(state, patch);
+      state.selectedTextTrackId.set(selectedTextTrackId);
     }
   });
 }

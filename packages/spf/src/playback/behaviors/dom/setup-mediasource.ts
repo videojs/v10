@@ -1,5 +1,6 @@
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal, update } from '../../../core/signals/primitives';
+import { computed } from '../../../core/signals/primitives';
 import {
   attachMediaSource,
   createMediaSource,
@@ -17,9 +18,9 @@ export interface MediaSourceState {
 }
 
 /**
- * Owners shape for MediaSource setup.
+ * Context shape for MediaSource setup.
  */
-export interface MediaSourceOwners {
+export interface MediaSourceContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
 }
@@ -28,29 +29,29 @@ export interface MediaSourceOwners {
  * Setup MediaSource orchestration.
  *
  * Creates and attaches MediaSource when:
- * - mediaElement exists in owners
+ * - mediaElement exists in context
  * - presentation.url exists in state
  *
- * Updates owners.mediaSource after successful setup.
+ * Updates context.mediaSource after successful setup.
  */
-export function setupMediaSource<S extends MediaSourceState, O extends MediaSourceOwners>({
+export function setupMediaSource({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: StateSignals<MediaSourceState>;
+  context: ContextSignals<MediaSourceContext>;
 }): () => void {
   const abortController = new AbortController();
 
   // Get the latest mediaElement (even if nullish)
-  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const mediaElementSignal = computed(() => context.mediaElement.get());
   // Get the latest presentationUrl (even if nullish)
-  const presentationUrlSignal = computed(() => state.get().presentation?.url);
+  const presentationUrlSignal = computed(() => state.presentation.get()?.url);
 
   const canSetupSignal = computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
 
   const mediaElementSrcSignal = computed(() => mediaElementSignal.get()?.src);
-  const mediaSourceSignal = computed(() => owners.get().mediaSource);
+  const mediaSourceSignal = computed(() => context.mediaSource.get());
   const shouldSetupSignal = computed(() => !mediaElementSrcSignal.get());
 
   // NOTE: This should be cleaner and less brittle if/when Reactors have their own internal finite state. This is planned as followup work.
@@ -63,20 +64,20 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 
     const mediaSource = createMediaSource({ preferManaged: true });
     // NOTE: Consider making MediaSource an Actor and using this in it.
-    update(state, { mediaSourceReadyState: mediaSource.readyState } as Partial<S>);
+    state.mediaSourceReadyState.set(mediaSource.readyState);
     onMediaSourceReadyStateChange(mediaSource, abortSignal, (readyState) => {
-      update(state, { mediaSourceReadyState: readyState } as Partial<S>);
+      state.mediaSourceReadyState.set(readyState);
     });
     attachMediaSource(mediaSource, mediaElement);
 
-    const cleanupOwnersUpdateEffect = effect(() => {
-      // If we already have a MediaSource or the *internal* mediaSource is not yet fully attached, wait to add it to owners;
-      if (!!mediaSourceSignal.get() || state.get().mediaSourceReadyState !== 'open') return;
-      owners.set(Object.assign({}, owners.get(), { mediaSource }) as O);
+    const cleanupContextUpdateEffect = effect(() => {
+      // If we already have a MediaSource or the *internal* mediaSource is not yet fully attached, wait to add it to context;
+      if (!!mediaSourceSignal.get() || state.mediaSourceReadyState.get() !== 'open') return;
+      context.mediaSource.set(mediaSource);
     });
 
     return () => {
-      cleanupOwnersUpdateEffect();
+      cleanupContextUpdateEffect();
     };
   });
 

@@ -1,3 +1,4 @@
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed, type Signal, signal } from '../../../core/signals/primitives';
 import { type BandwidthState, sampleBandwidth } from '../../../media/abr/bandwidth-estimator';
@@ -19,7 +20,7 @@ import type { MediaTrackType } from './setup-sourcebuffer';
 // Re-export buffer state types for consumers that import them from this module.
 export type { BufferState, SourceBufferState };
 
-// Map track type to SourceBufferActor owner property key.
+// Map track type to SourceBufferActor context property key.
 const ActorKeyByType = {
   video: 'videoBufferActor',
   audio: 'audioBufferActor',
@@ -85,7 +86,7 @@ async function fetchStream(addressable: AddressableObject, options?: FetchOption
 }
 
 // ============================================================================
-// STATE & OWNERS
+// STATE & CONTEXT
 // ============================================================================
 
 /**
@@ -102,9 +103,9 @@ export interface SegmentLoadingState extends TrackSelectionState {
 }
 
 /**
- * Owners shape for segment loading.
+ * Context shape for segment loading.
  */
-export interface SegmentLoadingOwners {
+export interface SegmentLoadingContext {
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
@@ -231,13 +232,13 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  *
  *   playbackInitiated
  *     resolvedTrackId changes      → trigger
- *     segmentStart(currentTime) changes → trigger (segment boundary only)
+ *     segmentStart(currentTime) changes → trigger
  *
  * @example
- * const cleanup = loadSegments({ state, owners }, { type: 'video' });
+ * const cleanup = loadSegments({ state, context }, { type: 'video' });
  */
-export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoadingOwners>(
-  { state, owners }: { state: Signal<S>; owners: Signal<O> },
+export function loadSegments(
+  { state, context }: { state: StateSignals<SegmentLoadingState>; context: ContextSignals<SegmentLoadingContext> },
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
@@ -245,7 +246,7 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
 
   // Local throughput signal — used by createTrackedFetch to sample bandwidth
   // per chunk and propagate back to the shared state for ABR.
-  const initialBandwidth = state.get().bandwidthState;
+  const initialBandwidth = state.bandwidthState.get();
   const throughput = signal<BandwidthState>(
     initialBandwidth ?? {
       fastEstimate: 0,
@@ -262,7 +263,7 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
           throughput,
           initialBandwidth !== undefined
             ? (next) => {
-                state.set(Object.assign({}, state.get(), { bandwidthState: next }) as S);
+                state.bandwidthState.set(next);
               }
             : undefined
         )
@@ -272,8 +273,8 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
   const segmentLoader = signal<SegmentLoaderActor | undefined>(undefined);
 
   // Computed: isolates the specific actor key so the lifecycle effect only
-  // re-runs when that actor reference changes, not on unrelated owners updates.
-  const actorSource = computed<SourceBufferActor | undefined>(() => owners.get()[actorKey]);
+  // re-runs when that actor reference changes, not on unrelated context updates.
+  const actorSource = computed<SourceBufferActor | undefined>(() => context[actorKey].get());
 
   // Actor lifecycle — destroy and recreate SegmentLoaderActor when the
   // upstream SourceBufferActor is replaced (quality switch) or removed.
@@ -296,14 +297,32 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
 
   // Derived: true only when we have both a resolved track and a ready loader
   const segmentsCanLoad = computed(() => {
-    const track = getSelectedTrack(state.get(), type);
+    const stateSnapshot: SegmentLoadingState = {
+      presentation: state.presentation.get(),
+      selectedVideoTrackId: state.selectedVideoTrackId.get(),
+      selectedAudioTrackId: state.selectedAudioTrackId.get(),
+      selectedTextTrackId: state.selectedTextTrackId.get(),
+    };
+    const track = getSelectedTrack(stateSnapshot, type);
     return !!track && isResolvedTrack(track) && !!segmentLoader.get();
   });
 
   // Loading inputs — selectLoadingInputs is cheap; let the effect body apply
   // loadingInputsEq rather than the computed, so the first run always fires
   // regardless of the initial state.
-  const loadingInputs = computed(() => selectLoadingInputs([segmentsCanLoad.get(), state.get()], type));
+  const loadingInputs = computed(() => {
+    const stateSnapshot: SegmentLoadingState = {
+      presentation: state.presentation.get(),
+      preload: state.preload.get(),
+      bandwidthState: state.bandwidthState.get(),
+      currentTime: state.currentTime.get(),
+      playbackInitiated: state.playbackInitiated.get(),
+      selectedVideoTrackId: state.selectedVideoTrackId.get(),
+      selectedAudioTrackId: state.selectedAudioTrackId.get(),
+      selectedTextTrackId: state.selectedTextTrackId.get(),
+    };
+    return selectLoadingInputs([segmentsCanLoad.get(), stateSnapshot], type);
+  });
 
   // Load effect — prevInputs guards against redundant messages using the same
   // equality semantics as the former combineLatest selector subscription.

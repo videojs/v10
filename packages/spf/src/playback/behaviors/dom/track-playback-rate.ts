@@ -1,6 +1,7 @@
 import { listen } from '@videojs/utils/dom';
+import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal, update } from '../../../core/signals/primitives';
+import { computed } from '../../../core/signals/primitives';
 
 /**
  * State shape for playback rate tracking.
@@ -10,9 +11,9 @@ export interface PlaybackRateState {
 }
 
 /**
- * Owners shape for playback rate tracking.
+ * Context shape for playback rate tracking.
  */
-export interface PlaybackRateOwners {
+export interface PlaybackRateContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
@@ -23,26 +24,26 @@ export interface PlaybackRateOwners {
  * event. Also syncs immediately when a media element becomes available.
  *
  * @example
- * const cleanup = trackPlaybackRate({ state, owners });
+ * const cleanup = trackPlaybackRate({ state, context });
  */
-export function trackPlaybackRate<O extends PlaybackRateOwners>({
+export function trackPlaybackRate({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<PlaybackRateState>;
-  owners: Signal<O>;
+  state: StateSignals<PlaybackRateState>;
+  context: ContextSignals<PlaybackRateContext>;
 }): () => void {
-  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const mediaElementSignal = computed(() => context.mediaElement.get());
   const canTrackPlaybackRate = computed(() => !!mediaElementSignal.get());
 
   const cleanupEffect = effect(() => {
     if (!canTrackPlaybackRate.get()) return;
     const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
 
-    update(state, { playbackRate: mediaElement.playbackRate });
+    state.playbackRate.set(mediaElement.playbackRate);
 
     return listen(mediaElement, 'ratechange', () => {
-      update(state, { playbackRate: mediaElement.playbackRate });
+      state.playbackRate.set(mediaElement.playbackRate);
     });
   });
 
