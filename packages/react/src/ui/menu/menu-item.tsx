@@ -19,7 +19,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
   { render, className, style, onSelect, disabled, onClick, ...elementProps },
   forwardedRef
 ) {
-  const { menu, state } = useMenuContext();
+  const { menu, state, stateAttrMap } = useMenuContext();
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +49,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
     { render, className, style },
     {
       state,
+      stateAttrMap,
       ref: [forwardedRef, elementRef],
       props: [
         {

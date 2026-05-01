@@ -17,13 +17,14 @@ export const MenuGroup = forwardRef<HTMLDivElement, MenuGroupProps>(function Men
   { render, className, style, label, ...elementProps },
   forwardedRef
 ) {
-  const { state } = useMenuContext();
+  const { state, stateAttrMap } = useMenuContext();
 
   return renderElement(
     'div',
     { render, className, style },
     {
       state,
+      stateAttrMap,
       ref: [forwardedRef],
       props: [{ role: 'group' as const, 'aria-label': label }, elementProps],
     }

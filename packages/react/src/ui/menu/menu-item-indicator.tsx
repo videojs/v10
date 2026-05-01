@@ -19,7 +19,7 @@ export const MenuItemIndicator = forwardRef<HTMLSpanElement, MenuItemIndicatorPr
   { render, className, style, checked, forceMount = false, ...elementProps },
   forwardedRef
 ) {
-  const { state } = useMenuContext();
+  const { state, stateAttrMap } = useMenuContext();
 
   if (!checked && !forceMount) return null;
 
@@ -28,6 +28,7 @@ export const MenuItemIndicator = forwardRef<HTMLSpanElement, MenuItemIndicatorPr
     { render, className, style },
     {
       state,
+      stateAttrMap,
       ref: [forwardedRef],
       props: [{ 'aria-hidden': true }, elementProps],
     }

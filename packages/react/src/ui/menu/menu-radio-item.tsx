@@ -19,7 +19,7 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
   { render, className, style, value, disabled, onClick, ...elementProps },
   forwardedRef
 ) {
-  const { menu, state } = useMenuContext();
+  const { menu, state, stateAttrMap } = useMenuContext();
   const { value: groupValue, onValueChange } = useMenuRadioGroupContext();
   const elementRef = useRef<HTMLDivElement>(null);
   const checked = groupValue === value;
@@ -51,6 +51,7 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
     { render, className, style },
     {
       state,
+      stateAttrMap,
       ref: [forwardedRef, elementRef],
       props: [
         {

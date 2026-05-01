@@ -21,7 +21,7 @@ export const MenuRadioGroup = forwardRef<HTMLDivElement, MenuRadioGroupProps>(fu
   { render, className, style, value, onValueChange, label, ...elementProps },
   forwardedRef
 ) {
-  const { state } = useMenuContext();
+  const { state, stateAttrMap } = useMenuContext();
 
   return (
     <MenuRadioGroupContextProvider value={{ value, onValueChange }}>
@@ -30,6 +30,7 @@ export const MenuRadioGroup = forwardRef<HTMLDivElement, MenuRadioGroupProps>(fu
         { render, className, style },
         {
           state,
+          stateAttrMap,
           ref: [forwardedRef],
           props: [{ role: 'group' as const, 'aria-label': label }, elementProps],
         }

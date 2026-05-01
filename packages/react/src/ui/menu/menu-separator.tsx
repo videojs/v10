@@ -14,13 +14,14 @@ export const MenuSeparator = forwardRef<HTMLDivElement, MenuSeparatorProps>(func
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { state } = useMenuContext();
+  const { state, stateAttrMap } = useMenuContext();
 
   return renderElement(
     'div',
     { render, className, style },
     {
       state,
+      stateAttrMap,
       ref: [forwardedRef],
       props: [{ role: 'separator' as const }, elementProps],
     }
