@@ -29,8 +29,8 @@ export interface MenuInput extends TransitionState {}
 export interface MenuState extends TransitionFlags {
   open: boolean;
   status: TransitionStatus;
-  side: PopoverSide;
-  align: PopoverAlign;
+  side: PopoverSide | undefined;
+  align: PopoverAlign | undefined;
   /** Whether this menu is nested inside another menu's content. */
   isSubmenu: boolean;
 }
@@ -68,12 +68,14 @@ export class MenuCore {
 
   getState(): MenuState {
     const input = this.#input!;
+    const isSubmenu = this.#props.isSubmenu;
+
     return {
       open: input.active,
       status: input.status,
-      side: this.#props.side,
-      align: this.#props.align,
-      isSubmenu: this.#props.isSubmenu,
+      side: isSubmenu ? undefined : this.#props.side,
+      align: isSubmenu ? undefined : this.#props.align,
+      isSubmenu,
       ...getTransitionFlags(input.status),
     };
   }

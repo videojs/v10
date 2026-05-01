@@ -48,8 +48,7 @@ export interface MenuApi {
 }
 
 export function createMenu(options: MenuOptions): MenuApi {
-  // Items are stored in registration order, which matches DOM order since
-  // React effects run top-to-bottom through siblings.
+  // Keep items in DOM order so dynamic insertions match visual order.
   const items: HTMLElement[] = [];
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
@@ -98,7 +97,9 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function handleTypeahead(char: string): void {
-    typeaheadBuffer += char;
+    const isSameCharCycle = typeaheadBuffer.length === 1 && typeaheadBuffer.toLowerCase() === char.toLowerCase();
+
+    typeaheadBuffer = isSameCharCycle ? char : typeaheadBuffer + char;
 
     if (typeaheadTimer !== null) clearTimeout(typeaheadTimer);
     typeaheadTimer = setTimeout(clearTypeahead, 500);
@@ -162,35 +163,41 @@ export function createMenu(options: MenuOptions): MenuApi {
       switch (key) {
         case 'ArrowDown': {
           event.preventDefault();
+          event.stopPropagation();
           const idx = highlightedItem ? items.indexOf(highlightedItem) : -1;
           highlight(items[(idx + 1) % items.length] ?? null);
           break;
         }
         case 'ArrowUp': {
           event.preventDefault();
+          event.stopPropagation();
           const idx = highlightedItem ? items.indexOf(highlightedItem) : 0;
           highlight(items[(idx <= 0 ? items.length : idx) - 1] ?? null);
           break;
         }
         case 'Home': {
           event.preventDefault();
+          event.stopPropagation();
           highlight(items[0] ?? null);
           break;
         }
         case 'End': {
           event.preventDefault();
+          event.stopPropagation();
           highlight(items[items.length - 1] ?? null);
           break;
         }
         case 'Enter':
         case ' ': {
           event.preventDefault();
+          event.stopPropagation();
           highlightedItem?.click();
           break;
         }
         default: {
           // Printable characters trigger type-ahead search.
           if (key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            event.stopPropagation();
             handleTypeahead(key);
           }
         }
@@ -214,16 +221,27 @@ export function createMenu(options: MenuOptions): MenuApi {
   function registerItem(element: HTMLElement): () => void {
     element.tabIndex = -1;
     element.setAttribute(MenuItemDataAttrs.item, '');
-    items.push(element);
+
+    const index = getItemInsertionIndex(element);
+    items.splice(index, 0, element);
 
     return () => {
       const index = items.indexOf(element);
       if (index !== -1) items.splice(index, 1);
-      if (highlightedItem === element) {
-        highlightedItem = null;
-        options.onHighlightChange?.(null);
-      }
+      if (highlightedItem === element) clearHighlight();
     };
+  }
+
+  function getItemInsertionIndex(element: HTMLElement): number {
+    const index = items.findIndex((item) => {
+      const position = element.compareDocumentPosition(item);
+
+      return (
+        (position & Node.DOCUMENT_POSITION_DISCONNECTED) === 0 && (position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+      );
+    });
+
+    return index === -1 ? items.length : index;
   }
 
   function destroy(): void {

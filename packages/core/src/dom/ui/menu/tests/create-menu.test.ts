@@ -171,17 +171,34 @@ describe('createMenu', () => {
       expect(menu.input.current.active).toBe(true); // still open
     });
 
-    it('clears highlight tracking when highlighted item is unregistered', () => {
+    it('keeps navigation order in DOM order when an item registers later', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(c);
+      c.before(b);
+      menu.registerItem(b);
+      menu.highlight(a);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('removes highlight DOM state when highlighted item is unregistered', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
 
-      menu.registerItem(element);
+      const cleanup = menu.registerItem(element);
       menu.highlight(element);
       onHighlightChange.mockClear();
 
-      const cleanup = menu.registerItem(element);
       cleanup();
 
+      expect(element.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(element.tabIndex).toBe(-1);
       expect(onHighlightChange).toHaveBeenCalledWith(null);
     });
   });
@@ -391,7 +408,7 @@ describe('createMenu', () => {
       expect(onClick).toHaveBeenCalledTimes(1);
     });
 
-    it('ArrowDown calls preventDefault', () => {
+    it('ArrowDown calls preventDefault and stopPropagation', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
       menu.registerItem(element);
@@ -400,6 +417,20 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+    });
+
+    it('stops propagation for handled navigation keys', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      for (const key of ['ArrowUp', 'Home', 'End', 'Enter', ' ']) {
+        const event = makeKeyEvent(key);
+        menu.contentProps.onKeyDown(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+      }
     });
 
     it('does nothing when no items are registered', () => {
@@ -432,6 +463,52 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('b'));
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('stops propagation for type-ahead characters', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      const event = makeKeyEvent('a');
+      menu.contentProps.onKeyDown(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+    });
+
+    it('searches type-ahead matches in DOM order when an item registers later', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const br = addItem('Bravo');
+      menu.registerItem(a);
+      menu.registerItem(br);
+      br.before(b);
+      menu.registerItem(b);
+      menu.highlight(a);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('cycles same-letter matches when the same key repeats quickly', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const al = addItem('Almond');
+      const b = addItem('Beta');
+      menu.registerItem(a);
+      menu.registerItem(al);
+      menu.registerItem(b);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('a'));
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('a'));
+      expect(al.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('a'));
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('accumulates characters for multi-char match', () => {
