@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import { type MediaSourceOwners, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
+import { type MediaSourceContext, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
 // Mock the DOM utilities.
 // onMediaSourceReadyStateChange fires `onChange('open')` immediately — simulates
 // the MediaSource having opened, which is the condition the inner effect waits
-// on before writing to owners.
+// on before writing to context.
 vi.mock('../../../../media/dom/mse/mediasource-setup', () => ({
   createMediaSource: vi.fn(() => ({
     addEventListener: vi.fn(),
@@ -22,11 +23,25 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', () => ({
   ),
 }));
 
-function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
-  const state = signal<MediaSourceState>(initialState);
-  const owners = signal<MediaSourceOwners>(initialOwners);
-  const cleanup = setupMediaSource({ state, owners });
-  return { state, owners, cleanup };
+function makeState(initial: MediaSourceState = {}): StateSignals<MediaSourceState> {
+  return {
+    presentation: signal<MediaSourceState['presentation']>(initial.presentation),
+    mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(initial.mediaSourceReadyState),
+  };
+}
+
+function makeContext(initial: MediaSourceContext = {}): ContextSignals<MediaSourceContext> {
+  return {
+    mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement),
+    mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
+  };
+}
+
+function setupSetupMediaSource(initialState: MediaSourceState, initialContext: MediaSourceContext) {
+  const state = makeState(initialState);
+  const context = makeContext(initialContext);
+  const cleanup = setupMediaSource({ state, context });
+  return { state, context, cleanup };
 }
 
 describe('setupMediaSource', () => {
@@ -37,13 +52,10 @@ describe('setupMediaSource', () => {
   it('creates MediaSource when mediaElement and presentation.url exist', async () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
-    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
+    const { state, context, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    context.mediaElement.set({} as HTMLMediaElement);
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledWith({ preferManaged: true });
@@ -62,14 +74,11 @@ describe('setupMediaSource', () => {
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
+    const { state, context, cleanup } = setupSetupMediaSource({}, {});
     const mediaElement = {} as HTMLMediaElement;
 
-    owners.set({ ...owners.get(), mediaElement });
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    context.mediaElement.set(mediaElement);
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await vi.waitFor(() => {
       expect(attachMediaSource).toHaveBeenCalledWith(mockMediaSource, mediaElement);
@@ -78,7 +87,7 @@ describe('setupMediaSource', () => {
     cleanup();
   });
 
-  it('publishes mediaSource on owners and mediaSourceReadyState on state', async () => {
+  it('publishes mediaSource on context and mediaSourceReadyState on state', async () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const mockMediaSource = {
@@ -88,17 +97,14 @@ describe('setupMediaSource', () => {
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
+    const { state, context, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    context.mediaElement.set({} as HTMLMediaElement);
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await vi.waitFor(() => {
-      expect(owners.get().mediaSource).toBe(mockMediaSource);
-      expect(state.get().mediaSourceReadyState).toBe('open');
+      expect(context.mediaSource.get()).toBe(mockMediaSource);
+      expect(state.mediaSourceReadyState.get()).toBe('open');
     });
 
     cleanup();
@@ -109,10 +115,7 @@ describe('setupMediaSource', () => {
 
     const { state, cleanup } = setupSetupMediaSource({}, {});
 
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -124,9 +127,9 @@ describe('setupMediaSource', () => {
   it('does not create MediaSource if presentation.url is missing', async () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
-    const { owners, cleanup } = setupSetupMediaSource({}, {});
+    const { context, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    context.mediaElement.set({} as HTMLMediaElement);
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -138,22 +141,16 @@ describe('setupMediaSource', () => {
   it('does not create multiple MediaSources (deduplication)', async () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
-    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
+    const { state, context, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    context.mediaElement.set({} as HTMLMediaElement);
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledTimes(1);
     });
 
-    state.set({
-      ...state.get(),
-      presentation: { url: 'https://example.com/video.m3u8' },
-    });
+    state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 

@@ -1,188 +1,137 @@
-import { describe, it } from 'vitest';
-import { effect } from '../../signals/effect';
-import type { Signal } from '../../signals/primitives';
-import { update } from '../../signals/primitives';
-import { createComposition } from '../create-composition';
+import { describe, expectTypeOf, it } from 'vitest';
+import { type Signal, signal } from '../../signals/primitives';
+import {
+  type Behavior,
+  type BehaviorDeps,
+  type Composition,
+  type ContextSignals,
+  createComposition,
+  type StateSignals,
+} from '../create-composition';
 
 // =============================================================================
-// Host-agnostic stand-in types
+// Stage A note
 // -----------------------------------------------------------------------------
-// Core is DOM-free. The tests need a small, concrete type to stand in for the
-// kind of thing a user would pass as an owner — something with a writable
-// surface and clear subtype relationships for covariance / non-covariance tests.
+// The composition-time type-conflict machinery (InferBehaviorState,
+// ResolveBehaviorOwners, ValidateComposition, etc.) was removed in stage A.
+// Compile-time enforcement of behavior compatibility is intentionally out of
+// scope here — Stage B will rebuild it on top of per-behavior key declarations
+// (the `stateKeys`/`contextKeys`/`writeKeys` shape from the meeting follow-up).
+//
+// What these tests cover is the surface that *did* survive stage A:
+//   - StateSignals<S> / ContextSignals<C> shapes (one signal per declared field)
+//   - The explicit-typed createComposition signature
+//   - Composition<S, C> and BehaviorDeps<S, C, Cfg> shapes the engine works with
 // =============================================================================
 
 interface Surface {
   textContent?: string | null;
 }
-interface VideoSurface extends Surface {
-  kind: 'video';
-}
-interface CanvasSurface extends Surface {
-  kind: 'canvas';
-}
 
-// =============================================================================
-// Test behaviors
-// =============================================================================
-
-function counter({ state, config }: { state: Signal<{ count?: number }>; config: { interval?: number } }) {
-  const interval = setInterval(() => {
-    update(state, { count: (state.get().count ?? 0) + 1 });
-  }, config.interval ?? 1000);
-  return () => clearInterval(interval);
-}
-
-function render({
-  state,
-  owners,
-  config,
-}: {
-  state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: Surface }>;
-  config: { defaultText?: string };
-}) {
-  return effect(() => {
-    const { renderElement } = owners.get();
-    if (!renderElement) return;
-    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
-  });
-}
-
-// =============================================================================
-// Type error enforcement
-// =============================================================================
-
-describe('createComposition type errors', () => {
-  it('errors when update() is called with a wrong type on engine.state', () => {
-    const engine = createComposition([counter]);
-    // @ts-expect-error — count expects number, not string
-    update(engine.state, { count: 'not a number' });
+describe('StateSignals', () => {
+  it('produces one signal per state field', () => {
+    type Map = StateSignals<{ count?: number; label?: string }>;
+    expectTypeOf<Map['count']>().toEqualTypeOf<Signal<number | undefined>>();
+    expectTypeOf<Map['label']>().toEqualTypeOf<Signal<string | undefined>>();
   });
 
-  it('errors when set() is called with a wrong type on engine.state', () => {
-    const engine = createComposition([counter]);
-    // @ts-expect-error — state expects { count?: number }, not { count: string }
-    engine.state.set({ count: 'not a number' });
+  it('strips optionality on signal slots while preserving undefined in value type', () => {
+    type Map = StateSignals<{ count?: number }>;
+    // No optional `?:` on the signal slot itself — every key has a signal.
+    expectTypeOf<Map>().toEqualTypeOf<{ count: Signal<number | undefined> }>();
   });
 
-  it('errors when update() uses a key not in the inferred state', () => {
-    const engine = createComposition([counter]);
-    // @ts-expect-error — 'unknown' is not a key of { count?: number }
-    update(engine.state, { unknown: true });
+  it('preserves required fields without injecting undefined', () => {
+    type Map = StateSignals<{ count: number }>;
+    expectTypeOf<Map>().toEqualTypeOf<{ count: Signal<number> }>();
+  });
+});
+
+describe('ContextSignals', () => {
+  it('produces one signal per context field', () => {
+    type Map = ContextSignals<{ el?: Surface; flag?: boolean }>;
+    expectTypeOf<Map['el']>().toEqualTypeOf<Signal<Surface | undefined>>();
+    expectTypeOf<Map['flag']>().toEqualTypeOf<Signal<boolean | undefined>>();
+  });
+});
+
+describe('Composition<S, C>', () => {
+  it('exposes state and context as signal maps plus an async destroy', () => {
+    interface State {
+      count?: number;
+    }
+    interface Context {
+      el?: Surface;
+    }
+    type Comp = Composition<State, Context>;
+    expectTypeOf<Comp['state']>().toEqualTypeOf<StateSignals<State>>();
+    expectTypeOf<Comp['context']>().toEqualTypeOf<ContextSignals<Context>>();
+    expectTypeOf<Comp['destroy']>().toEqualTypeOf<() => Promise<void>>();
+  });
+});
+
+describe('BehaviorDeps<S, C, Cfg>', () => {
+  it('exposes state, context, and config to behaviors', () => {
+    interface State {
+      count?: number;
+    }
+    interface Context {
+      el?: Surface;
+    }
+    interface Cfg {
+      interval?: number;
+    }
+    type Deps = BehaviorDeps<State, Context, Cfg>;
+    expectTypeOf<Deps['state']>().toEqualTypeOf<StateSignals<State>>();
+    expectTypeOf<Deps['context']>().toEqualTypeOf<ContextSignals<Context>>();
+    expectTypeOf<Deps['config']>().toEqualTypeOf<Cfg>();
+  });
+});
+
+describe('createComposition', () => {
+  it('returns Composition<S, C> when called with explicit type arguments', () => {
+    interface State {
+      count?: number;
+    }
+    interface Context {
+      el?: Surface;
+    }
+    interface Cfg {
+      interval?: number;
+    }
+
+    const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
+    const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
+    const composition = createComposition<State, Context, Cfg>([], {
+      state,
+      context,
+      config: { interval: 250 },
+    });
+
+    expectTypeOf(composition).toEqualTypeOf<Composition<State, Context>>();
+    expectTypeOf(composition.state.count).toEqualTypeOf<Signal<number | undefined>>();
+    expectTypeOf(composition.context.el).toEqualTypeOf<Signal<Surface | undefined>>();
   });
 
-  it('errors when initialState has wrong types', () => {
-    // @ts-expect-error — count expects number, not string
-    createComposition([counter], { initialState: { count: 'wrong' } });
-  });
+  it('passes through behavior shapes', () => {
+    interface State {
+      count?: number;
+    }
+    interface Context {
+      el?: Surface;
+    }
+    interface Cfg {
+      interval?: number;
+    }
 
-  it('errors when initialOwners has wrong types', () => {
-    // @ts-expect-error — renderElement expects Surface, not number
-    createComposition([render], { initialOwners: { renderElement: 42 } });
-  });
+    const behavior: Behavior<State, Context, Cfg> = ({ state, context, config }) => {
+      expectTypeOf(state).toEqualTypeOf<StateSignals<State>>();
+      expectTypeOf(context).toEqualTypeOf<ContextSignals<Context>>();
+      expectTypeOf(config).toEqualTypeOf<Cfg>();
+    };
 
-  it('errors when config has wrong types', () => {
-    // @ts-expect-error — interval expects number, not string
-    createComposition([counter], { config: { interval: 'fast' } });
-  });
-
-  it('errors when composing behaviors with conflicting required state types', () => {
-    const expectsNumber = (_deps: { state: Signal<{ value: number }> }) => {};
-    const expectsString = (_deps: { state: Signal<{ value: string }> }) => {};
-
-    // @ts-expect-error — behaviors have incompatible state: { value: number } vs { value: string }
-    createComposition([expectsNumber, expectsString]);
-  });
-
-  it('errors when composing behaviors with conflicting optional state types', () => {
-    const expectsNumber = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const expectsString = (_deps: { state: Signal<{ count?: string }> }) => {};
-
-    // @ts-expect-error — behaviors have incompatible state: { count?: number } vs { count?: string }
-    createComposition([expectsNumber, expectsString]);
-  });
-
-  it('errors when composing behaviors with conflicting config types', () => {
-    const expectsNumber = (_deps: { config: { interval?: number } }) => {};
-    const expectsString = (_deps: { config: { interval?: string } }) => {};
-
-    // @ts-expect-error — behaviors have incompatible config: { interval?: number } vs { interval?: string }
-    createComposition([expectsNumber, expectsString]);
-  });
-
-  it('errors when composing behaviors with incompatible owners class types', () => {
-    const expectsCanvas = (_deps: { owners: Signal<{ el?: CanvasSurface }> }) => {};
-    const expectsVideo = (_deps: { owners: Signal<{ el?: VideoSurface }> }) => {};
-
-    // @ts-expect-error — neither CanvasSurface nor VideoSurface extends the other
-    createComposition([expectsCanvas, expectsVideo]);
-  });
-
-  // =========================================================================
-  // Non-conflicts — behaviors that omit channels should compose freely
-  // =========================================================================
-
-  it('allows composing behaviors with owners in a subtype relationship', () => {
-    const expectsSurface = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
-    const expectsVideo = (_deps: { owners: Signal<{ el?: VideoSurface }> }) => {};
-
-    // No error — VideoSurface extends Surface
-    createComposition([expectsSurface, expectsVideo]);
-  });
-
-  it('allows composing behaviors that omit owners', () => {
-    const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: Surface }> }) => {};
-
-    // No error — omitting owners is not a conflict
-    createComposition([stateOnly, withOwners]);
-  });
-
-  it('allows composing behaviors that omit state', () => {
-    const configOnly = (_deps: { config: { interval?: number } }) => {};
-    const withState = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
-
-    // No error — omitting state is not a conflict
-    createComposition([configOnly, withState]);
-  });
-
-  it('allows composing behaviors that omit config', () => {
-    const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const withConfig = (_deps: { state: Signal<{ count?: number }>; config: { interval?: number } }) => {};
-
-    // No error — omitting config is not a conflict
-    createComposition([stateOnly, withConfig]);
-  });
-
-  it('allows composing behaviors where each omits different channels', () => {
-    const onlyState = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const onlyOwners = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
-    const onlyConfig = (_deps: { config: { interval?: number } }) => {};
-
-    // No error — behaviors with disjoint channels don't conflict
-    createComposition([onlyState, onlyOwners, onlyConfig]);
-  });
-
-  // =========================================================================
-  // Resetting optional fields to undefined
-  // =========================================================================
-
-  it('allows resetting optional state fields to undefined', () => {
-    // Behaviors declare { count?: number } — the engine allows resetting to
-    // undefined without requiring the behavior to declare | undefined.
-    const behavior = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const engine = createComposition([behavior]);
-
-    // No error — optional fields can be reset to undefined
-    update(engine.state, { count: undefined });
-  });
-
-  it('allows resetting optional owners fields to undefined', () => {
-    const behavior = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
-    const engine = createComposition([behavior]);
-
-    // No error — clearing an owner (e.g. on source switch)
-    update(engine.owners, { el: undefined });
+    const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
+    const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
+    createComposition<State, Context, Cfg>([behavior], { state, context, config: { interval: 250 } });
   });
 });

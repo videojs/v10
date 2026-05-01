@@ -1,251 +1,89 @@
-import { describe, expectTypeOf, it } from 'vitest';
-import { effect } from '../../signals/effect';
-import type { Signal } from '../../signals/primitives';
-import { update } from '../../signals/primitives';
-import {
-  createComposition,
-  type InferBehaviorConfig,
-  type InferBehaviorOwners,
-  type InferBehaviorState,
-  type ResolveBehaviorOwners,
-  type ResolveBehaviorState,
-} from '../create-composition';
+import { describe, it } from 'vitest';
+import { signal } from '../../signals/primitives';
+import { type Behavior, type ContextSignals, createComposition, type StateSignals } from '../create-composition';
 
 // =============================================================================
-// Host-agnostic stand-in types
+// Stage A note
 // -----------------------------------------------------------------------------
-// Core is DOM-free. The tests need a small, concrete type to stand in for the
-// kind of thing a user would pass as an owner — something with a writable
-// surface and clear subtype relationships for covariance tests.
+// The composition-time conflict-detection tests (`'Error: behaviors have
+// conflicting state types'`, owners-subtype compatibility, etc.) used to live
+// here but the underlying type machinery was removed in stage A.
+// Stage B will rebuild that surface from per-behavior `stateKeys` / `writeKeys`
+// declarations, at which point a richer set of `@ts-expect-error` tests should
+// return.
+//
+// What remains here are the @ts-expect-error checks that the explicit-typed
+// signature still enforces: per-signal value types and required options.
 // =============================================================================
 
 interface Surface {
   textContent?: string | null;
 }
 
-// =============================================================================
-// Test behaviors — concrete parameter types
-// =============================================================================
-
-function counter({ state, config }: { state: Signal<{ count?: number }>; config: { interval?: number } }) {
-  const interval = setInterval(() => {
-    update(state, { count: (state.get().count ?? 0) + 1 });
-  }, config.interval ?? 1000);
-  return () => clearInterval(interval);
+interface State {
+  count?: number;
 }
 
-function render({
-  state,
-  owners,
-  config,
-}: {
-  state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: Surface }>;
-  config: { defaultText?: string };
-}) {
-  return effect(() => {
-    const { renderElement } = owners.get();
-    if (!renderElement) return;
-    renderElement.textContent = String(state.get().count ?? config.defaultText ?? 'N/A');
-  });
+interface Context {
+  el?: Surface;
 }
 
-function persist({ state, config }: { state: Signal<{ count?: number }>; config: { saveEvery?: number } }) {
-  return effect(() => {
-    const { count } = state.get();
-    if (count && count > 0 && count % (config.saveEvery ?? 5) === 0) {
-      // save logic
-    }
-  });
-}
+const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
+const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
 
-// =============================================================================
-// Test behaviors — generic parameter types (the pattern real behaviors use)
-// =============================================================================
-
-interface TimerState {
-  elapsed?: number;
-}
-
-interface TimerConfig {
-  tickRate?: number;
-}
-
-function timer<S extends TimerState, C extends TimerConfig>({ state, config }: { state: Signal<S>; config: C }) {
-  const interval = setInterval(() => {
-    update(state, { elapsed: (state.get().elapsed ?? 0) + 1 } as Partial<S>);
-  }, config.tickRate ?? 1000);
-  return () => clearInterval(interval);
-}
-
-// =============================================================================
-// InferBehavior* — single behavior inference
-// =============================================================================
-
-describe('InferBehaviorState', () => {
-  it('extracts state type from a concrete behavior', () => {
-    expectTypeOf<InferBehaviorState<typeof counter>>().toEqualTypeOf<{ count?: number }>();
+describe('createComposition type errors', () => {
+  it('errors when set() is called on a state signal with the wrong value type', () => {
+    const composition = createComposition<State, Context, object>([], { state, context });
+    // @ts-expect-error — count is Signal<number | undefined>, not a string slot
+    composition.state.count.set('not a number');
   });
 
-  it('extracts state type from a behavior that uses owners', () => {
-    expectTypeOf<InferBehaviorState<typeof render>>().toEqualTypeOf<{ count?: number }>();
+  it('errors when get() is treated as the wrong type', () => {
+    const composition = createComposition<State, Context, object>([], { state, context });
+    // @ts-expect-error — count.get() returns number | undefined, not string
+    const _: string = composition.state.count.get();
   });
 
-  it('returns object for a behavior with no state in params', () => {
-    const noState = ({ config: _config }: { config: { x: number } }) => {};
-    expectTypeOf<InferBehaviorState<typeof noState>>().toEqualTypeOf<object>();
-  });
-});
-
-describe('InferBehaviorOwners', () => {
-  it('extracts owners type from a behavior that uses owners', () => {
-    expectTypeOf<InferBehaviorOwners<typeof render>>().toEqualTypeOf<{ renderElement?: Surface }>();
+  it('errors when state map is missing a required signal slot', () => {
+    // @ts-expect-error — `state` map missing the `count` signal that State declares
+    createComposition<State, Context, object>([], { state: {}, context });
   });
 
-  it('returns object for a behavior with no owners in params', () => {
-    expectTypeOf<InferBehaviorOwners<typeof counter>>().toEqualTypeOf<object>();
-  });
-});
-
-describe('InferBehaviorConfig', () => {
-  it('extracts config type from a concrete behavior', () => {
-    expectTypeOf<InferBehaviorConfig<typeof counter>>().toEqualTypeOf<{ interval?: number }>();
+  it('errors when context map is missing a required signal slot', () => {
+    // @ts-expect-error — `context` map missing the `el` signal that Context declares
+    createComposition<State, Context, object>([], { state, context: {} });
   });
 
-  it('extracts different config types from different behaviors', () => {
-    expectTypeOf<InferBehaviorConfig<typeof render>>().toEqualTypeOf<{ defaultText?: string }>();
-    expectTypeOf<InferBehaviorConfig<typeof persist>>().toEqualTypeOf<{ saveEvery?: number }>();
-  });
-});
-
-describe('InferBehavior* with generic behaviors', () => {
-  it('infers constraint types from generic behaviors', () => {
-    expectTypeOf<InferBehaviorState<typeof timer>>().toEqualTypeOf<TimerState>();
-    expectTypeOf<InferBehaviorConfig<typeof timer>>().toEqualTypeOf<TimerConfig>();
-  });
-});
-
-// =============================================================================
-// ResolveBehavior* — multi-behavior composition inference
-// =============================================================================
-
-describe('ResolveBehaviorState', () => {
-  it('intersects state from multiple behaviors', () => {
-    type Behaviors = [typeof counter, typeof render, typeof persist];
-    // All three expect { count?: number }, intersection is the same
-    expectTypeOf<ResolveBehaviorState<Behaviors>>().toEqualTypeOf<{ count?: number }>();
+  it('errors when state and context options are omitted entirely', () => {
+    // @ts-expect-error — state and context are required options
+    createComposition<State, Context, object>([]);
   });
 
-  it('intersects different state shapes', () => {
-    const behaviorA = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const behaviorB = (_deps: { state: Signal<{ label?: string }> }) => {};
-    const engine = createComposition([behaviorA, behaviorB]);
-    expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
-  });
-});
-
-describe('ResolveBehaviorOwners', () => {
-  it('resolves owners from mixed behaviors (some without owners)', () => {
-    // counter has no owners, render has renderElement
-    type Behaviors = [typeof counter, typeof render];
-    // object & { renderElement?: Surface } should simplify
-    expectTypeOf<ResolveBehaviorOwners<Behaviors>>().toExtend<{ renderElement?: Surface }>();
-  });
-});
-
-describe('ResolveBehaviorConfig', () => {
-  it('intersects config from multiple behaviors', () => {
-    const engine = createComposition([counter, render, persist], {
-      config: { interval: 250, defaultText: '--', saveEvery: 5 },
-    });
-    expectTypeOf(engine.state.get()).toExtend<{ count?: number }>();
-  });
-});
-
-// =============================================================================
-// createComposition — inference at the call site
-// =============================================================================
-
-describe('createComposition', () => {
-  describe('single behavior', () => {
-    it('infers state type from a single behavior', () => {
-      const engine = createComposition([counter], {
-        config: { interval: 250 },
-      });
-      expectTypeOf(engine.state.get()).toEqualTypeOf<{ count?: number }>();
-    });
-
-    it('infers types from an inline arrow behavior', () => {
-      const engine = createComposition([
-        ({ state }: { state: Signal<{ value?: string }> }) => {
-          update(state, { value: 'hello' });
-        },
-      ]);
-      expectTypeOf(engine.state.get()).toEqualTypeOf<{ value?: string }>();
-    });
+  it('errors when a behavior writes a wrong-type value to a state signal', () => {
+    const badBehavior: Behavior<State, Context, object> = ({ state }) => {
+      // @ts-expect-error — count is number | undefined
+      state.count.set('wrong');
+    };
+    void badBehavior;
   });
 
-  describe('behavior array', () => {
-    it('infers combined state from multiple behaviors', () => {
-      const engine = createComposition([counter, render, persist], {
-        initialState: { count: 0 },
-        config: { interval: 250, defaultText: '--', saveEvery: 5 },
-        initialOwners: { renderElement: null as unknown as Surface },
-      });
-
-      expectTypeOf(engine.state.get()).toExtend<{ count?: number }>();
-      expectTypeOf(engine.owners.get()).toExtend<{ renderElement?: Surface }>();
-    });
-
-    it('infers combined state from behaviors with different state shapes', () => {
-      const behaviorA = (_deps: { state: Signal<{ count?: number }> }) => {};
-      const behaviorB = (_deps: { state: Signal<{ label?: string }> }) => {};
-
-      const engine = createComposition([behaviorA, behaviorB]);
-      expectTypeOf(engine.state.get()).toExtend<{ count?: number; label?: string }>();
-    });
-
-    it('type-checks options against inferred types', () => {
-      // Config must satisfy the combined config requirements
-      const engine = createComposition([counter, render], {
-        config: { interval: 250, defaultText: '--' },
-      });
-
-      expectTypeOf(engine.state.get()).toExtend<{ count?: number }>();
-    });
+  it('errors when a behavior reads a state signal as the wrong type', () => {
+    const badBehavior: Behavior<State, Context, object> = ({ state }) => {
+      // @ts-expect-error — count.get() returns number | undefined, not string
+      const _: string = state.count.get();
+      void _;
+    };
+    void badBehavior;
   });
 
-  describe('generic behaviors', () => {
-    it('infers constraint types from generic behaviors', () => {
-      const engine = createComposition([timer], {
-        config: { tickRate: 500 },
-      });
-
-      expectTypeOf(engine.state.get()).toExtend<{ elapsed?: number }>();
-    });
+  it('errors when state or context maps have wrong-typed signal values', () => {
+    // @ts-expect-error — count signal must hold number | undefined, not string
+    const _bad: StateSignals<State> = { count: signal<string | undefined>(undefined) };
   });
 
-  describe('resetting optional fields to undefined', () => {
-    it('allows update() with undefined for optional state fields', () => {
-      const engine = createComposition([counter]);
-
-      // Behaviors declare { count?: number } — resetting to undefined is valid
-      // without the behavior needing to declare | undefined explicitly.
-      update(engine.state, { count: undefined });
-      expectTypeOf(engine.state.get().count).toEqualTypeOf<number | undefined>();
-    });
-
-    it('allows update() with undefined for optional owners fields', () => {
-      const engine = createComposition([render], {
-        initialOwners: { renderElement: null as unknown as Surface },
-      });
-
-      // Clearing an owner (e.g. on source switch)
-      update(engine.owners, { renderElement: undefined });
-      expectTypeOf(engine.owners.get().renderElement).toEqualTypeOf<Surface | undefined>();
-    });
-  });
-
-  // Type error enforcement tests (@ts-expect-error for wrong types, conflicting
-  // behaviors, etc.) live in engine-types.test-d.ts and run via vitest typecheck.
+  // ==========================================================================
+  // Stage A note: composition-time conflict detection between behaviors
+  // (incompatible state types, owner subtype mismatches, etc.) is intentionally
+  // gone. Stage B rebuilds that surface on top of per-behavior key declarations.
+  // ==========================================================================
 });

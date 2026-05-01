@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../../../../media/types';
+import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   buildMimeCodec,
-  type SourceBufferOwners,
+  type SourceBufferContext,
   type SourceBufferState,
   setupSourceBuffers,
 } from '../setup-sourcebuffer';
@@ -135,11 +137,30 @@ describe('buildMimeCodec', () => {
   });
 });
 
-function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialOwners: SourceBufferOwners = {}) {
-  const state = signal<SourceBufferState>(initialState);
-  const owners = signal<SourceBufferOwners>(initialOwners);
-  const cleanup = setupSourceBuffers({ state, owners });
-  return { state, owners, cleanup };
+function makeState(initial: SourceBufferState = {}): StateSignals<SourceBufferState> {
+  return {
+    presentation: signal<Presentation | undefined>(initial.presentation),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+  };
+}
+
+function makeContext(initial: SourceBufferContext = {}): ContextSignals<SourceBufferContext> {
+  return {
+    mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
+    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
+    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
+    videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
+    audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+  };
+}
+
+function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialContext: SourceBufferContext = {}) {
+  const state = makeState(initialState);
+  const context = makeContext(initialContext);
+  const cleanup = setupSourceBuffers({ state, context });
+  return { state, context, cleanup };
 }
 
 describe('setupSourceBuffers', () => {
@@ -151,20 +172,17 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.set({ ...owners.get(), mediaSource });
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    });
+    context.mediaSource.set(mediaSource);
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
+    state.selectedVideoTrackId.set('video-1');
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
-      expect(owners.get().videoBuffer).toBeDefined();
-      expect(owners.get().audioBuffer).toBeUndefined();
+      expect(context.videoBuffer.get()).toBeDefined();
+      expect(context.audioBuffer.get()).toBeUndefined();
     });
 
     cleanup();
@@ -174,20 +192,17 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const audioTrack = createResolvedAudioTrack();
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.set({ ...owners.get(), mediaSource });
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ audio: audioTrack }),
-      selectedAudioTrackId: 'audio-1',
-    });
+    context.mediaSource.set(mediaSource);
+    state.presentation.set(createPresentationWithTracks({ audio: audioTrack }));
+    state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(owners.get().audioBuffer).toBeDefined();
-      expect(owners.get().videoBuffer).toBeUndefined();
+      expect(context.audioBuffer.get()).toBeDefined();
+      expect(context.videoBuffer.get()).toBeUndefined();
     });
 
     cleanup();
@@ -198,23 +213,20 @@ describe('setupSourceBuffers', () => {
 
     const videoTrack = createResolvedVideoTrack();
     const audioTrack = createResolvedAudioTrack();
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.set({ ...owners.get(), mediaSource });
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack, audio: audioTrack }),
-      selectedVideoTrackId: 'video-1',
-      selectedAudioTrackId: 'audio-1',
-    });
+    context.mediaSource.set(mediaSource);
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: audioTrack }));
+    state.selectedVideoTrackId.set('video-1');
+    state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledTimes(2);
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(owners.get().videoBuffer).toBeDefined();
-      expect(owners.get().audioBuffer).toBeDefined();
+      expect(context.videoBuffer.get()).toBeDefined();
+      expect(context.audioBuffer.get()).toBeDefined();
     });
 
     cleanup();
@@ -234,34 +246,30 @@ describe('setupSourceBuffers', () => {
       ...unresolvedAudioPartial
     } = unresolvedAudio;
 
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
-    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
+    context.mediaSource.set({} as MediaSource);
     // Both track IDs selected, but audio track is not yet resolved
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({
+    state.presentation.set(
+      createPresentationWithTracks({
         video: videoTrack,
         audio: unresolvedAudioPartial as AudioTrack,
-      }),
-      selectedVideoTrackId: 'video-1',
-      selectedAudioTrackId: 'audio-1',
-    });
+      })
+    );
+    state.selectedVideoTrackId.set('video-1');
+    state.selectedAudioTrackId.set('audio-1');
 
     // Video is resolved but audio is not — neither SourceBuffer should be created yet
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).not.toHaveBeenCalled();
 
     // Now audio resolves
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack, audio: unresolvedAudio }),
-    });
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: unresolvedAudio }));
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledTimes(2);
-      expect(owners.get().videoBuffer).toBeDefined();
-      expect(owners.get().audioBuffer).toBeDefined();
+      expect(context.videoBuffer.get()).toBeDefined();
+      expect(context.audioBuffer.get()).toBeDefined();
     });
 
     cleanup();
@@ -271,14 +279,11 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const videoTrack: VideoTrack = { ...createResolvedVideoTrack(), codecs: [] };
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
-    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    });
+    context.mediaSource.set({} as MediaSource);
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
+    state.selectedVideoTrackId.set('video-1');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).not.toHaveBeenCalled();
@@ -290,18 +295,15 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupSourceBuffers();
 
-    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    });
+    context.mediaSource.set({} as MediaSource);
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
+    state.selectedVideoTrackId.set('video-1');
 
     await vi.waitFor(() => expect(createSourceBuffer).toHaveBeenCalledTimes(1));
 
-    state.set({ ...state.get(), presentation: createPresentationWithTracks({ video: videoTrack }) });
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).toHaveBeenCalledTimes(1);
 
@@ -314,11 +316,8 @@ describe('setupSourceBuffers', () => {
     const videoTrack = createResolvedVideoTrack();
     const { state, cleanup } = setupSetupSourceBuffers();
 
-    state.set({
-      ...state.get(),
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    });
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
+    state.selectedVideoTrackId.set('video-1');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).not.toHaveBeenCalled();

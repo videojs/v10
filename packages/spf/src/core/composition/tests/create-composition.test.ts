@@ -1,75 +1,93 @@
 import { describe, expect, it } from 'vitest';
-import type { Signal } from '../../signals/primitives';
-import { update } from '../../signals/primitives';
-import { createComposition } from '../create-composition';
+import { signal } from '../../signals/primitives';
+import { type Behavior, type ContextSignals, createComposition, type StateSignals } from '../create-composition';
 
 interface Resource {
   id: string;
 }
 
+interface State {
+  count?: number;
+}
+
+interface Context {
+  resource?: Resource;
+}
+
+function makeState(initial: State = {}): StateSignals<State> {
+  return { count: signal<number | undefined>(initial.count) };
+}
+
+function makeContext(initial: Context = {}): ContextSignals<Context> {
+  return { resource: signal<Resource | undefined>(initial.resource) };
+}
+
 describe('createComposition', () => {
   describe('destroy()', () => {
-    it('clears owners populated by a behavior during setup', async () => {
-      const composition = createComposition([
-        ({ owners }: { owners: Signal<{ resource?: Resource }> }) => {
-          update(owners, { resource: { id: 'r1' } });
-        },
-      ]);
+    it('clears context signals populated by a behavior during setup', async () => {
+      const setBehavior: Behavior<State, Context, object> = ({ context }) => {
+        context.resource.set({ id: 'r1' });
+      };
 
-      expect(composition.owners.get().resource).toEqual({ id: 'r1' });
-
-      await composition.destroy();
-
-      expect(composition.owners.get()).toEqual({});
-    });
-
-    it('clears owners populated via initialOwners', async () => {
-      const resource: Resource = { id: 'r1' };
-      const composition = createComposition([(_: { owners: Signal<{ resource?: Resource }> }) => {}], {
-        initialOwners: { resource },
+      const composition = createComposition<State, Context, object>([setBehavior], {
+        state: makeState(),
+        context: makeContext(),
       });
 
-      expect(composition.owners.get().resource).toBe(resource);
+      expect(composition.context.resource.get()).toEqual({ id: 'r1' });
 
       await composition.destroy();
 
-      expect(composition.owners.get()).toEqual({});
+      expect(composition.context.resource.get()).toBeUndefined();
     });
 
-    it('runs behavior cleanups with owners still populated, then clears', async () => {
+    it('clears context signals populated via the initial signal map', async () => {
       const resource: Resource = { id: 'r1' };
-      let ownersSeenByCleanup: { resource?: Resource } | null = null;
 
-      const composition = createComposition(
+      const composition = createComposition<State, Context, object>([() => {}], {
+        state: makeState(),
+        context: makeContext({ resource }),
+      });
+
+      expect(composition.context.resource.get()).toBe(resource);
+
+      await composition.destroy();
+
+      expect(composition.context.resource.get()).toBeUndefined();
+    });
+
+    it('runs behavior cleanups with context still populated, then clears', async () => {
+      const resource: Resource = { id: 'r1' };
+      let resourceSeenByCleanup: Resource | undefined;
+
+      const composition = createComposition<State, Context, object>(
         [
-          ({ owners }: { owners: Signal<{ resource?: Resource }> }) => {
+          ({ context }) => {
             return () => {
-              ownersSeenByCleanup = owners.get();
+              resourceSeenByCleanup = context.resource.get();
             };
           },
         ],
-        { initialOwners: { resource } }
+        { state: makeState(), context: makeContext({ resource }) }
       );
 
       await composition.destroy();
 
-      expect(ownersSeenByCleanup).toEqual({ resource });
-      expect(composition.owners.get()).toEqual({});
+      expect(resourceSeenByCleanup).toEqual(resource);
+      expect(composition.context.resource.get()).toBeUndefined();
     });
 
-    it('awaits async cleanups before clearing owners', async () => {
+    it('awaits async cleanups before clearing context', async () => {
       let cleanupCompleted = false;
 
-      const composition = createComposition(
+      const composition = createComposition<State, Context, object>(
         [
-          (_: { owners: Signal<{ resource?: Resource }> }) => {
-            return async () => {
-              await new Promise<void>((resolve) => setTimeout(resolve, 10));
-              cleanupCompleted = true;
-            };
+          () => async () => {
+            await new Promise<void>((resolve) => setTimeout(resolve, 10));
+            cleanupCompleted = true;
           },
         ],
-        { initialOwners: { resource: { id: 'r1' } } }
+        { state: makeState(), context: makeContext({ resource: { id: 'r1' } }) }
       );
 
       const destroyPromise = composition.destroy();
@@ -78,27 +96,102 @@ describe('createComposition', () => {
       await destroyPromise;
 
       expect(cleanupCompleted).toBe(true);
-      expect(composition.owners.get()).toEqual({});
+      expect(composition.context.resource.get()).toBeUndefined();
     });
 
-    it('clears owners across multiple keys from multiple behaviors', async () => {
-      const composition = createComposition([
-        ({ owners }: { owners: Signal<{ a?: Resource }> }) => {
-          update(owners, { a: { id: 'a1' } });
-        },
-        ({ owners }: { owners: Signal<{ b?: Resource }> }) => {
-          update(owners, { b: { id: 'b1' } });
-        },
-      ]);
+    it('clears across multiple keys from multiple behaviors', async () => {
+      interface MultiContext {
+        a?: Resource;
+        b?: Resource;
+      }
+      const context: ContextSignals<MultiContext> = {
+        a: signal<Resource | undefined>(undefined),
+        b: signal<Resource | undefined>(undefined),
+      };
 
-      expect(composition.owners.get()).toMatchObject({
-        a: { id: 'a1' },
-        b: { id: 'b1' },
-      });
+      const composition = createComposition<State, MultiContext, object>(
+        [
+          ({ context }) => {
+            context.a.set({ id: 'a1' });
+          },
+          ({ context }) => {
+            context.b.set({ id: 'b1' });
+          },
+        ],
+        { state: makeState(), context }
+      );
+
+      expect(composition.context.a.get()).toEqual({ id: 'a1' });
+      expect(composition.context.b.get()).toEqual({ id: 'b1' });
 
       await composition.destroy();
 
-      expect(composition.owners.get()).toEqual({});
+      expect(composition.context.a.get()).toBeUndefined();
+      expect(composition.context.b.get()).toBeUndefined();
+    });
+
+    it('also clears state signals on destroy', async () => {
+      const composition = createComposition<State, Context, object>(
+        [
+          ({ state }) => {
+            state.count.set(5);
+          },
+        ],
+        { state: makeState(), context: makeContext() }
+      );
+
+      expect(composition.state.count.get()).toBe(5);
+
+      await composition.destroy();
+
+      expect(composition.state.count.get()).toBeUndefined();
+    });
+  });
+
+  describe('behavior wiring', () => {
+    it('passes the same signal map references to every behavior', () => {
+      let stateA: StateSignals<State> | undefined;
+      let stateB: StateSignals<State> | undefined;
+
+      createComposition<State, Context, object>(
+        [
+          ({ state }) => {
+            stateA = state;
+          },
+          ({ state }) => {
+            stateB = state;
+          },
+        ],
+        { state: makeState(), context: makeContext() }
+      );
+
+      expect(stateA).toBeDefined();
+      expect(stateA).toBe(stateB);
+    });
+
+    it('exposes the same signal maps via composition.state and composition.context', () => {
+      const state = makeState();
+      const context = makeContext();
+      const composition = createComposition<State, Context, object>([], { state, context });
+
+      expect(composition.state).toBe(state);
+      expect(composition.context).toBe(context);
+    });
+
+    it('passes config to behaviors verbatim', () => {
+      let received: { interval: number } | undefined;
+      const config = { interval: 250 };
+
+      createComposition<State, Context, { interval: number }>(
+        [
+          ({ config }) => {
+            received = config;
+          },
+        ],
+        { state: makeState(), context: makeContext(), config }
+      );
+
+      expect(received).toBe(config);
     });
   });
 });
