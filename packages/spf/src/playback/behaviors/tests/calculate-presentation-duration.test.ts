@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../../../media/types';
 import {
@@ -8,6 +9,14 @@ import {
   type PresentationDurationState,
   shouldCalculateDuration,
 } from '../calculate-presentation-duration';
+
+function makeState(initial: PresentationDurationState = {}): StateSignals<PresentationDurationState> {
+  return {
+    presentation: signal<Presentation | undefined>(initial.presentation),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+  };
+}
 
 // Helper to create a minimal presentation with proper structure for getSelectedTrack
 function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]; duration?: number }): Presentation {
@@ -65,7 +74,6 @@ describe('canCalculateDuration', () => {
       presentation: mockPresentation(),
       selectedVideoTrackId: 'video-1',
     };
-
     expect(canCalculateDuration(state)).toBe(true);
   });
 
@@ -74,7 +82,6 @@ describe('canCalculateDuration', () => {
       presentation: mockPresentation(),
       selectedAudioTrackId: 'audio-1',
     };
-
     expect(canCalculateDuration(state)).toBe(true);
   });
 
@@ -82,7 +89,6 @@ describe('canCalculateDuration', () => {
     const state: PresentationDurationState = {
       selectedVideoTrackId: 'video-1',
     };
-
     expect(canCalculateDuration(state)).toBe(false);
   });
 
@@ -90,7 +96,6 @@ describe('canCalculateDuration', () => {
     const state: PresentationDurationState = {
       presentation: mockPresentation(),
     };
-
     expect(canCalculateDuration(state)).toBe(false);
   });
 });
@@ -101,7 +106,6 @@ describe('shouldCalculateDuration', () => {
       presentation: mockPresentation({ duration: 60 }),
       selectedVideoTrackId: 'video-1',
     };
-
     expect(shouldCalculateDuration(state)).toBe(false);
   });
 
@@ -118,7 +122,6 @@ describe('shouldCalculateDuration', () => {
       } as any,
       selectedVideoTrackId: 'video-1',
     };
-
     expect(shouldCalculateDuration(state)).toBe(false);
   });
 
@@ -142,7 +145,6 @@ describe('shouldCalculateDuration', () => {
       }),
       selectedVideoTrackId: 'video-1',
     };
-
     expect(shouldCalculateDuration(state)).toBe(true);
   });
 });
@@ -168,7 +170,6 @@ describe('getDurationFromResolvedTracks', () => {
       }),
       selectedVideoTrackId: 'video-1',
     };
-
     expect(getDurationFromResolvedTracks(state)).toBe(120.5);
   });
 
@@ -196,7 +197,6 @@ describe('getDurationFromResolvedTracks', () => {
       }),
       selectedAudioTrackId: 'audio-1',
     };
-
     expect(getDurationFromResolvedTracks(state)).toBe(90.25);
   });
 
@@ -239,7 +239,6 @@ describe('getDurationFromResolvedTracks', () => {
       selectedVideoTrackId: 'video-1',
       selectedAudioTrackId: 'audio-1',
     };
-
     expect(getDurationFromResolvedTracks(state)).toBe(120.5);
   });
 
@@ -247,20 +246,18 @@ describe('getDurationFromResolvedTracks', () => {
     const state: PresentationDurationState = {
       presentation: mockPresentation(),
     };
-
     expect(getDurationFromResolvedTracks(state)).toBeUndefined();
   });
 });
 
 describe('calculatePresentationDuration', () => {
   it('sets presentation.duration from resolved video track', async () => {
-    const state = signal<PresentationDurationState>({});
+    const state = makeState();
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.set({
-      ...state.get(),
-      presentation: createPresentation({
+    state.presentation.set(
+      createPresentation({
         video: [
           {
             id: 'video-1',
@@ -275,25 +272,24 @@ describe('calculatePresentationDuration', () => {
             initialization: { id: 'init', url: 'http://example.com/init.mp4' },
           } as VideoTrack,
         ],
-      }),
-      selectedVideoTrackId: 'video-1',
-    });
+      })
+    );
+    state.selectedVideoTrackId.set('video-1');
 
     await vi.waitFor(() => {
-      expect(state.get().presentation?.duration).toBe(120.5);
+      expect(state.presentation.get()?.duration).toBe(120.5);
     });
 
     cleanup();
   });
 
   it('sets presentation.duration from resolved audio track', async () => {
-    const state = signal<PresentationDurationState>({});
+    const state = makeState();
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.set({
-      ...state.get(),
-      presentation: createPresentation({
+    state.presentation.set(
+      createPresentation({
         audio: [
           {
             id: 'audio-1',
@@ -312,19 +308,19 @@ describe('calculatePresentationDuration', () => {
             initialization: { id: 'init', url: 'http://example.com/init.mp4' },
           } as AudioTrack,
         ],
-      }),
-      selectedAudioTrackId: 'audio-1',
-    });
+      })
+    );
+    state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
-      expect(state.get().presentation?.duration).toBe(90.75);
+      expect(state.presentation.get()?.duration).toBe(90.75);
     });
 
     cleanup();
   });
 
   it('does not recalculate when duration already set', async () => {
-    const state = signal<PresentationDurationState>({
+    const state = makeState({
       presentation: createPresentation({
         duration: 60,
         video: [
@@ -349,19 +345,18 @@ describe('calculatePresentationDuration', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().presentation?.duration).toBe(60);
+    expect(state.presentation.get()?.duration).toBe(60);
 
     cleanup();
   });
 
   it('does not set invalid durations', async () => {
-    const state = signal<PresentationDurationState>({});
+    const state = makeState();
 
     const cleanup = calculatePresentationDuration({ state });
 
-    state.set({
-      ...state.get(),
-      presentation: createPresentation({
+    state.presentation.set(
+      createPresentation({
         video: [
           {
             id: 'video-1',
@@ -376,13 +371,13 @@ describe('calculatePresentationDuration', () => {
             initialization: { id: 'init', url: 'http://example.com/init.mp4' },
           } as VideoTrack,
         ],
-      }),
-      selectedVideoTrackId: 'video-1',
-    });
+      })
+    );
+    state.selectedVideoTrackId.set('video-1');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().presentation?.duration).toBeUndefined();
+    expect(state.presentation.get()?.duration).toBeUndefined();
 
     cleanup();
   });
