@@ -4,6 +4,7 @@
 import { MediaContainerElement } from '../../media/container-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
+import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
@@ -31,6 +32,7 @@ defineTime();
 // Standalone elements.
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
+safeDefine(LiveButtonElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PlaybackRateButtonElement);

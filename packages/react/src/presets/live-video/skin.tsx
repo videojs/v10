@@ -27,6 +27,7 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture/gesture';
 import { Hotkey } from '@/ui/hotkey/hotkey';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -134,6 +135,8 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
               />
               <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
+
+            <LiveButton className="media-button media-button--subtle media-button--live" />
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />

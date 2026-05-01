@@ -4,8 +4,8 @@ import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
 
-// Reuse the audio preset's UI element registrations.
-import '../audio/ui';
+// Register the live audio player, container, and all UI custom elements.
+import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -35,6 +35,8 @@ function getTemplateHTML() {
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
             <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+
+            <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
           </div>
 
           <div class="media-time-controls" aria-hidden="true"></div>

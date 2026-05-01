@@ -14,6 +14,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
@@ -128,6 +129,8 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
+
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />

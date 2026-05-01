@@ -40,6 +40,7 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -176,6 +177,8 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
+
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />
