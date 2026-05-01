@@ -4,6 +4,8 @@ export const MenuCSSVars = {
   width: '--media-menu-width',
   /** Height of the incoming submenu view (px). Set on root Content before each transition. */
   height: '--media-menu-height',
+  /** Viewport-constrained max width for the menu (px). Set from popover positioning. */
+  availableWidth: '--media-menu-available-width',
   /** Viewport-constrained max height for the menu (px). Set from popover positioning. */
   availableHeight: '--media-menu-available-height',
 } as const;
