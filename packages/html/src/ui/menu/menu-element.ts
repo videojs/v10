@@ -146,16 +146,16 @@ export class MenuElement extends MediaElement {
       return;
     }
 
-    const posOpts = { side: state.side, align: state.align };
+    const positionOptions = { side: state.side, align: state.align };
 
     if (supportsAnchorPositioning()) {
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts));
+      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions));
     } else {
       const triggerRect = this.#currentTrigger?.getBoundingClientRect();
       const selfRect = getPopupPositionRect(this);
       const boundaryRect = document.documentElement.getBoundingClientRect();
       const offsets = resolveOffsets(this);
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
+      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions, triggerRect, selfRect, boundaryRect, offsets));
     }
 
     this.#position.sync(this.#currentTrigger);

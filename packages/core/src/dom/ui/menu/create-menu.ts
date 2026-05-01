@@ -164,14 +164,14 @@ export function createMenu(options: MenuOptions): MenuApi {
       switch (key) {
         case 'ArrowDown': {
           event.preventDefault();
-          const idx = highlightedItem ? items.indexOf(highlightedItem) : -1;
-          highlight(items[(idx + 1) % items.length] ?? null);
+          const currentIndex = highlightedItem ? items.indexOf(highlightedItem) : -1;
+          highlight(items[(currentIndex + 1) % items.length] ?? null);
           break;
         }
         case 'ArrowUp': {
           event.preventDefault();
-          const idx = highlightedItem ? items.indexOf(highlightedItem) : 0;
-          highlight(items[(idx <= 0 ? items.length : idx) - 1] ?? null);
+          const currentIndex = highlightedItem ? items.indexOf(highlightedItem) : 0;
+          highlight(items[(currentIndex <= 0 ? items.length : currentIndex) - 1] ?? null);
           break;
         }
         case 'Home': {

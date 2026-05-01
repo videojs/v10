@@ -37,13 +37,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   // --- Positioning ---
 
-  const posOpts = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
+  const positionOptions = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
 
   const anchorStyle = useMemo(() => {
     if (!supportsAnchorPositioning()) return null;
-    const { positionAnchor: _, ...rest } = getAnchorPositionStyle(anchorName, posOpts);
+    const { positionAnchor: _, ...rest } = getAnchorPositionStyle(anchorName, positionOptions);
     return rest as CSSProperties;
-  }, [anchorName, posOpts]);
+  }, [anchorName, positionOptions]);
 
   const [manualStyle, setManualStyle] = useState<CSSProperties | null>(null);
 
@@ -65,7 +65,14 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       const offsets = resolveOffsets(contentElement);
 
       setManualStyle(
-        getAnchorPositionStyle(anchorName, posOpts, triggerRect, contentRect, boundaryRect, offsets) as CSSProperties
+        getAnchorPositionStyle(
+          anchorName,
+          positionOptions,
+          triggerRect,
+          contentRect,
+          boundaryRect,
+          offsets
+        ) as CSSProperties
       );
     }
 
@@ -74,10 +81,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     const triggerElement = menu.triggerElement;
     const contentElement = internalRef.current;
 
-    let rafId = 0;
+    let animationFrameId = 0;
     function reposition(): void {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(measure);
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(measure);
     }
 
     reposition();
@@ -91,12 +98,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     window.addEventListener('resize', reposition);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      cancelAnimationFrame(animationFrameId);
       resizeObserver?.disconnect();
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [state.open, anchorName, posOpts, menu]);
+  }, [state.open, anchorName, positionOptions, menu]);
 
   const positioningStyle = anchorStyle ?? manualStyle ?? POPOVER_RESET;
 

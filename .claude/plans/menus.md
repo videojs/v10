@@ -50,9 +50,7 @@ PR 1 (Core + DOM) → PR 2 (UI flat) → PR 3 (Submenus)
 
 ## PR 2 — UI layer: flat menu (React + HTML)
 
-**Status:** PENDING — branch off `feat/menu-core-dom`
-
-**Status:** PENDING
+**Status:** OPEN — `feat/menu-react-html` (PR #1504)
 
 ### React files (`packages/react/src/ui/menu/`)
 - `context.tsx`, `index.parts.ts`, `index.ts`
