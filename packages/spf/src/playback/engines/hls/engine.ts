@@ -100,34 +100,37 @@ type Deps = {
 };
 
 // ============================================================================
-// Thin media-type wrappers
+// Behavior wrappers
 //
-// Behaviors parameterized by media type get thin wrappers that close over
-// the type value, so the engine composition reads as a flat list of
-// behaviors without inline config.
+// All wrappers reshape the engine `config` into a use-case-specific config
+// for the underlying behavior — typically by injecting a `type` discriminant
+// and forwarding the engine config. Extra engine-config fields beyond what
+// each behavior's own config type declares are structurally tolerated.
 // ============================================================================
 
-const loadVideoSegments = (deps: Deps) => loadSegments(deps, { type: 'video' });
-const loadAudioSegments = (deps: Deps) => loadSegments(deps, { type: 'audio' });
+const loadVideoSegments = ({ config, ...deps }: Deps) =>
+  loadSegments({ ...deps, config: { type: 'video', ...config } });
 
-const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
-const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
-const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
+const loadAudioSegments = ({ config, ...deps }: Deps) =>
+  loadSegments({ ...deps, config: { type: 'audio', ...config } });
 
-// ============================================================================
-// Config-aware behavior wrappers
-//
-// Behaviors that read from engine config get wrappers that close over the
-// media-type discriminant and forward the engine config. Each behavior
-// picks out the fields it cares about from its own config type — extra
-// fields on the spread are structurally tolerated.
-// ============================================================================
+const resolveVideoTrack = ({ config, ...deps }: Deps) =>
+  resolveTrack({ ...deps, config: { type: 'video' as const, ...config } });
 
-const selectVideoTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, { type: 'video', ...config });
+const resolveAudioTrack = ({ config, ...deps }: Deps) =>
+  resolveTrack({ ...deps, config: { type: 'audio' as const, ...config } });
 
-const selectAudioTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, { type: 'audio', ...config });
+const resolveTextTrack = ({ config, ...deps }: Deps) =>
+  resolveTrack({ ...deps, config: { type: 'text' as const, ...config } });
 
-const selectTextTrack = ({ config, ...deps }: Deps) => _selectTextTrack(deps, { type: 'text', ...config });
+const selectVideoTrack = ({ config, ...deps }: Deps) =>
+  selectMediaTrack({ ...deps, config: { type: 'video', ...config } });
+
+const selectAudioTrack = ({ config, ...deps }: Deps) =>
+  selectMediaTrack({ ...deps, config: { type: 'audio', ...config } });
+
+const selectTextTrack = ({ config, ...deps }: Deps) =>
+  _selectTextTrack({ ...deps, config: { type: 'text', ...config } });
 
 // ============================================================================
 // Signal-map factories

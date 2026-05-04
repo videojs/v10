@@ -70,10 +70,13 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
  */
-export function resolveTrack<T extends TrackType>(
-  { state }: { state: StateSignals<TrackResolutionState> },
-  config: TrackResolutionConfig<T>
-): () => void {
+export function resolveTrack<T extends TrackType>({
+  state,
+  config,
+}: {
+  state: StateSignals<TrackResolutionState>;
+  config: TrackResolutionConfig<T>;
+}): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).

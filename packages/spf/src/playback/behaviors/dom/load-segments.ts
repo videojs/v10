@@ -237,10 +237,15 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  * @example
  * const cleanup = loadSegments({ state, context }, { type: 'video' });
  */
-export function loadSegments(
-  { state, context }: { state: StateSignals<SegmentLoadingState>; context: ContextSignals<SegmentLoadingContext> },
-  config: { type: MediaTrackType }
-): () => void {
+export function loadSegments({
+  state,
+  context,
+  config,
+}: {
+  state: StateSignals<SegmentLoadingState>;
+  context: ContextSignals<SegmentLoadingContext>;
+  config: { type: MediaTrackType };
+}): () => void {
   const { type } = config;
   const actorKey = ActorKeyByType[type];
 

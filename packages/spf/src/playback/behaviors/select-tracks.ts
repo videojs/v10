@@ -26,15 +26,18 @@ import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
  * language preferences will be added when the selection algorithm matures.
  *
  * @example
- * const cleanup = selectMediaTrack(
- *   { state },
- *   { type: 'video', initialBandwidth: 2_000_000 }
- * );
+ * const cleanup = selectMediaTrack({
+ *   state,
+ *   config: { type: 'video', initialBandwidth: 2_000_000 },
+ * });
  */
-export function selectMediaTrack(
-  { state }: { state: StateSignals<TrackSelectionState> },
-  config: VideoSelectionConfig | AudioSelectionConfig
-): () => void {
+export function selectMediaTrack({
+  state,
+  config,
+}: {
+  state: StateSignals<TrackSelectionState>;
+  config: VideoSelectionConfig | AudioSelectionConfig;
+}): () => void {
   return effect(() => {
     const currentState = snapshot(state);
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
@@ -60,12 +63,15 @@ export function selectMediaTrack(
  * Note: Currently does not auto-select (user opt-in).
  *
  * @example
- * const cleanup = selectTextTrack({ state, context, events }, {});
+ * const cleanup = selectTextTrack({ state, config: { type: 'text' } });
  */
-export function selectTextTrack(
-  { state }: { state: StateSignals<TrackSelectionState> },
-  config: TextSelectionConfig = { type: 'text' }
-): () => void {
+export function selectTextTrack({
+  state,
+  config = { type: 'text' },
+}: {
+  state: StateSignals<TrackSelectionState>;
+  config?: TextSelectionConfig;
+}): () => void {
   return effect(() => {
     const currentState = snapshot(state);
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
