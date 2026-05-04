@@ -92,6 +92,44 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 | **D** | (6) single-writer enforcement + `initialState` requirement for 0-writer signals | Needs (4)'s declarations. May fold into B if we go straight to `readKeys` / `writeKeys`. |
 | **E or parallel** | (3) networking singleton | Independent track. Probably wants Stage A done first so it lands in the new shape. Defer concrete design. |
 
+## Follow-ups to revisit
+
+### Type-specialized behaviors traded code reuse for narrow types
+
+The engine-wrapper consolidation moved type-specifying configs (`type:
+'video'`, `type: 'audio'`, etc.) from engine wrappers into per-type
+specialized behaviors exported from each behavior module. `select-tracks`
+went from one `selectMediaTrack` (dynamic key access via
+`state[SelectedTrackIdKeyByType[config.type]]`) plus engine wrappers, to
+three direct exports: `selectVideoTrack`, `selectAudioTrack`,
+`selectTextTrack` — each with narrow `stateKeys` and an inlined body.
+
+What we won: narrow per-behavior keys (e.g. `selectVideoTrack` only
+declares `['presentation', 'selectedVideoTrackId']`); no engine wrappers;
+no `config.type` discriminant carried at runtime; type-honest direct
+signal access (`state.selectedVideoTrackId.set(...)` instead of
+`state[selectedKey].set(...)`).
+
+What we lost: shared body code. Each specialization repeats the
+"read presentation, check if selected, pick by type, set if found"
+pattern with only the type literal and signal name varying.
+
+**Revisit each affected module after the engine-wrapper migration is
+complete.** Look for shareable abstractions that preserve the wins —
+e.g. a factory function `makeFirstTrackSelector(type, selectedKey)` that
+takes the variants as parameters and produces a `defineBehavior` result.
+The factory keeps narrow types (the selectedKey generic threads through
+`Pick<S, K>` in the setup param) but reuses the body.
+
+The trap to avoid: don't reintroduce a `config.type` discriminant or
+type-erased `state[dynamicKey]` access. The factory binds the type at
+definition time, not call time.
+
+Modules to revisit when time permits:
+- `select-tracks.ts` (3 specializations: video/audio/text — first to land)
+- `resolve-track.ts` (3 specializations)
+- `load-segments.ts` (2 specializations: video/audio)
+
 ## Open questions to resolve before locking the plan
 
 1. **Read vs. write split — Stage B or D?** Going straight to `readKeys` / `writeKeys` in Stage B front-loads design but enables (6) for free. Single `stateKeys` first means touching every behavior twice. Lean toward splitting now.
