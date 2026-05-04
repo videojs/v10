@@ -1,29 +1,29 @@
 ---
-status: stages-A-B-C-complete
-branch: refactor/spf-discrete-signals-stage-a
+status: stages-A-B-C-complete-stage-D-pending
+branch: refactor/spf-discrete-signals-and-behavior-objects
 ---
 
 # SPF: Discrete Signals + Behavior-as-Object
 
-> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, and C have landed (the user's plan numbered these as steps 1, 2a, 2b, and 3). Stage D (read/write enforcement) is deferred. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
+> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, and C have landed (the user's plan numbered these as steps 1, 2a, 2b, and 3). Stage D (read/write enforcement) is in-scope for this branch but design is still TBD. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
 
 ## Status snapshot
 
-- **Branch:** `refactor/spf-discrete-signals-stage-a` (off `docs/spf-hls-engine-composition`)
+- **Branch:** `refactor/spf-discrete-signals-and-behavior-objects` (off `docs/spf-hls-engine-composition`). Renamed from `refactor/spf-discrete-signals-stage-a` once scope expanded beyond Stage A.
 - **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests. Tests green: 48 files, 748 tests passed (was 703 at end of Stage A — net +45 from new test coverage and consolidation).
 - **Build clean.** `pnpm typecheck`, `pnpm -F @videojs/spf test`, `pnpm exec biome check`, `pnpm check:workspace`, `pnpm build:packages` all pass.
-- **Stage D deferred.** Read/write enforcement (single-writer rule + `writeKeys`) — user's note: "doesn't need to happen yet."
+- **Stage D in-scope for this branch, design TBD.** Read/write enforcement (single-writer rule + `writeKeys`) — see `## Stage D — design TBD` below for the sketch carried into the design discussion.
 - **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`.
 - **Memory:** `project_spf_stage_a_revisit.md` has the deeper "why we did it this way" notes for Stage A; updated for B/C carryovers.
 
 ## Resuming — where to start the next session
 
-1. **Verify branch state.** `git log --oneline` should show `e4ce10ae refactor(spf): specialize load-segments behaviors per track type` at HEAD on `refactor/spf-discrete-signals-stage-a`.
-2. **Decide between three next moves:**
-   - **(a) Open the PR.** The branch is in shippable shape. PR description should walk through stages A→C, the engine-wrapper specialization, and the deferred Stage D.
-   - **(b) Doc updates.** `packages/spf/docs/hls-engine.md` is on the parent `docs/spf-hls-engine-composition` branch and is now badly stale (uses old `update`-style state writes, single-`owners` signal, no `defineBehavior`, no `stateKeys`/`contextKeys`). Refresh after Stage A→C. `internal/design/spf/fundamentals.md` no longer matches the new pattern (recommends external state writes; we now require behaviors to own writes).
-   - **(c) Stage D.** Read/write enforcement. See `## Stage D — what's left` below for the design sketch.
-3. **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. The plan doc + commit `77601054` capture the trade-off; revisit once a clean factory pattern is settled.
+1. **Verify branch state.** `git log --oneline` should show the plan-doc-rename commit at HEAD on `refactor/spf-discrete-signals-and-behavior-objects` (just below it: `e4ce10ae refactor(spf): specialize load-segments behaviors per track type`).
+2. **Stage D design discussion is the most likely next move.** The user explicitly said this stage is in-scope for the branch but design is TBD. See `## Stage D — design TBD` below for the open questions to walk through before any implementation.
+3. **Other moves (any order, can interleave with Stage D):**
+   - **Doc updates.** `packages/spf/docs/hls-engine.md` is on the parent `docs/spf-hls-engine-composition` branch and is now badly stale (uses old `update`-style state writes, single-`owners` signal, no `defineBehavior`, no `stateKeys`/`contextKeys`). Refresh after Stage D lands or use as a friction-list canary during. `internal/design/spf/fundamentals.md` no longer matches the new pattern (recommends external state writes; Stage C made that disallowed).
+   - **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off. Could fold into Stage D's pass since `writeKeys` may surface a clean factory shape.
+   - **Open the PR.** Branch is shippable as-is even without Stage D, but holding the PR until Stage D lands keeps the change set coherent under the new branch name.
 
 ## Stage A — what landed (early commits, pre-this-session)
 
@@ -78,13 +78,11 @@ Originally flagged as "save for the end" of Stage B. The engine had 8 wrappers (
 - **`load-segments.ts`** (`e4ce10ae`) — `loadSegments` split into `loadVideoSegments`, `loadAudioSegments`. Body shared via `setupSegmentLoading(state, context, type)` helper. **State/context keys still broad** — narrowing per specialization is a follow-up (see below).
 - **Engine** drops all 8 wrappers, the `Deps` shorthand, and the `StateSignals`/`ContextSignals` imports (no longer needed locally).
 
-## Stage D — what's left
+## Stage D — design TBD
 
-The user's plan #4: read/write enforcement.
+The user's plan #4: read/write enforcement. **In-scope for this branch**, but design is TBD — needs a discussion before any implementation.
 
-> Eventually, we will constrain these types more for our read vs. write enforcement, but I don't *think* that needs to happen yet.
-
-Design sketch (not implemented):
+Design sketch (the starting point for that discussion):
 
 - Behaviors gain a `writeKeys` (subset of `stateKeys`) declaring which signals they write.
 - `createComposition` validates: each state key has at most one writer.
@@ -92,7 +90,23 @@ Design sketch (not implemented):
 - `setup`'s param can narrow further: declared writeKeys produce `WriteSignal<T>` slots; read-only keys produce `ReadSignal<T>` slots.
 - The `destroy()` reset-loop in `createComposition` (which currently sets every signal to undefined post-cleanup) moves into per-signal cleanup owned by the writer behavior. The blanket reset is currently a workaround for missing read/write semantics.
 
-This is out of scope for the current branch; pick up in a follow-up.
+### Open questions for the Stage D discussion
+
+These are the design questions to resolve before implementation. The plan doc captures the current best-guess shape; expect the discussion to revisit each.
+
+1. **`writeKeys` placement.** Sibling to `stateKeys`, or replace `stateKeys` with `{readKeys, writeKeys}`? The latter is stricter but adds two list maintenance instead of one. `stateKeys` = `[...readKeys, ...writeKeys]` deduped is one option; `writeKeys ⊆ stateKeys` is another.
+
+2. **`ReadSignal<T>` / `WriteSignal<T>` shape.** Are these branded variants of `Signal<T>` (different types but same runtime representation)? Or do we re-use `Signal<T>` and `Omit<Signal<T>, 'set'>` (the existing `ReadonlySignal<T>` already exists in `core/signals/primitives.ts`)? The latter is simpler; the former lets you key on the brand for compile-time analysis.
+
+3. **Single-writer enforcement scope.** Just at `createComposition`, or also enforced by `defineBehavior` at the call site (e.g. one behavior can't declare the same key in `writeKeys` twice)? Probably the latter is automatic via tuple types; the former needs the same intersection machinery as state-shape conflict detection.
+
+4. **0-writer signals + `initialState`.** Currently anything in `initialState` is optional. With Stage D, a key that has 0 writers across the composition becomes "input-only" — it must be either in `initialState` *or* written from outside via the returned `Composition.state.x.set(...)`. Stage C tightened "no external writes from composition"; Stage D needs to define the read/write boundary at the composition surface too.
+
+5. **Migration path.** Each behavior currently has flat `stateKeys`. How do we decide which keys are reads vs. writes? Options: (a) audit each behavior body manually, (b) start with `writeKeys: stateKeys` (everything is a write) and narrow incrementally, (c) start with `writeKeys: []` and expand by need. Option (b) is the safest "no behavior change" starting point.
+
+6. **Code-reuse follow-up convergence.** The three behavior modules in `## Follow-ups` lost code reuse during the engine-wrapper revisit. Stage D's `readKeys` / `writeKeys` shape may give us the right hook for a `makeFirstTrackSelector(type, selectedKey)`-style factory that produces narrow keys per type. Worth holding the follow-up pass until Stage D's shape is decided.
+
+7. **The destroy reset loop.** Currently `for (const sig of Object.values(state)) sig.set(undefined)`. Stage D moves this into per-signal cleanup owned by the writer. What about signals seeded by `initialState` with no writer? Skip the reset (preserve seeded value)? Reset to the seeded value (need to capture it)? Reset to undefined (current behavior)?
 
 ## Motivation
 
@@ -114,7 +128,7 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 | **A** | (1) discrete signals; (2) `owners` → `context` | ✅ Complete |
 | **B** | (4) behavior-as-object with `stateKeys` / `contextKeys` / `setup` | ✅ Complete |
 | **C** | (5) no external setting from composition + `initialState` | ✅ Complete |
-| **D** | (6) single-writer enforcement + `initialState` requirement for 0-writer signals | ❌ Deferred |
+| **D** | (6) single-writer enforcement + `initialState` requirement for 0-writer signals | ⏳ In-scope for this branch, design TBD |
 | **E or parallel** | (3) networking singleton | ❌ Deferred |
 
 ## Follow-ups to revisit
