@@ -53,11 +53,9 @@ export type Behavior<S extends object, C extends object, Cfg extends object> = (
 // =============================================================================
 
 /** A behavior function with unconstrained deps — used as a generic bound. */
-// biome-ignore lint/suspicious/noExplicitAny: required for generic behavior inference
 type AnyBehavior = (deps: any) => BehaviorCleanup;
 
 /** Extract the first parameter (deps) type from a behavior function. */
-// biome-ignore lint/suspicious/noExplicitAny: required for conditional type inference
 type DepsOf<F> = F extends (deps: infer D, ...args: any[]) => any ? D : never;
 
 /**

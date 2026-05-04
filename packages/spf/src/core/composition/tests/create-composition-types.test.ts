@@ -64,8 +64,12 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when state and context options are omitted entirely', () => {
-    // @ts-expect-error — state and context are required options
-    createComposition([noopState]);
+    // Type-only assertion — guarded by an early return so the runtime
+    // doesn't crash on the missing options.
+    if (Math.random() < 0) {
+      // @ts-expect-error — state and context are required options
+      createComposition([noopState]);
+    }
   });
 
   it('errors when a behavior writes a wrong-type value to a state signal', () => {
