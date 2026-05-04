@@ -1,9 +1,4 @@
-import {
-  type Composition,
-  type ContextSignals,
-  createComposition,
-  type StateSignals,
-} from '../../../core/composition/create-composition';
+import { type Composition, createComposition } from '../../../core/composition/create-composition';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -12,7 +7,7 @@ import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
-import { loadSegments } from '../../behaviors/dom/load-segments';
+import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
@@ -90,34 +85,6 @@ export interface SimpleHlsEngineConfig {
    */
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
 }
-
-/** Shorthand for the deps shape used by HLS engine behaviors. */
-type Deps = {
-  state: StateSignals<SimpleHlsEngineState>;
-  context: ContextSignals<SimpleHlsEngineContext>;
-  config: SimpleHlsEngineConfig;
-};
-
-// ============================================================================
-// Behavior wrappers
-//
-// All wrappers reshape the engine `config` into a use-case-specific config
-// for the underlying behavior — typically by injecting a `type` discriminant
-// and forwarding the engine config. Extra engine-config fields beyond what
-// each behavior's own config type declares are structurally tolerated.
-// ============================================================================
-
-const loadVideoSegments = {
-  stateKeys: loadSegments.stateKeys,
-  contextKeys: loadSegments.contextKeys,
-  setup: ({ config, ...deps }: Deps) => loadSegments.setup({ ...deps, config: { type: 'video', ...config } }),
-};
-
-const loadAudioSegments = {
-  stateKeys: loadSegments.stateKeys,
-  contextKeys: loadSegments.contextKeys,
-  setup: ({ config, ...deps }: Deps) => loadSegments.setup({ ...deps, config: { type: 'audio', ...config } }),
-};
 
 // ============================================================================
 // HLS Playback Engine

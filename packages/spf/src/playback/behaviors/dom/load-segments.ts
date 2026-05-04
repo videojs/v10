@@ -207,7 +207,8 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
 // ============================================================================
 
 /**
- * Load segments orchestration — Reactor layer.
+ * Load segments orchestration — shared body used by `loadVideoSegments`
+ * and `loadAudioSegments`.
  *
  * Sends typed load messages to a SegmentLoaderActor when relevant conditions
  * change. Uses targeted subscriptions rather than broad combineLatest so only
@@ -234,19 +235,15 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  *     resolvedTrackId changes      → trigger
  *     segmentStart(currentTime) changes → trigger
  *
- * @example
- * const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
+ * Type-specific concerns (which actor, whether to track bandwidth) are
+ * resolved by the `loadVideoSegments` / `loadAudioSegments` exports —
+ * they bind `type` at definition time and pass it here.
  */
-function loadSegmentsSetup({
-  state,
-  context,
-  config,
-}: {
-  state: StateSignals<SegmentLoadingState>;
-  context: ContextSignals<SegmentLoadingContext>;
-  config: { type: MediaTrackType };
-}): () => void {
-  const { type } = config;
+function setupSegmentLoading(
+  state: StateSignals<SegmentLoadingState>,
+  context: ContextSignals<SegmentLoadingContext>,
+  type: MediaTrackType
+): () => void {
   const actorKey = ActorKeyByType[type];
 
   // Local throughput signal — used by createTrackedFetch to sample bandwidth
@@ -365,17 +362,49 @@ function loadSegmentsSetup({
   };
 }
 
-export const loadSegments = defineBehavior({
-  stateKeys: [
-    'presentation',
-    'preload',
-    'bandwidthState',
-    'currentTime',
-    'playbackInitiated',
-    'selectedVideoTrackId',
-    'selectedAudioTrackId',
-    'selectedTextTrackId',
-  ],
-  contextKeys: ['videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
-  setup: loadSegmentsSetup,
+const SEGMENT_LOADING_STATE_KEYS = [
+  'presentation',
+  'preload',
+  'bandwidthState',
+  'currentTime',
+  'playbackInitiated',
+  'selectedVideoTrackId',
+  'selectedAudioTrackId',
+  'selectedTextTrackId',
+] as const;
+
+const SEGMENT_LOADING_CONTEXT_KEYS = ['videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'] as const;
+
+/**
+ * Load video segments — drives the video SourceBufferActor with media
+ * segments based on bandwidth/preload/currentTime/playbackInitiated.
+ * Tracks throughput per chunk and bridges samples back into
+ * `state.bandwidthState` for ABR.
+ */
+export const loadVideoSegments = defineBehavior({
+  stateKeys: SEGMENT_LOADING_STATE_KEYS,
+  contextKeys: SEGMENT_LOADING_CONTEXT_KEYS,
+  setup: ({
+    state,
+    context,
+  }: {
+    state: StateSignals<SegmentLoadingState>;
+    context: ContextSignals<SegmentLoadingContext>;
+  }) => setupSegmentLoading(state, context, 'video'),
+});
+
+/**
+ * Load audio segments — same orchestration shape as `loadVideoSegments`,
+ * targeting the audio SourceBufferActor. Audio doesn't sample bandwidth.
+ */
+export const loadAudioSegments = defineBehavior({
+  stateKeys: SEGMENT_LOADING_STATE_KEYS,
+  contextKeys: SEGMENT_LOADING_CONTEXT_KEYS,
+  setup: ({
+    state,
+    context,
+  }: {
+    state: StateSignals<SegmentLoadingState>;
+    context: ContextSignals<SegmentLoadingContext>;
+  }) => setupSegmentLoading(state, context, 'audio'),
 });

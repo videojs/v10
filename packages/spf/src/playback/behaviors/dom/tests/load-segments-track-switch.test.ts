@@ -5,7 +5,7 @@ import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
 import type { Presentation, VideoSelectionSet } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
-import { loadSegments } from '../load-segments';
+import { loadVideoSegments } from '../load-segments';
 
 // ============================================================================
 // Mocks
@@ -158,7 +158,7 @@ describe('loadSegments — track switch', () => {
 
     const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
+    const cleanup = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -199,7 +199,7 @@ describe('loadSegments — track switch', () => {
     });
 
     const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
+    const cleanup = loadVideoSegments.setup({ state, context });
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
@@ -244,7 +244,7 @@ describe('loadSegments — track switch', () => {
     });
 
     const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
+    const cleanup = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -290,7 +290,7 @@ describe('loadSegments — track switch', () => {
 
     const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
+    const cleanup = loadVideoSegments.setup({ state, context });
     await new Promise((r) => setTimeout(r, 50));
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);

@@ -9,7 +9,7 @@
 export { appendSegment } from './media/dom/mse/append-segment';
 export { flushBuffer } from './media/dom/mse/buffer-flusher';
 export { destroyVttResolver, resolveVttSegment } from './media/dom/text/resolve-vtt-segment';
-export { loadSegments } from './playback/behaviors/dom/load-segments';
+export { loadAudioSegments, loadVideoSegments } from './playback/behaviors/dom/load-segments';
 export { setupTextTrackActors } from './playback/behaviors/dom/setup-text-track-actors';
 export type { CurrentTimeContext, CurrentTimeState } from './playback/behaviors/dom/track-current-time';
 export { trackCurrentTime } from './playback/behaviors/dom/track-current-time';

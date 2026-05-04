@@ -8,7 +8,12 @@ import { signal } from '../../../../core/signals/primitives';
 import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
 import type { Presentation, Segment } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
-import { loadSegments, type SegmentLoadingContext, type SegmentLoadingState } from '../load-segments';
+import {
+  loadAudioSegments,
+  loadVideoSegments,
+  type SegmentLoadingContext,
+  type SegmentLoadingState,
+} from '../load-segments';
 
 function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadingState> {
   return {
@@ -152,7 +157,8 @@ function setupLoadSegments(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = loadSegments.setup({ state, context, config: { type } });
+  const behavior = type === 'video' ? loadVideoSegments : loadAudioSegments;
+  const cleanup = behavior.setup({ state, context });
   return { state, context, cleanup };
 }
 
