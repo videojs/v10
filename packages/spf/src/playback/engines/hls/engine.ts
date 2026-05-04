@@ -21,6 +21,7 @@ import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
+import { type ExposeEngineInputsConfig, exposeEngineInputs } from './expose-engine-inputs';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -72,7 +73,7 @@ export interface SimpleHlsEngineContext {
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface SimpleHlsEngineConfig {
+export interface SimpleHlsEngineConfig extends ExposeEngineInputsConfig {
   initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
@@ -122,6 +123,7 @@ export function createSimpleHlsEngine(
 
   return createComposition(
     [
+      exposeEngineInputs,
       syncPreloadAttribute,
       trackPlaybackInitiated,
       resolvePresentation,
