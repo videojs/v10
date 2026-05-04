@@ -788,9 +788,70 @@ describe('defineBehavior type errors', () => {
     });
 
     // @ts-expect-error — cross-behavior conflict still flows through ValidateComposition
-    createComposition([numberBehavior, stringBehavior], {
-      state: { v: signal<number>(0) },
-      context: {},
+    createComposition([numberBehavior, stringBehavior]);
+  });
+});
+
+// =============================================================================
+// initialState / initialContext — type errors
+// =============================================================================
+
+describe('createComposition initial-value type errors', () => {
+  it('errors when initialState contains a key not in S', () => {
+    const behavior = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
     });
+
+    createComposition([behavior], {
+      // @ts-expect-error — 'unknownKey' is not in S = { count?: number }
+      initialState: { unknownKey: 1 },
+    });
+  });
+
+  it('errors when initialState seeds a key with the wrong type', () => {
+    const behavior = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
+    });
+
+    createComposition([behavior], {
+      // @ts-expect-error — count must be number | undefined, not string
+      initialState: { count: 'wrong' },
+    });
+  });
+
+  it('errors when initialContext contains a key not in C', () => {
+    const behavior = defineBehavior({
+      stateKeys: [],
+      contextKeys: ['el'],
+      setup: ({ context }: { context: ContextSignals<{ el?: Surface }> }) => {
+        void context;
+      },
+    });
+
+    createComposition([behavior], {
+      // @ts-expect-error — 'unknownKey' is not in C = { el?: Surface }
+      initialContext: { unknownKey: {} },
+    });
+  });
+
+  it('allows partial initial values (omitted keys default to undefined)', () => {
+    const behavior = defineBehavior({
+      stateKeys: ['a', 'b'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ a?: number; b?: string }> }) => {
+        void state;
+      },
+    });
+
+    // No error — Partial<S> allows omitting any subset of keys
+    createComposition([behavior], { initialState: { a: 1 } });
   });
 });

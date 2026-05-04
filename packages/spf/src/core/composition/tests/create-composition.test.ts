@@ -126,8 +126,9 @@ describe('createComposition', () => {
         },
       };
 
-      const composition = createComposition([cleanupBehavior]);
-      composition.context.resource.set(resource);
+      const composition = createComposition([cleanupBehavior], {
+        initialContext: { resource },
+      });
 
       await composition.destroy();
 
@@ -209,6 +210,68 @@ describe('createComposition', () => {
       await composition.destroy();
 
       expect(composition.state.count.get()).toBeUndefined();
+    });
+  });
+
+  describe('initial values', () => {
+    it('seeds state signals from initialState', () => {
+      const behavior: Behavior<State, Context, object> = {
+        stateKeys: ['count'],
+        contextKeys: [],
+        setup: () => {},
+      };
+      const composition = createComposition([behavior], {
+        initialState: { count: 42 },
+      });
+
+      expect(composition.state.count.get()).toBe(42);
+    });
+
+    it('seeds context signals from initialContext', () => {
+      const resource: Resource = { id: 'seeded' };
+      const behavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: ['resource'],
+        setup: () => {},
+      };
+      const composition = createComposition([behavior], {
+        initialContext: { resource },
+      });
+
+      expect(composition.context.resource.get()).toBe(resource);
+    });
+
+    it('leaves unseeded keys as undefined', () => {
+      interface MultiState {
+        a?: number;
+        b?: number;
+      }
+      const behavior: Behavior<MultiState, Context, object> = {
+        stateKeys: ['a', 'b'],
+        contextKeys: [],
+        setup: () => {},
+      };
+      const composition = createComposition([behavior], {
+        initialState: { a: 1 },
+      });
+
+      expect(composition.state.a.get()).toBe(1);
+      expect(composition.state.b.get()).toBeUndefined();
+    });
+
+    it('makes seeded values visible to behaviors during setup', () => {
+      let seen: number | undefined;
+      const captureBehavior: Behavior<State, Context, object> = {
+        stateKeys: ['count'],
+        contextKeys: [],
+        setup: ({ state }) => {
+          seen = state.count.get();
+        },
+      };
+
+      createComposition([captureBehavior], { initialState: { count: 7 } });
+
+      expect(seen).toBe(7);
     });
   });
 

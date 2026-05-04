@@ -202,20 +202,27 @@ export interface Composition<S extends object, C extends object> {
  * Options for `createComposition`.
  *
  * Composition derives the state and context signal maps from each
- * behavior's declared `stateKeys` / `contextKeys` — the caller supplies
- * config only.
+ * behavior's declared `stateKeys` / `contextKeys`; `initialState` and
+ * `initialContext` seed those signals at creation time. Any unseeded
+ * signal starts as `undefined`.
  */
-export interface CompositionOptions<Cfg extends object> {
+export interface CompositionOptions<S extends object, C extends object, Cfg extends object> {
   /** Static configuration passed to every behavior. */
   config?: Cfg;
+  /** Initial values for state signals — any subset of `keyof S`. */
+  initialState?: Partial<S>;
+  /** Initial values for context signals — any subset of `keyof C`. */
+  initialContext?: Partial<C>;
 }
 
 /**
  * Create a composition from a set of behaviors.
  *
  * Composition unions the behaviors' declared `stateKeys` / `contextKeys`
- * to know which signals to create. Each signal starts as `undefined`;
- * behaviors are responsible for writing their own slots.
+ * to know which signals to create. Each signal is seeded from
+ * `initialState` / `initialContext` when supplied, defaulting to
+ * `undefined`. Behaviors are responsible for writing their own slots
+ * once their preconditions are met.
  *
  * Cross-behavior type conflicts (e.g. two behaviors disagreeing on a
  * field's type) surface as a compose-time type error via
@@ -225,29 +232,36 @@ export interface CompositionOptions<Cfg extends object> {
  * ```ts
  * const composition = createComposition([resolvePresentation, selectVideoTrack], {
  *   config: { initialBandwidth: 2_000_000 },
+ *   initialState: { bandwidthState: { fastEstimate: 0, ... } },
  * });
  * ```
  */
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
   behaviors: ValidateComposition<Behaviors>,
-  options?: CompositionOptions<ResolveBehaviorConfig<Behaviors>>
+  options?: CompositionOptions<
+    ResolveBehaviorState<Behaviors>,
+    ResolveBehaviorContext<Behaviors>,
+    ResolveBehaviorConfig<Behaviors>
+  >
 ): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorContext<Behaviors>>;
 export function createComposition(
   behaviors: readonly AnyBehavior[],
-  options?: CompositionOptions<object>
+  options?: CompositionOptions<object, object, object>
 ): Composition<object, object> {
   // Derive state and context signal maps from declared keys. Iterate every
   // behavior's keys (wrappers forward keys from the wrapped behavior, so
-  // dedup on insertion is required). Each signal starts as `undefined` —
-  // behaviors write their own slots once their preconditions are met.
+  // dedup on insertion is required). Each signal is seeded from the
+  // matching key in initialState / initialContext, defaulting to undefined.
+  const initialState = (options?.initialState ?? {}) as Record<PropertyKey, unknown>;
+  const initialContext = (options?.initialContext ?? {}) as Record<PropertyKey, unknown>;
   const state: Record<PropertyKey, Signal<unknown>> = {};
   const context: Record<PropertyKey, Signal<unknown>> = {};
   for (const behavior of behaviors) {
     for (const key of behavior.stateKeys) {
-      if (!(key in state)) state[key] = signal<unknown>(undefined);
+      if (!(key in state)) state[key] = signal<unknown>(initialState[key]);
     }
     for (const key of behavior.contextKeys) {
-      if (!(key in context)) context[key] = signal<unknown>(undefined);
+      if (!(key in context)) context[key] = signal<unknown>(initialContext[key]);
     }
   }
 

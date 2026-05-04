@@ -30,16 +30,32 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('initializes with all state and context signals undefined', () => {
+  it('initializes state with seeded bandwidthState and undefined elsewhere', () => {
     const engine = createSimpleHlsEngine();
 
-    // Composition creates one signal per declared key (union of all
-    // behaviors' stateKeys/contextKeys), each starting as `undefined`.
-    // Behaviors are responsible for writing their own slots. Initial
-    // values for slots that need a non-undefined seed will arrive via
-    // `initialState` / `initialContext` in step 3.
-    const stateSnapshot = snapshot(engine.state);
-    expect(Object.values(stateSnapshot).every((v) => v === undefined)).toBe(true);
+    // Composition creates one signal per declared key. The engine seeds
+    // `bandwidthState` to an empty BandwidthState via `initialState` so
+    // ABR machinery has a non-nullish starting point; everything else
+    // starts as `undefined` and behaviors write their own slots.
+    expect(snapshot(engine.state)).toEqual({
+      abrDisabled: undefined,
+      bandwidthState: {
+        fastEstimate: 0,
+        fastTotalWeight: 0,
+        slowEstimate: 0,
+        slowTotalWeight: 0,
+        bytesSampled: 0,
+      },
+      currentTime: undefined,
+      mediaSourceReadyState: undefined,
+      playbackInitiated: undefined,
+      preload: undefined,
+      presentation: undefined,
+      presentationUrl: undefined,
+      selectedAudioTrackId: undefined,
+      selectedTextTrackId: undefined,
+      selectedVideoTrackId: undefined,
+    });
 
     const contextSnapshot = snapshot(engine.context);
     expect(Object.values(contextSnapshot).every((v) => v === undefined)).toBe(true);

@@ -229,6 +229,21 @@ export function createSimpleHlsEngine(
       setupTextTrackActors,
       loadTextTrackCues,
     ],
-    { config: finalConfig }
+    {
+      config: finalConfig,
+      // Seed bandwidthState so switchQuality fires on initial subscribe
+      // with the `initialBandwidth` fallback rather than waiting for the
+      // first chunk. The empty sample buffer means `getBandwidthEstimate`
+      // returns the configured initial bandwidth until real samples land.
+      initialState: {
+        bandwidthState: {
+          fastEstimate: 0,
+          fastTotalWeight: 0,
+          slowEstimate: 0,
+          slowTotalWeight: 0,
+          bytesSampled: 0,
+        },
+      },
+    }
   );
 }
