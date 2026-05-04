@@ -9,14 +9,13 @@ import type {
   Presentation,
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
-import type { TrackResolutionState } from '../resolve-track';
-import { resolveTrack } from '../resolve-track';
+import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function makeState(initial: TrackResolutionState = {}): StateSignals<TrackResolutionState> {
+function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackState> {
   return {
     presentation: signal<Presentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
@@ -25,7 +24,7 @@ function makeState(initial: TrackResolutionState = {}): StateSignals<TrackResolu
   };
 }
 
-describe('resolveTrack (video)', () => {
+describe('resolveVideoTrack', () => {
   it('resolves unresolved video track', async () => {
     const unresolved: PartiallyResolvedVideoTrack = {
       type: 'video',
@@ -69,7 +68,7 @@ http://example.com/segment2.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
+    const cleanup = resolveVideoTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -129,7 +128,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
+    const cleanup = resolveVideoTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -150,7 +149,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation });
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
+    const cleanup = resolveVideoTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -160,7 +159,7 @@ http://example.com/segment2.m4s
   });
 });
 
-describe('resolveTrack (audio)', () => {
+describe('resolveAudioTrack', () => {
   it('resolves unresolved audio track', async () => {
     const unresolved: PartiallyResolvedAudioTrack = {
       type: 'audio',
@@ -206,7 +205,7 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'audio' as const } });
+    const cleanup = resolveAudioTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -228,7 +227,7 @@ http://example.com/segment1.m4s
   });
 });
 
-describe('resolveTrack (text)', () => {
+describe('resolveTextTrack', () => {
   it('resolves unresolved text track', async () => {
     const unresolved: PartiallyResolvedTextTrack = {
       type: 'text',
@@ -275,7 +274,7 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'text' as const } });
+    const cleanup = resolveTextTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -295,7 +294,7 @@ http://example.com/subtitle1.webvtt
   });
 });
 
-describe('resolveTrack — concurrent resolution', () => {
+describe('resolveVideoTrack — concurrent resolution', () => {
   it('resolves both tracks concurrently when selectedTrackId changes mid-resolution', async () => {
     const trackA: PartiallyResolvedVideoTrack = {
       type: 'video',
@@ -341,7 +340,7 @@ ${segUrl}
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
+    const cleanup = resolveVideoTrack.setup({ state });
 
     state.selectedVideoTrackId.set('track-b');
 
@@ -395,7 +394,7 @@ http://example.com/a-seg1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
+    const cleanup = resolveVideoTrack.setup({ state });
 
     // Trigger multiple state changes while track-a is resolving.
     state.selectedVideoTrackId.set('track-a');

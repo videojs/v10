@@ -23,7 +23,7 @@ import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
-import { resolveTrack } from '../../behaviors/resolve-track';
+import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
@@ -117,24 +117,6 @@ const loadAudioSegments = {
   stateKeys: loadSegments.stateKeys,
   contextKeys: loadSegments.contextKeys,
   setup: ({ config, ...deps }: Deps) => loadSegments.setup({ ...deps, config: { type: 'audio', ...config } }),
-};
-
-const resolveVideoTrack = {
-  stateKeys: resolveTrack.stateKeys,
-  contextKeys: resolveTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'video' as const, ...config } }),
-};
-
-const resolveAudioTrack = {
-  stateKeys: resolveTrack.stateKeys,
-  contextKeys: resolveTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'audio' as const, ...config } }),
-};
-
-const resolveTextTrack = {
-  stateKeys: resolveTrack.stateKeys,
-  contextKeys: resolveTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'text' as const, ...config } }),
 };
 
 // ============================================================================

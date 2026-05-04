@@ -1,32 +1,11 @@
 import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { snapshot } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
-/**
- * State shape for track resolution.
- */
-export interface TrackResolutionState extends TrackSelectionState {
-  presentation?: MaybeResolvedPresentation;
-  selectedVideoTrackId?: string | undefined;
-  selectedAudioTrackId?: string | undefined;
-  selectedTextTrackId?: string | undefined;
-}
-
-export function canResolve<T extends TrackType>(
-  state: TrackResolutionState,
-  config: TrackResolutionConfig<T>
-): boolean {
-  const track = getSelectedTrack(state, config.type);
-  if (!track) return false;
-
-  return !isResolvedTrack(track);
-}
 
 // ============================================================================
 // Public API
@@ -53,63 +32,66 @@ export function updateTrackInPresentation<T extends ResolvedTrack>(
   } as Presentation;
 }
 
-/**
- * Configuration for track resolution.
- */
-export interface TrackResolutionConfig<T extends TrackType = TrackType> {
-  type: T;
-}
+// ============================================================================
+// Specialization helper
+//
+// Each `resolveXTrack` export below binds (type, selectedKey) at module
+// load. The runtime `state[selectedKey]` access is dynamic, but the
+// generic K narrows to a single literal at the call site, so TypeScript
+// sees concrete signal access — no `config.type` discriminant carried at
+// runtime, no engine-side wrapping.
+// ============================================================================
 
 /**
- * Resolves unresolved tracks using reactive composition.
- *
- * Reacts to state changes and schedules fetch tasks via ConcurrentRunner when
- * a selected track is unresolved. The ConcurrentRunner handles deduplication,
- * parallel execution, and cleanup.
- *
- * Generic version that works for video, audio, or text tracks based on config.
- * Type parameter T is inferred from config.type (use 'as const' for inference).
+ * State shape for track resolution. Uses `MaybeResolvedPresentation` so it
+ * matches the engine's slot type; resolution narrows internally.
  */
-function resolveTrackSetup({
-  state,
-  config,
-}: {
-  state: StateSignals<TrackResolutionState>;
-  config: TrackResolutionConfig;
-}): () => void {
+export interface ResolveTrackState {
+  presentation?: MaybeResolvedPresentation;
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+  selectedTextTrackId?: string;
+}
+
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+
+function setupTrackResolution<T extends TrackType, K extends SelectedTrackKey>(
+  state: StateSignals<Pick<ResolveTrackState, 'presentation' | K>>,
+  type: T,
+  selectedKey: K
+): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
   const cleanup = effect(() => {
-    const currentState = snapshot(state);
-    if (!canResolve(currentState, config)) return;
+    const presentation = state.presentation.get();
+    const trackId = state[selectedKey].get();
+    if (!presentation || !trackId) return;
 
-    const track = getSelectedTrack(currentState, config.type);
-    if (!track) return;
-
-    const resolvedTrack = track;
+    const track = presentation.selectionSets
+      ?.find(({ type: t }) => t === type)
+      ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId);
+    if (!track || isResolvedTrack(track)) return;
 
     runner.schedule(
       // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
       // likely eventually passed down via config or a new "definitions" argument (CJP).
       new Task(
         async (signal) => {
-          const response = await fetchResolvable(resolvedTrack, { signal });
+          const response = await fetchResolvable(track, { signal });
           const text = await getResponseText(response);
-          const mediaTrack = parseMediaPlaylist(text, resolvedTrack);
+          const mediaTrack = parseMediaPlaylist(text, track);
 
-          // IMPORTANT: Read state.presentation.get() at write time, not from the
-          // captured currentState snapshot. Multiple Tasks may be running concurrently
-          // (one per track being resolved), so the snapshot is likely already stale by
-          // the time a task completes — a sibling task may have already written the
-          // presentation with its own resolved track. Reading live state ensures each
-          // task builds on top of whatever has been committed so far.
+          // captured snapshot above. Multiple Tasks may be running concurrently
+          // (one per track being resolved), so the snapshot is likely already stale
+          // by the time a task completes — a sibling task may have already written
+          // the presentation with its own resolved track. Reading live state ensures
+          // each task builds on top of whatever has been committed so far.
           const latestPresentation = state.presentation.get();
           if (!isResolvedPresentation(latestPresentation)) return;
-          const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
-          state.presentation.set(updatedPresentation);
+          state.presentation.set(updateTrackInPresentation(latestPresentation, mediaTrack));
         },
         { id: track.id }
       )
@@ -122,8 +104,40 @@ function resolveTrackSetup({
   };
 }
 
-export const resolveTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+// ============================================================================
+// Specialized exports — one per track type
+// ============================================================================
+
+/**
+ * Resolve unresolved video tracks. Schedules a fetch task whenever the
+ * selected video track is partially resolved, parses the manifest, and
+ * writes the resolved track back into `state.presentation`.
+ */
+export const resolveVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: resolveTrackSetup,
+  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedVideoTrackId'>> }) =>
+    setupTrackResolution(state, 'video', 'selectedVideoTrackId'),
+});
+
+/**
+ * Resolve unresolved audio tracks. Same shape as `resolveVideoTrack`,
+ * narrowed to audio.
+ */
+export const resolveAudioTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedAudioTrackId'>> }) =>
+    setupTrackResolution(state, 'audio', 'selectedAudioTrackId'),
+});
+
+/**
+ * Resolve unresolved text tracks. Same shape as `resolveVideoTrack`,
+ * narrowed to text.
+ */
+export const resolveTextTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedTextTrackId'>> }) =>
+    setupTrackResolution(state, 'text', 'selectedTextTrackId'),
 });
