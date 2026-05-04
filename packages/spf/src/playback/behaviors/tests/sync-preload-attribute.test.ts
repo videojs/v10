@@ -34,7 +34,7 @@ describe('syncPreloadAttribute', () => {
     const context = makeContext({ mediaElement: video });
 
     // Sync should pick up existing mediaElement on first effect fire (synchronous)
-    const cleanup = syncPreloadAttribute({ state, context });
+    const cleanup = syncPreloadAttribute.setup({ state, context });
 
     expect(state.preload.get()).toBe('auto');
 
@@ -46,7 +46,7 @@ describe('syncPreloadAttribute', () => {
     const video = { preload: 'auto' } as MediaElementLike;
     const context = makeContext({ mediaElement: video });
 
-    const cleanup = syncPreloadAttribute({ state, context });
+    const cleanup = syncPreloadAttribute.setup({ state, context });
 
     expect(state.preload.get()).toBe('auto');
 
@@ -65,7 +65,7 @@ describe('syncPreloadAttribute', () => {
     const state = makeState();
     const context = makeContext();
 
-    const cleanup = syncPreloadAttribute({ state, context });
+    const cleanup = syncPreloadAttribute.setup({ state, context });
 
     expect(state.preload.get()).toBeUndefined();
 
@@ -76,7 +76,7 @@ describe('syncPreloadAttribute', () => {
     const state = makeState();
     const context = makeContext({ mediaElement: { preload: '' } as MediaElementLike });
 
-    const cleanup = syncPreloadAttribute({ state, context });
+    const cleanup = syncPreloadAttribute.setup({ state, context });
 
     expect(state.preload.get()).toBeUndefined();
 
@@ -87,7 +87,7 @@ describe('syncPreloadAttribute', () => {
     const state = makeState({ preload: 'auto' });
     const context = makeContext();
 
-    const cleanup = syncPreloadAttribute({ state, context });
+    const cleanup = syncPreloadAttribute.setup({ state, context });
 
     context.mediaElement.set(undefined);
 

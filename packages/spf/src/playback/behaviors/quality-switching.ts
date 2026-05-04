@@ -1,4 +1,4 @@
-import type { StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { snapshot } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
@@ -82,11 +82,11 @@ function getVideoTracks(presentation: MaybeResolvedPresentation) {
  * quality. The browser's SourceBuffer replaces the overlapping buffered range.
  *
  * @example
- * const cleanup = switchQuality({ state });
+ * const cleanup = switchQuality.setup({ state });
  * // Later, when done:
  * cleanup();
  */
-export function switchQuality({
+function switchQualitySetup({
   state,
   config = {},
 }: {
@@ -137,3 +137,9 @@ export function switchQuality({
     state.selectedVideoTrackId.set(optimal.id);
   });
 }
+
+export const switchQuality = defineBehavior({
+  stateKeys: ['presentation', 'bandwidthState', 'selectedVideoTrackId', 'abrDisabled'],
+  contextKeys: [],
+  setup: switchQualitySetup,
+});

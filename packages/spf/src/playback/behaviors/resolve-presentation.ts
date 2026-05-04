@@ -1,4 +1,4 @@
-import type { StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, snapshot } from '../../core/signals/primitives';
@@ -72,11 +72,11 @@ function deriveState(state: PresentationState): ResolvePresentationState {
  * task and returns an AbortController so the framework aborts it on state exit.
  *
  * @example
- * const reactor = resolvePresentation({ state });
+ * const reactor = resolvePresentation.setup({ state });
  * // later:
  * reactor.destroy();
  */
-export function resolvePresentation({
+function resolvePresentationSetup({
   state,
 }: {
   state: StateSignals<PresentationState>;
@@ -114,3 +114,9 @@ export function resolvePresentation({
     },
   });
 }
+
+export const resolvePresentation = defineBehavior({
+  stateKeys: ['presentationUrl', 'presentation', 'preload', 'playbackInitiated'],
+  contextKeys: [],
+  setup: resolvePresentationSetup,
+});

@@ -1,4 +1,4 @@
-import type { StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { snapshot } from '../../core/signals/primitives';
 import {
@@ -26,12 +26,12 @@ import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
  * language preferences will be added when the selection algorithm matures.
  *
  * @example
- * const cleanup = selectMediaTrack({
+ * const cleanup = selectMediaTrack.setup({
  *   state,
  *   config: { type: 'video', initialBandwidth: 2_000_000 },
  * });
  */
-export function selectMediaTrack({
+function selectMediaTrackSetup({
   state,
   config,
 }: {
@@ -63,14 +63,14 @@ export function selectMediaTrack({
  * Note: Currently does not auto-select (user opt-in).
  *
  * @example
- * const cleanup = selectTextTrack({ state, config: { type: 'text' } });
+ * const cleanup = selectTextTrack.setup({ state, config: { type: 'text' } });
  */
-export function selectTextTrack({
+function selectTextTrackSetup({
   state,
-  config = { type: 'text' },
+  config,
 }: {
   state: StateSignals<TrackSelectionState>;
-  config?: TextSelectionConfig;
+  config: TextSelectionConfig;
 }): () => void {
   return effect(() => {
     const currentState = snapshot(state);
@@ -86,3 +86,18 @@ export function selectTextTrack({
     }
   });
 }
+
+export const selectMediaTrack = defineBehavior({
+  // selectMediaTrack handles 'video' or 'audio'; the dynamic write key is one
+  // of selectedVideoTrackId / selectedAudioTrackId / selectedTextTrackId
+  // (selectedTextTrackId only via shouldSelectTrack predicate). All three
+  // selected*TrackId fields are part of the input shape.
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: selectMediaTrackSetup,
+});
+export const selectTextTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: selectTextTrackSetup,
+});

@@ -108,29 +108,53 @@ type Deps = {
 // each behavior's own config type declares are structurally tolerated.
 // ============================================================================
 
-const loadVideoSegments = ({ config, ...deps }: Deps) =>
-  loadSegments({ ...deps, config: { type: 'video', ...config } });
+const loadVideoSegments = {
+  stateKeys: loadSegments.stateKeys,
+  contextKeys: loadSegments.contextKeys,
+  setup: ({ config, ...deps }: Deps) => loadSegments.setup({ ...deps, config: { type: 'video', ...config } }),
+};
 
-const loadAudioSegments = ({ config, ...deps }: Deps) =>
-  loadSegments({ ...deps, config: { type: 'audio', ...config } });
+const loadAudioSegments = {
+  stateKeys: loadSegments.stateKeys,
+  contextKeys: loadSegments.contextKeys,
+  setup: ({ config, ...deps }: Deps) => loadSegments.setup({ ...deps, config: { type: 'audio', ...config } }),
+};
 
-const resolveVideoTrack = ({ config, ...deps }: Deps) =>
-  resolveTrack({ ...deps, config: { type: 'video' as const, ...config } });
+const resolveVideoTrack = {
+  stateKeys: resolveTrack.stateKeys,
+  contextKeys: resolveTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'video' as const, ...config } }),
+};
 
-const resolveAudioTrack = ({ config, ...deps }: Deps) =>
-  resolveTrack({ ...deps, config: { type: 'audio' as const, ...config } });
+const resolveAudioTrack = {
+  stateKeys: resolveTrack.stateKeys,
+  contextKeys: resolveTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'audio' as const, ...config } }),
+};
 
-const resolveTextTrack = ({ config, ...deps }: Deps) =>
-  resolveTrack({ ...deps, config: { type: 'text' as const, ...config } });
+const resolveTextTrack = {
+  stateKeys: resolveTrack.stateKeys,
+  contextKeys: resolveTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'text' as const, ...config } }),
+};
 
-const selectVideoTrack = ({ config, ...deps }: Deps) =>
-  selectMediaTrack({ ...deps, config: { type: 'video', ...config } });
+const selectVideoTrack = {
+  stateKeys: selectMediaTrack.stateKeys,
+  contextKeys: selectMediaTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => selectMediaTrack.setup({ ...deps, config: { type: 'video', ...config } }),
+};
 
-const selectAudioTrack = ({ config, ...deps }: Deps) =>
-  selectMediaTrack({ ...deps, config: { type: 'audio', ...config } });
+const selectAudioTrack = {
+  stateKeys: selectMediaTrack.stateKeys,
+  contextKeys: selectMediaTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => selectMediaTrack.setup({ ...deps, config: { type: 'audio', ...config } }),
+};
 
-const selectTextTrack = ({ config, ...deps }: Deps) =>
-  _selectTextTrack({ ...deps, config: { type: 'text', ...config } });
+const selectTextTrack = {
+  stateKeys: _selectTextTrack.stateKeys,
+  contextKeys: _selectTextTrack.contextKeys,
+  setup: ({ config, ...deps }: Deps) => _selectTextTrack.setup({ ...deps, config: { type: 'text', ...config } }),
+};
 
 // ============================================================================
 // Signal-map factories

@@ -1,4 +1,4 @@
-import type { StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { snapshot } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
@@ -70,12 +70,12 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
  */
-export function resolveTrack<T extends TrackType>({
+function resolveTrackSetup({
   state,
   config,
 }: {
   state: StateSignals<TrackResolutionState>;
-  config: TrackResolutionConfig<T>;
+  config: TrackResolutionConfig;
 }): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
@@ -121,3 +121,9 @@ export function resolveTrack<T extends TrackType>({
     cleanup();
   };
 }
+
+export const resolveTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: resolveTrackSetup,
+});

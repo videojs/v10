@@ -95,7 +95,7 @@ describe('selectMediaTrack — video', () => {
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectMediaTrack({ state, config: { type: 'video' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { type: 'video' } });
 
     // Wait for selection
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -109,7 +109,7 @@ describe('selectMediaTrack — video', () => {
     const presentation = createPresentation({ video: [] });
     const state = makeState({ presentation, selectedVideoTrackId: 'existing-video' });
 
-    const cleanup = selectMediaTrack({ state, config: { type: 'video' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { type: 'video' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -141,7 +141,7 @@ describe('selectMediaTrack — video', () => {
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectMediaTrack({ state, config: { initialBandwidth: 3_000_000, type: 'video' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { initialBandwidth: 3_000_000, type: 'video' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -171,7 +171,7 @@ describe('selectMediaTrack — audio', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectMediaTrack({ state, config: { type: 'audio' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { type: 'audio' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -184,7 +184,7 @@ describe('selectMediaTrack — audio', () => {
     const presentation = createPresentation({ audio: [] });
     const state = makeState({ presentation, selectedAudioTrackId: 'existing-audio' });
 
-    const cleanup = selectMediaTrack({ state, config: { type: 'audio' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { type: 'audio' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -226,7 +226,7 @@ describe('selectMediaTrack — audio', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectMediaTrack({ state, config: { type: 'audio', preferredAudioLanguage: 'es' } });
+    const cleanup = selectMediaTrack.setup({ state, config: { type: 'audio', preferredAudioLanguage: 'es' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -254,7 +254,7 @@ describe('selectTextTrack', () => {
     const presentation = createPresentation({ text: textTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectTextTrack({ state, config: { type: 'text' } });
+    const cleanup = selectTextTrack.setup({ state, config: { type: 'text' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 

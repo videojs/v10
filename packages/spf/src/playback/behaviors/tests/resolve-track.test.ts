@@ -69,7 +69,7 @@ http://example.com/segment2.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, config: { type: 'video' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -129,7 +129,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
 
-    const cleanup = resolveTrack({ state, config: { type: 'video' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -150,7 +150,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation });
 
-    const cleanup = resolveTrack({ state, config: { type: 'video' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -206,7 +206,7 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, config: { type: 'audio' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'audio' as const } });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -275,7 +275,7 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, config: { type: 'text' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'text' as const } });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -341,7 +341,7 @@ ${segUrl}
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
-    const cleanup = resolveTrack({ state, config: { type: 'video' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
 
     state.selectedVideoTrackId.set('track-b');
 
@@ -395,7 +395,7 @@ http://example.com/a-seg1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, config: { type: 'video' as const } });
+    const cleanup = resolveTrack.setup({ state, config: { type: 'video' as const } });
 
     // Trigger multiple state changes while track-a is resolving.
     state.selectedVideoTrackId.set('track-a');

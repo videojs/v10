@@ -89,7 +89,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -100,7 +100,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('360p');
       cleanup();
     });
@@ -117,7 +117,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -129,7 +129,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -142,7 +142,7 @@ describe('switchQuality', () => {
         bandwidthState: createBandwidthState(3_000_000),
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -156,7 +156,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       state.bandwidthState.set(createBandwidthState(800_000));
@@ -173,7 +173,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
       state.bandwidthState.set(createBandwidthState(700_000));
@@ -192,7 +192,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       state.bandwidthState.set(createBandwidthState(3_000_000));
@@ -215,7 +215,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -227,7 +227,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       vi.advanceTimersByTime(1000);
@@ -253,7 +253,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { safetyMargin: 1.0 };
-      const cleanup = switchQuality({ state, config });
+      const cleanup = switchQuality.setup({ state, config });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -266,7 +266,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { minUpgradeInterval: 2000 };
-      const cleanup = switchQuality({ state, config });
+      const cleanup = switchQuality.setup({ state, config });
 
       state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
@@ -296,7 +296,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { initialBandwidth: 5_000_000 };
-      const cleanup = switchQuality({ state, config });
+      const cleanup = switchQuality.setup({ state, config });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -310,7 +310,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       cleanup();
 
       vi.advanceTimersByTime(DEFAULT_SWITCHING_CONFIG.minUpgradeInterval + 1);

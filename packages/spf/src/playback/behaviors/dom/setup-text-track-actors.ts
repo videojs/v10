@@ -1,4 +1,4 @@
-import type { ContextSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed } from '../../../core/signals/primitives';
 import { createTextTracksActor } from '../../actors/dom/text-tracks';
@@ -55,7 +55,7 @@ export interface TextTrackActorsConfig {
  *   config: { resolveTextTrackSegment: resolveVttSegment },
  * });
  */
-export function setupTextTrackActors({
+function setupTextTrackActorsSetup({
   context,
   config,
 }: {
@@ -81,3 +81,9 @@ export function setupTextTrackActors({
     };
   });
 }
+
+export const setupTextTrackActors = defineBehavior({
+  stateKeys: [],
+  contextKeys: ['mediaElement', 'textTracksActor', 'segmentLoaderActor'],
+  setup: setupTextTrackActorsSetup,
+});

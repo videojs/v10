@@ -23,7 +23,7 @@ function makeContext(initial: CurrentTimeContext = {}): ContextSignals<CurrentTi
 function setupTrackCurrentTime(initialState: CurrentTimeState, initialContext: CurrentTimeContext) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = trackCurrentTime({ state, context });
+  const cleanup = trackCurrentTime.setup({ state, context });
   return { state, context, cleanup };
 }
 
@@ -103,7 +103,7 @@ describe('trackCurrentTime', () => {
         mediaElement: signal<HTMLMediaElement | undefined>(mediaElement),
         videoBuffer: signal<unknown>(undefined),
       };
-      const cleanup = trackCurrentTime({ state, context });
+      const cleanup = trackCurrentTime.setup({ state, context });
 
       await vi.waitFor(() => expect(state.currentTime.get()).toBe(5));
 

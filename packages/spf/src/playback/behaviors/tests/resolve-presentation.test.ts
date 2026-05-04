@@ -28,7 +28,7 @@ variant1.m3u8
 variant2.m3u8`)
     );
 
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
     state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
 
@@ -65,7 +65,7 @@ variant2.m3u8`)
 variant1.m3u8`)
     );
 
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
     // No URL yet — flipping preload shouldn't trigger fetch.
     state.preload.set('metadata');
@@ -101,7 +101,7 @@ variant1.m3u8`)
       preload: 'auto',
     });
 
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
     await vi.waitFor(() => {
       const pres = state.presentation.get();
@@ -149,7 +149,7 @@ variant1.m3u8`)
 
     const state = makeState({ presentation: resolvedPresentation, preload: 'auto' });
 
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -175,7 +175,7 @@ variant2.m3u8`)
 
     const state = makeState({ presentation: resolvedPresentation, preload: 'auto' });
 
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
     state.presentation.set({ url: 'http://example.com/second.m3u8' });
 
@@ -206,7 +206,7 @@ variant1.m3u8`)
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await vi.waitFor(() => {
         expect(state.presentation.get()).toHaveProperty('id');
@@ -227,7 +227,7 @@ variant1.m3u8`)
         preload: 'metadata',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await vi.waitFor(() => {
         expect(state.presentation.get()).toHaveProperty('id');
@@ -244,7 +244,7 @@ variant1.m3u8`)
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -262,7 +262,7 @@ variant1.m3u8`)
         presentation: { url: 'http://example.com/playlist.m3u8' },
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -287,7 +287,7 @@ variant1.m3u8`)
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       expect(fetchSpy).not.toHaveBeenCalled();
 
@@ -310,7 +310,7 @@ variant1.m3u8`)
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -335,7 +335,7 @@ variant1.m3u8`)
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       // Rapid no-op updates — preload doesn't change semantically.
       state.preload.set('auto');
@@ -363,7 +363,7 @@ variant1.m3u8`)
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await vi.waitFor(() => {
         expect(state.presentation.get()).toHaveProperty('id');

@@ -1,5 +1,5 @@
 import { listen } from '@videojs/utils/dom';
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed } from '../../../core/signals/primitives';
 
@@ -24,9 +24,9 @@ export interface PlaybackRateContext {
  * event. Also syncs immediately when a media element becomes available.
  *
  * @example
- * const cleanup = trackPlaybackRate({ state, context });
+ * const cleanup = trackPlaybackRate.setup({ state, context });
  */
-export function trackPlaybackRate({
+function trackPlaybackRateSetup({
   state,
   context,
 }: {
@@ -51,3 +51,9 @@ export function trackPlaybackRate({
     cleanupEffect();
   };
 }
+
+export const trackPlaybackRate = defineBehavior({
+  stateKeys: ['playbackRate'],
+  contextKeys: ['mediaElement'],
+  setup: trackPlaybackRateSetup,
+});

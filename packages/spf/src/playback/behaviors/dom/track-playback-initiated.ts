@@ -1,5 +1,5 @@
 import { listen } from '@videojs/utils/dom';
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, snapshot } from '../../../core/signals/primitives';
@@ -56,11 +56,11 @@ function deriveState(
  *   `state.playbackInitiated` to `false` on any change or lost preconditions.
  *
  * @example
- * const reactor = trackPlaybackInitiated({ state, context });
+ * const reactor = trackPlaybackInitiated.setup({ state, context });
  * // later:
  * reactor.destroy();
  */
-export function trackPlaybackInitiated({
+function trackPlaybackInitiatedSetup({
   state,
   context,
 }: {
@@ -108,3 +108,9 @@ export function trackPlaybackInitiated({
     },
   });
 }
+
+export const trackPlaybackInitiated = defineBehavior({
+  stateKeys: ['playbackInitiated', 'presentationUrl'],
+  contextKeys: ['mediaElement'],
+  setup: trackPlaybackInitiatedSetup,
+});

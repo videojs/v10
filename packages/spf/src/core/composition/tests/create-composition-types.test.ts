@@ -38,7 +38,11 @@ const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undef
 describe('createComposition type errors', () => {
   // A typed behavior that pins the inferred composition shape so the error
   // tests below can target the expected shape without explicit type args.
-  const noopState: Behavior<State, Context, object> = () => {};
+  const noopState: Behavior<State, Context, object> = {
+    stateKeys: [],
+    contextKeys: [],
+    setup: () => {},
+  };
 
   it('errors when set() is called on a state signal with the wrong value type', () => {
     const composition = createComposition([noopState], { state, context });
@@ -73,18 +77,26 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when a behavior writes a wrong-type value to a state signal', () => {
-    const badBehavior: Behavior<State, Context, object> = ({ state }) => {
-      // @ts-expect-error — count is number | undefined
-      state.count.set('wrong');
+    const badBehavior: Behavior<State, Context, object> = {
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }) => {
+        // @ts-expect-error — count is number | undefined
+        state.count.set('wrong');
+      },
     };
     void badBehavior;
   });
 
   it('errors when a behavior reads a state signal as the wrong type', () => {
-    const badBehavior: Behavior<State, Context, object> = ({ state }) => {
-      // @ts-expect-error — count.get() returns number | undefined, not string
-      const _: string = state.count.get();
-      void _;
+    const badBehavior: Behavior<State, Context, object> = {
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }) => {
+        // @ts-expect-error — count.get() returns number | undefined, not string
+        const _: string = state.count.get();
+        void _;
+      },
     };
     void badBehavior;
   });
@@ -116,8 +128,16 @@ describe('createComposition type errors', () => {
   // ==========================================================================
 
   it('errors when composing behaviors with conflicting required state types', () => {
-    const expectsNumber = (_deps: { state: StateSignals<{ value: number }> }) => {};
-    const expectsString = (_deps: { state: StateSignals<{ value: string }> }) => {};
+    const expectsNumber = {
+      stateKeys: ['value'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ value: number }> }) => {},
+    };
+    const expectsString = {
+      stateKeys: ['value'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ value: string }> }) => {},
+    };
 
     // @ts-expect-error — behaviors have incompatible state: { value: number } vs { value: string }
     createComposition([expectsNumber, expectsString], {
@@ -127,8 +147,16 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when composing behaviors with conflicting optional state types', () => {
-    const expectsNumber = (_deps: { state: StateSignals<{ count?: number }> }) => {};
-    const expectsString = (_deps: { state: StateSignals<{ count?: string }> }) => {};
+    const expectsNumber = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }> }) => {},
+    };
+    const expectsString = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: string }> }) => {},
+    };
 
     // @ts-expect-error — behaviors have incompatible state: { count?: number } vs { count?: string }
     createComposition([expectsNumber, expectsString], {
@@ -138,8 +166,16 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when composing behaviors with conflicting context types', () => {
-    const expectsCanvas = (_deps: { context: ContextSignals<{ el?: CanvasSurface }> }) => {};
-    const expectsVideo = (_deps: { context: ContextSignals<{ el?: VideoSurface }> }) => {};
+    const expectsCanvas = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_deps: { context: ContextSignals<{ el?: CanvasSurface }> }) => {},
+    };
+    const expectsVideo = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_deps: { context: ContextSignals<{ el?: VideoSurface }> }) => {},
+    };
 
     // @ts-expect-error — context conflict: CanvasSurface vs VideoSurface
     createComposition([expectsCanvas, expectsVideo], {
@@ -153,8 +189,16 @@ describe('createComposition type errors', () => {
     // without conflict — `Surface & VideoSurface = VideoSurface`. The prior
     // subtype-based owner check accepted this too; the difference vs. that
     // approach is sibling-type behavior (see the previous test).
-    const expectsSurface = (_deps: { context: ContextSignals<{ el?: Surface }> }) => {};
-    const expectsVideo = (_deps: { context: ContextSignals<{ el?: VideoSurface }> }) => {};
+    const expectsSurface = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_deps: { context: ContextSignals<{ el?: Surface }> }) => {},
+    };
+    const expectsVideo = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_deps: { context: ContextSignals<{ el?: VideoSurface }> }) => {},
+    };
 
     // No error — Surface and VideoSurface intersect to VideoSurface.
     createComposition([expectsSurface, expectsVideo], {
@@ -164,8 +208,16 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when composing behaviors with conflicting config types', () => {
-    const expectsNumber = (_deps: { config: { interval?: number } }) => {};
-    const expectsString = (_deps: { config: { interval?: string } }) => {};
+    const expectsNumber = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: (_deps: { config: { interval?: number } }) => {},
+    };
+    const expectsString = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: (_deps: { config: { interval?: string } }) => {},
+    };
 
     // @ts-expect-error — config conflict: { interval?: number } vs { interval?: string }
     createComposition([expectsNumber, expectsString], {
@@ -180,11 +232,16 @@ describe('createComposition type errors', () => {
   // ==========================================================================
 
   it('allows composing behaviors that omit context', () => {
-    const stateOnly = (_deps: { state: StateSignals<{ count?: number }> }) => {};
-    const withContext = (_deps: {
-      state: StateSignals<{ count?: number }>;
-      context: ContextSignals<{ el?: Surface }>;
-    }) => {};
+    const stateOnly = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }> }) => {},
+    };
+    const withContext = {
+      stateKeys: ['count'] as const,
+      contextKeys: ['el'] as const,
+      setup: (_deps: { state: StateSignals<{ count?: number }>; context: ContextSignals<{ el?: Surface }> }) => {},
+    };
 
     // No error — omitting context is not a conflict
     createComposition([stateOnly, withContext], {
@@ -194,8 +251,16 @@ describe('createComposition type errors', () => {
   });
 
   it('allows composing behaviors that omit state', () => {
-    const configOnly = (_deps: { config: { interval?: number } }) => {};
-    const withState = (_deps: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) => {};
+    const configOnly = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: (_deps: { config: { interval?: number } }) => {},
+    };
+    const withState = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) => {},
+    };
 
     // No error — omitting state is not a conflict
     createComposition([configOnly, withState], {
@@ -206,8 +271,16 @@ describe('createComposition type errors', () => {
   });
 
   it('allows composing behaviors that omit config', () => {
-    const stateOnly = (_deps: { state: StateSignals<{ count?: number }> }) => {};
-    const withConfig = (_deps: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) => {};
+    const stateOnly = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }> }) => {},
+    };
+    const withConfig = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) => {},
+    };
 
     // No error — omitting config is not a conflict
     createComposition([stateOnly, withConfig], {
@@ -218,8 +291,16 @@ describe('createComposition type errors', () => {
   });
 
   it('allows composing behaviors where each declares disjoint state keys', () => {
-    const a = (_deps: { state: StateSignals<{ count?: number }> }) => {};
-    const b = (_deps: { state: StateSignals<{ label?: string }> }) => {};
+    const a = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }> }) => {},
+    };
+    const b = {
+      stateKeys: ['label'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ label?: string }> }) => {},
+    };
 
     // No error — disjoint keys merge cleanly
     createComposition([a, b], {

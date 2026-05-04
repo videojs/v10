@@ -254,7 +254,7 @@ describe('calculatePresentationDuration', () => {
   it('sets presentation.duration from resolved video track', async () => {
     const state = makeState();
 
-    const cleanup = calculatePresentationDuration({ state });
+    const cleanup = calculatePresentationDuration.setup({ state });
 
     state.presentation.set(
       createPresentation({
@@ -286,7 +286,7 @@ describe('calculatePresentationDuration', () => {
   it('sets presentation.duration from resolved audio track', async () => {
     const state = makeState();
 
-    const cleanup = calculatePresentationDuration({ state });
+    const cleanup = calculatePresentationDuration.setup({ state });
 
     state.presentation.set(
       createPresentation({
@@ -341,7 +341,7 @@ describe('calculatePresentationDuration', () => {
       selectedVideoTrackId: 'video-1',
     });
 
-    const cleanup = calculatePresentationDuration({ state });
+    const cleanup = calculatePresentationDuration.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -353,7 +353,7 @@ describe('calculatePresentationDuration', () => {
   it('does not set invalid durations', async () => {
     const state = makeState();
 
-    const cleanup = calculatePresentationDuration({ state });
+    const cleanup = calculatePresentationDuration.setup({ state });
 
     state.presentation.set(
       createPresentation({

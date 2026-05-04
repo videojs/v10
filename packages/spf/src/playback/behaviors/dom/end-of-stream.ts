@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -262,7 +262,7 @@ const endOfStreamTask = async (
  * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
  * and MediaSource.duration updates.
  */
-export function endOfStream({
+function endOfStreamSetup({
   state,
   context,
 }: {
@@ -298,3 +298,15 @@ export function endOfStream({
 
   return cleanupEffect;
 }
+
+export const endOfStream = defineBehavior({
+  stateKeys: [
+    'presentation',
+    'selectedVideoTrackId',
+    'selectedAudioTrackId',
+    'selectedTextTrackId',
+    'mediaSourceReadyState',
+  ],
+  contextKeys: ['mediaSource', 'mediaElement', 'videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
+  setup: endOfStreamSetup,
+});

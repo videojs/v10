@@ -37,26 +37,42 @@ export interface BehaviorDeps<S extends object, C extends object, Cfg extends ob
 }
 
 /**
- * A behavior is a function that receives deps (state, context, config)
- * and returns an optional cleanup handle.
+ * A behavior announces the state and context keys it needs alongside a
+ * `setup` function that receives deps (state, context, config) and
+ * returns an optional cleanup handle.
  *
- * Each behavior declares its own state/context/config shape via its
- * parameter type. The composition's types are determined by the engine
- * — or inferred from the array of behaviors.
+ * The `stateKeys` / `contextKeys` declarations are the runtime expression
+ * of the behavior's contract — the caller (e.g. `createComposition`) uses
+ * them to know which signals to provide. The setup parameter type
+ * declares the *types* of those keys; together they form a complete
+ * contract.
+ *
+ * Manual `Behavior<>` literals (e.g. engine wrappers that forward keys
+ * from a wrapped behavior) opt out of exhaustiveness — the type alias is
+ * permissive (subset). Source behaviors should use `defineBehavior` to
+ * get exhaustiveness enforcement at the call site.
  */
-export type Behavior<S extends object, C extends object, Cfg extends object> = (
-  deps: BehaviorDeps<S, C, Cfg>
-) => BehaviorCleanup;
+export interface Behavior<S extends object, C extends object, Cfg extends object> {
+  /** State keys this behavior reads/writes. Subset of `keyof S`. */
+  stateKeys: readonly (keyof S)[];
+  /** Context keys this behavior reads/writes. Subset of `keyof C`. */
+  contextKeys: readonly (keyof C)[];
+  setup: (deps: BehaviorDeps<S, C, Cfg>) => BehaviorCleanup;
+}
 
 // =============================================================================
 // Behavior type inference
 // =============================================================================
 
-/** A behavior function with unconstrained deps — used as a generic bound. */
-type AnyBehavior = (deps: any) => BehaviorCleanup;
+/** A behavior with an unconstrained setup — used as a generic bound. */
+type AnyBehavior = {
+  stateKeys: readonly PropertyKey[];
+  contextKeys: readonly PropertyKey[];
+  setup: (deps: any) => BehaviorCleanup;
+};
 
-/** Extract the first parameter (deps) type from a behavior function. */
-type DepsOf<F> = F extends (deps: infer D, ...args: any[]) => any ? D : never;
+/** Extract the deps type from a behavior's setup function. */
+type DepsOf<B> = B extends { setup: (deps: infer D, ...args: any[]) => any } ? D : never;
 
 /**
  * Empty-object fallback used when a behavior omits state, context, or config.
@@ -200,32 +216,16 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
 /**
  * Create a composition by wiring behaviors to pre-built signal maps.
  *
- * Two ways to call:
- *
- * 1. **Inferred** — pass behaviors and let TypeScript intersect their
- *    deps to compute the engine's state, context, and config shapes.
- *    Conflicts (e.g. two behaviors disagreeing on a field's type) surface
- *    as a compose-time type error. Best when behaviors declare narrow
- *    per-feature shapes.
- * 2. **Explicit** — supply `<S, C, Cfg>` type arguments and the engine
- *    uses those shapes directly. Best for engines that aggregate many
- *    wrapper-style behaviors all sharing the same `Behavior<S, C, Cfg>`
- *    type — TypeScript's distributive intersection inference can drop
- *    types in that case, so explicit arguments are more reliable.
+ * Pass behaviors and let TypeScript intersect their deps to compute the
+ * engine's state, context, and config shapes. Conflicts (e.g. two behaviors
+ * disagreeing on a field's type) surface as a compose-time type error.
  *
  * @example
  * ```ts
- * // 1. Inferred — compose-time conflict detection on state/context/config
  * const composition = createComposition([resolvePresentation, selectVideoTrack], {
  *   state: createStateSignals(),
  *   context: createContextSignals(),
  * });
- *
- * // 2. Explicit (engine declares its full shape up front)
- * const composition = createComposition<MyState, MyContext, MyConfig>(
- *   [behavior1, behavior2, ...],
- *   { config, state, context }
- * );
  * ```
  */
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
@@ -246,7 +246,7 @@ export function createComposition(
     context,
     config: config ?? ({} as object),
   };
-  const cleanups = behaviors.map((behavior) => behavior(deps));
+  const cleanups = behaviors.map((behavior) => behavior.setup(deps));
 
   return {
     state,
@@ -272,5 +272,97 @@ export function createComposition(
         (context[key as keyof typeof context] as Signal<unknown>).set(undefined);
       }
     },
+  };
+}
+
+// =============================================================================
+// defineBehavior — typed factory with key/param consistency enforcement
+// =============================================================================
+
+/**
+ * Compose-time exhaustiveness check.
+ *
+ * Adds a phantom error tag to the parameter shape when `Keys` does not
+ * cover every key in `Slot`. The user's value won't satisfy the phantom
+ * field requirement, so TS surfaces the failure at the call site with a
+ * descriptive message. When exhaustive, the tag is `Empty` and adds no
+ * constraint.
+ */
+type ExhaustiveKeys<Keys extends readonly PropertyKey[], Slot extends object, Name extends string> = [
+  keyof Slot,
+] extends [Keys[number]]
+  ? Empty
+  : { [K in `Error: ${Name}Keys must list every key in the typed slice`]: Exclude<keyof Slot, Keys[number]> };
+
+/**
+ * Typed factory for behaviors that enforces single-behavior key/param
+ * consistency: declared `stateKeys` must equal `keyof S` (where `S` is
+ * inferred from the setup's `state` parameter type), and same for
+ * `contextKeys` / `C`.
+ *
+ * The `const` modifier on `SK` / `CK` captures literal tuples so e.g.
+ * `stateKeys: ['preload']` infers as `readonly ['preload']`, no `as
+ * const` needed at the call site.
+ *
+ * Cross-behavior consistency at `createComposition` is unchanged — the
+ * existing `IntersectBehaviors` machinery still runs over each
+ * behavior's setup param type.
+ *
+ * @example
+ * ```ts
+ * export const syncPreloadAttribute = defineBehavior({
+ *   stateKeys: ['preload'],
+ *   contextKeys: ['mediaElement'],
+ *   setup: ({ state, context }: {
+ *     state: StateSignals<{ preload?: 'auto' | 'metadata' | 'none' }>;
+ *     context: ContextSignals<{ mediaElement?: HTMLMediaElement | undefined }>;
+ *   }) => { ... },
+ * });
+ * ```
+ */
+/**
+ * Deps shape for a behavior whose deps slot is empty (no keys). When a
+ * slot is empty, the corresponding deps field is optional — callers
+ * (typically tests) can omit it, and it defaults to `{}` at runtime via
+ * `createComposition`.
+ *
+ * When a slot has at least one key, the behavior reads `state.foo` /
+ * `context.bar` / `config.baz` and we need the field to be required so
+ * the access is type-safe.
+ */
+type RequireIfNonEmpty<Key extends string, T extends object> = keyof T extends never
+  ? { [K in Key]?: T }
+  : { [K in Key]: T };
+
+type DepsForCfg<S extends object, C extends object, Cfg extends object> = RequireIfNonEmpty<'state', StateSignals<S>> &
+  RequireIfNonEmpty<'context', ContextSignals<C>> &
+  RequireIfNonEmpty<'config', Cfg>;
+
+export function defineBehavior<
+  S extends object = Empty,
+  C extends object = Empty,
+  Cfg extends object = Empty,
+  const SK extends readonly (keyof S)[] = readonly [],
+  const CK extends readonly (keyof C)[] = readonly [],
+  R extends BehaviorCleanup = BehaviorCleanup,
+>(
+  behavior: {
+    stateKeys: SK;
+    contextKeys: CK;
+    setup: (deps: { state: StateSignals<S>; context: ContextSignals<C>; config: Cfg }) => R;
+  } & ExhaustiveKeys<SK, S, 'state'> &
+    ExhaustiveKeys<CK, C, 'context'>
+): {
+  stateKeys: SK;
+  contextKeys: CK;
+  setup: (deps: DepsForCfg<S, C, Cfg>) => R;
+} {
+  // The runtime shape is identical; the cast bridges TS's view of the
+  // parameter (config required) to the return view (config optional when
+  // Cfg has no keys).
+  return behavior as unknown as {
+    stateKeys: SK;
+    contextKeys: CK;
+    setup: (deps: DepsForCfg<S, C, Cfg>) => R;
   };
 }

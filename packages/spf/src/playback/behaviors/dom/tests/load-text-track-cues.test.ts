@@ -89,8 +89,8 @@ function createMockSegments(count: number): Segment[] {
 function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialContext: ComposedContext) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const setupCleanup = setupTextTrackActors({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
-  const reactor = loadTextTrackCues({ state, context });
+  const setupCleanup = setupTextTrackActors.setup({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
+  const reactor = loadTextTrackCues.setup({ state, context });
   const cleanup = () => {
     reactor.destroy();
     setupCleanup();

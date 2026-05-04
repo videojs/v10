@@ -152,7 +152,7 @@ function setupLoadSegments(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = loadSegments({ state, context, config: { type } });
+  const cleanup = loadSegments.setup({ state, context, config: { type } });
   return { state, context, cleanup };
 }
 

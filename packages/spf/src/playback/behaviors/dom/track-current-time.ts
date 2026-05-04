@@ -1,5 +1,5 @@
 import { listen } from '@videojs/utils/dom';
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 
 /**
@@ -39,9 +39,9 @@ export function canTrackCurrentTime(context: CurrentTimeContext): boolean {
  * Also syncs immediately when a media element becomes available.
  *
  * @example
- * const cleanup = trackCurrentTime({ state, context });
+ * const cleanup = trackCurrentTime.setup({ state, context });
  */
-export function trackCurrentTime({
+function trackCurrentTimeSetup({
   state,
   context,
 }: {
@@ -81,3 +81,9 @@ export function trackCurrentTime({
     cleanupEffect();
   };
 }
+
+export const trackCurrentTime = defineBehavior({
+  stateKeys: ['currentTime'],
+  contextKeys: ['mediaElement'],
+  setup: trackCurrentTimeSetup,
+});

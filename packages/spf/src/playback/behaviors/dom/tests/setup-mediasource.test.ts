@@ -40,7 +40,7 @@ function makeContext(initial: MediaSourceContext = {}): ContextSignals<MediaSour
 function setupSetupMediaSource(initialState: MediaSourceState, initialContext: MediaSourceContext) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = setupMediaSource({ state, context });
+  const cleanup = setupMediaSource.setup({ state, context });
   return { state, context, cleanup };
 }
 

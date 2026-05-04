@@ -25,8 +25,12 @@ function makeContext(initial: Context = {}): ContextSignals<Context> {
 describe('createComposition', () => {
   describe('destroy()', () => {
     it('clears context signals populated by a behavior during setup', async () => {
-      const setBehavior: Behavior<State, Context, object> = ({ context }) => {
-        context.resource.set({ id: 'r1' });
+      const setBehavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: ['resource'],
+        setup: ({ context }) => {
+          context.resource.set({ id: 'r1' });
+        },
       };
 
       const composition = createComposition([setBehavior], {
@@ -43,7 +47,11 @@ describe('createComposition', () => {
 
     it('clears context signals populated via the initial signal map', async () => {
       const resource: Resource = { id: 'r1' };
-      const noopBehavior: Behavior<State, Context, object> = () => {};
+      const noopBehavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: [],
+        setup: () => {},
+      };
 
       const composition = createComposition([noopBehavior], {
         state: makeState(),
@@ -61,10 +69,14 @@ describe('createComposition', () => {
       const resource: Resource = { id: 'r1' };
       let resourceSeenByCleanup: Resource | undefined;
 
-      const cleanupBehavior: Behavior<State, Context, object> = ({ context }) => {
-        return () => {
-          resourceSeenByCleanup = context.resource.get();
-        };
+      const cleanupBehavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: ['resource'],
+        setup: ({ context }) => {
+          return () => {
+            resourceSeenByCleanup = context.resource.get();
+          };
+        },
       };
 
       const composition = createComposition([cleanupBehavior], {
@@ -81,9 +93,13 @@ describe('createComposition', () => {
     it('awaits async cleanups before clearing context', async () => {
       let cleanupCompleted = false;
 
-      const asyncCleanupBehavior: Behavior<State, Context, object> = () => async () => {
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
-        cleanupCompleted = true;
+      const asyncCleanupBehavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: [],
+        setup: () => async () => {
+          await new Promise<void>((resolve) => setTimeout(resolve, 10));
+          cleanupCompleted = true;
+        },
       };
 
       const composition = createComposition([asyncCleanupBehavior], {
@@ -105,11 +121,19 @@ describe('createComposition', () => {
         a?: Resource;
         b?: Resource;
       }
-      const setA: Behavior<State, MultiContext, object> = ({ context }) => {
-        context.a.set({ id: 'a1' });
+      const setA: Behavior<State, MultiContext, object> = {
+        stateKeys: [],
+        contextKeys: ['a'],
+        setup: ({ context }) => {
+          context.a.set({ id: 'a1' });
+        },
       };
-      const setB: Behavior<State, MultiContext, object> = ({ context }) => {
-        context.b.set({ id: 'b1' });
+      const setB: Behavior<State, MultiContext, object> = {
+        stateKeys: [],
+        contextKeys: ['b'],
+        setup: ({ context }) => {
+          context.b.set({ id: 'b1' });
+        },
       };
 
       const context: ContextSignals<MultiContext> = {
@@ -128,8 +152,12 @@ describe('createComposition', () => {
     });
 
     it('also clears state signals on destroy', async () => {
-      const incrementCount: Behavior<State, Context, object> = ({ state }) => {
-        state.count.set(5);
+      const incrementCount: Behavior<State, Context, object> = {
+        stateKeys: ['count'],
+        contextKeys: [],
+        setup: ({ state }) => {
+          state.count.set(5);
+        },
       };
 
       const composition = createComposition([incrementCount], {
@@ -150,11 +178,19 @@ describe('createComposition', () => {
       let stateA: StateSignals<State> | undefined;
       let stateB: StateSignals<State> | undefined;
 
-      const captureA: Behavior<State, Context, object> = ({ state }) => {
-        stateA = state;
+      const captureA: Behavior<State, Context, object> = {
+        stateKeys: ['count'],
+        contextKeys: [],
+        setup: ({ state }) => {
+          stateA = state;
+        },
       };
-      const captureB: Behavior<State, Context, object> = ({ state }) => {
-        stateB = state;
+      const captureB: Behavior<State, Context, object> = {
+        stateKeys: ['count'],
+        contextKeys: [],
+        setup: ({ state }) => {
+          stateB = state;
+        },
       };
 
       createComposition([captureA, captureB], {
@@ -169,7 +205,11 @@ describe('createComposition', () => {
     it('exposes the same signal maps via composition.state and composition.context', () => {
       const state = makeState();
       const context = makeContext();
-      const noopBehavior: Behavior<State, Context, object> = () => {};
+      const noopBehavior: Behavior<State, Context, object> = {
+        stateKeys: [],
+        contextKeys: [],
+        setup: () => {},
+      };
       const composition = createComposition([noopBehavior], { state, context });
 
       expect(composition.state).toBe(state);
@@ -180,8 +220,12 @@ describe('createComposition', () => {
       let received: { interval: number } | undefined;
       const config = { interval: 250 };
 
-      const captureConfig: Behavior<State, Context, { interval: number }> = ({ config }) => {
-        received = config;
+      const captureConfig: Behavior<State, Context, { interval: number }> = {
+        stateKeys: [],
+        contextKeys: [],
+        setup: ({ config }) => {
+          received = config;
+        },
       };
 
       createComposition([captureConfig], {

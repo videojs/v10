@@ -14,7 +14,7 @@ function makeContext(initial: PlaybackRateContext = {}): ContextSignals<Playback
 function setupTrackPlaybackRate(initialState: PlaybackRateState = {}, initialContext: PlaybackRateContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = trackPlaybackRate({ state, context });
+  const cleanup = trackPlaybackRate.setup({ state, context });
   return { state, context, cleanup };
 }
 

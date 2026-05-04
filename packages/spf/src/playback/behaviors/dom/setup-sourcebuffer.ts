@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed } from '../../../core/signals/primitives';
 import { createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
@@ -67,9 +67,9 @@ export function buildMimeCodec(track: ResolvedTrack): string {
  * track types are derived from the presentation rather than hardcoded.
  *
  * @example
- * const cleanup = setupSourceBuffers({ state, context });
+ * const cleanup = setupSourceBuffers.setup({ state, context });
  */
-export function setupSourceBuffers({
+function setupSourceBuffersSetup({
   state,
   context,
 }: {
@@ -127,3 +127,9 @@ export function setupSourceBuffers({
 
   return cleanupEffect;
 }
+
+export const setupSourceBuffers = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+  contextKeys: ['mediaSource', 'videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
+  setup: setupSourceBuffersSetup,
+});

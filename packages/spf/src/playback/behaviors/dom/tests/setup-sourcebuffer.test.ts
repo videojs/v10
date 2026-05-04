@@ -159,7 +159,7 @@ function makeContext(initial: SourceBufferContext = {}): ContextSignals<SourceBu
 function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialContext: SourceBufferContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = setupSourceBuffers({ state, context });
+  const cleanup = setupSourceBuffers.setup({ state, context });
   return { state, context, cleanup };
 }
 

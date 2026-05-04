@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -93,7 +93,7 @@ function waitForSourceBuffersReady(context: DurationUpdateContext): Promise<void
 /**
  * Update MediaSource duration when presentation duration becomes available.
  */
-export function updateDuration({
+function updateDurationSetup({
   state,
   context,
 }: {
@@ -141,3 +141,9 @@ export function updateDuration({
     cleanupEffect();
   };
 }
+
+export const updateDuration = defineBehavior({
+  stateKeys: ['presentation', 'mediaSourceReadyState'],
+  contextKeys: ['mediaSource', 'videoBuffer', 'audioBuffer'],
+  setup: updateDurationSetup,
+});

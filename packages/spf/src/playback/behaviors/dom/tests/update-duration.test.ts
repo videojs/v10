@@ -31,7 +31,7 @@ function setupUpdateDuration(initialState: DurationUpdateState, initialContext: 
   // explicitly.
   const state = makeState({ mediaSourceReadyState: 'open', ...initialState });
   const context = makeContext(initialContext);
-  const cleanup = updateDuration({ state, context });
+  const cleanup = updateDuration.setup({ state, context });
   return { state, context, cleanup };
 }
 

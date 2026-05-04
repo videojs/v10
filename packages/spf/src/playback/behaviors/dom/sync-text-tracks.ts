@@ -1,5 +1,5 @@
 import { listen } from '@videojs/utils/dom';
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, untrack } from '../../../core/signals/primitives';
@@ -77,11 +77,11 @@ function syncModes(textTracks: TextTrackList, selectedId: string | undefined): v
  *   `selectedTextTrackId`.
  *
  * @example
- * const reactor = syncTextTracks({ state, context });
+ * const reactor = syncTextTracks.setup({ state, context });
  * // later:
  * reactor.destroy();
  */
-export function syncTextTracks({
+function syncTextTracksSetup({
   state,
   context,
 }: {
@@ -176,3 +176,9 @@ export function syncTextTracks({
     },
   });
 }
+
+export const syncTextTracks = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: ['mediaElement'],
+  setup: syncTextTracksSetup,
+});

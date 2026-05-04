@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed } from '../../../core/signals/primitives';
 import {
@@ -34,7 +34,7 @@ export interface MediaSourceContext {
  *
  * Updates context.mediaSource after successful setup.
  */
-export function setupMediaSource({
+function setupMediaSourceSetup({
   state,
   context,
 }: {
@@ -86,3 +86,9 @@ export function setupMediaSource({
     cleanupEffect();
   };
 }
+
+export const setupMediaSource = defineBehavior({
+  stateKeys: ['presentationUrl', 'mediaSourceReadyState'],
+  contextKeys: ['mediaElement', 'mediaSource'],
+  setup: setupMediaSourceSetup,
+});

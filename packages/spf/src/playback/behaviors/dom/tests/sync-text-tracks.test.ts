@@ -47,7 +47,7 @@ function makeContext(initial: TextTrackSyncContext = {}): ContextSignals<TextTra
 function setup(initialState: TextTrackSyncState = {}, initialContext: TextTrackSyncContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = syncTextTracks({ state, context });
+  const reactor = syncTextTracks.setup({ state, context });
   return { state, context, reactor };
 }
 

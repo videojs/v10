@@ -27,31 +27,43 @@ interface Surface {
 // Test behaviors — concrete parameter types
 // =============================================================================
 
-function counter({ state, config }: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) {
-  state.count.set((state.count.get() ?? 0) + 1);
-  void config;
-}
+const counter = {
+  stateKeys: ['count'] as const,
+  contextKeys: [],
+  setup({ state, config }: { state: StateSignals<{ count?: number }>; config: { interval?: number } }) {
+    state.count.set((state.count.get() ?? 0) + 1);
+    void config;
+  },
+};
 
-function render({
-  state,
-  context,
-  config,
-}: {
-  state: StateSignals<{ count?: number }>;
-  context: ContextSignals<{ renderElement?: Surface }>;
-  config: { defaultText?: string };
-}) {
-  const el = context.renderElement.get();
-  if (!el) return;
-  el.textContent = String(state.count.get() ?? config.defaultText ?? 'N/A');
-}
+const render = {
+  stateKeys: ['count'] as const,
+  contextKeys: ['renderElement'] as const,
+  setup({
+    state,
+    context,
+    config,
+  }: {
+    state: StateSignals<{ count?: number }>;
+    context: ContextSignals<{ renderElement?: Surface }>;
+    config: { defaultText?: string };
+  }) {
+    const el = context.renderElement.get();
+    if (!el) return;
+    el.textContent = String(state.count.get() ?? config.defaultText ?? 'N/A');
+  },
+};
 
-function persist({ state, config }: { state: StateSignals<{ count?: number }>; config: { saveEvery?: number } }) {
-  const c = state.count.get();
-  if (c && c > 0 && c % (config.saveEvery ?? 5) === 0) {
-    // save logic
-  }
-}
+const persist = {
+  stateKeys: ['count'] as const,
+  contextKeys: [],
+  setup({ state, config }: { state: StateSignals<{ count?: number }>; config: { saveEvery?: number } }) {
+    const c = state.count.get();
+    if (c && c > 0 && c % (config.saveEvery ?? 5) === 0) {
+      // save logic
+    }
+  },
+};
 
 // =============================================================================
 // StateSignals / ContextSignals shape
@@ -130,7 +142,11 @@ describe('InferBehaviorState', () => {
   });
 
   it('returns an empty shape for a behavior with no state in params', () => {
-    const noState = ({ config: _config }: { config: { x: number } }) => {};
+    const noState = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: ({ config: _config }: { config: { x: number } }) => {},
+    };
     // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback in create-composition
     expectTypeOf<InferBehaviorState<typeof noState>>().toEqualTypeOf<{}>();
   });
@@ -169,8 +185,16 @@ describe('ResolveBehaviorState', () => {
   });
 
   it('intersects different state shapes', () => {
-    const a = (_deps: { state: StateSignals<{ count?: number }> }) => {};
-    const b = (_deps: { state: StateSignals<{ label?: string }> }) => {};
+    const a = {
+      stateKeys: ['count'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ count?: number }> }) => {},
+    };
+    const b = {
+      stateKeys: ['label'] as const,
+      contextKeys: [],
+      setup: (_deps: { state: StateSignals<{ label?: string }> }) => {},
+    };
     type Behaviors = [typeof a, typeof b];
     expectTypeOf<ResolveBehaviorState<Behaviors>>().toMatchTypeOf<{
       count: number | undefined;
@@ -195,8 +219,16 @@ describe('ResolveBehaviorContext', () => {
     interface VideoS extends Surf {
       kind: 'video';
     }
-    const a = (_d: { context: ContextSignals<{ el?: CanvasS }> }) => {};
-    const b = (_d: { context: ContextSignals<{ el?: VideoS }> }) => {};
+    const a = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_d: { context: ContextSignals<{ el?: CanvasS }> }) => {},
+    };
+    const b = {
+      stateKeys: [],
+      contextKeys: ['el'] as const,
+      setup: (_d: { context: ContextSignals<{ el?: VideoS }> }) => {},
+    };
     type Resolved = ResolveBehaviorContext<[typeof a, typeof b]>;
     // The intersection should collapse `el` because CanvasS & VideoS = never
     // (sibling types), and `never | undefined` = `undefined` for an optional field.
@@ -231,7 +263,11 @@ describe('createComposition', () => {
       interval?: number;
     }
 
-    const behavior: Behavior<State, Context, Cfg> = () => {};
+    const behavior: Behavior<State, Context, Cfg> = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => {},
+    };
 
     const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
     const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
@@ -257,10 +293,14 @@ describe('createComposition', () => {
       interval?: number;
     }
 
-    const behavior: Behavior<State, Context, Cfg> = ({ state, context, config }) => {
-      expectTypeOf(state).toEqualTypeOf<StateSignals<State>>();
-      expectTypeOf(context).toEqualTypeOf<ContextSignals<Context>>();
-      expectTypeOf(config).toEqualTypeOf<Cfg>();
+    const behavior: Behavior<State, Context, Cfg> = {
+      stateKeys: [],
+      contextKeys: [],
+      setup: ({ state, context, config }) => {
+        expectTypeOf(state).toEqualTypeOf<StateSignals<State>>();
+        expectTypeOf(context).toEqualTypeOf<ContextSignals<Context>>();
+        expectTypeOf(config).toEqualTypeOf<Cfg>();
+      },
     };
 
     const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };

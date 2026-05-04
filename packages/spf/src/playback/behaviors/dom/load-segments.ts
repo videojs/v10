@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed, type Signal, signal } from '../../../core/signals/primitives';
 import { type BandwidthState, sampleBandwidth } from '../../../media/abr/bandwidth-estimator';
@@ -235,9 +235,9 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  *     segmentStart(currentTime) changes → trigger
  *
  * @example
- * const cleanup = loadSegments({ state, context }, { type: 'video' });
+ * const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
  */
-export function loadSegments({
+function loadSegmentsSetup({
   state,
   context,
   config,
@@ -368,3 +368,18 @@ export function loadSegments({
     currentLoader?.destroy();
   };
 }
+
+export const loadSegments = defineBehavior({
+  stateKeys: [
+    'presentation',
+    'preload',
+    'bandwidthState',
+    'currentTime',
+    'playbackInitiated',
+    'selectedVideoTrackId',
+    'selectedAudioTrackId',
+    'selectedTextTrackId',
+  ],
+  contextKeys: ['videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
+  setup: loadSegmentsSetup,
+});

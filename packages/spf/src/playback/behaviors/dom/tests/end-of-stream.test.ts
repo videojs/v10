@@ -39,7 +39,7 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
   // explicitly.
   const state = makeState({ mediaSourceReadyState: 'open', ...initialState });
   const context = makeContext(initialContext);
-  const cleanup = endOfStream({ state, context });
+  const cleanup = endOfStream.setup({ state, context });
   return { state, context, cleanup };
 }
 

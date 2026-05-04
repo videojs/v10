@@ -158,7 +158,7 @@ describe('loadSegments — track switch', () => {
 
     const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, context, config: { type: 'video' } });
+    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -199,7 +199,7 @@ describe('loadSegments — track switch', () => {
     });
 
     const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, context, config: { type: 'video' } });
+    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
@@ -244,7 +244,7 @@ describe('loadSegments — track switch', () => {
     });
 
     const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, context, config: { type: 'video' } });
+    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -290,7 +290,7 @@ describe('loadSegments — track switch', () => {
 
     const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, context, config: { type: 'video' } });
+    const cleanup = loadSegments.setup({ state, context, config: { type: 'video' } });
     await new Promise((r) => setTimeout(r, 50));
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);

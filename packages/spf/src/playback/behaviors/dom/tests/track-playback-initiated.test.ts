@@ -24,7 +24,7 @@ function setupTrackPlaybackInitiated(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = trackPlaybackInitiated({ state, context });
+  const reactor = trackPlaybackInitiated.setup({ state, context });
   return { state, context, reactor };
 }
 
@@ -175,7 +175,7 @@ describe('trackPlaybackInitiated', () => {
       mediaElement: signal<HTMLMediaElement | undefined>(el),
       videoBuffer: signal<unknown>(undefined),
     };
-    const reactor = trackPlaybackInitiated({ state, context });
+    const reactor = trackPlaybackInitiated.setup({ state, context });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     const callsBefore = addEventListenerSpy.mock.calls.length;

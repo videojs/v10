@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, snapshot, untrack } from '../../core/signals/primitives';
@@ -105,9 +105,9 @@ function deriveState(state: TextTrackCueLoadingState, context: TextTrackCueLoadi
  * does not create or destroy them.
  *
  * @example
- * const reactor = loadTextTrackCues({ state, context });
+ * const reactor = loadTextTrackCues.setup({ state, context });
  */
-export function loadTextTrackCues({
+function loadTextTrackCuesSetup({
   state,
   context,
 }: {
@@ -140,3 +140,9 @@ export function loadTextTrackCues({
     },
   });
 }
+
+export const loadTextTrackCues = defineBehavior({
+  stateKeys: ['selectedTextTrackId', 'presentation', 'currentTime'],
+  contextKeys: ['mediaElement', 'textTracksActor', 'segmentLoaderActor'],
+  setup: loadTextTrackCuesSetup,
+});

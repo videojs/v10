@@ -1,4 +1,4 @@
-import type { ContextSignals, StateSignals } from '../../core/composition/create-composition';
+import { type ContextSignals, defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { computed } from '../../core/signals/primitives';
 import type { MediaElementLike } from '../../media/types';
@@ -12,6 +12,14 @@ export interface PlatformContext {
 }
 
 /**
+ * State slice this behavior reads/writes — narrowed from the broader
+ * `PresentationState` to only the keys touched by the body. The
+ * `defineBehavior` exhaustiveness check requires `stateKeys` to list
+ * every key in this typed slice.
+ */
+type State = Pick<PresentationState, 'preload'>;
+
+/**
  * Syncs preload attribute from mediaElement to state.
  *
  * Watches the context signal for mediaElement changes and copies the
@@ -19,13 +27,13 @@ export interface PlatformContext {
  * An explicit value (set via SimpleHlsMediaElement.preload) always wins.
  *
  * @example
- * const cleanup = syncPreloadAttribute({ state, context });
+ * const cleanup = syncPreloadAttribute.setup({ state, context, config: {} });
  */
-export function syncPreloadAttribute({
+function syncPreloadAttributeSetup({
   state,
   context,
 }: {
-  state: StateSignals<PresentationState>;
+  state: StateSignals<State>;
   context: ContextSignals<PlatformContext>;
 }): () => void {
   const mediaElement = computed(() => context.mediaElement.get());
@@ -36,3 +44,9 @@ export function syncPreloadAttribute({
     state.preload.set(preload as 'auto' | 'metadata' | 'none');
   });
 }
+
+export const syncPreloadAttribute = defineBehavior({
+  stateKeys: ['preload'],
+  contextKeys: ['mediaElement'],
+  setup: syncPreloadAttributeSetup,
+});
