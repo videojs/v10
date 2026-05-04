@@ -126,8 +126,7 @@ const selectAudioTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, {
 
 const selectTextTrack = ({ config, ...deps }: Deps) => _selectTextTrack(deps, { type: 'text', ...config });
 
-const switchQuality = ({ config, ...deps }: Deps) =>
-  _switchQuality(deps, { defaultBandwidth: config.initialBandwidth });
+const switchQuality = ({ config, ...deps }: Deps) => _switchQuality(deps, config);
 
 // ============================================================================
 // Signal-map factories

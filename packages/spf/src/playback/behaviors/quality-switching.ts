@@ -45,7 +45,7 @@ export interface QualitySwitchingConfig {
    * Bandwidth estimate in bps to use before enough samples have been collected.
    * Default: 5_000_000 (5 Mbps).
    */
-  defaultBandwidth?: number;
+  initialBandwidth?: number;
 }
 
 /**
@@ -54,7 +54,7 @@ export interface QualitySwitchingConfig {
 export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
   safetyMargin: 0.85,
   minUpgradeInterval: 8000,
-  defaultBandwidth: 5_000_000,
+  initialBandwidth: 5_000_000,
 };
 
 /**
@@ -92,7 +92,7 @@ export function switchQuality(
 ): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const minUpgradeInterval = config.minUpgradeInterval ?? DEFAULT_SWITCHING_CONFIG.minUpgradeInterval;
-  const defaultBandwidth = config.defaultBandwidth ?? DEFAULT_SWITCHING_CONFIG.defaultBandwidth;
+  const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
 
   // Initialize to creation time so the interval starts counting immediately.
   // The first time we have enough data to make a meaningful quality decision
@@ -115,7 +115,7 @@ export function switchQuality(
     const isFirst = firstMeaningfulFire;
     firstMeaningfulFire = false;
 
-    const bandwidth = getBandwidthEstimate(bandwidthState, defaultBandwidth);
+    const bandwidth = getBandwidthEstimate(bandwidthState, initialBandwidth);
     const optimal = selectQuality(videoTracks as any, bandwidth, { safetyMargin });
     if (!optimal || optimal.id === selectedVideoTrackId) return;
 

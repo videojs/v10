@@ -280,7 +280,7 @@ describe('switchQuality', () => {
       cleanup();
     });
 
-    it('uses defaultBandwidth when estimate is not yet reliable (insufficient samples)', () => {
+    it('uses initialBandwidth when estimate is not yet reliable (insufficient samples)', () => {
       const unreliableState: BandwidthState = {
         fastEstimate: 0,
         fastTotalWeight: 0,
@@ -295,7 +295,7 @@ describe('switchQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: QualitySwitchingConfig = { defaultBandwidth: 5_000_000 };
+      const config: QualitySwitchingConfig = { initialBandwidth: 5_000_000 };
       const cleanup = switchQuality({ state }, config);
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
