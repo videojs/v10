@@ -114,36 +114,20 @@ const setupTextTrackActors = ({ context }: Deps) =>
 // ============================================================================
 // Config-aware behavior wrappers
 //
-// Behaviors that read from engine config get wrappers that thread the
-// relevant config fields into the behavior's own config parameter.
+// Behaviors that read from engine config get wrappers that close over the
+// media-type discriminant and forward the engine config. Each behavior
+// picks out the fields it cares about from its own config type — extra
+// fields on the spread are structurally tolerated.
 // ============================================================================
 
-const selectVideoTrack = ({ config, ...deps }: Deps) =>
-  selectMediaTrack(deps, {
-    type: 'video',
-    ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
-  });
+const selectVideoTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, { type: 'video', ...config });
 
-const selectAudioTrack = ({ config, ...deps }: Deps) =>
-  selectMediaTrack(deps, {
-    type: 'audio',
-    ...(config.preferredAudioLanguage !== undefined && {
-      preferredAudioLanguage: config.preferredAudioLanguage,
-    }),
-  });
+const selectAudioTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, { type: 'audio', ...config });
 
-const selectTextTrack = ({ config, ...deps }: Deps) =>
-  _selectTextTrack(deps, {
-    type: 'text',
-    ...(config.preferredSubtitleLanguage !== undefined && {
-      preferredSubtitleLanguage: config.preferredSubtitleLanguage,
-    }),
-    ...(config.includeForcedTracks !== undefined && { includeForcedTracks: config.includeForcedTracks }),
-    ...(config.enableDefaultTrack !== undefined && { enableDefaultTrack: config.enableDefaultTrack }),
-  });
+const selectTextTrack = ({ config, ...deps }: Deps) => _selectTextTrack(deps, { type: 'text', ...config });
 
 const switchQuality = ({ config, ...deps }: Deps) =>
-  _switchQuality(deps, config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {});
+  _switchQuality(deps, { defaultBandwidth: config.initialBandwidth });
 
 // ============================================================================
 // Signal-map factories
