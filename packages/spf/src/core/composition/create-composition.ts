@@ -236,6 +236,29 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
  * });
  * ```
  */
+/**
+ * Build a typed signal map from the union of behaviors' declared keys.
+ *
+ * The body iterates with a wide `Record<PropertyKey, Signal<unknown>>`
+ * to keep indexing cast-free; the boundary cast at the return narrows
+ * to the caller's expected shape. Per-key narrow types are TypeScript-
+ * level only — at runtime every signal is `Signal<unknown>` regardless.
+ */
+function buildSignalMap<S extends object>(
+  behaviors: readonly AnyBehavior[],
+  keysOf: (b: AnyBehavior) => readonly PropertyKey[],
+  initial: Partial<S>
+): { [K in keyof S]-?: Signal<S[K]> } {
+  const map: Record<PropertyKey, Signal<unknown>> = {};
+  const init = initial as Record<PropertyKey, unknown>;
+  for (const b of behaviors) {
+    for (const key of keysOf(b)) {
+      if (!(key in map)) map[key] = signal(init[key]);
+    }
+  }
+  return map as unknown as { [K in keyof S]-?: Signal<S[K]> };
+}
+
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
   behaviors: ValidateComposition<Behaviors>,
   options?: CompositionOptions<
@@ -243,34 +266,25 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
     ResolveBehaviorContext<Behaviors>,
     ResolveBehaviorConfig<Behaviors>
   >
-): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorContext<Behaviors>>;
-export function createComposition(
-  behaviors: readonly AnyBehavior[],
-  options?: CompositionOptions<object, object, object>
-): Composition<object, object> {
-  // Derive state and context signal maps from declared keys. Iterate every
-  // behavior's keys (wrappers forward keys from the wrapped behavior, so
-  // dedup on insertion is required). Each signal is seeded from the
-  // matching key in initialState / initialContext, defaulting to undefined.
-  const initialState = (options?.initialState ?? {}) as Record<PropertyKey, unknown>;
-  const initialContext = (options?.initialContext ?? {}) as Record<PropertyKey, unknown>;
-  const state: Record<PropertyKey, Signal<unknown>> = {};
-  const context: Record<PropertyKey, Signal<unknown>> = {};
-  for (const behavior of behaviors) {
-    for (const key of behavior.stateKeys) {
-      if (!(key in state)) state[key] = signal<unknown>(initialState[key]);
-    }
-    for (const key of behavior.contextKeys) {
-      if (!(key in context)) context[key] = signal<unknown>(initialContext[key]);
-    }
-  }
+): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorContext<Behaviors>> {
+  type S = ResolveBehaviorState<Behaviors>;
+  type C = ResolveBehaviorContext<Behaviors>;
+  type Cfg = ResolveBehaviorConfig<Behaviors>;
 
-  const deps: BehaviorDeps<object, object, object> = {
+  // ValidateComposition<Behaviors> is `[...Behaviors]` on success, an error
+  // string on conflict. The function body only runs when the call typechecks
+  // (i.e. the success case), so iterating as the behavior tuple is sound.
+  const validBehaviors = behaviors as unknown as readonly AnyBehavior[];
+
+  const state = buildSignalMap<S>(validBehaviors, (b) => b.stateKeys, options?.initialState ?? {});
+  const context = buildSignalMap<C>(validBehaviors, (b) => b.contextKeys, options?.initialContext ?? {});
+
+  const deps: BehaviorDeps<S, C, Cfg> = {
     state,
     context,
-    config: options?.config ?? ({} as object),
+    config: (options?.config ?? {}) as Cfg,
   };
-  const cleanups = behaviors.map((behavior) => behavior.setup(deps));
+  const cleanups = validBehaviors.map((behavior) => behavior.setup(deps));
 
   return {
     state,
@@ -289,12 +303,8 @@ export function createComposition(
       // Reset every signal to undefined as a final cleanup, matching the
       // prior post-destroy `owners.set({})` semantics. A later stage will
       // move per-signal cleanup into the behaviors that own the writes.
-      for (const key in state) {
-        (state[key as keyof typeof state] as Signal<unknown>).set(undefined);
-      }
-      for (const key in context) {
-        (context[key as keyof typeof context] as Signal<unknown>).set(undefined);
-      }
+      for (const sig of Object.values(state) as Signal<unknown>[]) sig.set(undefined);
+      for (const sig of Object.values(context) as Signal<unknown>[]) sig.set(undefined);
     },
   };
 }
