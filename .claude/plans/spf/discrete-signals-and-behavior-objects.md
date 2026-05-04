@@ -12,15 +12,18 @@ branch: refactor/spf-discrete-signals-and-behavior-objects
 - **Branch:** `refactor/spf-discrete-signals-and-behavior-objects` (off `docs/spf-hls-engine-composition`). Renamed from `refactor/spf-discrete-signals-stage-a` once scope expanded beyond Stage A.
 - **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests. Tests green: 48 files, 748 tests passed (was 703 at end of Stage A — net +45 from new test coverage and consolidation).
 - **Build clean.** `pnpm typecheck`, `pnpm -F @videojs/spf test`, `pnpm exec biome check`, `pnpm check:workspace`, `pnpm build:packages` all pass.
-- **Stage D in-scope for this branch, design TBD.** Read/write enforcement (single-writer rule + `writeKeys`) — see `## Stage D — design TBD` below for the sketch carried into the design discussion.
+- **Stage D in-scope for this branch.** Direction picked: read/write enforcement is derived from the setup signature (per-slot `Signal<T>` vs `ReadonlySignal<T>`), no separate `writeKeys` array. Invariant is **0-or-1 writer behaviors per signal** (0-writer keys must be seeded via `initialState`). Composition surface becomes uniformly read-only externally.
+- **Stage D-pre identified.** The `adapter.ts` external writes (`mediaElement`, `preload`, `presentationUrl`, `playbackInitiated`) must move into writer behaviors via an explicit input mechanism (TBD) before Stage D's type machinery can hold the runtime invariant. See `## Stage D — direction picked, details TBD` for the audit and the input-mechanism options.
 - **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`.
 - **Memory:** `project_spf_stage_a_revisit.md` has the deeper "why we did it this way" notes for Stage A; updated for B/C carryovers.
 
 ## Resuming — where to start the next session
 
 1. **Verify branch state.** `git log --oneline` should show the plan-doc-rename commit at HEAD on `refactor/spf-discrete-signals-and-behavior-objects` (just below it: `e4ce10ae refactor(spf): specialize load-segments behaviors per track type`).
-2. **Stage D design discussion is the most likely next move.** The user explicitly said this stage is in-scope for the branch but design is TBD. See `## Stage D — design TBD` below for the open questions to walk through before any implementation.
-3. **Other moves (any order, can interleave with Stage D):**
+2. **Stage D-pre is the next move: implement the setup-callback input mechanism + mirror behaviors + reconcilers.** Decision is made (engine config takes a `setup(inputs)` callback returning writable signal refs; mirror behaviors are the writers; reconcilers handle intent + reactive default for the overlap cases). Migration touches `engine.ts`, `adapter.ts`, the `select-tracks.ts` behavior module (becomes reconcilers), and the sandbox harness (which is also broken at runtime since Stage A). See `### Input mechanism — picked` and `### Mirror-behavior factory shape` in the Stage D section.
+
+3. **After Stage D-pre, Stage D type enforcement.** Direction is picked (setup-signature-driven, no `writeKeys`; 0-or-1 writer-behavior invariant; required `initialState` for 0-writer keys; uniformly read-only public surface). Remaining open questions are mostly mechanical — see `## Stage D — direction picked, details TBD` below.
+4. **Other moves (any order, can interleave with Stage D-pre / D):**
    - **Doc updates.** `packages/spf/docs/hls-engine.md` is on the parent `docs/spf-hls-engine-composition` branch and is now badly stale (uses old `update`-style state writes, single-`owners` signal, no `defineBehavior`, no `stateKeys`/`contextKeys`). Refresh after Stage D lands or use as a friction-list canary during. `internal/design/spf/fundamentals.md` no longer matches the new pattern (recommends external state writes; Stage C made that disallowed).
    - **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off. Could fold into Stage D's pass since `writeKeys` may surface a clean factory shape.
    - **Open the PR.** Branch is shippable as-is even without Stage D, but holding the PR until Stage D lands keeps the change set coherent under the new branch name.
@@ -78,35 +81,222 @@ Originally flagged as "save for the end" of Stage B. The engine had 8 wrappers (
 - **`load-segments.ts`** (`e4ce10ae`) — `loadSegments` split into `loadVideoSegments`, `loadAudioSegments`. Body shared via `setupSegmentLoading(state, context, type)` helper. **State/context keys still broad** — narrowing per specialization is a follow-up (see below).
 - **Engine** drops all 8 wrappers, the `Deps` shorthand, and the `StateSignals`/`ContextSignals` imports (no longer needed locally).
 
-## Stage D — design TBD
+## Stage D — direction picked, details TBD
 
-The user's plan #4: read/write enforcement. **In-scope for this branch**, but design is TBD — needs a discussion before any implementation.
+The user's plan #4: read/write enforcement. **In-scope for this branch.** As of 2026-05-04 we've picked the direction: **enforcement is derived from the setup signature itself, not from a separately-maintained `writeKeys` array.** The composition surface becomes uniformly read-only externally; all signal writes live inside behaviors. Detailed shape and the input mechanism for time-varying external inputs are TBD.
 
-Design sketch (the starting point for that discussion):
+### Direction
 
-- Behaviors gain a `writeKeys` (subset of `stateKeys`) declaring which signals they write.
-- `createComposition` validates: each state key has at most one writer.
-- 0-writer signals are allowed only if seeded via `initialState`.
-- `setup`'s param can narrow further: declared writeKeys produce `WriteSignal<T>` slots; read-only keys produce `ReadSignal<T>` slots.
-- The `destroy()` reset-loop in `createComposition` (which currently sets every signal to undefined post-cleanup) moves into per-signal cleanup owned by the writer behavior. The blanket reset is currently a workaround for missing read/write semantics.
+Behaviors declare per-slot access by typing the setup param's `state` / `context` slots as either `Signal<T>` (read+write) or `ReadonlySignal<T>` (read-only):
 
-### Open questions for the Stage D discussion
+```ts
+defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'] as const,
+  setup({ state }: BehaviorDeps<{
+    presentation: ReadonlySignal<Presentation>,
+    selectedVideoTrackId: Signal<string | null>,
+  }>): BehaviorCleanup { ... }
+});
+```
 
-These are the design questions to resolve before implementation. The plan doc captures the current best-guess shape; expect the discussion to revisit each.
+Why this works:
 
-1. **`writeKeys` placement.** Sibling to `stateKeys`, or replace `stateKeys` with `{readKeys, writeKeys}`? The latter is stricter but adds two list maintenance instead of one. `stateKeys` = `[...readKeys, ...writeKeys]` deduped is one option; `writeKeys ⊆ stateKeys` is another.
+- `ReadonlySignal<T>` already exists (`core/signals/primitives.ts`) as `Omit<Signal<T>, 'set'>`. The structural difference (no `.set`) is enough to drive both body-level enforcement and compose-time inference. **No brands needed.**
+- The body literally cannot call `.set()` on a `ReadonlySignal<T>` slot — type-safety follows directly from the param type.
+- `createComposition` walks each behavior's setup param at the type level, identifies `Signal<T>` slots as writers and `ReadonlySignal<T>` slots as readers, and validates the writer-count invariant.
 
-2. **`ReadSignal<T>` / `WriteSignal<T>` shape.** Are these branded variants of `Signal<T>` (different types but same runtime representation)? Or do we re-use `Signal<T>` and `Omit<Signal<T>, 'set'>` (the existing `ReadonlySignal<T>` already exists in `core/signals/primitives.ts`)? The latter is simpler; the former lets you key on the brand for compile-time analysis.
+### The writer-count invariant
 
-3. **Single-writer enforcement scope.** Just at `createComposition`, or also enforced by `defineBehavior` at the call site (e.g. one behavior can't declare the same key in `writeKeys` twice)? Probably the latter is automatic via tuple types; the former needs the same intersection machinery as state-shape conflict detection.
+For each declared signal across a composition: **0 or 1 writer behaviors**, with these rules:
 
-4. **0-writer signals + `initialState`.** Currently anything in `initialState` is optional. With Stage D, a key that has 0 writers across the composition becomes "input-only" — it must be either in `initialState` *or* written from outside via the returned `Composition.state.x.set(...)`. Stage C tightened "no external writes from composition"; Stage D needs to define the read/write boundary at the composition surface too.
+- **0 writers**: signal must be seeded via `initialState` / `initialContext`. Becomes a constant after seeding.
+- **1 writer**: that behavior owns the write lifecycle (and per-signal cleanup/reset on destroy).
+- **2+ writers**: invalid. Compose-time error.
 
-5. **Migration path.** Each behavior currently has flat `stateKeys`. How do we decide which keys are reads vs. writes? Options: (a) audit each behavior body manually, (b) start with `writeKeys: stateKeys` (everything is a write) and narrow incrementally, (c) start with `writeKeys: []` and expand by need. Option (b) is the safest "no behavior change" starting point.
+This shifts `initialState` / `initialContext` from `Partial<S>` to a key-conditional shape — required for 0-writer keys, optional for 1-writer keys:
 
-6. **Code-reuse follow-up convergence.** The three behavior modules in `## Follow-ups` lost code reuse during the engine-wrapper revisit. Stage D's `readKeys` / `writeKeys` shape may give us the right hook for a `makeFirstTrackSelector(type, selectedKey)`-style factory that produces narrow keys per type. Worth holding the follow-up pass until Stage D's shape is decided.
+```ts
+type ResolveInitialState<S, Behaviors> =
+  & { [K in keyof S as IsZeroWriter<Behaviors, K> extends true ? K : never]-?: S[K] }
+  & { [K in keyof S as IsZeroWriter<Behaviors, K> extends true ? never : K]?: S[K] };
+```
 
-7. **The destroy reset loop.** Currently `for (const sig of Object.values(state)) sig.set(undefined)`. Stage D moves this into per-signal cleanup owned by the writer. What about signals seeded by `initialState` with no writer? Skip the reset (preserve seeded value)? Reset to the seeded value (need to capture it)? Reset to undefined (current behavior)?
+The compose call site gets a type error if a behavior is removed (or never added) and a 0-writer key isn't seeded.
+
+### What this means for the composition surface
+
+The composition's public `state` / `context` become **uniformly read-only externally**. There is no "external writes via signal" pathway:
+
+- **Constant inputs** (set once at construction): go through `initialState` / `initialContext`.
+- **Time-varying inputs** (e.g. the adapter's `presentationUrl`, `preload`, `mediaElement`, `playbackInitiated`): must go through a writer behavior, fed by an explicit non-signal input mechanism — see Stage D-pre below.
+
+The "0-writer = external input via signal" overload is **rejected**: it would let one syntactic shape (`ReadonlySignal<T>` slot) carry two semantic meanings (internal vs external write source) discoverable only by surveying the entire composition.
+
+### Stage D-pre — encapsulate adapter writes into writer behaviors
+
+Before Stage D's type machinery lands, the runtime invariant must hold. Audit (2026-05-04) shows the only external writer to composition signals is `packages/spf/src/playback/engines/hls/adapter.ts` — 4 sites:
+
+| Key | Slot | Trigger | Nature |
+|---|---|---|---|
+| `mediaElement` | context | `attach()` / `detach()` | DOM lifecycle |
+| `preload` | state | `preload =` IDL setter | HTML attribute input |
+| `presentationUrl` | state | `src =` IDL setter | HTML attribute input |
+| `playbackInitiated` | state | `play()` method | Imperative input |
+
+The sandbox harness (`apps/sandbox/src/spf-segment-loading/main.ts`) extends this set with three more — and exposes a real wrinkle:
+
+| Key | Currently written by | Wrinkle |
+|---|---|---|
+| `abrDisabled` | harness UI toggle | pure input, no overlap |
+| `selectedVideoTrackId` | harness **and the `selectVideoTrack` behavior** | **2-writer violation** — behavior default-picks; harness overrides |
+| `selectedTextTrackId` | harness | overlap with `selectTextTrack` behavior on default-pick |
+
+The overlap forces a real design question: when an external "intent" overlaps with a behavior-owned default-pick, the writer behavior must **reconcile** intent + reactive sources into a single write. The current `selectVideoTrack` becomes a `reconcileSelectedVideoTrackId` behavior that reads an intent input + presentation, and writes the resolved id.
+
+**Note:** the harness has been on the **pre-Stage-A API** (monolithic `engine.state.set({...engine.state.get(),...})` + `engine.owners`) since Stage A landed — broken at runtime, not just type-stale. Stage D-pre must fix it; it's the validation surface for the input mechanism.
+
+### Input mechanism — picked (2026-05-04): setup callback in engine config
+
+**Decision:** the engine config takes a `setup(inputs)` callback that receives writable signal refs. The engine factory creates the input signals; the adapter (or harness) captures the refs in the callback and writes to them imperatively. Composition state stays uniformly read-only externally — input signals are a separate concept owned by the engine, mirrored into composition state by tiny mirror behaviors.
+
+```ts
+// Engine config
+export interface SimpleHlsEngineConfig {
+  initialBandwidth?: number;
+  preferredSubtitleLanguage?: string;
+  setup?: (inputs: SimpleHlsEngineInputs) => void;
+}
+
+interface SimpleHlsEngineInputs {
+  presentationUrl: Signal<string | undefined>;
+  preload: Signal<PreloadValue>;
+  playbackInitiated: Signal<boolean>;
+  mediaElement: Signal<HTMLMediaElement | undefined>;
+  // intent signals for reconcilers:
+  selectedVideoTrackIdIntent: Signal<string | undefined>;
+  selectedTextTrackIdIntent: Signal<string | undefined>;
+  abrDisabled: Signal<boolean>;
+}
+
+// Engine factory wires inputs to mirror behaviors and to reconcilers
+export function createSimpleHlsEngine(config: SimpleHlsEngineConfig) {
+  const inputs: SimpleHlsEngineInputs = {
+    presentationUrl: signal(undefined),
+    preload: signal('none'),
+    playbackInitiated: signal(false),
+    mediaElement: signal(undefined),
+    selectedVideoTrackIdIntent: signal(undefined),
+    selectedTextTrackIdIntent: signal(undefined),
+    abrDisabled: signal(false),
+  };
+
+  const composition = createComposition([
+    mirrorInputState('presentationUrl', inputs.presentationUrl),
+    mirrorInputState('preload', inputs.preload),
+    mirrorInputState('playbackInitiated', inputs.playbackInitiated),
+    mirrorInputContext('mediaElement', inputs.mediaElement),
+    mirrorInputState('abrDisabled', inputs.abrDisabled),
+    reconcileSelectedVideoTrackId(inputs.selectedVideoTrackIdIntent),
+    reconcileSelectedTextTrackId(inputs.selectedTextTrackIdIntent, config),
+    resolvePresentation,
+    // ...
+  ], { initialState: { ... } });
+
+  config.setup?.(inputs);
+  return composition;
+}
+```
+
+**Why callback over passing signals in directly via config:** the callback shape generalizes to other reactive boundaries — most importantly **web workers**, where the engine must own the signals on its side and the consumer needs handles passed back across the worker boundary. "Adapter constructs signals, passes them in" works for in-process but breaks for worker/IPC cases. The callback is the same shape on either side.
+
+**Cost of callback over passing in:** the adapter's `set src` flow recreates the engine, which means re-capturing input refs each time. The adapter holds adapter-level "source of truth" fields (preload value, current URL, etc.) and forwards to whichever input signal is current. This pattern already partially exists today (the adapter has a `#preload` field for the IDL value cache).
+
+### Mirror-behavior factory shape
+
+```ts
+// behaviors/mirror-input.ts (new)
+export function mirrorInputState<K extends string, T>(
+  stateKey: K,
+  source: ReadonlySignal<T>,
+) {
+  return defineBehavior({
+    stateKeys: [stateKey] as const,
+    setup: ({ state }: { state: Record<K, Signal<T>> }) =>
+      effect(() => state[stateKey].set(source.get())),
+  });
+}
+
+export function mirrorInputContext<K extends string, T>(
+  contextKey: K,
+  source: ReadonlySignal<T>,
+) { /* same shape, contextKeys */ }
+```
+
+### Reconciler shape (Pattern B)
+
+```ts
+// behaviors/select-tracks.ts (revised — replaces selectVideoTrack)
+export function reconcileSelectedVideoTrackId(
+  intent: ReadonlySignal<string | undefined>,
+) {
+  return defineBehavior({
+    stateKeys: ['presentation', 'selectedVideoTrackId'],
+    setup: ({ state }: {
+      state: {
+        presentation: ReadonlySignal<Presentation | undefined>;
+        selectedVideoTrackId: Signal<string | undefined>;
+      };
+    }) =>
+      effect(() => {
+        const presentation = state.presentation.get();
+        if (!presentation) return;
+
+        const userIntent = intent.get();
+        if (userIntent !== undefined) {
+          state.selectedVideoTrackId.set(userIntent);
+          return;
+        }
+
+        if (!state.selectedVideoTrackId.get()) {
+          const id = pickFirstTrackId(presentation, 'video');
+          if (id) state.selectedVideoTrackId.set(id);
+        }
+      }),
+  });
+}
+```
+
+### Open product questions inside the reconcilers
+
+These are real questions about behavior, not architecture. Live in the reconciler body whichever way inputs are wired:
+
+- Default-pick re-fire on presentation reload — should `selectedVideoTrackId` reset to track 0 of the new presentation, or persist if user-selected and still valid?
+- Intent pointing at a track that doesn't exist in the current presentation — fall back to default? Reset intent? Both?
+- "Reset to auto" semantics — setting intent to `undefined` clears override; reconciler falls back to default-pick.
+
+### Open questions for Stage D implementation
+
+1. ~~**`writeKeys` placement.**~~ **Resolved.** No `writeKeys`. Per-slot access lives in the setup signature.
+
+2. ~~**`ReadSignal<T>` / `WriteSignal<T>` shape.**~~ **Resolved.** Reuse `Signal<T>` (writable) and `ReadonlySignal<T>` (read-only). No brands.
+
+3. ~~**0-writer signals + `initialState`.**~~ **Resolved.** 0-writer signals are constants seeded via `initialState`; required (not optional) at the type level. Composition surface is uniformly read-only externally; there is no signal-shaped external input pathway.
+
+4. ~~**Input mechanism for the adapter's 4 writes.**~~ **Resolved.** Setup callback in engine config returns writable signal refs. Engine creates signals, adapter captures via callback. Generalizes to web workers (callback can run on either side of an IPC boundary). See `### Input mechanism — picked` above.
+
+5. **Single-writer enforcement scope.** Compose-time only, or also at `defineBehavior`? Compose-time is required (cross-behavior). `defineBehavior` would catch "behavior can't declare the same key as both `Signal<T>` and `ReadonlySignal<T>` in its own setup" almost free via the existing exhaustiveness machinery.
+
+6. **Migration path for read/write annotations.** Each behavior currently takes `state: { [K]: Signal<S[K]> }` (everything writable). Per-behavior audit:
+   - Slots `.set` somewhere in the body → `Signal<T>`.
+   - Slots only read → `ReadonlySignal<T>`.
+   - No safe "default everything to writable" middle step (defeats enforcement).
+   - Likely one PR per behavior module, after Stage D-pre lands.
+
+7. **Code-reuse follow-up convergence.** The three behavior modules in `## Follow-ups` lost code reuse during the engine-wrapper revisit. Stage D's per-slot access annotations might surface a clean factory shape (e.g. `makeFirstTrackSelector(type, selectedKey)` with the read/write split baked into the factory's return type). Worth holding the follow-up pass until Stage D's mechanics are nailed down.
+
+8. **The destroy reset loop.** Currently `for (const sig of Object.values(state)) sig.set(undefined)`. Stage D moves this into per-signal cleanup owned by the writer behavior. Open: 0-writer (seeded) signals — skip the reset (preserve seeded value, treating them as immutable constants)? The cleanest answer is "yes, skip" — once they're constants, there's nothing to reset.
+
+9. **Type machinery shape.** The accumulator-style walk over behaviors to count writers per key is straightforward but new. Worth a focused spike (4–6 lines of `AccumulateWriters<Behaviors>`) before committing to it. The existing `IntersectBehaviors` is a recursive tuple-walk too, so the shape is familiar.
 
 ## Motivation
 
@@ -128,7 +318,8 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 | **A** | (1) discrete signals; (2) `owners` → `context` | ✅ Complete |
 | **B** | (4) behavior-as-object with `stateKeys` / `contextKeys` / `setup` | ✅ Complete |
 | **C** | (5) no external setting from composition + `initialState` | ✅ Complete |
-| **D** | (6) single-writer enforcement + `initialState` requirement for 0-writer signals | ⏳ In-scope for this branch, design TBD |
+| **D-pre** | encapsulate adapter writes into writer behaviors via input mechanism (TBD) | ⏳ In-scope, blocking Stage D |
+| **D** | (6) writer-count enforcement (0-or-1 per signal) via setup-signature-derived read/write split | ⏳ In-scope, direction picked, details TBD |
 | **E or parallel** | (3) networking singleton | ❌ Deferred |
 
 ## Follow-ups to revisit
