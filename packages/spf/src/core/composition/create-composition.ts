@@ -239,24 +239,26 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
 /**
  * Build a typed signal map from the union of behaviors' declared keys.
  *
- * The body iterates with a wide `Record<PropertyKey, Signal<unknown>>`
- * to keep indexing cast-free; the boundary cast at the return narrows
- * to the caller's expected shape. Per-key narrow types are TypeScript-
- * level only — at runtime every signal is `Signal<unknown>` regardless.
+ * Pipeline: flatMap collects every key across behaviors → `Set` dedupes
+ * (Set keeps insertion order, so first occurrence wins, matching the
+ * earlier imperative `if (!(key in map))` semantics) → `Object.fromEntries`
+ * materializes the map.
+ *
+ * The boundary cast at the return narrows the wide
+ * `Record<PropertyKey, Signal<unknown>>` to the caller's expected per-key
+ * shape. Per-key narrow types are TypeScript-level only — at runtime every
+ * signal is `Signal<unknown>` regardless.
  */
 function buildSignalMap<S extends object>(
   behaviors: readonly AnyBehavior[],
   keysOf: (b: AnyBehavior) => readonly PropertyKey[],
   initial: Partial<S>
 ): { [K in keyof S]-?: Signal<S[K]> } {
-  const map: Record<PropertyKey, Signal<unknown>> = {};
   const init = initial as Record<PropertyKey, unknown>;
-  for (const b of behaviors) {
-    for (const key of keysOf(b)) {
-      if (!(key in map)) map[key] = signal(init[key]);
-    }
-  }
-  return map as unknown as { [K in keyof S]-?: Signal<S[K]> };
+  const uniqueKeys = new Set(behaviors.flatMap(keysOf));
+  return Object.fromEntries([...uniqueKeys].map((key) => [key, signal(init[key])])) as {
+    [K in keyof S]-?: Signal<S[K]>;
+  };
 }
 
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
