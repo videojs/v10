@@ -21,6 +21,12 @@ export type {
   Composition,
   CompositionOptions,
   ContextSignals,
+  InferBehaviorConfig,
+  InferBehaviorContext,
+  InferBehaviorState,
+  ResolveBehaviorConfig,
+  ResolveBehaviorContext,
+  ResolveBehaviorState,
   StateSignals,
 } from './core/composition/create-composition';
 export { createComposition } from './core/composition/create-composition';

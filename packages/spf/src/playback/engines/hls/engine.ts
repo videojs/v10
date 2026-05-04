@@ -216,7 +216,7 @@ function createContextSignals(): ContextSignals<SimpleHlsEngineContext> {
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
-  return createComposition<SimpleHlsEngineState, SimpleHlsEngineContext, SimpleHlsEngineConfig>(
+  return createComposition(
     [
       syncPreloadAttribute,
       trackPlaybackInitiated,
