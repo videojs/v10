@@ -22,7 +22,7 @@ const MEDIA_REFERENCE_SUBSECTIONS = Object.freeze([
     key: 'events',
     title: 'Events',
     id: 'events',
-    isEmpty: (ref) => (ref.events ?? []).length === 0,
+    isEmpty: (ref) => (ref.events?.native ?? []).length === 0 && (ref.events?.elementSpecific ?? []).length === 0,
   },
   {
     key: 'cssCustomProperties',

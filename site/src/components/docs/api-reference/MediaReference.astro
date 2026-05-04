@@ -63,9 +63,11 @@ const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slot
       <>
         <H3 id={eventsSection.id}>{eventsSection.title}</H3>
         <p class="my-4 flex flex-wrap gap-2">
-          {ref.events.map((event) => (
-            <MarkdownCode>{event}</MarkdownCode>
-          ))}
+          {[...ref.events.native, ...ref.events.elementSpecific].map(
+            (event) => (
+              <MarkdownCode>{event}</MarkdownCode>
+            ),
+          )}
         </p>
       </>
     )
