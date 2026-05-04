@@ -25,11 +25,7 @@ import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchQuality as _switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveTrack } from '../../behaviors/resolve-track';
-import {
-  selectAudioTrack as _selectAudioTrack,
-  selectTextTrack as _selectTextTrack,
-  selectVideoTrack as _selectVideoTrack,
-} from '../../behaviors/select-tracks';
+import { selectTextTrack as _selectTextTrack, selectMediaTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
@@ -123,13 +119,13 @@ const setupTextTrackActors = ({ context }: Deps) =>
 // ============================================================================
 
 const selectVideoTrack = ({ config, ...deps }: Deps) =>
-  _selectVideoTrack(deps, {
+  selectMediaTrack(deps, {
     type: 'video',
     ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
   });
 
 const selectAudioTrack = ({ config, ...deps }: Deps) =>
-  _selectAudioTrack(deps, {
+  selectMediaTrack(deps, {
     type: 'audio',
     ...(config.preferredAudioLanguage !== undefined && {
       preferredAudioLanguage: config.preferredAudioLanguage,

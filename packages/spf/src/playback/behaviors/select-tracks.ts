@@ -14,23 +14,26 @@ import { isResolvedPresentation } from '../../media/types';
 import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
 
 /**
- * Select video track orchestration.
+ * Select a media track (video or audio) orchestration.
  *
- * Selects video track when:
+ * Selects when:
  * - Presentation exists
- * - No video track is selected yet
+ * - No track of the given type is selected yet
  *
- * Uses bandwidth-based quality selection algorithm.
+ * Currently a POC: simply selects the first track of the requested type.
+ * Type-specific config fields (`initialBandwidth`, `preferredAudioLanguage`)
+ * are accepted for forward compatibility but not yet honored — quality and
+ * language preferences will be added when the selection algorithm matures.
  *
  * @example
- * const cleanup = selectVideoTrack(
- *   { state, context, events },
- *   { initialBandwidth: 2_000_000 }
+ * const cleanup = selectMediaTrack(
+ *   { state },
+ *   { type: 'video', initialBandwidth: 2_000_000 }
  * );
  */
-export function selectVideoTrack(
+export function selectMediaTrack(
   { state }: { state: StateSignals<TrackSelectionState> },
-  config: VideoSelectionConfig = { type: 'video' }
+  config: VideoSelectionConfig | AudioSelectionConfig
 ): () => void {
   return effect(() => {
     const currentState = snapshot(state);
@@ -43,39 +46,6 @@ export function selectVideoTrack(
     if (selectedTrackId) {
       const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
       state[selectedTrackKey].set(selectedTrackId);
-    }
-  });
-}
-
-/**
- * Select audio track orchestration.
- *
- * Selects audio track when:
- * - Presentation exists
- * - No audio track is selected yet
- *
- * Uses language and preference-based selection.
- *
- * @example
- * const cleanup = selectAudioTrack(
- *   { state, context, events },
- *   { preferredAudioLanguage: 'en' }
- * );
- */
-export function selectAudioTrack(
-  { state }: { state: StateSignals<TrackSelectionState> },
-  config: AudioSelectionConfig = { type: 'audio' }
-): () => void {
-  return effect(() => {
-    const currentState = snapshot(state);
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
-
-    // Just to have basic functionality/POC, simply selecting the first track
-    const selectedTrackId = currentState.presentation?.selectionSets?.find(({ type }) => type === 'audio')
-      ?.switchingSets[0]?.tracks[0]?.id;
-
-    if (selectedTrackId) {
-      state.selectedAudioTrackId.set(selectedTrackId);
     }
   });
 }

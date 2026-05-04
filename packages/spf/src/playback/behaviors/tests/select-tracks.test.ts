@@ -10,7 +10,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
+import { selectMediaTrack, selectTextTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -79,7 +79,7 @@ function createPresentation(config: {
   };
 }
 
-describe('selectVideoTrack', () => {
+describe('selectMediaTrack — video', () => {
   it('selects video track when presentation loaded', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
@@ -95,7 +95,7 @@ describe('selectVideoTrack', () => {
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectVideoTrack({ state }, { type: 'video' });
+    const cleanup = selectMediaTrack({ state }, { type: 'video' });
 
     // Wait for selection
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -109,7 +109,7 @@ describe('selectVideoTrack', () => {
     const presentation = createPresentation({ video: [] });
     const state = makeState({ presentation, selectedVideoTrackId: 'existing-video' });
 
-    const cleanup = selectVideoTrack({ state }, { type: 'video' });
+    const cleanup = selectMediaTrack({ state }, { type: 'video' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -141,7 +141,7 @@ describe('selectVideoTrack', () => {
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectVideoTrack({ state }, { initialBandwidth: 3_000_000, type: 'video' });
+    const cleanup = selectMediaTrack({ state }, { initialBandwidth: 3_000_000, type: 'video' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -151,7 +151,7 @@ describe('selectVideoTrack', () => {
   });
 });
 
-describe('selectAudioTrack', () => {
+describe('selectMediaTrack — audio', () => {
   it('selects audio track when presentation loaded', async () => {
     const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
@@ -171,7 +171,7 @@ describe('selectAudioTrack', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectAudioTrack({ state }, { type: 'audio' });
+    const cleanup = selectMediaTrack({ state }, { type: 'audio' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -184,7 +184,7 @@ describe('selectAudioTrack', () => {
     const presentation = createPresentation({ audio: [] });
     const state = makeState({ presentation, selectedAudioTrackId: 'existing-audio' });
 
-    const cleanup = selectAudioTrack({ state }, { type: 'audio' });
+    const cleanup = selectMediaTrack({ state }, { type: 'audio' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -226,7 +226,7 @@ describe('selectAudioTrack', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectAudioTrack({ state }, { type: 'audio', preferredAudioLanguage: 'es' });
+    const cleanup = selectMediaTrack({ state }, { type: 'audio', preferredAudioLanguage: 'es' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
