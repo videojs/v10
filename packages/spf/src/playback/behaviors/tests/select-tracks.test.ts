@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { TrackSelectionState } from '../../../media/primitives/select-tracks';
 import type {
@@ -10,6 +11,15 @@ import type {
   VideoSelectionSet,
 } from '../../../media/types';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
+
+function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
+  return {
+    presentation: signal<Presentation | undefined>(initial.presentation),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+  };
+}
 
 // Helper to create a minimal presentation
 function createPresentation(config: {
@@ -83,32 +93,27 @@ describe('selectVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: videoTracks });
-
-    const state = signal<TrackSelectionState>({ presentation });
+    const state = makeState({ presentation });
 
     const cleanup = selectVideoTrack({ state }, { type: 'video' });
 
     // Wait for selection
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedVideoTrackId).toBe('video-360p');
+    expect(state.selectedVideoTrackId.get()).toBe('video-360p');
 
     cleanup();
   });
 
   it('does not select when video track already selected', async () => {
     const presentation = createPresentation({ video: [] });
-
-    const state = signal<TrackSelectionState>({
-      presentation,
-      selectedVideoTrackId: 'existing-video',
-    });
+    const state = makeState({ presentation, selectedVideoTrackId: 'existing-video' });
 
     const cleanup = selectVideoTrack({ state }, { type: 'video' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedVideoTrackId).toBe('existing-video');
+    expect(state.selectedVideoTrackId.get()).toBe('existing-video');
 
     cleanup();
   });
@@ -134,14 +139,13 @@ describe('selectVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: videoTracks });
-
-    const state = signal<TrackSelectionState>({ presentation });
+    const state = makeState({ presentation });
 
     const cleanup = selectVideoTrack({ state }, { initialBandwidth: 3_000_000, type: 'video' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedVideoTrackId).toBe('video-720p');
+    expect(state.selectedVideoTrackId.get()).toBe('video-720p');
 
     cleanup();
   });
@@ -165,31 +169,26 @@ describe('selectAudioTrack', () => {
     ];
 
     const presentation = createPresentation({ audio: audioTracks });
-
-    const state = signal<TrackSelectionState>({ presentation });
+    const state = makeState({ presentation });
 
     const cleanup = selectAudioTrack({ state }, { type: 'audio' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedAudioTrackId).toBe('audio-en');
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     cleanup();
   });
 
   it('does not select when audio track already selected', async () => {
     const presentation = createPresentation({ audio: [] });
-
-    const state = signal<TrackSelectionState>({
-      presentation,
-      selectedAudioTrackId: 'existing-audio',
-    });
+    const state = makeState({ presentation, selectedAudioTrackId: 'existing-audio' });
 
     const cleanup = selectAudioTrack({ state }, { type: 'audio' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedAudioTrackId).toBe('existing-audio');
+    expect(state.selectedAudioTrackId.get()).toBe('existing-audio');
 
     cleanup();
   });
@@ -225,14 +224,13 @@ describe('selectAudioTrack', () => {
     ];
 
     const presentation = createPresentation({ audio: audioTracks });
-
-    const state = signal<TrackSelectionState>({ presentation });
+    const state = makeState({ presentation });
 
     const cleanup = selectAudioTrack({ state }, { type: 'audio', preferredAudioLanguage: 'es' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedAudioTrackId).toBe('audio-es');
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
 
     cleanup();
   });
@@ -254,14 +252,13 @@ describe('selectTextTrack', () => {
     ];
 
     const presentation = createPresentation({ text: textTracks });
-
-    const state = signal<TrackSelectionState>({ presentation });
+    const state = makeState({ presentation });
 
     const cleanup = selectTextTrack({ state }, { type: 'text' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().selectedTextTrackId).toBeUndefined();
+    expect(state.selectedTextTrackId.get()).toBeUndefined();
 
     cleanup();
   });
