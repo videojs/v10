@@ -1,103 +1,89 @@
 import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { snapshot } from '../../core/signals/primitives';
 import {
-  type AudioSelectionConfig,
-  canSelectTrack,
   pickTextTrack,
-  shouldSelectTrack,
   type TextSelectionConfig,
   type TrackSelectionState,
-  type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
-import { isResolvedPresentation } from '../../media/types';
-import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
+import { isResolvedPresentation, type MaybeResolvedPresentation, type TrackType } from '../../media/types';
 
 /**
- * Select a media track (video or audio) orchestration.
+ * Pick the first track of the given type from a presentation.
  *
- * Selects when:
- * - Presentation exists
- * - No track of the given type is selected yet
- *
- * Currently a POC: simply selects the first track of the requested type.
- * Type-specific config fields (`initialBandwidth`, `preferredAudioLanguage`)
- * are accepted for forward compatibility but not yet honored — quality and
- * language preferences will be added when the selection algorithm matures.
- *
- * @example
- * const cleanup = selectMediaTrack.setup({
- *   state,
- *   config: { type: 'video', initialBandwidth: 2_000_000 },
- * });
+ * Currently a POC: returns the first track in the first switching set.
+ * The full pickers (`pickVideoTrack` / `pickAudioTrack` in
+ * `media/primitives/select-tracks.ts`) honor bandwidth + language
+ * preferences and will replace this once the selection algorithm matures.
  */
-function selectMediaTrackSetup({
-  state,
-  config,
-}: {
-  state: StateSignals<TrackSelectionState>;
-  config: VideoSelectionConfig | AudioSelectionConfig;
-}): () => void {
-  return effect(() => {
-    const currentState = snapshot(state);
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
-
-    // Just to have basic functionality/POC, simply selecting the first track
-    const selectedTrackId = currentState.presentation?.selectionSets?.find(({ type }) => type === config.type)
-      ?.switchingSets[0]?.tracks[0]?.id;
-
-    if (selectedTrackId) {
-      const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-      state[selectedTrackKey].set(selectedTrackId);
-    }
-  });
+function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackType): string | undefined {
+  return presentation.selectionSets?.find((set) => set.type === type)?.switchingSets[0]?.tracks[0]?.id;
 }
 
 /**
- * Select text track orchestration.
+ * Select the first available video track when a presentation loads.
  *
- * Selects text track when:
- * - Presentation exists
- * - No text track is selected yet
- *
- * Note: Currently does not auto-select (user opt-in).
+ * No-op once a video track is already selected.
  *
  * @example
- * const cleanup = selectTextTrack.setup({ state, config: { type: 'text' } });
+ * const cleanup = selectVideoTrack.setup({ state });
  */
-function selectTextTrackSetup({
-  state,
-  config,
-}: {
-  state: StateSignals<TrackSelectionState>;
-  config: TextSelectionConfig;
-}): () => void {
-  return effect(() => {
-    const currentState = snapshot(state);
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
-
-    if (!isResolvedPresentation(currentState.presentation)) return;
-
-    // Text tracks are user opt-in - don't auto-select
-    const selectedTextTrackId = pickTextTrack(currentState.presentation, config);
-
-    if (selectedTextTrackId) {
-      state.selectedTextTrackId.set(selectedTextTrackId);
-    }
-  });
-}
-
-export const selectMediaTrack = defineBehavior({
-  // selectMediaTrack handles 'video' or 'audio'; the dynamic write key is one
-  // of selectedVideoTrackId / selectedAudioTrackId / selectedTextTrackId
-  // (selectedTextTrackId only via shouldSelectTrack predicate). All three
-  // selected*TrackId fields are part of the input shape.
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+export const selectVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: selectMediaTrackSetup,
+  setup: ({ state }: { state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedVideoTrackId'>> }) =>
+    effect(() => {
+      const presentation = state.presentation.get();
+      if (!presentation || state.selectedVideoTrackId.get()) return;
+      const id = pickFirstTrackId(presentation, 'video');
+      if (id) state.selectedVideoTrackId.set(id);
+    }),
 });
-export const selectTextTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'selectedTextTrackId'],
+
+/**
+ * Select the first available audio track when a presentation loads.
+ *
+ * No-op once an audio track is already selected.
+ *
+ * @example
+ * const cleanup = selectAudioTrack.setup({ state });
+ */
+export const selectAudioTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: selectTextTrackSetup,
+  setup: ({ state }: { state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedAudioTrackId'>> }) =>
+    effect(() => {
+      const presentation = state.presentation.get();
+      if (!presentation || state.selectedAudioTrackId.get()) return;
+      const id = pickFirstTrackId(presentation, 'audio');
+      if (id) state.selectedAudioTrackId.set(id);
+    }),
+});
+
+/**
+ * Select a text track based on user preferences (preferred language,
+ * default-track auto-select, forced-track filtering).
+ *
+ * Unlike video/audio selection, text-track selection is user opt-in —
+ * `pickTextTrack` returns undefined when no preference matches, and the
+ * effect leaves `selectedTextTrackId` unset.
+ *
+ * @example
+ * const cleanup = selectTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+ */
+export const selectTextTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: ({
+    state,
+    config,
+  }: {
+    state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedTextTrackId'>>;
+    config: Omit<TextSelectionConfig, 'type'>;
+  }) =>
+    effect(() => {
+      const presentation = state.presentation.get();
+      if (!isResolvedPresentation(presentation) || state.selectedTextTrackId.get()) return;
+      const id = pickTextTrack(presentation, { ...config, type: 'text' });
+      if (id) state.selectedTextTrackId.set(id);
+    }),
 });

@@ -24,7 +24,7 @@ import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveTrack } from '../../behaviors/resolve-track';
-import { selectTextTrack as _selectTextTrack, selectMediaTrack } from '../../behaviors/select-tracks';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
@@ -135,24 +135,6 @@ const resolveTextTrack = {
   stateKeys: resolveTrack.stateKeys,
   contextKeys: resolveTrack.contextKeys,
   setup: ({ config, ...deps }: Deps) => resolveTrack.setup({ ...deps, config: { type: 'text' as const, ...config } }),
-};
-
-const selectVideoTrack = {
-  stateKeys: selectMediaTrack.stateKeys,
-  contextKeys: selectMediaTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => selectMediaTrack.setup({ ...deps, config: { type: 'video', ...config } }),
-};
-
-const selectAudioTrack = {
-  stateKeys: selectMediaTrack.stateKeys,
-  contextKeys: selectMediaTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => selectMediaTrack.setup({ ...deps, config: { type: 'audio', ...config } }),
-};
-
-const selectTextTrack = {
-  stateKeys: _selectTextTrack.stateKeys,
-  contextKeys: _selectTextTrack.contextKeys,
-  setup: ({ config, ...deps }: Deps) => _selectTextTrack.setup({ ...deps, config: { type: 'text', ...config } }),
 };
 
 // ============================================================================
