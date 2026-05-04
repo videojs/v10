@@ -86,10 +86,13 @@ function getVideoTracks(presentation: MaybeResolvedPresentation) {
  * // Later, when done:
  * cleanup();
  */
-export function switchQuality(
-  { state }: { state: StateSignals<QualitySwitchingState> },
-  config: QualitySwitchingConfig = {}
-): () => void {
+export function switchQuality({
+  state,
+  config = {},
+}: {
+  state: StateSignals<QualitySwitchingState>;
+  config?: QualitySwitchingConfig;
+}): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const minUpgradeInterval = config.minUpgradeInterval ?? DEFAULT_SWITCHING_CONFIG.minUpgradeInterval;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;

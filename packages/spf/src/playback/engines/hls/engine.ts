@@ -22,7 +22,7 @@ import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
-import { switchQuality as _switchQuality } from '../../behaviors/quality-switching';
+import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveTrack } from '../../behaviors/resolve-track';
 import { selectTextTrack as _selectTextTrack, selectMediaTrack } from '../../behaviors/select-tracks';
@@ -125,8 +125,6 @@ const selectVideoTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, {
 const selectAudioTrack = ({ config, ...deps }: Deps) => selectMediaTrack(deps, { type: 'audio', ...config });
 
 const selectTextTrack = ({ config, ...deps }: Deps) => _selectTextTrack(deps, { type: 'text', ...config });
-
-const switchQuality = ({ config, ...deps }: Deps) => _switchQuality(deps, config);
 
 // ============================================================================
 // Signal-map factories

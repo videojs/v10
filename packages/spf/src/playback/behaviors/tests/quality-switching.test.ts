@@ -253,7 +253,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { safetyMargin: 1.0 };
-      const cleanup = switchQuality({ state }, config);
+      const cleanup = switchQuality({ state, config });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
@@ -266,7 +266,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { minUpgradeInterval: 2000 };
-      const cleanup = switchQuality({ state }, config);
+      const cleanup = switchQuality({ state, config });
 
       state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
@@ -296,7 +296,7 @@ describe('switchQuality', () => {
       });
 
       const config: QualitySwitchingConfig = { initialBandwidth: 5_000_000 };
-      const cleanup = switchQuality({ state }, config);
+      const cleanup = switchQuality({ state, config });
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
