@@ -6,6 +6,7 @@ import {
   type Composition,
   type ContextSignals,
   createComposition,
+  defineBehavior,
   type InferBehaviorConfig,
   type InferBehaviorContext,
   type InferBehaviorState,
@@ -306,5 +307,135 @@ describe('createComposition', () => {
     const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
     const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
     createComposition([behavior], { state, context, config: { interval: 250 } });
+  });
+});
+
+// =============================================================================
+// defineBehavior — return-type inference
+// =============================================================================
+
+describe('defineBehavior', () => {
+  it('preserves stateKeys as a literal tuple via const modifier', () => {
+    const b = defineBehavior({
+      stateKeys: ['a', 'b'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ a?: number; b?: string }> }) => {
+        void state;
+      },
+    });
+    expectTypeOf<typeof b.stateKeys>().toEqualTypeOf<readonly ['a', 'b']>();
+  });
+
+  it('preserves contextKeys as a literal tuple via const modifier', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: ['el'],
+      setup: ({ context }: { context: ContextSignals<{ el?: Surface }> }) => {
+        void context;
+      },
+    });
+    expectTypeOf<typeof b.contextKeys>().toEqualTypeOf<readonly ['el']>();
+  });
+
+  it('captures the setup return type narrowly via the R generic', () => {
+    const cleanup = () => {};
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => cleanup,
+    });
+    // R is captured narrowly — the result's setup returns `() => void`,
+    // not the wider `BehaviorCleanup` union. So callers can invoke the
+    // returned cleanup directly without narrowing.
+    expectTypeOf<ReturnType<typeof b.setup>>().toEqualTypeOf<() => void>();
+  });
+
+  it('flows S into InferBehaviorState<typeof behavior>', () => {
+    const b = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
+    });
+    expectTypeOf<InferBehaviorState<typeof b>>().toEqualTypeOf<{ count: number | undefined }>();
+  });
+
+  it('flows C into InferBehaviorContext<typeof behavior>', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: ['el'],
+      setup: ({ context }: { context: ContextSignals<{ el?: Surface }> }) => {
+        void context;
+      },
+    });
+    expectTypeOf<InferBehaviorContext<typeof b>>().toEqualTypeOf<{ el: Surface | undefined }>();
+  });
+
+  it('flows Cfg into InferBehaviorConfig<typeof behavior>', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: ({ config }: { config: { interval: number } }) => {
+        void config;
+      },
+    });
+    expectTypeOf<InferBehaviorConfig<typeof b>>().toEqualTypeOf<{ interval: number }>();
+  });
+
+  it('makes state optional in the result setup signature when S has no keys', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => {},
+    });
+    // Calling .setup({}) — no state field — typechecks.
+    b.setup({});
+  });
+
+  it('makes context optional in the result setup signature when C has no keys', () => {
+    const b = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
+    });
+    b.setup({ state: { count: signal<number | undefined>(undefined) } });
+  });
+
+  it('makes config optional in the result setup signature when Cfg has no keys', () => {
+    const b = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
+    });
+    // No config field needed at the call site — Cfg defaults to Empty.
+    b.setup({ state: { count: signal<number | undefined>(undefined) } });
+  });
+
+  it('keeps state required in the result setup signature when S has at least one key', () => {
+    const b = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        void state;
+      },
+    });
+    // `{}` is not assignable to the deps param when S has keys — state is required.
+    // biome-ignore lint/complexity/noBannedTypes: testing that `{}` (empty arg) doesn't satisfy deps
+    expectTypeOf<{}>().not.toMatchTypeOf<Parameters<typeof b.setup>[0]>();
+  });
+
+  it('produces an InferBehaviorState of {} for a behavior with no state in setup', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => {},
+    });
+    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback in create-composition
+    expectTypeOf<InferBehaviorState<typeof b>>().toEqualTypeOf<{}>();
   });
 });

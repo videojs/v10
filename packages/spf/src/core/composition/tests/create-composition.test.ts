@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { signal } from '../../signals/primitives';
-import { type Behavior, type ContextSignals, createComposition, type StateSignals } from '../create-composition';
+import {
+  type Behavior,
+  type ContextSignals,
+  createComposition,
+  defineBehavior,
+  type StateSignals,
+} from '../create-composition';
 
 interface Resource {
   id: string;
@@ -236,5 +242,70 @@ describe('createComposition', () => {
 
       expect(received).toBe(config);
     });
+  });
+});
+
+describe('defineBehavior', () => {
+  it('preserves stateKeys, contextKeys, and setup on the returned object', () => {
+    const setup = (): void => {};
+    const behavior = defineBehavior({
+      stateKeys: ['a'],
+      contextKeys: ['b'],
+      setup: setup as (deps: { state: StateSignals<{ a?: number }>; context: ContextSignals<{ b?: string }> }) => void,
+    });
+    expect(behavior.stateKeys).toEqual(['a']);
+    expect(behavior.contextKeys).toEqual(['b']);
+    expect(behavior.setup).toBe(setup);
+  });
+
+  it('is essentially identity at runtime — returns the same input properties', () => {
+    const stateKeys = ['count'] as const;
+    const contextKeys = [] as const;
+    const setup = ({ state }: { state: StateSignals<{ count?: number }> }) => {
+      void state;
+    };
+    const input = { stateKeys, contextKeys, setup };
+    const result = defineBehavior(input);
+
+    expect(result.stateKeys).toBe(stateKeys);
+    expect(result.contextKeys).toBe(contextKeys);
+    expect(result.setup).toBe(setup);
+  });
+
+  it('produces a behavior that composes correctly with createComposition', () => {
+    const incrementCount = defineBehavior({
+      stateKeys: ['count'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ count?: number }> }) => {
+        state.count.set(7);
+      },
+    });
+
+    const composition = createComposition([incrementCount], {
+      state: makeState(),
+      context: makeContext(),
+    });
+
+    expect(composition.state.count.get()).toBe(7);
+  });
+
+  it('produces a behavior whose returned cleanup runs on destroy', async () => {
+    let cleanupRan = false;
+    const withCleanup = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => () => {
+        cleanupRan = true;
+      },
+    });
+
+    const composition = createComposition([withCleanup], {
+      state: makeState(),
+      context: makeContext(),
+    });
+
+    expect(cleanupRan).toBe(false);
+    await composition.destroy();
+    expect(cleanupRan).toBe(true);
   });
 });

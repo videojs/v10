@@ -1,6 +1,12 @@
 import { describe, it } from 'vitest';
 import { signal } from '../../signals/primitives';
-import { type Behavior, type ContextSignals, createComposition, type StateSignals } from '../create-composition';
+import {
+  type Behavior,
+  type ContextSignals,
+  createComposition,
+  defineBehavior,
+  type StateSignals,
+} from '../create-composition';
 
 // =============================================================================
 // Host-agnostic stand-in types
@@ -308,6 +314,132 @@ describe('createComposition type errors', () => {
         count: signal<number | undefined>(undefined),
         label: signal<string | undefined>(undefined),
       },
+      context: {},
+    });
+  });
+});
+
+// =============================================================================
+// defineBehavior — single-behavior key/param consistency
+//
+// Exhaustiveness check: declared `stateKeys` must equal `keyof S` (where S
+// is inferred from the setup's state parameter type), and same for
+// `contextKeys` / C. Missing keys surface as a phantom-tag failure;
+// keys-not-in-S are caught by `const SK extends readonly (keyof S)[]`.
+// =============================================================================
+
+describe('defineBehavior type errors', () => {
+  it('errors when stateKeys is missing a key declared in the typed state slice', () => {
+    // @ts-expect-error — stateKeys missing 'b' (in keyof S = {a, b})
+    defineBehavior({
+      stateKeys: ['a'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ a?: number; b?: string }> }) => {
+        void state.a.get();
+        void state.b.get();
+      },
+    });
+  });
+
+  it('errors when stateKeys lists a key not in the typed state slice', () => {
+    defineBehavior({
+      // @ts-expect-error — 'nope' is not assignable to keyof S = 'a'
+      stateKeys: ['a', 'nope'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ a?: number }> }) => {
+        void state.a.get();
+      },
+    });
+  });
+
+  it('errors when contextKeys is missing a key declared in the typed context slice', () => {
+    // @ts-expect-error — contextKeys missing 'b'
+    defineBehavior({
+      stateKeys: [],
+      contextKeys: ['a'],
+      setup: ({ context }: { context: ContextSignals<{ a?: number; b?: string }> }) => {
+        void context.a.get();
+        void context.b.get();
+      },
+    });
+  });
+
+  it('errors when contextKeys lists a key not in the typed context slice', () => {
+    defineBehavior({
+      stateKeys: [],
+      // @ts-expect-error — 'nope' is not assignable to keyof C = 'a'
+      contextKeys: ['nope'],
+      setup: ({ context }: { context: ContextSignals<{ a?: number }> }) => {
+        void context.a.get();
+      },
+    });
+  });
+
+  it('errors when stateKeys is empty but the typed state slice has keys', () => {
+    // @ts-expect-error — keyof S = 'a' is not in stateKeys = []
+    defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ a?: number }> }) => {
+        void state.a.get();
+      },
+    });
+  });
+
+  it('allows a behavior with no state at all and stateKeys: []', () => {
+    // No error — keyof S is `never`, stateKeys: [] is exhaustive
+    defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => {},
+    });
+  });
+
+  it('errors when calling .setup() without a required config (Cfg has keys)', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: ({ config }: { config: { x: number } }) => {
+        void config.x;
+      },
+    });
+    // Type-only assertion — guarded by an unreachable branch so the runtime
+    // call doesn't crash on the missing config.
+    if (Math.random() < 0) {
+      // @ts-expect-error — config required because Cfg = { x: number } has keys
+      b.setup({});
+    }
+  });
+
+  it('allows omitting config from .setup() when Cfg has no keys', () => {
+    const b = defineBehavior({
+      stateKeys: [],
+      contextKeys: [],
+      setup: () => {},
+    });
+    // No error — config is optional via DepsForCfg when Cfg = Empty
+    b.setup({});
+  });
+
+  it('errors when defineBehavior is called with a stateKey whose type conflicts with another behavior', () => {
+    const numberBehavior = defineBehavior({
+      stateKeys: ['v'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ v: number }> }) => {
+        void state.v.get();
+      },
+    });
+    const stringBehavior = defineBehavior({
+      stateKeys: ['v'],
+      contextKeys: [],
+      setup: ({ state }: { state: StateSignals<{ v: string }> }) => {
+        void state.v.get();
+      },
+    });
+
+    // @ts-expect-error — cross-behavior conflict still flows through ValidateComposition
+    createComposition([numberBehavior, stringBehavior], {
+      state: { v: signal<number>(0) },
       context: {},
     });
   });
