@@ -4,7 +4,6 @@ import {
   createComposition,
   type StateSignals,
 } from '../../../core/composition/create-composition';
-import { signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -157,44 +156,6 @@ const selectTextTrack = {
 };
 
 // ============================================================================
-// Signal-map factories
-// ============================================================================
-
-function createStateSignals(): StateSignals<SimpleHlsEngineState> {
-  return {
-    presentation: signal<MaybeResolvedPresentation | undefined>(undefined),
-    preload: signal<'auto' | 'metadata' | 'none' | undefined>(undefined),
-    selectedVideoTrackId: signal<string | undefined>(undefined),
-    selectedAudioTrackId: signal<string | undefined>(undefined),
-    selectedTextTrackId: signal<string | undefined>(undefined),
-    bandwidthState: signal<BandwidthState | undefined>({
-      fastEstimate: 0,
-      fastTotalWeight: 0,
-      slowEstimate: 0,
-      slowTotalWeight: 0,
-      bytesSampled: 0,
-    }),
-    abrDisabled: signal<boolean | undefined>(undefined),
-    currentTime: signal<number | undefined>(undefined),
-    playbackInitiated: signal<boolean | undefined>(undefined),
-    mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(undefined),
-  };
-}
-
-function createContextSignals(): ContextSignals<SimpleHlsEngineContext> {
-  return {
-    mediaElement: signal<HTMLMediaElement | undefined>(undefined),
-    mediaSource: signal<MediaSource | undefined>(undefined),
-    videoBuffer: signal<SourceBuffer | undefined>(undefined),
-    audioBuffer: signal<SourceBuffer | undefined>(undefined),
-    videoBufferActor: signal<SourceBufferActor | undefined>(undefined),
-    audioBufferActor: signal<SourceBufferActor | undefined>(undefined),
-    textTracksActor: signal<TextTracksActor | undefined>(undefined),
-    segmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(undefined),
-  };
-}
-
-// ============================================================================
 // HLS Playback Engine
 // ============================================================================
 
@@ -268,10 +229,6 @@ export function createSimpleHlsEngine(
       setupTextTrackActors,
       loadTextTrackCues,
     ],
-    {
-      config: finalConfig,
-      state: createStateSignals(),
-      context: createContextSignals(),
-    }
+    { config: finalConfig }
   );
 }

@@ -1,4 +1,4 @@
-import type { Signal } from '../signals/primitives';
+import { type Signal, signal } from '../signals/primitives';
 
 /**
  * Cleanup returned by a behavior. Behaviors may return:
@@ -199,52 +199,62 @@ export interface Composition<S extends object, C extends object> {
 }
 
 /**
- * Options for `createComposition`. The caller constructs the state and
- * context signal maps and passes them in — this is the "create signals
- * from the outside" stage of the discrete-signals migration. A later
- * stage will derive these from per-behavior key declarations.
+ * Options for `createComposition`.
+ *
+ * Composition derives the state and context signal maps from each
+ * behavior's declared `stateKeys` / `contextKeys` — the caller supplies
+ * config only.
  */
-export interface CompositionOptions<S extends object, C extends object, Cfg extends object> {
+export interface CompositionOptions<Cfg extends object> {
   /** Static configuration passed to every behavior. */
   config?: Cfg;
-  /** State signal map — one signal per state field. */
-  state: StateSignals<S>;
-  /** Context signal map — one signal per context field. */
-  context: ContextSignals<C>;
 }
 
 /**
- * Create a composition by wiring behaviors to pre-built signal maps.
+ * Create a composition from a set of behaviors.
  *
- * Pass behaviors and let TypeScript intersect their deps to compute the
- * engine's state, context, and config shapes. Conflicts (e.g. two behaviors
- * disagreeing on a field's type) surface as a compose-time type error.
+ * Composition unions the behaviors' declared `stateKeys` / `contextKeys`
+ * to know which signals to create. Each signal starts as `undefined`;
+ * behaviors are responsible for writing their own slots.
+ *
+ * Cross-behavior type conflicts (e.g. two behaviors disagreeing on a
+ * field's type) surface as a compose-time type error via
+ * `ValidateComposition`.
  *
  * @example
  * ```ts
  * const composition = createComposition([resolvePresentation, selectVideoTrack], {
- *   state: createStateSignals(),
- *   context: createContextSignals(),
+ *   config: { initialBandwidth: 2_000_000 },
  * });
  * ```
  */
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
   behaviors: ValidateComposition<Behaviors>,
-  options: CompositionOptions<
-    ResolveBehaviorState<Behaviors>,
-    ResolveBehaviorContext<Behaviors>,
-    ResolveBehaviorConfig<Behaviors>
-  >
+  options?: CompositionOptions<ResolveBehaviorConfig<Behaviors>>
 ): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorContext<Behaviors>>;
 export function createComposition(
   behaviors: readonly AnyBehavior[],
-  options: CompositionOptions<object, object, object>
+  options?: CompositionOptions<object>
 ): Composition<object, object> {
-  const { state, context, config } = options;
+  // Derive state and context signal maps from declared keys. Iterate every
+  // behavior's keys (wrappers forward keys from the wrapped behavior, so
+  // dedup on insertion is required). Each signal starts as `undefined` —
+  // behaviors write their own slots once their preconditions are met.
+  const state: Record<PropertyKey, Signal<unknown>> = {};
+  const context: Record<PropertyKey, Signal<unknown>> = {};
+  for (const behavior of behaviors) {
+    for (const key of behavior.stateKeys) {
+      if (!(key in state)) state[key] = signal<unknown>(undefined);
+    }
+    for (const key of behavior.contextKeys) {
+      if (!(key in context)) context[key] = signal<unknown>(undefined);
+    }
+  }
+
   const deps: BehaviorDeps<object, object, object> = {
     state,
     context,
-    config: config ?? ({} as object),
+    config: options?.config ?? ({} as object),
   };
   const cleanups = behaviors.map((behavior) => behavior.setup(deps));
 

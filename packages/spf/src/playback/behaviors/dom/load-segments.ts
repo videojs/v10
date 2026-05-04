@@ -251,9 +251,8 @@ function loadSegmentsSetup({
 
   // Local throughput signal — used by createTrackedFetch to sample bandwidth
   // per chunk and propagate back to the shared state for ABR.
-  const initialBandwidth = state.bandwidthState.get();
   const throughput = signal<BandwidthState>(
-    initialBandwidth ?? {
+    state.bandwidthState.get() ?? {
       fastEstimate: 0,
       fastTotalWeight: 0,
       slowEstimate: 0,
@@ -262,16 +261,13 @@ function loadSegmentsSetup({
     }
   );
 
+  // Video tracks always sample bandwidth and bridge updates back to engine
+  // state so ABR can react. Audio tracks don't track throughput.
   const fetchBytes =
     type === 'video'
-      ? createTrackedFetch(
-          throughput,
-          initialBandwidth !== undefined
-            ? (next) => {
-                state.bandwidthState.set(next);
-              }
-            : undefined
-        )
+      ? createTrackedFetch(throughput, (next) => {
+          state.bandwidthState.set(next);
+        })
       : fetchStream;
 
   // Local segment loader — signal so segmentsCanLoad can track it reactively

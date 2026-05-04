@@ -30,19 +30,19 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('initializes with empty state and owners', () => {
+  it('initializes with all state and context signals undefined', () => {
     const engine = createSimpleHlsEngine();
 
-    expect(snapshot(engine.state)).toEqual({
-      bandwidthState: {
-        fastEstimate: 0,
-        fastTotalWeight: 0,
-        slowEstimate: 0,
-        slowTotalWeight: 0,
-        bytesSampled: 0,
-      },
-    });
-    expect(snapshot(engine.context)).toEqual({});
+    // Composition creates one signal per declared key (union of all
+    // behaviors' stateKeys/contextKeys), each starting as `undefined`.
+    // Behaviors are responsible for writing their own slots. Initial
+    // values for slots that need a non-undefined seed will arrive via
+    // `initialState` / `initialContext` in step 3.
+    const stateSnapshot = snapshot(engine.state);
+    expect(Object.values(stateSnapshot).every((v) => v === undefined)).toBe(true);
+
+    const contextSnapshot = snapshot(engine.context);
+    expect(Object.values(contextSnapshot).every((v) => v === undefined)).toBe(true);
 
     engine.destroy();
   });

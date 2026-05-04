@@ -280,13 +280,7 @@ describe('createComposition', () => {
       setup: () => {},
     };
 
-    const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
-    const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
-    const composition = createComposition([behavior], {
-      state,
-      context,
-      config: { interval: 250 },
-    });
+    const composition = createComposition([behavior], { config: { interval: 250 } });
 
     expectTypeOf(composition).toEqualTypeOf<Composition<State, Context>>();
     expectTypeOf(composition.state.count).toEqualTypeOf<Signal<number | undefined>>();
@@ -314,9 +308,7 @@ describe('createComposition', () => {
       },
     };
 
-    const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
-    const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
-    createComposition([behavior], { state, context, config: { interval: 250 } });
+    createComposition([behavior], { config: { interval: 250 } });
   });
 });
 
@@ -461,43 +453,26 @@ describe('createComposition type errors', () => {
   interface Context {
     el?: Surface;
   }
-  const state: StateSignals<State> = { count: signal<number | undefined>(undefined) };
-  const context: ContextSignals<Context> = { el: signal<Surface | undefined>(undefined) };
 
   // A typed behavior that pins the inferred composition shape so the error
   // tests below can target the expected shape without explicit type args.
   const noopState: Behavior<State, Context, object> = {
-    stateKeys: [],
-    contextKeys: [],
+    stateKeys: ['count'],
+    contextKeys: ['el'],
     setup: () => {},
   };
 
   it('errors when set() is called on a state signal with the wrong value type', () => {
-    const composition = createComposition([noopState], { state, context });
+    const composition = createComposition([noopState]);
     // @ts-expect-error — count is Signal<number | undefined>, not a string slot
     composition.state.count.set('not a number');
   });
 
   it('errors when get() is treated as the wrong type', () => {
-    const composition = createComposition([noopState], { state, context });
+    const composition = createComposition([noopState]);
     // @ts-expect-error — count.get() returns number | undefined, not string
     const _: string = composition.state.count.get();
     void _;
-  });
-
-  it('errors when state map is missing a required signal slot', () => {
-    // @ts-expect-error — `state` map missing the `count` signal the inferred shape requires
-    createComposition([noopState], { state: {}, context });
-  });
-
-  it('errors when context map is missing a required signal slot', () => {
-    // @ts-expect-error — `context` map missing the `el` signal the inferred shape requires
-    createComposition([noopState], { state, context: {} });
-  });
-
-  it('errors when state and context options are omitted entirely', () => {
-    // @ts-expect-error — state and context are required options
-    createComposition([noopState]);
   });
 
   it('errors when a behavior writes a wrong-type value to a state signal', () => {
@@ -523,12 +498,6 @@ describe('createComposition type errors', () => {
       },
     };
     void badBehavior;
-  });
-
-  it('errors when state or context maps have wrong-typed signal values', () => {
-    // @ts-expect-error — count signal must hold number | undefined, not string
-    const _bad: StateSignals<State> = { count: signal<string | undefined>(undefined) };
-    void _bad;
   });
 
   // ==========================================================================
@@ -564,10 +533,7 @@ describe('createComposition type errors', () => {
     };
 
     // @ts-expect-error — behaviors have incompatible state: { value: number } vs { value: string }
-    createComposition([expectsNumber, expectsString], {
-      state: { value: signal<number>(0) },
-      context: {},
-    });
+    createComposition([expectsNumber, expectsString]);
   });
 
   it('errors when composing behaviors with conflicting optional state types', () => {
@@ -583,10 +549,7 @@ describe('createComposition type errors', () => {
     };
 
     // @ts-expect-error — behaviors have incompatible state: { count?: number } vs { count?: string }
-    createComposition([expectsNumber, expectsString], {
-      state: { count: signal<undefined>(undefined) },
-      context: {},
-    });
+    createComposition([expectsNumber, expectsString]);
   });
 
   it('errors when composing behaviors with conflicting context types', () => {
@@ -602,10 +565,7 @@ describe('createComposition type errors', () => {
     };
 
     // @ts-expect-error — context conflict: CanvasSurface vs VideoSurface
-    createComposition([expectsCanvas, expectsVideo], {
-      state: {},
-      context: { el: signal<undefined>(undefined) },
-    });
+    createComposition([expectsCanvas, expectsVideo]);
   });
 
   it('allows context types in a subtype relationship to compose', () => {
@@ -625,10 +585,7 @@ describe('createComposition type errors', () => {
     };
 
     // No error — Surface and VideoSurface intersect to VideoSurface.
-    createComposition([expectsSurface, expectsVideo], {
-      state: {},
-      context: { el: signal<VideoSurface | undefined>(undefined) },
-    });
+    createComposition([expectsSurface, expectsVideo]);
   });
 
   it('errors when composing behaviors with conflicting config types', () => {
@@ -644,11 +601,7 @@ describe('createComposition type errors', () => {
     };
 
     // @ts-expect-error — config conflict: { interval?: number } vs { interval?: string }
-    createComposition([expectsNumber, expectsString], {
-      state: {},
-      context: {},
-      config: {},
-    });
+    createComposition([expectsNumber, expectsString], { config: {} });
   });
 
   // ==========================================================================
@@ -668,10 +621,7 @@ describe('createComposition type errors', () => {
     };
 
     // No error — omitting context is not a conflict
-    createComposition([stateOnly, withContext], {
-      state: { count: signal<number | undefined>(undefined) },
-      context: { el: signal<Surface | undefined>(undefined) },
-    });
+    createComposition([stateOnly, withContext]);
   });
 
   it('allows composing behaviors that omit state', () => {
@@ -687,11 +637,7 @@ describe('createComposition type errors', () => {
     };
 
     // No error — omitting state is not a conflict
-    createComposition([configOnly, withState], {
-      state: { count: signal<number | undefined>(undefined) },
-      context: {},
-      config: { interval: 250 },
-    });
+    createComposition([configOnly, withState], { config: { interval: 250 } });
   });
 
   it('allows composing behaviors that omit config', () => {
@@ -707,11 +653,7 @@ describe('createComposition type errors', () => {
     };
 
     // No error — omitting config is not a conflict
-    createComposition([stateOnly, withConfig], {
-      state: { count: signal<number | undefined>(undefined) },
-      context: {},
-      config: { interval: 250 },
-    });
+    createComposition([stateOnly, withConfig], { config: { interval: 250 } });
   });
 
   it('allows composing behaviors where each declares disjoint state keys', () => {
@@ -727,13 +669,7 @@ describe('createComposition type errors', () => {
     };
 
     // No error — disjoint keys merge cleanly
-    createComposition([a, b], {
-      state: {
-        count: signal<number | undefined>(undefined),
-        label: signal<string | undefined>(undefined),
-      },
-      context: {},
-    });
+    createComposition([a, b]);
   });
 });
 
