@@ -10,13 +10,13 @@ import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
-import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
+import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
-import { setupTextTrackActors as _setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
@@ -84,6 +84,12 @@ export interface SimpleHlsEngineConfig {
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
   enableDefaultTrack?: boolean;
+  /**
+   * Resolver that turns a text-track segment fetch into VTT cues.
+   * Defaults to the DOM-bound `resolveVttSegment` resolver, which uses an
+   * offscreen `<track>` element to parse WebVTT.
+   */
+  resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
 }
 
 /** Shorthand for the deps shape used by HLS engine behaviors. */
@@ -107,9 +113,6 @@ const loadAudioSegments = (deps: Deps) => loadSegments(deps, { type: 'audio' });
 const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
 const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
 const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
-
-const setupTextTrackActors = ({ context }: Deps) =>
-  _setupTextTrackActors({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
 
 // ============================================================================
 // Config-aware behavior wrappers
@@ -193,6 +196,11 @@ function createContextSignals(): ContextSignals<SimpleHlsEngineContext> {
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  const finalConfig = {
+    ...config,
+    resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+  };
+
   return createComposition(
     [
       syncPreloadAttribute,
@@ -234,7 +242,7 @@ export function createSimpleHlsEngine(
       loadTextTrackCues,
     ],
     {
-      config,
+      config: finalConfig,
       state: createStateSignals(),
       context: createContextSignals(),
     }
