@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
+import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
 import type { Presentation, VideoSelectionSet } from '../../../../media/types';
-import { createSourceBufferActor } from '../../../actors/dom/source-buffer';
-import type { SegmentLoadingOwners, SegmentLoadingState } from '../load-segments';
+import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
+import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
 import { loadSegments } from '../load-segments';
 
 // ============================================================================
@@ -20,6 +22,28 @@ vi.mock('../../../../media/dom/mse/buffer-flusher', () => ({
 // ============================================================================
 // Helpers
 // ============================================================================
+
+function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadingState> {
+  return {
+    presentation: signal<Presentation | undefined>(initial.presentation),
+    preload: signal<string | undefined>(initial.preload),
+    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
+    currentTime: signal<number | undefined>(initial.currentTime),
+    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+  };
+}
+
+function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
+  return {
+    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
+    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
+    videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
+    audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+  };
+}
 
 const seg = (id: string, startTime: number, duration = 10) => ({
   id,
@@ -69,10 +93,6 @@ const makeMockSourceBuffer = () => {
   return sb;
 };
 
-// ============================================================================
-// Helpers
-// ============================================================================
-
 function makeControllableFetch() {
   const resolvers = new Map<string, () => void>();
   const fetchedUrls: string[] = [];
@@ -100,8 +120,6 @@ describe('loadSegments — track switch', () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
-    // Use mockImplementation so each call gets a fresh Response (avoiding
-    // "body stream already read" errors when multiple fetches occur).
     globalThis.fetch = vi
       .fn()
       .mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 })));
@@ -122,7 +140,6 @@ describe('loadSegments — track switch', () => {
 
     const videoBuffer = makeMockSourceBuffer();
 
-    // Pre-seed actor with track-a already loaded
     const videoBufferActor = createSourceBufferActor(videoBuffer, {
       initTrackId: 'track-a',
       segments: [
@@ -131,40 +148,32 @@ describe('loadSegments — track switch', () => {
       ],
     });
 
-    const state = signal<SegmentLoadingState>({
+    const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true, // track switches are an ABR concern during playback
+      playbackInitiated: true,
       currentTime: 5,
     });
 
-    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const cleanup = loadSegments({ state, context }, { type: 'video' });
 
-    // Wait for initial evaluation to settle (track-a already fully loaded — no work needed)
     await new Promise((r) => setTimeout(r, 20));
 
-    // ABR switches to track B
-    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
+    state.selectedVideoTrackId.set('track-b');
 
-    // Wait for task to process track switch
     await new Promise((r) => setTimeout(r, 50));
 
-    // No full flush: new content overwrites existing buffer ranges in-place.
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    // New track-b init should be committed.
-    const ctx = owners.get().videoBufferActor?.snapshot.get().context;
+    const ctx = context.videoBufferActor.get()?.snapshot.get().context;
     expect(ctx?.initTrackId).toBe('track-b');
 
-    // Old track-a segments should be gone: time-aligned deduplication replaces
-    // each a* entry when b* is appended at the same startTime.
     const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
     expect(hasOldSegments).toBeFalsy();
 
-    // New track-b segments should be present.
     const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
     expect(hasNewSegments).toBeTruthy();
 
@@ -181,7 +190,7 @@ describe('loadSegments — track switch', () => {
     const videoBuffer = makeMockSourceBuffer();
     const videoBufferActor = createSourceBufferActor(videoBuffer);
 
-    const state = signal<SegmentLoadingState>({
+    const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
@@ -189,26 +198,22 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const context = makeContext({ videoBuffer, videoBufferActor });
+    const cleanup = loadSegments({ state, context }, { type: 'video' });
 
-    // Wait for track-a init fetch to start (but leave it pending)
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
-    // Switch tracks while track-a init is still in-flight
-    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
+    state.selectedVideoTrackId.set('track-b');
 
-    // Unblock the pending init fetch so the runner can progress
     resolve('https://example.com/track-a-init.mp4');
 
-    // track-b init should be fetched after the preempt
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-b-init.mp4'), {
       timeout: 3000,
     });
 
     resolve('https://example.com/track-b-init.mp4');
 
-    await vi.waitFor(() => expect(owners.get().videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-b'), {
+    await vi.waitFor(() => expect(context.videoBufferActor.get()?.snapshot.get().context.initTrackId).toBe('track-b'), {
       timeout: 3000,
     });
 
@@ -222,7 +227,6 @@ describe('loadSegments — track switch', () => {
     const presentation = makePresentation(trackA, trackB);
     const videoBuffer = makeMockSourceBuffer();
 
-    // Pre-seed actor: track-a fully loaded, playing at t=25
     const videoBufferActor = createSourceBufferActor(videoBuffer, {
       initTrackId: 'track-a',
       segments: [
@@ -231,7 +235,7 @@ describe('loadSegments — track switch', () => {
       ],
     });
 
-    const state = signal<SegmentLoadingState>({
+    const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
@@ -239,13 +243,12 @@ describe('loadSegments — track switch', () => {
       currentTime: 25,
     });
 
-    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const context = makeContext({ videoBuffer, videoBufferActor });
+    const cleanup = loadSegments({ state, context }, { type: 'video' });
 
     await new Promise((r) => setTimeout(r, 20));
 
-    // Switch to track-b at currentTime=25
-    state.set({ ...state.get(), selectedVideoTrackId: 'track-b' });
+    state.selectedVideoTrackId.set('track-b');
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
@@ -254,7 +257,6 @@ describe('loadSegments — track switch', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
     });
 
-    // Segments at or past currentTime=25 should be loaded (b3@20 overlaps [25,55), b4-b6)
     await vi.waitFor(
       () => {
         expect(fetchedUrls).toContain('https://example.com/b3.m4s');
@@ -263,7 +265,6 @@ describe('loadSegments — track switch', () => {
       { timeout: 3000 }
     );
 
-    // Segments before currentTime=25 should NOT be loaded (b1@0 and b2@10 end before 25)
     expect(fetchedUrls).not.toContain('https://example.com/b1.m4s');
     expect(fetchedUrls).not.toContain('https://example.com/b2.m4s');
 
@@ -278,22 +279,20 @@ describe('loadSegments — track switch', () => {
     const presentation = makePresentation(trackA);
     const videoBuffer = makeMockSourceBuffer();
 
-    // Actor starts fresh (no prior track)
     const videoBufferActor = createSourceBufferActor(videoBuffer);
 
-    const state = signal<SegmentLoadingState>({
+    const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
       currentTime: 0,
     });
 
-    const owners = signal<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const cleanup = loadSegments({ state, context }, { type: 'video' });
     await new Promise((r) => setTimeout(r, 50));
 
-    // No full flush should happen on first init load
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     cleanup();
