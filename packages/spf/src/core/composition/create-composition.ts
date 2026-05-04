@@ -237,25 +237,35 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
  * ```
  */
 /**
- * Build a typed signal map from the union of behaviors' declared keys.
+ * Create a typed signal map for a given set of keys, seeded from an
+ * optional partial initial value.
  *
- * Pipeline: flatMap collects every key across behaviors → `Set` dedupes
- * (Set keeps insertion order, so first occurrence wins, matching the
- * earlier imperative `if (!(key in map))` semantics) → `Object.fromEntries`
- * materializes the map.
+ * Pipeline: `Set` dedupes the iterable (insertion order preserved, so
+ * first occurrence wins) → `Object.fromEntries` materializes one
+ * `signal()` per unique key, seeded from `initial[key]` or `undefined`.
  *
- * The boundary cast at the return narrows the wide
- * `Record<PropertyKey, Signal<unknown>>` to the caller's expected per-key
- * shape. Per-key narrow types are TypeScript-level only — at runtime every
- * signal is `Signal<unknown>` regardless.
+ * Per-key value types live in TypeScript only — at runtime every signal
+ * is `Signal<unknown>`. The boundary cast at the return narrows the wide
+ * `Record<PropertyKey, Signal<unknown>>` shape to the caller's expected
+ * per-key types from `S`.
+ *
+ * Used by `createComposition` to derive engine state/context maps from
+ * the union of behaviors' declared `stateKeys` / `contextKeys`.
+ *
+ * @example
+ * ```ts
+ * interface State { count?: number; label?: string }
+ * const state = buildSignalMap<State>(['count', 'label'], { count: 5 });
+ * state.count.get(); // 5
+ * state.label.get(); // undefined
+ * ```
  */
-function buildSignalMap<S extends object>(
-  behaviors: readonly AnyBehavior[],
-  keysOf: (b: AnyBehavior) => readonly PropertyKey[],
+export function buildSignalMap<S extends object>(
+  keys: Iterable<PropertyKey>,
   initial: Partial<S>
 ): { [K in keyof S]-?: Signal<S[K]> } {
   const init = initial as Record<PropertyKey, unknown>;
-  const uniqueKeys = new Set(behaviors.flatMap(keysOf));
+  const uniqueKeys = new Set(keys);
   return Object.fromEntries([...uniqueKeys].map((key) => [key, signal(init[key])])) as {
     [K in keyof S]-?: Signal<S[K]>;
   };
@@ -278,8 +288,14 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
   // (i.e. the success case), so iterating as the behavior tuple is sound.
   const validBehaviors = behaviors as unknown as readonly AnyBehavior[];
 
-  const state = buildSignalMap<S>(validBehaviors, (b) => b.stateKeys, options?.initialState ?? {});
-  const context = buildSignalMap<C>(validBehaviors, (b) => b.contextKeys, options?.initialContext ?? {});
+  const state = buildSignalMap<S>(
+    validBehaviors.flatMap((b) => b.stateKeys),
+    options?.initialState ?? {}
+  );
+  const context = buildSignalMap<C>(
+    validBehaviors.flatMap((b) => b.contextKeys),
+    options?.initialContext ?? {}
+  );
 
   const deps: BehaviorDeps<S, C, Cfg> = {
     state,

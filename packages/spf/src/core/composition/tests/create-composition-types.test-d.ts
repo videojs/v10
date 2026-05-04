@@ -3,6 +3,7 @@ import { type Signal, signal } from '../../signals/primitives';
 import {
   type Behavior,
   type BehaviorDeps,
+  buildSignalMap,
   type Composition,
   type ContextSignals,
   createComposition,
@@ -853,5 +854,71 @@ describe('createComposition initial-value type errors', () => {
 
     // No error — Partial<S> allows omitting any subset of keys
     createComposition([behavior], { initialState: { a: 1 } });
+  });
+});
+
+// =============================================================================
+// buildSignalMap — return-type inference
+// =============================================================================
+
+describe('buildSignalMap', () => {
+  it('returns one Signal slot per key in S', () => {
+    interface S {
+      a?: number;
+      b?: string;
+    }
+    const map = buildSignalMap<S>(['a', 'b'], {});
+    expectTypeOf<typeof map>().toEqualTypeOf<{ a: Signal<number | undefined>; b: Signal<string | undefined> }>();
+  });
+
+  it('strips optionality on signal slots while preserving undefined in value type', () => {
+    interface S {
+      a?: number;
+    }
+    const map = buildSignalMap<S>(['a'], {});
+    // The slot is required (`-?`) but the value type retains | undefined.
+    expectTypeOf<typeof map>().toEqualTypeOf<{ a: Signal<number | undefined> }>();
+  });
+
+  it('preserves required fields without injecting undefined', () => {
+    interface S {
+      a: number;
+    }
+    const map = buildSignalMap<S>(['a'], { a: 5 });
+    expectTypeOf<typeof map>().toEqualTypeOf<{ a: Signal<number> }>();
+  });
+
+  it('accepts Partial<S> as the initial seed (any subset of keys)', () => {
+    interface S {
+      a?: number;
+      b?: string;
+    }
+    // No errors — partial seeds welcome.
+    buildSignalMap<S>(['a', 'b'], {});
+    buildSignalMap<S>(['a', 'b'], { a: 1 });
+    buildSignalMap<S>(['a', 'b'], { a: 1, b: 'x' });
+  });
+
+  it('errors when initial seeds a key not in S', () => {
+    interface S {
+      a?: number;
+    }
+    // @ts-expect-error — 'unknown' is not a key of S
+    buildSignalMap<S>(['a'], { unknown: 1 });
+  });
+
+  it('errors when initial seeds a key with the wrong type', () => {
+    interface S {
+      a?: number;
+    }
+    // @ts-expect-error — 'a' must be number | undefined, not string
+    buildSignalMap<S>(['a'], { a: 'wrong' });
+  });
+
+  it('produces an empty map for an empty Partial<{}>', () => {
+    // biome-ignore lint/complexity/noBannedTypes: empty interface intentional
+    const map = buildSignalMap<{}>([], {});
+    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback
+    expectTypeOf<typeof map>().toEqualTypeOf<{}>();
   });
 });
