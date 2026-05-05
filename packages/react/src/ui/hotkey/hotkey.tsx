@@ -33,6 +33,7 @@ export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): 
     return createHotkey(container, {
       keys,
       action,
+      value,
       target,
       disabled,
       repeatable: !isHotkeyToggleAction(action),

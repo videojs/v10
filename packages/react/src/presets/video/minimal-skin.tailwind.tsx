@@ -10,6 +10,7 @@ import {
   iconContainer,
   iconFlipped,
   iconState,
+  inputFeedback,
   overlay,
   popup,
   poster,
@@ -27,6 +28,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -47,6 +49,8 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -54,15 +58,21 @@ import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
+import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
+import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -210,7 +220,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -224,7 +234,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
           </div>
 
@@ -254,7 +264,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           <div className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -311,6 +321,73 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       </Controls.Root>
 
       <div className={overlay} />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
+      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
+      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className={inputFeedback.root}>
+        <VolumeIndicator.Root
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <VolumeIndicator.Fill data-feedback-island-content="" className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <div aria-hidden="true" className={inputFeedback.island.volumeProgress} />
+            <VolumeIndicator.Value className={inputFeedback.island.value} />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+            <StatusIndicator.Value className={inputFeedback.island.value} />
+          </div>
+        </StatusIndicator.Root>
+
+        <SeekIndicator.Root className={inputFeedback.bubble.base}>
+          <ChevronIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek)} />
+          <SeekIndicator.Value className={inputFeedback.bubble.time} />
+        </SeekIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
+          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

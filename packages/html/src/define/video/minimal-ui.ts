@@ -6,6 +6,8 @@ import { BufferingIndicatorElement } from '../../ui/buffering-indicator/bufferin
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
+import { GestureElement } from '../../ui/gesture/gesture-element';
+import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
@@ -16,7 +18,14 @@ import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineControls, defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineTime,
+  defineTimeSlider,
+  defineVolumeSlider,
+} from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { VideoPlayerElement } from './player';
@@ -29,6 +38,7 @@ safeDefine(MediaContainerElement);
 // Compound groups.
 defineControls();
 defineErrorDialog();
+defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();
@@ -38,6 +48,8 @@ safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);
 safeDefine(FullscreenButtonElement);
+safeDefine(GestureElement);
+safeDefine(HotkeyElement);
 safeDefine(MuteButtonElement);
 safeDefine(PiPButtonElement);
 safeDefine(PlayButtonElement);

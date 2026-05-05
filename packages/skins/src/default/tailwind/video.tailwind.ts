@@ -3,6 +3,7 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
+import { inputFeedback as baseInputFeedback } from './components/input-feedback';
 import { popup as basePopup } from './components/popup';
 import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
@@ -28,13 +29,13 @@ export const root = (isShadowDOM: boolean) =>
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
-    '[--media-spring-transition:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
+    '[--media-spring-timing-function:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     '[--media-controls-transition-duration:100ms]',
     '[--media-controls-transition-timing-function:ease-out]',
     '[--media-error-dialog-transition-duration:350ms]',
     '[--media-error-dialog-transition-delay:100ms]',
-    '[--media-error-dialog-transition-timing-function:var(--media-spring-transition)]',
+    '[--media-error-dialog-transition-timing-function:var(--media-spring-timing-function)]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
     '[--media-surface-background-color:oklch(1_0_0/0.1)]',
@@ -54,15 +55,15 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:transparent]',
     'contrast-more:[--media-surface-outer-border-color:transparent]',
-    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5.5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:[&>*]:[--media-caption-track-y:-3.5rem]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3.5rem]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -97,14 +98,14 @@ export const controls = cn(
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',
   'duration-(--media-controls-transition-duration)',
-  '[@media(pointer:fine)]:will-change-[scale,filter,opacity]',
-  '[@media(pointer:fine)]:transition-[scale,filter,opacity]',
-  '[@media(pointer:coarse)]:will-change-[scale,opacity]',
-  '[@media(pointer:coarse)]:transition-[scale,opacity]',
+  'pointer-fine:will-change-[scale,filter,opacity]',
+  'pointer-fine:transition-[scale,filter,opacity]',
+  'pointer-coarse:will-change-[scale,opacity]',
+  'pointer-coarse:transition-[scale,opacity]',
   // Hidden state
   'not-data-visible:pointer-events-none not-data-visible:opacity-0',
   'motion-safe:not-data-visible:scale-90',
-  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm',
+  'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
   '@2xl/media-root:bottom-3 @2xl/media-root:inset-x-3 @2xl/media-root:flex-nowrap @2xl/media-root:gap-x-0.5 @2xl/media-root:p-1'
 );
@@ -141,8 +142,8 @@ export const preview = {
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
     'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
-    '[&:has([role=img][data-loading])]:max-h-24',
+    'has-[[role=img][data-hidden]]:opacity-0 has-[[role=img][data-hidden]]:scale-80 has-[[role=img][data-hidden]]:blur-sm',
+    'has-[[role=img][data-loading]]:max-h-24',
     surface,
     basePreview.root
   ),
@@ -186,6 +187,18 @@ export const error = {
   dialog: cn(baseError.dialog, surface, 'text-shadow-2xs text-shadow-black/25'),
   content: cn(baseError.content, 'text-shadow-inherit'),
   title: cn(baseError.title, 'text-base'),
+};
+
+/* ==========================================================================
+   Input Feedback (islands use video surface)
+   ========================================================================== */
+
+export const inputFeedback = {
+  ...baseInputFeedback,
+  island: {
+    ...baseInputFeedback.island,
+    base: cn(baseInputFeedback.island.base, surface),
+  },
 };
 
 /* ==========================================================================

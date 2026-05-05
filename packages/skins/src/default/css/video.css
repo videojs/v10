@@ -15,14 +15,17 @@
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/captions.css";
+@import "./components/input-feedback.css";
 @import "../../shared/css/video/icon-state.css";
+@import "../../shared/global/video/keyframes.css";
+@import "../../shared/global/video/properties.css";
 
 /* ==========================================================================
    Root
    ========================================================================== */
 
 .media-default-skin--video {
-  --media-spring-transition: linear(
+  --media-spring-timing-function: linear(
     0,
     0.034 1.5%,
     0.763 9.7%,
@@ -44,7 +47,7 @@
   --media-controls-transition-timing-function: ease-out;
   --media-error-dialog-transition-duration: 350ms;
   --media-error-dialog-transition-delay: 100ms;
-  --media-error-dialog-transition-timing-function: var(--media-spring-transition);
+  --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
   --media-tooltip-side-offset: 0.75rem;

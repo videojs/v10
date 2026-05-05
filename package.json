@@ -74,6 +74,7 @@
     "commit-msg": "pnpm commitlint"
   },
   "lint-staged": {
+    "packages/icons/src/assets/**/*.svg": "node --import tsx packages/icons/scripts/format.ts",
     "*.astro": "prettier --write",
     "*": "biome check --write --no-errors-on-unmatched"
   }

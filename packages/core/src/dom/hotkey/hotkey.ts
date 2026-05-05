@@ -20,8 +20,10 @@ export interface HotkeyOptions {
   /** Whether `event.repeat` should fire the callback. */
   repeatable?: boolean | undefined;
   disabled?: boolean | undefined;
-  /** Action name for the ARIA registry. */
+  /** Action name for the ARIA registry and subscriber events. */
   action?: string | undefined;
+  /** Numeric magnitude passed to subscriber events (e.g. 10 for `seekStep`). */
+  value?: number | undefined;
 }
 
 const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
@@ -114,7 +116,8 @@ export function findHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator | 
   return coordinators.get(target);
 }
 
-function getCoordinator(target: HTMLElement): HotkeyCoordinator {
+/** Look up or create the hotkey coordinator for a target element. */
+export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
   let coordinator = coordinators.get(target);
   if (!coordinator) {
     coordinator = new HotkeyCoordinator(target);
@@ -140,6 +143,6 @@ function getCoordinator(target: HTMLElement): HotkeyCoordinator {
  * @returns A cleanup function that removes the binding.
  */
 export function createHotkey(target: HTMLElement, options: HotkeyOptions): () => void {
-  const coordinator = getCoordinator(target);
+  const coordinator = getHotkeyCoordinator(target);
   return coordinator.add(options);
 }

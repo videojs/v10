@@ -1,11 +1,10 @@
 import { isUndefined } from '@videojs/utils/predicate';
-
 import type { AnyPlayerStore } from '../media/types';
+import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import {
   selectFullscreen,
   selectPiP,
   selectPlayback,
-  selectPlaybackRate,
   selectTextTrack,
   selectTime,
   selectVolume,
@@ -63,37 +62,13 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
     pip.pip ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
   },
 
-  seekStep({ store, value }) {
-    if (isUndefined(value)) return;
-    const time = selectTime(store.state);
-    if (!time) return;
-    time.seek(time.currentTime + value);
-  },
+  seekStep: MEDIA_INPUT_ACTION_OVERRIDES.seekStep,
 
-  volumeStep({ store, value }) {
-    if (isUndefined(value)) return;
-    const vol = selectVolume(store.state);
-    if (!vol) return;
-    vol.setVolume(vol.volume + value);
-  },
+  volumeStep: MEDIA_INPUT_ACTION_OVERRIDES.volumeStep,
 
-  speedUp({ store }) {
-    const rate = selectPlaybackRate(store.state);
-    if (!rate) return;
-    const { playbackRates, playbackRate } = rate;
-    const idx = playbackRates.indexOf(playbackRate);
-    const next = idx < 0 || idx >= playbackRates.length - 1 ? 0 : idx + 1;
-    rate.setPlaybackRate(playbackRates[next]!);
-  },
+  speedUp: MEDIA_INPUT_ACTION_OVERRIDES.speedUp,
 
-  speedDown({ store }) {
-    const rate = selectPlaybackRate(store.state);
-    if (!rate) return;
-    const { playbackRates, playbackRate } = rate;
-    const idx = playbackRates.indexOf(playbackRate);
-    const next = idx <= 0 ? playbackRates.length - 1 : idx - 1;
-    rate.setPlaybackRate(playbackRates[next]!);
-  },
+  speedDown: MEDIA_INPUT_ACTION_OVERRIDES.speedDown,
 
   seekToPercent({ store, value, key }) {
     const time = selectTime(store.state);

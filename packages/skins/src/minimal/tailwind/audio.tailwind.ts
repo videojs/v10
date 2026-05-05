@@ -45,7 +45,7 @@ export const controls = cn(
   // Layout
   'p-1.5 gap-2',
   'rounded-(--media-border-radius,1rem)',
-  'peer-data-open/error:[&_*]:invisible',
+  'peer-data-open/error:**:invisible',
   // Appearance
   'text-(--media-controls-text-color)',
   // Border

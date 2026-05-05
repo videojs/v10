@@ -22,6 +22,7 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./*.css": "./dist/default/*.css",
     "./icons": {
       "types": "./dist/dev/icons/index.d.ts",
       "development": "./dist/dev/icons/index.js",

@@ -6,6 +6,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -26,8 +27,8 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
-import { Gesture } from '@/ui/gesture/gesture';
-import { Hotkey } from '@/ui/hotkey/hotkey';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -35,15 +36,21 @@ import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
+import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
+import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export type VideoSkinProps = BaseVideoSkinProps;
 
@@ -148,7 +155,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -162,7 +169,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
           </div>
 
@@ -189,7 +196,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -254,10 +261,10 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <Hotkey keys="f" action="toggleFullscreen" />
       <Hotkey keys="c" action="toggleSubtitles" />
       <Hotkey keys="i" action="togglePictureInPicture" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <Hotkey keys="l" action="seekStep" value={10} />
-      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
+      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
+      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
       <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
       <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
       <Hotkey keys="0-9" action="seekToPercent" />
@@ -269,9 +276,47 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       {/* Gestures */}
       <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
       <Gesture type="tap" action="toggleControls" pointer="touch" />
-      <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
       <Gesture type="doubletap" action="toggleFullscreen" region="center" />
-      <Gesture type="doubletap" action="seekStep" value={10} region="right" />
+      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className="media-input-feedback">
+        <VolumeIndicator.Root className="media-surface media-input-feedback-island media-input-feedback-island--volume">
+          <VolumeIndicator.Fill className="media-input-feedback-island__content">
+            <VolumeHighIcon className="media-icon media-icon--volume-high" />
+            <VolumeLowIcon className="media-icon media-icon--volume-low" />
+            <VolumeOffIcon className="media-icon media-icon--volume-off" />
+            <VolumeIndicator.Value className="media-input-feedback-island__value" />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className="media-surface media-input-feedback-island media-input-feedback-island--status"
+        >
+          <div className="media-input-feedback-island__content">
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+            <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+            <PipEnterIcon className="media-icon media-icon--pip-enter" />
+            <PipExitIcon className="media-icon media-icon--pip-exit" />
+            <StatusIndicator.Value className="media-input-feedback-island__value" />
+          </div>
+        </StatusIndicator.Root>
+
+        <SeekIndicator.Root className="media-input-feedback-bubble">
+          <ChevronIcon className="media-icon media-icon--seek" />
+          <SeekIndicator.Value className="media-time" />
+        </SeekIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className="media-input-feedback-bubble">
+          <PlayIcon className="media-icon media-icon--play" />
+          <PauseIcon className="media-icon media-icon--pause" />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }
