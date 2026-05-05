@@ -105,9 +105,9 @@ function SubmenuEscapeFixture({ onRootOpenChange }: { onRootOpenChange: (open: b
   );
 }
 
-function SiblingSubmenuFixture() {
+function SiblingSubmenuFixture({ onRootOpenChange }: { onRootOpenChange?: MenuRoot.Props['onOpenChange'] } = {}) {
   return (
-    <MenuRoot defaultOpen>
+    <MenuRoot defaultOpen {...(onRootOpenChange ? { onOpenChange: onRootOpenChange } : {})}>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
         <MenuView data-testid="root-view">
@@ -328,8 +328,11 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-content').hasAttribute('data-open')).toBe(true);
   });
 
-  it('does not pop a sibling submenu when Escape is pressed in an exiting submenu view', async () => {
-    render(<SiblingSubmenuFixture />);
+  it('allows Escape from an inactive sibling submenu view to close the root menu', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(<SiblingSubmenuFixture onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
 
     fireEvent.click(screen.getByTestId('quality-trigger'));
 
@@ -343,8 +346,7 @@ describe('MenuContent', () => {
     fireEvent.keyDown(exitingContent, { key: 'Escape' });
 
     await waitFor(() => {
-      expect(screen.getByTestId('speed-content').getAttribute('data-menu-view-state')).toBe('active');
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'escape' }));
     });
   });
 

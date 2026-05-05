@@ -267,15 +267,14 @@ export class MenuElement extends MediaElement {
     const stack = parentCtx.menu.navigationInput.current.stack;
     const topEntry = stack[stack.length - 1];
     const ownsActiveSubmenu = topEntry?.menuId === this.id;
+    const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
-    if ((event.key === 'ArrowLeft' || event.key === 'Escape') && !event.defaultPrevented) {
+    if (isBackNavigationKey && ownsActiveSubmenu && !event.defaultPrevented) {
       event.preventDefault();
-      if (ownsActiveSubmenu) {
-        parentCtx.menu.pop();
-      }
+      parentCtx.menu.pop();
     }
 
-    if (isMenuNavigationKey(event)) {
+    if (isMenuNavigationKey(event) && (!isBackNavigationKey || ownsActiveSubmenu)) {
       event.stopPropagation();
     }
   };

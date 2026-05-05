@@ -31,6 +31,9 @@ const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin:
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
   return {
+    get defaultPrevented() {
+      return event.defaultPrevented;
+    },
     key: event.key,
     shiftKey: event.shiftKey,
     ctrlKey: event.ctrlKey,
@@ -103,6 +106,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
       const keyboardEvent = toUIKeyboardEvent(event);
       menu.contentProps.onKeyDown(keyboardEvent);
+      const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
       const ownsActiveSubmenu =
         parentMenu !== null &&
@@ -110,14 +114,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
         parentMenu.menu.navigationInput.current.stack[parentMenu.menu.navigationInput.current.stack.length - 1]
           ?.menuId === subMenuId;
 
-      if ((event.key === 'ArrowLeft' || event.key === 'Escape') && !event.defaultPrevented) {
+      if (isBackNavigationKey && ownsActiveSubmenu && !event.defaultPrevented) {
         event.preventDefault();
-        if (ownsActiveSubmenu) {
-          parentMenu.pop();
-        }
+        parentMenu.pop();
       }
 
-      if (isMenuNavigationKey(keyboardEvent)) {
+      if (isMenuNavigationKey(keyboardEvent) && (!isBackNavigationKey || ownsActiveSubmenu)) {
         event.stopPropagation();
       }
     },

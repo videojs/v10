@@ -227,7 +227,7 @@ describe('MenuElement', () => {
     );
   });
 
-  it('does not pop a sibling nested menu when Escape is pressed in an exiting menu view', async () => {
+  it('allows Escape from an inactive sibling nested menu to close the root menu', async () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
     const qualityTrigger = createElement(MenuItemElement);
@@ -236,6 +236,7 @@ describe('MenuElement', () => {
     const speed = createElement(MenuElement);
     const qualityItem = createElement(MenuItemElement);
     const speedItem = createElement(MenuItemElement);
+    const onOpenChange = vi.fn();
 
     root.open = true;
     qualityTrigger.id = 'quality-trigger';
@@ -247,6 +248,7 @@ describe('MenuElement', () => {
     qualityItem.textContent = 'Auto';
     speedItem.textContent = 'Normal';
 
+    root.addEventListener('open-change', onOpenChange);
     rootView.append(qualityTrigger, speedTrigger);
     quality.append(qualityItem);
     speed.append(speedItem);
@@ -261,6 +263,7 @@ describe('MenuElement', () => {
     await speed.updateComplete;
     await qualityItem.updateComplete;
     await speedItem.updateComplete;
+    onOpenChange.mockClear();
 
     qualityTrigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
@@ -277,8 +280,10 @@ describe('MenuElement', () => {
     await quality.updateComplete;
     await speed.updateComplete;
     await waitForAssertion(() => {
-      expect(speed.getAttribute('data-menu-view-state')).toBe('active');
-      expect(quality.getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(root.open).toBe(false);
+      expect(onOpenChange).toHaveBeenCalledWith(
+        expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'escape' }) })
+      );
     });
   });
 
