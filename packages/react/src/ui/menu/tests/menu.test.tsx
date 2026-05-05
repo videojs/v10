@@ -87,6 +87,24 @@ function SubmenuSelectFixture({ onSelect }: { onSelect: () => void }) {
   );
 }
 
+function SubmenuEscapeFixture({ onRootOpenChange }: { onRootOpenChange: (open: boolean) => void }) {
+  return (
+    <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="submenu-content">
+              <MenuItem data-testid="submenu-item">Auto</MenuItem>
+            </MenuContent>
+          </MenuRoot>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function NestedSubmenuFixture() {
   return (
     <MenuRoot defaultOpen>
@@ -262,6 +280,28 @@ describe('MenuContent', () => {
     await waitFor(() => {
       expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
     });
+  });
+
+  it('returns to the parent view without closing the root menu when Escape is pressed in a submenu', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(<SubmenuEscapeFixture onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+    expect(screen.getByTestId('root-content').hasAttribute('data-open')).toBe(true);
   });
 
   it('only stops propagation for submenu-owned keyboard events', async () => {
