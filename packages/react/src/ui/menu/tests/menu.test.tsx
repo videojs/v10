@@ -20,7 +20,7 @@ function SubmenuFixture() {
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
               <MenuBack data-testid="submenu-back">Back</MenuBack>
-              <MenuItem>Auto</MenuItem>
+              <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
         </MenuView>
@@ -99,5 +99,20 @@ describe('MenuContent', () => {
       expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
       expect(screen.getByTestId('submenu-content').hasAttribute('hidden')).toBe(false);
     });
+  });
+
+  it('handles keyboard navigation in the active submenu view', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
+    });
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowDown' });
+
+    expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
+    expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(false);
   });
 });

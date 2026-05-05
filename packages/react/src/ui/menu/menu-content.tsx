@@ -11,6 +11,7 @@ import {
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
+  type UIKeyboardEvent,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
@@ -26,6 +27,20 @@ import { useMenuContext, useSubMenuContext } from './context';
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
+
+function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
+  return {
+    key: event.key,
+    shiftKey: event.shiftKey,
+    ctrlKey: event.ctrlKey,
+    altKey: event.altKey,
+    metaKey: event.metaKey,
+    target: event.target instanceof Node ? event.target : event.currentTarget,
+    currentTarget: event.currentTarget,
+    preventDefault: () => event.preventDefault(),
+    stopPropagation: () => event.stopPropagation(),
+  };
+}
 
 /** Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when nested. */
 export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
@@ -80,13 +95,25 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
+
+      menu.contentProps.onKeyDown(toUIKeyboardEvent(event));
+
       if (event.key === 'ArrowLeft' || event.key === 'Escape') {
         event.preventDefault();
-        event.stopPropagation();
         parentMenu?.pop();
       }
+
+      event.stopPropagation();
     },
-    [onKeyDown, parentMenu]
+    [onKeyDown, parentMenu, menu]
+  );
+
+  const handleRootMenuKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
+      menu.contentProps.onKeyDown(toUIKeyboardEvent(event));
+    },
+    [onKeyDown, menu]
   );
 
   // ─── Root content state (always declared — Rules of Hooks) ───────────────
@@ -226,9 +253,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const positioningStyle = anchorStyle ?? manualStyle ?? POPOVER_RESET;
 
-  // Remap DOM keyboard event to React synthetic name.
-  const { onKeyDown: menuKeyDown } = menu.contentProps;
-
   return renderElement(
     'div',
     { render, className, style },
@@ -243,7 +267,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
           ...core.getContentAttrs(state),
           ...getMenuViewportAttrs(),
         },
-        { onKeyDown: menuKeyDown },
+        { onKeyDown: handleRootMenuKeyDown },
         elementProps,
       ],
     }

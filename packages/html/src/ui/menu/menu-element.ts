@@ -17,6 +17,7 @@ import {
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
+  type UIKeyboardEvent,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
@@ -93,7 +94,7 @@ export class MenuElement extends MediaElement {
     // Submenu detection happens in update() once parent context is available.
     this.#menu.setContentElement(this);
 
-    applyElementProps(this, this.#menu.contentProps, { signal: this.#disconnect.signal });
+    applyElementProps(this, { onKeyDown: this.#handleContentKeyDown }, { signal: this.#disconnect.signal });
 
     if (this.#snapshot) {
       this.#snapshot.track(this.#menu.input);
@@ -251,6 +252,21 @@ export class MenuElement extends MediaElement {
     });
     syncMenuViewTransition(parentCtx.menu.contentElement, this, transitionState);
   }
+
+  #handleContentKeyDown = (event: UIKeyboardEvent): void => {
+    this.#menu?.contentProps.onKeyDown(event);
+
+    const parentCtx = this.#parentCtx.value ?? null;
+
+    if (!parentCtx) return;
+
+    if (event.key === 'ArrowLeft' || event.key === 'Escape') {
+      event.preventDefault();
+      parentCtx.menu.pop();
+    }
+
+    event.stopPropagation();
+  };
 
   #syncTrigger(triggerElement: HTMLElement | null): void {
     if (triggerElement === this.#currentTrigger) return;

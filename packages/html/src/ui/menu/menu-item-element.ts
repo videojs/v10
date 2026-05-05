@@ -65,6 +65,14 @@ export class MenuItemElement extends MediaElement {
             }
             event.preventDefault();
           },
+          onKeyDown: (event: KeyboardEvent) => {
+            if (this.disabled || event.key !== 'ArrowRight') return;
+            const target = this.commandfor;
+            if (!target) return;
+
+            ctx.menu.push(target, this.id);
+            event.preventDefault();
+          },
           onPointerenter: () => {
             if (!this.disabled) ctx.menu.highlight(this);
           },

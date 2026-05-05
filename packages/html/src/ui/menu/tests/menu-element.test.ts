@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { MenuElement } from '../menu-element';
+import { MenuItemElement } from '../menu-item-element';
 import { MenuViewElement } from '../menu-view-element';
 
 let tagCounter = 0;
@@ -42,5 +43,40 @@ describe('MenuElement', () => {
     expect(child.hasAttribute('data-menu-view')).toBe(true);
     expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
     expect(child.hasAttribute('data-submenu')).toBe(true);
+  });
+
+  it('handles keyboard navigation in the active nested menu view', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+
+    root.open = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    child.id = 'child-menu';
+    item.textContent = 'Auto';
+
+    rootView.append(trigger);
+    child.append(item);
+    root.append(rootView, child);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await item.updateComplete;
+
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+
+    child.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+    expect(trigger.hasAttribute('data-highlighted')).toBe(false);
   });
 });
