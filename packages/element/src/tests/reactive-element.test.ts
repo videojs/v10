@@ -142,6 +142,102 @@ describe('ReactiveElement properties', () => {
     expect(el.count).toBeNaN();
   });
 
+  it('coerces number property assignments to numbers', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        count: { type: Number },
+      };
+      count = 0;
+    }
+
+    const el = createElement(TestElement);
+
+    // Frameworks like Vue pass static custom-element prop values as strings.
+    // The setter coerces so downstream consumers see the declared type.
+    (el as unknown as { count: unknown }).count = '42';
+    expect(el.count).toBe(42);
+    expect(typeof el.count).toBe('number');
+
+    (el as unknown as { count: unknown }).count = '-10';
+    expect(el.count).toBe(-10);
+
+    (el as unknown as { count: unknown }).count = '3.14';
+    expect(el.count).toBe(3.14);
+  });
+
+  it('coerces boolean property assignments to booleans', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        disabled: { type: Boolean },
+      };
+      disabled = false;
+    }
+
+    const el = createElement(TestElement);
+
+    (el as unknown as { disabled: unknown }).disabled = 'true';
+    expect(el.disabled).toBe(true);
+
+    (el as unknown as { disabled: unknown }).disabled = '';
+    expect(el.disabled).toBe(false);
+
+    (el as unknown as { disabled: unknown }).disabled = 1;
+    expect(el.disabled).toBe(true);
+
+    (el as unknown as { disabled: unknown }).disabled = 0;
+    expect(el.disabled).toBe(false);
+  });
+
+  it('coerces string property assignments to strings', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+    }
+
+    const el = createElement(TestElement);
+
+    (el as unknown as { label: unknown }).label = 42;
+    expect(el.label).toBe('42');
+    expect(typeof el.label).toBe('string');
+  });
+
+  it('preserves null and undefined on typed property assignments', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        count: { type: Number },
+      };
+      count: number | null = 0;
+    }
+
+    const el = createElement(TestElement);
+
+    el.count = null;
+    expect(el.count).toBeNull();
+
+    (el as unknown as { count: unknown }).count = undefined;
+    expect(el.count).toBeUndefined();
+  });
+
+  it('attribute and property paths produce the same typed value', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        count: { type: Number },
+      };
+      count = 0;
+    }
+
+    const a = createElement(TestElement);
+    const b = createElement(TestElement);
+
+    a.setAttribute('count', '-10');
+    (b as unknown as { count: unknown }).count = '-10';
+
+    expect(a.count).toBe(b.count);
+    expect(typeof a.count).toBe(typeof b.count);
+  });
+
   it('supports custom attribute names', () => {
     class TestElement extends ReactiveElement {
       static override properties = {
