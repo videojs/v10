@@ -7,899 +7,441 @@ date: 2026-04-22
 
 ## Summary
 
-The media layer today composes features via static TypeScript mixins
-(`HlsJsMediaLiveMixin(HlsJsMediaStreamTypeMixin(...))`, `GoogleCastMixin(...)`).
-Great DX for library authors, closed to app authors. The store layer has
-already solved this with **declarative feature arrays** (`defineSlice` /
-`createPlayer({ features })`).
+The store layer already lets app authors compose behaviour from a flat
+list of features:
 
-This doc lays out ways to bring the same compositional freedom to the
-media layer, starting with the most user-facing path (markup composition)
-and progressing to the underlying primitive.
+```ts
+createPlayer({ features: [playbackFeature, volumeFeature, /* … */] });
+```
 
-**Recommended shape:**
+We want the same shape on the media layer. Each media class binds an
+**engine** — a function that takes a config and returns a variant —
+to a flat list of features:
 
-1. Ship HTML child elements (`<media-feature-*>`) and React child
-   components (`<MediaFeature*>`) as the primary composition surface.
-2. Back them with a `defineMediaFeature` primitive — mirror
-   `defineSlice` 1:1.
-3. Ship preset arrays (`hlsjsFeatures`, `nativeHlsFeatures`) and
-   instance composition (`new HlsMedia({ features })` / `.use(f)`).
-4. Add class-time composition (`HlsMedia.with(...)`) for custom-element
-   authors.
+```ts
+import { createVideo } from '@videojs/core/dom/media';
+import { hlsJs, live, streamType, errors, googleCast, muxData } from '@videojs/core/dom/media/hls';
 
-Keep existing mixins usable internally; migrate leaf-first (`live`,
-`errors`, `streamType`) where the lifecycle is already clean, and then
-bigger surfaces like `google-cast`.
+const HlsJsMedia = createVideo(
+  hlsJs({ features: [live, streamType, errors, googleCast, muxData] }),
+);
+```
 
-> If/when we commit to this direction, the public-API-facing pieces
-> (`<media-feature-*>`, `<MediaFeature*>`, `defineMediaFeature`,
-> `features: []`) belong in an RFC. This doc exists to scope the options.
+Multi-engine playback (hls.js with native-HLS fallback) is the same
+function called with multiple variants:
+
+```ts
+import { hlsJs, live, streamType, googleCast, muxData } from '@videojs/core/dom/media/hls';
+import {
+  nativeHls,
+  live as nativeLive,
+  streamType as nativeStreamType,
+  googleCast as nativeCast,
+  muxData as nativeMuxData,
+} from '@videojs/core/dom/media/native-hls';
+
+const HlsMedia = createVideo(
+  hlsJs    ({ features: [live,       streamType,       googleCast, muxData] }),
+  nativeHls({ features: [nativeLive, nativeStreamType, nativeCast, nativeMuxData] }),
+);
+```
+
+`createVideo` is variadic: one variant = single-engine class, two or
+more = a class that picks an engine at runtime based on the source.
+
+Every feature — engine plumbing (`hlsJs`), capability (`live`,
+`streamType`), or cross-cutting facade-only (`googleCast`, `muxData`) —
+ships from the engine-specific subpath. **One engine = one import
+path.**
+
+Internally each feature is a class mixin — exactly what we have today.
 
 ---
 
 ## Today: Static Mixins
 
+Mixins are composed at module load:
+
 ```ts
 export class HlsJsMedia extends HlsJsMediaPreloadMixin(
-  HlsJsMediaLiveMixin(
-    HlsJsMediaStreamTypeMixin(
-      HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase))
-    )
+  HlsJsMediaStreamTypeMixin(
+    HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase))
   )
 ) {}
 
-export class MuxVideoMedia extends GoogleCastMixin(MuxMedia) {}
+export class MuxVideoMedia extends MuxDataMediaMixin(GoogleCastMixin(HlsMedia)) {}
 ```
 
-**Pros:** precise types, `#private` fields, zero runtime overhead.
-**Cons:** closed at build time, duplicated per engine delegate, lots of
-lifecycle boilerplate per mixin, no user extension without subclassing.
+Great for library authors, closed for everyone else. There's no way to
+opt out of a built-in mixin or layer in a new one without subclassing
+the whole stack. Engine selection (hls.js vs native HLS) is hand-coded
+inside `HlsMedia` (`packages/core/src/dom/media/hls/index.ts`).
 
 ---
 
-## Option 1 — HTML child elements + React child components
+## The API
 
-The primary user-facing path: compose features as children of a media
-element. Element authors declare `<media-feature-google-cast>` (HTML) or
-`<MediaFeatureGoogleCast />` (React); the child finds its host, calls
-`host.use(feature, { signal })`, and cleans up on disconnect/unmount.
-
-Naming convention:
-
-- HTML tag: `media-feature-<kebab-name>` — e.g. `<media-feature-google-cast>`,
-  `<media-feature-live>`.
-- React component: `MediaFeature<PascalName>` — e.g. `<MediaFeatureGoogleCast />`,
-  `<MediaFeatureLive />`.
-
-The prefix makes features self-identifying in markup, groups them in IDE
-autocomplete, and cleanly distinguishes them from content children like
-`<source>` / `<track>`.
-
-### Worked example: `<media-feature-google-cast>` (HTML)
-
-Google Cast is today a heavy mixin (`GoogleCastMixin` in
-`packages/core/src/dom/media/google-cast/index.ts`) that adds `castSrc`,
-`castReceiver`, `castContentType`, `castStreamType`, `castCustomData`,
-loads the Cast framework on attach, and overrides `play` / `pause` /
-`currentTime` / `volume` when casting. As a child element:
-
-```html
-<hls-video id="player" src="live.m3u8" controls>
-  <source src="live.m3u8" type="application/vnd.apple.mpegurl" />
-  <track kind="captions" src="en.vtt" default />
-
-  <media-feature-live></media-feature-live>
-  <media-feature-google-cast
-    receiver="CC1AD845"
-    content-type="application/vnd.apple.mpegurl"
-  ></media-feature-google-cast>
-</hls-video>
-```
-
-Features can reach back onto the host via `define()` — so declaring
-`<media-feature-live>` adds `liveEdgeStart` and `targetLiveWindow`
-(plus the `targetlivewindowchange` event) to the `<hls-video>` element
-itself. Same API surface as today's mixin, just opt-in:
+Two factory functions, one per media kind. Both are variadic:
 
 ```ts
-const player = document.getElementById('player') as HTMLVideoElement & {
-  liveEdgeStart: number;
-  targetLiveWindow: number;
-};
-
-player.addEventListener('targetlivewindowchange', () => {
-  console.log('live window:', player.targetLiveWindow);
-  if (player.currentTime >= player.liveEdgeStart) showLiveBadge();
-});
-```
-
-Remove the child element and the properties go away — the host is a
-plain `<hls-video>` again. No subclass, no global augmentation.
-
-Shape:
-
-```ts
-import { defineMediaFeature } from '@videojs/core/dom/feature';
-import { googleCastFeature } from '@videojs/core/dom/media/google-cast';
-
-abstract class MediaFeatureElement extends HTMLElement {
-  abstract getFeature(): AnyMediaFeature;
-  #disconnect: AbortController | null = null;
-
-  connectedCallback() {
-    const host = this.closest<MediaHostElement>('[data-media-host]');
-    if (!host) return;
-    this.#disconnect = new AbortController();
-    host.use(this.getFeature(), { signal: this.#disconnect.signal });
-  }
-
-  disconnectedCallback() {
-    this.#disconnect?.abort();
-    this.#disconnect = null;
-  }
-}
-
-class MediaFeatureGoogleCast extends MediaFeatureElement {
-  static observedAttributes = ['receiver', 'content-type', 'stream-type'];
-  getFeature() {
-    return googleCastFeature({
-      receiver: this.getAttribute('receiver') ?? undefined,
-      contentType: this.getAttribute('content-type') ?? undefined,
-      streamType: this.getAttribute('stream-type') ?? undefined,
-    });
-  }
-}
-
-class MediaFeatureLive extends MediaFeatureElement {
-  // No attributes — the `liveEdgeStart` / `targetLiveWindow` props it
-  // defines on the host are its entire public surface.
-  getFeature() { return liveFeature; }
-}
-
-customElements.define('media-feature-google-cast', MediaFeatureGoogleCast);
-customElements.define('media-feature-live', MediaFeatureLive);
-```
-
-The host (`<hls-video>`, `<video-player>`) marks itself with
-`data-media-host` and exposes `use(feature, { signal })` — the same
-method the instance API uses. Feature registrations that arrive before
-the host's `connectedCallback` get buffered and flushed once it's ready.
-
-### Worked example: `<MediaFeatureGoogleCast />` (React)
-
-The React twin is a 1:1 JSX wrapper that uses `useMedia()` plus an
-`AbortController`-scoped effect. No DOM dance — the component returns
-`null` and registers side-effectfully:
-
-```tsx
-// packages/react/src/media/feature/google-cast.tsx
-'use client';
-
-import { useMemo } from 'react';
-import { useMediaFeature } from '../../utils/use-media-feature';
-import { googleCastFeature } from '@videojs/core/dom/media/google-cast';
-
-export interface MediaFeatureGoogleCastProps {
-  receiver?: string;
-  contentType?: string;
-  streamType?: 'on-demand' | 'live';
-  customData?: Record<string, unknown>;
-}
-
-export function MediaFeatureGoogleCast({
-  receiver,
-  contentType,
-  streamType,
-  customData,
-}: MediaFeatureGoogleCastProps) {
-  const feature = useMemo(
-    () => googleCastFeature({ receiver, contentType, streamType, customData }),
-    [receiver, contentType, streamType, customData]
-  );
-  useMediaFeature(feature);
-  return null;
-}
-```
-
-App markup becomes declarative and React-idiomatic:
-
-```tsx
-<PlayerProvider features={liveVideoFeatures}>
-  <VideoContainer>
-    <HlsVideo src="live.m3u8">
-      <MediaFeatureGoogleCast receiver="CC1AD845" />
-      <MediaFeatureLive />
-    </HlsVideo>
-    <PlayButton /><TimeSlider /><MuteButton /><CastButton />
-  </VideoContainer>
-</PlayerProvider>
-```
-
-Store features (`liveVideoFeatures`) shape the store state; media
-features (`<MediaFeatureLive />`, `<MediaFeatureGoogleCast />`) shape
-engine behaviour. Both are arrays of "what do I want this player to
-do" — now at parity.
-
-Because `<MediaFeatureLive />` registers the feature on the underlying
-`HlsMedia`, the same `liveEdgeStart` / `targetLiveWindow` props and the
-`targetlivewindowchange` event are available through `useMedia()` —
-for a consumer-side hook:
-
-```tsx
-function useAtLiveEdge() {
-  const media = useMedia<HlsMedia>();
-  return useSyncExternalStore(
-    (cb) => {
-      media?.addEventListener('targetlivewindowchange', cb);
-      media?.addEventListener('timeupdate', cb);
-      return () => {
-        media?.removeEventListener('targetlivewindowchange', cb);
-        media?.removeEventListener('timeupdate', cb);
-      };
-    },
-    () => !!media && media.currentTime >= media.liveEdgeStart
-  );
-}
-```
-
-**Pros:** HTML-native, declarative, serialisable, SSR-safe; mirrors
-`<source>` / `<track>` handling; add/remove a feature by
-adding/removing DOM; reactive config via attributes; React component is
-a trivial wrapper. Discoverable in markup: `grep media-feature-` shows
-exactly what's loaded.
-**Cons:** a thin element/component per feature; startup-timing
-handshake (buffer registrations until the host's `connectedCallback`,
-or use the existing `containerContext` / `playerContext` pattern).
-
-> **How this works underneath.** Each `<media-feature-*>` reads its
-> attributes into a config object and hands the resulting feature to
-> the host's `use()` method. That `use()` method, the feature object
-> itself, and the `AbortSignal` lifecycle all come from the
-> `defineMediaFeature` primitive — see **Option 2**.
-
----
-
-## Option 2 — `defineMediaFeature` primitive
-
-Underlying primitive that Option 1's child elements (and Options 3–5)
-are built on. Mirrors `defineSlice` on the media side.
-
-```ts
-export interface MediaFeatureContext<Host> {
-  host: Host;
-  engine?: unknown;
-  target: HTMLMediaElement | null;
-  signal: AbortSignal;
-  // Install a *new* member on the host (e.g. `liveEdgeStart`).
-  define: (name: string, desc: PropertyDescriptor) => void;
-  // Wrap an *existing* method on the host (e.g. `play`, `pause`,
-  // `load`). The wrapper receives the previous implementation and must
-  // return a replacement; wrappers compose LIFO and are restored on
-  // `signal` abort.
-  override: <K extends FunctionKeys<Host>>(
-    name: K,
-    wrap: (original: Host[K]) => Host[K]
-  ) => void;
-  // Same idea for getters/setters (e.g. `currentTime`, `volume`,
-  // `paused`). The wrapper receives the previous descriptor and
-  // returns a replacement descriptor.
-  overrideAccessor: <K extends keyof Host>(
-    name: K,
-    wrap: (prev: { get?: () => Host[K]; set?: (v: Host[K]) => void }) =>
-      { get?: () => Host[K]; set?: (v: Host[K]) => void }
-  ) => void;
-  emit: (type: string) => void;
-}
-
-export function defineMediaFeature<Host, API = void>(cfg: {
-  name: string;
-  supports?: (host: Host) => boolean;
-  setup: (ctx: MediaFeatureContext<Host>) => API | void;
-}) { return cfg; }
-```
-
-Each feature is a plain object. A tiny registry on the base `MediaHost`
-runs features in `attach()` and tears them down via `AbortSignal` on
-`detach()` / `destroy()`.
-
-**Pros:** data-shaped, typeable, uniform lifecycle, testable, reusable
-across delegates, types via `UnionToIntersection<InferAPI<F[number]>>`
-(same pattern as `UnionSliceState`).
-**Cons:** reliance on `Object.defineProperty` for per-feature props
-(already used across the codebase).
-
-### Worked example: `live` on `HlsJsMedia`
-
-Today's equivalent is a mixin that does a constructor-time
-`engine.on(...)`, holds private state, and has no standard teardown
-(compare `HlsJsMediaStreamTypeMixin` in
-`packages/core/src/dom/media/hls/stream-type.ts`):
-
-```ts
-export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
-    #targetLiveWindow = Number.NaN;
-    #liveEdgeStartOffset: number | undefined;
-
-    constructor(...args: any[]) {
-      super(...args);
-      this.engine?.on(Hls.Events.LEVEL_LOADED, (_e, data) => this.#derive(data.details));
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#reset());
-      this.engine?.on(Hls.Events.DESTROYING, () => this.#reset());
-    }
-
-    get targetLiveWindow() { return this.#targetLiveWindow; }
-    get liveEdgeStart() { /* derive from seekable + offset */ }
-
-    // #derive / #reset / #setTargetLiveWindow …
-  }
-  return HlsJsMediaLive as unknown as Base &
-    Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
-}
-
-export class HlsJsMedia extends HlsJsMediaLiveMixin(HlsJsMediaStreamTypeMixin(HlsJsMediaBase)) {}
-```
-
-Reshaped as a feature:
-
-```ts
-// packages/core/src/dom/media/hls/features/live.ts
-import Hls, { type LevelLoadedData } from 'hls.js';
-import { defineMediaFeature } from '../../feature';
-import type { HlsEngineHost } from '../types';
-
-export const hlsjsLive = defineMediaFeature<HlsEngineHost>({
-  name: 'hlsjs:live',
-  setup({ host, target, signal, define, emit }) {
-    let targetLiveWindow = Number.NaN;
-    let liveEdgeStartOffset: number | undefined;
-
-    define('targetLiveWindow', { get: () => targetLiveWindow });
-    define('liveEdgeStart', {
-      get: () => {
-        if (liveEdgeStartOffset === undefined || !target) return Number.NaN;
-        const { seekable } = target;
-        return seekable.length ? seekable.end(seekable.length - 1) - liveEdgeStartOffset : Number.NaN;
-      },
-    });
-
-    const setWindow = (value: number) => {
-      if (Object.is(targetLiveWindow, value)) return;
-      targetLiveWindow = value;
-      emit('targetlivewindowchange');
-    };
-
-    const derive = (details: LevelLoadedData['details']) => {
-      if (!details.live) return reset();
-      const lowLatency = !!details.partList?.length;
-      liveEdgeStartOffset = lowLatency
-        ? details.partHoldBack || details.partTarget * 2
-        : details.holdBack || details.targetduration * 3;
-      setWindow(details.type === 'EVENT' ? Number.POSITIVE_INFINITY : 0);
-    };
-
-    const reset = () => {
-      liveEdgeStartOffset = undefined;
-      setWindow(Number.NaN);
-    };
-
-    const engine = host.engine;
-    const onLevel = (_e: string, data: LevelLoadedData) => derive(data.details);
-    engine?.on(Hls.Events.LEVEL_LOADED, onLevel);
-    engine?.on(Hls.Events.MANIFEST_LOADING, reset);
-    engine?.on(Hls.Events.DESTROYING, reset);
-
-    // Every subscription is undone when `signal` aborts — no custom
-    // `detach()` / `destroy()` wiring required on the host.
-    signal.addEventListener('abort', () => {
-      engine?.off(Hls.Events.LEVEL_LOADED, onLevel);
-      engine?.off(Hls.Events.MANIFEST_LOADING, reset);
-      engine?.off(Hls.Events.DESTROYING, reset);
-      reset();
-    });
-  },
-});
-```
-
-And the registration site — no mixin chain, just an array:
-
-```ts
-// packages/core/src/dom/media/hls/hlsjs.ts
-import { hlsjsLive } from './features/live';
-import { hlsjsStreamType } from './features/stream-type';
-
-export const hlsjsFeatures = [hlsjsStreamType, hlsjsLive /* , … */];
-
-export class HlsJsMedia extends HlsJsMediaBase {
-  constructor(init?: HlsJsMediaInit) {
-    super(init);
-    for (const f of hlsjsFeatures) this.use(f);
-  }
-}
-```
-
-What the shape buys us:
-
-- **Lifecycle.** One `AbortSignal` replaces the ad-hoc `destroy()` /
-  `#reset()` dance — same pattern already used by
-  `NativeHlsMediaLiveMixin` and store `listen()` helpers.
-- **Reuse.** `hlsjsLive` and `nativeHlsLive` are two `defineMediaFeature`
-  calls sitting in the same folder; users pick one or both instead of
-  inheriting a whole class.
-- **User extension.** `new HlsJsMedia({ features: [...hlsjsFeatures, myRecorder] })`
-  needs no subclass.
-- **Tests.** Setup is a pure function — pass a fake host/engine/target
-  plus an `AbortController`, drive it, then `controller.abort()`. No
-  class instantiation, no mixin composition.
-
-### Overriding host members
-
-`define()` installs *new* members; `override()` and `overrideAccessor()`
-wrap *existing* ones. This is the answer to "how does a feature swap
-behaviour on `play` / `pause` / `currentTime` when casting?"
-
-Under the hood each helper does the same thing as a classical mixin
-override, just scoped to a feature + `AbortSignal`:
-
-```ts
-// packages/core/src/dom/feature.ts (sketch — inside the host registry)
-
-function override<K extends FunctionKeys<Host>>(name: K, wrap: Wrapper) {
-  const proto = Object.getPrototypeOf(host);
-  const prevDesc = findDescriptor(proto, name);
-  const original = prevDesc.value as Host[K];
-  const replacement = wrap(original);
-  Object.defineProperty(host, name, { ...prevDesc, value: replacement });
-  signal.addEventListener('abort', () => {
-    Object.defineProperty(host, name, prevDesc);
-  });
-}
-
-function overrideAccessor<K extends keyof Host>(name: K, wrap: AccessorWrapper) {
-  const prevDesc = findDescriptor(Object.getPrototypeOf(host), name);
-  const next = wrap({ get: prevDesc.get, set: prevDesc.set });
-  Object.defineProperty(host, name, { ...prevDesc, ...next });
-  signal.addEventListener('abort', () => {
-    Object.defineProperty(host, name, prevDesc);
-  });
-}
-```
-
-Two guarantees:
-
-- **Wrappers see the previous implementation.** A second feature
-  overriding the same member gets *this feature's* wrapped version as
-  its `original`, so multi-feature overrides compose LIFO — identical
-  to a mixin chain, but declarative.
-- **Cleanup is automatic.** `signal.abort()` (detach / destroy /
-  element removal) restores the exact descriptor present before this
-  feature installed its wrapper. No bookkeeping on the host.
-
-### Sketch: `googleCastFeature`
-
-Same primitive, wrapping the side-effecty Cast framework. The current
-`GoogleCastMixin` overrides ~14 members on the host (`play`, `pause`,
-`load`, `currentTime`, `volume`, `muted`, `paused`, `ended`, `seeking`,
-`readyState`, `duration`, `playbackRate`, `remote`). Each is the same
-shape: "if casting, defer to `provider`, else `super`". As a feature:
-
-```ts
-// packages/core/src/dom/media/google-cast/feature.ts
-import { defineMediaFeature } from '../../feature';
-import { GoogleCastProvider } from './google-cast-provider';
-import { loadCastFramework, requiresCastFramework } from './utils';
-
-export function googleCastFeature(config: {
-  src?: string;
-  receiver?: string;
-  contentType?: string;
-  streamType?: 'on-demand' | 'live';
-  customData?: Record<string, unknown>;
-}) {
-  return defineMediaFeature<GoogleCastMediaHost>({
-    name: 'google-cast',
-    supports: () => requiresCastFramework(),
-    setup({ host, signal, define, override, overrideAccessor }) {
-      if (!host.disableRemotePlayback) loadCastFramework();
-
-      const provider = new GoogleCastProvider(host, {
-        src: () => config.src ?? host.src,
-        receiver: () => config.receiver,
-        contentType: () => config.contentType,
-        streamType: () => config.streamType ?? host.streamType,
-        customData: () => config.customData,
-      });
-
-      // Method overrides — same shape as today's mixin, minus the
-      // `super.*` boilerplate.
-      override('play',  (base) => () => provider.isCasting ? provider.play()  : base.call(host));
-      override('pause', (base) => () => provider.isCasting ? provider.pause() : base.call(host));
-      override('load',  (base) => () => provider.isCasting ? provider.load()  : base.call(host));
-
-      // Accessor overrides — read-only state.
-      for (const key of ['paused', 'ended', 'seeking', 'readyState', 'duration'] as const) {
-        overrideAccessor(key, ({ get }) => ({
-          get: () => (provider.isCasting ? provider[key] : get!.call(host)),
-        }));
-      }
-
-      // Accessor overrides — read/write state.
-      for (const key of ['currentTime', 'volume', 'muted', 'playbackRate'] as const) {
-        overrideAccessor(key, ({ get, set }) => ({
-          get: () => (provider.isCasting ? provider[key] : get!.call(host)),
-          set: (v) => {
-            if (provider.isCasting) (provider as any)[key] = v;
-            else set!.call(host, v);
-          },
-        }));
-      }
-
-      // `remote` is a *new* member that cast adds on top of the host
-      // surface — no prior descriptor to wrap.
-      define('remote', { get: () => provider.remote });
-
-      signal.addEventListener('abort', () => provider.destroy());
-    },
-  });
-}
-```
-
-The loop reuses the same one-line wrapper per key — ~15 lines replace
-~150 lines of mixin override boilerplate, and the "if casting, else
-super" shape is expressed exactly once. The element authors of
-`<media-feature-google-cast>` (Option 1) and React authors of
-`<MediaFeatureGoogleCast />` both import this single feature factory
-— no parallel class hierarchies.
-
-### Facade hosts: `HlsMedia` over `HlsJsMedia` + `NativeHlsMedia`
-
-`HlsMedia` (`packages/core/src/dom/media/hls/index.ts`) is a facade: at
-`load()` it instantiates **either** `HlsJsMedia` (hls.js / MSE) **or**
-`NativeHlsMedia` (browser-built-in HLS) as `#delegate`, swaps on
-`src` / `type` / `preferPlayback` change, bridges events via
-`bridgeEvents`, and manually forwards a handful of props
-(`streamType`, `preload`). Today each delegate carries its own mixin
-stack:
-
-```ts
-// hlsjs.ts
-export class HlsJsMedia extends HlsJsMediaPreloadMixin(
-  HlsJsMediaLiveMixin(HlsJsMediaStreamTypeMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
-) {}
-
-// native-hls/index.ts
-export class NativeHlsMedia extends NativeHlsMediaStreamTypeMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase)) {}
-```
-
-Two concerns the new design has to answer:
-
-1. **Where does a feature live** when the two delegates genuinely
-   require different engine-specific code (hls.js listens to
-   `LEVEL_LOADED`; native listens to `durationchange` + `seekable`)?
-2. **How does the facade expose it**, so a user who writes
-   `<media-feature-live>` on `<hls-video>` gets the same
-   `liveEdgeStart` / `targetLiveWindow` surface no matter which
-   delegate ends up active?
-
-The answer is *two layers of features* that mirror the existing two
-layers of classes:
-
-**Layer 1 — delegate features.** One per engine, each targets its own
-host. Exactly the Option 2 `hlsjsLive` shown above, plus a
-`nativeHlsLive` sibling under `packages/core/src/dom/media/native-hls/features/`.
-These replace the delegate-specific mixins 1:1.
-
-```ts
-// packages/core/src/dom/media/hls/features/hlsjs-live.ts  → HlsJsMedia
-export const hlsjsLive = defineMediaFeature<HlsJsMedia>({ /* Option 2 example */ });
-
-// packages/core/src/dom/media/native-hls/features/live.ts → NativeHlsMedia
-export const nativeHlsLive = defineMediaFeature<NativeHlsMedia>({
-  name: 'native-hls:live',
-  setup({ host, target, signal, define, emit }) {
-    let targetLiveWindow = Number.NaN;
-    define('targetLiveWindow', { get: () => targetLiveWindow });
-    define('liveEdgeStart',    { get: () => { /* derive from seekable */ } });
-    // listen to durationchange / seekable on target, …
-    signal.addEventListener('abort', () => { /* tear down */ });
-  },
-});
-```
-
-**Layer 2 — facade features.** One per user-facing surface, targets
-the facade host, and does three small jobs: expose getters that
-forward to the active delegate, run the right delegate feature on
-each delegate swap (with its own `AbortSignal`), and let existing
-event-bridging carry through.
-
-```ts
-// packages/core/src/dom/media/hls/features/live.ts → HlsMedia
-import { defineMediaFeature } from '../../feature';
-import { HlsJsMedia } from '../hlsjs';
-import { NativeHlsMedia } from '../../native-hls';
-import { hlsjsLive } from './hlsjs-live';
-import { nativeHlsLive } from '../../native-hls/features/live';
-
-export const hlsLive = defineMediaFeature<HlsMedia>({
-  name: 'hls:live',
-  setup({ host, signal, define }) {
-    // Facade surface — same members the delegate features define,
-    // just read through whichever delegate is currently active.
-    // Replaces today's hand-written `streamType` / `preload` getters.
-    define('targetLiveWindow', { get: () => host.delegate?.targetLiveWindow ?? Number.NaN });
-    define('liveEdgeStart',    { get: () => host.delegate?.liveEdgeStart    ?? Number.NaN });
-
-    // Re-run the matching delegate feature on every delegate swap.
-    // Each swap gets its own AbortSignal — teardown is automatic.
-    let delegateCtrl: AbortController | null = null;
-    const onSwap = () => {
-      delegateCtrl?.abort();
-      const delegate = host.delegate;
-      if (!delegate) return;
-      const feature =
-        delegate instanceof HlsJsMedia    ? hlsjsLive    :
-        delegate instanceof NativeHlsMedia ? nativeHlsLive : null;
-      if (!feature) return;
-      delegateCtrl = new AbortController();
-      delegate.use(feature, { signal: delegateCtrl.signal });
-    };
-
-    host.addEventListener('delegatechange', onSwap, { signal });
-    onSwap();
-    signal.addEventListener('abort', () => delegateCtrl?.abort());
-
-    // `targetlivewindowchange` fires on the delegate; `bridgeEvents`
-    // already forwards it to the facade, so consumers listening on
-    // `<hls-video>` get it automatically — no extra wiring.
-  },
-});
-```
-
-And the registration site:
-
-```ts
-// packages/core/src/dom/media/hls/index.ts
-export const hlsFeatures = [hlsStreamType, hlsLive, hlsErrors /* , … */];
-```
-
-The `<media-feature-live>` child element (Option 1) mounts `hlsLive`
-onto `<hls-video>`, which then runs `hlsjsLive` **or** `nativeHlsLive`
-against the delegate depending on which one `load()` picked. Delegate
-swap → old feature aborts, new feature runs. Users and UI code only
-see one API surface.
-
-Host-level prerequisites — small, self-contained changes to `HlsMedia`:
-
-- **Expose `delegate`.** Already tracked internally via `#delegate`;
-  add a `get delegate()` getter so facade features can read it.
-- **Emit `delegatechange`.** In `load()` / `#engineDestroy()`, dispatch
-  an event whenever `#delegate` reassigns. One line each.
-- **Generalise property forwarding.** Today's manual
-  `streamType` / `preload` getters become `define` calls from their
-  respective facade features (`hlsStreamType`, `hlsPreload`). The
-  facade class keeps `src` / `type` / `preferPlayback` / `config` /
-  `debug` — the inputs that decide *which* delegate to build, not
-  anything the delegate produces.
-
-If this pattern recurs (`MuxMedia` over `HlsMedia`, future
-`DashMedia` variants), wrap it in a helper so feature authors don't
-write the swap plumbing by hand:
-
-```ts
-// packages/core/src/dom/feature.ts
-export function defineDelegateFeature<Facade, Delegate>(cfg: {
-  name: string;
-  forward: Array<keyof Delegate>;           // auto `define` + getter
-  pick: (delegate: Delegate | null) => AnyMediaFeature | null;
-}) { /* wraps `defineMediaFeature` with the swap + forward plumbing */ }
-
-// Consumer:
-export const hlsLive = defineDelegateFeature<HlsMedia, HlsJsMedia | NativeHlsMedia>({
-  name: 'hls:live',
-  forward: ['liveEdgeStart', 'targetLiveWindow'],
-  pick: (d) =>
-    d instanceof HlsJsMedia    ? hlsjsLive    :
-    d instanceof NativeHlsMedia ? nativeHlsLive : null,
-});
-```
-
-Bottom line: **the two-delegate split stays; mixins become features,
-one layer per class layer.** The feature model doesn't flatten
-`HlsMedia`, it just gives each mixin tier a cleaner lifecycle and
-unifies the facade's manual forwarding into the same `define` /
-`forward` primitive the delegate features already use.
-
----
-
-## Option 3 — Class-time composition (`.with(...)`)
-
-Factory that returns a constructable class. Solves the custom-element
-and "declare a tagName" use case.
-
-```ts
-class HlsMedia extends MediaHost {
-  static with<F extends AnyMediaFeature[]>(...features: F) {
-    return class extends HlsMedia {
-      constructor(init?) { super(init); features.forEach((f) => this.use(f)); }
-    } as Constructor<HlsMedia & WithFeatures<HlsMedia, F>>;
-  }
-}
-
-customElements.define(
-  'castable-hls-media',
-  HlsMedia.with(...hlsjsFeatures, googleCastFeature({ receiver: 'CC1AD845' }))
+const HlsJsMedia = createVideo(hlsJs({ features: […] }));
+const HlsMedia   = createVideo(
+  hlsJs    ({ features: […] }),
+  nativeHls({ features: […] }),
+);
+
+const HlsJsAudio = createAudio(hlsJs({ features: […] }));
+const HlsAudio   = createAudio(
+  hlsJs    ({ features: […] }),
+  nativeHls({ features: […] }),
 );
 ```
 
-**Pros:** markup-ready, typed, composes from data.
-**Cons:** returns a new class per call — keep callers module-scoped.
+`createVideo` returns a class that extends `HTMLVideoElementHost`;
+`createAudio` extends `HTMLAudioElementHost`. Both return a
+constructable class typed end-to-end with the union of every feature's
+added members.
 
----
+Each engine call (`hlsJs(...)`, `nativeHls(...)`) describes one engine
+variant. With multiple variants, the resulting class:
 
-## Option 4 — `features: []` escape hatch
+- Asks each variant's `supports({ src, type, preferPlayback })` in
+  order.
+- Instantiates the first match's composed inner class as the active
+  delegate.
+- Forwards facade-side calls to it.
+- Re-evaluates on `src` / `type` change. Aborts the old delegate,
+  builds the new one.
 
-Smallest migration. Keep the existing mixin-composed classes; add an
-optional `features` constructor option that runs additional features on
-top.
+With one variant, there's no selection — the class is just the
+composed mixin chain.
+
+### Engine config
+
+Engines accept their own configuration alongside the features array:
 
 ```ts
-new HlsJsMedia({ features: [googleCastFeature({ receiver: 'CC1AD845' })] });
+const HlsJsMedia = createVideo(
+  hlsJs({
+    config: { backBufferLength: 30 },
+    debug: true,
+    features: [live, streamType, errors, googleCast({ receiver: 'CC1AD845' })],
+  }),
+);
 ```
 
-**Pros:** zero churn, additive.
-**Cons:** doesn't fix per-engine duplication or per-instance opt-out of
-the built-in stack — more a bridge than a destination.
+`config`, `debug`, etc. are engine-specific options. `features` is
+universal across engines.
+
+### Configurable features
+
+Features may take options. Call the factory to get a configured
+variant — same convention as store features:
+
+```ts
+hlsJs({
+  features: [
+    live,
+    streamType,
+    googleCast({ receiver: 'CC1AD845' }),
+    muxData({ envKey: '…' }),
+  ],
+});
+```
+
+The bare symbol (`live`, `googleCast`) is shorthand for the default
+config; calling it (`googleCast({…})`) returns a configured variant.
+
+### Composing presets
+
+Each engine ships preset feature arrays — the media-side twins of
+`videoFeatures` / `liveVideoFeatures`:
+
+```ts
+import { hlsJs, hlsJsFeatures, googleCast } from '@videojs/core/dom/media/hls';
+
+const Player = createVideo(
+  hlsJs({ features: [...hlsJsFeatures, googleCast({ receiver: 'CC1AD845' })] }),
+);
+```
+
+### Audio mirror
+
+```ts
+const HlsAudio = createAudio(
+  hlsJs    ({ features: [live,       googleCast] }),
+  nativeHls({ features: [nativeLive, nativeCast] }),
+);
+```
+
+Same pattern, audio base class.
 
 ---
 
-## Option 5 — React: `useMediaFeature` hook + `features` prop
+## Engines
 
-The hook is the primitive behind every `<MediaFeature*>` component in
-Option 1; the `features` prop mirrors the store's `<PlayerProvider features>`.
+An engine is a function: it takes an options object (`config`,
+`features`, engine-specific knobs) and returns a variant descriptor
+that `createVideo` understands.
 
-### Hook
+```ts
+// packages/core/src/dom/media/hls/index.ts → @videojs/core/dom/media/hls
+import Hls, { type HlsConfig } from 'hls.js';
+import { HlsJsMediaBaseMixin } from './base';
 
-```tsx
-export function useMediaFeature(feature: AnyMediaFeature): void {
-  const media = useMedia();
-  useEffect(() => {
-    if (!media?.use) return;
-    const ctrl = new AbortController();
-    media.use(feature, { signal: ctrl.signal });
-    return () => ctrl.abort();
-  }, [media, feature]);
+interface HlsJsOptions {
+  config?: Partial<HlsConfig>;
+  debug?: boolean;
+  features: AnyHlsJsFeature[];
+}
+
+export function hlsJs(options: HlsJsOptions) {
+  return {
+    name: 'hlsJs' as const,
+    // Adds `engine`, `src`, `attach`, `detach`, `destroy` plumbing —
+    // closes over `options.config` / `options.debug`.
+    mixin: HlsJsMediaBaseMixin(options),
+    features: options.features,
+    supports: ({ type, preferPlayback }) =>
+      Hls.isSupported() &&
+      type === 'application/vnd.apple.mpegurl' &&
+      preferPlayback !== 'native',
+  };
 }
 ```
 
-### Prop (store-parity)
+`HlsJsMediaBaseMixin` is exactly today's
+`packages/core/src/dom/media/hls/hlsjs.ts:19-57` body, lifted to a
+mixin (it currently extends `HTMLVideoElementHost` directly). The
+mixin chain on lines 59-63 disappears: those mixins become engine-
+specific feature descriptors.
 
-```tsx
-<HlsVideo src="live.m3u8" features={hlsMediaFeatures} />
+`nativeHls` ships from `@videojs/core/dom/media/native-hls` with the
+same shape over `NativeHlsMediaBaseMixin`. Future engines (`dash`,
+`shaka`) drop in under their own subpath. An app that imports only
+`hlsJs` never reaches native-HLS code, and vice versa.
+
+---
+
+## Features
+
+Every feature is a tiny descriptor wrapping a class mixin, exported
+from an engine's subpath. Two flavours, distinguished by what code
+they wrap:
+
+### Engine-specific features
+
+The mixin uses engine internals (e.g. `this.engine` for hls.js).
+Lives next to the engine's source:
+
+```ts
+// packages/core/src/dom/media/hls/features/live.ts
+import { HlsJsMediaLiveMixin } from '../live';
+
+export const live = {
+  name: 'live',
+  mixin: HlsJsMediaLiveMixin,
+};
 ```
 
-**Pros:** `useMedia()` from `PlayerContext` already wires this up;
-SSR-safe (effects run client-only); `AbortController` cleanup handles
-unmount / media swap / StrictMode double-mount; tests can assert
-`feature.setup` called against a mock host.
-**Cons:** `features` prop array must be a stable reference; apply the
-hooks-in-loops rule — register the whole array in one effect rather
-than iterating `useMediaFeature`.
+Examples: `live`, `streamType`, `errors`, `preload`, `textTracks`.
+
+`live` from `@videojs/core/dom/media/hls` only fits in a `hlsJs(...)`
+variant. `live` from `@videojs/core/dom/media/native-hls` is a
+different descriptor that wraps `NativeHlsMediaLiveMixin`. Same name,
+different import path, different mixin.
+
+### Engine-agnostic features
+
+The mixin only uses public media APIs (`play`, `pause`, `currentTime`).
+Implementation lives in a shared location — typically wrapping the
+existing engine-agnostic mixin like `GoogleCastMixin` — and gets
+**re-exported from each engine subpath**:
+
+```ts
+// packages/core/src/dom/media/google-cast/index.ts (implementation)
+export const googleCast = (config: GoogleCastConfig = {}) => ({
+  name: 'googleCast',
+  mixin: GoogleCastMixin(config),
+});
+
+// packages/core/src/dom/media/hls/index.ts
+export { googleCast, muxData, airPlay } from '../google-cast';
+
+// packages/core/src/dom/media/native-hls/index.ts
+export { googleCast, muxData, airPlay } from '../google-cast';
+```
+
+Examples: `googleCast`, `muxData`, `airPlay`. Each engine path
+re-exports them so users have one curated import location per engine.
+
+The implementation isn't duplicated — each subpath re-exports the same
+module, so the bundler still sees one copy.
+
+When using multi-engine `createVideo(...)`, engine-agnostic features
+go into each variant's `features` array. Cast and analytics attach
+per-delegate; only the active delegate runs them at any moment, so
+the cost is the same as today's single mixin chain.
 
 ---
 
-## Comparison
+## Internals
 
-| Option | Runtime opt-in | Markup | Per-instance | Config | Tree-shakes | Typed | DX cost |
-|---|---|---|---|---|---|---|---|
-| 0. Mixins (today) | ✗ | ✗ | ✗ | N/A | ✓ | ✓✓ | high (authors) |
-| 1. `<media-feature-*>` / `<MediaFeature*>` | ✓ | ✓✓ | ✓ | ✓ (attrs/props) | ✓ | ✓ | medium |
-| 2. `defineMediaFeature` | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | low |
-| 3. `.with(...)` | class-time | ✓ (via `define`) | ✗ | ✓ | ✓ | ✓ | low |
-| 4. `features:` escape | ✓ | ✗ | partial | ✓ | ✓ | ✓ | minimal |
-| 5. `useMediaFeature` + prop | ✓ | ✓✓ (JSX) | ✓ | ✓ | ✓ | ✓ | low |
+`createVideo` builds an inner class per variant and (when there's more
+than one) wraps them in a thin selection facade:
 
----
+```ts
+// packages/core/src/dom/media/create-video.ts (sketch)
+export function createVideo<Variants extends [MediaVariant, ...MediaVariant[]]>(
+  ...variants: Variants
+): VideoMediaResult<Variants> {
+  const composed = variants.map((variant) => {
+    let cls: Constructor = HTMLVideoElementHost;
+    cls = variant.mixin(cls);
+    for (const feature of variant.features) cls = feature.mixin(cls);
+    return { variant, cls };
+  });
 
-## Recommended rollout
+  if (composed.length === 1) return composed[0].cls as VideoMediaResult<Variants>;
 
-1. **Primitive** — `defineMediaFeature` next to `definePlayerFeature`
-   (`packages/core/src/dom/feature.ts`). Same mental model. Includes
-   `define` / `override` / `overrideAccessor` in the context.
-2. **Host registry** — extend `MediaHost` / `HTMLVideoElementHost` with
-   `use(feature, { signal })`; run in `attach`, abort on `detach` /
-   `destroy`.
-3. **Preset arrays** — `hlsjsFeatures`, `nativeHlsFeatures`, and
-   matching `HlsMedia.with(...)` for default custom-element exports.
-4. **Pilot migration** — `live` first (small, two delegates, clean
-   lifecycle already in `packages/core/src/dom/media/hls/live.ts` and
-   `packages/core/src/dom/media/native-hls/live.ts`). Then `errors`,
-   `streamType`. `google-cast` last — it's the highest-value
-   user-opt-in feature and exercises `override` /
-   `overrideAccessor` end-to-end.
-5. **Markup (Option 1)** — `MediaFeatureElement` base +
-   `<media-feature-live>` and `<media-feature-google-cast>` as the two
-   driving examples. Populate `packages/html/src/define/feature/video.ts`
-   (currently a TODO stub).
-6. **React (Option 1 + 5)** — `useMediaFeature` + one
-   `<MediaFeature*>` wrapper per feature, mirroring the HTML tags 1:1.
-   Wire through existing `useMedia()` context.
+  // Selection facade: holds an active delegate, asks each variant's
+  // `supports()` at load(), instantiates the first match.
+  return withVariantSelection(HTMLVideoElementHost, composed) as VideoMediaResult<Variants>;
+}
+```
 
-Keep mixins internally for anything too intrusive to express as a
-feature (e.g. `HTMLVideoElementHost` itself).
+`createAudio` is identical except it starts from `HTMLAudioElementHost`.
+
+No new lifecycle, no new primitive, no runtime registry. Each variant
+is a declarative description of which mixins to compose, in which
+order, on which base.
 
 ---
 
-## Open questions
+## Bundle cost
 
-- Ordering guarantees: should feature order in the array imply
-  registration order, and should features declare dependencies
-  (`requires: ['streamType']`)? `google-cast` reaches into `streamType`
-  and `remote`, making this the most likely first case to hit.
-- **Override arbitration.** Two features overriding the same member
-  compose LIFO (last registered wraps first) — good default, matches
-  mixin order. Do we also need an explicit priority, or is
-  registration order enough? What about features that want to
-  *replace* rather than wrap (e.g. a test harness)?
-- **Conflicting active overrides.** Cast and AirPlay both override
-  `play` with "if active, defer to provider". Both can't be active at
-  once today, but the feature layer doesn't know that. Do we add a
-  "takeover" concept (one active per group) or leave coordination to
-  the features themselves?
-- Shared helpers: `listenEngine(engine, event, fn, { signal })` so
-  engine events get the same `AbortSignal`-scoped cleanup as DOM
-  events.
-- Attribute reflection: for `<media-feature-*>` elements, who owns
-  attribute → config re-derivation — the element, the feature factory,
-  or a shared `attributeChangedCallback` helper?
-- Type augmentation strategy: per-feature `API` generic (seen by
-  `WithFeatures`) vs. `declare module` merging keyed by feature `name`.
-  The store side uses the generic route — recommend matching.
-- Naming of the primitive: `defineMediaFeature` (parallel with
-  `definePlayerFeature`), or something unique like `defineMediaPlugin`
-  to avoid conflation?
+Tree-shake follows import paths.
+
+**Engine-specific code is never cross-referenced.**
+`@videojs/core/dom/media/hls` exports `hlsJs`, `live`, `streamType`,
+`errors`, `hlsJsFeatures`, plus re-exports of engine-agnostic features
+(`googleCast`, `muxData`).
+`@videojs/core/dom/media/native-hls` exports its own variants of the
+same names. Neither path imports the other.
+
+**A single-engine app pays for one engine.** A `createVideo(hlsJs({…}))`
+call only references hls.js code plus whatever engine-agnostic features
+were imported. A native-only build never touches `Hls` or any
+`HlsJs*Mixin`.
+
+**Multi-engine apps pay for both engines.** `createVideo(hlsJs({…}),
+nativeHls({…}))` necessarily references both engine bases and both
+feature sets. That's the user opting in to multi-engine playback —
+same trade-off they make today by importing `HlsMedia`.
+
+**Engine-agnostic features pay for themselves only.** The
+implementation module (`google-cast/`) is a single module re-exported
+from each engine path; the bundler dedupes it. Importing
+`googleCast` from `hls` and `googleCast` from `native-hls` in the same
+build resolves to one copy of `GoogleCastMixin`.
 
 ---
 
-## Considered but not pursued
+## Why
 
-- **Named preset tags** (`<live-hls-video>` alongside `<hls-video>`) —
-  a separate element per feature bundle, twin of `liveVideoFeatures`
-  vs `videoFeatures` on the store side. Zero-config for common cases,
-  but combinatorial as features grow (`<live-castable-hls-video>`?),
-  and `HlsMedia.with(...)` + `customElements.define(...)` (Option 3)
-  already covers the "I want a preset tag" use case with no new
-  concepts.
-- **Reactive Controllers** — OO variant of `defineMediaFeature` where
-  features implement a `MediaController` interface
-  (`hostAttach` / `hostDetach` / `hostDestroy`, `new
-  GoogleCastController(...)`). Familiar to Lit users, but redundant
-  with `defineMediaFeature` and less uniform with store slices.
-  `defineMediaFeature` already gives us `this`-free closures over the
-  same lifecycle via `AbortSignal`.
-- **`features="live google-cast"` attribute** — registry-backed
-  attribute listing feature names. Short to write but every
-  config-bearing feature (cast, thumbnails, …) still needs a
-  `<media-feature-*>` child for its config, so the attribute ends up
-  duplicating Option 1 rather than replacing it. Also inherits the
-  global-registry problems below.
-- **Global side-effect imports** (`import '@videojs/core/features/live'`)
-  — classic plugin pattern. Rejected as a primary path because it
-  breaks tree-shaking, has load-order problems across code-splitting /
-  SSR / late scripts, duplicates registries when `@videojs/core` is
-  deduped, has no configuration story, offers no per-instance opt-out,
-  and hides the feature set from the component (harder bug triage).
-  Can still be offered later as thin sugar over `defineMediaFeature`
-  if there's demand.
+- **Parity with the store.** Both layers read the same way:
+  `{ features: [...] }`, plus the engine function call.
+- **One function for one or many engines.** No separate router
+  primitive. Pass one variant or many — the API surface is the same.
+- **One import path per engine.** Everything you need for hls.js
+  comes from `@videojs/core/dom/media/hls`. The next-most-common
+  question — "which `googleCast` do I import?" — answers itself.
+- **Tree-shake by intent.** Pick one engine path and that's all you
+  pay for. Pass a second variant to opt in to fallback.
+- **No churn underneath.** Mixins keep their `#private` fields,
+  precise types, and zero runtime overhead. We're only changing the
+  composition surface.
+- **One concept to learn.** Library authors still write mixins.
+  App authors see one variadic factory per media kind.
+- **Audio is real.** `createAudio` extends `HTMLAudioElementHost`
+  properly, fixing the `packages/core/src/dom/media/mux/index.ts:20-21`
+  TODO.
+
+---
+
+## Migration sketch
+
+| Today | Tomorrow |
+| --- | --- |
+| `HlsJsMediaBase` (lines 19-57 of `hls/hlsjs.ts`) | `hlsJs(...).mixin` (engine function) |
+| `class HlsJsMedia extends HlsJsMediaPreloadMixin(...)` | `createVideo(hlsJs({ features: [live, streamType, errors, preload] }))` |
+| `class NativeHlsMedia` | `createVideo(nativeHls({ features: [live, streamType, errors] }))` |
+| `class HlsMedia { … delegate selection … }` | `createVideo(hlsJs({ features: [...] }), nativeHls({ features: [...] }))` |
+| `GoogleCastMixin` | `googleCast.mixin` (re-exported from each engine path) |
+| `MuxDataMediaMixin` | `muxData.mixin` (re-exported from each engine path) |
+| `class MuxVideoMedia extends MuxDataMediaMixin(GoogleCastMixin(HlsMedia))` | `createVideo(hlsJs({ features: [..., muxData, googleCast] }), nativeHls({ features: [..., muxData, googleCast] }))` |
+| `class MuxAudioMedia` (TODO: should extend audio) | `createAudio(...)` mirroring the video version |
+
+Engine classes shrink to bare bases. Mixins keep their bodies and just
+get exposed as feature descriptors under their engine's subpath. The
+hand-coded selection logic in `HlsMedia` moves into `createVideo`'s
+multi-variant branch.
+
+---
+
+## Open Questions
+
+- **Variant type surface.** When multiple variants are passed, is the
+  resulting class's public type the *intersection* of the variants
+  (only members on every variant — simplest contract) or the *union*
+  (everything any variant exposes, narrowed via `instanceof` on
+  `delegate`)? Today's `HlsMedia` hand-picks forwarders; the new
+  multi-variant branch needs a principled answer.
+- **`supports` contract.** Engines contribute it; what signature?
+  Today's `HlsMedia` reads `src`, `type`, `preferPlayback`,
+  `config`, `debug`. A canonical `MediaSupportContext` type lives in
+  `@videojs/core/dom/media`.
+- **Variant ordering.** First match wins, with `preferPlayback` as a
+  tiebreaker (matching today's logic). Do we expose
+  `preferPlayback` as a special-cased prop, or generalise to a
+  per-variant `priority`?
+- **Feature ordering.** Array order is registration order. Mixin
+  order matters today (preload wraps stream-type wraps errors, …) —
+  encode the recommended order in each engine's preset (`hlsJsFeatures`).
+- **Override conflicts.** Two features wrapping the same method
+  (e.g. cast and AirPlay both wrapping `play`) compose in array
+  order. Same as today's mixin chain — likely fine, worth confirming.
+- **Naming.** `createVideo` / `createAudio` parallel `createPlayer`.
+  Alternatives: `defineVideo` / `defineAudio` to mirror
+  `defineSlice` / `definePlayerFeature`.
+- **Repeated cross-cutting features.** Putting `googleCast`, `muxData`
+  in every variant is verbose. Worth a sugar like
+  `createVideo(variant1, variant2, { features: sharedFeatures })`
+  (trailing options apply to all variants)? Or leave it to user-side
+  helpers?
+- **Re-exports vs duplicate descriptors.** `googleCast` re-exported
+  from each engine path — does TypeScript's instance type stay
+  identical across import paths? (Should — re-export preserves
+  identity.) Worth a sanity test.
+- **Custom engines / features.** Type-ergonomic helpers
+  (`defineFeature`, `defineEngine`) for third-party authors? Or is
+  the descriptor shape simple enough to write by hand?
 
 ---
 
 ## See Also
 
-- `internal/design/media.md` — Media contract work this builds on.
-- `packages/core/src/dom/feature.ts` — `definePlayerFeature` /
-  `defineSlice` — the shape to mirror.
-- `packages/core/src/dom/store/features/presets.ts` — preset array
-  pattern (`videoFeatures`, `liveVideoFeatures`).
-- `packages/core/src/dom/media/google-cast/` — the mixin this doc
-  proposes reshaping as a feature factory.
+- `packages/core/src/dom/store/features/presets.ts` — preset arrays
+  on the store side. The shape we're mirroring.
+- `packages/core/src/dom/media/hls/hlsjs.ts` — the current static
+  mixin chain `createVideo` replaces; lines 19-57 become the body of
+  the `hlsJs` engine function's mixin.
+- `packages/core/src/dom/media/hls/index.ts` — today's `HlsMedia`
+  facade with hand-coded delegate selection; replaced by
+  `createVideo`'s multi-variant branch.
+- `packages/core/src/dom/media/google-cast/index.ts` — the heaviest
+  engine-agnostic mixin, becomes `googleCast.mixin` re-exported from
+  each engine path.
+- `packages/core/src/dom/media/mux/index.ts` — `MuxVideoMedia` /
+  `MuxAudioMedia`, the canonical multi-layer composition. The audio
+  TODO on line 20-21 resolves naturally with `createAudio`.
