@@ -31,20 +31,24 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const triggerId = useSafeId('sub-trigger');
 
   const parentMenu = subMenuCtx?.parentMenu ?? null;
-  const isExpanded = isSubMenuTrigger ? parentMenu?.activeSubMenuId === subMenuCtx?.subMenuId : state.open;
+  const parentMenuApi = parentMenu?.menu ?? null;
+  const parentState = parentMenu?.state ?? state;
+  const parentPush = parentMenu?.push ?? null;
+  const subMenuId = subMenuCtx?.subMenuId ?? null;
+  const isExpanded = isSubMenuTrigger ? parentMenu?.activeSubMenuId === subMenuId : state.open;
 
   // Register with the parent menu's item list when acting as a submenu trigger.
   useEffect(() => {
-    if (!isSubMenuTrigger || !parentMenu) return;
+    if (!isSubMenuTrigger || !parentMenuApi) return;
     const element = elementRef.current;
     if (!element) return;
-    return parentMenu.menu.registerItem(element);
-  }, [isSubMenuTrigger, parentMenu]);
+    return parentMenuApi.registerItem(element);
+  }, [isSubMenuTrigger, parentMenuApi]);
 
   const openSubMenu = useCallback(() => {
-    if (disabled || !parentMenu) return;
-    parentMenu.push(subMenuCtx!.subMenuId, triggerId);
-  }, [disabled, parentMenu, subMenuCtx, triggerId]);
+    if (disabled || !parentPush || !subMenuId) return;
+    parentPush(subMenuId, triggerId);
+  }, [disabled, parentPush, subMenuId, triggerId]);
 
   const handleSubMenuClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -67,9 +71,9 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
-    if (!element || disabled || !parentMenu) return;
-    parentMenu.menu.highlight(element);
-  }, [disabled, parentMenu]);
+    if (!element || disabled || !parentMenuApi) return;
+    parentMenuApi.highlight(element);
+  }, [disabled, parentMenuApi]);
 
   // Root trigger mode — standard button that toggles the menu.
   const triggerRef = useCallback(
@@ -88,7 +92,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
       'div',
       { render, className, style },
       {
-        state: parentMenu?.state ?? state,
+        state: parentState,
         stateAttrMap,
         ref: [forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>],
         props: [

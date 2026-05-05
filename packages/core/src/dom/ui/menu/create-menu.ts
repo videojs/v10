@@ -43,6 +43,23 @@ export interface MenuContentProps {
   onKeyDown: (event: UIKeyboardEvent) => void;
 }
 
+export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
+  const { key } = event;
+
+  return (
+    key === 'ArrowDown' ||
+    key === 'ArrowUp' ||
+    key === 'ArrowLeft' ||
+    key === 'ArrowRight' ||
+    key === 'Home' ||
+    key === 'End' ||
+    key === 'Enter' ||
+    key === ' ' ||
+    key === 'Escape' ||
+    (key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey)
+  );
+}
+
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
@@ -62,6 +79,8 @@ export interface MenuApi {
   registerItem: (element: HTMLElement) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
   highlight: (element: HTMLElement | null) => void;
+  /** Programmatically highlight the first registered item. */
+  highlightFirstItem: () => void;
   /** Push a submenu onto the navigation stack. */
   push: (menuId: string, triggerId: string) => void;
   /** Pop the current submenu from the navigation stack. */
@@ -137,6 +156,10 @@ export function createMenu(options: MenuOptions): MenuApi {
     }
   }
 
+  function highlightFirstItem(): void {
+    highlight(items[0] ?? null);
+  }
+
   // --- Type-ahead ---
 
   function clearTypeahead(): void {
@@ -154,7 +177,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       // Guard against close() being called before the RAF fires — active
       // stays true during the closing animation, so also check status.
       if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;
-      highlight(items[0] ?? null);
+      highlightFirstItem();
     });
   }
 
@@ -322,6 +345,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     setContentElement,
     registerItem,
     highlight,
+    highlightFirstItem,
     push,
     pop,
     open: popover.open,

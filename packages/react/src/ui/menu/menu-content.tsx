@@ -8,6 +8,7 @@ import {
   getMenuViewportElement,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  isMenuNavigationKey,
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
@@ -59,6 +60,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const [menuViewTransition] = useState(() =>
     createMenuViewTransition({
+      focusFirstItem() {
+        menu.highlightFirstItem();
+      },
       restoreFocus(triggerId) {
         if (triggerId) {
           document.getElementById(triggerId)?.focus({ preventScroll: true });
@@ -96,14 +100,17 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
 
-      menu.contentProps.onKeyDown(toUIKeyboardEvent(event));
+      const keyboardEvent = toUIKeyboardEvent(event);
+      menu.contentProps.onKeyDown(keyboardEvent);
 
       if (event.key === 'ArrowLeft' || event.key === 'Escape') {
         event.preventDefault();
         parentMenu?.pop();
       }
 
-      event.stopPropagation();
+      if (isMenuNavigationKey(keyboardEvent)) {
+        event.stopPropagation();
+      }
     },
     [onKeyDown, parentMenu, menu]
   );

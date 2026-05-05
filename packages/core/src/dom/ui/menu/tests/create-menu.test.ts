@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../../event';
+import { isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -270,6 +271,19 @@ describe('createMenu', () => {
       menu.highlight(element);
 
       expect(onHighlightChange).not.toHaveBeenCalled();
+    });
+
+    it('highlights the first item in DOM order', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(b);
+      menu.registerItem(a);
+
+      menu.highlightFirstItem();
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
     });
   });
 
@@ -643,5 +657,19 @@ describe('createMenu', () => {
 
       vi.useRealTimers();
     });
+  });
+});
+
+describe('isMenuNavigationKey', () => {
+  it('matches keys owned by menu navigation and type-ahead', () => {
+    expect(isMenuNavigationKey(makeKeyEvent('ArrowDown'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('ArrowLeft'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('Escape'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('a'))).toBe(true);
+  });
+
+  it('ignores keys that should be allowed to bubble', () => {
+    expect(isMenuNavigationKey(makeKeyEvent('Tab'))).toBe(false);
+    expect(isMenuNavigationKey(makeKeyEvent('a', { metaKey: true }))).toBe(false);
   });
 });

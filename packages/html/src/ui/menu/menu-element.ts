@@ -10,6 +10,7 @@ import {
   getMenuViewportAttrs,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
   type MenuViewTransitionState,
@@ -55,6 +56,9 @@ export class MenuElement extends MediaElement {
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #menuViewTransition = createMenuViewTransition({
+    focusFirstItem: () => {
+      this.#menu?.highlightFirstItem();
+    },
     restoreFocus: (triggerId) => {
       const triggerElement = triggerId ? document.getElementById(triggerId) : null;
       const fallbackTrigger = this.parentElement?.querySelector<HTMLElement>(
@@ -265,7 +269,9 @@ export class MenuElement extends MediaElement {
       parentCtx.menu.pop();
     }
 
-    event.stopPropagation();
+    if (isMenuNavigationKey(event)) {
+      event.stopPropagation();
+    }
   };
 
   #syncTrigger(triggerElement: HTMLElement | null): void {

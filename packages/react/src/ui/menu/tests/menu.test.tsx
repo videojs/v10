@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import type { KeyboardEventHandler } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MenuBack } from '../menu-back';
 import { MenuContent } from '../menu-content';
@@ -20,6 +21,24 @@ function SubmenuFixture() {
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
               <MenuBack data-testid="submenu-back">Back</MenuBack>
+              <MenuItem data-testid="submenu-item">Auto</MenuItem>
+            </MenuContent>
+          </MenuRoot>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function SubmenuPropagationFixture({ onRootKeyDown }: { onRootKeyDown: KeyboardEventHandler<HTMLDivElement> }) {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content" onKeyDown={onRootKeyDown}>
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="submenu-content">
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
@@ -127,6 +146,33 @@ describe('MenuContent', () => {
 
     expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
     expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(false);
+  });
+
+  it('highlights the first item when a submenu view becomes active', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
+    });
+  });
+
+  it('only stops propagation for submenu-owned keyboard events', async () => {
+    const onRootKeyDown = vi.fn();
+    render(<SubmenuPropagationFixture onRootKeyDown={onRootKeyDown} />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
+    });
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowDown' });
+    expect(onRootKeyDown).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'Tab' });
+    expect(onRootKeyDown).toHaveBeenCalledTimes(1);
   });
 
   it('uses DOM order for keyboard navigation', () => {
