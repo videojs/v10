@@ -181,7 +181,9 @@ The provider's scope can extend beyond the fullscreen target. Playlists, transcr
 <Player.Provider>
   <Player.Container>
     <video src="video.mp4" />
-    <Controls />          {/* goes fullscreen with the video */}
+    <Controls.Root>          {/* goes fullscreen with the video */}
+      {/* ... */}
+    </Controls.Root>
   </Player.Container>
 
   <Transcript />          {/* outside container — still has store access */}

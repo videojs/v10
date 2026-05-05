@@ -21,7 +21,9 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 <Player.Provider>
   <Player.Container> {/* [!code focus] */}
     <video src="video.mp4" />
-    <Controls />
+    <Controls.Root>
+      {/* ... */}
+    </Controls.Root>
   </Player.Container> {/* [!code focus] */}
 </Player.Provider>
 ```
@@ -93,7 +95,9 @@ The container is the visual box around your media and controls. Sizing, aspect r
 ```tsx
 <Player.Container style={{ width: 640, aspectRatio: '16/9' }}>
   <video src="video.mp4" />
-  <Controls />
+  <Controls.Root>
+    {/* ... */}
+  </Controls.Root>
 </Player.Container>
 ```
 </FrameworkCase>
@@ -175,7 +179,9 @@ The <DocsLink slug="reference/player-provider">provider</DocsLink> gives compone
 <Player.Provider>
   <Player.Container>
     <video src="video.mp4" />
-    <Controls />          {/* fullscreen, activity detection, gestures */}
+    <Controls.Root>          {/* fullscreen, activity detection, gestures */}
+      {/* ... */}
+    </Controls.Root>
   </Player.Container>
 
   <Transcript />          {/* state & actions, but no container behaviors */}
