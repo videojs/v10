@@ -1,8 +1,8 @@
 import { createState, type State } from '@videojs/store';
 import { getTransitionStyleAttrs, type TransitionStyleAttrs } from '../../../core/ui/transition';
+import { forceLayout } from '../../utils/layout';
 
 import type { NavigationState } from './create-menu';
-import { forceLayout } from './layout';
 
 export type MenuViewTransitionPhase = 'hidden' | 'entering' | 'active' | 'exiting';
 

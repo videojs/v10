@@ -1,6 +1,6 @@
 import { TransitionDataAttrs } from '../../../core/ui/transition';
+import { forceLayout } from '../../utils/layout';
 import type { MenuViewTransitionState } from './create-menu-view-transition';
-import { forceLayout } from './layout';
 
 export interface MenuViewportTransitionOptions {
   minWidth?: number;
