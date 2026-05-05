@@ -1,9 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-
+import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '../../../core/media/predicate';
 import type { MediaStreamTypeState } from '../../../core/media/state';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '../../media/predicate';
 
 export const streamTypeFeature = definePlayerFeature({
   name: 'streamType',

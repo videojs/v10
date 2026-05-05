@@ -1,8 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-
+import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../../core/media/predicate';
 import type { MediaPlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 
 export const playbackFeature = definePlayerFeature({
   name: 'playback',

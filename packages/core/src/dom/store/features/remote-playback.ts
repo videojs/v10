@@ -1,8 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-
+import { isMediaRemotePlaybackCapable } from '../../../core/media/predicate';
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaRemotePlaybackCapable } from '../../media/predicate';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
