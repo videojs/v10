@@ -151,6 +151,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className={cn(popup.tooltip)} {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className={popup.tooltipShortcut} />
+    </Tooltip.Popup>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
@@ -206,7 +215,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -220,7 +229,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -234,7 +243,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
 
@@ -264,7 +273,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           <div className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -278,7 +287,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -290,7 +299,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -302,7 +311,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -314,7 +323,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

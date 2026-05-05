@@ -30,10 +30,14 @@ export const popup = {
   tooltip: cn(
     base,
     'px-2 py-1 rounded-lg text-[0.75rem] whitespace-nowrap',
+    'data-[open]:flex data-[open]:items-center data-[open]:gap-1',
     'bg-(--media-tooltip-background-color) [backdrop-filter:var(--media-tooltip-backdrop-filter)]',
     'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/10',
     'text-(--media-tooltip-text-color)',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
+  ),
+  tooltipShortcut: cn(
+    'min-w-[1.5em] px-0.5 text-[90%] font-semibold font-[inherit] leading-snug text-center border border-solid border-current/30 rounded'
   ),
 };

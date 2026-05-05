@@ -58,6 +58,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+export function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-surface media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 export function AudioSkin(props: AudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
@@ -92,7 +101,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -106,7 +115,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -120,7 +129,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
 
@@ -141,7 +150,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
               />
-              <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <VolumePopover />

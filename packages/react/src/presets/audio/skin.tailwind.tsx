@@ -109,6 +109,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className={cn(popup.tooltip)} {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className={popup.tooltipShortcut} />
+    </Tooltip.Popup>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
@@ -145,7 +154,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -159,7 +168,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -173,7 +182,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
 
@@ -192,7 +201,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
           <div className={buttonGroup}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <VolumePopover />

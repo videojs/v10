@@ -43,8 +43,8 @@ export { type UseTapGestureOptions, useTapGesture } from './ui/gesture/use-tap-g
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
 export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
-export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
+export { useHotkeyShortcut } from './ui/hotkey/use-hotkey-shortcut';
 export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
@@ -71,7 +71,7 @@ export type { StatusIndicatorValueProps } from './ui/status-indicator/status-ind
 export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
-export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
+export { Tooltip, type TooltipContent, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';
 export type { VolumeIndicatorRootProps } from './ui/volume-indicator/volume-indicator-root';

@@ -2,6 +2,7 @@
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
+import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
@@ -9,6 +10,8 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
+import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
+import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
 import { safeDefine } from '../safe-define';
 import { defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
 
@@ -27,10 +30,13 @@ defineVolumeSlider();
 defineTime();
 
 // Standalone elements.
+safeDefine(HotkeyElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PlaybackRateButtonElement);
 safeDefine(PopoverElement);
 safeDefine(SeekButtonElement);
+safeDefine(TooltipLabelElement);
+safeDefine(TooltipShortcutElement);
 safeDefine(TooltipElement);
 safeDefine(TooltipGroupElement);

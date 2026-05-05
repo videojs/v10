@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toAriaKeyShortcut } from '../aria';
+import { toAriaKeyShortcut, toDisplayKeyShortcut } from '../aria';
 import { parseHotkeyPattern } from '../hotkey';
 
 describe('toAriaKeyShortcut', () => {
@@ -34,5 +34,13 @@ describe('toAriaKeyShortcut', () => {
     const bindings = parseHotkeyPattern('0-9');
     const result = toAriaKeyShortcut(bindings);
     expect(result).toBe('0 1 2 3 4 5 6 7 8 9');
+  });
+});
+
+describe('toDisplayKeyShortcut', () => {
+  it('formats a compact display key', () => {
+    const binding = parseHotkeyPattern('Ctrl+Shift+k')[0]!;
+
+    expect(toDisplayKeyShortcut(binding)).toBe('Ctrl+Shift+K');
   });
 });

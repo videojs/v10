@@ -71,7 +71,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
-      tooltipCtx.setContent(labelText);
+      tooltipCtx.setContent(labelText ? { label: labelText } : undefined);
       return () => tooltipCtx.setContent(undefined);
     }, [tooltipCtx, labelText]);
 

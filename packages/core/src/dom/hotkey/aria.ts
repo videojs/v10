@@ -7,6 +7,13 @@ const ARIA_MODIFIER_MAP: Record<HotkeyModifierKey, string> = {
   meta: 'Meta',
 };
 
+const DISPLAY_MODIFIER_MAP: Record<HotkeyModifierKey, string> = {
+  shift: 'Shift',
+  ctrl: 'Ctrl',
+  alt: 'Alt',
+  meta: 'Meta',
+};
+
 const MODIFIER_ORDER: readonly HotkeyModifierKey[] = ['ctrl', 'shift', 'alt', 'meta'];
 
 /**
@@ -36,4 +43,22 @@ export function toAriaKeyShortcut(bindings: ParsedHotkeyBinding[]): string {
       return parts.join('+');
     })
     .join(' ');
+}
+
+/** Convert a parsed key binding to a compact display shortcut. */
+export function toDisplayKeyShortcut(binding: ParsedHotkeyBinding): string {
+  const parts: string[] = [];
+
+  for (const mod of MODIFIER_ORDER) {
+    if (binding.modifiers.has(mod)) {
+      parts.push(DISPLAY_MODIFIER_MAP[mod]);
+    }
+  }
+
+  parts.push(toDisplayKey(binding.originalKey));
+  return parts.join('+');
+}
+
+function toDisplayKey(key: string): string {
+  return key.length === 1 ? key.toUpperCase() : key;
 }
