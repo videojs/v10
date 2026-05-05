@@ -1,6 +1,6 @@
 'use client';
 
-import { type MenuProps as CoreMenuProps, MenuCore, MenuDataAttrs } from '@videojs/core';
+import { MenuCore, MenuDataAttrs } from '@videojs/core';
 import { createMenu, createTransition, type MenuChangeDetails } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
@@ -11,7 +11,7 @@ import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
-export interface MenuRootProps extends CoreMenuProps {
+export interface MenuRootProps extends MenuCore.Props {
   /** Called when the menu open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: MenuChangeDetails) => void;
   /** Called after open/close animations complete. */

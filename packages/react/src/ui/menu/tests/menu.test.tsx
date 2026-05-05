@@ -48,6 +48,31 @@ function SubmenuPropagationFixture({ onRootKeyDown }: { onRootKeyDown: KeyboardE
   );
 }
 
+function NestedSubmenuFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="first-submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="first-submenu-content">
+              <MenuView data-testid="first-submenu-view">
+                <MenuRoot>
+                  <MenuTrigger data-testid="second-submenu-trigger">Advanced</MenuTrigger>
+                  <MenuContent data-testid="second-submenu-content">
+                    <MenuItem data-testid="second-submenu-item">HDR</MenuItem>
+                  </MenuContent>
+                </MenuRoot>
+              </MenuView>
+            </MenuContent>
+          </MenuRoot>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function ItemOrderFixture() {
   return (
     <MenuRoot defaultOpen>
@@ -79,6 +104,27 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('submenu-content').parentElement).toBe(screen.getByTestId('root-content'));
+    });
+  });
+
+  it('portals deeper submenu content into the active parent submenu viewport', async () => {
+    render(<NestedSubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('first-submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('first-submenu-content').parentElement).toBe(screen.getByTestId('root-content'));
+    });
+
+    fireEvent.click(screen.getByTestId('second-submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('second-submenu-content').parentElement).toBe(
+        screen.getByTestId('first-submenu-content')
+      );
+      expect(screen.getByTestId('second-submenu-content').parentElement).not.toBe(
+        screen.getByTestId('first-submenu-view')
+      );
     });
   });
 

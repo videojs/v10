@@ -91,9 +91,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const setMenuViewElement = useCallback(
     (element: HTMLDivElement | null) => {
       menuViewElementRef.current = element;
+      menu.setContentElement(element);
       menuViewTransition.setElement(element);
     },
-    [menuViewTransition]
+    [menu, menuViewTransition]
   );
 
   const handleSubMenuKeyDown = useCallback(

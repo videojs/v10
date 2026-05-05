@@ -1,5 +1,6 @@
 import { TransitionDataAttrs } from '../../../core/ui/transition';
 import type { MenuViewTransitionState } from './create-menu-view-transition';
+import { forceLayout } from './layout';
 
 export interface MenuViewportTransitionOptions {
   minWidth?: number;
@@ -70,10 +71,6 @@ export function getMenuRootViewAttrs(): MenuRootViewAttrs {
     'data-menu-root-view': '',
     'data-menu-view': '',
   };
-}
-
-function forceLayout(element: HTMLElement | null): void {
-  element?.getBoundingClientRect();
 }
 
 function getViewportTransitionState(content: HTMLElement): MenuViewportTransitionState {

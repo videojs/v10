@@ -2,6 +2,7 @@ import { createState, type State } from '@videojs/store';
 import { getTransitionStyleAttrs, type TransitionStyleAttrs } from '../../../core/ui/transition';
 
 import type { NavigationState } from './create-menu';
+import { forceLayout } from './layout';
 
 export type MenuViewTransitionPhase = 'hidden' | 'entering' | 'active' | 'exiting';
 
@@ -47,10 +48,6 @@ const DEFAULT_MENU_VIEW_TRANSITION_STATE: MenuViewTransitionState = {
   direction: 'forward',
   triggerId: null,
 };
-
-function forceLayout(element: HTMLElement | null): void {
-  element?.getBoundingClientRect();
-}
 
 async function waitForElementAnimations(element: HTMLElement): Promise<void> {
   const animations = element.getAnimations?.() ?? [];
