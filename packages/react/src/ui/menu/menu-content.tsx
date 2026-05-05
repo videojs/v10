@@ -61,7 +61,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const [menuViewTransition] = useState(() =>
     createMenuViewTransition({
       focusFirstItem() {
-        menu.highlightFirstItem();
+        menu.highlightFirstItem({ preventScroll: true });
       },
       restoreFocus(triggerId) {
         if (triggerId) {

@@ -57,7 +57,7 @@ export class MenuElement extends MediaElement {
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #menuViewTransition = createMenuViewTransition({
     focusFirstItem: () => {
-      this.#menu?.highlightFirstItem();
+      this.#menu?.highlightFirstItem({ preventScroll: true });
     },
     restoreFocus: (triggerId) => {
       const triggerElement = triggerId ? document.getElementById(triggerId) : null;

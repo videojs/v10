@@ -43,6 +43,10 @@ export interface MenuContentProps {
   onKeyDown: (event: UIKeyboardEvent) => void;
 }
 
+export interface MenuHighlightOptions {
+  preventScroll?: boolean;
+}
+
 export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   const { key } = event;
 
@@ -78,9 +82,9 @@ export interface MenuApi {
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
-  highlight: (element: HTMLElement | null) => void;
+  highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
   /** Programmatically highlight the first registered item. */
-  highlightFirstItem: () => void;
+  highlightFirstItem: (options?: MenuHighlightOptions) => void;
   /** Push a submenu onto the navigation stack. */
   push: (menuId: string, triggerId: string) => void;
   /** Pop the current submenu from the navigation stack. */
@@ -128,7 +132,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   // --- Highlight ---
 
-  function highlight(element: HTMLElement | null): void {
+  function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
     if (highlightedItem === element) return;
 
     if (highlightedItem) {
@@ -141,7 +145,11 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (element) {
       element.tabIndex = 0;
       element.setAttribute(MenuItemDataAttrs.highlighted, '');
-      element.focus();
+      if (highlightOptions?.preventScroll) {
+        element.focus({ preventScroll: true });
+      } else {
+        element.focus();
+      }
     }
 
     options.onHighlightChange?.(element);
@@ -156,8 +164,8 @@ export function createMenu(options: MenuOptions): MenuApi {
     }
   }
 
-  function highlightFirstItem(): void {
-    highlight(items[0] ?? null);
+  function highlightFirstItem(options?: MenuHighlightOptions): void {
+    highlight(items[0] ?? null, options);
   }
 
   // --- Type-ahead ---

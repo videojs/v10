@@ -285,6 +285,17 @@ describe('createMenu', () => {
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
     });
+
+    it('can highlight the first item without scrolling it into view', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      const focus = vi.spyOn(element, 'focus');
+      menu.registerItem(element);
+
+      menu.highlightFirstItem({ preventScroll: true });
+
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
   });
 
   // -------------------------------------------------------------------------
