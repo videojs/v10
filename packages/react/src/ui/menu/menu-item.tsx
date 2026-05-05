@@ -1,11 +1,12 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { completeMenuItemSelection } from '@videojs/core/dom';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext } from './context';
+import { useMenuContext, useSubMenuContext } from './context';
 
 export interface MenuItemProps extends UIComponentProps<'div', MenuState> {
   /** Called when the item is selected. */
@@ -20,6 +21,8 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
   forwardedRef
 ) {
   const { menu, state, stateAttrMap } = useMenuContext();
+  const subMenuCtx = useSubMenuContext();
+  const parentMenu = subMenuCtx?.parentMenu.menu ?? null;
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,9 +36,9 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
       if (disabled) return;
       onClick?.(event);
       onSelect?.();
-      menu.close();
+      completeMenuItemSelection(menu, parentMenu);
     },
-    [disabled, onClick, onSelect, menu]
+    [disabled, onClick, onSelect, menu, parentMenu]
   );
 
   const handlePointerEnter = useCallback(() => {

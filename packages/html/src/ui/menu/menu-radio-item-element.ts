@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -54,17 +54,16 @@ export class MenuRadioItemElement extends MediaElement {
         this,
         {
           onClick: () => {
-            if (this.disabled) return;
-            groupCtx.onValueChange(this.value);
-            // In a submenu (parentMenu is set), auto-pop back to parent view.
-            if (menuCtx.parentMenu) {
-              menuCtx.parentMenu.pop();
-            } else {
-              menuCtx.menu.close();
-            }
+            const currentMenuCtx = this.#menuCtx.value;
+            const currentGroupCtx = this.#groupCtx.value;
+            if (!currentMenuCtx || !currentGroupCtx || this.disabled) return;
+
+            currentGroupCtx.onValueChange(this.value);
+            completeMenuItemSelection(currentMenuCtx.menu, currentMenuCtx.parentMenu);
           },
           onPointerenter: () => {
-            if (!this.disabled) menuCtx.menu.highlight(this);
+            const currentMenuCtx = this.#menuCtx.value;
+            if (!this.disabled) currentMenuCtx?.menu.highlight(this);
           },
         },
         { signal: this.#disconnect.signal }

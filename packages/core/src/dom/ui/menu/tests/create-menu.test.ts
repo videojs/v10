@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../../event';
-import { isMenuNavigationKey } from '../create-menu';
+import { completeMenuItemSelection, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -119,6 +119,34 @@ describe('createMenu', () => {
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('completeMenuItemSelection', () => {
+    it('closes the menu when selection happens in a root menu', () => {
+      const { menu, onOpenChange } = createTestMenu();
+
+      menu.open();
+      onOpenChange.mockClear();
+
+      completeMenuItemSelection(menu);
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
+    });
+
+    it('pops the parent menu when selection happens in a submenu', () => {
+      const { menu } = createTestMenu();
+      const { menu: parentMenu, onOpenChange: parentOpenChange } = createTestMenu();
+
+      parentMenu.open();
+      parentOpenChange.mockClear();
+      parentMenu.push('quality-menu', 'quality-trigger');
+
+      completeMenuItemSelection(menu, parentMenu);
+
+      expect(parentMenu.navigationInput.current.stack).toEqual([]);
+      expect(parentMenu.navigationInput.current.direction).toBe('back');
+      expect(parentOpenChange).not.toHaveBeenCalled();
     });
   });
 

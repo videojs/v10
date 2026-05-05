@@ -1,11 +1,12 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { completeMenuItemSelection } from '@videojs/core/dom';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext } from './context';
+import { useMenuContext, useSubMenuContext } from './context';
 
 export interface MenuCheckboxItemProps extends UIComponentProps<'div', MenuState> {
   /** Whether the item is currently checked. */
@@ -22,6 +23,8 @@ export const MenuCheckboxItem = forwardRef<HTMLDivElement, MenuCheckboxItemProps
   forwardedRef
 ) {
   const { menu, state, stateAttrMap } = useMenuContext();
+  const subMenuCtx = useSubMenuContext();
+  const parentMenu = subMenuCtx?.parentMenu.menu ?? null;
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,9 +38,9 @@ export const MenuCheckboxItem = forwardRef<HTMLDivElement, MenuCheckboxItemProps
       if (disabled) return;
       onClick?.(event);
       onCheckedChange(!checked);
-      menu.close();
+      completeMenuItemSelection(menu, parentMenu);
     },
-    [disabled, onClick, onCheckedChange, checked, menu]
+    [disabled, onClick, onCheckedChange, checked, menu, parentMenu]
   );
 
   const handlePointerEnter = useCallback(() => {

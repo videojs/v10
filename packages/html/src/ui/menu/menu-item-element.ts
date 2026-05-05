@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -53,28 +53,33 @@ export class MenuItemElement extends MediaElement {
         this,
         {
           onClick: (event: MouseEvent) => {
-            if (this.disabled) return;
+            const currentCtx = this.#ctx.value;
+            if (!currentCtx || this.disabled) return;
+
             const target = this.commandfor;
             if (target) {
               // Push the linked submenu — use this element's id as triggerId
               // (ensure the element has an id for focus restoration).
-              ctx.menu.push(target, this.id);
+              currentCtx.menu.push(target, this.id);
             } else {
               this.dispatchEvent(new CustomEvent('select', { bubbles: true }));
-              ctx.menu.close();
+              completeMenuItemSelection(currentCtx.menu, currentCtx.parentMenu);
             }
             event.preventDefault();
           },
           onKeyDown: (event: KeyboardEvent) => {
-            if (this.disabled || event.key !== 'ArrowRight') return;
+            const currentCtx = this.#ctx.value;
+            if (!currentCtx || this.disabled || event.key !== 'ArrowRight') return;
+
             const target = this.commandfor;
             if (!target) return;
 
-            ctx.menu.push(target, this.id);
+            currentCtx.menu.push(target, this.id);
             event.preventDefault();
           },
           onPointerenter: () => {
-            if (!this.disabled) ctx.menu.highlight(this);
+            const currentCtx = this.#ctx.value;
+            if (!this.disabled) currentCtx?.menu.highlight(this);
           },
         },
         { signal: this.#disconnect.signal }

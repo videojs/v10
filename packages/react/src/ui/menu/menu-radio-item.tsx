@@ -1,6 +1,7 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { completeMenuItemSelection } from '@videojs/core/dom';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -22,6 +23,7 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
   const { menu, state, stateAttrMap } = useMenuContext();
   const { value: groupValue, onValueChange } = useMenuRadioGroupContext();
   const subMenuCtx = useSubMenuContext();
+  const parentMenu = subMenuCtx?.parentMenu.menu ?? null;
   const elementRef = useRef<HTMLDivElement>(null);
   const checked = groupValue === value;
 
@@ -36,14 +38,9 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
       if (disabled) return;
       onClick?.(event);
       onValueChange(value);
-      // In a submenu, auto-navigate back to the parent view after selection.
-      if (subMenuCtx) {
-        subMenuCtx.parentMenu.pop();
-      } else {
-        menu.close();
-      }
+      completeMenuItemSelection(menu, parentMenu);
     },
-    [disabled, onClick, onValueChange, value, menu, subMenuCtx]
+    [disabled, onClick, onValueChange, value, menu, parentMenu]
   );
 
   const handlePointerEnter = useCallback(() => {

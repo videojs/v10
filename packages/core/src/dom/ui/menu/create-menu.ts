@@ -94,6 +94,14 @@ export interface MenuApi {
   destroy: () => void;
 }
 
+export function completeMenuItemSelection(menu: MenuApi, parentMenu: MenuApi | null = null): void {
+  if (parentMenu) {
+    parentMenu.pop();
+  } else {
+    menu.close();
+  }
+}
+
 export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.

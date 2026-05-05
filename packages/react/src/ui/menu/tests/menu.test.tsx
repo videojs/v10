@@ -67,6 +67,26 @@ function SubmenuKeyboardFixture() {
   );
 }
 
+function SubmenuSelectFixture({ onSelect }: { onSelect: () => void }) {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="submenu-content">
+              <MenuItem data-testid="submenu-item" onSelect={onSelect}>
+                Auto
+              </MenuItem>
+            </MenuContent>
+          </MenuRoot>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function NestedSubmenuFixture() {
   return (
     <MenuRoot defaultOpen>
@@ -221,6 +241,26 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
+    });
+  });
+
+  it('returns to the parent view when selecting an item in a submenu', async () => {
+    const onSelect = vi.fn();
+
+    render(<SubmenuSelectFixture onSelect={onSelect} />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+
+    fireEvent.click(screen.getByTestId('submenu-item'));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
     });
   });
 

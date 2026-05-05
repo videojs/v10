@@ -133,6 +133,51 @@ describe('MenuElement', () => {
     });
   });
 
+  it('returns to the parent view when selecting an item in a nested menu', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const onSelect = vi.fn();
+
+    root.open = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    child.id = 'child-menu';
+    item.textContent = 'Auto';
+
+    item.addEventListener('select', onSelect);
+    rootView.append(trigger);
+    child.append(item);
+    root.append(rootView, child);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await item.updateComplete;
+
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+    await waitForAssertion(() => {
+      expect(child.getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    await root.updateComplete;
+    await child.updateComplete;
+    await waitForAssertion(() => {
+      expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+  });
+
   it('only stops propagation for nested menu-owned keyboard events', async () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
