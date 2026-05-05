@@ -37,7 +37,7 @@ describe('trackPlaybackInitiated', () => {
   it('sets playbackInitiated to true when mediaElement fires play event', async () => {
     const { el, play } = makeMediaElement();
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -51,7 +51,7 @@ describe('trackPlaybackInitiated', () => {
   it('sets playbackInitiated to true immediately if element is already playing', async () => {
     const { el } = makeMediaElement(false);
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -64,7 +64,7 @@ describe('trackPlaybackInitiated', () => {
   it('resets playbackInitiated to false when presentation URL changes', async () => {
     const { el, play, pause } = makeMediaElement();
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream1.m3u8' },
+      { presentation: { url: 'http://example.com/stream1.m3u8' } },
       { mediaElement: el }
     );
 
@@ -74,7 +74,7 @@ describe('trackPlaybackInitiated', () => {
 
     // Simulate source change: element pauses as new media loads.
     pause();
-    state.set({ ...state.get(), presentationUrl: 'http://example.com/stream2.m3u8' });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream2.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.get().playbackInitiated).toBe(false);
@@ -84,7 +84,7 @@ describe('trackPlaybackInitiated', () => {
   it('resets playbackInitiated to false when the media element is swapped', async () => {
     const { el, play } = makeMediaElement();
     const { state, owners, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -103,7 +103,7 @@ describe('trackPlaybackInitiated', () => {
   it('resets playbackInitiated to false when element is removed', async () => {
     const { el, play } = makeMediaElement();
     const { state, owners, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -121,7 +121,7 @@ describe('trackPlaybackInitiated', () => {
   it('resets playbackInitiated to false when URL is cleared', async () => {
     const { el, play } = makeMediaElement();
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -129,7 +129,7 @@ describe('trackPlaybackInitiated', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(state.get().playbackInitiated).toBe(true);
 
-    state.set({ ...state.get(), presentationUrl: undefined });
+    state.set({ ...state.get(), presentation: undefined });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.get().playbackInitiated).toBe(false);
@@ -139,7 +139,7 @@ describe('trackPlaybackInitiated', () => {
   it('does not reset playbackInitiated on unrelated state changes', async () => {
     const { el, play } = makeMediaElement();
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -147,7 +147,7 @@ describe('trackPlaybackInitiated', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(state.get().playbackInitiated).toBe(true);
 
-    state.set({ ...state.get(), presentationUrl: 'http://example.com/stream.m3u8' });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.get().playbackInitiated).toBe(true);
@@ -159,7 +159,7 @@ describe('trackPlaybackInitiated', () => {
     const addEventListenerSpy = vi.spyOn(el, 'addEventListener');
 
     const { owners, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream.m3u8' },
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
       { mediaElement: el }
     );
 
@@ -176,7 +176,7 @@ describe('trackPlaybackInitiated', () => {
   it('stops tracking after destroy', async () => {
     const { el, play } = makeMediaElement();
     const { state, reactor } = setupTrackPlaybackInitiated(
-      { presentationUrl: 'http://example.com/stream1.m3u8' },
+      { presentation: { url: 'http://example.com/stream1.m3u8' } },
       { mediaElement: el }
     );
 

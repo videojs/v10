@@ -1,12 +1,12 @@
 import { effect } from '../../../core/signals/effect';
 import { computed, type Signal } from '../../../core/signals/primitives';
-import type { Presentation } from '../../../media/types';
+import type { MaybeResolvedPresentation } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 
 export interface EndOfStreamState extends TrackSelectionState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
   mediaSourceReadyState?: MediaSource['readyState'];
 }

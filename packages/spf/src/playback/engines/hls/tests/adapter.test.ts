@@ -66,21 +66,21 @@ describe('SimpleHlsMediaElement', () => {
     it('synchronously updates engine presentation state when src is set', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      expect(media.engine.state.get().presentationUrl).toBe('https://example.com/v.m3u8');
+      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src changes', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
-      expect(media.engine.state.get().presentationUrl).toBe('https://example.com/v2.m3u8');
+      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v2.m3u8');
     });
 
     it('clears engine presentation state when src is set to empty string', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
-      expect(media.engine.state.get().presentationUrl).toBeFalsy();
+      expect(media.engine.state.get().presentation?.url).toBeFalsy();
     });
   });
 
@@ -184,7 +184,7 @@ describe('SimpleHlsMediaElement', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
-      expect(media.engine.state.get().presentationUrl).toBe('https://example.com/v.m3u8');
+      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('detach does not destroy the engine', () => {

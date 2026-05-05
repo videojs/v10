@@ -2,7 +2,7 @@ import { listen } from '@videojs/utils/dom';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type Signal, untrack, update } from '../../../core/signals/primitives';
-import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../../media/types';
+import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../../../media/types';
 
 /**
  * FSM states for text track sync.
@@ -19,7 +19,7 @@ import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../
  * State shape for text track sync.
  */
 export interface TextTrackSyncState {
-  presentation?: Presentation | undefined;
+  presentation?: MaybeResolvedPresentation;
   selectedTextTrackId?: string | undefined;
 }
 
@@ -46,7 +46,7 @@ function createTrackElement(track: PartiallyResolvedTextTrack | TextTrack): HTML
 }
 
 function getModelTextTracks(
-  presentation: Presentation | undefined
+  presentation: MaybeResolvedPresentation | undefined
 ): (PartiallyResolvedTextTrack | TextTrack)[] | undefined {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks;
 }

@@ -81,10 +81,11 @@ Every SPF composition is parameterized by three shapes:
 
 ```ts
 export interface SimpleHlsEngineState {
-  /** Input: URL of the manifest to play. */
-  presentationUrl?: string;
-  /** Output: parsed manifest, written by `resolvePresentation`. */
-  presentation?: Presentation;
+  /**
+   * The presentation being played. A caller writes `{ url }`;
+   * `resolvePresentation` parses the manifest and populates the rest.
+   */
+  presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -142,7 +143,7 @@ resolvePresentation,
 
 **`trackPlaybackInitiated`** sets `state.playbackInitiated` to `true` once the user has tried to play (the element is no longer paused). It's a small reactor that watches the media element's `play`/`pause` events. Why it matters: behaviors that should only run after the user interacts (or after autoplay fires) can gate on `state.playbackInitiated`.
 
-**`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentationUrl` (the input slot, written by the caller) and on change fetches the multivariant playlist, parses it, and writes the parsed `Presentation` back to `state.presentation` (the output slot). The two-slot split keeps the input shape (`string`) and the output shape (`Presentation`) honest with each other, and lets every downstream behavior declare `presentation?: Presentation` without a union or `any`. Setting `presentationUrl` to a different URL after resolution transitions back through `'resolving'` to refetch.
+**`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentation` and, when it sees an unresolved value (`{ url }` with no `id`), fetches the multivariant playlist, parses it, and writes the resolved `Presentation` back to the same slot. The lifecycle lives in one slot: a caller writes `{ url }`, the resolver replaces it with a fully populated `Presentation`. Behaviors that only need the URL read `presentation.url`; behaviors that need resolved fields use `isResolvedPresentation` (or check for `selectionSets`) to narrow.
 
 A pattern shows up here that recurs throughout: **behaviors gate themselves on preconditions and write their results back to state.** They don't take inputs as function arguments. They read from a known signal slot, do their work, and write to a known signal slot. The composition is wired through state, not through call ordering.
 
@@ -236,7 +237,7 @@ setupSourceBuffers,
 
 This is where the engine first touches the media element directly. Up until now, behaviors have been operating on plain data in `state` — manifests, URLs, ids, durations. MSE is the bridge: a `MediaSource` attaches to the `<video>` element via `srcObject` (or an object URL), and `SourceBuffer`s under it accept appended segments.
 
-**`setupMediaSource`** waits for two preconditions: a `mediaElement` in owners and a `presentationUrl` in state. When both arrive, it creates a `MediaSource`, attaches it to the element, and writes both back to owners (`mediaSource`) and state (`mediaSourceReadyState`). The DOM event for "MediaSource is open" is bridged onto `state.mediaSourceReadyState` via the `onMediaSourceReadyStateChange` callback primitive — once that flips to `'open'`, the `mediaSource` is published to owners so downstream behaviors can use it.
+**`setupMediaSource`** waits for two preconditions: a `mediaElement` in owners and a `presentation.url` in state. When both arrive, it creates a `MediaSource`, attaches it to the element, and writes both back to owners (`mediaSource`) and state (`mediaSourceReadyState`). The DOM event for "MediaSource is open" is bridged onto `state.mediaSourceReadyState` via the `onMediaSourceReadyStateChange` callback primitive — once that flips to `'open'`, the `mediaSource` is published to owners so downstream behaviors can use it.
 
 The split between owners and state is deliberate. The MediaSource itself is a resource — you call `addSourceBuffer()` on it, you set its `duration` — so it lives in owners. Its readyState is data — a string that other behaviors gate decisions on — so it lives in state. The DOM events that drive readyState changes get bridged into the SPF signal graph by the small primitive in `media/dom/mse/`, keeping `setupMediaSource` clean.
 

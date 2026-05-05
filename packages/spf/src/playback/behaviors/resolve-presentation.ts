@@ -2,21 +2,18 @@ import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type Signal, update } from '../../core/signals/primitives';
 import { parseMultivariantPlaylist } from '../../media/hls/parse-multivariant';
-import type { Presentation } from '../../media/types';
+import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
 /**
  * State shape for presentation resolution.
  *
- * The lifecycle is split across two slots:
- * - `presentationUrl` — the input. Caller writes a URL; resolvePresentation
- *   reads it and fetches/parses the manifest.
- * - `presentation` — the output. resolvePresentation writes the parsed
- *   `Presentation` here on success.
+ * `presentation` is a single slot whose value may or may not be resolved.
+ * A caller writes `{ url }`; resolvePresentation parses the manifest and
+ * populates the rest in place.
  */
 export interface PresentationState {
-  presentationUrl?: string;
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none' | undefined;
   /** True once the user has initiated playback — enables resolution regardless of preload. */
   playbackInitiated?: boolean;
@@ -40,10 +37,12 @@ export function shouldResolve(state: PresentationState): boolean {
 }
 
 /**
- * True when there's a URL to resolve and no resolved presentation yet.
+ * True when there's a presentation with a URL that hasn't been resolved yet.
  */
-export function canResolve(state: PresentationState): state is PresentationState & { presentationUrl: string } {
-  return !!state.presentationUrl && !state.presentation;
+export function canResolve(
+  state: PresentationState
+): state is PresentationState & { presentation: MaybeResolvedPresentation } {
+  return !!state.presentation?.url && !isResolvedPresentation(state.presentation);
 }
 
 export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
@@ -52,24 +51,20 @@ export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolvi
  * Derives the current state from current state conditions.
  *
  * States are mutually exclusive and exhaustive:
- * - `'preconditions-unmet'`: no presentationUrl
- * - `'idle'`: presentationUrl present, not yet resolved (or resolved to a stale URL), shouldResolve not met
- * - `'resolving'`: presentationUrl present, not yet resolved (or resolved to a stale URL), shouldResolve met
- * - `'resolved'`: presentation present and matches presentationUrl
- *
- * Setting `presentationUrl` to a different URL after resolution transitions
- * back through `'resolving'` to refetch the new manifest.
+ * - `'preconditions-unmet'`: no presentation, or presentation has no URL
+ * - `'idle'`: URL present, unresolved, shouldResolve not met
+ * - `'resolving'`: URL present, unresolved, shouldResolve met
+ * - `'resolved'`: presentation has been resolved
  */
 function deriveState(state: PresentationState): ResolvePresentationState {
-  if (!state.presentationUrl) {
-    return state.presentation ? 'resolved' : 'preconditions-unmet';
-  }
-  if (state.presentation?.url === state.presentationUrl) return 'resolved';
+  const { presentation } = state;
+  if (!presentation?.url) return 'preconditions-unmet';
+  if (isResolvedPresentation(presentation)) return 'resolved';
   return shouldResolve(state) ? 'resolving' : 'idle';
 }
 
 /**
- * Resolves a presentation URL into a parsed `Presentation`.
+ * Resolves an unresolved presentation into a parsed `Presentation`.
  *
  * FSM driven by `deriveState` — a single `always` monitor keeps the state in
  * sync with conditions at all times. `'resolving'` additionally runs the fetch
@@ -97,13 +92,13 @@ export function resolvePresentation<S extends PresentationState>({
         // Entry: start fetch on state entry; return AbortController so the
         // framework aborts the in-flight request on state exit.
         entry: () => {
-          const url = state.get().presentationUrl!;
+          const presentation = state.get().presentation!;
           const ac = new AbortController();
 
-          fetchResolvable({ url }, { signal: ac.signal })
+          fetchResolvable(presentation, { signal: ac.signal })
             .then((response) => getResponseText(response))
             .then((text) => {
-              const parsed = parseMultivariantPlaylist(text, { url });
+              const parsed = parseMultivariantPlaylist(text, presentation);
               update(state, { presentation: parsed } as Partial<S>);
             })
             .catch((error) => {

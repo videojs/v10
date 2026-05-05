@@ -2,7 +2,7 @@ import { effect } from '../../../core/signals/effect';
 import { computed, type Signal, signal } from '../../../core/signals/primitives';
 import { type BandwidthState, sampleBandwidth } from '../../../media/abr/bandwidth-estimator';
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../../media/buffer/forward-buffer';
-import type { AddressableObject, Presentation, ResolvedTrack } from '../../../media/types';
+import type { AddressableObject, MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../../../network/chunked-stream-iterable';
@@ -92,7 +92,7 @@ async function fetchStream(addressable: AddressableObject, options?: FetchOption
  * State shape for segment loading.
  */
 export interface SegmentLoadingState extends TrackSelectionState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   preload?: string;
   bandwidthState?: BandwidthState;
   /** Current playback position in seconds. Defaults to 0 when undefined. */

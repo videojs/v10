@@ -1,7 +1,7 @@
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type Signal, untrack } from '../../core/signals/primitives';
-import type { Cue, MediaElementWithTextTracks, Presentation, TextTrack } from '../../media/types';
+import type { Cue, MaybeResolvedPresentation, MediaElementWithTextTracks, TextTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
 import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../actors/text-tracks';
@@ -32,7 +32,7 @@ export type LoadTextTrackCuesState = 'preconditions-unmet' | 'pending' | 'monito
  */
 export interface TextTrackCueLoadingState {
   selectedTextTrackId?: string;
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   /** Current playback position — used to gate segment fetching to the forward buffer window. */
   currentTime?: number;
 }
@@ -55,7 +55,7 @@ export interface TextTrackCueLoadingOwners {
 // Helpers
 // ============================================================================
 
-function getTextTracks(presentation: Presentation | undefined) {
+function getTextTracks(presentation: MaybeResolvedPresentation | undefined) {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks;
 }
 

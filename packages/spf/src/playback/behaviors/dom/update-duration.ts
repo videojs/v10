@@ -1,10 +1,10 @@
 import { effect } from '../../../core/signals/effect';
 import type { Signal } from '../../../core/signals/primitives';
-import type { Presentation } from '../../../media/types';
+import type { MaybeResolvedPresentation } from '../../../media/types';
 import { hasPresentationDuration } from '../../../media/types';
 
 export interface DurationUpdateState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
   mediaSourceReadyState?: MediaSource['readyState'];
 }

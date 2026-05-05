@@ -9,6 +9,7 @@ import {
   type TrackSelectionState,
   type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
+import { isResolvedPresentation } from '../../media/types';
 import { SelectedTrackIdKeyByType } from '../../media/utils/track-selection';
 
 /**
@@ -35,7 +36,7 @@ export function selectVideoTrack<S extends TrackSelectionState>(
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
     // Just to have basic functionality/POC, simply selecting the first track
-    const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === config.type)
+    const selectedTrackId = currentState.presentation?.selectionSets?.find(({ type }) => type === config.type)
       ?.switchingSets[0]?.tracks[0]?.id;
 
     if (selectedTrackId) {
@@ -70,7 +71,7 @@ export function selectAudioTrack<S extends TrackSelectionState>(
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
     // Just to have basic functionality/POC, simply selecting the first track
-    const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === 'audio')
+    const selectedTrackId = currentState.presentation?.selectionSets?.find(({ type }) => type === 'audio')
       ?.switchingSets[0]?.tracks[0]?.id;
 
     if (selectedTrackId) {
@@ -100,8 +101,10 @@ export function selectTextTrack<S extends TrackSelectionState>(
     const currentState = state.get();
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
+    if (!isResolvedPresentation(currentState.presentation)) return;
+
     // Text tracks are user opt-in - don't auto-select
-    const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
+    const selectedTextTrackId = pickTextTrack(currentState.presentation, config);
 
     if (selectedTextTrackId) {
       const patch: Partial<TrackSelectionState> = { selectedTextTrackId };

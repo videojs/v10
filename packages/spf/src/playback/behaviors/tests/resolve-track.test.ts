@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
 import type {
+  MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
@@ -436,8 +437,11 @@ http://example.com/a-seg1.m4s
 });
 
 // Helper to find track by ID in presentation
-function findTrackById(presentation: Presentation, trackId: string): PartiallyResolvedVideoTrack | any | undefined {
-  for (const selectionSet of presentation.selectionSets) {
+function findTrackById(
+  presentation: MaybeResolvedPresentation,
+  trackId: string
+): PartiallyResolvedVideoTrack | any | undefined {
+  for (const selectionSet of presentation.selectionSets ?? []) {
     for (const switchingSet of selectionSet.switchingSets) {
       const track = switchingSet.tracks.find((t) => t.id === trackId);
       if (track) return track;

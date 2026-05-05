@@ -1,11 +1,11 @@
 import { effect } from '../../core/signals/effect';
 import type { Signal } from '../../core/signals/primitives';
-import type { AudioTrack, Presentation, VideoTrack } from '../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
 import { getSelectedTrack } from '../../media/utils/track-selection';
 
 export interface PresentationDurationState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
 }

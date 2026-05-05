@@ -332,6 +332,17 @@ export type Presentation = Ham &
     selectionSets: SelectionSet[];
   };
 
+/**
+ * State-shaped presentation that may or may not be resolved yet.
+ *
+ * The lifecycle is a single value: a caller writes `{ url }`, and the
+ * resolver populates the rest in place. `url` is always present; resolved
+ * fields (`id`, `selectionSets`, duration) appear once parsing succeeds.
+ *
+ * Use `isResolvedPresentation` to narrow to `Presentation`.
+ */
+export type MaybeResolvedPresentation = AddressableObject & Partial<Omit<Presentation, keyof AddressableObject>>;
+
 // =============================================================================
 // Type Guards
 // =============================================================================
@@ -353,7 +364,19 @@ export function isResolvedTrack(track: PartiallyResolvedTrack | ResolvedTrack): 
  * Narrows type to include required duration.
  */
 export function hasPresentationDuration(
-  presentation: Presentation
-): presentation is Presentation & { duration: number } {
+  presentation: MaybeResolvedPresentation
+): presentation is MaybeResolvedPresentation & { duration: number } {
   return presentation.duration !== undefined;
+}
+
+/**
+ * Narrows a `MaybeResolvedPresentation` to a fully resolved `Presentation`.
+ *
+ * A presentation is resolved once `resolvePresentation` has parsed the
+ * manifest and populated `id` and `selectionSets`.
+ */
+export function isResolvedPresentation(
+  presentation: MaybeResolvedPresentation | undefined
+): presentation is Presentation {
+  return presentation !== undefined && 'id' in presentation;
 }

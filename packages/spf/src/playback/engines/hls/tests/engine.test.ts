@@ -54,7 +54,7 @@ describe('createSimpleHlsEngine', () => {
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'https://example.com/playlist.m3u8',
+      presentation: { url: 'https://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -62,7 +62,7 @@ describe('createSimpleHlsEngine', () => {
     await new Promise<void>((resolve) => queueMicrotask(resolve));
 
     expect(engine.owners.get().mediaElement).toBe(mediaElement);
-    expect(engine.state.get().presentationUrl).toBe('https://example.com/playlist.m3u8');
+    expect(engine.state.get().presentation?.url).toBe('https://example.com/playlist.m3u8');
 
     engine.destroy();
   });
@@ -133,7 +133,7 @@ http://example.com/segment1.m4s
     // Patch state to trigger presentation resolution
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -207,7 +207,7 @@ http://example.com/audio-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -301,7 +301,7 @@ http://example.com/video-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -366,7 +366,7 @@ http://example.com/audio-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -431,7 +431,7 @@ http://example.com/video-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -487,7 +487,7 @@ http://example.com/video-seg1.m4s
     // Patch state but NOT owners (no mediaElement)
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -569,7 +569,7 @@ http://example.com/audio-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
     });
 
     // PHASE 1: Verify nothing auto-resolves
@@ -650,7 +650,7 @@ http://example.com/seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'metadata',
     });
 
@@ -728,7 +728,7 @@ http://example.com/seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -829,7 +829,7 @@ http://example.com/text-es-seg1.vtt
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -929,7 +929,7 @@ http://example.com/text-es-seg1.vtt
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -1008,7 +1008,7 @@ http://example.com/text-fr-seg1.vtt
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -1094,7 +1094,7 @@ http://example.com/text-es-seg1.vtt
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -1195,7 +1195,7 @@ http://example.com/video-seg1.m4s
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -1292,7 +1292,7 @@ http://example.com/text-es-seg1.vtt
     engine.owners.set({ ...engine.owners.get(), mediaElement });
     engine.state.set({
       ...engine.state.get(),
-      presentationUrl: 'http://example.com/playlist.m3u8',
+      presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'auto',
     });
 
@@ -1401,7 +1401,7 @@ http://example.com/seg2.m4s
   engine.owners.set({ ...engine.owners.get(), mediaElement });
   engine.state.set({
     ...engine.state.get(),
-    presentationUrl: 'http://example.com/playlist.m3u8',
+    presentation: { url: 'http://example.com/playlist.m3u8' },
     preload: 'auto',
   });
 
@@ -1479,7 +1479,7 @@ http://example.com/audio-seg1.m4s
   engine.owners.set({ ...engine.owners.get(), mediaElement });
   engine.state.set({
     ...engine.state.get(),
-    presentationUrl: 'http://example.com/playlist.m3u8',
+    presentation: { url: 'http://example.com/playlist.m3u8' },
     preload: 'auto',
   });
 

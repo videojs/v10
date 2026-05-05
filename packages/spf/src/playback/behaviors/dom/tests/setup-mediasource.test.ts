@@ -42,7 +42,7 @@ describe('setupMediaSource', () => {
     owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await vi.waitFor(() => {
@@ -68,7 +68,7 @@ describe('setupMediaSource', () => {
     owners.set({ ...owners.get(), mediaElement });
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await vi.waitFor(() => {
@@ -93,7 +93,7 @@ describe('setupMediaSource', () => {
     owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await vi.waitFor(() => {
@@ -111,7 +111,7 @@ describe('setupMediaSource', () => {
 
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -143,7 +143,7 @@ describe('setupMediaSource', () => {
     owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await vi.waitFor(() => {
@@ -152,7 +152,7 @@ describe('setupMediaSource', () => {
 
     state.set({
       ...state.get(),
-      presentationUrl: 'https://example.com/video.m3u8',
+      presentation: { url: 'https://example.com/video.m3u8' },
     });
 
     await new Promise((resolve) => setTimeout(resolve, 50));

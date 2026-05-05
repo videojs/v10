@@ -2,7 +2,7 @@ import { type Composition, createComposition } from '../../../core/composition/c
 import type { Signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
-import type { Presentation } from '../../../media/types';
+import type { MaybeResolvedPresentation } from '../../../media/types';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
@@ -39,10 +39,11 @@ import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
  * type satisfies all of them.
  */
 export interface SimpleHlsEngineState {
-  /** Input: URL of the manifest to play. The engine watches this slot. */
-  presentationUrl?: string;
-  /** Output: parsed manifest, written by `resolvePresentation`. */
-  presentation?: Presentation;
+  /**
+   * The presentation being played. A caller writes `{ url }`;
+   * `resolvePresentation` parses the manifest and populates the rest.
+   */
+  presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -162,7 +163,7 @@ const switchQuality = ({ config, ...deps }: Deps) =>
  * });
  *
  * engine.owners.set({ ...engine.owners.get(), mediaElement: videoEl });
- * engine.state.set({ ...engine.state.get(), presentationUrl: 'https://example.com/stream.m3u8' });
+ * engine.state.set({ ...engine.state.get(), presentation: { url: 'https://example.com/stream.m3u8' } });
  *
  * videoEl.play();
  *

@@ -3,13 +3,13 @@ import { type Signal, update } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
-import type { Presentation, VideoSelectionSet } from '../../media/types';
+import type { MaybeResolvedPresentation, VideoSelectionSet } from '../../media/types';
 
 /**
  * State shape for quality switching.
  */
 export interface QualitySwitchingState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   // TODO: abrDisabled is a blunt instrument — it requires callers to know they're
@@ -60,7 +60,7 @@ export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
  * Get all video tracks from a presentation's first switching set.
  * Returns [] when the presentation is still unresolved (no selectionSets yet).
  */
-function getVideoTracks(presentation: Presentation) {
+function getVideoTracks(presentation: MaybeResolvedPresentation) {
   const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
   return videoSet?.switchingSets[0]?.tracks ?? [];
 }

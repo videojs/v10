@@ -6,7 +6,6 @@ import { syncPreloadAttribute } from '../sync-preload-attribute';
 describe('syncPreloadAttribute', () => {
   it('syncs preload from mediaElement to state', async () => {
     interface State {
-      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -15,7 +14,6 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentationUrl: undefined,
       preload: undefined,
     });
 
@@ -35,7 +33,6 @@ describe('syncPreloadAttribute', () => {
 
   it('does not override preload when mediaElement changes and preload is already set', async () => {
     interface State {
-      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -44,7 +41,6 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentationUrl: undefined,
       preload: undefined,
     });
 
@@ -114,7 +110,6 @@ describe('syncPreloadAttribute', () => {
 
   it('does not clear preload when mediaElement is removed and preload is already set', async () => {
     interface State {
-      presentationUrl?: string | undefined;
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
@@ -123,7 +118,6 @@ describe('syncPreloadAttribute', () => {
     }
 
     const state = signal<State>({
-      presentationUrl: undefined,
       preload: 'auto',
     });
 

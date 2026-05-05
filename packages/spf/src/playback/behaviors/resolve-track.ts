@@ -2,8 +2,8 @@ import { effect } from '../../core/signals/effect';
 import type { Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
-import type { Presentation, ResolvedTrack, TrackType } from '../../media/types';
-import { isResolvedTrack } from '../../media/types';
+import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
+import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
@@ -11,7 +11,7 @@ import { fetchResolvable, getResponseText } from '../../network/fetch';
  * State shape for track resolution.
  */
 export interface TrackResolutionState extends TrackSelectionState {
-  presentation?: Presentation | undefined;
+  presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string | undefined;
   selectedAudioTrackId?: string | undefined;
   selectedTextTrackId?: string | undefined;
@@ -103,7 +103,8 @@ export function resolveTrack<S extends TrackResolutionState, T extends TrackType
           // presentation with its own resolved track. Reading live state ensures each
           // task builds on top of whatever has been committed so far.
           const latest = state.get();
-          const updatedPresentation = updateTrackInPresentation(latest.presentation!, mediaTrack);
+          if (!isResolvedPresentation(latest.presentation)) return;
+          const updatedPresentation = updateTrackInPresentation(latest.presentation, mediaTrack);
           state.set({ ...latest, presentation: updatedPresentation } as S);
         },
         { id: track.id }

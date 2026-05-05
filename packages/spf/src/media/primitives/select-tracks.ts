@@ -1,5 +1,11 @@
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import type { AudioSelectionSet, Presentation, TrackType, VideoSelectionSet } from '../types';
+import type {
+  AudioSelectionSet,
+  MaybeResolvedPresentation,
+  Presentation,
+  TrackType,
+  VideoSelectionSet,
+} from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
 /**
@@ -12,7 +18,7 @@ export const DEFAULT_INITIAL_BANDWIDTH = 1_000_000;
  * State shape for track selection.
  */
 export interface TrackSelectionState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;

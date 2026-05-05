@@ -51,6 +51,7 @@ export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './media/buffer
 export type {
   AudioTrack,
   FrameRate,
+  MaybeResolvedPresentation,
   MediaElementLike,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
@@ -63,7 +64,7 @@ export type {
   Track,
   VideoTrack,
 } from './media/types';
-export { hasPresentationDuration, isResolvedTrack } from './media/types';
+export { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from './media/types';
 
 // =============================================================================
 // DOM APIs (P4, P12, P16)

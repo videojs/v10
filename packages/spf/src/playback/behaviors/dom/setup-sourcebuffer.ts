@@ -1,7 +1,7 @@
 import { effect } from '../../../core/signals/effect';
 import { computed, type Signal, update } from '../../../core/signals/primitives';
 import { createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
-import type { Presentation, ResolvedTrack } from '../../../media/types';
+import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -21,7 +21,7 @@ const ActorKeyByType = {
  * State shape for SourceBuffer setup.
  */
 export interface SourceBufferState extends TrackSelectionState {
-  presentation?: Presentation;
+  presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
 }
@@ -78,7 +78,7 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
   // Derive which media track types this presentation actually contains
   const presentationTypesSignal = computed((): MediaTrackType[] => {
     const { presentation } = state.get();
-    if (!presentation || !('selectionSets' in presentation)) return [];
+    if (!presentation?.selectionSets) return [];
     return presentation.selectionSets
       .map(({ type }) => type)
       .filter((type): type is MediaTrackType => type === 'video' || type === 'audio');
