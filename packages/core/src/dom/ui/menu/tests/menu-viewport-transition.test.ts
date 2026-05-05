@@ -226,4 +226,57 @@ describe('menu-viewport-transition', () => {
     expect(rootView.style.getPropertyValue('width')).toBe('');
     expect(rootView.style.getPropertyValue('height')).toBe('');
   });
+
+  it('does not restore the root view when a hidden child sibling still has an active view', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const hiddenView = document.createElement('div');
+    const activeView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    hiddenView.setAttribute('data-menu-view', '');
+    activeView.setAttribute('data-menu-view', '');
+    content.append(rootView, hiddenView, activeView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 260,
+      currentHeight: 180,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(hiddenView, {
+      currentWidth: 260,
+      currentHeight: 180,
+      naturalWidth: 220,
+      naturalHeight: 140,
+    });
+    mockMenuViewSize(activeView, {
+      currentWidth: 260,
+      currentHeight: 180,
+      naturalWidth: 260,
+      naturalHeight: 180,
+    });
+
+    syncMenuViewTransition(content, hiddenView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    syncMenuViewTransition(content, activeView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-2',
+    });
+
+    hiddenView.hidden = true;
+    syncMenuViewTransition(content, hiddenView, {
+      phase: 'hidden',
+      direction: 'back',
+      triggerId: 'trigger-1',
+    });
+
+    expect(rootView.getAttribute('data-menu-view-state')).toBe('inactive');
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('260px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('180px');
+  });
 });

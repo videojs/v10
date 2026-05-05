@@ -105,6 +105,30 @@ function SubmenuEscapeFixture({ onRootOpenChange }: { onRootOpenChange: (open: b
   );
 }
 
+function SiblingSubmenuFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="quality-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="quality-content">
+              <MenuItem data-testid="quality-item">Auto</MenuItem>
+            </MenuContent>
+          </MenuRoot>
+          <MenuRoot>
+            <MenuTrigger data-testid="speed-trigger">Speed</MenuTrigger>
+            <MenuContent data-testid="speed-content">
+              <MenuItem data-testid="speed-item">Normal</MenuItem>
+            </MenuContent>
+          </MenuRoot>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function NestedSubmenuFixture() {
   return (
     <MenuRoot defaultOpen>
@@ -302,6 +326,26 @@ describe('MenuContent', () => {
 
     expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
     expect(screen.getByTestId('root-content').hasAttribute('data-open')).toBe(true);
+  });
+
+  it('does not pop a sibling submenu when Escape is pressed in an exiting submenu view', async () => {
+    render(<SiblingSubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('quality-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quality-content').getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    const exitingContent = screen.getByTestId('quality-content');
+
+    fireEvent.click(screen.getByTestId('speed-trigger'));
+    fireEvent.keyDown(exitingContent, { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('speed-content').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    });
   });
 
   it('only stops propagation for submenu-owned keyboard events', async () => {

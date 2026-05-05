@@ -104,16 +104,24 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       const keyboardEvent = toUIKeyboardEvent(event);
       menu.contentProps.onKeyDown(keyboardEvent);
 
-      if (event.key === 'ArrowLeft' || event.key === 'Escape') {
+      const ownsActiveSubmenu =
+        parentMenu !== null &&
+        subMenuId !== null &&
+        parentMenu.menu.navigationInput.current.stack[parentMenu.menu.navigationInput.current.stack.length - 1]
+          ?.menuId === subMenuId;
+
+      if ((event.key === 'ArrowLeft' || event.key === 'Escape') && !event.defaultPrevented) {
         event.preventDefault();
-        parentMenu?.pop();
+        if (ownsActiveSubmenu) {
+          parentMenu.pop();
+        }
       }
 
       if (isMenuNavigationKey(keyboardEvent)) {
         event.stopPropagation();
       }
     },
-    [onKeyDown, parentMenu, menu]
+    [onKeyDown, parentMenu, subMenuId, menu]
   );
 
   const handleRootMenuKeyDown = useCallback(

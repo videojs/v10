@@ -295,7 +295,7 @@ export function syncMenuViewTransition(
 
   if (viewState.phase === 'hidden') {
     state.phaseKeys.delete(view);
-    syncMenuViewRoot(content, false, options);
+    syncMenuViewRoot(content, getActiveMenuViewElement(viewport) !== null, options);
     return;
   }
 

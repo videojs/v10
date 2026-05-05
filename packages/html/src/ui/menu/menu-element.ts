@@ -264,9 +264,15 @@ export class MenuElement extends MediaElement {
 
     if (!parentCtx) return;
 
-    if (event.key === 'ArrowLeft' || event.key === 'Escape') {
+    const stack = parentCtx.menu.navigationInput.current.stack;
+    const topEntry = stack[stack.length - 1];
+    const ownsActiveSubmenu = topEntry?.menuId === this.id;
+
+    if ((event.key === 'ArrowLeft' || event.key === 'Escape') && !event.defaultPrevented) {
       event.preventDefault();
-      parentCtx.menu.pop();
+      if (ownsActiveSubmenu) {
+        parentCtx.menu.pop();
+      }
     }
 
     if (isMenuNavigationKey(event)) {

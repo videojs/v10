@@ -227,6 +227,61 @@ describe('MenuElement', () => {
     );
   });
 
+  it('does not pop a sibling nested menu when Escape is pressed in an exiting menu view', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const qualityTrigger = createElement(MenuItemElement);
+    const speedTrigger = createElement(MenuItemElement);
+    const quality = createElement(MenuElement);
+    const speed = createElement(MenuElement);
+    const qualityItem = createElement(MenuItemElement);
+    const speedItem = createElement(MenuItemElement);
+
+    root.open = true;
+    qualityTrigger.id = 'quality-trigger';
+    qualityTrigger.commandfor = 'quality-menu';
+    speedTrigger.id = 'speed-trigger';
+    speedTrigger.commandfor = 'speed-menu';
+    quality.id = 'quality-menu';
+    speed.id = 'speed-menu';
+    qualityItem.textContent = 'Auto';
+    speedItem.textContent = 'Normal';
+
+    rootView.append(qualityTrigger, speedTrigger);
+    quality.append(qualityItem);
+    speed.append(speedItem);
+    root.append(rootView, quality, speed);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await qualityTrigger.updateComplete;
+    await speedTrigger.updateComplete;
+    await quality.updateComplete;
+    await speed.updateComplete;
+    await qualityItem.updateComplete;
+    await speedItem.updateComplete;
+
+    qualityTrigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await quality.updateComplete;
+    await waitForAssertion(() => {
+      expect(quality.getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    speedTrigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    quality.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await quality.updateComplete;
+    await speed.updateComplete;
+    await waitForAssertion(() => {
+      expect(speed.getAttribute('data-menu-view-state')).toBe('active');
+      expect(quality.getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+  });
+
   it('only stops propagation for nested menu-owned keyboard events', async () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
