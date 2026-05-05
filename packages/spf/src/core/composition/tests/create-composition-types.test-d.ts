@@ -5,6 +5,24 @@ import { update } from '../../signals/primitives';
 import { createComposition } from '../create-composition';
 
 // =============================================================================
+// Host-agnostic stand-in types
+// -----------------------------------------------------------------------------
+// Core is DOM-free. The tests need a small, concrete type to stand in for the
+// kind of thing a user would pass as an owner — something with a writable
+// surface and clear subtype relationships for covariance / non-covariance tests.
+// =============================================================================
+
+interface Surface {
+  textContent?: string | null;
+}
+interface VideoSurface extends Surface {
+  kind: 'video';
+}
+interface CanvasSurface extends Surface {
+  kind: 'canvas';
+}
+
+// =============================================================================
 // Test behaviors
 // =============================================================================
 
@@ -21,7 +39,7 @@ function render({
   config,
 }: {
   state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: HTMLElement }>;
+  owners: Signal<{ renderElement?: Surface }>;
   config: { defaultText?: string };
 }) {
   return effect(() => {
@@ -60,7 +78,7 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when initialOwners has wrong types', () => {
-    // @ts-expect-error — renderElement expects HTMLElement, not number
+    // @ts-expect-error — renderElement expects Surface, not number
     createComposition([render], { initialOwners: { renderElement: 42 } });
   });
 
@@ -94,10 +112,10 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when composing behaviors with incompatible owners class types', () => {
-    const expectsCanvas = (_deps: { owners: Signal<{ el?: HTMLCanvasElement }> }) => {};
-    const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+    const expectsCanvas = (_deps: { owners: Signal<{ el?: CanvasSurface }> }) => {};
+    const expectsVideo = (_deps: { owners: Signal<{ el?: VideoSurface }> }) => {};
 
-    // @ts-expect-error — neither HTMLCanvasElement nor HTMLVideoElement extends the other
+    // @ts-expect-error — neither CanvasSurface nor VideoSurface extends the other
     createComposition([expectsCanvas, expectsVideo]);
   });
 
@@ -106,16 +124,16 @@ describe('createComposition type errors', () => {
   // =========================================================================
 
   it('allows composing behaviors with owners in a subtype relationship', () => {
-    const expectsElement = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
-    const expectsVideo = (_deps: { owners: Signal<{ el?: HTMLVideoElement }> }) => {};
+    const expectsSurface = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
+    const expectsVideo = (_deps: { owners: Signal<{ el?: VideoSurface }> }) => {};
 
-    // No error — HTMLVideoElement extends HTMLElement
-    createComposition([expectsElement, expectsVideo]);
+    // No error — VideoSurface extends Surface
+    createComposition([expectsSurface, expectsVideo]);
   });
 
   it('allows composing behaviors that omit owners', () => {
     const stateOnly = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: HTMLElement }> }) => {};
+    const withOwners = (_deps: { state: Signal<{ count?: number }>; owners: Signal<{ el?: Surface }> }) => {};
 
     // No error — omitting owners is not a conflict
     createComposition([stateOnly, withOwners]);
@@ -139,7 +157,7 @@ describe('createComposition type errors', () => {
 
   it('allows composing behaviors where each omits different channels', () => {
     const onlyState = (_deps: { state: Signal<{ count?: number }> }) => {};
-    const onlyOwners = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const onlyOwners = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
     const onlyConfig = (_deps: { config: { interval?: number } }) => {};
 
     // No error — behaviors with disjoint channels don't conflict
@@ -161,7 +179,7 @@ describe('createComposition type errors', () => {
   });
 
   it('allows resetting optional owners fields to undefined', () => {
-    const behavior = (_deps: { owners: Signal<{ el?: HTMLElement }> }) => {};
+    const behavior = (_deps: { owners: Signal<{ el?: Surface }> }) => {};
     const engine = createComposition([behavior]);
 
     // No error — clearing an owner (e.g. on source switch)

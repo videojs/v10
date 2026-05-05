@@ -3,7 +3,7 @@
  *
  * The compositional primitives: createComposition, signals, tasks, actors,
  * reactors. Media-domain helpers and the HLS playback engine live behind
- * the `./dom` and `./playback-engine` subpaths.
+ * the `./dom` and `./hls` subpaths.
  *
  * @packageDocumentation
  */

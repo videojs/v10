@@ -51,6 +51,7 @@ export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './media/buffer
 export type {
   AudioTrack,
   FrameRate,
+  MaybeResolvedPresentation,
   MediaElementLike,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
@@ -63,7 +64,7 @@ export type {
   Track,
   VideoTrack,
 } from './media/types';
-export { hasPresentationDuration, isResolvedTrack } from './media/types';
+export { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from './media/types';
 
 // =============================================================================
 // DOM APIs (P4, P12, P16)
@@ -72,7 +73,7 @@ export { hasPresentationDuration, isResolvedTrack } from './media/types';
 export type {
   AttachMediaSourceResult,
   CreateMediaSourceOptions,
-} from './dom/media/mediasource-setup';
+} from './media/dom/mse/mediasource-setup';
 export {
   attachMediaSource,
   createMediaSource,
@@ -80,26 +81,18 @@ export {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-} from './dom/media/mediasource-setup';
-export type { ResponseLike } from './dom/network/fetch';
-export { fetchResolvable, getResponseText } from './dom/network/fetch';
+} from './media/dom/mse/mediasource-setup';
+export type { ResponseLike } from './network/fetch';
+export { fetchResolvable, getResponseText } from './network/fetch';
 
 // =============================================================================
 // Features (F1)
 // =============================================================================
 
-export type {
-  PresentationState,
-  UnresolvedPresentation,
-} from './media/features/resolve-presentation';
-export {
-  canResolve,
-  isUnresolved,
-  resolvePresentation,
-  shouldResolve,
-} from './media/features/resolve-presentation';
-export type { PlatformOwners } from './media/features/sync-preload-attribute';
-export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
+export type { PresentationState } from './playback/behaviors/resolve-presentation';
+export { canResolve, resolvePresentation, shouldResolve } from './playback/behaviors/resolve-presentation';
+export type { PlatformOwners } from './playback/behaviors/sync-preload-attribute';
+export { syncPreloadAttribute } from './playback/behaviors/sync-preload-attribute';
 
 // =============================================================================
 // Features (F9 - Quality Switching)
@@ -108,5 +101,5 @@ export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
 export type {
   QualitySwitchingConfig,
   QualitySwitchingState,
-} from './media/features/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './media/features/quality-switching';
+} from './playback/behaviors/quality-switching';
+export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './playback/behaviors/quality-switching';
