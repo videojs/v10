@@ -906,8 +906,28 @@ describe('Preset pipeline (end-to-end)', () => {
 
     it('resolves feature names from the bundle', () => {
       const ref = findPreset('video')!.reference;
-      expect(ref.features).toEqual(expect.arrayContaining(['playback', 'volume']));
+      expect(ref.features.map((f) => f.name)).toEqual(expect.arrayContaining(['playback', 'volume']));
       expect(ref.features.length).toBe(2);
+    });
+
+    it('emits docs slugs for features', () => {
+      const ref = findPreset('video')!.reference;
+      const playback = ref.features.find((f) => f.name === 'playback');
+      const volume = ref.features.find((f) => f.name === 'volume');
+      expect(playback?.slug).toBe('reference/feature-playback');
+      expect(volume?.slug).toBe('reference/feature-volume');
+    });
+
+    it('flags hasReference true when the feature MDX page exists', () => {
+      const ref = findPreset('video')!.reference;
+      const playback = ref.features.find((f) => f.name === 'playback');
+      expect(playback?.hasReference).toBe(true);
+    });
+
+    it('flags hasReference false when the feature MDX page is missing', () => {
+      const ref = findPreset('video')!.reference;
+      const volume = ref.features.find((f) => f.name === 'volume');
+      expect(volume?.hasReference).toBe(false);
     });
 
     it('detects HTML skins with tagNames', () => {
@@ -958,7 +978,7 @@ describe('Preset pipeline (end-to-end)', () => {
 
     it('resolves feature names (subset of video)', () => {
       const ref = findPreset('audio')!.reference;
-      expect(ref.features).toEqual(['playback']);
+      expect(ref.features.map((f) => f.name)).toEqual(['playback']);
     });
 
     it('detects single HTML skin', () => {
@@ -1033,8 +1053,8 @@ describe('Preset pipeline (end-to-end)', () => {
       const featureSlugs = featureResults.map((r) => r.slug);
 
       const videoPreset = findPreset('video')!.reference;
-      for (const featureName of videoPreset.features) {
-        expect(featureSlugs).toContain(featureName);
+      for (const feature of videoPreset.features) {
+        expect(featureSlugs).toContain(feature.name);
       }
     });
   });

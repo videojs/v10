@@ -4,7 +4,12 @@
   "tasks": {
     "api-docs": {
       "dependsOn": ["^build"],
-      "outputs": ["src/content/generated-component-reference/**", "src/content/generated-util-reference/**"]
+      "outputs": [
+        "src/content/generated-component-reference/**",
+        "src/content/generated-util-reference/**",
+        "src/content/generated-feature-reference/**",
+        "src/content/generated-preset-reference/**"
+      ]
     },
     "ejected-skins": {
       "dependsOn": ["^build"],

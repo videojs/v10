@@ -148,6 +148,22 @@ function main() {
 
   log.info(`Done! Generated ${presetSuccessCount} preset files.`);
 
+  // Report features referenced by presets that lack a reference page.
+  // These render as plain text in the preset table instead of links.
+  const unlinked = new Map<string, string>();
+  for (const { reference } of presetResults) {
+    for (const feature of reference.features) {
+      if (!feature.hasReference) unlinked.set(feature.name, feature.slug);
+    }
+  }
+
+  if (unlinked.size > 0) {
+    log.warn(`${unlinked.size} preset feature(s) have no reference page:`);
+    for (const [name, slug] of unlinked) {
+      log.warn(`  - ${name} → site/src/content/docs/${slug}.mdx (missing)`);
+    }
+  }
+
   console.warn = originalWarn;
 
   if (errorCount > 0) {
