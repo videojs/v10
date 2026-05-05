@@ -14,13 +14,6 @@ type PartialWithUndefined<T> = { [K in keyof T]?: T[K] | undefined };
  * ```
  */
 export function defaults<T extends object>(object: PartialWithUndefined<T>, defaultValues: T): T {
-  const result = { ...defaultValues };
-
-  for (const key in object) {
-    if (!isUndefined(object[key])) {
-      result[key as keyof T] = object[key] as T[keyof T];
-    }
-  }
-
-  return result;
+  const defined = Object.fromEntries(Object.entries(object).filter(([, value]) => !isUndefined(value)));
+  return { ...defaultValues, ...defined } as T;
 }
