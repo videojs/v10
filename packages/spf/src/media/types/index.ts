@@ -373,10 +373,13 @@ export function hasPresentationDuration(
  * Narrows a `MaybeResolvedPresentation` to a fully resolved `Presentation`.
  *
  * A presentation is resolved once `resolvePresentation` has parsed the
- * manifest and populated `id` and `selectionSets`.
+ * manifest and populated both `id` and `selectionSets`. Both must be
+ * present — a partial value with only one of them isn't usable, and
+ * letting it through would have downstream behaviors crash when they
+ * access `selectionSets`.
  */
 export function isResolvedPresentation(
   presentation: MaybeResolvedPresentation | undefined
 ): presentation is Presentation {
-  return presentation !== undefined && 'id' in presentation;
+  return presentation !== undefined && presentation.id !== undefined && presentation.selectionSets !== undefined;
 }
