@@ -101,6 +101,24 @@ describe('createMenu', () => {
 
       expect(onOpenChange).not.toHaveBeenCalled();
     });
+
+    it('highlights the first DOM item when items register after opening', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+
+      menu.open();
+      menu.registerItem(b);
+      menu.registerItem(a);
+
+      vi.runAllTimers();
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      vi.useRealTimers();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -266,6 +284,18 @@ describe('createMenu', () => {
       const b = addItem('Beta');
       menu.registerItem(a);
       menu.registerItem(b);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowDown follows DOM order when items register out of order', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(b);
+      menu.registerItem(a);
 
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
 

@@ -29,6 +29,19 @@ function SubmenuFixture() {
   );
 }
 
+function ItemOrderFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="content">
+        <MenuItem data-testid="first-item">Quality</MenuItem>
+        <MenuItem data-testid="second-item">Speed</MenuItem>
+        <MenuItem data-testid="third-item">Copy link</MenuItem>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 describe('MenuContent', () => {
   it('marks the root view inactive while a submenu view is active', async () => {
     render(<SubmenuFixture />);
@@ -114,5 +127,14 @@ describe('MenuContent', () => {
 
     expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
     expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(false);
+  });
+
+  it('uses DOM order for keyboard navigation', () => {
+    render(<ItemOrderFixture />);
+
+    fireEvent.keyDown(screen.getByTestId('content'), { key: 'ArrowDown' });
+
+    expect(screen.getByTestId('first-item').hasAttribute('data-highlighted')).toBe(true);
+    expect(screen.getByTestId('third-item').hasAttribute('data-highlighted')).toBe(false);
   });
 });

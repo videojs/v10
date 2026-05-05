@@ -72,8 +72,8 @@ export interface MenuApi {
 }
 
 export function createMenu(options: MenuOptions): MenuApi {
-  // Items are stored in registration order, which matches DOM order since
-  // React effects run top-to-bottom through siblings.
+  // Items are stored in DOM order. Framework/component lifecycle ordering is
+  // not always the same as visual order, especially across nested components.
   const items: HTMLElement[] = [];
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
@@ -147,6 +147,17 @@ export function createMenu(options: MenuOptions): MenuApi {
     typeaheadBuffer = '';
   }
 
+  function scheduleInitialHighlight(): void {
+    cancelAnimationFrame(openRafId);
+    openRafId = requestAnimationFrame(() => {
+      openRafId = 0;
+      // Guard against close() being called before the RAF fires — active
+      // stays true during the closing animation, so also check status.
+      if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;
+      highlight(items[0] ?? null);
+    });
+  }
+
   function handleTypeahead(char: string): void {
     typeaheadBuffer += char;
 
@@ -178,14 +189,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       if (open) {
         // Focus the first item after the popover element becomes visible.
         // One RAF ensures the element has been shown via the Popover API.
-        cancelAnimationFrame(openRafId);
-        openRafId = requestAnimationFrame(() => {
-          openRafId = 0;
-          // Guard against close() being called before the RAF fires — active
-          // stays true during the closing animation, so also check status.
-          if (!popover.input.current.active || popover.input.current.status === 'ending') return;
-          highlight(items[0] ?? null);
-        });
+        scheduleInitialHighlight();
       } else {
         clearHighlight();
         clearTypeahead();
@@ -264,10 +268,26 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   // --- Item registration ---
 
+  function compareItems(a: HTMLElement, b: HTMLElement): number {
+    if (a === b) return 0;
+
+    const position = a.compareDocumentPosition(b);
+
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+
+    return 0;
+  }
+
   function registerItem(element: HTMLElement): () => void {
     element.tabIndex = -1;
     element.setAttribute(MenuItemDataAttrs.item, '');
     items.push(element);
+    items.sort(compareItems);
+
+    if (popover.input.current.active && popover.input.current.status !== 'ending' && !highlightedItem) {
+      scheduleInitialHighlight();
+    }
 
     return () => {
       const index = items.indexOf(element);
