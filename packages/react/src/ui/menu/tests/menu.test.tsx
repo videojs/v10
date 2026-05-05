@@ -48,6 +48,25 @@ function SubmenuPropagationFixture({ onRootKeyDown }: { onRootKeyDown: KeyboardE
   );
 }
 
+function SubmenuKeyboardFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="submenu-content">
+              <MenuItem data-testid="submenu-item">Auto</MenuItem>
+            </MenuContent>
+          </MenuRoot>
+          <MenuItem data-testid="root-item">Copy link</MenuItem>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function NestedSubmenuFixture() {
   return (
     <MenuRoot defaultOpen>
@@ -180,8 +199,9 @@ describe('MenuContent', () => {
   });
 
   it('handles keyboard navigation in the active submenu view', async () => {
-    render(<SubmenuFixture />);
+    render(<SubmenuKeyboardFixture />);
 
+    fireEvent.pointerEnter(screen.getByTestId('submenu-trigger'));
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
@@ -191,7 +211,7 @@ describe('MenuContent', () => {
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowDown' });
 
     expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
-    expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(false);
+    expect(screen.getByTestId('root-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
   it('highlights the first item when a submenu view becomes active', async () => {
