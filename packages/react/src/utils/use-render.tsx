@@ -9,7 +9,7 @@ import type { HTMLProps, RenderProp } from './types';
 import { composeRefs } from './use-composed-refs';
 
 /** Check if a value is a render prop (function or React element). */
-export function isRenderProp(value: unknown): value is RenderProp<any> {
+export function isRenderProp(value: unknown): value is RenderProp<unknown> {
   return isFunction(value) || isValidElement(value);
 }
 
