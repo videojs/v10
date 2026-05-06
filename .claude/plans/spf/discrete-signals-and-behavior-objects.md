@@ -13,7 +13,7 @@ branch: refactor/spf-discrete-signals-and-behavior-objects
 - **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests. Tests green: 48 files, 748 tests passed (was 703 at end of Stage A — net +45 from new test coverage and consolidation).
 - **Build clean.** `pnpm typecheck`, `pnpm -F @videojs/spf test`, `pnpm exec biome check`, `pnpm check:workspace`, `pnpm build:packages` all pass.
 - **Stage D in-scope for this branch.** Direction picked: read/write enforcement is derived from the setup signature (per-slot `Signal<T>` vs `ReadonlySignal<T>`), no separate `writeKeys` array. Invariant is **0-or-1 writer behaviors per signal** (0-writer keys must be seeded via `initialState`). Composition surface becomes uniformly read-only externally.
-- **Stage D-pre identified.** The `adapter.ts` external writes (`mediaElement`, `preload`, `presentationUrl`, `playbackInitiated`) must move into writer behaviors via an explicit input mechanism (TBD) before Stage D's type machinery can hold the runtime invariant. See `## Stage D — direction picked, details TBD` for the audit and the input-mechanism options.
+- **Stage D-pre identified.** The `adapter.ts` external writes (`mediaElement`, `preload`, `presentation`, `playbackInitiated`) must move into writer behaviors via an explicit input mechanism (TBD) before Stage D's type machinery can hold the runtime invariant. See `## Stage D — direction picked, details TBD` for the audit and the input-mechanism options. (Note: `presentation` was originally split as `presentationUrl` + `presentation` during the parent doc branch, but that split was reverted before merge — `presentation` is now a single `MaybeResolvedPresentation` slot. The adapter writes the unresolved form `{ url }`.)
 - **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`.
 - **Memory:** `project_spf_stage_a_revisit.md` has the deeper "why we did it this way" notes for Stage A; updated for B/C carryovers.
 
@@ -128,7 +128,7 @@ The compose call site gets a type error if a behavior is removed (or never added
 The composition's public `state` / `context` become **uniformly read-only externally**. There is no "external writes via signal" pathway:
 
 - **Constant inputs** (set once at construction): go through `initialState` / `initialContext`.
-- **Time-varying inputs** (e.g. the adapter's `presentationUrl`, `preload`, `mediaElement`, `playbackInitiated`): must go through a writer behavior, fed by an explicit non-signal input mechanism — see Stage D-pre below.
+- **Time-varying inputs** (e.g. the adapter's `presentation`, `preload`, `mediaElement`, `playbackInitiated`): must go through a writer behavior, fed by an explicit non-signal input mechanism — see Stage D-pre below.
 
 The "0-writer = external input via signal" overload is **rejected**: it would let one syntactic shape (`ReadonlySignal<T>` slot) carry two semantic meanings (internal vs external write source) discoverable only by surveying the entire composition.
 
@@ -140,7 +140,7 @@ Before Stage D's type machinery lands, the runtime invariant must hold. Audit (2
 |---|---|---|---|
 | `mediaElement` | context | `attach()` / `detach()` | DOM lifecycle |
 | `preload` | state | `preload =` IDL setter | HTML attribute input |
-| `presentationUrl` | state | `src =` IDL setter | HTML attribute input |
+| `presentation` | state | `src =` IDL setter (writes `{ url }`) | HTML attribute input |
 | `playbackInitiated` | state | `play()` method | Imperative input |
 
 The sandbox harness (`apps/sandbox/src/spf-segment-loading/main.ts`) extends this set with three more — and exposes a real wrinkle:
@@ -168,7 +168,7 @@ export interface SimpleHlsEngineConfig {
 }
 
 interface SimpleHlsEngineInputs {
-  presentationUrl: Signal<string | undefined>;
+  presentation: Signal<MaybeResolvedPresentation | undefined>;
   preload: Signal<PreloadValue>;
   playbackInitiated: Signal<boolean>;
   mediaElement: Signal<HTMLMediaElement | undefined>;
@@ -181,7 +181,7 @@ interface SimpleHlsEngineInputs {
 // Engine factory wires inputs to mirror behaviors and to reconcilers
 export function createSimpleHlsEngine(config: SimpleHlsEngineConfig) {
   const inputs: SimpleHlsEngineInputs = {
-    presentationUrl: signal(undefined),
+    presentation: signal(undefined),
     preload: signal('none'),
     playbackInitiated: signal(false),
     mediaElement: signal(undefined),
@@ -191,7 +191,7 @@ export function createSimpleHlsEngine(config: SimpleHlsEngineConfig) {
   };
 
   const composition = createComposition([
-    mirrorInputState('presentationUrl', inputs.presentationUrl),
+    mirrorInputState('presentation', inputs.presentation),
     mirrorInputState('preload', inputs.preload),
     mirrorInputState('playbackInitiated', inputs.playbackInitiated),
     mirrorInputContext('mediaElement', inputs.mediaElement),
