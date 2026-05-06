@@ -23,7 +23,7 @@ interface Context {
 describe('createComposition', () => {
   describe('signal map derivation', () => {
     it('creates one signal per declared state key', () => {
-      const behavior: Behavior<State, Context, object> = {
+      const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: () => {},
@@ -35,7 +35,7 @@ describe('createComposition', () => {
     });
 
     it('creates one signal per declared context key', () => {
-      const behavior: Behavior<State, Context, object> = {
+      const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: [],
         contextKeys: ['resource'],
         setup: () => {},
@@ -47,14 +47,14 @@ describe('createComposition', () => {
     });
 
     it('deduplicates keys across behaviors that share them', () => {
-      const a: Behavior<State, Context, object> = {
+      const a: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
           state.count.set(1);
         },
       };
-      const b: Behavior<State, Context, object> = {
+      const b: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
@@ -72,14 +72,14 @@ describe('createComposition', () => {
       let stateA: StateSignals<State> | undefined;
       let stateB: StateSignals<State> | undefined;
 
-      const captureA: Behavior<State, Context, object> = {
+      const captureA: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
           stateA = state;
         },
       };
-      const captureB: Behavior<State, Context, object> = {
+      const captureB: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
@@ -96,7 +96,7 @@ describe('createComposition', () => {
 
   describe('destroy()', () => {
     it('clears context signals populated by a behavior during setup', async () => {
-      const setBehavior: Behavior<State, Context, object> = {
+      const setBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: [],
         contextKeys: ['resource'],
         setup: ({ context }) => {
@@ -117,7 +117,7 @@ describe('createComposition', () => {
       const resource: Resource = { id: 'r1' };
       let resourceSeenByCleanup: Resource | undefined;
 
-      const cleanupBehavior: Behavior<State, Context, object> = {
+      const cleanupBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: [],
         contextKeys: ['resource'],
         setup: ({ context }) => {
@@ -140,7 +140,7 @@ describe('createComposition', () => {
     it('awaits async cleanups before clearing', async () => {
       let cleanupCompleted = false;
 
-      const asyncCleanupBehavior: Behavior<State, Context, object> = {
+      const asyncCleanupBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup:
@@ -169,14 +169,14 @@ describe('createComposition', () => {
         a?: Resource;
         b?: Resource;
       }
-      const setA: Behavior<State, MultiContext, object> = {
+      const setA: Behavior<StateSignals<State>, ContextSignals<MultiContext>, object> = {
         stateKeys: [],
         contextKeys: ['a'],
         setup: ({ context }) => {
           context.a.set({ id: 'a1' });
         },
       };
-      const setB: Behavior<State, MultiContext, object> = {
+      const setB: Behavior<StateSignals<State>, ContextSignals<MultiContext>, object> = {
         stateKeys: [],
         contextKeys: ['b'],
         setup: ({ context }) => {
@@ -196,7 +196,7 @@ describe('createComposition', () => {
     });
 
     it('also clears state signals on destroy', async () => {
-      const incrementCount: Behavior<State, Context, object> = {
+      const incrementCount: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
@@ -216,7 +216,7 @@ describe('createComposition', () => {
 
   describe('initial values', () => {
     it('seeds state signals from initialState', () => {
-      const behavior: Behavior<State, Context, object> = {
+      const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: () => {},
@@ -230,7 +230,7 @@ describe('createComposition', () => {
 
     it('seeds context signals from initialContext', () => {
       const resource: Resource = { id: 'seeded' };
-      const behavior: Behavior<State, Context, object> = {
+      const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: [],
         contextKeys: ['resource'],
         setup: () => {},
@@ -247,7 +247,7 @@ describe('createComposition', () => {
         a?: number;
         b?: number;
       }
-      const behavior: Behavior<MultiState, Context, object> = {
+      const behavior: Behavior<StateSignals<MultiState>, ContextSignals<Context>, object> = {
         stateKeys: ['a', 'b'],
         contextKeys: [],
         setup: () => {},
@@ -262,7 +262,7 @@ describe('createComposition', () => {
 
     it('makes seeded values visible to behaviors during setup', () => {
       let seen: number | undefined;
-      const captureBehavior: Behavior<State, Context, object> = {
+      const captureBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup: ({ state }) => {
@@ -281,7 +281,7 @@ describe('createComposition', () => {
       let received: { interval: number } | undefined;
       const config = { interval: 250 };
 
-      const captureConfig: Behavior<State, Context, { interval: number }> = {
+      const captureConfig: Behavior<StateSignals<State>, ContextSignals<Context>, { interval: number }> = {
         stateKeys: [],
         contextKeys: [],
         setup: ({ config }) => {
@@ -297,7 +297,7 @@ describe('createComposition', () => {
     it('defaults config to empty object when not supplied', () => {
       let received: object | undefined;
 
-      const captureConfig: Behavior<State, Context, object> = {
+      const captureConfig: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: [],
         contextKeys: [],
         setup: ({ config }) => {

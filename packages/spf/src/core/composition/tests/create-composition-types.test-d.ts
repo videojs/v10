@@ -122,7 +122,7 @@ describe('Composition<S, C>', () => {
   });
 });
 
-describe('BehaviorDeps<S, C, Cfg>', () => {
+describe('BehaviorDeps<StateMap, ContextMap, Cfg>', () => {
   it('exposes state, context, and config to behaviors', () => {
     interface State {
       count?: number;
@@ -133,7 +133,7 @@ describe('BehaviorDeps<S, C, Cfg>', () => {
     interface Cfg {
       interval?: number;
     }
-    type Deps = BehaviorDeps<State, Context, Cfg>;
+    type Deps = BehaviorDeps<StateSignals<State>, ContextSignals<Context>, Cfg>;
     expectTypeOf<Deps['state']>().toEqualTypeOf<StateSignals<State>>();
     expectTypeOf<Deps['context']>().toEqualTypeOf<ContextSignals<Context>>();
     expectTypeOf<Deps['config']>().toEqualTypeOf<Cfg>();
@@ -275,7 +275,7 @@ describe('createComposition', () => {
       interval?: number;
     }
 
-    const behavior: Behavior<State, Context, Cfg> = {
+    const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, Cfg> = {
       stateKeys: [],
       contextKeys: [],
       setup: () => {},
@@ -299,7 +299,7 @@ describe('createComposition', () => {
       interval?: number;
     }
 
-    const behavior: Behavior<State, Context, Cfg> = {
+    const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, Cfg> = {
       stateKeys: [],
       contextKeys: [],
       setup: ({ state, context, config }) => {
@@ -457,7 +457,7 @@ describe('createComposition type errors', () => {
 
   // A typed behavior that pins the inferred composition shape so the error
   // tests below can target the expected shape without explicit type args.
-  const noopState: Behavior<State, Context, object> = {
+  const noopState: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
     stateKeys: ['count'],
     contextKeys: ['el'],
     setup: () => {},
@@ -477,7 +477,7 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when a behavior writes a wrong-type value to a state signal', () => {
-    const badBehavior: Behavior<State, Context, object> = {
+    const badBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
       stateKeys: ['count'],
       contextKeys: [],
       setup: ({ state }) => {
@@ -489,7 +489,7 @@ describe('createComposition type errors', () => {
   });
 
   it('errors when a behavior reads a state signal as the wrong type', () => {
-    const badBehavior: Behavior<State, Context, object> = {
+    const badBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
       stateKeys: ['count'],
       contextKeys: [],
       setup: ({ state }) => {

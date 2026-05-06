@@ -1,4 +1,4 @@
-import { type Signal, signal } from '../signals/primitives';
+import { type ReadonlySignal, type Signal, signal } from '../signals/primitives';
 
 /**
  * Cleanup returned by a behavior. Behaviors may return:
@@ -9,30 +9,57 @@ import { type Signal, signal } from '../signals/primitives';
 export type BehaviorCleanup = void | (() => void | Promise<void>) | { destroy(): void | Promise<void> };
 
 /**
- * A signal map keyed by the fields of `S`. Each field is a discrete signal.
+ * A signal map keyed by the fields of `S`. Each field is a writable signal.
  *
  * Optional fields on `S` map to required signal slots whose value type
  * includes `undefined`, ensuring every key has a signal even when the
  * underlying value is absent.
+ *
+ * Used in two roles:
+ * - Engine-side **construction**: `Composition<S, C>` exposes its public
+ *   surface as `StateSignals<S>` (everything writable) so external code
+ *   can read or write any slot.
+ * - Behavior **input convenience**: a behavior that writes to every slot
+ *   can type its setup state param as `StateSignals<{ ... }>` rather than
+ *   spelling out per-slot `Signal<T>` types.
+ *
+ * Behaviors that mix read-only and writable slots type the setup param
+ * directly as a slot map (`{ x: Signal<T>; y: ReadonlySignal<U> }`)
+ * instead of going through `StateSignals<>`.
  */
 export type StateSignals<S extends object> = { [K in keyof S]-?: Signal<S[K]> };
 
 /**
- * A signal map keyed by the fields of `C`. Each field is a discrete signal
- * for a platform object or actor reference.
+ * A signal map keyed by the fields of `C`. Each field is a writable signal
+ * for a platform object or actor reference. Same dual role as
+ * `StateSignals<S>` — see its docblock.
  */
 export type ContextSignals<C extends object> = { [K in keyof C]-?: Signal<C[K]> };
 
 /**
+ * Slot-map shape — a record where each value is at least a `ReadonlySignal`.
+ * `Signal<T>` is structurally a subtype of `ReadonlySignal<T>` (it adds
+ * `.set()`), so a writable slot satisfies this bound too.
+ *
+ * This is the bound used for behavior `state` / `context` slot maps. It
+ * lets a single behavior declare a *heterogeneous* slot map where some
+ * slots are `Signal<T>` (writable) and others are `ReadonlySignal<T>`
+ * (read-only) — making read/write intent explicit at the call site and
+ * giving body-level enforcement (TS rejects `.set()` on a read-only slot).
+ */
+export type AnySlotMap = Record<PropertyKey, ReadonlySignal<unknown>>;
+
+/**
  * The deps object passed to each behavior by the composition.
  *
- * - `state` — discrete signal map for state fields (reactive data)
- * - `context` — discrete signal map for platform objects and actor references
- * - `config` — static configuration, passed once at composition creation
+ * - `state` — slot map for state fields (reactive data). Per-slot read/
+ *   write intent expressed via `Signal<T>` vs `ReadonlySignal<T>`.
+ * - `context` — slot map for platform objects and actor references.
+ * - `config` — static configuration, passed once at composition creation.
  */
-export interface BehaviorDeps<S extends object, C extends object, Cfg extends object> {
-  state: StateSignals<S>;
-  context: ContextSignals<C>;
+export interface BehaviorDeps<StateMap extends AnySlotMap, ContextMap extends AnySlotMap, Cfg extends object> {
+  state: StateMap;
+  context: ContextMap;
   config: Cfg;
 }
 
@@ -44,20 +71,25 @@ export interface BehaviorDeps<S extends object, C extends object, Cfg extends ob
  * The `stateKeys` / `contextKeys` declarations are the runtime expression
  * of the behavior's contract — the caller (e.g. `createComposition`) uses
  * them to know which signals to provide. The setup parameter type
- * declares the *types* of those keys; together they form a complete
- * contract.
+ * declares the *slot map* (per-slot `Signal<T>` vs `ReadonlySignal<T>`);
+ * together they form a complete contract.
  *
  * Manual `Behavior<>` literals (e.g. engine wrappers that forward keys
- * from a wrapped behavior) opt out of exhaustiveness — the type alias is
- * permissive (subset). Source behaviors should use `defineBehavior` to
- * get exhaustiveness enforcement at the call site.
+ * from a wrapped behavior, or pass-through behaviors like `shareSignals`)
+ * opt out of exhaustiveness — the type alias is permissive (subset).
+ * Source behaviors should use `defineBehavior` to get exhaustiveness
+ * enforcement at the call site.
  */
-export interface Behavior<S extends object, C extends object, Cfg extends object> {
-  /** State keys this behavior reads/writes. Subset of `keyof S`. */
-  stateKeys: readonly (keyof S)[];
-  /** Context keys this behavior reads/writes. Subset of `keyof C`. */
-  contextKeys: readonly (keyof C)[];
-  setup: (deps: BehaviorDeps<S, C, Cfg>) => BehaviorCleanup;
+export interface Behavior<
+  StateMap extends AnySlotMap = Empty,
+  ContextMap extends AnySlotMap = Empty,
+  Cfg extends object = Empty,
+> {
+  /** State keys this behavior reads/writes. Subset of `keyof StateMap`. */
+  stateKeys: readonly (keyof StateMap)[];
+  /** Context keys this behavior reads/writes. Subset of `keyof ContextMap`. */
+  contextKeys: readonly (keyof ContextMap)[];
+  setup: (deps: BehaviorDeps<StateMap, ContextMap, Cfg>) => BehaviorCleanup;
 }
 
 // =============================================================================
@@ -297,7 +329,7 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
     options?.initialContext ?? {}
   );
 
-  const deps: BehaviorDeps<S, C, Cfg> = {
+  const deps: BehaviorDeps<StateSignals<S>, ContextSignals<C>, Cfg> = {
     state,
     context,
     config: (options?.config ?? {}) as Cfg,
@@ -386,28 +418,31 @@ type RequireIfNonEmpty<Key extends string, T extends object> = keyof T extends n
   ? { [K in Key]?: T }
   : { [K in Key]: T };
 
-type DepsForCfg<S extends object, C extends object, Cfg extends object> = RequireIfNonEmpty<'state', StateSignals<S>> &
-  RequireIfNonEmpty<'context', ContextSignals<C>> &
+type DepsForCfg<StateMap extends AnySlotMap, ContextMap extends AnySlotMap, Cfg extends object> = RequireIfNonEmpty<
+  'state',
+  StateMap
+> &
+  RequireIfNonEmpty<'context', ContextMap> &
   RequireIfNonEmpty<'config', Cfg>;
 
 export function defineBehavior<
-  S extends object = Empty,
-  C extends object = Empty,
+  StateMap extends AnySlotMap = Empty,
+  ContextMap extends AnySlotMap = Empty,
   Cfg extends object = Empty,
-  const SK extends readonly (keyof S)[] = readonly [],
-  const CK extends readonly (keyof C)[] = readonly [],
+  const SK extends readonly (keyof StateMap)[] = readonly [],
+  const CK extends readonly (keyof ContextMap)[] = readonly [],
   R extends BehaviorCleanup = BehaviorCleanup,
 >(
   behavior: {
     stateKeys: SK;
     contextKeys: CK;
-    setup: (deps: { state: StateSignals<S>; context: ContextSignals<C>; config: Cfg }) => R;
-  } & ExhaustiveKeys<SK, S, 'state'> &
-    ExhaustiveKeys<CK, C, 'context'>
+    setup: (deps: { state: StateMap; context: ContextMap; config: Cfg }) => R;
+  } & ExhaustiveKeys<SK, StateMap, 'state'> &
+    ExhaustiveKeys<CK, ContextMap, 'context'>
 ): {
   stateKeys: SK;
   contextKeys: CK;
-  setup: (deps: DepsForCfg<S, C, Cfg>) => R;
+  setup: (deps: DepsForCfg<StateMap, ContextMap, Cfg>) => R;
 } {
   // The runtime shape is identical; the cast bridges TS's view of the
   // parameter (config required) to the return view (config optional when
@@ -415,6 +450,6 @@ export function defineBehavior<
   return behavior as unknown as {
     stateKeys: SK;
     contextKeys: CK;
-    setup: (deps: DepsForCfg<S, C, Cfg>) => R;
+    setup: (deps: DepsForCfg<StateMap, ContextMap, Cfg>) => R;
   };
 }

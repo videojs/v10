@@ -48,10 +48,10 @@ export function update<T extends object>(signal: Signal<T>, updater: Partial<T> 
  * Convenience for behaviors that pass whole state/context snapshots to pure
  * helpers; prefer per-field reads when only a few fields are needed.
  */
-export function snapshot<M extends Record<string, Signal<unknown>>>(
+export function snapshot<M extends Record<string, ReadonlySignal<unknown>>>(
   map: M
-): { [K in keyof M]: M[K] extends Signal<infer V> ? V : never } {
-  const out = {} as { [K in keyof M]: M[K] extends Signal<infer V> ? V : never };
+): { [K in keyof M]: M[K] extends { get(): infer V } ? V : never } {
+  const out = {} as { [K in keyof M]: M[K] extends { get(): infer V } ? V : never };
   for (const key in map) {
     out[key] = map[key]!.get() as never;
   }

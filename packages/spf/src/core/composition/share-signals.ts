@@ -36,7 +36,11 @@ export interface ShareSignalsConfig<S extends object, C extends object> {
  * context shapes here describe what the consumer's callback receives,
  * not keys this behavior needs created.
  */
-export function makeShareSignals<S extends object, C extends object>(): Behavior<S, C, ShareSignalsConfig<S, C>> {
+export function makeShareSignals<S extends object, C extends object>(): Behavior<
+  StateSignals<S>,
+  ContextSignals<C>,
+  ShareSignalsConfig<S, C>
+> {
   return {
     stateKeys: [],
     contextKeys: [],
