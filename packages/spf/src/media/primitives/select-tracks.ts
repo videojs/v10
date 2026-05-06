@@ -25,10 +25,10 @@ export interface TrackSelectionState {
 }
 
 /**
- * Owners shape for track selection.
+ * Context shape for track selection.
  * Currently empty - reserved for future use (e.g., bandwidth estimator).
  */
-export type TrackSelectionOwners = Record<string, never>;
+export type TrackSelectionContext = Record<string, never>;
 
 /**
  * Action types for track selection.

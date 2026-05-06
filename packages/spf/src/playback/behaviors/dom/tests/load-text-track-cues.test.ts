@@ -1,19 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import { resolveVttSegment } from '../../../../media/dom/text/resolve-vtt-segment';
-import type { Presentation, Segment, TextTrack } from '../../../../media/types';
+import type {
+  Cue,
+  MaybeResolvedPresentation,
+  MediaElementWithTextTracks,
+  Presentation,
+  Segment,
+  TextTrack,
+} from '../../../../media/types';
+import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
+import type { TextTracksActor } from '../../../actors/text-tracks';
 import {
   loadTextTrackCues,
-  type TextTrackCueLoadingOwners,
+  type TextTrackCueLoadingContext,
   type TextTrackCueLoadingState,
 } from '../../load-text-track-cues';
-import { setupTextTrackActors, type TextTrackActorsOwners } from '../setup-text-track-actors';
+import { setupTextTrackActors, type TextTrackActorsContext } from '../setup-text-track-actors';
 
 // The composed behaviors (setup in dom + loader in media) intersect their
-// owner-shape contracts. The setup narrows `mediaElement` to
+// context-shape contracts. The setup narrows `mediaElement` to
 // `HTMLMediaElement`; the loader keeps the abstract actor types. The test
-// signal has to satisfy both.
-type ComposedOwners = TextTrackCueLoadingOwners & TextTrackActorsOwners;
+// signal map has to satisfy both.
+type ComposedContext = TextTrackCueLoadingContext & TextTrackActorsContext;
 
 // Mock resolveVttSegment
 vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
@@ -25,6 +35,26 @@ vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
   }),
   destroyVttResolver: vi.fn(),
 }));
+
+function makeState(initial: TextTrackCueLoadingState = {}): StateSignals<TextTrackCueLoadingState> {
+  return {
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    currentTime: signal<number | undefined>(initial.currentTime),
+  };
+}
+
+function makeContext(initial: ComposedContext = {}): ContextSignals<ComposedContext> {
+  return {
+    mediaElement: signal<(MediaElementWithTextTracks & HTMLMediaElement) | undefined>(
+      initial.mediaElement as (MediaElementWithTextTracks & HTMLMediaElement) | undefined
+    ) as ContextSignals<ComposedContext>['mediaElement'],
+    textTracksActor: signal<TextTracksActor<VTTCue & Cue> | undefined>(
+      initial.textTracksActor as TextTracksActor<VTTCue & Cue> | undefined
+    ) as ContextSignals<ComposedContext>['textTracksActor'],
+    segmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.segmentLoaderActor),
+  };
+}
 
 function createMockPresentation(tracks: Partial<TextTrack>[]): Presentation {
   return {
@@ -63,21 +93,16 @@ function createMockSegments(count: number): Segment[] {
   }));
 }
 
-/**
- * Sets up the composition of `setupTextTrackActors` (DOM-side actor
- * setup) and `loadTextTrackCues` (host-agnostic orchestrator). Returns
- * the composed reactive channels and a combined cleanup.
- */
-function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: ComposedOwners) {
-  const state = signal<TextTrackCueLoadingState>(initialState);
-  const owners = signal<ComposedOwners>(initialOwners);
-  const setupCleanup = setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
-  const reactor = loadTextTrackCues({ state, owners });
+function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialContext: ComposedContext) {
+  const state = makeState(initialState);
+  const context = makeContext(initialContext);
+  const setupCleanup = setupTextTrackActors.setup({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
+  const reactor = loadTextTrackCues.setup({ state, context });
   const cleanup = () => {
     reactor.destroy();
     setupCleanup();
   };
-  return { state, owners, cleanup };
+  return { state, context, cleanup };
 }
 
 describe('loadTextTrackCues', () => {
@@ -85,14 +110,7 @@ describe('loadTextTrackCues', () => {
     vi.clearAllMocks();
   });
 
-  // Note: We cannot test actual cue addition in unit tests because the vitest
-  // browser environment clears manually added cues after async operations.
-  // These tests verify the orchestration logic and that resolveVttSegment is called.
-
   describe('cue deduplication', () => {
-    // Deduplication checks textTrack.cues directly. Since the vitest browser
-    // environment clears cues after async operations, we override addCue and the
-    // cues getter to maintain a persistent list across awaits for these tests.
     function makeTrackWithPersistentCues() {
       const trackElement = document.createElement('track');
       trackElement.id = 'text-1';
@@ -141,7 +159,6 @@ describe('loadTextTrackCues', () => {
 
     it('drops a duplicate cue from a subsequent segment', async () => {
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
-      // Boundary-spanning cue appears in both adjacent segments per HLS spec
       vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')])
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')]);
@@ -165,7 +182,7 @@ describe('loadTextTrackCues', () => {
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
       vi.mocked(resolveVttSegment)
         .mockResolvedValueOnce([new VTTCue(0, 5, 'Hello')])
-        .mockResolvedValueOnce([new VTTCue(0, 5, 'World')]); // same timing, different text — not a duplicate
+        .mockResolvedValueOnce([new VTTCue(0, 5, 'World')]);
 
       const { video, addCueSpy } = makeTrackWithPersistentCues();
 
@@ -199,7 +216,6 @@ describe('loadTextTrackCues', () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // 3 unique cues — boundary cue added only once
       expect(addCueSpy).toHaveBeenCalledTimes(3);
       cleanup();
     });
@@ -221,7 +237,7 @@ describe('loadTextTrackCues', () => {
     trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
-    trackElement.track.mode = 'hidden'; // Enable cue access
+    trackElement.track.mode = 'hidden';
 
     const { cleanup } = setupLoadTextTrackCues(
       {
@@ -245,7 +261,7 @@ describe('loadTextTrackCues', () => {
     trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
-    trackElement.track.mode = 'hidden'; // Enable cue access
+    trackElement.track.mode = 'hidden';
 
     const { cleanup } = setupLoadTextTrackCues(
       {
@@ -266,16 +282,12 @@ describe('loadTextTrackCues', () => {
     cleanup();
   });
 
-  // Note: the "skips when cues already loaded" test was removed — with forward
-  // buffer windowing, the orchestrator now re-evaluates on each currentTime change.
-  // Re-loading is prevented by the loadedSegmentIds set in the closure, not DOM cues.
-
   it('continues on segment error (partial loading)', async () => {
     const trackElement = document.createElement('track');
     trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
-    trackElement.track.mode = 'hidden'; // Enable cue access
+    trackElement.track.mode = 'hidden';
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -299,13 +311,11 @@ describe('loadTextTrackCues', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
-    // Verify all segments were attempted
     expect(resolveVttSegment).toHaveBeenCalledTimes(3);
     expect(resolveVttSegment).toHaveBeenNthCalledWith(1, 'https://example.com/segment-0.vtt');
     expect(resolveVttSegment).toHaveBeenNthCalledWith(2, 'https://example.com/fail.vtt');
     expect(resolveVttSegment).toHaveBeenNthCalledWith(3, 'https://example.com/segment-2.vtt');
 
-    // Verify error was logged for the failing segment
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       expect.stringContaining('Failed to load text-track segment'),
       expect.any(Error)
@@ -338,9 +348,6 @@ describe('loadTextTrackCues', () => {
   });
 
   describe('forward buffer windowing', () => {
-    // 5 segments × 10s = 50s total. Default buffer window = 30s.
-    // At t=0: window [0, 30) covers seg-0..seg-2; seg-3 (start=30) and seg-4 excluded.
-    // At t=15: window [15, 45) adds seg-3 (start=30) and seg-4 (start=40).
     function makeWindowingSetup(currentTime = 0) {
       const trackElement = document.createElement('track');
       trackElement.id = 'text-1';
@@ -348,7 +355,7 @@ describe('loadTextTrackCues', () => {
       video.appendChild(trackElement);
       trackElement.track.mode = 'hidden';
 
-      const { state, owners, cleanup } = setupLoadTextTrackCues(
+      const { state, context, cleanup } = setupLoadTextTrackCues(
         {
           selectedTextTrackId: 'text-1',
           currentTime,
@@ -357,7 +364,7 @@ describe('loadTextTrackCues', () => {
         { mediaElement: video }
       );
 
-      return { state, owners, cleanup, trackElement };
+      return { state, context, cleanup, trackElement };
     }
 
     it('only fetches segments within the forward buffer window at the initial position', async () => {
@@ -366,7 +373,6 @@ describe('loadTextTrackCues', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
-      // Window [0, 30): seg-0 (0s), seg-1 (10s), seg-2 (20s) — seg-3 starts at 30 (excluded)
       expect(resolveVttSegment).toHaveBeenCalledTimes(3);
       expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
       expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
@@ -380,14 +386,12 @@ describe('loadTextTrackCues', () => {
     it('fetches new in-window segments when currentTime advances', async () => {
       const { state, cleanup } = makeWindowingSetup(0);
 
-      // Wait for initial window load (seg-0..seg-2)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
       expect(resolveVttSegment).toHaveBeenCalledTimes(3);
 
-      // Advance currentTime so seg-3 and seg-4 enter the window [15, 45)
-      state.set({ ...state.get(), currentTime: 15 });
+      state.currentTime.set(15);
 
       await vi.waitFor(() => {
         expect(resolveVttSegment).toHaveBeenCalledTimes(5);
@@ -408,12 +412,11 @@ describe('loadTextTrackCues', () => {
       const callsBefore = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
       expect(callsBefore).toContain('https://example.com/segment-0.vtt');
 
-      state.set({ ...state.get(), currentTime: 15 });
+      state.currentTime.set(15);
       await vi.waitFor(() => {
         expect(resolveVttSegment).toHaveBeenCalledTimes(5);
       });
 
-      // seg-0..seg-2 should each appear exactly once across all calls
       const allCalls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-0.vtt')).toHaveLength(1);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-1.vtt')).toHaveLength(1);
@@ -423,8 +426,6 @@ describe('loadTextTrackCues', () => {
     });
 
     it('fetches all segments immediately when the track fits in one window', async () => {
-      // 3 segments × 10s = 30s total — all fit in the default [0, 30) window.
-      // Set up directly with 3 segments so no preemption from a prior 5-segment load.
       const trackElement = document.createElement('track');
       trackElement.id = 'text-1';
       const video = document.createElement('video');

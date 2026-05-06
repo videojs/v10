@@ -1,5 +1,6 @@
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { type Signal, update } from '../../core/signals/primitives';
+import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
@@ -44,7 +45,7 @@ export interface QualitySwitchingConfig {
    * Bandwidth estimate in bps to use before enough samples have been collected.
    * Default: 5_000_000 (5 Mbps).
    */
-  defaultBandwidth?: number;
+  initialBandwidth?: number;
 }
 
 /**
@@ -53,7 +54,7 @@ export interface QualitySwitchingConfig {
 export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
   safetyMargin: 0.85,
   minUpgradeInterval: 8000,
-  defaultBandwidth: 5_000_000,
+  initialBandwidth: 5_000_000,
 };
 
 /**
@@ -81,17 +82,25 @@ function getVideoTracks(presentation: MaybeResolvedPresentation) {
  * quality. The browser's SourceBuffer replaces the overlapping buffered range.
  *
  * @example
- * const cleanup = switchQuality({ state });
+ * const cleanup = switchQuality.setup({ state });
  * // Later, when done:
  * cleanup();
  */
-export function switchQuality<S extends QualitySwitchingState>(
-  { state }: { state: Signal<S> },
-  config: QualitySwitchingConfig = {}
-): () => void {
+function switchQualitySetup({
+  state,
+  config = {},
+}: {
+  state: {
+    presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
+    bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
+    selectedVideoTrackId: Signal<QualitySwitchingState['selectedVideoTrackId']>;
+    abrDisabled: ReadonlySignal<QualitySwitchingState['abrDisabled']>;
+  };
+  config?: QualitySwitchingConfig;
+}): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const minUpgradeInterval = config.minUpgradeInterval ?? DEFAULT_SWITCHING_CONFIG.minUpgradeInterval;
-  const defaultBandwidth = config.defaultBandwidth ?? DEFAULT_SWITCHING_CONFIG.defaultBandwidth;
+  const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
 
   // Initialize to creation time so the interval starts counting immediately.
   // The first time we have enough data to make a meaningful quality decision
@@ -101,7 +110,7 @@ export function switchQuality<S extends QualitySwitchingState>(
   let firstMeaningfulFire = true;
 
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     const { presentation, bandwidthState, selectedVideoTrackId, abrDisabled } = currentState;
 
     if (abrDisabled === true) return;
@@ -114,7 +123,7 @@ export function switchQuality<S extends QualitySwitchingState>(
     const isFirst = firstMeaningfulFire;
     firstMeaningfulFire = false;
 
-    const bandwidth = getBandwidthEstimate(bandwidthState, defaultBandwidth);
+    const bandwidth = getBandwidthEstimate(bandwidthState, initialBandwidth);
     const optimal = selectQuality(videoTracks as any, bandwidth, { safetyMargin });
     if (!optimal || optimal.id === selectedVideoTrackId) return;
 
@@ -130,7 +139,12 @@ export function switchQuality<S extends QualitySwitchingState>(
       lastUpgradeTime = now;
     }
 
-    const patch: Partial<QualitySwitchingState> = { selectedVideoTrackId: optimal.id };
-    update(state, patch);
+    state.selectedVideoTrackId.set(optimal.id);
   });
 }
+
+export const switchQuality = defineBehavior({
+  stateKeys: ['presentation', 'bandwidthState', 'selectedVideoTrackId', 'abrDisabled'],
+  contextKeys: [],
+  setup: switchQualitySetup,
+});

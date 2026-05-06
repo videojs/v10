@@ -1,4 +1,4 @@
-import { type Signal, signal } from '../signals/primitives';
+import { type ReadonlySignal, type Signal, signal } from '../signals/primitives';
 
 /**
  * Cleanup returned by a behavior. Behaviors may return:
@@ -9,65 +9,175 @@ import { type Signal, signal } from '../signals/primitives';
 export type BehaviorCleanup = void | (() => void | Promise<void>) | { destroy(): void | Promise<void> };
 
 /**
- * The deps object passed to each behavior by the engine.
+ * A signal map keyed by the fields of `S`. Each field is a writable signal.
  *
- * - `state` — shared reactive state signal
- * - `owners` — shared reactive owners signal (platform objects)
- * - `config` — static configuration, passed once at engine creation
+ * Optional fields on `S` map to required signal slots whose value type
+ * includes `undefined`, ensuring every key has a signal even when the
+ * underlying value is absent.
+ *
+ * Used in two roles:
+ * - Engine-side **construction**: `Composition<S, C>` exposes its public
+ *   surface as `StateSignals<S>` (everything writable) so external code
+ *   can read or write any slot.
+ * - Behavior **input convenience**: a behavior that writes to every slot
+ *   can type its setup state param as `StateSignals<{ ... }>` rather than
+ *   spelling out per-slot `Signal<T>` types.
+ *
+ * Behaviors that mix read-only and writable slots type the setup param
+ * directly as a slot map (`{ x: Signal<T>; y: ReadonlySignal<U> }`)
+ * instead of going through `StateSignals<>`.
  */
-export interface BehaviorDeps<S extends object, O extends object, C extends object> {
-  state: Signal<S>;
-  owners: Signal<O>;
-  config: C;
+export type StateSignals<S extends object> = { [K in keyof S]-?: Signal<S[K]> };
+
+/**
+ * A signal map keyed by the fields of `C`. Each field is a writable signal
+ * for a platform object or actor reference. Same dual role as
+ * `StateSignals<S>` — see its docblock.
+ */
+export type ContextSignals<C extends object> = { [K in keyof C]-?: Signal<C[K]> };
+
+/**
+ * Slot-map shape — a record where each value is at least a `ReadonlySignal`.
+ * `Signal<T>` is structurally a subtype of `ReadonlySignal<T>` (it adds
+ * `.set()`), so a writable slot satisfies this bound too.
+ *
+ * This is the bound used for behavior `state` / `context` slot maps. It
+ * lets a single behavior declare a *heterogeneous* slot map where some
+ * slots are `Signal<T>` (writable) and others are `ReadonlySignal<T>`
+ * (read-only) — making read/write intent explicit at the call site and
+ * giving body-level enforcement (TS rejects `.set()` on a read-only slot).
+ */
+export type AnySlotMap = Record<PropertyKey, ReadonlySignal<unknown>>;
+
+/**
+ * The deps object passed to each behavior by the composition.
+ *
+ * - `state` — slot map for state fields (reactive data). Per-slot read/
+ *   write intent expressed via `Signal<T>` vs `ReadonlySignal<T>`.
+ * - `context` — slot map for platform objects and actor references.
+ * - `config` — static configuration, passed once at composition creation.
+ */
+export interface BehaviorDeps<StateMap extends AnySlotMap, ContextMap extends AnySlotMap, Cfg extends object> {
+  state: StateMap;
+  context: ContextMap;
+  config: Cfg;
 }
 
 /**
- * A behavior is a function that receives deps (state, owners, config)
- * and returns an optional cleanup handle.
+ * A behavior announces the state and context keys it needs alongside a
+ * `setup` function that receives deps (state, context, config) and
+ * returns an optional cleanup handle.
  *
- * Each behavior declares its own state/owners/config shape via its
- * parameter type. The engine's types are determined by the composition.
+ * The `stateKeys` / `contextKeys` declarations are the runtime expression
+ * of the behavior's contract — the caller (e.g. `createComposition`) uses
+ * them to know which signals to provide. The setup parameter type
+ * declares the *slot map* (per-slot `Signal<T>` vs `ReadonlySignal<T>`);
+ * together they form a complete contract.
+ *
+ * Manual `Behavior<>` literals (e.g. engine wrappers that forward keys
+ * from a wrapped behavior, or pass-through behaviors like `shareSignals`)
+ * opt out of exhaustiveness — the type alias is permissive (subset).
+ * Source behaviors should use `defineBehavior` to get exhaustiveness
+ * enforcement at the call site.
  */
-export type Behavior<S extends object, O extends object, C extends object> = (
-  deps: BehaviorDeps<S, O, C>
-) => BehaviorCleanup;
+export interface Behavior<
+  StateMap extends AnySlotMap = Empty,
+  ContextMap extends AnySlotMap = Empty,
+  Cfg extends object = Empty,
+> {
+  /** State keys this behavior reads/writes. Subset of `keyof StateMap`. */
+  stateKeys: readonly (keyof StateMap)[];
+  /** Context keys this behavior reads/writes. Subset of `keyof ContextMap`. */
+  contextKeys: readonly (keyof ContextMap)[];
+  setup: (deps: BehaviorDeps<StateMap, ContextMap, Cfg>) => BehaviorCleanup;
+}
 
 // =============================================================================
 // Behavior type inference
 // =============================================================================
 
-/** A behavior function with unconstrained deps — used as a generic bound. */
-// biome-ignore lint/suspicious/noExplicitAny: required for generic behavior inference
-type AnyBehavior = (deps: any) => BehaviorCleanup;
+/** A behavior with an unconstrained setup — used as a generic bound. */
+type AnyBehavior = {
+  stateKeys: readonly PropertyKey[];
+  contextKeys: readonly PropertyKey[];
+  setup: (deps: any) => BehaviorCleanup;
+};
 
-/** Extract the first parameter (deps) type from a behavior function. */
-// biome-ignore lint/suspicious/noExplicitAny: required for conditional type inference
-type DepsOf<F> = F extends (deps: infer D, ...args: any[]) => any ? D : never;
+/** Extract the deps type from a behavior's setup function. */
+type DepsOf<B> = B extends { setup: (deps: infer D, ...args: any[]) => any } ? D : never;
 
-/** Infer the state type a behavior requires from its deps parameter. */
-export type InferBehaviorState<F> = DepsOf<F> extends { state: Signal<infer S extends object> } ? S : object;
+/**
+ * Empty-object fallback used when a behavior omits state, context, or config.
+ *
+ * Using `{}` rather than `object` is deliberate — `object & {x: T}` collapses
+ * to `{x: never}` under TS's union-to-intersection conversion in some inference
+ * contexts (likely a TS quirk around the `object` upper bound), whereas
+ * `{} & {x: T}` simplifies cleanly to `{x: T}`.
+ */
+// biome-ignore lint/complexity/noBannedTypes: see comment above
+type Empty = {};
 
-/** Infer the owners type a behavior requires from its deps parameter. */
-export type InferBehaviorOwners<F> = DepsOf<F> extends { owners: Signal<infer O extends object> } ? O : object;
+/**
+ * Unwrap a signal map back to its state/context shape.
+ *
+ * Inferring through `{ get(): infer V }` rather than `Signal<infer V>`
+ * sidesteps `Signal`'s nominal/invariance behaviour — the conditional
+ * matches structurally on the read side, and `V` is inferred covariantly.
+ */
+type UnwrapSignals<M> = M extends object ? { [K in keyof M]: M[K] extends { get(): infer V } ? V : never } : Empty;
 
-/** Infer the config type a behavior requires from its deps parameter. */
-export type InferBehaviorConfig<F> = DepsOf<F> extends { config: infer C extends object } ? C : object;
+/** Infer the state shape a behavior requires from its deps parameter. */
+export type InferBehaviorState<F> = DepsOf<F> extends { state: infer M } ? UnwrapSignals<M> : Empty;
 
-/** Convert a union to an intersection: `A | B` → `A & B`. */
-// biome-ignore lint/suspicious/noExplicitAny: required for distributive conditional type
-type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
+/** Infer the context shape a behavior requires from its deps parameter. */
+export type InferBehaviorContext<F> = DepsOf<F> extends { context: infer M } ? UnwrapSignals<M> : Empty;
 
-/** Resolve the combined state type from an array of behaviors (intersection of all requirements). */
+/** Infer the config shape a behavior requires from its deps parameter. */
+export type InferBehaviorConfig<F> = DepsOf<F> extends { config: infer C extends object } ? C : Empty;
+
+/**
+ * Recursively intersect a per-behavior projection across the tuple.
+ *
+ * Iterating over the tuple directly avoids `UnionToIntersection`'s
+ * function-contravariance trick, which produces unstable intersections
+ * (collapsing concrete fields to `never` or unrelated types) when one of the
+ * union members is the empty `{}` fallback.
+ */
+type IntersectBehaviors<Behaviors extends readonly AnyBehavior[], Project extends object> = Behaviors extends readonly [
+  infer First extends AnyBehavior,
+  ...infer Rest extends readonly AnyBehavior[],
+]
+  ? Apply<Project, First> & IntersectBehaviors<Rest, Project>
+  : Empty;
+
+/**
+ * Apply a projection (one of the marker types below) to a single behavior.
+ * Encoded as a discriminated dispatch so the recursion above can stay generic
+ * and we don't have to write three near-identical recursive types.
+ */
+type Apply<Project extends object, F> = Project extends { kind: 'state' }
+  ? InferBehaviorState<F>
+  : Project extends { kind: 'context' }
+    ? InferBehaviorContext<F>
+    : Project extends { kind: 'config' }
+      ? InferBehaviorConfig<F>
+      : never;
+
+type StateProjection = { kind: 'state' };
+type ContextProjection = { kind: 'context' };
+type ConfigProjection = { kind: 'config' };
+
+/** Resolve the combined state shape from an array of behaviors (intersection of all requirements). */
 export type ResolveBehaviorState<Behaviors extends readonly AnyBehavior[]> =
-  UnionToIntersection<InferBehaviorState<Behaviors[number]>> extends infer R extends object ? R : object;
+  IntersectBehaviors<Behaviors, StateProjection> extends infer R extends object ? R : Empty;
 
-/** Resolve the combined owners type from an array of behaviors (intersection of all requirements). */
-export type ResolveBehaviorOwners<Behaviors extends readonly AnyBehavior[]> =
-  UnionToIntersection<InferBehaviorOwners<Behaviors[number]>> extends infer R extends object ? R : object;
+/** Resolve the combined context shape from an array of behaviors (intersection of all requirements). */
+export type ResolveBehaviorContext<Behaviors extends readonly AnyBehavior[]> =
+  IntersectBehaviors<Behaviors, ContextProjection> extends infer R extends object ? R : Empty;
 
-/** Resolve the combined config type from an array of behaviors (intersection of all requirements). */
+/** Resolve the combined config shape from an array of behaviors (intersection of all requirements). */
 export type ResolveBehaviorConfig<Behaviors extends readonly AnyBehavior[]> =
-  UnionToIntersection<InferBehaviorConfig<Behaviors[number]>> extends infer R extends object ? R : object;
+  IntersectBehaviors<Behaviors, ConfigProjection> extends infer R extends object ? R : Empty;
 
 /**
  * True if any property in `T` collapsed to `undefined` or `never` — indicating
@@ -83,58 +193,6 @@ type HasConflict<T extends object> = true extends {
   : false;
 
 // =============================================================================
-// Owners compatibility (subtype-based)
-//
-// Unlike state/config (where intersection catches primitive conflicts),
-// owners hold concrete platform objects where class hierarchy matters.
-// Two behaviors sharing an owner key are compatible only if their types
-// are in a subtype relationship (one extends the other).
-// =============================================================================
-
-/** Strip `undefined` from a type so optionality doesn't affect subtype checks. */
-type NonUndefined<T> = T extends undefined ? never : T;
-
-/**
- * Check that two owners types are compatible: for each overlapping key,
- * one type must extend the other (ignoring optionality).
- *
- * - `{ el?: HTMLElement }` + `{ el?: HTMLVideoElement }` → valid (HTMLVideoElement extends HTMLElement)
- * - `{ el?: HTMLCanvasElement }` + `{ el?: HTMLVideoElement }` → invalid (neither extends the other)
- * - `{ el?: HTMLElement }` + `{ buffer?: SourceBuffer }` → valid (no overlapping keys)
- */
-type OwnersCompatible<A extends object, B extends object> = [Extract<keyof A, keyof B>] extends [never]
-  ? true
-  : false extends {
-        [K in Extract<keyof A, keyof B>]: [NonUndefined<A[K]>] extends [NonUndefined<B[K]>]
-          ? true
-          : [NonUndefined<B[K]>] extends [NonUndefined<A[K]>]
-            ? true
-            : false;
-      }[Extract<keyof A, keyof B>]
-    ? false
-    : true;
-
-/** Check one behavior's owners against all remaining behaviors. */
-type CheckOwnersAgainstRest<Owners extends object, Rest extends readonly AnyBehavior[]> = Rest extends readonly [
-  infer Next,
-  ...infer Remaining extends readonly AnyBehavior[],
-]
-  ? OwnersCompatible<Owners, InferBehaviorOwners<Next>> extends true
-    ? CheckOwnersAgainstRest<Owners, Remaining>
-    : false
-  : true;
-
-/** Check all pairs of behaviors' owners for subtype compatibility. */
-type AllOwnersCompatible<Behaviors extends readonly AnyBehavior[]> = Behaviors extends readonly [
-  infer First,
-  ...infer Rest extends readonly AnyBehavior[],
-]
-  ? CheckOwnersAgainstRest<InferBehaviorOwners<First>, Rest> extends true
-    ? AllOwnersCompatible<Rest>
-    : false
-  : true;
-
-// =============================================================================
 // Composition validation
 // =============================================================================
 
@@ -142,105 +200,145 @@ type AllOwnersCompatible<Behaviors extends readonly AnyBehavior[]> = Behaviors e
  * Validate that a behavior composition has no type conflicts.
  * Returns the behaviors tuple if valid, or an error message type if conflicts are detected.
  *
- * - State/config: checked via intersection — conflicting primitives produce `never`/`undefined`
- * - Owners: checked via subtype — shared keys must have types in an extends relationship
+ * State, context, and config are all checked the same way — by intersecting
+ * each behavior's requirement and looking for collapsed fields. The
+ * intersection-based check applies the same rule to context as to state, so
+ * two behaviors that disagree on a context field's type (e.g. `Surface` vs
+ * `VideoSurface`) surface a conflict at compose time. The prior subtype-based
+ * approach for owners is gone — the unified rule is simpler and catches the
+ * cases where two behaviors silently agreed on a wider supertype.
  */
 type ValidateComposition<Behaviors extends readonly AnyBehavior[]> =
   HasConflict<ResolveBehaviorState<Behaviors>> extends true
     ? 'Error: behaviors have conflicting state types'
-    : AllOwnersCompatible<Behaviors> extends false
-      ? 'Error: behaviors have incompatible owners types'
+    : HasConflict<ResolveBehaviorContext<Behaviors>> extends true
+      ? 'Error: behaviors have conflicting context types'
       : HasConflict<ResolveBehaviorConfig<Behaviors>> extends true
         ? 'Error: behaviors have conflicting config types'
         : [...Behaviors];
 
 // =============================================================================
-// Engine
+// Composition
 // =============================================================================
 
 /**
- * A composition of behaviors with shared reactive state, owners, and config.
- *
- * Generic over the state and owners shapes, which are determined by the
- * specific behaviors passed to `createComposition`.
+ * A composition of behaviors with shared state and context signal maps.
  */
-export interface Composition<S extends object, O extends object> {
-  state: Signal<S>;
-  owners: Signal<O>;
+export interface Composition<S extends object, C extends object> {
+  state: StateSignals<S>;
+  context: ContextSignals<C>;
   destroy(): Promise<void>;
 }
 
 /**
- * Options for `createComposition`. All fields are optional.
+ * Options for `createComposition`.
+ *
+ * Composition derives the state and context signal maps from each
+ * behavior's declared `stateKeys` / `contextKeys`; `initialState` and
+ * `initialContext` seed those signals at creation time. Any unseeded
+ * signal starts as `undefined`.
  */
-export interface CompositionOptions<S extends object, O extends object, C extends object> {
+export interface CompositionOptions<S extends object, C extends object, Cfg extends object> {
   /** Static configuration passed to every behavior. */
-  config?: C;
-  /** Initial value for the state signal. */
-  initialState?: S;
-  /** Initial value for the owners signal. */
-  initialOwners?: O;
+  config?: Cfg;
+  /** Initial values for state signals — any subset of `keyof S`. */
+  initialState?: Partial<S>;
+  /** Initial values for context signals — any subset of `keyof C`. */
+  initialContext?: Partial<C>;
 }
 
 /**
- * Create a composition by composing behaviors.
+ * Create a composition from a set of behaviors.
  *
- * `createComposition` is generic — it knows nothing about HLS, DASH,
- * or any specific protocol. It creates shared reactive state, wires
- * each behavior to that state, and returns the composition interface.
+ * Composition unions the behaviors' declared `stateKeys` / `contextKeys`
+ * to know which signals to create. Each signal is seeded from
+ * `initialState` / `initialContext` when supplied, defaulting to
+ * `undefined`. Behaviors are responsible for writing their own slots
+ * once their preconditions are met.
  *
- * Two ways to call:
- *
- * 1. **Inferred** — pass behaviors and let TypeScript intersect their
- *    deps to compute the engine's state, owners, and config shapes.
- *    Best when behaviors declare narrow per-feature shapes.
- * 2. **Explicit** — supply `<S, O, C>` type arguments and the engine
- *    uses those shapes directly. Best for engines that aggregate many
- *    wrapper-style behaviors all sharing the same `Behavior<S, O, C>`
- *    type — TypeScript's distributive intersection inference can drop
- *    types in that case, so explicit arguments are more reliable.
- *
- * @param behaviors - Array of behavior functions
- * @param options - Optional config, initial state, and initial owners
+ * Cross-behavior type conflicts (e.g. two behaviors disagreeing on a
+ * field's type) surface as a compose-time type error via
+ * `ValidateComposition`.
  *
  * @example
  * ```ts
- * // 1. Inferred
- * const engine = createComposition([resolvePresentation, selectVideoTrack]);
- *
- * // 2. Explicit (engine declares its full state/owners/config up front)
- * const engine = createComposition<MyState, MyOwners, MyConfig>(
- *   [behavior1, behavior2, ...],
- *   { config, initialState, initialOwners }
- * );
+ * const composition = createComposition([resolvePresentation, selectVideoTrack], {
+ *   config: { initialBandwidth: 2_000_000 },
+ *   initialState: { bandwidthState: { fastEstimate: 0, ... } },
+ * });
  * ```
  */
+/**
+ * Create a typed signal map for a given set of keys, seeded from an
+ * optional partial initial value.
+ *
+ * Pipeline: `Set` dedupes the iterable (insertion order preserved, so
+ * first occurrence wins) → `Object.fromEntries` materializes one
+ * `signal()` per unique key, seeded from `initial[key]` or `undefined`.
+ *
+ * Per-key value types live in TypeScript only — at runtime every signal
+ * is `Signal<unknown>`. The boundary cast at the return narrows the wide
+ * `Record<PropertyKey, Signal<unknown>>` shape to the caller's expected
+ * per-key types from `S`.
+ *
+ * Used by `createComposition` to derive engine state/context maps from
+ * the union of behaviors' declared `stateKeys` / `contextKeys`.
+ *
+ * @example
+ * ```ts
+ * interface State { count?: number; label?: string }
+ * const state = buildSignalMap<State>(['count', 'label'], { count: 5 });
+ * state.count.get(); // 5
+ * state.label.get(); // undefined
+ * ```
+ */
+export function buildSignalMap<S extends object>(
+  keys: Iterable<PropertyKey>,
+  initial: Partial<S>
+): { [K in keyof S]-?: Signal<S[K]> } {
+  const init = initial as Record<PropertyKey, unknown>;
+  const uniqueKeys = new Set(keys);
+  return Object.fromEntries([...uniqueKeys].map((key) => [key, signal(init[key])])) as {
+    [K in keyof S]-?: Signal<S[K]>;
+  };
+}
+
 export function createComposition<const Behaviors extends readonly AnyBehavior[]>(
   behaviors: ValidateComposition<Behaviors>,
   options?: CompositionOptions<
     ResolveBehaviorState<Behaviors>,
-    ResolveBehaviorOwners<Behaviors>,
+    ResolveBehaviorContext<Behaviors>,
     ResolveBehaviorConfig<Behaviors>
   >
-): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorOwners<Behaviors>>;
-export function createComposition<S extends object, O extends object, C extends object>(
-  behaviors: readonly Behavior<S, O, C>[],
-  options?: CompositionOptions<S, O, C>
-): Composition<S, O>;
-export function createComposition(
-  behaviors: readonly AnyBehavior[],
-  options?: CompositionOptions<object, object, object>
-): Composition<object, object> {
-  const state = signal(options?.initialState ?? {});
-  const owners = signal(options?.initialOwners ?? {});
-  const config = options?.config ?? {};
+): Composition<ResolveBehaviorState<Behaviors>, ResolveBehaviorContext<Behaviors>> {
+  type S = ResolveBehaviorState<Behaviors>;
+  type C = ResolveBehaviorContext<Behaviors>;
+  type Cfg = ResolveBehaviorConfig<Behaviors>;
 
-  const deps: BehaviorDeps<object, object, object> = { state, owners, config };
-  const cleanups = behaviors.map((f) => f(deps));
+  // ValidateComposition<Behaviors> is `[...Behaviors]` on success, an error
+  // string on conflict. The function body only runs when the call typechecks
+  // (i.e. the success case), so iterating as the behavior tuple is sound.
+  const validBehaviors = behaviors as unknown as readonly AnyBehavior[];
+
+  const state = buildSignalMap<S>(
+    validBehaviors.flatMap((b) => b.stateKeys),
+    options?.initialState ?? {}
+  );
+  const context = buildSignalMap<C>(
+    validBehaviors.flatMap((b) => b.contextKeys),
+    options?.initialContext ?? {}
+  );
+
+  const deps: BehaviorDeps<StateSignals<S>, ContextSignals<C>, Cfg> = {
+    state,
+    context,
+    config: (options?.config ?? {}) as Cfg,
+  };
+  const cleanups = validBehaviors.map((behavior) => behavior.setup(deps));
 
   return {
     state,
-    owners,
+    context,
     async destroy() {
       const results: (void | Promise<void>)[] = [];
       for (const cleanup of cleanups) {
@@ -252,9 +350,106 @@ export function createComposition(
         }
       }
       await Promise.all(results);
-      // Clear any keys behaviors registered — or callers seeded via
-      // initialOwners — so the composition ends with an empty owners map.
-      owners.set({});
+      // Reset every signal to undefined as a final cleanup, matching the
+      // prior post-destroy `owners.set({})` semantics. A later stage will
+      // move per-signal cleanup into the behaviors that own the writes.
+      for (const sig of Object.values(state) as Signal<unknown>[]) sig.set(undefined);
+      for (const sig of Object.values(context) as Signal<unknown>[]) sig.set(undefined);
     },
+  };
+}
+
+// =============================================================================
+// defineBehavior — typed factory with key/param consistency enforcement
+// =============================================================================
+
+/**
+ * Compose-time exhaustiveness check.
+ *
+ * Adds a phantom error tag to the parameter shape when `Keys` does not
+ * cover every key in `Slot`. The user's value won't satisfy the phantom
+ * field requirement, so TS surfaces the failure at the call site with a
+ * descriptive message. When exhaustive, the tag is `Empty` and adds no
+ * constraint.
+ */
+type ExhaustiveKeys<Keys extends readonly PropertyKey[], Slot extends object, Name extends string> = [
+  keyof Slot,
+] extends [Keys[number]]
+  ? Empty
+  : { [K in `Error: ${Name}Keys must list every key in the typed slice`]: Exclude<keyof Slot, Keys[number]> };
+
+/**
+ * Typed factory for behaviors that enforces single-behavior key/param
+ * consistency: declared `stateKeys` must equal `keyof S` (where `S` is
+ * inferred from the setup's `state` parameter type), and same for
+ * `contextKeys` / `C`.
+ *
+ * The `const` modifier on `SK` / `CK` captures literal tuples so e.g.
+ * `stateKeys: ['preload']` infers as `readonly ['preload']`, no `as
+ * const` needed at the call site.
+ *
+ * Cross-behavior consistency at `createComposition` is unchanged — the
+ * existing `IntersectBehaviors` machinery still runs over each
+ * behavior's setup param type.
+ *
+ * @example
+ * ```ts
+ * export const syncPreloadAttribute = defineBehavior({
+ *   stateKeys: ['preload'],
+ *   contextKeys: ['mediaElement'],
+ *   setup: ({ state, context }: {
+ *     state: StateSignals<{ preload?: 'auto' | 'metadata' | 'none' }>;
+ *     context: ContextSignals<{ mediaElement?: HTMLMediaElement | undefined }>;
+ *   }) => { ... },
+ * });
+ * ```
+ */
+/**
+ * Deps shape for a behavior whose deps slot is empty (no keys). When a
+ * slot is empty, the corresponding deps field is optional — callers
+ * (typically tests) can omit it, and it defaults to `{}` at runtime via
+ * `createComposition`.
+ *
+ * When a slot has at least one key, the behavior reads `state.foo` /
+ * `context.bar` / `config.baz` and we need the field to be required so
+ * the access is type-safe.
+ */
+type RequireIfNonEmpty<Key extends string, T extends object> = keyof T extends never
+  ? { [K in Key]?: T }
+  : { [K in Key]: T };
+
+type DepsForCfg<StateMap extends AnySlotMap, ContextMap extends AnySlotMap, Cfg extends object> = RequireIfNonEmpty<
+  'state',
+  StateMap
+> &
+  RequireIfNonEmpty<'context', ContextMap> &
+  RequireIfNonEmpty<'config', Cfg>;
+
+export function defineBehavior<
+  StateMap extends AnySlotMap = Empty,
+  ContextMap extends AnySlotMap = Empty,
+  Cfg extends object = Empty,
+  const SK extends readonly (keyof StateMap)[] = readonly [],
+  const CK extends readonly (keyof ContextMap)[] = readonly [],
+  R extends BehaviorCleanup = BehaviorCleanup,
+>(
+  behavior: {
+    stateKeys: SK;
+    contextKeys: CK;
+    setup: (deps: { state: StateMap; context: ContextMap; config: Cfg }) => R;
+  } & ExhaustiveKeys<SK, StateMap, 'state'> &
+    ExhaustiveKeys<CK, ContextMap, 'context'>
+): {
+  stateKeys: SK;
+  contextKeys: CK;
+  setup: (deps: DepsForCfg<StateMap, ContextMap, Cfg>) => R;
+} {
+  // The runtime shape is identical; the cast bridges TS's view of the
+  // parameter (config required) to the return view (config optional when
+  // Cfg has no keys).
+  return behavior as unknown as {
+    stateKeys: SK;
+    contextKeys: CK;
+    setup: (deps: DepsForCfg<StateMap, ContextMap, Cfg>) => R;
   };
 }

@@ -1,25 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
-import { resolvePresentation, shouldResolve } from '../resolve-presentation';
+import { type PresentationState, resolvePresentation, shouldResolve } from '../resolve-presentation';
+
+function makeState(initial: PresentationState = {}): StateSignals<PresentationState> {
+  return {
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    preload: signal<'auto' | 'metadata' | 'none' | undefined>(initial.preload),
+    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+  };
+}
 
 describe('resolvePresentation', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
   it('resolves unresolved presentation', async () => {
-    // Arrange
-    interface State {
-      presentation?: MaybeResolvedPresentation;
-      preload?: 'auto' | 'metadata' | 'none' | undefined;
-    }
+    const state = makeState({ preload: 'auto' });
 
-    const state = signal<State>({
-      presentation: undefined,
-      preload: 'auto',
-    });
-
-    // Mock fetch
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
@@ -28,49 +28,36 @@ variant1.m3u8
 variant2.m3u8`)
     );
 
-    // Act
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
-    // Trigger resolution by setting unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
+    state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
 
-    // Wait for resolution
     await vi.waitFor(() => {
-      const current = state.get();
-      expect(current.presentation).toBeDefined();
-      expect(current.presentation).toHaveProperty('id');
-      expect(current.presentation).toHaveProperty('selectionSets');
+      const pres = state.presentation.get();
+      expect(pres).toBeDefined();
+      expect(pres).toHaveProperty('id');
+      expect(pres).toHaveProperty('selectionSets');
     });
 
-    // Assert
-    const resolved = state.get().presentation as Presentation;
+    const resolved = state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/playlist.m3u8');
     expect(resolved.selectionSets).toBeDefined();
     expect(resolved.selectionSets.length).toBeGreaterThan(0);
 
-    // Check that we have video tracks
     const videoSet = resolved.selectionSets.find((s) => s.type === 'video');
     expect(videoSet).toBeDefined();
     expect(videoSet!.switchingSets).toBeDefined();
     expect(videoSet!.switchingSets[0]?.tracks.length).toBeGreaterThan(0);
 
-    // Cleanup
     reactor.destroy();
   });
 
   it('does not trigger resolution when other state fields change', async () => {
-    // Arrange
-    interface State {
-      presentation?: MaybeResolvedPresentation;
-      preload?: 'auto' | 'metadata' | 'none' | undefined;
-      volume: number;
-    }
-
-    const state = signal<State>({
-      presentation: undefined,
-      preload: 'auto',
-      volume: 1.0,
-    });
+    // The new discrete-signals shape eliminates the "any unrelated field
+    // change re-runs the effect" footgun by construction — each derived
+    // computed only tracks the signals it reads. This test is preserved as
+    // a behavioural assertion: only `presentation` triggers fetch.
+    const state = makeState({ preload: 'auto' });
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
@@ -78,86 +65,60 @@ variant2.m3u8`)
 variant1.m3u8`)
     );
 
-    // Act
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
-    // Change volume before resolution
-    state.set({ ...state.get(), volume: 0.5 });
-
-    // Wait a bit to ensure no fetch triggered
+    // No URL yet — flipping preload shouldn't trigger fetch.
+    state.preload.set('metadata');
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    // Now add unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
+    state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
 
-    // Wait for resolution
     await vi.waitFor(() => {
-      expect(state.get().presentation).toHaveProperty('id');
+      expect(state.presentation.get()).toHaveProperty('id');
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     fetchSpy.mockClear();
 
-    // Change volume after resolution
-    state.set({ ...state.get(), volume: 0.8 });
-
-    // Wait a bit to ensure no additional fetch
+    // Flipping preload after resolution shouldn't re-fetch.
+    state.preload.set('auto');
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    // Cleanup
     reactor.destroy();
   });
 
   it('resolves presentation initialized as unresolved', async () => {
-    // Arrange
-    interface State {
-      presentation?: MaybeResolvedPresentation;
-      preload?: 'auto' | 'metadata' | 'none' | undefined;
-    }
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
     );
 
-    // State starts with unresolved presentation
-    const state = signal<State>({
+    const state = makeState({
       presentation: { url: 'http://example.com/initial.m3u8' },
       preload: 'auto',
     });
 
-    // Act
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
-    // Wait for resolution (should happen automatically)
     await vi.waitFor(() => {
-      const current = state.get();
-      expect(current.presentation).toHaveProperty('id');
-      expect(current.presentation).toHaveProperty('selectionSets');
+      const pres = state.presentation.get();
+      expect(pres).toHaveProperty('id');
+      expect(pres).toHaveProperty('selectionSets');
     });
 
-    // Assert
-    const resolved = state.get().presentation as Presentation;
+    const resolved = state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/initial.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
-    // Cleanup
     reactor.destroy();
   });
 
   it('does not re-resolve presentation initialized as resolved', async () => {
-    // Arrange
-    interface State {
-      presentation?: MaybeResolvedPresentation;
-      preload?: 'auto' | 'metadata' | 'none' | undefined;
-    }
-
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    // Create a resolved presentation
     const resolvedPresentation: Presentation = {
       id: 'pres-1',
       url: 'http://example.com/resolved.m3u8',
@@ -186,40 +147,25 @@ variant1.m3u8`)
       startTime: 0,
     };
 
-    // State starts with resolved presentation
-    const state = signal<State>({
-      presentation: resolvedPresentation,
-      preload: 'auto',
-    });
+    const state = makeState({ presentation: resolvedPresentation, preload: 'auto' });
 
-    // Act
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
-    // Wait a bit to ensure no fetch triggered
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Assert - should not fetch
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(state.get().presentation).toBe(resolvedPresentation);
+    expect(state.presentation.get()).toBe(resolvedPresentation);
 
-    // Cleanup
     reactor.destroy();
   });
 
   it('resolves new unresolved presentation after resolved one', async () => {
-    // Arrange
-    interface State {
-      presentation?: MaybeResolvedPresentation;
-      preload?: 'auto' | 'metadata' | 'none' | undefined;
-    }
-
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=2000000
 variant2.m3u8`)
     );
 
-    // Create initial resolved presentation
     const resolvedPresentation: Presentation = {
       id: 'pres-1',
       url: 'http://example.com/first.m3u8',
@@ -227,131 +173,104 @@ variant2.m3u8`)
       startTime: 0,
     };
 
-    const state = signal<State>({
-      presentation: resolvedPresentation,
-      preload: 'auto',
-    });
+    const state = makeState({ presentation: resolvedPresentation, preload: 'auto' });
 
-    // Act
-    const reactor = resolvePresentation({ state });
+    const reactor = resolvePresentation.setup({ state });
 
-    // Replace with unresolved presentation
-    state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
+    state.presentation.set({ url: 'http://example.com/second.m3u8' });
 
-    // Wait for resolution
     await vi.waitFor(() => {
-      const current = state.get();
-      expect(current.presentation).toHaveProperty('id');
-      expect((current.presentation as Presentation).url).toBe('http://example.com/second.m3u8');
+      const pres = state.presentation.get();
+      expect(pres).toHaveProperty('id');
+      expect((pres as Presentation).url).toBe('http://example.com/second.m3u8');
     });
 
-    // Assert - should have fetched and resolved new presentation
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const resolved = state.get().presentation as Presentation;
+    const resolved = state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/second.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
-    // Cleanup
     reactor.destroy();
   });
 
   describe('preload policy', () => {
     it('resolves when preload is "auto"', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
       );
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await vi.waitFor(() => {
-        expect(state.get().presentation).toHaveProperty('id');
+        expect(state.presentation.get()).toHaveProperty('id');
       });
 
       reactor.destroy();
     });
 
     it('resolves when preload is "metadata"', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
       );
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'metadata',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await vi.waitFor(() => {
-        expect(state.get().presentation).toHaveProperty('id');
+        expect(state.presentation.get()).toHaveProperty('id');
       });
 
       reactor.destroy();
     });
 
     it('does not resolve when preload is "none"', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation?.url).toBe('http://example.com/playlist.m3u8');
-      expect(state.get().presentation).not.toHaveProperty('id');
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
+      expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });
 
     it('does not resolve when preload is undefined', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
-        preload: undefined,
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation?.url).toBe('http://example.com/playlist.m3u8');
-      expect(state.get().presentation).not.toHaveProperty('id');
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
+      expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });
@@ -359,34 +278,25 @@ variant1.m3u8`)
 
   describe('playbackInitiated resolution', () => {
     it('resolves when playbackInitiated is set to true with preload "none"', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-        playbackInitiated?: boolean;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
       );
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
-      // Initially shouldn't fetch (preload="none", not yet initiated)
       expect(fetchSpy).not.toHaveBeenCalled();
 
-      // Set playbackInitiated (replaces the old 'play' event dispatch)
-      state.set({ ...state.get(), playbackInitiated: true });
+      state.playbackInitiated.set(true);
 
-      // Wait for resolution
       await vi.waitFor(() => {
-        expect(state.get().presentation).toHaveProperty('id');
+        expect(state.presentation.get()).toHaveProperty('id');
       });
 
       expect(fetchSpy).toHaveBeenCalledOnce();
@@ -395,26 +305,21 @@ variant1.m3u8`)
     });
 
     it('does not resolve when playbackInitiated is false with preload "none"', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-        playbackInitiated?: boolean;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.get().presentation?.url).toBe('http://example.com/playlist.m3u8');
-      expect(state.get().presentation).not.toHaveProperty('id');
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
+      expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });
@@ -422,45 +327,33 @@ variant1.m3u8`)
 
   describe('deduplication', () => {
     it('does not trigger multiple fetches for same presentation', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
       );
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
-      // Rapidly trigger additional state changes while resolution is in progress
-      state.set({ ...state.get(), preload: 'auto' });
-      state.set({ ...state.get(), preload: 'auto' });
+      // Rapid no-op updates — preload doesn't change semantically.
+      state.preload.set('auto');
+      state.preload.set('auto');
 
-      // Wait for resolution
       await vi.waitFor(() => {
-        expect(state.get().presentation).toHaveProperty('id');
+        expect(state.presentation.get()).toHaveProperty('id');
       });
 
-      // Should only fetch once despite multiple state changes
       expect(fetchSpy).toHaveBeenCalledOnce();
 
       reactor.destroy();
     });
 
     it('allows resolving different presentations sequentially', async () => {
-      interface State {
-        presentation?: MaybeResolvedPresentation;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
         async () =>
           new Response(`#EXTM3U
@@ -468,31 +361,27 @@ variant1.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = signal<State>({
+      const state = makeState({
         presentation: { url: 'http://example.com/first.m3u8' },
         preload: 'auto',
       });
 
-      const reactor = resolvePresentation({ state });
+      const reactor = resolvePresentation.setup({ state });
 
-      // Wait for first resolution
       await vi.waitFor(() => {
-        expect(state.get().presentation).toHaveProperty('id');
+        expect(state.presentation.get()).toHaveProperty('id');
       });
 
       expect(fetchSpy).toHaveBeenCalledOnce();
 
-      // Now load a different presentation (overwrites the resolved one with an unresolved one)
-      state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
+      state.presentation.set({ url: 'http://example.com/second.m3u8' });
 
-      // Wait for second resolution — check id to confirm the fetch actually completed
       await vi.waitFor(() => {
-        const pres = state.get().presentation as Presentation;
+        const pres = state.presentation.get() as Presentation;
         expect(pres).toHaveProperty('id');
         expect(pres.url).toBe('http://example.com/second.m3u8');
       });
 
-      // Should have fetched twice (different URLs)
       expect(fetchSpy).toHaveBeenCalledTimes(2);
 
       reactor.destroy();
@@ -502,20 +391,12 @@ variant1.m3u8`)
 
 describe('shouldResolve', () => {
   it('returns true when preload is "auto"', () => {
-    const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'auto',
-    });
-
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' });
     expect(result).toBe(true);
   });
 
   it('returns true when preload is "metadata"', () => {
-    const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'metadata',
-    });
-
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'metadata' });
     expect(result).toBe(true);
   });
 
@@ -525,16 +406,11 @@ describe('shouldResolve', () => {
       preload: 'none',
       playbackInitiated: true,
     });
-
     expect(result).toBe(true);
   });
 
   it('returns false when preload is "none" and playbackInitiated is false', () => {
-    const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'none',
-    });
-
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' });
     expect(result).toBe(false);
   });
 
@@ -543,7 +419,6 @@ describe('shouldResolve', () => {
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: undefined,
     });
-
     expect(result).toBe(false);
   });
 });

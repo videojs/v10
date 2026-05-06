@@ -1,6 +1,7 @@
+import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type Signal, update } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
 import { parseMultivariantPlaylist } from '../../media/hls/parse-multivariant';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
@@ -71,16 +72,20 @@ function deriveState(state: PresentationState): ResolvePresentationState {
  * task and returns an AbortController so the framework aborts it on state exit.
  *
  * @example
- * const reactor = resolvePresentation({ state });
+ * const reactor = resolvePresentation.setup({ state });
  * // later:
  * reactor.destroy();
  */
-export function resolvePresentation<S extends PresentationState>({
+function resolvePresentationSetup({
   state,
 }: {
-  state: Signal<S>;
+  state: {
+    presentation: Signal<PresentationState['presentation']>;
+    preload: ReadonlySignal<PresentationState['preload']>;
+    playbackInitiated: ReadonlySignal<PresentationState['playbackInitiated']>;
+  };
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(state.get()));
+  const derivedStateSignal = computed(() => deriveState(snapshot(state)));
 
   return createMachineReactor<ResolvePresentationState>({
     initial: 'preconditions-unmet',
@@ -92,14 +97,14 @@ export function resolvePresentation<S extends PresentationState>({
         // Entry: start fetch on state entry; return AbortController so the
         // framework aborts the in-flight request on state exit.
         entry: () => {
-          const presentation = state.get().presentation!;
+          const presentation = state.presentation.get()!;
           const ac = new AbortController();
 
           fetchResolvable(presentation, { signal: ac.signal })
             .then((response) => getResponseText(response))
             .then((text) => {
               const parsed = parseMultivariantPlaylist(text, presentation);
-              update(state, { presentation: parsed } as Partial<S>);
+              state.presentation.set(parsed);
             })
             .catch((error) => {
               if (error instanceof Error && error.name === 'AbortError') return;
@@ -113,3 +118,9 @@ export function resolvePresentation<S extends PresentationState>({
     },
   });
 }
+
+export const resolvePresentation = defineBehavior({
+  stateKeys: ['presentation', 'preload', 'playbackInitiated'],
+  contextKeys: [],
+  setup: resolvePresentationSetup,
+});

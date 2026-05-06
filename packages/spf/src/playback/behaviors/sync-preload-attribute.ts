@@ -1,38 +1,52 @@
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal, update } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { MediaElementLike } from '../../media/types';
 import type { PresentationState } from './resolve-presentation';
 
 /**
- * Owners shape for preload attribute sync.
+ * Context shape for preload attribute sync.
  */
-export interface PlatformOwners {
+export interface PlatformContext {
   mediaElement?: MediaElementLike | undefined;
 }
 
 /**
+ * State slice this behavior reads/writes — narrowed from the broader
+ * `PresentationState` to only the keys touched by the body. The
+ * `defineBehavior` exhaustiveness check requires `stateKeys` to list
+ * every key in this typed slice.
+ */
+type State = Pick<PresentationState, 'preload'>;
+
+/**
  * Syncs preload attribute from mediaElement to state.
  *
- * Watches the owners signal for mediaElement changes and copies the
+ * Watches the context signal for mediaElement changes and copies the
  * preload attribute to state when no explicit value has been set.
  * An explicit value (set via SimpleHlsMediaElement.preload) always wins.
  *
  * @example
- * const cleanup = syncPreloadAttribute({ state, owners });
+ * const cleanup = syncPreloadAttribute.setup({ state, context, config: {} });
  */
-export function syncPreloadAttribute<S extends PresentationState, O extends PlatformOwners>({
+function syncPreloadAttributeSetup({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: { preload: Signal<State['preload']> };
+  context: { mediaElement: ReadonlySignal<PlatformContext['mediaElement']> };
 }): () => void {
-  const mediaElement = computed(() => owners.get().mediaElement);
+  const mediaElement = computed(() => context.mediaElement.get());
   return effect(() => {
-    if (state.get().preload !== undefined) return;
+    if (state.preload.get() !== undefined) return;
     const preload = mediaElement.get()?.preload || undefined;
     if (preload === undefined) return;
-    const patch: Partial<PresentationState> = { preload: preload as 'auto' | 'metadata' | 'none' };
-    update(state, patch);
+    state.preload.set(preload as 'auto' | 'metadata' | 'none');
   });
 }
+
+export const syncPreloadAttribute = defineBehavior({
+  stateKeys: ['preload'],
+  contextKeys: ['mediaElement'],
+  setup: syncPreloadAttributeSetup,
+});

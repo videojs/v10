@@ -39,3 +39,21 @@ export function update<T extends object>(signal: Signal<T>, updater: Partial<T> 
   const current = untrack(() => signal.get());
   signal.set(typeof updater === 'function' ? updater(current) : { ...current, ...updater });
 }
+
+/**
+ * Read every signal in a map and return a plain object snapshot. Each read
+ * tracks in the surrounding Computed/Effect — equivalent to calling `.get()`
+ * on a single `Signal<S>` over the merged shape.
+ *
+ * Convenience for behaviors that pass whole state/context snapshots to pure
+ * helpers; prefer per-field reads when only a few fields are needed.
+ */
+export function snapshot<M extends Record<string, ReadonlySignal<unknown>>>(
+  map: M
+): { [K in keyof M]: M[K] extends { get(): infer V } ? V : never } {
+  const out = {} as { [K in keyof M]: M[K] extends { get(): infer V } ? V : never };
+  for (const key in map) {
+    out[key] = map[key]!.get() as never;
+  }
+  return out;
+}

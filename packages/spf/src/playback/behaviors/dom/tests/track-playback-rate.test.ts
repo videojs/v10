@@ -1,12 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import { type PlaybackRateOwners, type PlaybackRateState, trackPlaybackRate } from '../track-playback-rate';
+import { type PlaybackRateContext, type PlaybackRateState, trackPlaybackRate } from '../track-playback-rate';
 
-function setupTrackPlaybackRate(initialState: PlaybackRateState = {}, initialOwners: PlaybackRateOwners = {}) {
-  const state = signal<PlaybackRateState>(initialState);
-  const owners = signal<PlaybackRateOwners>(initialOwners);
-  const cleanup = trackPlaybackRate({ state, owners });
-  return { state, owners, cleanup };
+function makeState(initial: PlaybackRateState = {}): StateSignals<PlaybackRateState> {
+  return { playbackRate: signal<number | undefined>(initial.playbackRate) };
+}
+
+function makeContext(initial: PlaybackRateContext = {}): ContextSignals<PlaybackRateContext> {
+  return { mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement) };
+}
+
+function setupTrackPlaybackRate(initialState: PlaybackRateState = {}, initialContext: PlaybackRateContext = {}) {
+  const state = makeState(initialState);
+  const context = makeContext(initialContext);
+  const cleanup = trackPlaybackRate.setup({ state, context });
+  return { state, context, cleanup };
 }
 
 describe('trackPlaybackRate', () => {
@@ -16,7 +25,7 @@ describe('trackPlaybackRate', () => {
     const { state, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
 
     await vi.waitFor(() => {
-      expect(state.get().playbackRate).toBe(1);
+      expect(state.playbackRate.get()).toBe(1);
     });
 
     cleanup();
@@ -31,7 +40,7 @@ describe('trackPlaybackRate', () => {
     mediaElement.dispatchEvent(new Event('ratechange'));
 
     await vi.waitFor(() => {
-      expect(state.get().playbackRate).toBe(2);
+      expect(state.playbackRate.get()).toBe(2);
     });
 
     cleanup();
@@ -44,11 +53,11 @@ describe('trackPlaybackRate', () => {
 
     mediaElement.playbackRate = 0.5;
     mediaElement.dispatchEvent(new Event('ratechange'));
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(0.5));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(0.5));
 
     mediaElement.playbackRate = 1.5;
     mediaElement.dispatchEvent(new Event('ratechange'));
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(1.5));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1.5));
 
     cleanup();
   });
@@ -58,44 +67,44 @@ describe('trackPlaybackRate', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.get().playbackRate).toBeUndefined();
+    expect(state.playbackRate.get()).toBeUndefined();
 
     cleanup();
   });
 
-  it('continues tracking correctly after owners updates with unchanged mediaElement', async () => {
+  it('continues tracking correctly after context updates with unchanged mediaElement', async () => {
     const mediaElement = document.createElement('video');
     const ratechangeHandler = vi.fn();
     mediaElement.addEventListener('ratechange', ratechangeHandler);
 
-    const { state, owners, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
+    const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
 
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(1));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
-    // Spread owners without changing mediaElement — effect may re-setup but no duplicate handling
-    owners.set({ ...owners.get() });
+    // Re-set mediaElement to the same instance — effect may re-run but no duplicate handling
+    context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 30));
 
     // ratechange should still update state exactly once
     mediaElement.playbackRate = 2;
     mediaElement.dispatchEvent(new Event('ratechange'));
 
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(2));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(2));
 
     cleanup();
   });
 
   it('starts tracking when mediaElement is added later', async () => {
-    const { state, owners, cleanup } = setupTrackPlaybackRate();
+    const { state, context, cleanup } = setupTrackPlaybackRate();
 
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(state.get().playbackRate).toBeUndefined();
+    expect(state.playbackRate.get()).toBeUndefined();
 
     const mediaElement = document.createElement('video');
-    owners.set({ ...owners.get(), mediaElement });
+    context.mediaElement.set(mediaElement);
 
     await vi.waitFor(() => {
-      expect(state.get().playbackRate).toBe(1);
+      expect(state.playbackRate.get()).toBe(1);
     });
 
     cleanup();
@@ -105,19 +114,19 @@ describe('trackPlaybackRate', () => {
     const element1 = document.createElement('video');
     const element2 = document.createElement('video');
 
-    const { state, owners, cleanup } = setupTrackPlaybackRate({}, { mediaElement: element1 });
+    const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement: element1 });
 
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(1));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
-    owners.set({ ...owners.get(), mediaElement: element2 });
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(1));
+    context.mediaElement.set(element2);
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
     // Old element ratechange should no longer affect state
     element1.playbackRate = 3;
     element1.dispatchEvent(new Event('ratechange'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.get().playbackRate).toBe(1);
+    expect(state.playbackRate.get()).toBe(1);
 
     cleanup();
   });
@@ -127,7 +136,7 @@ describe('trackPlaybackRate', () => {
 
     const { state, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
 
-    await vi.waitFor(() => expect(state.get().playbackRate).toBe(1));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
     cleanup();
 
@@ -135,6 +144,6 @@ describe('trackPlaybackRate', () => {
     mediaElement.dispatchEvent(new Event('ratechange'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.get().playbackRate).toBe(1);
+    expect(state.playbackRate.get()).toBe(1);
   });
 });

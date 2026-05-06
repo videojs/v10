@@ -1,7 +1,8 @@
 import { listen } from '@videojs/utils/dom';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type Signal, update } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 
 /**
@@ -15,9 +16,9 @@ export interface PlaybackInitiatedState {
 }
 
 /**
- * Owners shape for playback initiation tracking.
+ * Context shape for playback initiation tracking.
  */
-export interface PlaybackInitiatedOwners {
+export interface PlaybackInitiatedContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
@@ -37,9 +38,9 @@ export interface PlaybackInitiatedOwners {
  */
 function deriveState(
   state: PlaybackInitiatedState,
-  owners: PlaybackInitiatedOwners
+  context: PlaybackInitiatedContext
 ): 'preconditions-unmet' | 'monitoring' | 'playback-initiated' {
-  if (!owners.mediaElement || !state.presentation?.url) return 'preconditions-unmet';
+  if (!context.mediaElement || !state.presentation?.url) return 'preconditions-unmet';
   if (state.playbackInitiated) return 'playback-initiated';
   return 'monitoring';
 }
@@ -55,20 +56,23 @@ function deriveState(
  *   `state.playbackInitiated` to `false` on any change or lost preconditions.
  *
  * @example
- * const reactor = trackPlaybackInitiated({ state, owners });
+ * const reactor = trackPlaybackInitiated.setup({ state, context });
  * // later:
  * reactor.destroy();
  */
-export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
+function trackPlaybackInitiatedSetup({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: {
+    playbackInitiated: Signal<PlaybackInitiatedState['playbackInitiated']>;
+    presentation: ReadonlySignal<PlaybackInitiatedState['presentation']>;
+  };
+  context: { mediaElement: ReadonlySignal<PlaybackInitiatedContext['mediaElement']> };
 }): Reactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated' | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(state.get(), owners.get()));
-  const mediaElementSignal = computed(() => owners.get().mediaElement);
-  const urlSignal = computed(() => state.get().presentation?.url);
+  const derivedStateSignal = computed(() => deriveState(snapshot(state), snapshot(context)));
+  const mediaElementSignal = computed(() => context.mediaElement.get());
+  const urlSignal = computed(() => state.presentation.get()?.url);
 
   return createMachineReactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated'>({
     initial: 'preconditions-unmet',
@@ -81,9 +85,9 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
         // The fn body is automatically untracked — el is read at entry time only.
         entry: () => {
           const el = mediaElementSignal.get()!;
-          update(state, { playbackInitiated: !el.paused } as Partial<S>);
+          state.playbackInitiated.set(!el.paused);
           return listen(el, 'play', () => {
-            update(state, { playbackInitiated: !el.paused } as Partial<S>);
+            state.playbackInitiated.set(!el.paused);
           });
         },
       },
@@ -101,9 +105,15 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
         effects: () => {
           mediaElementSignal.get(); // tracked — re-run on element change
           urlSignal.get(); // tracked — re-run on URL change
-          return () => update(state, { playbackInitiated: false } as Partial<S>);
+          return () => state.playbackInitiated.set(false);
         },
       },
     },
   });
 }
+
+export const trackPlaybackInitiated = defineBehavior({
+  stateKeys: ['playbackInitiated', 'presentation'],
+  contextKeys: ['mediaElement'],
+  setup: trackPlaybackInitiatedSetup,
+});
