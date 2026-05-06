@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.24] - 2026-05-06
+
+### 🚀 Features
+- *(packages)* Add live button component ([#1473](https://github.com/videojs/v10/pull/1473)) by [@luwes](https://github.com/luwes)
+- *(packages)* Add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/pull/1388)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/pull/1512)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(core)* Menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/pull/1503)) by [@sampotts](https://github.com/sampotts)
+
+### 🐛 Bug Fixes
+- *(icons)* Avoid hidden spinner animations ([#1476](https://github.com/videojs/v10/pull/1476)) by [@sampotts](https://github.com/sampotts)
+- *(ci)* Use biome to sort CSS properties ([#1490](https://github.com/videojs/v10/pull/1490)) by [@sampotts](https://github.com/sampotts)
+- *(icons)* Use icon exports in ejected skins ([#1489](https://github.com/videojs/v10/pull/1489)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Add 'use client' to ejected skin Next.js output ([#1488](https://github.com/videojs/v10/pull/1488)) by [@ronald-urbina](https://github.com/ronald-urbina)
+- *(skin)* Fix safari button alignment issue when zoomed ([#1495](https://github.com/videojs/v10/pull/1495)) by [@sampotts](https://github.com/sampotts)
+
+### 📚 Documentation
+- *(design)* Menus ([#1078](https://github.com/videojs/v10/pull/1078)) by [@sampotts](https://github.com/sampotts)
+- *(design)* Add design doc for live presets ([#1395](https://github.com/videojs/v10/pull/1395)) by [@luwes](https://github.com/luwes)
+
+### ⚙️ Miscellaneous Tasks
+- *(ci)* Configure noUnknownProperty to allow corner-shape ([#1502](https://github.com/videojs/v10/pull/1502)) by [@sampotts](https://github.com/sampotts)
+
 ## [@videojs/core@10.0.0-beta.23] - 2026-04-27
 
 ### 🚀 Features
@@ -1286,6 +1308,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.24]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24
 [@videojs/core@10.0.0-beta.23]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23
 [@videojs/core@10.0.0-beta.22]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.21...@videojs/core@10.0.0-beta.22
 [@videojs/core@10.0.0-beta.21]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.20...@videojs/core@10.0.0-beta.21
