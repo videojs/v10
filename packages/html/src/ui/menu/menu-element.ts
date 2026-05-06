@@ -15,6 +15,7 @@ import {
   type MenuChangeDetails,
   type MenuViewTransitionState,
   type NavigationState,
+  type PositioningOptions,
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
@@ -28,6 +29,15 @@ import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover 
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
+
+function getRootPositionOptions(
+  side: MenuCore.State['side'],
+  align: MenuCore.State['align']
+): PositioningOptions | null {
+  if (!side || !align) return null;
+
+  return { side, align };
+}
 
 export class MenuElement extends MediaElement {
   static readonly tagName = 'media-menu';
@@ -217,7 +227,8 @@ export class MenuElement extends MediaElement {
 
     syncMenuViewRoot(this, this.#navState.stack.length > 0);
 
-    const positionOptions = { side: state.side, align: state.align };
+    const positionOptions = getRootPositionOptions(state.side, state.align);
+    if (!positionOptions) return;
 
     if (supportsAnchorPositioning()) {
       applyStyles(this, getAnchorPositionStyle(this.id, positionOptions));

@@ -9,6 +9,7 @@ import {
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
   isMenuNavigationKey,
+  type PositioningOptions,
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
@@ -28,6 +29,12 @@ import { useMenuContext, useSubMenuContext } from './context';
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
+
+function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
+  if (!side || !align) return null;
+
+  return { side, align };
+}
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
   return {
@@ -151,10 +158,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const rootComposedRef = useComposedRefs(forwardedRef, contentRef, internalRef);
   const menuViewComposedRef = useComposedRefs(forwardedRef, setMenuViewElement);
 
-  const positionOptions = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
+  const positionOptions = useMemo(() => getRootPositionOptions(state.side, state.align), [state.side, state.align]);
 
   const anchorStyle = useMemo(() => {
-    if (isSubmenu || !supportsAnchorPositioning()) return null;
+    if (isSubmenu || !positionOptions || !supportsAnchorPositioning()) return null;
     const { positionAnchor: _, ...rest } = getAnchorPositionStyle(anchorName, positionOptions);
     return rest as CSSProperties;
   }, [isSubmenu, anchorName, positionOptions]);
@@ -179,10 +186,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   useLayoutEffect(() => {
     if (isSubmenu) return;
     if (supportsAnchorPositioning()) return;
+    if (!positionOptions) return;
     if (!state.open) {
       setManualStyle(null);
       return;
     }
+
+    const rootPositionOptions = positionOptions;
 
     function measure(): void {
       const triggerElement = menu.triggerElement;
@@ -197,7 +207,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       setManualStyle(
         getAnchorPositionStyle(
           anchorName,
-          positionOptions,
+          rootPositionOptions,
           triggerRect,
           contentRect,
           boundaryRect,
