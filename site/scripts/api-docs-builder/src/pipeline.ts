@@ -549,6 +549,7 @@ export { generateFeatureReferences } from './feature-handler.js';
 export interface PresetSkinDef {
   name: string;
   tagName?: string;
+  cssImport?: string;
 }
 
 export interface PresetReference {
