@@ -149,13 +149,16 @@ export function createMenuViewTransition(options: MenuViewTransitionOptions = {}
 
       if (currentTransitionId !== transitionId) return;
 
-      const { triggerId } = input.current;
+      const { direction, triggerId } = input.current;
 
       input.patch({
         phase: 'hidden',
         triggerId: null,
       });
-      options.restoreFocus?.(triggerId);
+
+      if (direction === 'back') {
+        options.restoreFocus?.(triggerId);
+      }
     });
   }
 

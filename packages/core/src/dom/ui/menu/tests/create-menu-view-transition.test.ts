@@ -115,6 +115,62 @@ describe('createMenuViewTransition', () => {
     expect(transition.input.current.phase).toBe('hidden');
   });
 
+  it('restores focus after a backward exit completes', async () => {
+    const element = addElement();
+    let resolveAnimation = () => {};
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    const restoreFocus = vi.fn();
+    const transition = createMenuViewTransition({
+      restoreFocus,
+      waitForAnimations: () => animationFinished,
+    });
+
+    transition.setElement(element);
+    transition.sync({ active: true, direction: 'forward', triggerId: 'trigger-1' });
+
+    await nextFrame();
+    await nextFrame();
+
+    transition.sync({ active: false, direction: 'back' });
+    await nextFrame();
+
+    resolveAnimation();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(restoreFocus).toHaveBeenCalledWith('trigger-1');
+  });
+
+  it('does not restore focus after a forward exit completes', async () => {
+    const element = addElement();
+    let resolveAnimation = () => {};
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    const restoreFocus = vi.fn();
+    const transition = createMenuViewTransition({
+      restoreFocus,
+      waitForAnimations: () => animationFinished,
+    });
+
+    transition.setElement(element);
+    transition.sync({ active: true, direction: 'forward', triggerId: 'trigger-1' });
+
+    await nextFrame();
+    await nextFrame();
+
+    transition.sync({ active: false, direction: 'forward' });
+    await nextFrame();
+
+    resolveAnimation();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(restoreFocus).not.toHaveBeenCalled();
+  });
+
   it('ignores a stale exit completion after reopening', async () => {
     const element = addElement();
     let resolveAnimation = () => {};
