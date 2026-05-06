@@ -1,8 +1,9 @@
 import { createState, type State } from '@videojs/store';
-import type { MenuInput } from '../../../core/ui/menu/menu-core';
+import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
+import type { PositioningOptions } from '../popover/popover-positioning';
 import type { TransitionApi } from '../transition';
 
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
@@ -62,6 +63,12 @@ export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
     key === 'Escape' ||
     (key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey)
   );
+}
+
+export function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
+  if (!side || !align) return null;
+
+  return { side, align };
 }
 
 export interface MenuApi {

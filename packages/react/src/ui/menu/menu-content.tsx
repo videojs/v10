@@ -8,8 +8,8 @@ import {
   getMenuViewportElement,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getRootPositionOptions,
   isMenuNavigationKey,
-  type PositioningOptions,
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
@@ -29,12 +29,6 @@ import { useMenuContext, useSubMenuContext } from './context';
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
-
-function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
-  if (!side || !align) return null;
-
-  return { side, align };
-}
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
   return {

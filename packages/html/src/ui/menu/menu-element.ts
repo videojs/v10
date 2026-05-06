@@ -10,12 +10,12 @@ import {
   getMenuViewportAttrs,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getRootPositionOptions,
   isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
   type MenuViewTransitionState,
   type NavigationState,
-  type PositioningOptions,
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
@@ -29,15 +29,6 @@ import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover 
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
-
-function getRootPositionOptions(
-  side: MenuCore.State['side'],
-  align: MenuCore.State['align']
-): PositioningOptions | null {
-  if (!side || !align) return null;
-
-  return { side, align };
-}
 
 export class MenuElement extends MediaElement {
   static readonly tagName = 'media-menu';

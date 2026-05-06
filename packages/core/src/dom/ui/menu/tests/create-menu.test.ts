@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../../event';
-import { completeMenuItemSelection, isMenuNavigationKey } from '../create-menu';
+import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -710,5 +710,16 @@ describe('isMenuNavigationKey', () => {
   it('ignores keys that should be allowed to bubble', () => {
     expect(isMenuNavigationKey(makeKeyEvent('Tab'))).toBe(false);
     expect(isMenuNavigationKey(makeKeyEvent('a', { metaKey: true }))).toBe(false);
+  });
+});
+
+describe('getRootPositionOptions', () => {
+  it('returns positioning options when side and align are available', () => {
+    expect(getRootPositionOptions('bottom', 'start')).toEqual({ side: 'bottom', align: 'start' });
+  });
+
+  it('returns null when root positioning is unavailable', () => {
+    expect(getRootPositionOptions(undefined, 'start')).toBeNull();
+    expect(getRootPositionOptions('bottom', undefined)).toBeNull();
   });
 });
