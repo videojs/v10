@@ -4,9 +4,9 @@ import {
   createSimpleHlsEngine,
   type SimpleHlsEngineConfig,
   type SimpleHlsEngineContext,
+  type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
 } from './engine';
-import type { SimpleHlsEngineInputs } from './expose-engine-inputs';
 
 export interface SimpleHlsMediaProps {
   src: string;
@@ -48,7 +48,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   class SimpleHlsMediaImpl extends BaseClass {
     #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
-    #inputs!: SimpleHlsEngineInputs;
+    #signals!: SimpleHlsEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -72,12 +72,12 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
 
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
-      this.#inputs.context.mediaElement.set(mediaElement);
+      this.#signals.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
-      this.#inputs.context.mediaElement.set(undefined);
+      this.#signals.context.mediaElement.set(undefined);
       super.detach?.();
     }
 
@@ -97,7 +97,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     set preload(value: '' | 'none' | 'metadata' | 'auto') {
       this.#preload = value;
       if (value) {
-        this.#inputs.state.preload.set(value);
+        this.#signals.state.preload.set(value);
       }
       // value = '' clears #preload (so the next engine recreation won't re-apply
       // an explicit value) but does not patch current state — the existing preload
@@ -111,11 +111,11 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // -------------------------------------------------------------------------
 
     get src(): string {
-      return this.#inputs.state.presentation.get()?.url ?? '';
+      return this.#signals.state.presentation.get()?.url ?? '';
     }
 
     set src(value: string) {
-      const prevMediaElement = this.#inputs.context.mediaElement.get();
+      const prevMediaElement = this.#signals.context.mediaElement.get();
 
       this.#cancelPendingPlay();
       this.#engine.destroy();
@@ -124,15 +124,15 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // Apply explicit preload before setting context so syncPreloadAttribute skips
       // element inference and the explicit value is preserved across src changes.
       if (this.#preload) {
-        this.#inputs.state.preload.set(this.#preload);
+        this.#signals.state.preload.set(this.#preload);
       }
 
       if (prevMediaElement) {
-        this.#inputs.context.mediaElement.set(prevMediaElement);
+        this.#signals.context.mediaElement.set(prevMediaElement);
       }
 
       if (value) {
-        this.#inputs.state.presentation.set({ url: value });
+        this.#signals.state.presentation.set({ url: value });
       }
     }
 
@@ -142,13 +142,13 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // -------------------------------------------------------------------------
 
     play(): Promise<void> {
-      const mediaElement = this.#inputs.context.mediaElement.get();
+      const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
         return Promise.reject(new Error('SimpleHlsMediaElement: no media element attached'));
       }
 
       // Signal play intent — enables loading even with preload="none"
-      this.#inputs.state.playbackInitiated.set(true);
+      this.#signals.state.playbackInitiated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE
@@ -175,15 +175,15 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
-        exposeInputs: (inputs) => {
-          this.#inputs = inputs;
+        onSignalsReady: (signals) => {
+          this.#signals = signals;
         },
       });
     }
 
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
-      const mediaElement = this.#inputs.context.mediaElement.get();
+      const mediaElement = this.#signals.context.mediaElement.get();
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }

@@ -1,4 +1,10 @@
-import { type Composition, createComposition } from '../../../core/composition/create-composition';
+import {
+  type Composition,
+  type ContextSignals,
+  createComposition,
+  type StateSignals,
+} from '../../../core/composition/create-composition';
+import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -21,7 +27,6 @@ import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
-import { type ExposeEngineInputsConfig, exposeEngineInputs } from './expose-engine-inputs';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -68,12 +73,23 @@ export interface SimpleHlsEngineContext {
 }
 
 /**
+ * The composition signal refs handed to `onSignalsReady` callers — the
+ * canonical way to drive the engine externally (writes) or observe its
+ * state (reads) without touching `composition.state` / `composition.context`
+ * directly.
+ */
+export type SimpleHlsEngineSignals = {
+  state: StateSignals<SimpleHlsEngineState>;
+  context: ContextSignals<SimpleHlsEngineContext>;
+};
+
+/**
  * Configuration for the HLS playback engine.
  *
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface SimpleHlsEngineConfig extends ExposeEngineInputsConfig {
+export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
   initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
@@ -92,6 +108,13 @@ export interface SimpleHlsEngineConfig extends ExposeEngineInputsConfig {
 // ============================================================================
 
 /**
+ * Generic `shareSignals` instantiated against the HLS engine's full state
+ * and context — captures composition signal refs into the consumer's
+ * `onSignalsReady` callback at setup time.
+ */
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
+
+/**
  * Create an HLS playback engine.
  *
  * Composes SPF behaviors into a reactive pipeline for HLS playback over MSE:
@@ -100,13 +123,17 @@ export interface SimpleHlsEngineConfig extends ExposeEngineInputsConfig {
  *
  * @example
  * ```ts
+ * let signals: SimpleHlsEngineSignals;
  * const engine = createSimpleHlsEngine({
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
+ *   onSignalsReady: (refs) => {
+ *     signals = refs;
+ *   },
  * });
  *
- * engine.context.mediaElement.set(videoEl);
- * engine.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
+ * signals.context.mediaElement.set(videoEl);
+ * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  *
  * videoEl.play();
  *
@@ -123,7 +150,6 @@ export function createSimpleHlsEngine(
 
   return createComposition(
     [
-      exposeEngineInputs,
       syncPreloadAttribute,
       trackPlaybackInitiated,
       resolvePresentation,
@@ -161,6 +187,11 @@ export function createSimpleHlsEngine(
       syncTextTracks,
       setupTextTrackActors,
       loadTextTrackCues,
+
+      // Behavior whose sole purpose is to use a callback to allow for signal writing from the outside (e.g. an adapter)
+      // NOTE: While not required, adding at the end since behaviors are setup in order, so this increases the likelihood
+      // that initial signal setup will have occurred before shareSignals' callback is invoked. (CJP)
+      shareSignals,
     ],
     {
       config: finalConfig,

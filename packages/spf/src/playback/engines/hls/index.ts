@@ -3,7 +3,7 @@ export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps 
 export type {
   SimpleHlsEngineConfig,
   SimpleHlsEngineContext,
+  SimpleHlsEngineSignals,
   SimpleHlsEngineState,
 } from './engine';
 export { createSimpleHlsEngine } from './engine';
-export type { ExposeEngineInputsConfig, SimpleHlsEngineInputs } from './expose-engine-inputs';
