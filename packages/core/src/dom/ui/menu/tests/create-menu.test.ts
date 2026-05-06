@@ -608,6 +608,27 @@ describe('createMenu', () => {
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('cycles through matching items when the same character is pressed repeatedly', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const br = addItem('Bravo');
+      const bu = addItem('Button');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(br);
+      menu.registerItem(bu);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+      expect(br.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+      expect(bu.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('accumulates characters for multi-char match', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
