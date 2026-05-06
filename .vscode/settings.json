@@ -18,6 +18,8 @@
   "biome.requireConfiguration": true,
   "editor.defaultFormatter": "biomejs.biome",
   "js/ts.tsdk.path": "node_modules/typescript/lib",
+  // Built-in CSS validation overlaps Biome; disable it for CSS diagnostics only.
+  "css.validate": false,
 
   "[astro]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

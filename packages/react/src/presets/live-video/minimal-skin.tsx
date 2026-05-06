@@ -25,15 +25,24 @@ import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
+
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export type MinimalLiveVideoSkinProps = BaseVideoSkinProps;
 
@@ -131,6 +140,8 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
               />
               <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
+
+            <LiveButton className="media-button media-button--subtle media-button--live" />
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />
@@ -190,6 +201,55 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className="media-input-feedback">
+        <VolumeIndicator.Root className="media-input-feedback-island media-input-feedback-island--volume">
+          <VolumeIndicator.Fill className="media-input-feedback-island__content">
+            <VolumeHighIcon className="media-icon media-icon--volume-high" />
+            <VolumeLowIcon className="media-icon media-icon--volume-low" />
+            <VolumeOffIcon className="media-icon media-icon--volume-off" />
+            <div className="media-input-feedback-island__progress" aria-hidden="true" />
+            <VolumeIndicator.Value className="media-input-feedback-island__value" />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className="media-input-feedback-island media-input-feedback-island--status"
+        >
+          <div className="media-input-feedback-island__content">
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+            <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+            <PipEnterIcon className="media-icon media-icon--pip-enter" />
+            <PipExitIcon className="media-icon media-icon--pip-exit" />
+            <StatusIndicator.Value className="media-input-feedback-island__value" />
+          </div>
+        </StatusIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className="media-input-feedback-bubble">
+          <PlayIcon className="media-icon media-icon--play" />
+          <PauseIcon className="media-icon media-icon--pause" />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

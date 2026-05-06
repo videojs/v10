@@ -8,6 +8,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  min-height: 0;
   padding: 0.5rem 1rem;
   text-align: center;
   touch-action: manipulation;
@@ -44,11 +45,9 @@
   }
 }
 
-/* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
 @supports (corner-shape: squircle) {
   .media-minimal-skin .media-button {
     border-radius: 1rem;
-    /* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
     corner-shape: squircle;
   }
 }
@@ -86,7 +85,12 @@
   }
 
   & .media-icon {
-    filter: drop-shadow(0 1px 0 var(--media-controls-current-shadow-color, oklch(0 0 0 / 0.25)));
+    grid-area: 1 / 1;
+    transition-behavior: allow-discrete;
+    transition-property: display, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+    filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
   }
 }
 
@@ -115,5 +119,37 @@
     width: 4ch;
     font-variant-numeric: tabular-nums;
     content: attr(data-rate) "\00D7";
+  }
+}
+
+/* Live button — wide pill button with a status dot (gray → red at the live
+   edge) rendered via ::before, and "LIVE" text rendered as the button's own
+   text content. */
+.media-minimal-skin .media-button--live {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  width: auto;
+  aspect-ratio: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &::before {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    content: "";
+    background-color: oklch(from currentColor l c h / 0.4);
+    border-radius: 50%;
+    transition: background-color 150ms ease-out;
+  }
+
+  &[data-live-edge]::before {
+    background-color: oklch(0.65 0.22 27);
   }
 }

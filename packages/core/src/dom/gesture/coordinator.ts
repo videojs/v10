@@ -1,6 +1,13 @@
 import { isInteractiveTarget, listen } from '@videojs/utils/dom';
 
-import type { GestureBinding, GestureMatchResult, GestureRecognizer, GestureRegion, GestureType } from './gesture';
+import type {
+  GestureActivateEvent,
+  GestureBinding,
+  GestureMatchResult,
+  GestureRecognizer,
+  GestureRegion,
+  GestureType,
+} from './gesture';
 import { resolveRegion } from './region';
 
 const TAP_THRESHOLD = 250;
@@ -10,6 +17,7 @@ export class GestureCoordinator {
   #bindings: GestureBinding[] = [];
   #recognizers = new Set<GestureRecognizer>();
   #disconnect: AbortController | null = null;
+  #subscribers = new Set<(event: GestureActivateEvent) => void>();
 
   constructor(target: HTMLElement) {
     this.#target = target;
@@ -19,9 +27,39 @@ export class GestureCoordinator {
     return this.#bindings;
   }
 
+  subscribe(callback: (event: GestureActivateEvent) => void): () => void {
+    this.#subscribers.add(callback);
+    return () => this.#subscribers.delete(callback);
+  }
+
   add(binding: GestureBinding): () => void {
-    this.#bindings.push(binding);
-    this.#recognizers.add(binding.recognizer);
+    const wrapped: GestureBinding = {
+      ...binding,
+      onActivate: (event) => {
+        if (this.#subscribers.size > 0) {
+          const activateEvent: GestureActivateEvent = {
+            type: binding.type,
+            source: 'gesture',
+            action: binding.action,
+            value: binding.value,
+            region: binding.region,
+            pointer: binding.pointer,
+            event,
+          };
+          for (const cb of this.#subscribers) {
+            try {
+              cb(activateEvent);
+            } catch (error) {
+              if (__DEV__) console.warn('[vjs-gesture] subscribe callback threw:', error);
+            }
+          }
+        }
+        binding.onActivate(event);
+      },
+    };
+
+    this.#bindings.push(wrapped);
+    this.#recognizers.add(wrapped.recognizer);
     this.#connect();
 
     let removed = false;
@@ -29,7 +67,7 @@ export class GestureCoordinator {
       if (removed) return;
       removed = true;
 
-      const idx = this.#bindings.indexOf(binding);
+      const idx = this.#bindings.indexOf(wrapped);
       if (idx !== -1) this.#bindings.splice(idx, 1);
 
       this.#maybeDisconnect();

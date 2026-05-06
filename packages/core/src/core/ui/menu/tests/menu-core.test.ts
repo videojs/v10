@@ -82,6 +82,15 @@ describe('MenuCore', () => {
 
       expect(state.isSubmenu).toBe(true);
     });
+
+    it('omits root positioning for submenus', () => {
+      const core = new MenuCore({ side: 'right', align: 'end', isSubmenu: true });
+      core.setInput(createInput());
+      const state = core.getState();
+
+      expect(state.side).toBeUndefined();
+      expect(state.align).toBeUndefined();
+    });
   });
 
   describe('getTriggerAttrs', () => {
@@ -164,12 +173,12 @@ describe('MenuCore', () => {
 
   describe('constructor', () => {
     it('accepts initial props', () => {
-      const core = new MenuCore({ side: 'right', isSubmenu: true });
+      const core = new MenuCore({ side: 'right', align: 'end' });
       core.setInput(createInput());
       const state = core.getState();
 
       expect(state.side).toBe('right');
-      expect(state.isSubmenu).toBe(true);
+      expect(state.align).toBe('end');
     });
 
     it('works without props', () => {

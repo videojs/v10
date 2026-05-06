@@ -8,6 +8,7 @@ import {
   error,
   icon,
   iconState,
+  inputFeedback,
   overlay,
   popup,
   poster,
@@ -19,8 +20,8 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Reuse the video preset's minimal UI element registrations.
-import '../video/minimal-ui';
+// Register the live video player, container, and minimal UI custom elements.
+import './minimal-ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -58,6 +59,8 @@ function getTemplateHTML() {
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+
+              <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>
@@ -102,6 +105,54 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="${overlay}"></div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+      <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
+      <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+
+      <!-- Gestures -->
+      <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+      <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+      <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+
+      <!-- Input Feedback -->
+      <media-status-announcer></media-status-announcer>
+      <div class="${inputFeedback.root}">
+        <media-volume-indicator hidden class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}">
+          <media-volume-indicator-fill data-feedback-island-content class="${inputFeedback.island.content}">
+            ${renderIcon('volume-high', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh) })}
+            ${renderIcon('volume-low', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow) })}
+            ${renderIcon('volume-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff) })}
+            <div aria-hidden="true" class="${inputFeedback.island.volumeProgress}"></div>
+            <media-volume-indicator-value class="${inputFeedback.island.value}"></media-volume-indicator-value>
+          </media-volume-indicator-fill>
+        </media-volume-indicator>
+        <media-status-indicator
+          hidden
+          actions="toggleSubtitles toggleFullscreen togglePictureInPicture"
+          class="${cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}"
+        >
+          <div class="${inputFeedback.island.content}">
+            ${renderIcon('captions-on', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn) })}
+            ${renderIcon('captions-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff) })}
+            ${renderIcon('fullscreen-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter) })}
+            ${renderIcon('fullscreen-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit) })}
+            ${renderIcon('pip-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter) })}
+            ${renderIcon('pip-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit) })}
+            <media-status-indicator-value class="${inputFeedback.island.value}"></media-status-indicator-value>
+          </div>
+        </media-status-indicator>
+        <media-status-indicator hidden actions="togglePaused" class="${inputFeedback.bubble.base}">
+          ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
+          ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
+        </media-status-indicator>
+      </div>
     </media-container>
   `;
 }

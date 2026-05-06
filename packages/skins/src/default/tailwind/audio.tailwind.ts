@@ -46,7 +46,7 @@ export const root = cn(
    Controls
    ========================================================================== */
 
-export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:[&_*]:invisible');
+export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:**:invisible');
 
 /* ==========================================================================
    Sliders

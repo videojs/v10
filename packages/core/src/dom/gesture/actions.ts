@@ -1,7 +1,6 @@
-import { isFunction, isUndefined } from '@videojs/utils/predicate';
-
+import { isFunction } from '@videojs/utils/predicate';
 import type { AnyPlayerStore } from '../media/types';
-import { selectPlaybackRate, selectTime, selectVolume } from '../store/selectors';
+import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 
 export type GestureActionName =
   | 'togglePaused'
@@ -25,37 +24,13 @@ export type GestureActionResolver = (context: GestureActionContext) => void;
 
 /** Actions that need custom logic beyond `store.state[action]()`. */
 const GESTURE_ACTION_OVERRIDES: Partial<Record<GestureActionName, GestureActionResolver>> = {
-  seekStep({ store, value }) {
-    if (isUndefined(value)) return;
-    const time = selectTime(store.state);
-    if (!time) return;
-    time.seek(time.currentTime + value);
-  },
+  seekStep: MEDIA_INPUT_ACTION_OVERRIDES.seekStep,
 
-  volumeStep({ store, value }) {
-    if (isUndefined(value)) return;
-    const vol = selectVolume(store.state);
-    if (!vol) return;
-    vol.setVolume(vol.volume + value);
-  },
+  volumeStep: MEDIA_INPUT_ACTION_OVERRIDES.volumeStep,
 
-  speedUp({ store }) {
-    const rate = selectPlaybackRate(store.state);
-    if (!rate) return;
-    const { playbackRates, playbackRate } = rate;
-    const idx = playbackRates.indexOf(playbackRate);
-    const next = idx < 0 || idx >= playbackRates.length - 1 ? 0 : idx + 1;
-    rate.setPlaybackRate(playbackRates[next]!);
-  },
+  speedUp: MEDIA_INPUT_ACTION_OVERRIDES.speedUp,
 
-  speedDown({ store }) {
-    const rate = selectPlaybackRate(store.state);
-    if (!rate) return;
-    const { playbackRates, playbackRate } = rate;
-    const idx = playbackRates.indexOf(playbackRate);
-    const next = idx <= 0 ? playbackRates.length - 1 : idx - 1;
-    rate.setPlaybackRate(playbackRates[next]!);
-  },
+  speedDown: MEDIA_INPUT_ACTION_OVERRIDES.speedDown,
 };
 
 export function resolveGestureAction(name: GestureActionName | (string & {})): GestureActionResolver | undefined {

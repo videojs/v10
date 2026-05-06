@@ -28,10 +28,10 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./playback-engine": {
-      "types": "./dist/dev/dom/playback-engine.d.ts",
-      "development": "./dist/dev/dom/playback-engine.js",
-      "default": "./dist/default/dom/playback-engine.js"
+    "./hls": {
+      "types": "./dist/dev/hls.d.ts",
+      "development": "./dist/dev/hls.js",
+      "default": "./dist/default/hls.js"
     }
   },
   "main": "dist/default/index.js",

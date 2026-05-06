@@ -3,7 +3,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, SeekIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
-import { Hotkey } from '@/ui/hotkey/hotkey';
+import { Hotkey } from '@/ui/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';

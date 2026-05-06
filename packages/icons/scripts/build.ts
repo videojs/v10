@@ -1,48 +1,39 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, watch, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, mkdirSync, readFileSync, rmSync, watch, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const isWatch = process.argv.includes('--watch');
 
 import { transform } from '@svgr/core';
 import { camelCase, pascalCase } from '@videojs/utils/string';
 import { transform as esbuildTransform } from 'esbuild';
-import { type Config, optimize } from 'svgo';
+import { optimize } from 'svgo';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
-const ASSETS_DIR = join(ROOT, 'src/assets');
-const DIST_DIR = join(ROOT, 'dist');
+import {
+  ASSETS_DIR,
+  createSvgoConfig,
+  DIST_DIR,
+  getIconSets,
+  getSvgFiles,
+  PRESET_DEFAULT_OVERRIDES,
+  REMOVE_ATTRS_PLUGIN,
+  replaceColors,
+} from './shared.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
 
-const SVGO_CONFIG: Config = {
-  multipass: true,
-  plugins: [
-    {
-      name: 'preset-default',
-      params: {
-        overrides: {
-          convertColors: {
-            currentColor: /^black$/,
-          },
-        },
-      },
+const SVGO_CONFIG = createSvgoConfig([
+  {
+    name: 'preset-default',
+    params: { overrides: PRESET_DEFAULT_OVERRIDES },
+  },
+  REMOVE_ATTRS_PLUGIN,
+  {
+    name: 'addAttributesToSVGElement',
+    params: {
+      attributes: [{ 'aria-hidden': 'true' }],
     },
-    {
-      name: 'removeAttrs',
-      params: {
-        attrs: ['^clip-rule$', '^fill-rule$'],
-      },
-    },
-    {
-      name: 'addAttributesToSVGElement',
-      params: {
-        attributes: [{ 'aria-hidden': 'true' }],
-      },
-    },
-  ],
-};
+  },
+]);
 
 function ensureDir(path: string): void {
   if (!existsSync(path)) mkdirSync(path, { recursive: true });
@@ -52,36 +43,21 @@ function cleanDist(): void {
   if (existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
 }
 
-function getIconSets(): string[] {
-  if (!existsSync(ASSETS_DIR)) {
-    console.error(`Assets directory not found: ${ASSETS_DIR}`);
-    process.exit(1);
-  }
-  return readdirSync(ASSETS_DIR).filter((item) => !item.startsWith('.') && item !== 'index');
-}
-
-function getSvgFiles(setName: string): string[] {
-  return readdirSync(join(ASSETS_DIR, setName)).filter((f) => f.endsWith('.svg'));
-}
-
 function optimizeSvg(svgContent: string): string {
-  const optimized = optimize(svgContent, SVGO_CONFIG).data;
-  return optimized
-    .replaceAll('fill="black"', 'fill="currentColor"')
-    .replaceAll('stroke="black"', 'stroke="currentColor"');
+  return replaceColors(optimize(svgContent, SVGO_CONFIG).data);
 }
 
 async function buildReactComponent(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
+  const optimized = optimizeSvg(svgContent);
+
   const transformOpts: Parameters<typeof transform>[1] = {
-    plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],
+    plugins: ['@svgr/plugin-jsx'],
     jsxRuntime: 'automatic',
-    svgoConfig: SVGO_CONFIG,
   };
 
-  const tsxCode = await transform(svgContent, { ...transformOpts, typescript: true }, { componentName });
-  const jsxCode = await transform(svgContent, transformOpts, { componentName });
+  const tsxCode = await transform(optimized, { ...transformOpts, typescript: true }, { componentName });
+  const jsxCode = await transform(optimized, transformOpts, { componentName });
 
-  // SVGR outputs JSX syntax which is invalid in .js files — compile to JS
   const { code } = await esbuildTransform(jsxCode, { loader: 'jsx', jsx: 'automatic' });
 
   return { js: code, tsx: tsxCode };

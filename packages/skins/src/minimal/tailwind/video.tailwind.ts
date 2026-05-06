@@ -48,16 +48,16 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    '@2xl/media-root:[&>*]:[--media-popover-side-offset:0rem]',
-    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    '@2xl/media-root:*:[--media-popover-side-offset:0rem]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:[&>*]:[--media-caption-track-y:-3rem]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3rem]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -92,14 +92,14 @@ export const controls = cn(
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',
   'duration-(--media-controls-transition-duration)',
-  '[@media(pointer:fine)]:will-change-[translate,filter,opacity]',
-  '[@media(pointer:fine)]:transition-[translate,filter,opacity]',
-  '[@media(pointer:coarse)]:will-change-[translate,opacity]',
-  '[@media(pointer:coarse)]:transition-[translate,opacity]',
+  'pointer-fine:will-change-[translate,filter,opacity]',
+  'pointer-fine:transition-[translate,filter,opacity]',
+  'pointer-coarse:will-change-[translate,opacity]',
+  'pointer-coarse:transition-[translate,opacity]',
   // Hidden state
   'not-data-visible:opacity-0 not-data-visible:pointer-events-none',
   'motion-safe:not-data-visible:translate-y-full',
-  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm',
+  'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
   '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2'
 );
@@ -148,8 +148,8 @@ export const preview = {
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
     'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
-    '[&:has([role=img][data-loading])]:max-h-24',
+    'has-[[role=img][data-hidden]]:opacity-0 has-[[role=img][data-hidden]]:scale-80 has-[[role=img][data-hidden]]:blur-sm',
+    'has-[[role=img][data-loading]]:max-h-24',
     basePreview.root
   ),
   thumbnailWrapper: cn(
@@ -192,6 +192,7 @@ export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { inputFeedback } from './components/input-feedback';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

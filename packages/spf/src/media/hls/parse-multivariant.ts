@@ -1,4 +1,4 @@
-import { generateId } from '../../core/utils/generate-id';
+import { generateId } from '@videojs/utils/string';
 import type {
   AddressableObject,
   AudioSelectionSet,

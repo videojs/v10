@@ -12,6 +12,18 @@ import {
 } from '../create-composition';
 
 // =============================================================================
+// Host-agnostic stand-in types
+// -----------------------------------------------------------------------------
+// Core is DOM-free. The tests need a small, concrete type to stand in for the
+// kind of thing a user would pass as an owner — something with a writable
+// surface and clear subtype relationships for covariance tests.
+// =============================================================================
+
+interface Surface {
+  textContent?: string | null;
+}
+
+// =============================================================================
 // Test behaviors — concrete parameter types
 // =============================================================================
 
@@ -28,7 +40,7 @@ function render({
   config,
 }: {
   state: Signal<{ count?: number }>;
-  owners: Signal<{ renderElement?: HTMLElement }>;
+  owners: Signal<{ renderElement?: Surface }>;
   config: { defaultText?: string };
 }) {
   return effect(() => {
@@ -87,7 +99,7 @@ describe('InferBehaviorState', () => {
 
 describe('InferBehaviorOwners', () => {
   it('extracts owners type from a behavior that uses owners', () => {
-    expectTypeOf<InferBehaviorOwners<typeof render>>().toEqualTypeOf<{ renderElement?: HTMLElement }>();
+    expectTypeOf<InferBehaviorOwners<typeof render>>().toEqualTypeOf<{ renderElement?: Surface }>();
   });
 
   it('returns object for a behavior with no owners in params', () => {
@@ -136,8 +148,8 @@ describe('ResolveBehaviorOwners', () => {
   it('resolves owners from mixed behaviors (some without owners)', () => {
     // counter has no owners, render has renderElement
     type Behaviors = [typeof counter, typeof render];
-    // object & { renderElement?: HTMLElement } should simplify
-    expectTypeOf<ResolveBehaviorOwners<Behaviors>>().toExtend<{ renderElement?: HTMLElement }>();
+    // object & { renderElement?: Surface } should simplify
+    expectTypeOf<ResolveBehaviorOwners<Behaviors>>().toExtend<{ renderElement?: Surface }>();
   });
 });
 
@@ -178,11 +190,11 @@ describe('createComposition', () => {
       const engine = createComposition([counter, render, persist], {
         initialState: { count: 0 },
         config: { interval: 250, defaultText: '--', saveEvery: 5 },
-        initialOwners: { renderElement: null as unknown as HTMLElement },
+        initialOwners: { renderElement: null as unknown as Surface },
       });
 
       expectTypeOf(engine.state.get()).toExtend<{ count?: number }>();
-      expectTypeOf(engine.owners.get()).toExtend<{ renderElement?: HTMLElement }>();
+      expectTypeOf(engine.owners.get()).toExtend<{ renderElement?: Surface }>();
     });
 
     it('infers combined state from behaviors with different state shapes', () => {
@@ -225,12 +237,12 @@ describe('createComposition', () => {
 
     it('allows update() with undefined for optional owners fields', () => {
       const engine = createComposition([render], {
-        initialOwners: { renderElement: null as unknown as HTMLElement },
+        initialOwners: { renderElement: null as unknown as Surface },
       });
 
       // Clearing an owner (e.g. on source switch)
       update(engine.owners, { renderElement: undefined });
-      expectTypeOf(engine.owners.get().renderElement).toEqualTypeOf<HTMLElement | undefined>();
+      expectTypeOf(engine.owners.get().renderElement).toEqualTypeOf<Surface | undefined>();
     });
   });
 

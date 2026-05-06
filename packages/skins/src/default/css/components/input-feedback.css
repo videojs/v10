@@ -1,0 +1,228 @@
+/* ==========================================================================
+   Input Feedback
+   ========================================================================== */
+
+.media-default-skin .media-input-feedback {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  bottom: 3.5rem; /* Shift up a little in smaller containers */
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  justify-items: center;
+  color: var(--media-color-primary, oklch(1 0 0));
+  pointer-events: none;
+
+  @container media-root (width > 24rem) {
+    bottom: 0;
+  }
+}
+
+/* --- Feedback islands ------------------------------------------------------- */
+
+.media-default-skin .media-input-feedback-island {
+  --media-surface-background-color: oklch(0 0 0 / 0.25);
+  position: absolute;
+  top: 0.75rem;
+  font-weight: 500;
+  color: inherit;
+  pointer-events: none;
+  border-radius: calc(Infinity * 1px);
+  transform-origin: top center;
+  transition-timing-function: ease-out;
+  transition-duration: 100ms;
+
+  .media-input-feedback-island__content {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.25rem 0.625rem;
+
+    /* Increase contrast of the content */
+    * {
+      mix-blend-mode: difference;
+    }
+  }
+
+  .media-icon {
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .media-input-feedback-island__value {
+    margin-left: auto;
+  }
+
+  @media (pointer: coarse) {
+    transition-property: scale, translate, opacity;
+    will-change: scale, translate, opacity;
+  }
+
+  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    transition-property: scale, translate, filter, opacity;
+    will-change: scale, translate, filter, opacity;
+  }
+
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --media-surface-background-color: oklch(0 0 0);
+  }
+
+  /* Default hidden state */
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transition-timing-function: ease-in;
+    transition-duration: 250ms;
+
+    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      filter: blur(8px);
+      scale: 0.9;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &[data-ending-style] {
+        translate: 0 -25%;
+      }
+    }
+  }
+}
+
+.media-default-skin .media-input-feedback-island--volume {
+  width: min(80%, 12rem);
+
+  .media-input-feedback-island__content {
+    --media-progress-fill: var(--media-volume-fill);
+    background-image: linear-gradient(
+      to right,
+      currentColor 0%,
+      currentColor var(--media-progress-fill),
+      transparent var(--media-progress-fill),
+      transparent 100%
+    );
+    border-radius: inherit;
+    transition: --media-progress-fill 200ms linear;
+  }
+}
+
+.media-default-skin .media-input-feedback-island--volume[data-level="high"] .media-icon--volume-high,
+.media-default-skin .media-input-feedback-island--volume[data-level="low"] .media-icon--volume-low,
+.media-default-skin .media-input-feedback-island--volume[data-level="off"] .media-icon--volume-off {
+  display: block;
+}
+
+.media-default-skin .media-input-feedback-island--status[data-status="captions-on"] .media-icon--captions-on,
+.media-default-skin .media-input-feedback-island--status[data-status="captions-off"] .media-icon--captions-off,
+.media-default-skin .media-input-feedback-island--status[data-status="fullscreen"] .media-icon--fullscreen-enter,
+.media-default-skin .media-input-feedback-island--status[data-status="exit-fullscreen"] .media-icon--fullscreen-exit,
+.media-default-skin .media-input-feedback-island--status[data-status="pip"] .media-icon--pip-enter,
+.media-default-skin .media-input-feedback-island--status[data-status="exit-pip"] .media-icon--pip-exit {
+  display: block;
+}
+
+/* --- Boundary shake ------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .media-default-skin .media-input-feedback-island--volume[data-min],
+  .media-default-skin .media-input-feedback-island--volume[data-max] {
+    animation: media-shake 300ms ease-in-out;
+  }
+}
+
+/* --- Bubble ---------------------------------------------------------------- */
+
+.media-default-skin .media-input-feedback-bubble {
+  display: flex;
+  flex-direction: column;
+  grid-row: 1;
+  grid-column: 2; /* default to center for status bubbles and undirected seeks */
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  transition: opacity 250ms ease-out;
+
+  @container media-root (width > 24rem) {
+    padding: 2rem;
+  }
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transition-timing-function: ease-in;
+    transition-duration: 200ms;
+  }
+}
+
+/* Direction placement — seek bubbles move to the side implied by their direction. */
+.media-default-skin .media-input-feedback-bubble[data-direction="backward"] {
+  grid-column: 1;
+  justify-self: left;
+}
+
+.media-default-skin .media-input-feedback-bubble:not([data-direction]) {
+  grid-column: 2;
+  transition-timing-function:
+    ease-out, linear(0, 0.12 1.5%, 1.35 9.7%, 2.2 13.9%, 3 19.9%, 2.7 21.8%, 0.62 37.5%, 0.96 50.9%, 1);
+  transition-duration: 600ms;
+  transition-property: opacity, scale;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: opacity 100ms ease-out;
+  }
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    scale: 0.8;
+    transition-timing-function: ease-in;
+    transition-duration: 200ms;
+  }
+}
+
+.media-default-skin .media-input-feedback-bubble[data-direction="forward"] {
+  grid-column: 3;
+  justify-self: right;
+}
+
+/* --- Bubble icons ---------------------------------------------------------- */
+
+.media-default-skin .media-input-feedback-bubble .media-icon {
+  display: none;
+  width: 36px;
+  height: 36px;
+}
+
+/* seek: seek icon, flipped for backward */
+.media-default-skin .media-input-feedback-bubble[data-direction] .media-icon--seek {
+  display: block;
+}
+
+.media-default-skin .media-input-feedback-bubble[data-direction="backward"] .media-icon--seek {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .media-default-skin
+    .media-input-feedback-bubble[data-direction="forward"]:not([data-starting-style])
+    .media-icon--seek {
+    animation: media-slide-in-forward 300ms ease-in-out;
+  }
+
+  .media-default-skin
+    .media-input-feedback-bubble[data-direction="backward"]:not([data-starting-style])
+    .media-icon--seek {
+    animation: media-slide-in-backward 300ms ease-in-out;
+  }
+
+  .media-default-skin .media-input-feedback-island--status[data-status]:not([data-starting-style]) .media-icon,
+  .media-default-skin .media-input-feedback-bubble[data-status]:not([data-starting-style]) .media-icon {
+    animation: media-pop-in 250ms ease-out;
+  }
+}
+
+.media-default-skin .media-input-feedback-bubble[data-status="pause"] .media-icon--pause,
+.media-default-skin .media-input-feedback-bubble[data-status="play"] .media-icon--play {
+  display: block;
+}

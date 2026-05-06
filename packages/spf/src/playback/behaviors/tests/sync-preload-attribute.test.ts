@@ -1,0 +1,137 @@
+import { describe, expect, it, vi } from 'vitest';
+import { signal } from '../../../core/signals/primitives';
+import type { MediaElementLike } from '../../../media/types';
+import { syncPreloadAttribute } from '../sync-preload-attribute';
+
+describe('syncPreloadAttribute', () => {
+  it('syncs preload from mediaElement to state', async () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: MediaElementLike | undefined;
+    }
+
+    const state = signal<State>({
+      preload: undefined,
+    });
+
+    // Start with media element already set
+    const video = { preload: 'auto' } as MediaElementLike;
+    const owners = signal<Owners>({
+      mediaElement: video,
+    });
+
+    // Sync should pick up existing mediaElement on first effect fire (synchronous)
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBe('auto');
+
+    cleanup();
+  });
+
+  it('does not override preload when mediaElement changes and preload is already set', async () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: MediaElementLike | undefined;
+    }
+
+    const state = signal<State>({
+      preload: undefined,
+    });
+
+    const video = { preload: 'auto' } as MediaElementLike;
+    const owners = signal<Owners>({
+      mediaElement: video,
+    });
+
+    // Start syncing — initial inference from element (synchronous)
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBe('auto');
+
+    // Swap to a different mediaElement with a different preload value.
+    // Since preload is already set, the new element's value is ignored.
+    const updatedVideo = { preload: 'metadata' } as MediaElementLike;
+    owners.set({ ...owners.get(), mediaElement: updatedVideo });
+
+    await vi.waitFor(() => {
+      // preload should remain 'auto' — new element's value is not applied once preload is set
+      expect(state.get().preload).toBe('auto');
+    });
+
+    cleanup();
+  });
+
+  it('does not loop when mediaElement is absent and preload is unset', () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: MediaElementLike | undefined;
+    }
+
+    const state = signal<State>({ preload: undefined });
+    const owners = signal<Owners>({ mediaElement: undefined });
+
+    // Should not throw / hang — the effect must exit without writing when
+    // both preload and mediaElement are absent.
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBeUndefined();
+
+    cleanup();
+  });
+
+  it('does not loop when mediaElement has no preload attribute and preload is unset', () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: MediaElementLike | undefined;
+    }
+
+    const state = signal<State>({ preload: undefined });
+    // Browsers return '' when the preload attribute is absent
+    const owners = signal<Owners>({ mediaElement: { preload: '' } as MediaElementLike });
+
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBeUndefined();
+
+    cleanup();
+  });
+
+  it('does not clear preload when mediaElement is removed and preload is already set', async () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: MediaElementLike | undefined;
+    }
+
+    const state = signal<State>({
+      preload: 'auto',
+    });
+
+    const owners = signal<Owners>({
+      mediaElement: undefined,
+    });
+
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    owners.set({ ...owners.get(), mediaElement: undefined });
+
+    // Preload was already set — removing the element does not clear it.
+    expect(state.get().preload).toBe('auto');
+
+    cleanup();
+  });
+});

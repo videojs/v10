@@ -1,3 +1,4 @@
+import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Preset, Skin, Styling } from '@app/types';
 import { forwardRef, useState } from 'react';
@@ -8,19 +9,34 @@ type PreviewProps = {
   skin: Skin;
   styling: Styling;
   source: SourceId;
+  autoplay: boolean;
+  muted: boolean;
+  loop: boolean;
+  preload: PreloadValue;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, preset, skin, styling, source },
+  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload },
   ref
 ) {
-  const [iframeUrl] = useState(
-    () =>
-      `${pagePath}?preset=${encodeURIComponent(preset)}&skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}&source=${encodeURIComponent(source)}`
-  );
-  const openUrl =
-    `${pagePath}?preset=${encodeURIComponent(preset)}&skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}` +
-    `&source=${encodeURIComponent(source)}`;
+  const buildUrl = (base: string) => {
+    const params = new URLSearchParams({
+      preset,
+      skin,
+      styling,
+      source,
+      autoplay: autoplay ? '1' : '0',
+      muted: muted ? '1' : '0',
+      loop: loop ? '1' : '0',
+      preload,
+    });
+    return `${base}?${params}`;
+  };
+
+  // Capture the initial query so the iframe doesn't reload when autoplay/muted
+  // toggle — those changes are streamed in via postMessage.
+  const [iframeUrl] = useState(() => buildUrl(pagePath));
+  const openUrl = buildUrl(pagePath);
 
   return (
     <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">

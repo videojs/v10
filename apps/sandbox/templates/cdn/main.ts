@@ -1,9 +1,16 @@
 import '@app/styles.css';
-import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
+import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
-import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
+import {
+  onAutoplayChange,
+  onLoopChange,
+  onMutedChange,
+  onPreloadChange,
+  onSkinChange,
+  onSourceChange,
+} from '@app/shared/sandbox-listener';
 import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
 
@@ -73,10 +80,10 @@ async function loadCdnMedia(preset: Preset) {
 // Rendering — produces the exact HTML markup the installation builder generates.
 // ---------------------------------------------------------------------------
 
-function getPlayerTag(preset: Preset): string {
+function getPlayerTag(preset: Preset, live: boolean): string {
   if (preset === 'background-video') return 'background-video-player';
-  if (preset === 'audio' || preset === 'mux-audio') return 'audio-player';
-  return 'video-player';
+  if (preset === 'audio' || preset === 'mux-audio') return live ? 'live-audio-player' : 'audio-player';
+  return live ? 'live-video-player' : 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
@@ -135,7 +142,7 @@ async function render() {
   loadStylesheets(preset, state.skin);
 
   const root = document.getElementById('root')!;
-  const playerTag = getPlayerTag(preset);
+  const playerTag = getPlayerTag(preset, live);
   const skinTag = getSkinTag(preset, state.skin, live);
   const mediaTag = getMediaTag(preset);
   const source = SOURCES[state.source];
@@ -143,7 +150,7 @@ async function render() {
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
   const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
-  const liveAttrs = live ? 'autoplay muted' : '';
+  const mediaAttrs = renderMediaAttrs(state);
 
   // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {
@@ -167,7 +174,7 @@ async function render() {
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>
           <${skinTag}>
-            <${mediaTag} ${sourceAttr}></${mediaTag}>
+            <${mediaTag} ${sourceAttr} ${mediaAttrs}></${mediaTag}>
           </${skinTag}>
         </${playerTag}>
       </div>
@@ -178,7 +185,7 @@ async function render() {
   root.innerHTML = html`
     <${playerTag}>
       <${skinTag} class="aspect-video max-w-4xl mx-auto">
-        <${mediaTag} ${sourceAttr} ${liveAttrs} playsinline crossorigin="anonymous">
+        <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </${mediaTag}>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
@@ -196,5 +203,25 @@ onSkinChange((skin) => {
 
 onSourceChange((source) => {
   state.source = source;
+  render();
+});
+
+onAutoplayChange((autoplay) => {
+  state.autoplay = autoplay;
+  render();
+});
+
+onMutedChange((muted) => {
+  state.muted = muted;
+  render();
+});
+
+onLoopChange((loop) => {
+  state.loop = loop;
+  render();
+});
+
+onPreloadChange((preload) => {
+  state.preload = preload;
   render();
 });

@@ -1,13 +1,12 @@
 'use client';
 
+export type { IndicatorStatus, InputAction, InputIndicatorLabels } from '@videojs/core';
 // Core
 export * from '@videojs/core/dom';
-
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
-
 // Media primitives
 export {
   Container,
@@ -28,7 +27,6 @@ export {
   createPlayer,
   type ProviderProps,
 } from './player/create-player';
-
 // UI
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
@@ -47,6 +45,7 @@ export { useSlider } from './ui/hooks/use-slider';
 export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
 export { useAriaKeyShortcuts } from './ui/hotkey/use-aria-key-shortcuts';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
+export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
 export { Menu, type MenuContextValue, useMenuContext, useOptionalMenuContext } from './ui/menu';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
@@ -55,6 +54,9 @@ export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
+export { SeekIndicator } from './ui/seek-indicator';
+export type { SeekIndicatorRootProps } from './ui/seek-indicator/seek-indicator-root';
+export type { SeekIndicatorValueProps } from './ui/seek-indicator/seek-indicator-value';
 export { Slider } from './ui/slider';
 export type { SliderBufferProps } from './ui/slider/slider-buffer';
 export type { SliderFillProps } from './ui/slider/slider-fill';
@@ -63,10 +65,18 @@ export type { SliderThumbProps } from './ui/slider/slider-thumb';
 export type { SliderThumbnailProps } from './ui/slider/slider-thumbnail';
 export type { SliderTrackProps } from './ui/slider/slider-track';
 export type { SliderValueProps } from './ui/slider/slider-value';
+export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announcer/status-announcer';
+export { StatusIndicator } from './ui/status-indicator';
+export type { StatusIndicatorRootProps } from './ui/status-indicator/status-indicator-root';
+export type { StatusIndicatorValueProps } from './ui/status-indicator/status-indicator-value';
 export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
 export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
+export { VolumeIndicator } from './ui/volume-indicator';
+export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';
+export type { VolumeIndicatorRootProps } from './ui/volume-indicator/volume-indicator-root';
+export type { VolumeIndicatorValueProps } from './ui/volume-indicator/volume-indicator-value';
 export { VolumeSlider } from './ui/volume-slider';
 // Utilities
 export { mergeProps } from './utils/merge-props';

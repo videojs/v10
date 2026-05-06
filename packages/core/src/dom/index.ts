@@ -14,6 +14,7 @@ export * from './ui/alert-dialog';
 export * from './ui/button';
 export * from './ui/dismiss-layer';
 export * from './ui/event';
+export * from './ui/input-action';
 export * from './ui/menu/create-menu';
 export * from './ui/menu/create-menu-view-transition';
 export * from './ui/menu/menu-viewport-transition';
