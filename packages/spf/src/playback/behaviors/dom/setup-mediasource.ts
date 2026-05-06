@@ -88,7 +88,7 @@ function setupMediaSourceSetup({
 }
 
 export const setupMediaSource = defineBehavior({
-  stateKeys: ['presentationUrl', 'mediaSourceReadyState'],
+  stateKeys: ['presentation', 'mediaSourceReadyState'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupMediaSourceSetup,
 });

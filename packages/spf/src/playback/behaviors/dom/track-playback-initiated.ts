@@ -110,7 +110,7 @@ function trackPlaybackInitiatedSetup({
 }
 
 export const trackPlaybackInitiated = defineBehavior({
-  stateKeys: ['playbackInitiated', 'presentationUrl'],
+  stateKeys: ['playbackInitiated', 'presentation'],
   contextKeys: ['mediaElement'],
   setup: trackPlaybackInitiatedSetup,
 });

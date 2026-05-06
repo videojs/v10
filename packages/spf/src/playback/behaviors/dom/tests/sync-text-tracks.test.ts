@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { Presentation } from '../../../../media/types';
+import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { syncTextTracks, type TextTrackSyncContext, type TextTrackSyncState } from '../sync-text-tracks';
 
 function makePresentation(tracks: Array<{ id: string; kind?: string; language?: string }>) {
@@ -35,7 +35,7 @@ function makePresentation(tracks: Array<{ id: string; kind?: string; language?: 
 
 function makeState(initial: TextTrackSyncState = {}): StateSignals<TextTrackSyncState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
   };
 }

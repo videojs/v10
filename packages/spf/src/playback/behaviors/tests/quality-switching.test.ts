@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
-import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../../media/types';
+import type {
+  MaybeResolvedPresentation,
+  PartiallyResolvedVideoTrack,
+  Presentation,
+  VideoSelectionSet,
+} from '../../../media/types';
 import {
   DEFAULT_SWITCHING_CONFIG,
   type QualitySwitchingConfig,
@@ -16,7 +21,7 @@ import {
 
 function makeState(initial: QualitySwitchingState = {}): StateSignals<QualitySwitchingState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     abrDisabled: signal<boolean | undefined>(initial.abrDisabled),

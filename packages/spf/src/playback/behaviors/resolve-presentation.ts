@@ -116,7 +116,7 @@ function resolvePresentationSetup({
 }
 
 export const resolvePresentation = defineBehavior({
-  stateKeys: ['presentationUrl', 'presentation', 'preload', 'playbackInitiated'],
+  stateKeys: ['presentation', 'preload', 'playbackInitiated'],
   contextKeys: [],
   setup: resolvePresentationSetup,
 });

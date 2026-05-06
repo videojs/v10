@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
-import type { Presentation, VideoSelectionSet } from '../../../../media/types';
+import type { MaybeResolvedPresentation, Presentation, VideoSelectionSet } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
 import { loadVideoSegments } from '../load-segments';
@@ -25,7 +25,7 @@ vi.mock('../../../../media/dom/mse/buffer-flusher', () => ({
 
 function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadingState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<string | undefined>(initial.preload),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),

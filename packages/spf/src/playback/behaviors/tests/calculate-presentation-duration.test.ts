@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
-import type { AudioTrack, Presentation, VideoTrack } from '../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../media/types';
 import {
   calculatePresentationDuration,
   canCalculateDuration,
@@ -12,7 +12,7 @@ import {
 
 function makeState(initial: PresentationDurationState = {}): StateSignals<PresentationDurationState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
   };

@@ -17,7 +17,7 @@ afterEach(() => {
 
 function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),

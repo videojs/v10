@@ -249,8 +249,9 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.presentation.get()).toBeUndefined();
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
       expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });
@@ -267,8 +268,9 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.presentation.get()).toBeUndefined();
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
       expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });
@@ -315,8 +317,9 @@ variant1.m3u8`)
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.presentation.get()).toBeUndefined();
+      // Presentation slot still holds the unresolved input (URL only, no `id`).
       expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
+      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });

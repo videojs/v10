@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
-import type { Presentation, Segment } from '../../../../media/types';
+import type { MaybeResolvedPresentation, Segment } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   loadAudioSegments,
@@ -17,7 +17,7 @@ import {
 
 function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadingState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<string | undefined>(initial.preload),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),

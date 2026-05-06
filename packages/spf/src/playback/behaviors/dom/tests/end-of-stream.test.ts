@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { Presentation, Segment, VideoTrack } from '../../../../media/types';
+import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   canEndStream,
@@ -14,7 +14,7 @@ import {
 
 function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(initial.mediaSourceReadyState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),

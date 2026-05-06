@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
+import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { exposeEngineInputs, type SimpleHlsEngineInputs } from '../expose-engine-inputs';
 
 function makeDeps() {
   const state = {
-    presentationUrl: signal<string | undefined>(undefined),
+    presentation: signal<MaybeResolvedPresentation | undefined>(undefined),
     preload: signal<'auto' | 'metadata' | 'none' | undefined>(undefined),
     playbackInitiated: signal<boolean | undefined>(undefined),
     abrDisabled: signal<boolean | undefined>(undefined),
@@ -31,7 +32,7 @@ describe('exposeEngineInputs', () => {
     });
 
     expect(captured).toBeDefined();
-    expect(captured?.state.presentationUrl).toBe(state.presentationUrl);
+    expect(captured?.state.presentation).toBe(state.presentation);
     expect(captured?.state.preload).toBe(state.preload);
     expect(captured?.state.playbackInitiated).toBe(state.playbackInitiated);
     expect(captured?.state.abrDisabled).toBe(state.abrDisabled);
@@ -52,11 +53,11 @@ describe('exposeEngineInputs', () => {
       },
     });
 
-    captured?.state.presentationUrl.set('https://example.com/stream.m3u8');
+    captured?.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
     captured?.state.preload.set('auto');
     captured?.state.playbackInitiated.set(true);
 
-    expect(state.presentationUrl.get()).toBe('https://example.com/stream.m3u8');
+    expect(state.presentation.get()?.url).toBe('https://example.com/stream.m3u8');
     expect(state.preload.get()).toBe('auto');
     expect(state.playbackInitiated.get()).toBe(true);
   });
@@ -69,7 +70,7 @@ describe('exposeEngineInputs', () => {
   });
 
   it('declares the input keys in stateKeys and contextKeys', () => {
-    expect(exposeEngineInputs.stateKeys).toEqual(['presentationUrl', 'preload', 'playbackInitiated', 'abrDisabled']);
+    expect(exposeEngineInputs.stateKeys).toEqual(['presentation', 'preload', 'playbackInitiated', 'abrDisabled']);
     expect(exposeEngineInputs.contextKeys).toEqual(['mediaElement']);
   });
 });

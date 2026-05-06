@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import { resolveVttSegment } from '../../../../media/dom/text/resolve-vtt-segment';
-import type { Cue, MediaElementWithTextTracks, Presentation, Segment, TextTrack } from '../../../../media/types';
+import type {
+  Cue,
+  MaybeResolvedPresentation,
+  MediaElementWithTextTracks,
+  Presentation,
+  Segment,
+  TextTrack,
+} from '../../../../media/types';
 import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../../actors/text-tracks';
 import {
@@ -32,7 +39,7 @@ vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
 function makeState(initial: TextTrackCueLoadingState = {}): StateSignals<TextTrackCueLoadingState> {
   return {
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     currentTime: signal<number | undefined>(initial.currentTime),
   };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { Presentation } from '../../../../media/types';
+import type { MaybeResolvedPresentation, Presentation } from '../../../../media/types';
 import {
   canUpdateDuration,
   type DurationUpdateContext,
@@ -12,7 +12,7 @@ import {
 
 function makeState(initial: DurationUpdateState = {}): StateSignals<DurationUpdateState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(initial.mediaSourceReadyState),
   };
 }

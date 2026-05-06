@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { AudioTrack, Presentation, VideoTrack } from '../../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   buildMimeCodec,
@@ -139,7 +139,7 @@ describe('buildMimeCodec', () => {
 
 function makeState(initial: SourceBufferState = {}): StateSignals<SourceBufferState> {
   return {
-    presentation: signal<Presentation | undefined>(initial.presentation),
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
