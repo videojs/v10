@@ -1,31 +1,33 @@
 ---
-status: stages-A-B-C-complete-stage-D-pre-largely-landed
+status: stages-A-B-C-D-shipped-pivoted-no-count-invariant
 branch: refactor/spf-discrete-signals-and-behavior-objects
 ---
 
 # SPF: Discrete Signals + Behavior-as-Object
 
-> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, and C have landed (the user's plan numbered these as steps 1, 2a, 2b, and 3). Stage D-pre's input mechanism + adapter/harness migration has landed; the reconciler-overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) are deferred into Stage D proper. Stage D type enforcement is still TBD. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
+> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, C, and a scoped-down Stage D have landed. Stage D originally proposed a compose-time **writer-count invariant** (0-or-1 writer per signal) on top of per-slot read/write annotations — that part was dropped after the writer audit revealed multiple legitimate multi-writer patterns (intent+default, pipeline, two-way DOM sync). What shipped is the per-slot annotation work + writer audit; multi-writer slots are accepted as legitimate shapes. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
 
 ## Status snapshot
 
 - **Branch:** `refactor/spf-discrete-signals-and-behavior-objects` (off `docs/spf-hls-engine-composition`). Renamed from `refactor/spf-discrete-signals-stage-a` once scope expanded beyond Stage A.
-- **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests + Stage D-pre input mechanism. Tests green: 49 files, 759 tests passed.
+- **Stages A + B + C + D (scoped-down) complete** + engine-wrapper revisit + `buildSignalMap` export + Stage D-pre input mechanism (`shareSignals`) + per-slot read/write annotation propagation across all 17 behaviors. Tests green: 49 files, 759 tests passed.
 - **Build clean.** `pnpm typecheck`, `pnpm -F @videojs/spf test`, `pnpm exec biome check`, `pnpm check:workspace`, `pnpm build:packages` all pass.
-- **Stage D in-scope for this branch.** Direction picked: read/write enforcement is derived from the setup signature (per-slot `Signal<T>` vs `ReadonlySignal<T>`), no separate `writeKeys` array. Invariant is **0-or-1 writer behaviors per signal** (0-writer keys must be seeded via `initialState`). Composition surface becomes uniformly read-only externally.
-- **Stage D-pre largely landed.** The adapter's external writes now flow through a generic `shareSignals` behavior factory: the engine instantiates `makeShareSignals<S, C>()` and the consumer captures writable signal refs via `config.onSignalsReady` at composition setup. Adapter migrated; sandbox harness rebuilt (also fixed: it had been on the pre-Stage-A monolithic API since Stage A landed). The 2-writer overlap cases (`selectedVideoTrackId` from harness rendition picker + `selectVideoTrack` behavior; `selectedTextTrackId` from harness auto-selection + `selectTextTrack` behavior) are **deferred** — the harness still writes those directly into composition state with `TODO(stage-d)` markers. See `### What landed` and `### Deferred to Stage D` in the Stage D section.
-- **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`; reconciler design + Stage D type machinery.
+- **Stage D pivoted (no count invariant).** Per-slot `Signal<T>` (writable) / `ReadonlySignal<T>` (read-only) annotations are the contract — body-level write enforcement is shipped (commit `b7866e6a`). The originally-planned compose-time writer-count invariant ("0-or-1 writer behaviors per signal") was **dropped** once the writer audit (commit `c29fea1e`) confirmed that multi-writer slots are legitimate patterns, not violations. See `### Why we dropped the writer-count invariant` for the patterns and reasoning.
+- **Stage D-pre shipped.** The adapter's external writes flow through a generic `shareSignals` behavior factory: the engine instantiates `makeShareSignals<S, C>()` and the consumer captures writable signal refs via `config.onSignalsReady` at composition setup. Adapter migrated; sandbox harness rebuilt (also fixed: it had been on the pre-Stage-A monolithic API since Stage A landed). The 2-writer cases on `selectedVideoTrackId` / `selectedTextTrackId` are now documented in the writer audit as legitimate intent+default patterns; the harness's direct writes via `engine.state` retain `TODO(stage-d)` markers as cleanup hints (decompose into manual + ABR slots), but are no longer Stage D-blocking.
+- **Future follow-up:** custom linter rule that warns on multi-writer slots with an ignore-comment mechanism for intentional cases (`// writer-audit-allow: <reason>`). Captures the original Stage D intent (visibility into multi-writer cases) without forcing decomposition through types. See `### Follow-up: writer-audit lint rule`.
+- **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`.
 - **Memory:** `project_spf_stage_a_revisit.md` has the deeper "why we did it this way" notes for Stage A; updated for B/C carryovers.
 
 ## Resuming — where to start the next session
 
-1. **Verify branch state.** `git log --oneline` should show the rename-to-shareSignals commit at HEAD; just below: `9559d860 docs(spf): refresh plan doc for post-revert single-slot presentation` and `b17ef570 refactor(spf): route adapter inputs through exposeEngineInputs behavior` (the original landing — since renamed/generalized).
-2. **Stage D type enforcement is the next major move.** Direction is picked (setup-signature-driven, no `writeKeys`; 0-or-1 writer-behavior invariant; required `initialState` for 0-writer keys; uniformly read-only public surface). Remaining open questions are mostly mechanical — see `## Stage D — direction picked, details TBD` below.
-3. **Reconcilers for the 2-writer overlap cases** (`selectedVideoTrackId`, `selectedTextTrackId`) get folded into Stage D. Stage D's type machinery needs them anyway — once writer-count enforcement is on, the harness's direct writes have to go somewhere, and that somewhere is a reconciler that takes intent + presentation and writes the resolved id. See `### Reconciler shape (Pattern B, deferred)`.
-4. **Other moves (any order, can interleave with Stage D):**
-   - **Doc updates.** `packages/spf/docs/hls-engine.md` is on the parent `docs/spf-hls-engine-composition` branch and is now badly stale (uses old `update`-style state writes, single-`owners` signal, no `defineBehavior`, no `stateKeys`/`contextKeys`). Refresh after Stage D lands or use as a friction-list canary during. `internal/design/spf/fundamentals.md` no longer matches the new pattern (recommends external state writes; Stage C made that disallowed).
-   - **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off. Could fold into Stage D's pass since per-slot read/write annotations may surface a clean factory shape.
-   - **Open the PR.** Branch is shippable as-is even without Stage D, but holding the PR until Stage D lands keeps the change set coherent under the new branch name.
+1. **Verify branch state.** `git log --oneline` should show recent commits including `c29fea1e docs(spf): add per-behavior + shareSignals writer audit to plan doc`, `b7866e6a refactor(spf): make per-slot read/write intent explicit in behaviors`, and `6b9801a4 refactor(spf): parameterize Behavior types over slot-map shapes`.
+2. **No major Stage D work pending.** The scoped-down Stage D shipped; the count invariant is dropped. Stage D's open questions (`### Open questions for Stage D implementation`) are largely resolved or moot.
+3. **Independent grooming work** (any order, can interleave):
+   - **Writer-audit lint rule.** The future follow-up — a custom rule that warns on multi-writer slots with a comment-based ignore mechanism for intentional cases. See `### Follow-up: writer-audit lint rule` for the sketch.
+   - **`selectedVideoTrackId` decomposition.** Replace the `abrDisabled` flag with a clean intent-vs-default split: separate `abrSelectedVideoTrackId` (written by `switchQuality`) and `manualSelectedVideoTrackId` (written by external code), derive `selectedVideoTrackId` as `manual ?? abr`. Already noted as a TODO at `quality-switching.ts:18`. Independent of Stage D.
+   - **Doc updates.** `packages/spf/docs/hls-engine.md` (parent `docs/spf-hls-engine-composition` branch) and `internal/design/spf/fundamentals.md` are stale. Refresh post-merge.
+   - **Code-reuse follow-up.** Three behavior modules (select-tracks, resolve-track, load-segments) lost some code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off.
+   - **Open the PR.** Branch is shippable.
 
 ## Stage A — what landed (early commits, pre-this-session)
 
@@ -80,60 +82,70 @@ Originally flagged as "save for the end" of Stage B. The engine had 8 wrappers (
 - **`load-segments.ts`** (`e4ce10ae`) — `loadSegments` split into `loadVideoSegments`, `loadAudioSegments`. Body shared via `setupSegmentLoading(state, context, type)` helper. **State/context keys still broad** — narrowing per specialization is a follow-up (see below).
 - **Engine** drops all 8 wrappers, the `Deps` shorthand, and the `StateSignals`/`ContextSignals` imports (no longer needed locally).
 
-## Stage D — direction picked, details TBD
+## Stage D — pivoted: per-slot annotations are the contract
 
-The user's plan #4: read/write enforcement. **In-scope for this branch.** As of 2026-05-04 we've picked the direction: **enforcement is derived from the setup signature itself, not from a separately-maintained `writeKeys` array.** The composition surface becomes uniformly read-only externally; all signal writes live inside behaviors. Detailed shape and the input mechanism for time-varying external inputs are TBD.
+The user's plan #4: read/write enforcement. **Shipped in scoped-down form (commit `b7866e6a`).** The original plan included a compose-time **writer-count invariant** ("0-or-1 writer behaviors per signal") on top of per-slot read/write annotations. The annotation work shipped; the count invariant was **dropped** after the writer audit (commit `c29fea1e`) confirmed multi-writer slots are legitimate patterns, not violations.
 
-### Direction
+### What shipped
 
 Behaviors declare per-slot access by typing the setup param's `state` / `context` slots as either `Signal<T>` (read+write) or `ReadonlySignal<T>` (read-only):
 
 ```ts
 defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId'] as const,
-  setup({ state }: BehaviorDeps<{
-    presentation: ReadonlySignal<Presentation>,
-    selectedVideoTrackId: Signal<string | null>,
-  }>): BehaviorCleanup { ... }
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  setup: ({ state }: {
+    state: {
+      presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
+      selectedVideoTrackId: Signal<string | undefined>;
+    };
+  }) => effect(() => { ... }),
 });
 ```
 
 Why this works:
 
-- `ReadonlySignal<T>` already exists (`core/signals/primitives.ts`) as `Omit<Signal<T>, 'set'>`. The structural difference (no `.set`) is enough to drive both body-level enforcement and compose-time inference. **No brands needed.**
-- The body literally cannot call `.set()` on a `ReadonlySignal<T>` slot — type-safety follows directly from the param type.
-- `createComposition` walks each behavior's setup param at the type level, identifies `Signal<T>` slots as writers and `ReadonlySignal<T>` slots as readers, and validates the writer-count invariant.
+- `ReadonlySignal<T>` already exists (`core/signals/primitives.ts`) as `Omit<Signal<T>, 'set'>`. The structural difference (no `.set`) drives body-level enforcement directly — TS rejects `.set()` on a slot typed as `ReadonlySignal<T>`. **No brands needed.**
+- `Behavior<>` / `BehaviorDeps<>` / `defineBehavior` are now parameterized over **slot maps** (`StateMap`, `ContextMap`) rather than data shapes (`S`, `C`). Slot maps are bounded as `Record<PropertyKey, ReadonlySignal<unknown>>` so heterogeneous slot maps (some writable, some read-only) typecheck cleanly. `StateSignals<S>` / `ContextSignals<C>` remain as helpers for "everything writable" cases (`Composition<S, C>`'s public surface still uses them — no read/write split externally).
+- Cross-behavior intersection (`InferBehaviorState` / `IntersectBehaviors`) is unchanged — `UnwrapSignals<M>` matches structurally on `{ get(): infer V }`, so both `Signal<T>` and `ReadonlySignal<T>` unwrap to `T`.
 
-### The writer-count invariant
+All 17 playback behaviors were updated in commit `b7866e6a`. See `### Per-behavior writer audit (post-propagation)` for the full picture.
 
-For each declared signal across a composition: **0 or 1 writer behaviors**, with these rules:
+### Why we dropped the writer-count invariant
 
-- **0 writers**: signal must be seeded via `initialState` / `initialContext`. Becomes a constant after seeding.
-- **1 writer**: that behavior owns the write lifecycle (and per-signal cleanup/reset on destroy).
-- **2+ writers**: invalid. Compose-time error.
+The original plan was: **0-or-1 writer behaviors per signal**, enforced at compose time via the type machinery. 0-writer slots would be required in `initialState`; 2+ writers would be a compile error.
 
-This shifts `initialState` / `initialContext` from `Partial<S>` to a key-conditional shape — required for 0-writer keys, optional for 1-writer keys:
+The writer audit revealed three legitimate multi-writer patterns we'd be ruling out:
 
-```ts
-type ResolveInitialState<S, Behaviors> =
-  & { [K in keyof S as IsZeroWriter<Behaviors, K> extends true ? K : never]-?: S[K] }
-  & { [K in keyof S as IsZeroWriter<Behaviors, K> extends true ? never : K]?: S[K] };
-```
+1. **Pipeline / patch** — `presentation` is written by the adapter (initial `{ url }` seed), then `resolvePresentation` (parses manifest), then `resolve{Video,Audio,Text}Track` (per-track segments), then `calculatePresentationDuration` (duration field). Each writer owns a different aspect of the same logical object. Forcing decomposition into separate `url` / `selectionSets` / `tracks.*.segments` / `duration` slots breaks the "presentation is one thing" model and pushes complexity to consumers (query 4 slots instead of 1). Forcing colocation breaks composition.
 
-The compose call site gets a type error if a behavior is removed (or never added) and a 0-writer key isn't seeded.
+2. **Intent + reactive default** — `selectedVideoTrackId` is written by `selectVideoTrack` (default-pick on presentation load), `switchQuality` (ABR), and external code (manual override, currently in the sandbox harness). Disambiguated today via the `abrDisabled` flag. A clean factoring exists (separate `abrSelectedVideoTrackId` + `manualSelectedVideoTrackId` slots, derive `selectedVideoTrackId` as `manual ?? abr` — see `quality-switching.ts:18`'s TODO), but we don't want to *force* this decomposition for every multi-writer case. The "two writers + mode-flag disambiguator" shape is sometimes the right answer.
 
-### What this means for the composition surface
+3. **Two-way DOM sync** — `preload` is written by `syncPreloadAttribute` (DOM → state mirror) and external code via `shareSignals` (state → drives downstream DOM behavior). The slot is a coordination point between observer and controller; both writers are legitimate.
 
-The composition's public `state` / `context` become **uniformly read-only externally**. There is no "external writes via signal" pathway:
+The 0-or-1 invariant would force decomposition for all three cases. That's too aggressive — it imposes a uniform shape on patterns that are genuinely different. Per-slot annotations alone (which we shipped) give us body-level write enforcement and self-documenting intent at the call site; the count invariant was layered on top but adds churn without proportional value.
 
-- **Constant inputs** (set once at construction): go through `initialState` / `initialContext`.
-- **Time-varying inputs** (e.g. the adapter's `presentation`, `preload`, `mediaElement`, `playbackInitiated`): must go through a writer behavior, fed by an explicit non-signal input mechanism — see Stage D-pre below.
+**Decision:** drop the count invariant. Multi-writer slots are legitimate. The writer audit (`### Per-behavior writer audit`) documents who writes what; review serves the same purpose the count invariant would have.
 
-The "0-writer = external input via signal" overload is **rejected**: it would let one syntactic shape (`ReadonlySignal<T>` slot) carry two semantic meanings (internal vs external write source) discoverable only by surveying the entire composition.
+### Composition surface stays writable
 
-### Stage D-pre — what landed and what's deferred
+The original plan made `composition.state` / `composition.context` **uniformly read-only externally** — all writes had to go through behaviors or the `shareSignals` callback. Without the count invariant, this enforcement isn't necessary: the composition surface stays as `StateSignals<S>` / `ContextSignals<C>` (writable). External code can still write directly via `composition.state.X.set(...)` (the harness's deferred `selectedVideoTrackId` / `selectedTextTrackId` writes do this).
 
-Before Stage D's type machinery lands, the runtime invariant has to hold. Audit (2026-05-04) showed the external writers to composition signals were:
+Per-slot annotations are a **behavior-side** contract — they describe what each behavior reads and writes within its setup body. They're not a composition-surface contract.
+
+### Follow-up: writer-audit lint rule
+
+A future custom linter rule could capture the original Stage D intent (visibility into multi-writer cases) without forcing decomposition through types:
+
+- **Detection.** Walk all `defineBehavior(...)` calls and `shareSignals.onSignalsReady` consumer callbacks; tally writers per slot.
+- **Warn on multi-writer slots.** Surface the writer list at each violating site so reviewers see the broader picture.
+- **Ignore mechanism.** A comment marker (e.g. `// writer-audit-allow: <reason>`) on the writing line opts the slot out of the warning. Forces the author to articulate intent ("this is the pipeline pattern" / "this is intent + default with `abrDisabled` mode flag" / "this is DOM ↔ state sync").
+- **Separate concerns.** Lives in tooling, not in types — keeps the type system simple and lets reviewers see the multi-writer landscape without compile-time churn.
+
+Not in scope for the current branch. Worth opening as a follow-up issue once the branch ships.
+
+### Stage D-pre — what landed (input mechanism)
+
+Stage D-pre routed external writes through a new generic behavior (`shareSignals`) so the call site for "external writes" became uniform. Originally framed as a precondition for Stage D's count invariant; with the invariant dropped, this work stands on its own as the canonical pattern for external writes. Audit (2026-05-04) showed the external writers to composition signals were:
 
 | Key | Slot | Trigger | Nature | Status |
 |---|---|---|---|---|
@@ -142,10 +154,10 @@ Before Stage D's type machinery lands, the runtime invariant has to hold. Audit 
 | `presentation` | state | `src =` IDL setter (writes `{ url }`) | HTML attribute input | ✅ same |
 | `playbackInitiated` | state | `play()` method | Imperative input | ✅ same |
 | `abrDisabled` | state | sandbox harness UI toggle | pure input, no overlap | ✅ same |
-| `selectedVideoTrackId` | state | sandbox harness rendition picker **and** `selectVideoTrack` behavior | **2-writer overlap** — behavior default-picks; harness overrides | ⏳ deferred to Stage D — harness still writes directly with `TODO(stage-d)` |
-| `selectedTextTrackId` | state | sandbox harness auto-select + (default-pick from `selectTextTrack` behavior) | overlap on default-pick | ⏳ deferred to Stage D — same |
+| `selectedVideoTrackId` | state | sandbox harness rendition picker + `selectVideoTrack` (default-pick) + `switchQuality` (ABR) | **Multi-writer (intent + reactive default)** — accepted pattern; cleanup proposed at `quality-switching.ts:18` (decompose into `manualSelectedVideoTrackId` + `abrSelectedVideoTrackId`) |
+| `selectedTextTrackId` | state | sandbox harness auto-select + `selectTextTrack` (default-pick) + `syncTextTracks` (DOM-driven) | **Multi-writer** — accepted pattern; harness still writes directly with `TODO(stage-d)` markers as cleanup hints |
 
-**The harness was also on the pre-Stage-A monolithic API** (`engine.state.set({...engine.state.get(),...})` + `engine.owners`) since Stage A landed — broken at runtime, not just type-stale. Stage D-pre rebuilt it on the discrete-signals shape and routed all five non-overlap inputs through `onSignalsReady`. The two overlap cases stayed as direct writes because they need a reconciler design that hasn't landed yet.
+**The harness was also on the pre-Stage-A monolithic API** (`engine.state.set({...engine.state.get(),...})` + `engine.owners`) since Stage A landed — broken at runtime, not just type-stale. Stage D-pre rebuilt it on the discrete-signals shape and routed all five non-overlap inputs through `onSignalsReady`. The two multi-writer cases stayed as direct writes via `engine.state` (no longer needing a reconciler — see "Reconciler shape — optional pattern").
 
 ### Input mechanism — actual implementation (`shareSignals`)
 
@@ -205,7 +217,7 @@ What actually landed:
    }
    ```
 
-5. **Bidirectional usage** — once Stage D's read/write enforcement lands, the consumer's callback can declare per-slot intent by typing captured refs as `Signal<T>` (write) or `ReadonlySignal<T>` (read-only). For now everything is `Signal<T>`; the discipline is informal.
+5. **Bidirectional usage** — the consumer's callback can already declare per-slot intent by typing captured refs as `Signal<T>` (write) or `ReadonlySignal<T>` (read-only) — `Signal<T>` is structurally a subtype of `ReadonlySignal<T>`, so the narrower assignment Just Works. Discipline is per-consumer; today's consumers (adapter, harness) declare everything writable since they need both reads and writes.
 
 **Why this is simpler than the original sketch.** The mirror-behaviors layer assumed the input signals had to be *separate* from composition state ("input signals are owned by the engine; composition state is owned by the composition"). But there's no actual benefit to that separation — the composition is owned by the engine factory, which is the same scope. The single signal set carries both roles.
 
@@ -255,34 +267,32 @@ Plus the deferred reconciler-overlap cases — the harness still writes these **
 | Sandbox harness rendition picker | `selectedVideoTrackId` (manual override) | `// TODO(stage-d)` |
 | Sandbox harness auto-select effect | `selectedTextTrackId` (initial pick) | `// TODO(stage-d)` |
 
-These two slots are the 2-writer cases that need reconcilers (see "Reconciler shape (Pattern B, deferred to Stage D)" below).
+These slots are documented in the multi-writer table below as legitimate intent + default patterns; the harness's direct writes via `engine.state` are noted with `TODO(stage-d)` markers as cleanup hints (see `selectedVideoTrackId` decomposition below) but are no longer Stage D-blocking.
 
-#### Multi-writer slots — what Stage D's invariant has to handle
+#### Multi-writer slots — accepted patterns
 
-Slots with more than one writer once both internal and external writes are counted:
+Slots with more than one writer once both internal and external writes are counted. With the count invariant dropped, these are **legitimate shapes**, not violations:
 
 | Slot | Writers | Pattern |
 |---|---|---|
-| `presentation` | adapter / harness (initial `{ url }`), `resolvePresentation` (parsed), `resolve{Video,Audio,Text}Track` (per-track resolution), `calculatePresentationDuration` (duration field) | **Pipeline** — each writer builds on the previous, never mutating fields owned by another. May warrant per-field decomposition under Stage D. |
-| `preload` | `syncPreloadAttribute` (DOM → state), adapter / harness (state → drives DOM via downstream) | **Two-way sync** — likely needs Stage D to disambiguate "external sets" from "DOM mirrors" with a separate input slot. |
-| `selectedVideoTrackId` | `selectVideoTrack` (default-pick), `switchQuality` (ABR), harness direct write (manual override, deferred) | **Intent + reactive default** — natural reconciler case. |
-| `selectedTextTrackId` | `selectTextTrack` (default-pick), `syncTextTracks` (DOM-driven), harness direct write (auto-select, deferred) | Same. |
-| `playbackInitiated` | `trackPlaybackInitiated` (DOM observer), adapter `play()` write | **Imperative + observer** — adapter sets `true` on `play()` call, observer reflects DOM `paused` state on cleanup. May be a single-writer-with-input-trigger case. |
-| `mediaElement` | adapter / harness only | Externally-driven only — single-source from outside, no internal writers. Cleanest case. |
+| `presentation` | adapter / harness (initial `{ url }`), `resolvePresentation` (parsed), `resolve{Video,Audio,Text}Track` (per-track resolution), `calculatePresentationDuration` (duration field) | **Pipeline** — each writer owns a different aspect of the same logical object; each builds on the previous via `{ ...current, fieldOwnedHere }` rather than overwriting. |
+| `preload` | `syncPreloadAttribute` (DOM → state), adapter / harness (state → drives DOM via downstream) | **Two-way DOM sync** — the slot is a coordination point between observer and controller. |
+| `selectedVideoTrackId` | `selectVideoTrack` (default-pick), `switchQuality` (ABR), harness direct write (manual override) | **Intent + reactive default** — disambiguated today via `abrDisabled` flag. Cleaner factoring exists (separate `manualSelectedVideoTrackId` + `abrSelectedVideoTrackId`, derive `selectedVideoTrackId` as `manual ?? abr`); see TODO at `quality-switching.ts:18`. Independent cleanup, not Stage D-mandated. |
+| `selectedTextTrackId` | `selectTextTrack` (default-pick), `syncTextTracks` (DOM-driven), harness direct write (auto-select) | Same intent + reactive default pattern. |
+| `playbackInitiated` | `trackPlaybackInitiated` (DOM observer), adapter `play()` write | **Imperative + observer** — adapter sets `true` on `play()` call; observer reflects DOM `paused` state on cleanup. |
+| `mediaElement` | adapter / harness only | Externally-driven only — single source from outside, no internal writers. |
 
-Most multi-writer slots fall into one of three patterns: pipelines (presentation), two-way sync (preload), or intent+default reconcilers (`selected*TrackId`). Stage D's writer-count enforcement + the reconciler design have to cover all three.
+The future writer-audit lint rule (see `### Follow-up: writer-audit lint rule`) will surface multi-writer slots at review time and let the author confirm intent via an ignore comment, without forcing decomposition through types.
 
-### Reconciler shape (Pattern B, deferred to Stage D)
+### Reconciler shape — optional pattern (no longer Stage D-required)
 
-The 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) need a reconciler when external "intent" overlaps with a behavior-owned default-pick. Today the harness writes intent directly into composition state and the behavior writes the default-pick into the same slot — runtime works but Stage D's writer-count enforcement will reject it.
-
-The fix: the current `selectVideoTrack` behavior becomes a `reconcileSelectedVideoTrackId` behavior that reads an external intent + presentation and writes the resolved id. The intent input is a separate signal (held by the engine factory or the adapter / harness, whichever owns the intent) and gets passed to the reconciler at composition time.
+Originally the 2-writer cases on `selectedVideoTrackId` / `selectedTextTrackId` were going to need a reconciler to satisfy the count invariant. With the invariant dropped, **the reconciler pattern is now optional** — multiple direct writers are fine. We're keeping the sketch below as a documented pattern for cases where the intent-vs-reactive-default distinction is worth making explicit.
 
 ```ts
-// behaviors/select-tracks.ts (revised — replaces selectVideoTrack)
-export function reconcileSelectedVideoTrackId(
-  intent: ReadonlySignal<string | undefined>,
-) {
+// Optional pattern — replaces a default-pick behavior with a reconciler that
+// also reads external intent. Useful when the consumer wants the intent vs.
+// default split to be visible in the type signature.
+export function reconcileSelectedVideoTrackId(intent: ReadonlySignal<string | undefined>) {
   return defineBehavior({
     stateKeys: ['presentation', 'selectedVideoTrackId'],
     setup: ({ state }: {
@@ -310,40 +320,25 @@ export function reconcileSelectedVideoTrackId(
 }
 ```
 
-**Open question for the reconciler implementation:** where does the intent signal live? Options:
-- **Engine config** — engine creates the intent signal, hands it back via `onSignalsReady` (alongside the composition signals). Treats intent as part of the engine's input surface.
-- **Engine config, separate callback** — the reconciler's setup callback receives the intent, similar to a plugin handshake.
-- **Adapter-owned** — adapter creates the intent signal, passes it into the reconciler at composition time. Tightest scoping but couples reconciler creation to adapter knowledge.
+The cleaner-still factoring (decompose into `manualSelectedVideoTrackId` + `abrSelectedVideoTrackId`, derive `selectedVideoTrackId` as `manual ?? abr`) eliminates the multi-writer entirely. Either approach works; the choice is per-case, not a framework rule.
 
-Likely the first: extend the `onSignalsReady` payload (or an adjacent `onIntentsReady`) with intent signals. Decide alongside Stage D's read/write split since the shape interacts.
+### Open product questions (still relevant if a reconciler is adopted)
 
-### Open product questions inside the reconcilers
-
-These are real questions about behavior, not architecture. Live in the reconciler body whichever way inputs are wired:
+These are real questions about behavior, not architecture. Apply equally to the harness's current direct writes or to a future reconciler:
 
 - Default-pick re-fire on presentation reload — should `selectedVideoTrackId` reset to track 0 of the new presentation, or persist if user-selected and still valid?
 - Intent pointing at a track that doesn't exist in the current presentation — fall back to default? Reset intent? Both?
-- "Reset to auto" semantics — setting intent to `undefined` clears override; reconciler falls back to default-pick.
+- "Reset to auto" semantics — setting intent to `undefined` clears override; reactive default takes over.
 
-### Open questions for Stage D implementation
+### Resolved questions (Stage D scope-down)
 
 1. ~~**`writeKeys` placement.**~~ **Resolved.** No `writeKeys`. Per-slot access lives in the setup signature.
-
 2. ~~**`ReadSignal<T>` / `WriteSignal<T>` shape.**~~ **Resolved.** Reuse `Signal<T>` (writable) and `ReadonlySignal<T>` (read-only). No brands.
-
-3. ~~**0-writer signals + `initialState`.**~~ **Resolved.** 0-writer signals are constants seeded via `initialState`; required (not optional) at the type level. Composition surface is uniformly read-only externally; there is no signal-shaped external input pathway.
-
-4. ~~**Input mechanism for the adapter's 4 writes.**~~ **Resolved (and shipped).** Generic `shareSignals` behavior factory hands writable signal refs to a consumer-supplied `config.onSignalsReady` callback at composition setup. The "input signals" are the composition state signals — no separate set, no mirror layer. Adapter and harness both use this. Reconcilers for the 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) are deferred into Stage D. See `### Input mechanism — actual implementation (shareSignals)` above.
-
-5. **Single-writer enforcement scope.** Compose-time only, or also at `defineBehavior`? Compose-time is required (cross-behavior). `defineBehavior` would catch "behavior can't declare the same key as both `Signal<T>` and `ReadonlySignal<T>` in its own setup" almost free via the existing exhaustiveness machinery.
-
-6. **Migration path for read/write annotations.** Each behavior currently takes `state: { [K]: Signal<S[K]> }` (everything writable). Per-behavior audit:
-   - Slots `.set` somewhere in the body → `Signal<T>`.
-   - Slots only read → `ReadonlySignal<T>`.
-   - No safe "default everything to writable" middle step (defeats enforcement).
-   - Likely one PR per behavior module. Stage D-pre is landed; this can start whenever Stage D's type machinery is ready.
-
-7. **Code-reuse follow-up convergence.** The three behavior modules in `## Follow-ups` lost code reuse during the engine-wrapper revisit. Stage D's per-slot access annotations might surface a clean factory shape (e.g. `makeFirstTrackSelector(type, selectedKey)` with the read/write split baked into the factory's return type). Worth holding the follow-up pass until Stage D's mechanics are nailed down.
+3. ~~**0-writer signals + `initialState`.**~~ **Moot — count invariant dropped.** 0-writer slots are still allowed (and seeded via `initialState` if needed); they just aren't enforced as a special case. `initialState` stays `Partial<S>`.
+4. ~~**Input mechanism for the adapter's writes.**~~ **Resolved (and shipped).** Generic `shareSignals` behavior factory hands writable signal refs to a consumer-supplied `config.onSignalsReady` callback at composition setup.
+5. ~~**Single-writer enforcement scope.**~~ **Moot — count invariant dropped.**
+6. ~~**Migration path for read/write annotations.**~~ **Resolved (and shipped).** All 17 behaviors migrated in commit `b7866e6a`.
+7. **Code-reuse follow-up convergence.** Still open. Three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. The per-slot annotation work didn't surface a clean factory shape; this is independent grooming.
 
 8. **The destroy reset loop.** Currently `for (const sig of Object.values(state)) sig.set(undefined)`. Stage D moves this into per-signal cleanup owned by the writer behavior. Open: 0-writer (seeded) signals — skip the reset (preserve seeded value, treating them as immutable constants)? The cleanest answer is "yes, skip" — once they're constants, there's nothing to reset.
 
@@ -351,7 +346,7 @@ These are real questions about behavior, not architecture. Live in the reconcile
 
 ## Motivation
 
-A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"declared signals with clear ownership."** Today, `state` and `owners` are each a single signal whose value is an object; any behavior can read or write any field. We want each field to be its own signal, and we want behaviors to declare which signals they read and which they write — so the compose step can enforce single-writer / N-reader and surface the contract in types.
+A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"declared signals with clear ownership."** Today, `state` and `owners` are each a single signal whose value is an object; any behavior can read or write any field. The shift makes each field its own signal and asks behaviors to declare which signals they read and which they write — surfacing the contract in types and making intent visible at the call site. (Originally the plan also included a compose-time writer-count invariant; that part was dropped after the writer audit confirmed multiple legitimate multi-writer patterns exist. See `### Why we dropped the writer-count invariant`.)
 
 ## The six changes
 
@@ -359,8 +354,8 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 2. **Rename `owners` → `context`.** ✅ Stage A.
 3. **Networking → shared singleton in `context`.** ❌ Deferred (Stage E or follow-up).
 4. **Behaviors: function → object with `stateKeys` / `contextKeys`.** ✅ Stage B.
-5. **No external signal setting from the composition.** ✅ Stage C — `createComposition` no longer accepts caller-built signal maps; behaviors own all writes (with `initialState` / `initialContext` for seed values).
-6. **Read vs. write enforcement on signals.** ❌ Deferred (Stage D).
+5. **No external signal setting from the composition.** ✅ Stage C — `createComposition` no longer accepts caller-built signal maps; behaviors own all writes (with `initialState` / `initialContext` for seed values). (The Stage-D follow-up here would have made `composition.state` read-only externally; that part was dropped — composition surface stays writable. External writes go through the `shareSignals.onSignalsReady` callback by convention rather than by enforcement.)
+6. **Read vs. write enforcement on signals.** ✅ Stage D, scope reduced — per-slot `Signal<T>` / `ReadonlySignal<T>` annotations on behavior setup signatures (body-level enforcement). The originally-planned compose-time writer-count invariant ("0-or-1 writer per slot") was **dropped** — multi-writer patterns are accepted as legitimate. Future custom linter rule will warn on multi-writer slots with an ignore mechanism.
 
 ## Proposed staging (historical reference)
 
@@ -369,8 +364,8 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 | **A** | (1) discrete signals; (2) `owners` → `context` | ✅ Complete |
 | **B** | (4) behavior-as-object with `stateKeys` / `contextKeys` / `setup` | ✅ Complete |
 | **C** | (5) no external setting from composition + `initialState` | ✅ Complete |
-| **D-pre** | route adapter + harness writes through `shareSignals` / `onSignalsReady` callback | ✅ Largely landed; reconcilers for 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) deferred into Stage D |
-| **D** | (6) writer-count enforcement (0-or-1 per signal) via setup-signature-derived read/write split + reconcilers for the deferred overlap cases | ⏳ In-scope, direction picked, details TBD |
+| **D-pre** | route adapter + harness writes through `shareSignals` / `onSignalsReady` callback | ✅ Shipped |
+| **D (scope-down)** | (6) per-slot `Signal<T>` / `ReadonlySignal<T>` annotations on all behaviors. Count invariant **dropped** — multi-writer slots are legitimate patterns. | ✅ Shipped (commit `b7866e6a`); writer-audit lint rule = future follow-up |
 | **E or parallel** | (3) networking singleton | ❌ Deferred |
 
 ## Follow-ups to revisit
@@ -418,13 +413,13 @@ Modules to revisit when time permits:
 
 ## Open questions to resolve before locking the plan
 
-1. ~~**Read vs. write split — Stage B or D?**~~ **Resolved.** Single `stateKeys` shipped in Stage B. Read/write split is deferred to Stage D.
+1. ~~**Read vs. write split — Stage B or D?**~~ **Resolved (and shipped).** Single `stateKeys` shipped in Stage B; per-slot read/write annotations on setup signatures shipped in Stage D (commit `b7866e6a`).
 
 2. ~~**`setup` signature.**~~ **Resolved.** Receives `BehaviorDeps<S, C, Cfg>` = `{ state, context, config }`, with state/context/config optional via `DepsForCfg` when their slice has no keys. Returns `BehaviorCleanup` (narrowed via the `R` generic in `defineBehavior` so concrete returns survive).
 
 3. ~~**`createComposition` explicit-typed overload.**~~ **Resolved in Stage A** (and re-confirmed in `21f43473`'s single-signature collapse) — explicit overload removed; the inferred form alone handles the HLS engine's behaviors with no inference issues.
 
-4. **Composition's read-only API surface.** Still open. `Composition<S, C>` currently exposes the full signal maps as `state` / `context`. Read-only views aren't enforced. Revisit if Stage D needs this.
+4. ~~**Composition's read-only API surface.**~~ **Resolved (stays writable).** `Composition<S, C>` continues to expose `state: StateSignals<S>` / `context: ContextSignals<C>` (writable everywhere). The originally-planned readonly external surface was a Stage D enforcement promise that's no longer being made — per-slot read/write annotations live on **behavior** setup signatures, not the composition's external API.
 
 5. **Fundamentals doc updates.** Pending — see Doc updates above.
 
@@ -434,8 +429,8 @@ Modules to revisit when time permits:
 
 ## Risk and scope notes
 
-- **Stages A through C have landed in 16 commits on `refactor/spf-discrete-signals-stage-a`.** Net: behaviors are objects with declared keys, composition derives the signal map, type-specialized exports replace engine wrappers, and `defineBehavior` / `buildSignalMap` are tested primitives.
-- **Stage D is where the type system gets interesting.** `readKeys` / `writeKeys` with proper inference at `createComposition` is the load-bearing piece. Worth a focused spike first.
+- **Stages A through D (scoped down) have landed.** Net: behaviors are objects with declared keys + per-slot read/write annotations; composition derives the signal map; type-specialized exports replace engine wrappers; `defineBehavior` / `buildSignalMap` / `makeShareSignals` are tested primitives. Multi-writer slots are accepted as legitimate patterns (see writer audit).
+- **Stage D's count invariant was dropped after the audit.** Per-slot `Signal<T>` / `ReadonlySignal<T>` annotations alone give us body-level write enforcement and self-documenting intent at the call site. The originally-planned compose-time writer-count invariant added churn without proportional value — see `### Why we dropped the writer-count invariant`.
 - **Backwards compatibility** within the SPF package is not a concern — there are no external consumers of the behavior shape yet. Move freely.
 
 ## See also
