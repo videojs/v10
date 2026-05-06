@@ -1,11 +1,12 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { completeMenuItemSelection } from '@videojs/core/dom';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext, useMenuRadioGroupContext } from './context';
+import { useMenuContext, useMenuRadioGroupContext, useSubMenuContext } from './context';
 
 export interface MenuRadioItemProps extends UIComponentProps<'div', MenuState> {
   /** The value this item represents. */
@@ -21,6 +22,8 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
 ) {
   const { menu, state, stateAttrMap } = useMenuContext();
   const { value: groupValue, onValueChange } = useMenuRadioGroupContext();
+  const subMenuCtx = useSubMenuContext();
+  const parentMenu = subMenuCtx?.parentMenu.menu ?? null;
   const elementRef = useRef<HTMLDivElement>(null);
   const checked = groupValue === value;
 
@@ -35,9 +38,9 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
       if (disabled) return;
       onClick?.(event);
       onValueChange(value);
-      menu.close();
+      completeMenuItemSelection(menu, parentMenu);
     },
-    [disabled, onClick, onValueChange, value, menu]
+    [disabled, onClick, onValueChange, value, menu, parentMenu]
   );
 
   const handlePointerEnter = useCallback(() => {

@@ -1,4 +1,5 @@
 export interface UIEvent {
+  readonly defaultPrevented?: boolean;
   preventDefault(): void;
   stopPropagation(): void;
 }

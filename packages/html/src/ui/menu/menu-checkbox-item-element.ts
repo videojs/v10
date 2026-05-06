@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -52,13 +52,16 @@ export class MenuCheckboxItemElement extends MediaElement {
         this,
         {
           onClick: () => {
-            if (this.disabled) return;
+            const currentCtx = this.#ctx.value;
+            if (!currentCtx || this.disabled) return;
+
             this.checked = !this.checked;
             this.dispatchEvent(new CustomEvent('checked-change', { detail: { checked: this.checked }, bubbles: true }));
-            ctx.menu.close();
+            completeMenuItemSelection(currentCtx.menu, currentCtx.parentMenu);
           },
           onPointerenter: () => {
-            if (!this.disabled) ctx.menu.highlight(this);
+            const currentCtx = this.#ctx.value;
+            if (!this.disabled) currentCtx?.menu.highlight(this);
           },
         },
         { signal: this.#disconnect.signal }

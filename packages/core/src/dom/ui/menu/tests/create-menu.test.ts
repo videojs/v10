@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIKeyboardEvent } from '../../event';
+import { completeMenuItemSelection, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -100,6 +101,52 @@ describe('createMenu', () => {
       menu.close();
 
       expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('highlights the first DOM item when items register after opening', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+
+      menu.open();
+      menu.registerItem(b);
+      menu.registerItem(a);
+
+      vi.runAllTimers();
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('completeMenuItemSelection', () => {
+    it('closes the menu when selection happens in a root menu', () => {
+      const { menu, onOpenChange } = createTestMenu();
+
+      menu.open();
+      onOpenChange.mockClear();
+
+      completeMenuItemSelection(menu);
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
+    });
+
+    it('pops the parent menu when selection happens in a submenu', () => {
+      const { menu } = createTestMenu();
+      const { menu: parentMenu, onOpenChange: parentOpenChange } = createTestMenu();
+
+      parentMenu.open();
+      parentOpenChange.mockClear();
+      parentMenu.push('quality-menu', 'quality-trigger');
+
+      completeMenuItemSelection(menu, parentMenu);
+
+      expect(parentMenu.navigationInput.current.stack).toEqual([]);
+      expect(parentMenu.navigationInput.current.direction).toBe('back');
+      expect(parentOpenChange).not.toHaveBeenCalled();
     });
   });
 
@@ -253,6 +300,30 @@ describe('createMenu', () => {
 
       expect(onHighlightChange).not.toHaveBeenCalled();
     });
+
+    it('highlights the first item in DOM order', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(b);
+      menu.registerItem(a);
+
+      menu.highlightFirstItem();
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+    });
+
+    it('can highlight the first item without scrolling it into view', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      const focus = vi.spyOn(element, 'focus');
+      menu.registerItem(element);
+
+      menu.highlightFirstItem({ preventScroll: true });
+
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -266,6 +337,18 @@ describe('createMenu', () => {
       const b = addItem('Beta');
       menu.registerItem(a);
       menu.registerItem(b);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowDown follows DOM order when items register out of order', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(b);
+      menu.registerItem(a);
 
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
 
@@ -407,6 +490,42 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
 
       expect(() => menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'))).not.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Submenu navigation
+  // -------------------------------------------------------------------------
+
+  describe('submenu navigation', () => {
+    it('pushes and pops submenu entries', () => {
+      const { menu } = createTestMenu();
+
+      menu.push('quality-menu', 'quality-trigger');
+      menu.pop();
+
+      expect(menu.navigationInput.current).toEqual({ stack: [], direction: 'back' });
+    });
+
+    it('ignores duplicate pushes for the active submenu', () => {
+      const { menu } = createTestMenu();
+
+      menu.push('quality-menu', 'quality-trigger');
+      menu.push('quality-menu', 'quality-trigger');
+      menu.pop();
+
+      expect(menu.navigationInput.current.stack).toEqual([]);
+    });
+
+    it('does not emit a navigation update when popping at root', () => {
+      const { menu } = createTestMenu();
+      const listener = vi.fn();
+      const cleanup = menu.navigationInput.subscribe(listener);
+
+      menu.pop();
+
+      expect(listener).not.toHaveBeenCalled();
+      cleanup();
     });
   });
 
@@ -577,5 +696,19 @@ describe('createMenu', () => {
 
       vi.useRealTimers();
     });
+  });
+});
+
+describe('isMenuNavigationKey', () => {
+  it('matches keys owned by menu navigation and type-ahead', () => {
+    expect(isMenuNavigationKey(makeKeyEvent('ArrowDown'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('ArrowLeft'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('Escape'))).toBe(true);
+    expect(isMenuNavigationKey(makeKeyEvent('a'))).toBe(true);
+  });
+
+  it('ignores keys that should be allowed to bubble', () => {
+    expect(isMenuNavigationKey(makeKeyEvent('Tab'))).toBe(false);
+    expect(isMenuNavigationKey(makeKeyEvent('a', { metaKey: true }))).toBe(false);
   });
 });

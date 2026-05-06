@@ -76,34 +76,40 @@ PR 1 (Core + DOM) → PR 2 (UI flat) → PR 3 (Submenus)
 
 ## PR 3 — Submenu navigation
 
-**Status:** PENDING
+**Status:** OPEN — `feat/menu-sub` (PR pending)
 
 ### Files
 
 **New DOM:**
-- `packages/core/src/dom/ui/menu/create-sub-menu-transition.ts`
+- `packages/core/src/dom/ui/menu/create-menu-view-transition.ts`
+- `packages/core/src/dom/ui/menu/menu-viewport-transition.ts`
 
 **New React:**
 - `packages/react/src/ui/menu/menu-back.tsx`
+- `packages/react/src/ui/menu/menu-view.tsx`
 
 **New HTML:**
 - `packages/html/src/ui/menu/menu-back-element.ts`
+- `packages/html/src/ui/menu/menu-view-element.ts`
 
 **Modified:**
 - `packages/core/src/dom/ui/menu/create-menu.ts` — add `push`/`pop` to `MenuApi`, `NavigationState`, wire transition
 - `packages/react/src/ui/menu/menu-root.tsx` — nested Root detects parent context → submenu mode
 - `packages/react/src/ui/menu/menu-content.tsx` — `data-submenu`, `data-direction`, slide transition wiring
+- `packages/react/src/ui/menu/index.parts.ts` — export `Menu.Back` and `Menu.View`
 - `packages/html/src/ui/menu/menu-element.ts` — nested `<media-menu>` + `commandfor` support
 - `packages/html/src/ui/menu/menu-item-element.ts` — `commandfor` attribute handling
-- `packages/core/src/dom/index.ts` — add transition export
-- `packages/react/src/ui/index.ts` — add Back to Menu exports
-- `packages/html/src/define/ui/menu.ts` — register `<media-menu-back>`
+- `packages/core/src/dom/index.ts` — add submenu and viewport transition exports
+- `packages/html/src/define/ui/menu.ts` — register `<media-menu-back>` and `<media-menu-view>`
 
-**Status:** PENDING — branch off `feat/menu-react-html`
+**Status:** OPEN — branched off `feat/menu-react-html`
 
 ### Scope
 - `NavigationState`: stack of `{ menuId, triggerId }`, direction, exitingMenuId, transitioning
-- `createSubMenuTransition()`: double-RAF lifecycle, `--media-menu-width/height` measurement, `getAnimations()` settle
+- `createMenuViewTransition()`: generic menu view double-RAF lifecycle, data attribute hooks, `getAnimations()` settle
+- `menu-viewport-transition.ts`: shared root/child view measurement and `--media-menu-width/height` sizing
+- `Menu.View` / `<media-menu-view>`: optional root view wrapper for in-place view navigation; receives `data-menu-root-view` while root `Content` / `<media-menu>` acts as the shared viewport
+- Traditional flyout submenus are out of scope for this PR and should not require `Menu.View` / `<media-menu-view>` when added later
 - Nested `Menu.Root` detection via parent `MenuContext` → `isSubmenu: true` prop, Trigger registers as parent item
 - `Menu.Back` / `<media-menu-back>`: pops stack, focus restoration to trigger
 - Auto-back on `RadioItem` selection in submenu

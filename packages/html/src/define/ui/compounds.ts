@@ -4,6 +4,7 @@ import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-titl
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
+import { MenuBackElement } from '../../ui/menu/menu-back-element';
 import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
 import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuGroupElement } from '../../ui/menu/menu-group-element';
@@ -13,6 +14,7 @@ import { MenuLabelElement } from '../../ui/menu/menu-label-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
 import { MenuSeparatorElement } from '../../ui/menu/menu-separator-element';
+import { MenuViewElement } from '../../ui/menu/menu-view-element';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
 import { SliderElement } from '../../ui/slider/slider-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
@@ -33,6 +35,7 @@ import { safeDefine } from '../safe-define';
 export function defineMenu(): void {
   // Root first — part elements consume its context.
   safeDefine(MenuElement);
+  safeDefine(MenuBackElement);
   safeDefine(MenuItemElement);
   safeDefine(MenuLabelElement);
   safeDefine(MenuSeparatorElement);
@@ -41,6 +44,7 @@ export function defineMenu(): void {
   safeDefine(MenuRadioItemElement);
   safeDefine(MenuCheckboxItemElement);
   safeDefine(MenuItemIndicatorElement);
+  safeDefine(MenuViewElement);
 }
 
 export function defineControls(): void {
