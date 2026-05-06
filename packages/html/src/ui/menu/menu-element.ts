@@ -19,6 +19,7 @@ import {
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
+  type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -99,7 +100,11 @@ export class MenuElement extends MediaElement {
     // Submenu detection happens in update() once parent context is available.
     this.#menu.setContentElement(this);
 
-    applyElementProps(this, { onKeyDown: this.#handleContentKeyDown }, { signal: this.#disconnect.signal });
+    applyElementProps(
+      this,
+      { onKeyDown: this.#handleContentKeyDown, onFocusOut: this.#handleContentFocusOut },
+      { signal: this.#disconnect.signal }
+    );
 
     if (this.#snapshot) {
       this.#snapshot.track(this.#menu.input);
@@ -279,6 +284,10 @@ export class MenuElement extends MediaElement {
     if (isMenuNavigationKey(event) && (!isBackNavigationKey || ownsActiveSubmenu)) {
       event.stopPropagation();
     }
+  };
+
+  #handleContentFocusOut = (event: UIFocusEvent): void => {
+    this.#menu?.contentProps.onFocusOut(event);
   };
 
   #syncTrigger(triggerElement: HTMLElement | null): void {

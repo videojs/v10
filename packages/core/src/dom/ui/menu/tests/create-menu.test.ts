@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
-import type { UIKeyboardEvent } from '../../event';
+import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
 import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
@@ -20,6 +20,14 @@ function makeKeyEvent(key: string, modifiers?: Partial<UIKeyboardEvent>): UIKeyb
     preventDefault: vi.fn(),
     stopPropagation: vi.fn(),
     ...modifiers,
+  };
+}
+
+function makeFocusEvent(relatedTarget: EventTarget | null): UIFocusEvent {
+  return {
+    relatedTarget,
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
   };
 }
 
@@ -119,6 +127,52 @@ describe('createMenu', () => {
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
 
       vi.useRealTimers();
+    });
+
+    it('closes when focus moves outside the menu and trigger', () => {
+      const { menu, onOpenChange } = createTestMenu();
+      const trigger = document.createElement('button');
+      const content = document.createElement('div');
+      const outside = document.createElement('button');
+
+      menu.setTriggerElement(trigger);
+      menu.setContentElement(content);
+      menu.open();
+      onOpenChange.mockClear();
+
+      menu.contentProps.onFocusOut(makeFocusEvent(outside));
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'blur' });
+    });
+
+    it('keeps the menu open when focus moves inside the menu', () => {
+      const { menu, onOpenChange } = createTestMenu();
+      const content = document.createElement('div');
+      const child = document.createElement('button');
+
+      content.append(child);
+      menu.setContentElement(content);
+      menu.open();
+      onOpenChange.mockClear();
+
+      menu.contentProps.onFocusOut(makeFocusEvent(child));
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('keeps the menu open when focus returns to the trigger', () => {
+      const { menu, onOpenChange } = createTestMenu();
+      const trigger = document.createElement('button');
+      const content = document.createElement('div');
+
+      menu.setTriggerElement(trigger);
+      menu.setContentElement(content);
+      menu.open();
+      onOpenChange.mockClear();
+
+      menu.contentProps.onFocusOut(makeFocusEvent(trigger));
+
+      expect(onOpenChange).not.toHaveBeenCalled();
     });
   });
 

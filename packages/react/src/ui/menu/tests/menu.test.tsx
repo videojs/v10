@@ -3,6 +3,7 @@ import type { KeyboardEventHandler } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MenuBack } from '../menu-back';
+import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
 import { MenuItem } from '../menu-item';
 import { MenuRoot } from '../menu-root';
@@ -164,6 +165,41 @@ function ItemOrderFixture() {
         <MenuItem data-testid="third-item">Copy link</MenuItem>
       </MenuContent>
     </MenuRoot>
+  );
+}
+
+function CheckboxFixture({
+  onCheckedChange,
+  onRootOpenChange,
+}: {
+  onCheckedChange: (checked: boolean) => void;
+  onRootOpenChange: NonNullable<MenuRoot.Props['onOpenChange']>;
+}) {
+  return (
+    <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="content">
+        <MenuCheckboxItem data-testid="checkbox-item" checked={false} onCheckedChange={onCheckedChange}>
+          Autoplay
+        </MenuCheckboxItem>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function FocusOutFixture({ onRootOpenChange }: { onRootOpenChange: NonNullable<MenuRoot.Props['onOpenChange']> }) {
+  return (
+    <>
+      <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent data-testid="root-content">
+          <MenuItem data-testid="root-item">Copy link</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+      <button type="button" data-testid="outside">
+        Outside
+      </button>
+    </>
   );
 }
 
@@ -374,5 +410,32 @@ describe('MenuContent', () => {
 
     expect(screen.getByTestId('first-item').hasAttribute('data-highlighted')).toBe(true);
     expect(screen.getByTestId('third-item').hasAttribute('data-highlighted')).toBe(false);
+  });
+
+  it('keeps the menu open when a checkbox item is toggled', () => {
+    const onCheckedChange = vi.fn();
+    const onRootOpenChange = vi.fn();
+
+    render(<CheckboxFixture onCheckedChange={onCheckedChange} onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
+
+    fireEvent.click(screen.getByTestId('checkbox-item'));
+
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+    expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+    expect(screen.queryByTestId('content')).not.toBeNull();
+  });
+
+  it('closes when focus moves outside the root menu', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(<FocusOutFixture onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
+
+    fireEvent.focusOut(screen.getByTestId('root-content'), { relatedTarget: screen.getByTestId('outside') });
+
+    await waitFor(() => {
+      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
+    });
   });
 });

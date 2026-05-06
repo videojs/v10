@@ -1,7 +1,7 @@
 import { createState, type State } from '@videojs/store';
 import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
-import type { UIKeyboardEvent } from '../event';
+import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningOptions } from '../popover/popover-positioning';
 import type { TransitionApi } from '../transition';
@@ -42,6 +42,7 @@ export interface MenuTriggerProps {
 
 export interface MenuContentProps {
   onKeyDown: (event: UIKeyboardEvent) => void;
+  onFocusOut: (event: UIFocusEvent) => void;
 }
 
 export interface MenuHighlightOptions {
@@ -256,6 +257,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Content keyboard navigation ---
 
   const contentProps: MenuContentProps = {
+    onFocusOut: popover.popupProps.onFocusOut,
     onKeyDown(event) {
       const { key } = event;
 

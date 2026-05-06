@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuItemElement } from '../menu-item-element';
 import { MenuViewElement } from '../menu-view-element';
@@ -176,6 +177,63 @@ describe('MenuElement', () => {
     await waitForAssertion(() => {
       expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
     });
+  });
+
+  it('keeps the menu open when a checkbox item is toggled', async () => {
+    const root = createElement(MenuElement);
+    const checkbox = createElement(MenuCheckboxItemElement);
+    const onCheckedChange = vi.fn();
+    const onOpenChange = vi.fn();
+
+    root.open = true;
+    checkbox.textContent = 'Autoplay';
+
+    checkbox.addEventListener('checked-change', onCheckedChange);
+    root.addEventListener('open-change', onOpenChange);
+    root.append(checkbox);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await checkbox.updateComplete;
+    onOpenChange.mockClear();
+
+    checkbox.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(checkbox.checked).toBe(true);
+    expect(onCheckedChange).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ checked: true }) })
+    );
+    expect(root.open).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ open: false }) })
+    );
+  });
+
+  it('closes when focus moves outside the root menu', async () => {
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const outside = document.createElement('button');
+    const onOpenChange = vi.fn();
+
+    root.open = true;
+    item.textContent = 'Auto';
+
+    root.addEventListener('open-change', onOpenChange);
+    root.append(item);
+    document.body.append(root, outside);
+
+    await root.updateComplete;
+    await item.updateComplete;
+    onOpenChange.mockClear();
+
+    root.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }));
+
+    await root.updateComplete;
+
+    expect(root.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'blur' }) })
+    );
   });
 
   it('returns to the parent view without closing the root menu when Escape is pressed in a nested menu', async () => {

@@ -13,6 +13,7 @@ import {
   resolveOffsets,
   syncMenuViewRoot,
   syncMenuViewTransition,
+  type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
@@ -47,9 +48,20 @@ function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboa
   };
 }
 
+function toUIFocusEvent(event: React.FocusEvent<HTMLDivElement>): UIFocusEvent {
+  return {
+    get defaultPrevented() {
+      return event.defaultPrevented;
+    },
+    relatedTarget: event.relatedTarget,
+    preventDefault: () => event.preventDefault(),
+    stopPropagation: () => event.stopPropagation(),
+  };
+}
+
 /** Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when nested. */
 export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
-  { render, className, style, onKeyDown, ...elementProps },
+  { render, className, style, onKeyDown, onBlur, ...elementProps },
   forwardedRef
 ) {
   const { core, menu, state, stateAttrMap, anchorName, contentId, activeSubMenuId } = useMenuContext();
@@ -133,6 +145,14 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       menu.contentProps.onKeyDown(toUIKeyboardEvent(event));
     },
     [onKeyDown, menu]
+  );
+
+  const handleRootMenuBlur = useCallback(
+    (event: React.FocusEvent<HTMLDivElement>) => {
+      (onBlur as React.FocusEventHandler<HTMLDivElement> | undefined)?.(event);
+      menu.contentProps.onFocusOut(toUIFocusEvent(event));
+    },
+    [onBlur, menu]
   );
 
   // ─── Root content state (always declared — Rules of Hooks) ───────────────
@@ -258,6 +278,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
             tabIndex: -1,
             'data-submenu': '',
             onKeyDown: handleSubMenuKeyDown,
+            onBlur,
           },
           elementProps,
         ],
@@ -289,7 +310,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
           ...core.getContentAttrs(state),
           ...getMenuViewportAttrs(),
         },
-        { onKeyDown: handleRootMenuKeyDown },
+        { onKeyDown: handleRootMenuKeyDown, onBlur: handleRootMenuBlur },
         elementProps,
       ],
     }
