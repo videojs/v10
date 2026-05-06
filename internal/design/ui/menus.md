@@ -32,6 +32,8 @@ Requirements:
 
 Submenus are expressed by nesting `Menu.Root` inside `Menu.Content`. There are no separate `SubMenu*` parts — the same three structural parts (`Root`, `Trigger`, `Content`) compose at every level. A nested `Root` detects its parent context and behaves as a submenu automatically.
 
+For the in-place settings-menu pattern, the root list is wrapped in `Menu.View`. `Menu.View` is not a generic submenu requirement; it marks the root logical view inside a shared viewport so CSS can animate between the root view and nested `Menu.Content` views. Traditional flyout submenus would use positioned nested content instead and would not require `Menu.View`.
+
 ```tsx
 import { Menu } from '@videojs/react';
 
@@ -39,32 +41,34 @@ import { Menu } from '@videojs/react';
   <Menu.Trigger>Settings</Menu.Trigger>
   <Menu.Content>
 
-    <Menu.Root>
-      <Menu.Trigger>Quality</Menu.Trigger>
-      <Menu.Content>
-        <Menu.Back />
-        <Menu.RadioGroup value={quality} onValueChange={setQuality}>
-          <Menu.RadioItem value="auto">Auto</Menu.RadioItem>
-          <Menu.RadioItem value="1080p">1080p</Menu.RadioItem>
-          <Menu.RadioItem value="720p">720p</Menu.RadioItem>
-        </Menu.RadioGroup>
-      </Menu.Content>
-    </Menu.Root>
+    <Menu.View>
+      <Menu.Root>
+        <Menu.Trigger>Quality</Menu.Trigger>
+        <Menu.Content>
+          <Menu.Back />
+          <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+            <Menu.RadioItem value="auto">Auto</Menu.RadioItem>
+            <Menu.RadioItem value="1080p">1080p</Menu.RadioItem>
+            <Menu.RadioItem value="720p">720p</Menu.RadioItem>
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Root>
 
-    <Menu.Root>
-      <Menu.Trigger>Speed</Menu.Trigger>
-      <Menu.Content>
-        <Menu.Back />
-        <Menu.RadioGroup value={speed} onValueChange={setSpeed}>
-          <Menu.RadioItem value="0.5">0.5×</Menu.RadioItem>
-          <Menu.RadioItem value="1">Normal</Menu.RadioItem>
-          <Menu.RadioItem value="2">2×</Menu.RadioItem>
-        </Menu.RadioGroup>
-      </Menu.Content>
-    </Menu.Root>
+      <Menu.Root>
+        <Menu.Trigger>Speed</Menu.Trigger>
+        <Menu.Content>
+          <Menu.Back />
+          <Menu.RadioGroup value={speed} onValueChange={setSpeed}>
+            <Menu.RadioItem value="0.5">0.5×</Menu.RadioItem>
+            <Menu.RadioItem value="1">Normal</Menu.RadioItem>
+            <Menu.RadioItem value="2">2×</Menu.RadioItem>
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Root>
 
-    <Menu.Separator />
-    <Menu.Item onSelect={copyLink}>Copy Link</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item onSelect={copyLink}>Copy Link</Menu.Item>
+    </Menu.View>
 
   </Menu.Content>
 </Menu.Root>
@@ -74,6 +78,8 @@ import { Menu } from '@videojs/react';
 
 Submenus are nested `<media-menu>` elements. A `<media-menu-item>` with `commandfor` links to its target submenu by ID — consistent with how other floating components use the invoker API.
 
+For the in-place settings-menu pattern, the root list is wrapped in `<media-menu-view>`. Like `Menu.View`, it is a shared-viewport view-navigation boundary, not a requirement for future flyout submenu rendering.
+
 ```ts
 import '@videojs/html/ui/menu';
 ```
@@ -82,7 +88,13 @@ import '@videojs/html/ui/menu';
 <button commandfor="settings-menu">Settings</button>
 <media-menu id="settings-menu" side="top" align="end">
 
-  <media-menu-item commandfor="quality-menu">Quality</media-menu-item>
+  <media-menu-view>
+    <media-menu-item commandfor="quality-menu">Quality</media-menu-item>
+    <media-menu-item commandfor="speed-menu">Speed</media-menu-item>
+    <media-menu-separator></media-menu-separator>
+    <media-menu-item>Copy Link</media-menu-item>
+  </media-menu-view>
+
   <media-menu id="quality-menu">
     <media-menu-back></media-menu-back>
     <media-menu-radio-group value="auto">
@@ -92,7 +104,6 @@ import '@videojs/html/ui/menu';
     </media-menu-radio-group>
   </media-menu>
 
-  <media-menu-item commandfor="speed-menu">Speed</media-menu-item>
   <media-menu id="speed-menu">
     <media-menu-back></media-menu-back>
     <media-menu-radio-group value="1">
@@ -101,9 +112,6 @@ import '@videojs/html/ui/menu';
       <media-menu-radio-item value="2">2×</media-menu-radio-item>
     </media-menu-radio-group>
   </media-menu>
-
-  <media-menu-separator></media-menu-separator>
-  <media-menu-item>Copy Link</media-menu-item>
 
 </media-menu>
 ```
@@ -166,9 +174,9 @@ When acting as a submenu trigger inside a parent menu: `role="menuitem"`, roving
 
 #### Content
 
-Popup container. At the root level, handles popover positioning and dismiss behavior. Acts as the **viewport** for navigation — only one view is visible at a time.
+Popup container. At the root level, handles popover positioning and dismiss behavior. When paired with `Menu.View` / `<media-menu-view>`, it also acts as the shared **viewport** for in-place menu view navigation — only one logical view is active at a time.
 
-When nested (submenu), does not use popover positioning. Instead it renders in-place as a slide-transition view inside the parent Content's viewport. Gets `data-submenu` to distinguish it from the root Content.
+When nested in the current in-place navigation mode, it does not use popover positioning. Instead it renders in-place as a generic menu view inside the parent Content's viewport. Gets `data-submenu` to distinguish it from the root Content. Future flyout submenu support would use positioned nested content and would not require the root `Menu.View` boundary.
 
 **ARIA (automatic):**
 
@@ -188,6 +196,7 @@ When nested (submenu), does not use popover positioning. Instead it renders in-p
 | `data-side` | `top` / `bottom` / `left` / `right` | Popover side (root only) |
 | `data-align` | `start` / `center` / `end` | Popover alignment (root only) |
 | `data-submenu` | present/absent | This Content belongs to a nested submenu |
+| `data-menu-viewport` | present | Root Content is the viewport for menu view transitions |
 
 **CSS custom properties** (set by JS on the root Content during submenu transitions):
 
@@ -202,6 +211,22 @@ When nested (submenu), does not use popover positioning. Instead it renders in-p
 | Event | Detail | Fires when |
 |-------|--------|------------|
 | `open-change` | `{ open: boolean }` | Menu opens or closes |
+
+---
+
+#### View
+
+Root menu view inside `Content` for in-place view navigation. This is the root panel in the shared menu viewport; CSS decides whether it slides, fades, crossfades, scales, or remains static while child views enter.
+
+`Menu.View` / `<media-menu-view>` is only needed when the root menu and nested `Content` views share one viewport and transition in-place. It is not part of the flat menu API, and it should not be needed for a traditional side-opening flyout submenu pattern.
+
+**Data attributes:**
+
+| Attribute | Values | When |
+|-----------|--------|------|
+| `data-menu-root-view` | present | Marks the root list view |
+| `data-menu-view` | present | Marks this element as a menu view |
+| `data-menu-view-state` | `active` / `inactive` | Root view state within the viewport |
 
 ---
 
@@ -349,6 +374,7 @@ Visual indicator that renders when the parent RadioItem or CheckboxItem is check
 | Part | Tag |
 |------|-----|
 | Root / Content | `<media-menu>` |
+| View | `<media-menu-view>` |
 | Back | `<media-menu-back>` |
 | Item | `<media-menu-item>` |
 | Label | `<media-menu-label>` |
@@ -359,11 +385,11 @@ Visual indicator that renders when the parent RadioItem or CheckboxItem is check
 | CheckboxItem | `<media-menu-checkbox-item>` |
 | ItemIndicator | `<media-menu-item-indicator>` |
 
-Submenus are expressed by nesting `<media-menu>` and linking via `commandfor`. No separate sub-element tags are needed.
+In-place submenus are expressed by nesting sibling `<media-menu>` elements in the parent `<media-menu>` and linking triggers via `commandfor`. The root list lives in `<media-menu-view>` so it can participate in the same view lifecycle as child submenu content.
 
 ## Navigation model
 
-Content acts as a fixed-size **viewport**. Only one view is visible at a time: the root list or one submenu's content. Navigation is modelled as a **stack**:
+For in-place navigation, Content acts as a fixed-size **viewport**. Only one logical view is active at a time: the root list or one submenu's content. Navigation is modelled as a **stack**:
 
 ```ts
 type StackEntry = {
@@ -417,7 +443,7 @@ The stack supports arbitrary depth. A submenu `Content` can contain another nest
 
 ## CSS animation
 
-Animation is driven entirely by data attributes and CSS custom properties. No inline styles are applied.
+Animation is driven by data attributes and CSS custom properties. Core may set sizing CSS variables and temporary measurement styles internally; sandbox/user-authored motion styling stays in CSS.
 
 ### Data attributes
 
@@ -436,9 +462,11 @@ Animation is driven entirely by data attributes and CSS custom properties. No in
 | Attribute | Values | When |
 |-----------|--------|------|
 | `data-submenu` | present | Always — identifies this as a submenu view |
-| `data-open` | present/absent | This submenu is the active view |
-| `data-starting-style` | present/absent | Submenu is entering |
-| `data-ending-style` | present/absent | Submenu is exiting |
+| `data-menu-view` | present | Marks this element as a menu view |
+| `data-menu-view-state` | `active` / `inactive` | This view is entering/current or exiting/hidden |
+| `data-open` | present/absent | This view is mounted for transition or active |
+| `data-starting-style` | present/absent | View is entering |
+| `data-ending-style` | present/absent | View is exiting |
 | `data-direction` | `forward` / `back` | Direction of the transition |
 
 **On items** (Item, RadioItem, CheckboxItem, and Trigger when used as a submenu trigger):
@@ -582,10 +610,12 @@ The menu follows the [WAI-ARIA Menu Pattern](https://www.w3.org/WAI/ARIA/apg/pat
 </button>
 <div id="settings-menu" role="menu" tabindex="-1">
   <!-- Submenu trigger acts as a menuitem in the parent -->
-  <div role="menuitem" aria-haspopup="menu" aria-expanded="false" tabindex="0">Quality</div>
-  <div role="menuitem" aria-haspopup="menu" aria-expanded="false" tabindex="-1">Speed</div>
-  <div role="separator"></div>
-  <div role="menuitem" tabindex="-1">Copy Link</div>
+  <div data-menu-root-view>
+    <div role="menuitem" aria-haspopup="menu" aria-expanded="false" tabindex="0">Quality</div>
+    <div role="menuitem" aria-haspopup="menu" aria-expanded="false" tabindex="-1">Speed</div>
+    <div role="separator"></div>
+    <div role="menuitem" tabindex="-1">Copy Link</div>
+  </div>
 </div>
 
 <!-- Quality submenu (when active — replaces root view in the viewport) -->
@@ -719,7 +749,8 @@ interface MenuApi {
 }
 ```
 
-`createSubMenuTransition()` handles the double-RAF lifecycle for submenu navigation (same pattern as `createTransition()`).
+`createMenuViewTransition()` handles the double-RAF lifecycle for menu view enter/exit hooks (same pattern as `createTransition()`).
+`menu-viewport-transition.ts` handles shared menu viewport measurement, width/height variables, and root/child view state coordination.
 
 **Item collection:** Items self-register via `registerItem(el)` returning a cleanup function. Sorted by `compareDocumentPosition`. Works across Shadow DOM boundaries without coupling to ARIA role strings.
 
@@ -738,7 +769,8 @@ menu-css-vars.ts
 
 ```text
 create-menu.ts
-create-sub-menu-transition.ts
+create-menu-view-transition.ts
+menu-viewport-transition.ts
 ```
 
 **React** (`packages/react/src/ui/menu/`):
@@ -750,6 +782,7 @@ index.ts
 menu-root.tsx
 menu-trigger.tsx
 menu-content.tsx
+menu-view.tsx
 menu-back.tsx
 menu-item.tsx
 menu-label.tsx
@@ -765,6 +798,7 @@ menu-item-indicator.tsx
 
 ```text
 menu-element.ts
+menu-view-element.ts
 menu-back-element.ts
 menu-item-element.ts
 menu-label-element.ts

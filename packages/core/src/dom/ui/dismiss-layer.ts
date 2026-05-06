@@ -79,6 +79,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
 
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape') return;
+    if (event.defaultPrevented) return;
     if (!state.current.active) return;
 
     const shouldClose = options.closeOnEscape?.() ?? true;
