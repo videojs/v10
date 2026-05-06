@@ -213,6 +213,65 @@ What actually landed:
 
 **The `set src` engine-recreate cost** is also unchanged. Each `set src` destroys the composition and creates a new one; the adapter's `onSignalsReady` re-fires and re-captures refs. The adapter holds adapter-level source-of-truth fields (`#preload`, etc.) and re-applies them to the new signals. Same as the original sketch.
 
+### Per-behavior writer audit (post-propagation)
+
+After the per-slot read/write annotation propagation (commit `b7866e6a`), each behavior's intent is legible from its setup signature alone — `Signal<T>` for writable slots, `ReadonlySignal<T>` for read-only. Body-level enforcement catches accidental writes at typecheck time.
+
+#### Internal writes (via `defineBehavior` setup bodies)
+
+| Behavior | State writes | Context writes |
+|---|---|---|
+| `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack` | `selected{Video,Audio,Text}TrackId` (the corresponding one) | — |
+| `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `presentation` (via shared `setupTrackResolution<K>`; merges resolved track segments into the existing presentation) | — |
+| `resolvePresentation` | `presentation` (parses manifest from `{ url }` seed) | — |
+| `calculatePresentationDuration` | `presentation` (sets the `duration` field on the existing presentation) | — |
+| `switchQuality` | `selectedVideoTrackId` (ABR decisions) | — |
+| `trackCurrentTime` | `currentTime` | — |
+| `trackPlaybackRate` | `playbackRate` | — |
+| `trackPlaybackInitiated` | `playbackInitiated` (from DOM `play` event + `paused` check) | — |
+| `syncTextTracks` | `selectedTextTrackId` (when DOM `<track>` mode change picks a new track) | — |
+| `syncPreloadAttribute` | `preload` (mirrors the DOM attribute when no explicit value set) | — |
+| `setupMediaSource` | `mediaSourceReadyState` (mirrors `MediaSource.readyState`) | `mediaSource` |
+| `setupSourceBuffers` | — | `videoBuffer`, `audioBuffer`, `videoBufferActor`, `audioBufferActor` |
+| `setupTextTrackActors` | — | `textTracksActor`, `segmentLoaderActor` |
+| `loadVideoSegments` | `bandwidthState` (per-chunk throughput sampling for ABR) | — |
+| `loadAudioSegments` | — (audio doesn't sample bandwidth) | — |
+| `loadTextTrackCues` / `updateDuration` / `endOfStream` | — (read-only — drive DOM properties / actor messages, not signal writes) | — |
+| `shareSignals` | — (forwards refs to consumer; see external-writes table below) | — |
+
+#### External writes (via `shareSignals.onSignalsReady` callback)
+
+`shareSignals` itself writes nothing — it forwards composition signal refs to the consumer-supplied `onSignalsReady` callback at composition setup. The consumer captures the refs and writes through them at runtime. Two consumers exist today:
+
+| Consumer | State writes | Context writes |
+|---|---|---|
+| `SimpleHlsMedia` adapter (`packages/spf/src/playback/engines/hls/adapter.ts`) | `presentation` (`set src`), `preload` (`set preload`), `playbackInitiated` (`play()`) | `mediaElement` (`attach()` / `detach()`) |
+| Sandbox harness (`apps/sandbox/templates/spf-segment-loading/main.ts`) | `presentation`, `preload`, `abrDisabled` (UI toggle) | `mediaElement` |
+
+Plus the deferred reconciler-overlap cases — the harness still writes these **directly via `engine.state`**, *not* via the `onSignalsReady` callback:
+
+| Direct writer | Slot | Marker |
+|---|---|---|
+| Sandbox harness rendition picker | `selectedVideoTrackId` (manual override) | `// TODO(stage-d)` |
+| Sandbox harness auto-select effect | `selectedTextTrackId` (initial pick) | `// TODO(stage-d)` |
+
+These two slots are the 2-writer cases that need reconcilers (see "Reconciler shape (Pattern B, deferred to Stage D)" below).
+
+#### Multi-writer slots — what Stage D's invariant has to handle
+
+Slots with more than one writer once both internal and external writes are counted:
+
+| Slot | Writers | Pattern |
+|---|---|---|
+| `presentation` | adapter / harness (initial `{ url }`), `resolvePresentation` (parsed), `resolve{Video,Audio,Text}Track` (per-track resolution), `calculatePresentationDuration` (duration field) | **Pipeline** — each writer builds on the previous, never mutating fields owned by another. May warrant per-field decomposition under Stage D. |
+| `preload` | `syncPreloadAttribute` (DOM → state), adapter / harness (state → drives DOM via downstream) | **Two-way sync** — likely needs Stage D to disambiguate "external sets" from "DOM mirrors" with a separate input slot. |
+| `selectedVideoTrackId` | `selectVideoTrack` (default-pick), `switchQuality` (ABR), harness direct write (manual override, deferred) | **Intent + reactive default** — natural reconciler case. |
+| `selectedTextTrackId` | `selectTextTrack` (default-pick), `syncTextTracks` (DOM-driven), harness direct write (auto-select, deferred) | Same. |
+| `playbackInitiated` | `trackPlaybackInitiated` (DOM observer), adapter `play()` write | **Imperative + observer** — adapter sets `true` on `play()` call, observer reflects DOM `paused` state on cleanup. May be a single-writer-with-input-trigger case. |
+| `mediaElement` | adapter / harness only | Externally-driven only — single-source from outside, no internal writers. Cleanest case. |
+
+Most multi-writer slots fall into one of three patterns: pipelines (presentation), two-way sync (preload), or intent+default reconcilers (`selected*TrackId`). Stage D's writer-count enforcement + the reconciler design have to cover all three.
+
 ### Reconciler shape (Pattern B, deferred to Stage D)
 
 The 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) need a reconciler when external "intent" overlaps with a behavior-owned default-pick. Today the harness writes intent directly into composition state and the behavior writes the default-pick into the same slot — runtime works but Stage D's writer-count enforcement will reject it.
