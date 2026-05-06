@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.23...@videojs/icons@10.0.0-beta.24) (2026-05-06)
+
+
+### Features
+
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+
+
+### Bug Fixes
+
+* **icons:** avoid hidden spinner animations ([#1476](https://github.com/videojs/v10/issues/1476)) ([c388dd3](https://github.com/videojs/v10/commit/c388dd35a96465d6b2c340fdb68cf1eede36418a))
+* **icons:** use icon exports in ejected skins ([#1489](https://github.com/videojs/v10/issues/1489)) ([d0b36ed](https://github.com/videojs/v10/commit/d0b36ed5b80f9614687d0dd584232cf74d4fb3ca))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.22...@videojs/icons@10.0.0-beta.23) (2026-04-27)
 
 
