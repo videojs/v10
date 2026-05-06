@@ -142,17 +142,16 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           {preset.react.skins.length > 0
-                            ? listFormat
-                                .formatToParts(
-                                  preset.react.skins.map((s) => s.name),
-                                )
-                                .map((part) =>
-                                  part.type === "element" ? (
-                                    <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
-                                  ) : (
-                                    <span>{part.value}</span>
-                                  ),
-                                )
+                            ? preset.react.skins.map((skin) => (
+                                <div class="mb-2 last:mb-0">
+                                  <MarkdownCode class="inline-block whitespace-nowrap">{`<${skin.name}>`}</MarkdownCode>
+                                  {skin.cssImport && (
+                                    <div class="mt-0.5">
+                                      <MarkdownCode class="text-sm inline-block whitespace-nowrap">{`import '${skin.cssImport}';`}</MarkdownCode>
+                                    </div>
+                                  )}
+                                </div>
+                              ))
                             : "–"}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>

@@ -384,7 +384,7 @@ function scanHtmlDirectory(scanDir: string): { skins: PresetSkinDef[]; mediaElem
   return { skins, mediaElement };
 }
 
-function scanReactDirectory(scanDir: string, barrelPath: string): PresetSkinDef[] {
+function scanReactDirectory(scanDir: string, barrelPath: string, presetName: string): PresetSkinDef[] {
   const skins: PresetSkinDef[] = [];
 
   if (!fs.existsSync(scanDir)) return skins;
@@ -397,11 +397,16 @@ function scanReactDirectory(scanDir: string, barrelPath: string): PresetSkinDef[
   for (const file of files) {
     const filePath = path.join(scanDir, file);
     const exports = extractValueExports(filePath);
+    const basename = path.basename(file, path.extname(file));
+    const cssFile = path.join(scanDir, `${basename}.css`);
+    const cssImport = fs.existsSync(cssFile) ? `@videojs/react/${presetName}/${basename}.css` : undefined;
 
     for (const name of exports) {
       if (isFeatureBundle(name)) continue;
       if (isReactSkin(name)) {
-        skins.push({ name });
+        const skin: PresetSkinDef = { name };
+        if (cssImport) skin.cssImport = cssImport;
+        skins.push(skin);
       }
     }
   }
@@ -426,7 +431,7 @@ function buildPresetReference(preset: PresetInfo, featureBundleMap: Map<string, 
 
   // Scan React directory for skins, read barrel for media element
   const reactSkins = preset.react
-    ? scanReactDirectory(preset.react.scanDir, preset.react.barrelPath)
+    ? scanReactDirectory(preset.react.scanDir, preset.react.barrelPath, preset.name)
     : ([] as PresetSkinDef[]);
   const reactMediaElement = preset.react ? findReactMediaElement(preset.react.barrelPath) : undefined;
 
