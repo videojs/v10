@@ -9,7 +9,7 @@ import '@app/styles.css';
 //   preload=auto|metadata|none  Initial preload mode
 
 import { effect, snapshot } from '@videojs/spf';
-import type { SimpleHlsEngineInputs, SimpleHlsEngineState } from '@videojs/spf/hls';
+import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
 import { createSimpleHlsEngine } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ function updateThroughputDisplay() {
 }
 
 function renderRenditionPicker() {
-  if (!engine || !inputs) return;
+  if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
   const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
   const abrDisabled = engine.state.abrDisabled.get() === true;
@@ -146,7 +146,7 @@ function renderRenditionPicker() {
     enableBtn.textContent = 'Enable ABR';
     enableBtn.addEventListener('click', () => {
       log('ABR re-enabled', 'success');
-      inputs.state.abrDisabled.set(false);
+      signals.state.abrDisabled.set(false);
     });
     statusRow.appendChild(enableBtn);
   }
@@ -166,7 +166,7 @@ function renderRenditionPicker() {
       // TODO(stage-d): selectedVideoTrackId is the deferred reconciler case —
       // direct write into composition state until intent/state split lands.
       engine.state.selectedVideoTrackId.set(track.id);
-      inputs.state.abrDisabled.set(true);
+      signals.state.abrDisabled.set(true);
     });
     renditionButtonsDiv.appendChild(btn);
   }
@@ -270,7 +270,7 @@ log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
 let engine: ReturnType<typeof createSimpleHlsEngine>;
-let inputs: SimpleHlsEngineInputs;
+let signals: SimpleHlsEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
@@ -279,12 +279,12 @@ function startEngine(src: string) {
 
   engine = createSimpleHlsEngine({
     initialBandwidth: 1_000_000,
-    exposeInputs: (refs) => {
-      inputs = refs;
+    onSignalsReady: (refs) => {
+      signals = refs;
     },
   });
   (window as any).engine = engine;
-  (window as any).inputs = inputs;
+  (window as any).signals = signals;
   (window as any).state = () => snapshot(engine.state);
   (window as any).context = () => snapshot(engine.context);
 
@@ -407,15 +407,15 @@ function startEngine(src: string) {
   };
 
   log('✓ Engine created', 'success');
-  log('Exposed as window.engine / window.inputs / window.state() / window.context()');
+  log('Exposed as window.engine / window.signals / window.state() / window.context()');
   log('✓ Reactive effects active', 'success');
 
   // ── Wire media element ──────────────────────────────────────────────────────
   // Set preload on the element BEFORE wiring context so syncPreloadAttribute
   // reads the correct value rather than the hardcoded "none" from the HTML.
   video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  inputs.context.mediaElement.set(video);
-  inputs.state.presentationUrl.set(src);
+  signals.context.mediaElement.set(video);
+  signals.state.presentation.set({ url: src });
 
   log('✓ Orchestration started', 'success');
 
@@ -472,7 +472,7 @@ autoplayToggle.addEventListener('change', () => {
 
 preloadSelect.addEventListener('change', () => {
   const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  inputs.state.preload.set(value);
+  signals.state.preload.set(value);
   log(`Preload: ${value}`);
   updateShareUrl();
 });
