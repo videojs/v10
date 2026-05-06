@@ -55,6 +55,12 @@ interface MediaElementSource {
  * Resolve an import specifier to an absolute file path using TypeScript's
  * module resolution. Handles both relative paths and workspace package
  * imports (e.g., @videojs/core/dom/media/hls) via the project's tsconfig.
+ *
+ * Workspace imports go through `package.json#exports` and resolve to the
+ * built `dist/dev/*.d.ts` files, where the TypeScript compiler has collapsed
+ * mixin chains into opaque `_base` aliases. To preserve the original mixin
+ * structure for extraction, we remap the resolved dist `.d.ts` path back to
+ * the corresponding source `.ts` file.
  */
 function resolveModuleToFile(
   fromFile: string,
@@ -62,7 +68,21 @@ function resolveModuleToFile(
   compilerOptions: ts.CompilerOptions
 ): string | undefined {
   const result = ts.resolveModuleName(importSpecifier, fromFile, compilerOptions, ts.sys);
-  return result.resolvedModule?.resolvedFileName;
+  const resolved = result.resolvedModule?.resolvedFileName;
+  if (!resolved) return undefined;
+  return mapDistToSource(resolved);
+}
+
+function mapDistToSource(resolvedPath: string): string {
+  if (!resolvedPath.endsWith('.d.ts')) return resolvedPath;
+  const match = resolvedPath.match(/^(.+\/packages\/[^/]+)\/dist\/dev\/(.+)\.d\.ts$/);
+  if (!match) return resolvedPath;
+  const [, pkgRoot, rest] = match;
+  const candidates = [`${pkgRoot}/src/${rest}.ts`, `${pkgRoot}/src/${rest}/index.ts`];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return resolvedPath;
 }
 
 // ─── Discovery ───────────────────────────────────────────────────────
@@ -254,24 +274,27 @@ function parseCustomMediaElementCall(
 function extractHostProperties(
   filePath: string,
   hostClassName: string,
-  compilerOptions: ts.CompilerOptions
+  compilerOptions: ts.CompilerOptions,
+  nativeNames: Set<string>
 ): Record<string, HostPropertyDef> {
   const properties: Record<string, HostPropertyDef> = {};
-  extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set());
+  extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set(), nativeNames);
   return properties;
 }
 
 /**
  * Recursively extract getter/setter pairs from a class and its parent chain.
- * Child properties override parent properties (checked via the `seen` set).
- * Stops at host base classes (HTMLMediaElementHost, HTMLVideoElementHost, etc.).
+ * Handles both `extends Identifier` and `extends MixinA(MixinB(Base))`. Child
+ * properties override parent properties (checked via the `seen` set). Stops
+ * at host base classes (HTMLMediaElementHost, HTMLVideoElementHost, etc.).
  */
 function extractClassProperties(
   filePath: string,
   className: string,
   properties: Record<string, HostPropertyDef>,
   compilerOptions: ts.CompilerOptions,
-  seen: Set<string>
+  seen: Set<string>,
+  nativeNames: Set<string>
 ): void {
   if (seen.has(`${filePath}:${className}`)) return;
   seen.add(`${filePath}:${className}`);
@@ -279,86 +302,341 @@ function extractClassProperties(
   const content = fs.readFileSync(filePath, 'utf-8');
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
 
-  const getters = new Map<string, { type: string; description?: string }>();
-  const setters = new Set<string>();
-  let parentClassName: string | undefined;
-  let parentImportPath: string | undefined;
-
+  let classNode: ts.ClassDeclaration | undefined;
   ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isClassDeclaration(node) || !node.name || node.name.text !== className) return;
+    if (ts.isClassDeclaration(node) && node.name?.text === className) {
+      classNode = node;
+    }
+  });
+  if (!classNode) return;
 
-    // Check for extends clause (host inheritance)
-    if (node.heritageClauses) {
-      const extendsClause = node.heritageClauses.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
-      if (extendsClause && extendsClause.types.length > 0) {
-        const extendsExpr = extendsClause.types[0]!.expression;
-        if (ts.isIdentifier(extendsExpr)) {
-          parentClassName = extendsExpr.text;
-        }
+  // Process the extends chain BEFORE applying own getters/setters, so that
+  // child overrides win in the merge step at the end of applyClassMembers.
+  const extendsClause = classNode.heritageClauses?.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
+  if (extendsClause && extendsClause.types.length > 0) {
+    const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+    processExtendsExpression(extendsExpr, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+  }
+
+  applyClassMembers(classNode, sourceFile, properties, nativeNames);
+}
+
+/** Strip parens and `as Foo` casts from an expression. */
+function unwrapExpression(expr: ts.Expression): ts.Expression {
+  while (ts.isParenthesizedExpression(expr) || ts.isAsExpression(expr)) {
+    expr = expr.expression;
+  }
+  return expr;
+}
+
+/**
+ * Process an `extends` expression — either an `Identifier` (regular class
+ * inheritance) or a `CallExpression` (mixin chain like `OuterMixin(InnerMixin(Base))`).
+ * Mixins are applied innermost-first so that outer mixin overrides win.
+ */
+function processExtendsExpression(
+  extendsExpr: ts.Expression,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  properties: Record<string, HostPropertyDef>,
+  compilerOptions: ts.CompilerOptions,
+  seen: Set<string>,
+  nativeNames: Set<string>
+): void {
+  if (ts.isIdentifier(extendsExpr)) {
+    const parentClassName = extendsExpr.text;
+    if (HOST_BASE_CLASSES.has(parentClassName)) return;
+    const parentImportPath = findImportPath(sourceFile, parentClassName);
+    if (parentImportPath) {
+      const parentFilePath = resolveModuleToFile(filePath, parentImportPath, compilerOptions);
+      if (parentFilePath) {
+        extractClassProperties(parentFilePath, parentClassName, properties, compilerOptions, seen, nativeNames);
+      }
+    } else {
+      // Parent is declared in the same file.
+      extractClassProperties(filePath, parentClassName, properties, compilerOptions, seen, nativeNames);
+    }
+    return;
+  }
+
+  if (ts.isCallExpression(extendsExpr)) {
+    const { mixins, base } = unwindMixinChain(extendsExpr);
+    // Process the base class first (innermost identifier), then layer each
+    // mixin from innermost to outermost so outer mixins override inner ones.
+    processExtendsExpression(base, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+    for (let i = mixins.length - 1; i >= 0; i--) {
+      processMixin(mixins[i]!.name, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+    }
+  }
+}
+
+/**
+ * Unwind a mixin call chain like `OuterMixin(InnerMixin(Base))` into a list
+ * of mixin names (outermost first) and the innermost expression (the base).
+ * Parens and `as` casts are stripped between layers.
+ */
+function unwindMixinChain(callExpr: ts.CallExpression): {
+  mixins: Array<{ name: string }>;
+  base: ts.Expression;
+} {
+  const mixins: Array<{ name: string }> = [];
+  let current: ts.Expression = callExpr;
+  while (ts.isCallExpression(current)) {
+    if (ts.isIdentifier(current.expression)) {
+      mixins.push({ name: current.expression.text });
+    } else {
+      // Non-identifier callee — give up walking further down.
+      break;
+    }
+    if (current.arguments.length === 0) break;
+    current = unwrapExpression(current.arguments[0]!);
+  }
+  return { mixins, base: current };
+}
+
+/**
+ * Walk a mixin function and merge the inner class's getters/setters into
+ * `properties`. Supports the three mixin shapes used in this codebase:
+ *   A: `function MixinName(arg) { class Inner extends arg { ... } }`
+ *   B: `const MixinName: Mixin<...> = (arg) => { class Inner extends arg { ... } }`
+ *   C: `const MixinName = <Base extends ...>(arg) => { class Inner extends arg { ... } }`
+ *
+ * The inner class always extends a function parameter; we don't recurse on
+ * that — the outer chain walk already handles the base.
+ */
+function processMixin(
+  mixinName: string,
+  callerSourceFile: ts.SourceFile,
+  callerFilePath: string,
+  properties: Record<string, HostPropertyDef>,
+  compilerOptions: ts.CompilerOptions,
+  seen: Set<string>,
+  nativeNames: Set<string>
+): void {
+  const resolved = resolveMixinDeclaration(mixinName, callerSourceFile, callerFilePath, compilerOptions, new Set());
+  if (!resolved) return;
+
+  const seenKey = `${resolved.filePath}::mixin::${resolved.name}`;
+  if (seen.has(seenKey)) return;
+  seen.add(seenKey);
+
+  applyClassMembers(resolved.innerClass, resolved.sourceFile, properties, nativeNames);
+}
+
+/**
+ * Resolve a mixin name to the file containing its declaration and the inner
+ * class returned by the mixin. Follows re-exports through barrel files
+ * (`export { Foo } from './bar'`). Returns `undefined` if not found.
+ */
+function resolveMixinDeclaration(
+  mixinName: string,
+  callerSourceFile: ts.SourceFile,
+  callerFilePath: string,
+  compilerOptions: ts.CompilerOptions,
+  visited: Set<string>
+): { name: string; filePath: string; sourceFile: ts.SourceFile; innerClass: ts.ClassDeclaration } | undefined {
+  const importPath = findImportPath(callerSourceFile, mixinName);
+  let mixinFilePath: string;
+  if (importPath) {
+    const resolved = resolveModuleToFile(callerFilePath, importPath, compilerOptions);
+    if (!resolved) return undefined;
+    mixinFilePath = resolved;
+  } else {
+    mixinFilePath = callerFilePath;
+  }
+
+  const visitKey = `${mixinFilePath}::${mixinName}`;
+  if (visited.has(visitKey)) return undefined;
+  visited.add(visitKey);
+
+  const content = fs.readFileSync(mixinFilePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(mixinFilePath, content, ts.ScriptTarget.Latest, true);
+
+  const innerClass = findMixinInnerClass(sourceFile, mixinName);
+  if (innerClass) {
+    return { name: mixinName, filePath: mixinFilePath, sourceFile, innerClass };
+  }
+
+  // Not declared here — follow a re-export if present.
+  const reExport = findReExportSource(sourceFile, mixinName);
+  if (!reExport) return undefined;
+
+  const targetName = reExport.exportedName;
+  const targetFilePath = resolveModuleToFile(mixinFilePath, reExport.moduleSpecifier, compilerOptions);
+  if (!targetFilePath) return undefined;
+  const targetContent = fs.readFileSync(targetFilePath, 'utf-8');
+  const targetSourceFile = ts.createSourceFile(targetFilePath, targetContent, ts.ScriptTarget.Latest, true);
+
+  const targetVisitKey = `${targetFilePath}::${targetName}`;
+  if (visited.has(targetVisitKey)) return undefined;
+  visited.add(targetVisitKey);
+
+  const targetInner = findMixinInnerClass(targetSourceFile, targetName);
+  if (targetInner) {
+    return { name: targetName, filePath: targetFilePath, sourceFile: targetSourceFile, innerClass: targetInner };
+  }
+
+  // Multi-hop re-export (rare).
+  return resolveMixinDeclaration(targetName, targetSourceFile, targetFilePath, compilerOptions, visited);
+}
+
+/**
+ * Look for a `export { Foo } from './bar'` (or `export { Foo as Bar } from './bar'`)
+ * matching the given name. Returns the source module specifier and the actual
+ * exported identifier in the target module.
+ */
+function findReExportSource(
+  sourceFile: ts.SourceFile,
+  name: string
+): { moduleSpecifier: string; exportedName: string } | undefined {
+  let result: { moduleSpecifier: string; exportedName: string } | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (result) return;
+    if (!ts.isExportDeclaration(node)) return;
+    if (!node.moduleSpecifier || !ts.isStringLiteral(node.moduleSpecifier)) return;
+    if (!node.exportClause || !ts.isNamedExports(node.exportClause)) return;
+    for (const specifier of node.exportClause.elements) {
+      // `export { Foo as Bar }` — `propertyName` = original (Foo), `name` = alias (Bar).
+      const localName = specifier.name.text;
+      const targetName = (specifier.propertyName ?? specifier.name).text;
+      if (localName === name) {
+        result = { moduleSpecifier: node.moduleSpecifier.text, exportedName: targetName };
+        return;
       }
     }
+  });
+  return result;
+}
 
-    for (const member of node.members) {
-      if (!ts.isGetAccessorDeclaration(member) && !ts.isSetAccessorDeclaration(member)) continue;
-      if (!member.name || !ts.isIdentifier(member.name)) continue;
+/**
+ * Find the inner class declared inside a mixin function whose `extends`
+ * targets one of the function's parameters.
+ */
+function findMixinInnerClass(sourceFile: ts.SourceFile, mixinName: string): ts.ClassDeclaration | undefined {
+  let result: ts.ClassDeclaration | undefined;
 
-      const name = member.name.text;
-      if (name.startsWith('_') || name.startsWith('#')) continue;
-      // target is an internal reference to the native media element, not a user-facing property
-      if (name === 'target') continue;
-
-      if (ts.isGetAccessorDeclaration(member)) {
-        let type = 'unknown';
-        if (member.type) {
-          type = member.type.getText(sourceFile);
+  function scanBody(body: ts.Node, paramNames: Set<string>): void {
+    function visit(n: ts.Node): void {
+      if (result) return;
+      if (ts.isClassDeclaration(n) && n.heritageClauses) {
+        const ext = n.heritageClauses.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
+        if (ext && ext.types.length > 0) {
+          const extExpr = unwrapExpression(ext.types[0]!.expression);
+          if (ts.isIdentifier(extExpr) && paramNames.has(extExpr.text)) {
+            result = n;
+            return;
+          }
         }
-        const description = getJSDocDescription(member);
-        getters.set(name, { type, description });
-      } else if (ts.isSetAccessorDeclaration(member)) {
-        setters.add(name);
+      }
+      ts.forEachChild(n, visit);
+    }
+    ts.forEachChild(body, visit);
+  }
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (result) return;
+
+    // Shape A: function declaration
+    if (ts.isFunctionDeclaration(node) && node.name?.text === mixinName && node.body) {
+      scanBody(node.body, getParameterNames(node.parameters));
+      return;
+    }
+
+    // Shapes B / C: const arrow / function expression
+    if (ts.isVariableStatement(node)) {
+      for (const decl of node.declarationList.declarations) {
+        if (
+          ts.isIdentifier(decl.name) &&
+          decl.name.text === mixinName &&
+          decl.initializer &&
+          (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer))
+        ) {
+          const body = decl.initializer.body;
+          if (ts.isBlock(body)) {
+            scanBody(body, getParameterNames(decl.initializer.parameters));
+          }
+          return;
+        }
       }
     }
   });
 
-  // Resolve parent class and extract its properties first (child overrides parent)
-  if (parentClassName && !HOST_BASE_CLASSES.has(parentClassName)) {
-    // Find the import for the parent class
-    ts.forEachChild(sourceFile, (node) => {
-      if (!ts.isImportDeclaration(node)) return;
-      if (!ts.isStringLiteral(node.moduleSpecifier)) return;
-      const importClause = node.importClause;
-      if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings)) return;
+  return result;
+}
 
-      for (const specifier of importClause.namedBindings.elements) {
-        const importedName = (specifier.propertyName ?? specifier.name).text;
-        if (importedName === parentClassName) {
-          parentImportPath = node.moduleSpecifier.text;
-          break;
-        }
-      }
-    });
+function getParameterNames(params: ts.NodeArray<ts.ParameterDeclaration>): Set<string> {
+  const names = new Set<string>();
+  for (const p of params) {
+    if (ts.isIdentifier(p.name)) names.add(p.name.text);
+  }
+  return names;
+}
 
-    if (parentImportPath) {
-      const parentFilePath = resolveModuleToFile(filePath, parentImportPath, compilerOptions);
-      if (parentFilePath) {
-        // Extract parent properties first — child will override
-        extractClassProperties(parentFilePath, parentClassName, properties, compilerOptions, seen);
+/**
+ * Collect getter/setter pairs from a single class node and merge them into
+ * `properties`. Description fallback: if a child override has no JSDoc,
+ * the closest ancestor's description is preserved.
+ */
+function applyClassMembers(
+  classNode: ts.ClassDeclaration,
+  sourceFile: ts.SourceFile,
+  properties: Record<string, HostPropertyDef>,
+  nativeNames: Set<string>
+): void {
+  const getters = new Map<string, { type: string; description?: string }>();
+  const setters = new Set<string>();
+
+  for (const member of classNode.members) {
+    if (!ts.isGetAccessorDeclaration(member) && !ts.isSetAccessorDeclaration(member)) continue;
+    if (!member.name || !ts.isIdentifier(member.name)) continue;
+
+    const name = member.name.text;
+    if (name.startsWith('_') || name.startsWith('#')) continue;
+    // target is an internal reference to the native media element, not a user-facing property
+    if (name === 'target') continue;
+
+    if (ts.isGetAccessorDeclaration(member)) {
+      let type = 'unknown';
+      if (member.type) {
+        type = member.type.getText(sourceFile);
       }
-    } else {
-      // Parent is in the same file
-      extractClassProperties(filePath, parentClassName, properties, compilerOptions, seen);
+      const description = getJSDocDescription(member);
+      getters.set(name, { type, description });
+    } else if (ts.isSetAccessorDeclaration(member)) {
+      setters.add(name);
     }
   }
 
-  // Apply this class's properties (overrides parent)
   for (const [name, info] of getters) {
     const def: HostPropertyDef = {
       type: info.type,
       readonly: !setters.has(name),
     };
-    if (info.description) def.description = info.description;
+    // Description fallback: keep parent's if child has none.
+    const description = info.description ?? properties[name]?.description;
+    if (description) def.description = description;
+    if (nativeNames.has(name)) def.overridesNative = true;
     properties[name] = def;
   }
+}
+
+function findImportPath(sourceFile: ts.SourceFile, name: string): string | undefined {
+  let importPath: string | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (importPath) return;
+    if (!ts.isImportDeclaration(node)) return;
+    if (!ts.isStringLiteral(node.moduleSpecifier)) return;
+    const importClause = node.importClause;
+    if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings)) return;
+    for (const specifier of importClause.namedBindings.elements) {
+      const importedName = (specifier.propertyName ?? specifier.name).text;
+      if (importedName === name) {
+        importPath = node.moduleSpecifier.text;
+        return;
+      }
+    }
+  });
+  return importPath;
 }
 
 // ─── JSDoc Extraction ────────────────────────────────────────────────
@@ -596,6 +874,133 @@ function extractEventsFromTypes(filePath: string, interfaceName: string): string
   return events;
 }
 
+/**
+ * Scan a host class (and its mixin/parent chain) for `this.dispatchEvent(new Event('name'))`
+ * style calls and return the set of event names dispatched. Forwarding patterns like
+ * `new (event.constructor as ...)(event.type, event)` are naturally skipped because their
+ * first argument is not a `StringLiteral`.
+ */
+function extractDispatchedEvents(
+  filePath: string,
+  className: string,
+  compilerOptions: ts.CompilerOptions,
+  seen: Set<string>,
+  events: Set<string>
+): Set<string> {
+  const fileScanKey = `${filePath}::dispatchEvents`;
+  if (!seen.has(fileScanKey)) {
+    seen.add(fileScanKey);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+    scanForDispatchEvents(sourceFile, events);
+
+    let classNode: ts.ClassDeclaration | undefined;
+    ts.forEachChild(sourceFile, (n) => {
+      if (ts.isClassDeclaration(n) && n.name?.text === className) {
+        classNode = n;
+      }
+    });
+    if (classNode) {
+      const extendsClause = classNode.heritageClauses?.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
+      if (extendsClause && extendsClause.types.length > 0) {
+        const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+        walkExtendsForDispatchEvents(extendsExpr, sourceFile, filePath, compilerOptions, seen, events);
+      }
+    }
+  }
+  return events;
+}
+
+function walkExtendsForDispatchEvents(
+  extendsExpr: ts.Expression,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  compilerOptions: ts.CompilerOptions,
+  seen: Set<string>,
+  events: Set<string>
+): void {
+  if (ts.isIdentifier(extendsExpr)) {
+    const parentName = extendsExpr.text;
+    if (HOST_BASE_CLASSES.has(parentName)) return;
+    const parentImportPath = findImportPath(sourceFile, parentName);
+    if (parentImportPath) {
+      const parentFilePath = resolveModuleToFile(filePath, parentImportPath, compilerOptions);
+      if (parentFilePath) {
+        extractDispatchedEvents(parentFilePath, parentName, compilerOptions, seen, events);
+      }
+    } else {
+      extractDispatchedEvents(filePath, parentName, compilerOptions, seen, events);
+    }
+    return;
+  }
+
+  if (ts.isCallExpression(extendsExpr)) {
+    const { mixins, base } = unwindMixinChain(extendsExpr);
+    walkExtendsForDispatchEvents(base, sourceFile, filePath, compilerOptions, seen, events);
+    for (const mixin of mixins) {
+      const importPath = findImportPath(sourceFile, mixin.name);
+      let mixinFilePath: string;
+      if (importPath) {
+        const resolved = resolveModuleToFile(filePath, importPath, compilerOptions);
+        if (!resolved) continue;
+        mixinFilePath = resolved;
+      } else {
+        mixinFilePath = filePath;
+      }
+      const key = `${mixinFilePath}::dispatchEvents`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const content = fs.readFileSync(mixinFilePath, 'utf-8');
+      const mixinSourceFile = ts.createSourceFile(mixinFilePath, content, ts.ScriptTarget.Latest, true);
+      scanForDispatchEvents(mixinSourceFile, events);
+    }
+  }
+}
+
+function scanForDispatchEvents(sourceFile: ts.SourceFile, events: Set<string>): void {
+  function visit(node: ts.Node): void {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === 'dispatchEvent' &&
+      node.arguments.length > 0
+    ) {
+      const arg = node.arguments[0]!;
+      if (ts.isNewExpression(arg) && arg.arguments && arg.arguments.length > 0) {
+        const eventArg = arg.arguments[0]!;
+        if (ts.isStringLiteral(eventArg)) {
+          events.add(eventArg.text);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+}
+
+function dedupeStrings(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+/**
+ * Build the set of property names declared on `HTMLMediaElement`,
+ * `HTMLVideoElement`, and `HTMLAudioElement` (per `lib.dom.d.ts`). Used to
+ * tag host properties that override a native member.
+ */
+function collectNativeMemberNames(program: ts.Program, anchorFile: ts.SourceFile): Set<string> {
+  const checker = program.getTypeChecker();
+  const names = new Set<string>();
+  for (const ifaceName of ['HTMLMediaElement', 'HTMLVideoElement', 'HTMLAudioElement']) {
+    const symbol = checker.resolveName(ifaceName, anchorFile, ts.SymbolFlags.Type, false);
+    if (!symbol) continue;
+    const type = checker.getDeclaredTypeOfSymbol(symbol);
+    for (const member of type.getProperties()) {
+      names.add(member.getName());
+    }
+  }
+  return names;
+}
+
 // ─── Pipeline ────────────────────────────────────────────────────────
 
 export function generateMediaElementReferences(monorepoRoot: string): MediaElementResult[] {
@@ -618,10 +1023,23 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const videoEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'VideoEvents') : [];
   const audioEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'AudioEvents') : [];
 
-  // Extract CSS vars using the existing handler (needs a TS program)
-  const program = ts.createProgram([customMediaPath], compilerOptions);
+  // Extract CSS vars using the existing handler (needs a TS program).
+  // Ensure `lib.dom.d.ts` is loaded so HTMLMediaElement / HTMLVideoElement /
+  // HTMLAudioElement member names can be resolved for the `overridesNative`
+  // tag — `tsconfig.base.json` only lists `ES2022`.
+  const programOptions: ts.CompilerOptions = {
+    ...compilerOptions,
+    lib: dedupeStrings([...(compilerOptions.lib ?? []), 'lib.dom.d.ts']),
+  };
+  const program = ts.createProgram([customMediaPath], programOptions);
   const videoCSSVarsRaw = extractCSSVars(customMediaPath, program, 'Video');
   const audioCSSVarsRaw = extractCSSVars(customMediaPath, program, 'Audio');
+
+  // Collect native HTMLMediaElement/Video/Audio member names from lib.dom.d.ts.
+  const customMediaSourceFile = program.getSourceFile(customMediaPath);
+  const nativeNames = customMediaSourceFile
+    ? collectNativeMemberNames(program, customMediaSourceFile)
+    : new Set<string>();
 
   const videoCSSVars: Record<string, { description: string }> = {};
   if (videoCSSVarsRaw) {
@@ -644,7 +1062,12 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const results: MediaElementResult[] = [];
 
   for (const source of sources) {
-    const hostProperties = extractHostProperties(source.hostFilePath, source.hostClassName, compilerOptions);
+    const hostProperties = extractHostProperties(
+      source.hostFilePath,
+      source.hostClassName,
+      compilerOptions,
+      nativeNames
+    );
 
     // Deduplicate: host props that overlap with native attributes
     const hostAttrNames = new Set<string>();
@@ -655,14 +1078,24 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
     const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
-    const events = source.mediaType === 'video' ? videoEvents : audioEvents;
+    const native = source.mediaType === 'video' ? videoEvents : audioEvents;
+
+    const dispatched = extractDispatchedEvents(
+      source.hostFilePath,
+      source.hostClassName,
+      compilerOptions,
+      new Set(),
+      new Set()
+    );
+    const nativeSet = new Set(native);
+    const elementSpecific = [...dispatched].filter((e) => !nativeSet.has(e)).sort();
 
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
       hostProperties,
       nativeAttributes,
-      events,
+      events: { native, elementSpecific },
       cssCustomProperties,
       slots,
     };

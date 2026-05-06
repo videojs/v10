@@ -4,6 +4,7 @@ import { z } from 'astro/zod';
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { FeatureReferenceSchema } from './types/feature-reference';
+import { MediaReferenceSchema } from './types/media-reference';
 import { PresetReferenceSchema } from './types/preset-reference';
 import { UtilReferenceSchema } from './types/util-reference';
 import { defaultGitService } from './utils/gitService';
@@ -139,6 +140,14 @@ const featureReference = defineCollection({
   schema: FeatureReferenceSchema,
 });
 
+const mediaReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-media-reference',
+  }),
+  schema: MediaReferenceSchema,
+});
+
 const presetReference = defineCollection({
   loader: glob({
     pattern: '*.json',
@@ -168,6 +177,7 @@ export const collections = {
   componentReference,
   utilReference,
   featureReference,
+  mediaReference,
   presetReference,
   ejectedSkins,
 };

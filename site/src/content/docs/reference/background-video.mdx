@@ -1,0 +1,134 @@
+---
+title: BackgroundVideo
+frameworkTitle:
+  html: background-video
+description: Decorative background video element with automatic muting and looping
+---
+
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import MarkdownCode from "@/components/typography/MarkdownCode.astro";
+import Table from "@/components/typography/Table.astro";
+import Tbody from "@/components/typography/Tbody.astro";
+import Td from "@/components/typography/Td.astro";
+import Th from "@/components/typography/Th.astro";
+import Thead from "@/components/typography/Thead.astro";
+import Tr from "@/components/typography/Tr.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/background-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/background-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/background-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/background-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/background-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/background-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/background-video/html/css/BasicUsage.ts?raw";
+
+Decorative background video that automatically plays muted and looped. Renders a `<video>` inside a shadow DOM positioned to fill its container. By default, the video is muted, looped, and autoplaying — use the opt-out attributes below to change this behavior.
+
+## Anatomy
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<background-video src="video.mp4"></background-video>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<BackgroundVideo src="video.mp4" />
+```
+</FrameworkCase>
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## API Reference
+
+### Attributes
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Attribute</Th>
+      <Th>Description</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    <Tr>
+      <Td><MarkdownCode>src</MarkdownCode></Td>
+      <Td>URL of the video source.</Td>
+    </Tr>
+    <Tr>
+      <Td><MarkdownCode>nomuted</MarkdownCode></Td>
+      <Td>Opt out of muted playback. By default the video is muted.</Td>
+    </Tr>
+    <Tr>
+      <Td><MarkdownCode>noloop</MarkdownCode></Td>
+      <Td>Opt out of looped playback. By default the video loops.</Td>
+    </Tr>
+    <Tr>
+      <Td><MarkdownCode>noautoplay</MarkdownCode></Td>
+      <Td>Opt out of autoplay. By default the video autoplays.</Td>
+    </Tr>
+  </Tbody>
+</Table>
+
+### CSS Custom Properties
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Variable</Th>
+      <Th>Default</Th>
+      <Th>Description</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    <Tr>
+      <Td><MarkdownCode>--media-object-fit</MarkdownCode></Td>
+      <Td><MarkdownCode>inherit</MarkdownCode></Td>
+      <Td>Controls how the video fits its container.</Td>
+    </Tr>
+    <Tr>
+      <Td><MarkdownCode>--media-object-position</MarkdownCode></Td>
+      <Td><MarkdownCode>50% 50%</MarkdownCode></Td>
+      <Td>Controls the position of the video within its container.</Td>
+    </Tr>
+  </Tbody>
+</Table>
+
+### Slots
+
+<p class="my-4 flex flex-wrap gap-2">
+  <MarkdownCode>(default)</MarkdownCode>
+</p>
+
+Content placed in the default slot is rendered before the video element inside the shadow DOM.
