@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.23...@videojs/utils@10.0.0-beta.24) (2026-05-06)
+
+
+### Features
+
+* **spf:** HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/issues/1512)) ([0cfd3bb](https://github.com/videojs/v10/commit/0cfd3bb395332b19cf85e9dc7eb08f656bec3e2b))
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.22...@videojs/utils@10.0.0-beta.23) (2026-04-27)
 
 

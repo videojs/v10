@@ -1,5 +1,27 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.23...@videojs/skins@10.0.0-beta.24) (2026-05-06)
+
+
+### Features
+
+* **packages:** add live button component ([#1473](https://github.com/videojs/v10/issues/1473)) ([e37d5df](https://github.com/videojs/v10/commit/e37d5df87352088a9287bd46b14759965c154b76))
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+
+
+### Bug Fixes
+
+* **ci:** use biome to sort CSS properties ([#1490](https://github.com/videojs/v10/issues/1490)) ([8e2b7e4](https://github.com/videojs/v10/commit/8e2b7e4f6d20a0b4f780c34ec2670ec1f9bd25e6))
+* **icons:** avoid hidden spinner animations ([#1476](https://github.com/videojs/v10/issues/1476)) ([c388dd3](https://github.com/videojs/v10/commit/c388dd35a96465d6b2c340fdb68cf1eede36418a))
+* **skin:** fix safari button alignment issue when zoomed ([#1495](https://github.com/videojs/v10/issues/1495)) ([c5b06cf](https://github.com/videojs/v10/commit/c5b06cf948c5f432f2288c8a931238bb2a150e1a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.22...@videojs/skins@10.0.0-beta.23) (2026-04-27)
 
 

@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.23...@videojs/react@10.0.0-beta.24) (2026-05-06)
+
+
+### Features
+
+* **core:** menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/issues/1503)) ([e3c1b28](https://github.com/videojs/v10/commit/e3c1b280325493909ef1da193855832b8c51fb48))
+* **packages:** add live button component ([#1473](https://github.com/videojs/v10/issues/1473)) ([e37d5df](https://github.com/videojs/v10/commit/e37d5df87352088a9287bd46b14759965c154b76))
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+* **spf:** HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/issues/1512)) ([0cfd3bb](https://github.com/videojs/v10/commit/0cfd3bb395332b19cf85e9dc7eb08f656bec3e2b))
+
+
+### Bug Fixes
+
+* **icons:** use icon exports in ejected skins ([#1489](https://github.com/videojs/v10/issues/1489)) ([d0b36ed](https://github.com/videojs/v10/commit/d0b36ed5b80f9614687d0dd584232cf74d4fb3ca))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.24
+    * @videojs/spf bumped to 10.0.0-beta.24
+    * @videojs/store bumped to 10.0.0-beta.24
+    * @videojs/utils bumped to 10.0.0-beta.24
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.24
+    * @videojs/skins bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.22...@videojs/react@10.0.0-beta.23) (2026-04-27)
 
 
