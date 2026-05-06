@@ -1,31 +1,30 @@
 ---
-status: stages-A-B-C-complete-stage-D-pending
+status: stages-A-B-C-complete-stage-D-pre-largely-landed
 branch: refactor/spf-discrete-signals-and-behavior-objects
 ---
 
 # SPF: Discrete Signals + Behavior-as-Object
 
-> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, and C have landed (the user's plan numbered these as steps 1, 2a, 2b, and 3). Stage D (read/write enforcement) is in-scope for this branch but design is still TBD. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
+> Captures a meeting follow-up on a coordinated set of architectural shifts in SPF. Stages A, B, and C have landed (the user's plan numbered these as steps 1, 2a, 2b, and 3). Stage D-pre's input mechanism + adapter/harness migration has landed; the reconciler-overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) are deferred into Stage D proper. Stage D type enforcement is still TBD. Findings feed back into `internal/design/spf/primitives.md` and `packages/spf/docs/hls-engine.md`.
 
 ## Status snapshot
 
 - **Branch:** `refactor/spf-discrete-signals-and-behavior-objects` (off `docs/spf-hls-engine-composition`). Renamed from `refactor/spf-discrete-signals-stage-a` once scope expanded beyond Stage A.
-- **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests. Tests green: 48 files, 748 tests passed (was 703 at end of Stage A — net +45 from new test coverage and consolidation).
+- **Stages A + B + C complete** + engine-wrapper revisit + `buildSignalMap` export with tests + Stage D-pre input mechanism. Tests green: 49 files, 759 tests passed.
 - **Build clean.** `pnpm typecheck`, `pnpm -F @videojs/spf test`, `pnpm exec biome check`, `pnpm check:workspace`, `pnpm build:packages` all pass.
 - **Stage D in-scope for this branch.** Direction picked: read/write enforcement is derived from the setup signature (per-slot `Signal<T>` vs `ReadonlySignal<T>`), no separate `writeKeys` array. Invariant is **0-or-1 writer behaviors per signal** (0-writer keys must be seeded via `initialState`). Composition surface becomes uniformly read-only externally.
-- **Stage D-pre identified.** The `adapter.ts` external writes (`mediaElement`, `preload`, `presentation`, `playbackInitiated`) must move into writer behaviors via an explicit input mechanism (TBD) before Stage D's type machinery can hold the runtime invariant. See `## Stage D — direction picked, details TBD` for the audit and the input-mechanism options. (Note: `presentation` was originally split as `presentationUrl` + `presentation` during the parent doc branch, but that split was reverted before merge — `presentation` is now a single `MaybeResolvedPresentation` slot. The adapter writes the unresolved form `{ url }`.)
-- **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`.
+- **Stage D-pre largely landed.** The adapter's external writes now flow through a generic `shareSignals` behavior factory: the engine instantiates `makeShareSignals<S, C>()` and the consumer captures writable signal refs via `config.onSignalsReady` at composition setup. Adapter migrated; sandbox harness rebuilt (also fixed: it had been on the pre-Stage-A monolithic API since Stage A landed). The 2-writer overlap cases (`selectedVideoTrackId` from harness rendition picker + `selectVideoTrack` behavior; `selectedTextTrackId` from harness auto-selection + `selectTextTrack` behavior) are **deferred** — the harness still writes those directly into composition state with `TODO(stage-d)` markers. See `### What landed` and `### Deferred to Stage D` in the Stage D section.
+- **Not yet:** PR opened; merge to main; doc updates to `hls-engine.md` / `fundamentals.md`; reconciler design + Stage D type machinery.
 - **Memory:** `project_spf_stage_a_revisit.md` has the deeper "why we did it this way" notes for Stage A; updated for B/C carryovers.
 
 ## Resuming — where to start the next session
 
-1. **Verify branch state.** `git log --oneline` should show the plan-doc-rename commit at HEAD on `refactor/spf-discrete-signals-and-behavior-objects` (just below it: `e4ce10ae refactor(spf): specialize load-segments behaviors per track type`).
-2. **Stage D-pre is the next move: implement the setup-callback input mechanism + mirror behaviors + reconcilers.** Decision is made (engine config takes a `setup(inputs)` callback returning writable signal refs; mirror behaviors are the writers; reconcilers handle intent + reactive default for the overlap cases). Migration touches `engine.ts`, `adapter.ts`, the `select-tracks.ts` behavior module (becomes reconcilers), and the sandbox harness (which is also broken at runtime since Stage A). See `### Input mechanism — picked` and `### Mirror-behavior factory shape` in the Stage D section.
-
-3. **After Stage D-pre, Stage D type enforcement.** Direction is picked (setup-signature-driven, no `writeKeys`; 0-or-1 writer-behavior invariant; required `initialState` for 0-writer keys; uniformly read-only public surface). Remaining open questions are mostly mechanical — see `## Stage D — direction picked, details TBD` below.
-4. **Other moves (any order, can interleave with Stage D-pre / D):**
+1. **Verify branch state.** `git log --oneline` should show the rename-to-shareSignals commit at HEAD; just below: `9559d860 docs(spf): refresh plan doc for post-revert single-slot presentation` and `b17ef570 refactor(spf): route adapter inputs through exposeEngineInputs behavior` (the original landing — since renamed/generalized).
+2. **Stage D type enforcement is the next major move.** Direction is picked (setup-signature-driven, no `writeKeys`; 0-or-1 writer-behavior invariant; required `initialState` for 0-writer keys; uniformly read-only public surface). Remaining open questions are mostly mechanical — see `## Stage D — direction picked, details TBD` below.
+3. **Reconcilers for the 2-writer overlap cases** (`selectedVideoTrackId`, `selectedTextTrackId`) get folded into Stage D. Stage D's type machinery needs them anyway — once writer-count enforcement is on, the harness's direct writes have to go somewhere, and that somewhere is a reconciler that takes intent + presentation and writes the resolved id. See `### Reconciler shape (Pattern B, deferred)`.
+4. **Other moves (any order, can interleave with Stage D):**
    - **Doc updates.** `packages/spf/docs/hls-engine.md` is on the parent `docs/spf-hls-engine-composition` branch and is now badly stale (uses old `update`-style state writes, single-`owners` signal, no `defineBehavior`, no `stateKeys`/`contextKeys`). Refresh after Stage D lands or use as a friction-list canary during. `internal/design/spf/fundamentals.md` no longer matches the new pattern (recommends external state writes; Stage C made that disallowed).
-   - **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off. Could fold into Stage D's pass since `writeKeys` may surface a clean factory shape.
+   - **Code-reuse follow-up.** See `## Follow-ups` — three behavior modules (select-tracks, resolve-track, load-segments) lost code reuse during the engine-wrapper revisit. Commit `77601054` documents the trade-off. Could fold into Stage D's pass since per-slot read/write annotations may surface a clean factory shape.
    - **Open the PR.** Branch is shippable as-is even without Stage D, but holding the PR until Stage D lands keeps the change set coherent under the new branch name.
 
 ## Stage A — what landed (early commits, pre-this-session)
@@ -132,107 +131,93 @@ The composition's public `state` / `context` become **uniformly read-only extern
 
 The "0-writer = external input via signal" overload is **rejected**: it would let one syntactic shape (`ReadonlySignal<T>` slot) carry two semantic meanings (internal vs external write source) discoverable only by surveying the entire composition.
 
-### Stage D-pre — encapsulate adapter writes into writer behaviors
+### Stage D-pre — what landed and what's deferred
 
-Before Stage D's type machinery lands, the runtime invariant must hold. Audit (2026-05-04) shows the only external writer to composition signals is `packages/spf/src/playback/engines/hls/adapter.ts` — 4 sites:
+Before Stage D's type machinery lands, the runtime invariant has to hold. Audit (2026-05-04) showed the external writers to composition signals were:
 
-| Key | Slot | Trigger | Nature |
-|---|---|---|---|
-| `mediaElement` | context | `attach()` / `detach()` | DOM lifecycle |
-| `preload` | state | `preload =` IDL setter | HTML attribute input |
-| `presentation` | state | `src =` IDL setter (writes `{ url }`) | HTML attribute input |
-| `playbackInitiated` | state | `play()` method | Imperative input |
+| Key | Slot | Trigger | Nature | Status |
+|---|---|---|---|---|
+| `mediaElement` | context | `attach()` / `detach()` | DOM lifecycle | ✅ migrated to `onSignalsReady` capture in adapter |
+| `preload` | state | `preload =` IDL setter | HTML attribute input | ✅ same |
+| `presentation` | state | `src =` IDL setter (writes `{ url }`) | HTML attribute input | ✅ same |
+| `playbackInitiated` | state | `play()` method | Imperative input | ✅ same |
+| `abrDisabled` | state | sandbox harness UI toggle | pure input, no overlap | ✅ same |
+| `selectedVideoTrackId` | state | sandbox harness rendition picker **and** `selectVideoTrack` behavior | **2-writer overlap** — behavior default-picks; harness overrides | ⏳ deferred to Stage D — harness still writes directly with `TODO(stage-d)` |
+| `selectedTextTrackId` | state | sandbox harness auto-select + (default-pick from `selectTextTrack` behavior) | overlap on default-pick | ⏳ deferred to Stage D — same |
 
-The sandbox harness (`apps/sandbox/src/spf-segment-loading/main.ts`) extends this set with three more — and exposes a real wrinkle:
+**The harness was also on the pre-Stage-A monolithic API** (`engine.state.set({...engine.state.get(),...})` + `engine.owners`) since Stage A landed — broken at runtime, not just type-stale. Stage D-pre rebuilt it on the discrete-signals shape and routed all five non-overlap inputs through `onSignalsReady`. The two overlap cases stayed as direct writes because they need a reconciler design that hasn't landed yet.
 
-| Key | Currently written by | Wrinkle |
-|---|---|---|
-| `abrDisabled` | harness UI toggle | pure input, no overlap |
-| `selectedVideoTrackId` | harness **and the `selectVideoTrack` behavior** | **2-writer violation** — behavior default-picks; harness overrides |
-| `selectedTextTrackId` | harness | overlap with `selectTextTrack` behavior on default-pick |
+### Input mechanism — actual implementation (`shareSignals`)
 
-The overlap forces a real design question: when an external "intent" overlaps with a behavior-owned default-pick, the writer behavior must **reconcile** intent + reactive sources into a single write. The current `selectVideoTrack` becomes a `reconcileSelectedVideoTrackId` behavior that reads an intent input + presentation, and writes the resolved id.
+**The original sketch was more elaborate than what shipped.** The plan was to have the engine create a *separate* set of input signals, with `mirrorInputState` / `mirrorInputContext` behaviors copying each input → composition state, and `reconcileSelectedVideoTrackId` / `reconcileSelectedTextTrackId` replacing `selectVideoTrack` / `selectTextTrack`. Implementation collapsed that down: the "input signals" *are* the composition state signals — there's no parallel set, no mirror layer, and the two reconciler-overlap cases got deferred.
 
-**Note:** the harness has been on the **pre-Stage-A API** (monolithic `engine.state.set({...engine.state.get(),...})` + `engine.owners`) since Stage A landed — broken at runtime, not just type-stale. Stage D-pre must fix it; it's the validation surface for the input mechanism.
+What actually landed:
 
-### Input mechanism — picked (2026-05-04): setup callback in engine config
+1. **`shareSignals` is a generic behavior factory** in `core/composition/share-signals.ts`:
+   ```ts
+   export interface ShareSignalsConfig<S extends object, C extends object> {
+     onSignalsReady?: (signals: { state: StateSignals<S>; context: ContextSignals<C> }) => void;
+   }
 
-**Decision:** the engine config takes a `setup(inputs)` callback that receives writable signal refs. The engine factory creates the input signals; the adapter (or harness) captures the refs in the callback and writes to them imperatively. Composition state stays uniformly read-only externally — input signals are a separate concept owned by the engine, mirrored into composition state by tiny mirror behaviors.
+   export function makeShareSignals<S extends object, C extends object>(): Behavior<S, C, ShareSignalsConfig<S, C>> {
+     return {
+       stateKeys: [],
+       contextKeys: [],
+       setup: ({ state, context, config }) => {
+         config.onSignalsReady?.({ state, context });
+       },
+     };
+   }
+   ```
+   Uses a `Behavior<S, C, Cfg>` literal (not `defineBehavior`) so empty key arrays don't trip the exhaustiveness check. Its setup-param S/C describe what the consumer's callback receives, not keys this behavior needs created — the composition's signal map comes from other behaviors' `stateKeys` / `contextKeys` declarations. The factory is generic so it's not tied to a specific engine; the HLS engine instantiates it once at module load with its full state/context types.
 
-```ts
-// Engine config
-export interface SimpleHlsEngineConfig {
-  initialBandwidth?: number;
-  preferredSubtitleLanguage?: string;
-  setup?: (inputs: SimpleHlsEngineInputs) => void;
-}
+2. **Engine wiring** — one-liner instantiation, no separate input signals:
+   ```ts
+   // packages/spf/src/playback/engines/hls/engine.ts
+   const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
 
-interface SimpleHlsEngineInputs {
-  presentation: Signal<MaybeResolvedPresentation | undefined>;
-  preload: Signal<PreloadValue>;
-  playbackInitiated: Signal<boolean>;
-  mediaElement: Signal<HTMLMediaElement | undefined>;
-  // intent signals for reconcilers:
-  selectedVideoTrackIdIntent: Signal<string | undefined>;
-  selectedTextTrackIdIntent: Signal<string | undefined>;
-  abrDisabled: Signal<boolean>;
-}
+   export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
+     initialBandwidth?: number;
+     // ...
+   }
 
-// Engine factory wires inputs to mirror behaviors and to reconcilers
-export function createSimpleHlsEngine(config: SimpleHlsEngineConfig) {
-  const inputs: SimpleHlsEngineInputs = {
-    presentation: signal(undefined),
-    preload: signal('none'),
-    playbackInitiated: signal(false),
-    mediaElement: signal(undefined),
-    selectedVideoTrackIdIntent: signal(undefined),
-    selectedTextTrackIdIntent: signal(undefined),
-    abrDisabled: signal(false),
-  };
+   export function createSimpleHlsEngine(config: SimpleHlsEngineConfig = {}) {
+     return createComposition([shareSignals, /* other behaviors */], { config: finalConfig, initialState: { ... } });
+   }
+   ```
 
-  const composition = createComposition([
-    mirrorInputState('presentation', inputs.presentation),
-    mirrorInputState('preload', inputs.preload),
-    mirrorInputState('playbackInitiated', inputs.playbackInitiated),
-    mirrorInputContext('mediaElement', inputs.mediaElement),
-    mirrorInputState('abrDisabled', inputs.abrDisabled),
-    reconcileSelectedVideoTrackId(inputs.selectedVideoTrackIdIntent),
-    reconcileSelectedTextTrackId(inputs.selectedTextTrackIdIntent, config),
-    resolvePresentation,
-    // ...
-  ], { initialState: { ... } });
+3. **`SimpleHlsEngineSignals`** — a named alias for the callback's parameter type, exported from `engine.ts` / `engines/hls/index.ts` so adapters and harnesses can type their captured refs:
+   ```ts
+   export type SimpleHlsEngineSignals = {
+     state: StateSignals<SimpleHlsEngineState>;
+     context: ContextSignals<SimpleHlsEngineContext>;
+   };
+   ```
 
-  config.setup?.(inputs);
-  return composition;
-}
-```
+4. **Adapter capture** — straight ref-grab in the engine-creation path:
+   ```ts
+   #signals!: SimpleHlsEngineSignals;
+   #createEngine() {
+     return createSimpleHlsEngine({
+       ...this.#config,
+       onSignalsReady: (signals) => { this.#signals = signals; },
+     });
+   }
+   ```
 
-**Why callback over passing signals in directly via config:** the callback shape generalizes to other reactive boundaries — most importantly **web workers**, where the engine must own the signals on its side and the consumer needs handles passed back across the worker boundary. "Adapter constructs signals, passes them in" works for in-process but breaks for worker/IPC cases. The callback is the same shape on either side.
+5. **Bidirectional usage** — once Stage D's read/write enforcement lands, the consumer's callback can declare per-slot intent by typing captured refs as `Signal<T>` (write) or `ReadonlySignal<T>` (read-only). For now everything is `Signal<T>`; the discipline is informal.
 
-**Cost of callback over passing in:** the adapter's `set src` flow recreates the engine, which means re-capturing input refs each time. The adapter holds adapter-level "source of truth" fields (preload value, current URL, etc.) and forwards to whichever input signal is current. This pattern already partially exists today (the adapter has a `#preload` field for the IDL value cache).
+**Why this is simpler than the original sketch.** The mirror-behaviors layer assumed the input signals had to be *separate* from composition state ("input signals are owned by the engine; composition state is owned by the composition"). But there's no actual benefit to that separation — the composition is owned by the engine factory, which is the same scope. The single signal set carries both roles.
 
-### Mirror-behavior factory shape
+**The web-worker generalization** still works. If the engine moves into a worker, `onSignalsReady` is the IPC boundary. The composition's signals live on the worker side; the consumer captures proxies on the main-thread side. The callback shape is the same on either side — only the marshaling changes. (We haven't built that yet; this is forward-compat reasoning.)
 
-```ts
-// behaviors/mirror-input.ts (new)
-export function mirrorInputState<K extends string, T>(
-  stateKey: K,
-  source: ReadonlySignal<T>,
-) {
-  return defineBehavior({
-    stateKeys: [stateKey] as const,
-    setup: ({ state }: { state: Record<K, Signal<T>> }) =>
-      effect(() => state[stateKey].set(source.get())),
-  });
-}
+**The `set src` engine-recreate cost** is also unchanged. Each `set src` destroys the composition and creates a new one; the adapter's `onSignalsReady` re-fires and re-captures refs. The adapter holds adapter-level source-of-truth fields (`#preload`, etc.) and re-applies them to the new signals. Same as the original sketch.
 
-export function mirrorInputContext<K extends string, T>(
-  contextKey: K,
-  source: ReadonlySignal<T>,
-) { /* same shape, contextKeys */ }
-```
+### Reconciler shape (Pattern B, deferred to Stage D)
 
-### Reconciler shape (Pattern B)
+The 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) need a reconciler when external "intent" overlaps with a behavior-owned default-pick. Today the harness writes intent directly into composition state and the behavior writes the default-pick into the same slot — runtime works but Stage D's writer-count enforcement will reject it.
+
+The fix: the current `selectVideoTrack` behavior becomes a `reconcileSelectedVideoTrackId` behavior that reads an external intent + presentation and writes the resolved id. The intent input is a separate signal (held by the engine factory or the adapter / harness, whichever owns the intent) and gets passed to the reconciler at composition time.
 
 ```ts
 // behaviors/select-tracks.ts (revised — replaces selectVideoTrack)
@@ -266,6 +251,13 @@ export function reconcileSelectedVideoTrackId(
 }
 ```
 
+**Open question for the reconciler implementation:** where does the intent signal live? Options:
+- **Engine config** — engine creates the intent signal, hands it back via `onSignalsReady` (alongside the composition signals). Treats intent as part of the engine's input surface.
+- **Engine config, separate callback** — the reconciler's setup callback receives the intent, similar to a plugin handshake.
+- **Adapter-owned** — adapter creates the intent signal, passes it into the reconciler at composition time. Tightest scoping but couples reconciler creation to adapter knowledge.
+
+Likely the first: extend the `onSignalsReady` payload (or an adjacent `onIntentsReady`) with intent signals. Decide alongside Stage D's read/write split since the shape interacts.
+
 ### Open product questions inside the reconcilers
 
 These are real questions about behavior, not architecture. Live in the reconciler body whichever way inputs are wired:
@@ -282,7 +274,7 @@ These are real questions about behavior, not architecture. Live in the reconcile
 
 3. ~~**0-writer signals + `initialState`.**~~ **Resolved.** 0-writer signals are constants seeded via `initialState`; required (not optional) at the type level. Composition surface is uniformly read-only externally; there is no signal-shaped external input pathway.
 
-4. ~~**Input mechanism for the adapter's 4 writes.**~~ **Resolved.** Setup callback in engine config returns writable signal refs. Engine creates signals, adapter captures via callback. Generalizes to web workers (callback can run on either side of an IPC boundary). See `### Input mechanism — picked` above.
+4. ~~**Input mechanism for the adapter's 4 writes.**~~ **Resolved (and shipped).** Generic `shareSignals` behavior factory hands writable signal refs to a consumer-supplied `config.onSignalsReady` callback at composition setup. The "input signals" are the composition state signals — no separate set, no mirror layer. Adapter and harness both use this. Reconcilers for the 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) are deferred into Stage D. See `### Input mechanism — actual implementation (shareSignals)` above.
 
 5. **Single-writer enforcement scope.** Compose-time only, or also at `defineBehavior`? Compose-time is required (cross-behavior). `defineBehavior` would catch "behavior can't declare the same key as both `Signal<T>` and `ReadonlySignal<T>` in its own setup" almost free via the existing exhaustiveness machinery.
 
@@ -290,7 +282,7 @@ These are real questions about behavior, not architecture. Live in the reconcile
    - Slots `.set` somewhere in the body → `Signal<T>`.
    - Slots only read → `ReadonlySignal<T>`.
    - No safe "default everything to writable" middle step (defeats enforcement).
-   - Likely one PR per behavior module, after Stage D-pre lands.
+   - Likely one PR per behavior module. Stage D-pre is landed; this can start whenever Stage D's type machinery is ready.
 
 7. **Code-reuse follow-up convergence.** The three behavior modules in `## Follow-ups` lost code reuse during the engine-wrapper revisit. Stage D's per-slot access annotations might surface a clean factory shape (e.g. `makeFirstTrackSelector(type, selectedKey)` with the read/write split baked into the factory's return type). Worth holding the follow-up pass until Stage D's mechanics are nailed down.
 
@@ -318,8 +310,8 @@ A coordinated shift in SPF from **"shared bag mutated by everyone"** to **"decla
 | **A** | (1) discrete signals; (2) `owners` → `context` | ✅ Complete |
 | **B** | (4) behavior-as-object with `stateKeys` / `contextKeys` / `setup` | ✅ Complete |
 | **C** | (5) no external setting from composition + `initialState` | ✅ Complete |
-| **D-pre** | encapsulate adapter writes into writer behaviors via input mechanism (TBD) | ⏳ In-scope, blocking Stage D |
-| **D** | (6) writer-count enforcement (0-or-1 per signal) via setup-signature-derived read/write split | ⏳ In-scope, direction picked, details TBD |
+| **D-pre** | route adapter + harness writes through `shareSignals` / `onSignalsReady` callback | ✅ Largely landed; reconcilers for 2-writer overlap cases (`selectedVideoTrackId` / `selectedTextTrackId`) deferred into Stage D |
+| **D** | (6) writer-count enforcement (0-or-1 per signal) via setup-signature-derived read/write split + reconcilers for the deferred overlap cases | ⏳ In-scope, direction picked, details TBD |
 | **E or parallel** | (3) networking singleton | ❌ Deferred |
 
 ## Follow-ups to revisit
