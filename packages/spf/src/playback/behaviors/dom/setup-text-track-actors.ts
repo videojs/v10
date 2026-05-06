@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { createTextTracksActor } from '../../actors/dom/text-tracks';
 import {
   createTextTrackSegmentLoaderActor,
@@ -59,7 +59,11 @@ function setupTextTrackActorsSetup({
   context,
   config,
 }: {
-  context: ContextSignals<TextTrackActorsContext>;
+  context: {
+    mediaElement: ReadonlySignal<TextTrackActorsContext['mediaElement']>;
+    textTracksActor: Signal<TextTrackActorsContext['textTracksActor']>;
+    segmentLoaderActor: Signal<TextTrackActorsContext['segmentLoaderActor']>;
+  };
   config: TextTrackActorsConfig;
 }): () => void {
   const mediaElementSignal = computed(() => context.mediaElement.get());

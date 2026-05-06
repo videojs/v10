@@ -1,5 +1,6 @@
-import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import {
   pickTextTrack,
   type TextSelectionConfig,
@@ -30,7 +31,14 @@ function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackTy
 export const selectVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedVideoTrackId'>> }) =>
+  setup: ({
+    state,
+  }: {
+    state: {
+      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
+      selectedVideoTrackId: Signal<TrackSelectionState['selectedVideoTrackId']>;
+    };
+  }) =>
     effect(() => {
       const presentation = state.presentation.get();
       if (!presentation || state.selectedVideoTrackId.get()) return;
@@ -50,7 +58,14 @@ export const selectVideoTrack = defineBehavior({
 export const selectAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedAudioTrackId'>> }) =>
+  setup: ({
+    state,
+  }: {
+    state: {
+      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
+      selectedAudioTrackId: Signal<TrackSelectionState['selectedAudioTrackId']>;
+    };
+  }) =>
     effect(() => {
       const presentation = state.presentation.get();
       if (!presentation || state.selectedAudioTrackId.get()) return;
@@ -77,7 +92,10 @@ export const selectTextTrack = defineBehavior({
     state,
     config,
   }: {
-    state: StateSignals<Pick<TrackSelectionState, 'presentation' | 'selectedTextTrackId'>>;
+    state: {
+      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
+      selectedTextTrackId: Signal<TrackSelectionState['selectedTextTrackId']>;
+    };
     config: Omit<TextSelectionConfig, 'type'>;
   }) =>
     effect(() => {

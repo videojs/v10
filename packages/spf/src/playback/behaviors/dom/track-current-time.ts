@@ -1,6 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
+import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
 
 /**
  * State shape for current time tracking.
@@ -45,8 +46,8 @@ function trackCurrentTimeSetup({
   state,
   context,
 }: {
-  state: StateSignals<CurrentTimeState>;
-  context: ContextSignals<CurrentTimeContext>;
+  state: { currentTime: Signal<CurrentTimeState['currentTime']> };
+  context: { mediaElement: ReadonlySignal<CurrentTimeContext['mediaElement']> };
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
   let removeListeners: (() => void) | null = null;

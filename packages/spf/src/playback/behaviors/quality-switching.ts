@@ -1,6 +1,6 @@
-import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { snapshot } from '../../core/signals/primitives';
+import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
@@ -90,7 +90,12 @@ function switchQualitySetup({
   state,
   config = {},
 }: {
-  state: StateSignals<QualitySwitchingState>;
+  state: {
+    presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
+    bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
+    selectedVideoTrackId: Signal<QualitySwitchingState['selectedVideoTrackId']>;
+    abrDisabled: ReadonlySignal<QualitySwitchingState['abrDisabled']>;
+  };
   config?: QualitySwitchingConfig;
 }): () => void {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;

@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
@@ -73,8 +73,19 @@ function setupSourceBuffersSetup({
   state,
   context,
 }: {
-  state: StateSignals<SourceBufferState>;
-  context: ContextSignals<SourceBufferContext>;
+  state: {
+    presentation: ReadonlySignal<SourceBufferState['presentation']>;
+    selectedVideoTrackId: ReadonlySignal<SourceBufferState['selectedVideoTrackId']>;
+    selectedAudioTrackId: ReadonlySignal<SourceBufferState['selectedAudioTrackId']>;
+    selectedTextTrackId: ReadonlySignal<SourceBufferState['selectedTextTrackId']>;
+  };
+  context: {
+    mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
+    videoBuffer: Signal<SourceBufferContext['videoBuffer']>;
+    audioBuffer: Signal<SourceBufferContext['audioBuffer']>;
+    videoBufferActor: Signal<SourceBufferContext['videoBufferActor']>;
+    audioBufferActor: Signal<SourceBufferContext['audioBufferActor']>;
+  };
 }): () => void {
   // Derive which media track types this presentation actually contains
   const presentationTypesSignal = computed((): MediaTrackType[] => {

@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, snapshot } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
@@ -266,8 +266,21 @@ function endOfStreamSetup({
   state,
   context,
 }: {
-  state: StateSignals<EndOfStreamState>;
-  context: ContextSignals<EndOfStreamContext>;
+  state: {
+    presentation: ReadonlySignal<EndOfStreamState['presentation']>;
+    selectedVideoTrackId: ReadonlySignal<EndOfStreamState['selectedVideoTrackId']>;
+    selectedAudioTrackId: ReadonlySignal<EndOfStreamState['selectedAudioTrackId']>;
+    selectedTextTrackId: ReadonlySignal<EndOfStreamState['selectedTextTrackId']>;
+    mediaSourceReadyState: ReadonlySignal<EndOfStreamState['mediaSourceReadyState']>;
+  };
+  context: {
+    mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']>;
+    mediaElement: ReadonlySignal<EndOfStreamContext['mediaElement']>;
+    videoBuffer: ReadonlySignal<EndOfStreamContext['videoBuffer']>;
+    audioBuffer: ReadonlySignal<EndOfStreamContext['audioBuffer']>;
+    videoBufferActor: ReadonlySignal<EndOfStreamContext['videoBufferActor']>;
+    audioBufferActor: ReadonlySignal<EndOfStreamContext['audioBufferActor']>;
+  };
 }): () => void {
   // Derived condition. Transitively tracks through context into each actor's
   // snapshot signal — when context changes and points to a new actor, this computed

@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { computed } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { MediaElementLike } from '../../media/types';
 import type { PresentationState } from './resolve-presentation';
 
@@ -33,8 +33,8 @@ function syncPreloadAttributeSetup({
   state,
   context,
 }: {
-  state: StateSignals<State>;
-  context: ContextSignals<PlatformContext>;
+  state: { preload: Signal<State['preload']> };
+  context: { mediaElement: ReadonlySignal<PlatformContext['mediaElement']> };
 }): () => void {
   const mediaElement = computed(() => context.mediaElement.get());
   return effect(() => {

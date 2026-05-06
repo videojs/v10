@@ -1,8 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, snapshot } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 
 /**
@@ -64,8 +64,11 @@ function trackPlaybackInitiatedSetup({
   state,
   context,
 }: {
-  state: StateSignals<PlaybackInitiatedState>;
-  context: ContextSignals<PlaybackInitiatedContext>;
+  state: {
+    playbackInitiated: Signal<PlaybackInitiatedState['playbackInitiated']>;
+    presentation: ReadonlySignal<PlaybackInitiatedState['presentation']>;
+  };
+  context: { mediaElement: ReadonlySignal<PlaybackInitiatedContext['mediaElement']> };
 }): Reactor<'preconditions-unmet' | 'monitoring' | 'playback-initiated' | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(snapshot(state), snapshot(context)));
   const mediaElementSignal = computed(() => context.mediaElement.get());

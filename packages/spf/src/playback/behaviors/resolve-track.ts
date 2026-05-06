@@ -1,11 +1,11 @@
-import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
-
 
 // ============================================================================
 // Public API
@@ -55,8 +55,12 @@ export interface ResolveTrackState {
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 
+type ResolveTrackStateMap<K extends SelectedTrackKey> = {
+  presentation: Signal<ResolveTrackState['presentation']>;
+} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
+
 function setupTrackResolution<T extends TrackType, K extends SelectedTrackKey>(
-  state: StateSignals<Pick<ResolveTrackState, 'presentation' | K>>,
+  state: ResolveTrackStateMap<K>,
   type: T,
   selectedKey: K
 ): () => void {
@@ -116,7 +120,7 @@ function setupTrackResolution<T extends TrackType, K extends SelectedTrackKey>(
 export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedVideoTrackId'>> }) =>
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
     setupTrackResolution(state, 'video', 'selectedVideoTrackId'),
 });
 
@@ -127,7 +131,7 @@ export const resolveVideoTrack = defineBehavior({
 export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedAudioTrackId'>> }) =>
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedAudioTrackId'> }) =>
     setupTrackResolution(state, 'audio', 'selectedAudioTrackId'),
 });
 
@@ -138,6 +142,6 @@ export const resolveAudioTrack = defineBehavior({
 export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: StateSignals<Pick<ResolveTrackState, 'presentation' | 'selectedTextTrackId'>> }) =>
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedTextTrackId'> }) =>
     setupTrackResolution(state, 'text', 'selectedTextTrackId'),
 });

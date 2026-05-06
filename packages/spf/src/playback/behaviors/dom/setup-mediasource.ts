@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import {
   attachMediaSource,
   createMediaSource,
@@ -38,8 +38,14 @@ function setupMediaSourceSetup({
   state,
   context,
 }: {
-  state: StateSignals<MediaSourceState>;
-  context: ContextSignals<MediaSourceContext>;
+  state: {
+    presentation: ReadonlySignal<MediaSourceState['presentation']>;
+    mediaSourceReadyState: Signal<MediaSourceState['mediaSourceReadyState']>;
+  };
+  context: {
+    mediaElement: ReadonlySignal<MediaSourceContext['mediaElement']>;
+    mediaSource: Signal<MediaSourceContext['mediaSource']>;
+  };
 }): () => void {
   const abortController = new AbortController();
 

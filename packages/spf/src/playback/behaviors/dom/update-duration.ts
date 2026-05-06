@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { snapshot } from '../../../core/signals/primitives';
+import { type ReadonlySignal, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { hasPresentationDuration } from '../../../media/types';
 
@@ -97,8 +97,15 @@ function updateDurationSetup({
   state,
   context,
 }: {
-  state: StateSignals<DurationUpdateState>;
-  context: ContextSignals<DurationUpdateContext>;
+  state: {
+    presentation: ReadonlySignal<DurationUpdateState['presentation']>;
+    mediaSourceReadyState: ReadonlySignal<DurationUpdateState['mediaSourceReadyState']>;
+  };
+  context: {
+    mediaSource: ReadonlySignal<DurationUpdateContext['mediaSource']>;
+    videoBuffer: ReadonlySignal<DurationUpdateContext['videoBuffer']>;
+    audioBuffer: ReadonlySignal<DurationUpdateContext['audioBuffer']>;
+  };
 }): () => void {
   let destroyed = false;
   let running = false;

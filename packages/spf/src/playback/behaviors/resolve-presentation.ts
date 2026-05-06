@@ -1,7 +1,7 @@
-import { defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, snapshot } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
 import { parseMultivariantPlaylist } from '../../media/hls/parse-multivariant';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
@@ -79,7 +79,11 @@ function deriveState(state: PresentationState): ResolvePresentationState {
 function resolvePresentationSetup({
   state,
 }: {
-  state: StateSignals<PresentationState>;
+  state: {
+    presentation: Signal<PresentationState['presentation']>;
+    preload: ReadonlySignal<PresentationState['preload']>;
+    playbackInitiated: ReadonlySignal<PresentationState['playbackInitiated']>;
+  };
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(snapshot(state)));
 

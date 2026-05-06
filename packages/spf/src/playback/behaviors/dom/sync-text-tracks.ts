@@ -1,8 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, untrack } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, untrack } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../../../media/types';
 
 /**
@@ -85,8 +85,11 @@ function syncTextTracksSetup({
   state,
   context,
 }: {
-  state: StateSignals<TextTrackSyncState>;
-  context: ContextSignals<TextTrackSyncContext>;
+  state: {
+    presentation: ReadonlySignal<TextTrackSyncState['presentation']>;
+    selectedTextTrackId: Signal<TextTrackSyncState['selectedTextTrackId']>;
+  };
+  context: { mediaElement: ReadonlySignal<TextTrackSyncContext['mediaElement']> };
 }): Reactor<'preconditions-unmet' | 'set-up' | 'destroying' | 'destroyed'> {
   const mediaElementSignal = computed(() => context.mediaElement.get());
   const modelTextTracksSignal = computed(() => getModelTextTracks(state.presentation.get()), {

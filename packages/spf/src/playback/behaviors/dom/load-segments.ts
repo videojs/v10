@@ -1,6 +1,6 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal, signal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
 import { type BandwidthState, sampleBandwidth } from '../../../media/abr/bandwidth-estimator';
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../../media/buffer/forward-buffer';
 import type { AddressableObject, MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
@@ -239,10 +239,29 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  * resolved by the `loadVideoSegments` / `loadAudioSegments` exports —
  * they bind `type` at definition time and pass it here.
  */
+type SegmentLoadingStateMap = {
+  presentation: ReadonlySignal<SegmentLoadingState['presentation']>;
+  preload: ReadonlySignal<SegmentLoadingState['preload']>;
+  bandwidthState: ReadonlySignal<SegmentLoadingState['bandwidthState']>;
+  currentTime: ReadonlySignal<SegmentLoadingState['currentTime']>;
+  playbackInitiated: ReadonlySignal<SegmentLoadingState['playbackInitiated']>;
+  selectedVideoTrackId: ReadonlySignal<SegmentLoadingState['selectedVideoTrackId']>;
+  selectedAudioTrackId: ReadonlySignal<SegmentLoadingState['selectedAudioTrackId']>;
+  selectedTextTrackId: ReadonlySignal<SegmentLoadingState['selectedTextTrackId']>;
+};
+
+type SegmentLoadingContextMap = {
+  videoBuffer: ReadonlySignal<SegmentLoadingContext['videoBuffer']>;
+  audioBuffer: ReadonlySignal<SegmentLoadingContext['audioBuffer']>;
+  videoBufferActor: ReadonlySignal<SegmentLoadingContext['videoBufferActor']>;
+  audioBufferActor: ReadonlySignal<SegmentLoadingContext['audioBufferActor']>;
+};
+
 function setupSegmentLoading(
-  state: StateSignals<SegmentLoadingState>,
-  context: ContextSignals<SegmentLoadingContext>,
-  type: MediaTrackType
+  state: SegmentLoadingStateMap,
+  context: SegmentLoadingContextMap,
+  type: MediaTrackType,
+  onThroughputSample?: (next: BandwidthState) => void
 ): () => void {
   const actorKey = ActorKeyByType[type];
 
@@ -259,13 +278,10 @@ function setupSegmentLoading(
   );
 
   // Video tracks always sample bandwidth and bridge updates back to engine
-  // state so ABR can react. Audio tracks don't track throughput.
+  // state via the supplied callback so ABR can react. Audio tracks don't
+  // track throughput.
   const fetchBytes =
-    type === 'video'
-      ? createTrackedFetch(throughput, (next) => {
-          state.bandwidthState.set(next);
-        })
-      : fetchStream;
+    type === 'video' && onThroughputSample ? createTrackedFetch(throughput, onThroughputSample) : fetchStream;
 
   // Local segment loader — signal so segmentsCanLoad can track it reactively
   const segmentLoader = signal<SegmentLoaderActor | undefined>(undefined);
@@ -388,9 +404,14 @@ export const loadVideoSegments = defineBehavior({
     state,
     context,
   }: {
-    state: StateSignals<SegmentLoadingState>;
-    context: ContextSignals<SegmentLoadingContext>;
-  }) => setupSegmentLoading(state, context, 'video'),
+    // bandwidthState is the only writable slot in this behavior — video
+    // tracks sample throughput per chunk and bridge updates back into engine
+    // state for ABR. Audio's `loadAudioSegments` keeps it readonly.
+    state: Omit<SegmentLoadingStateMap, 'bandwidthState'> & {
+      bandwidthState: Signal<SegmentLoadingState['bandwidthState']>;
+    };
+    context: SegmentLoadingContextMap;
+  }) => setupSegmentLoading(state, context, 'video', (next) => state.bandwidthState.set(next)),
 });
 
 /**
@@ -400,11 +421,6 @@ export const loadVideoSegments = defineBehavior({
 export const loadAudioSegments = defineBehavior({
   stateKeys: SEGMENT_LOADING_STATE_KEYS,
   contextKeys: SEGMENT_LOADING_CONTEXT_KEYS,
-  setup: ({
-    state,
-    context,
-  }: {
-    state: StateSignals<SegmentLoadingState>;
-    context: ContextSignals<SegmentLoadingContext>;
-  }) => setupSegmentLoading(state, context, 'audio'),
+  setup: ({ state, context }: { state: SegmentLoadingStateMap; context: SegmentLoadingContextMap }) =>
+    setupSegmentLoading(state, context, 'audio'),
 });

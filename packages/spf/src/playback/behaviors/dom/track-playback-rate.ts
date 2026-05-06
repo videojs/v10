@@ -1,7 +1,7 @@
 import { listen } from '@videojs/utils/dom';
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 
 /**
  * State shape for playback rate tracking.
@@ -30,8 +30,8 @@ function trackPlaybackRateSetup({
   state,
   context,
 }: {
-  state: StateSignals<PlaybackRateState>;
-  context: ContextSignals<PlaybackRateContext>;
+  state: { playbackRate: Signal<PlaybackRateState['playbackRate']> };
+  context: { mediaElement: ReadonlySignal<PlaybackRateContext['mediaElement']> };
 }): () => void {
   const mediaElementSignal = computed(() => context.mediaElement.get());
   const canTrackPlaybackRate = computed(() => !!mediaElementSignal.get());

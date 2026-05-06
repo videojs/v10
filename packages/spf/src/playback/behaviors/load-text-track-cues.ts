@@ -1,7 +1,7 @@
-import { type ContextSignals, defineBehavior, type StateSignals } from '../../core/composition/create-composition';
+import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, snapshot, untrack } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, snapshot, untrack } from '../../core/signals/primitives';
 import type { Cue, MaybeResolvedPresentation, MediaElementWithTextTracks, TextTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
 import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
@@ -111,8 +111,16 @@ function loadTextTrackCuesSetup({
   state,
   context,
 }: {
-  state: StateSignals<TextTrackCueLoadingState>;
-  context: ContextSignals<TextTrackCueLoadingContext>;
+  state: {
+    selectedTextTrackId: ReadonlySignal<TextTrackCueLoadingState['selectedTextTrackId']>;
+    presentation: ReadonlySignal<TextTrackCueLoadingState['presentation']>;
+    currentTime: ReadonlySignal<TextTrackCueLoadingState['currentTime']>;
+  };
+  context: {
+    mediaElement: ReadonlySignal<TextTrackCueLoadingContext['mediaElement']>;
+    textTracksActor: ReadonlySignal<TextTrackCueLoadingContext['textTracksActor']>;
+    segmentLoaderActor: ReadonlySignal<TextTrackCueLoadingContext['segmentLoaderActor']>;
+  };
 }): Reactor<LoadTextTrackCuesState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(snapshot(state), snapshot(context)));
   const currentTimeSignal = computed(() => state.currentTime.get() ?? 0);
