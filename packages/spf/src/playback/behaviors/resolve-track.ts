@@ -1,6 +1,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type {
@@ -104,33 +104,49 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
-  const cleanup = effect(() => {
+  // Track id needing resolution, or undefined when there's nothing to do.
+  // Wrapping in a computed collapses presentation churn into id-level changes:
+  // the effect only re-fires when the answer to "what should we resolve next?"
+  // actually changes (selected id changes, or the track at that id transitions
+  // between unresolved and resolved/missing).
+  const idToResolve = computed(() => {
     const presentation = state.presentation.get();
     const trackId = state[selectedKey].get();
-    if (!presentation || !trackId) return;
-
+    if (!presentation || !trackId) return undefined;
     const track = findTrackToResolve(presentation, trackId);
-    if (!track || isResolvedTrack(track)) return;
+    if (!track || isResolvedTrack(track)) return undefined;
+    return trackId;
+  });
+
+  const cleanup = effect(() => {
+    const id = idToResolve.get();
+    if (id === undefined) return;
 
     runner.schedule(
       // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
       // likely eventually passed down via config or a new "definitions" argument (CJP).
       new Task(
         async (signal) => {
+          // Re-read presentation at task start. Multiple Tasks may be running
+          // concurrently (one per id being resolved); a sibling task may have
+          // already committed a resolved track at this id by the time this
+          // task runs.
+          const presentation = state.presentation.get();
+          if (!presentation) return;
+          const track = findTrackToResolve(presentation, id);
+          if (!track || isResolvedTrack(track)) return;
+
           const response = await fetchResolvable(track, { signal });
           const text = await getResponseText(response);
           const mediaTrack = parseMediaPlaylist(text, track);
 
-          // captured snapshot above. Multiple Tasks may be running concurrently
-          // (one per track being resolved), so the snapshot is likely already stale
-          // by the time a task completes — a sibling task may have already written
-          // the presentation with its own resolved track. Reading live state ensures
-          // each task builds on top of whatever has been committed so far.
+          // Commit against live state for the same reason: a sibling may have
+          // written between fetch start and parse complete.
           const latestPresentation = state.presentation.get();
           if (!isResolvedPresentation(latestPresentation)) return;
           state.presentation.set(updateTrackInPresentation(latestPresentation, mediaTrack));
         },
-        { id: track.id }
+        { id }
       )
     );
   });
