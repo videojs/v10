@@ -104,17 +104,18 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
-  // Presentation tracked by source URL identity. Internal presentation
-  // updates (segments added by sibling resolution tasks) reuse the same URL
-  // and are filtered out by the equality check; only fresh streams or
-  // unset/reset transitions propagate. The effect re-fires on these
-  // relevant presentation changes and on selected-id changes.
-  const presentationByUrl = computed(() => state.presentation.get(), {
-    equals: (a, b) => a?.url === b?.url,
+  // Presentation tracked by Ham id. The id is undefined for unresolved
+  // presentations (URL-only, no selectionSets) and a stable string once
+  // the multivariant is parsed; it changes on URL transitions and on the
+  // unresolved↔resolved transition. Internal updates (segments added by
+  // sibling resolution tasks) preserve the same id and are filtered out.
+  // The `(a, b) => a?.id === b?.id` check is generic over any Ham object.
+  const presentationById = computed(() => state.presentation.get(), {
+    equals: (a, b) => a?.id === b?.id,
   });
 
   const cleanup = effect(() => {
-    const presentation = presentationByUrl.get();
+    const presentation = presentationById.get();
     const trackId = state[selectedKey].get();
     if (!presentation || !trackId) return;
 
