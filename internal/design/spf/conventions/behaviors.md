@@ -129,7 +129,57 @@ What to do when you've confirmed the gap:
 - Currently a single behavior — splitting would create two halves that have to coordinate through a new "ms ready" slot, which the merge-sniffs argue against.
 - Has a fight-the-shape sniff: the `canSetup` / `shouldSetup` / nested-effect pattern is a hand-rolled FSM. The file's own comments hint at two refactor candidates — `createMachineActor` (treating MediaSource as a resource the Actor owns) or `createMachineReactor` (if the work is observe-and-react). Both already provide internal finite state. The older "if/when Reactors have internal finite state" comment likely predates `createMachineReactor` and should be reconciled when the cleanup is executed; the deciding factor between machine-Actor and machine-Reactor is whether MediaSource ownership belongs in this behavior or a longer-lived unit.
 
+**Counterpoint** already shipped: `setupTrackResolution` in `packages/spf/src/playback/behaviors/resolve-track.ts` (commit series ending at `f707b0e9`) followed the same fight-the-shape sniff to a `createMachineReactor` migration with `entry: () => () => runner.abortAll()` for source-change cancellation. See the current file for the worked example of source-identity states + the entry-returns-state-exit-cleanup idiom; see [`reactors.md`](reactors.md) for the convention guidance.
+
 The example is illustrative and may decay — read the code first when applying these sniffs to it.
+
+## Source-reset handling (playback-engine behaviors)
+
+Behaviors composed into a playback engine almost always have an implicit dependency on a current source — typically `state.presentation`. Source reset (URL change, presentation cleared, behavior destroyed mid-stream) is a first-class concern: every playback-engine behavior should be designed with explicit semantics for it.
+
+Three categories of source-dependence, each with its own reset contract:
+
+### 1. Async work tied to a source
+
+The behavior schedules tasks (fetches, parses, transforms) whose result is meaningful only for the source they were scheduled against.
+
+**Reset contract**: cancel in-flight work; do not let it commit.
+
+**Pattern**: `createMachineReactor` with source-identity states; `entry: () => () => runner.abortAll()` on the active state. See [`reactors.md`](reactors.md) → "Source-identity states for source-driven work." `setupTrackResolution` in `packages/spf/src/playback/behaviors/resolve-track.ts` is the canonical worked example.
+
+**Hazard**: the spec-defined fetch signal abort cancels in-flight body reads, so tasks awaiting fetch completion fail-fast on signal abort. Behaviors that bypass the signal (e.g., manual `addEventListener('updateend')` plumbing) need explicit teardown in the same cleanup.
+
+### 2. State derived from a source
+
+The behavior holds derived state (closure flags, computed projections, accumulated counters) computed against the current source.
+
+**Reset contract**: reset the derived state when the source changes.
+
+**Pattern**: don't carry derived state in closure-mutable variables; either compute it via `computed` (auto-tracks the source signal) or scope it to a state-machine state so it's freshly initialized on each entry. Closure-mutable state (`let lastUpgradeTime`, `let hasEnded`) survives source resets and produces stale answers.
+
+**Hazard**: the easy bug. `quality-switching`'s closure-state flags, `end-of-stream`'s `hasEnded`, `update-duration`'s `running` flag are all instances surfaced by the assessment as candidates for this category.
+
+### 3. Resources owned per source
+
+The behavior creates a resource (MediaSource, SourceBuffer, Actor, listener) whose lifecycle is bound to the source.
+
+**Reset contract**: dispose the resource when the source changes; create fresh on the new source.
+
+**Pattern**: state-machine state-exit cleanup or behavior-level cleanup. For MediaSource-shaped resources where the lifecycle has multiple states (idle / attaching / open / tearing-down), `createMachineActor` is often the right primitive — the resource owns its own state machine.
+
+**Hazard**: mid-flight teardown vs. late commits. If the resource is being torn down while in-flight work referencing it is completing, the work must short-circuit. `setup-mediasource`'s nested-effect-via-flags pattern is an instance.
+
+### Source-reset checklist
+
+When designing or reviewing a playback-engine behavior:
+
+- What does this behavior depend on from the source?
+- On `set source → unset → set new`: does the behavior recover correctly? (Common URL-change path.)
+- On `set source → set new` directly (no unset intermediate): is this assumed not to occur, or is there defense in depth?
+- On `behavior destroyed mid-async`: is teardown clean? Does in-flight work bail or leak?
+- Is any state that should reset on source change carried in closure variables instead of state-machine state or signal-derived computed?
+
+The cleanup pass should re-audit each behavior through this lens; the symptom-level findings in the assessment (closure flags, manual cleanup, hand-rolled FSMs) cluster around source-reset gaps.
 
 ## Behavior shape
 
@@ -303,3 +353,5 @@ When a Behavior is augmented with an Actor, the Actor's own tests live in `playb
 - **Reaching for the raw Actor primitive when one of the factories (`createTransitionActor`, `createMachineActor`) fits.** The factories are the convention layer; the raw Actor is below it.
 - **Behaviors that own an Actor without disposing it in cleanup.** Always a leak; usually a sign the Actor's lifecycle should be expressed through context (so cleanup ordering is explicit) rather than captured locally.
 - **Splitting by domain rather than by shape.** A "video" Behavior that's really three Behaviors (selection, loading, sync) glued together is harder to reuse in audio-only contexts than three small Behaviors with overlapping slot maps.
+- **Defense-in-depth checks without an articulated failure mode.** Every guard added "just in case" should name the specific thing it protects against. When the architecture changes, revisit the guard — it may have become unreachable. Carrying unreachable guards is technical debt that obscures the real safety properties of the surrounding code. (Concrete instance from this branch: a commit-time presentation id check in `setupTrackResolution` that became redundant once the reactor's state-exit abort + spec-compliant fetch signal propagation handled the same race; removed in commit `5456d9db`.)
+- **Closure-mutable state that should reset on source change.** See "Source-reset handling" — closure variables survive source resets. Express the state in a `createMachineReactor` state or a signal-derived `computed` so reset happens structurally.
