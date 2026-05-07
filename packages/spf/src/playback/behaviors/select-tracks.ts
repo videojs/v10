@@ -20,6 +20,39 @@ function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackTy
   return presentation.selectionSets?.find((set) => set.type === type)?.switchingSets[0]?.tracks[0]?.id;
 }
 
+// ============================================================================
+// Specialization helper
+//
+// Each `selectXTrack` export below is a thin wrapper that binds (selectedKey,
+// picker) at module load. Picker is variant-specific: video/audio use
+// `pickFirstTrackId` (works on any `MaybeResolvedPresentation`); text uses
+// `pickTextTrack` against a fully-resolved `Presentation`. The orchestration
+// — read presentation, no-op when already selected, pick, set — is shared.
+// ============================================================================
+
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+
+type SelectStateMap<K extends SelectedTrackKey> = {
+  presentation: ReadonlySignal<TrackSelectionState['presentation']>;
+} & { [P in K]: Signal<TrackSelectionState[P]> };
+
+function setupTrackSelection<K extends SelectedTrackKey>(
+  state: SelectStateMap<K>,
+  selectedKey: K,
+  picker: (presentation: MaybeResolvedPresentation) => string | undefined
+): () => void {
+  return effect(() => {
+    const presentation = state.presentation.get();
+    if (!presentation || state[selectedKey].get()) return;
+    const id = picker(presentation);
+    if (id) state[selectedKey].set(id);
+  });
+}
+
+// ============================================================================
+// Specialized exports — one per track type
+// ============================================================================
+
 /**
  * Select the first available video track when a presentation loads.
  *
@@ -31,20 +64,8 @@ function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackTy
 export const selectVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({
-    state,
-  }: {
-    state: {
-      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
-      selectedVideoTrackId: Signal<TrackSelectionState['selectedVideoTrackId']>;
-    };
-  }) =>
-    effect(() => {
-      const presentation = state.presentation.get();
-      if (!presentation || state.selectedVideoTrackId.get()) return;
-      const id = pickFirstTrackId(presentation, 'video');
-      if (id) state.selectedVideoTrackId.set(id);
-    }),
+  setup: ({ state }: { state: SelectStateMap<'selectedVideoTrackId'> }) =>
+    setupTrackSelection(state, 'selectedVideoTrackId', (presentation) => pickFirstTrackId(presentation, 'video')),
 });
 
 /**
@@ -58,20 +79,8 @@ export const selectVideoTrack = defineBehavior({
 export const selectAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({
-    state,
-  }: {
-    state: {
-      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
-      selectedAudioTrackId: Signal<TrackSelectionState['selectedAudioTrackId']>;
-    };
-  }) =>
-    effect(() => {
-      const presentation = state.presentation.get();
-      if (!presentation || state.selectedAudioTrackId.get()) return;
-      const id = pickFirstTrackId(presentation, 'audio');
-      if (id) state.selectedAudioTrackId.set(id);
-    }),
+  setup: ({ state }: { state: SelectStateMap<'selectedAudioTrackId'> }) =>
+    setupTrackSelection(state, 'selectedAudioTrackId', (presentation) => pickFirstTrackId(presentation, 'audio')),
 });
 
 /**
@@ -80,7 +89,8 @@ export const selectAudioTrack = defineBehavior({
  *
  * Unlike video/audio selection, text-track selection is user opt-in —
  * `pickTextTrack` returns undefined when no preference matches, and the
- * effect leaves `selectedTextTrackId` unset.
+ * effect leaves `selectedTextTrackId` unset. Also requires a fully-resolved
+ * presentation; partial resolutions are skipped until a media playlist is parsed.
  *
  * @example
  * const cleanup = selectTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
@@ -92,16 +102,11 @@ export const selectTextTrack = defineBehavior({
     state,
     config,
   }: {
-    state: {
-      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
-      selectedTextTrackId: Signal<TrackSelectionState['selectedTextTrackId']>;
-    };
+    state: SelectStateMap<'selectedTextTrackId'>;
     config: Omit<TextSelectionConfig, 'type'>;
   }) =>
-    effect(() => {
-      const presentation = state.presentation.get();
-      if (!isResolvedPresentation(presentation) || state.selectedTextTrackId.get()) return;
-      const id = pickTextTrack(presentation, { ...config, type: 'text' });
-      if (id) state.selectedTextTrackId.set(id);
+    setupTrackSelection(state, 'selectedTextTrackId', (presentation) => {
+      if (!isResolvedPresentation(presentation)) return undefined;
+      return pickTextTrack(presentation, { ...config, type: 'text' });
     }),
 });
