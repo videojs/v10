@@ -94,13 +94,11 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config,
+  config: { selectedKey, findTrackToResolve },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
 }): () => void {
-  const { selectedKey, findTrackToResolve } = config;
-
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
