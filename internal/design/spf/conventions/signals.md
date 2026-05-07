@@ -110,6 +110,56 @@ Reaching for a primitive doesn't escape signals — it embeds them in a particul
 
 Corollary: when a primitive already exposes its state as a signal (Actor snapshot, Reactor state), don't introduce a parallel state slot for the same value. Two representations drift; one of them will eventually be wrong.
 
+## Helper functions for working with signals
+
+A handful of utilities in `core/signals/primitives` cover recurring patterns. Reach for them at sites where the unsugared form would otherwise repeat.
+
+### `peek(signal, transform?)`
+
+Read a signal's current value without tracking it as a dependency. Sugar for `untrack(() => signal.get())` to reduce boilerplate at single-read sites.
+
+```ts
+const value = peek(someSignal);
+const id = peek(presentationSignal, (p) => p?.id);
+```
+
+The optional second argument is a transform applied in the same call; the default is a type-inferred identity so the single-arg form returns `T` unchanged.
+
+**When to use:**
+
+- **Inside a reactor's per-state effect** when the reactor's `monitor` already tracks the signal at the state-machine level. Tracking it again creates redundant re-runs on internal updates that don't change the state. See [`reactors.md`](reactors.md) → "Reading non-tracked signals inside effects."
+- **One-off reads from non-reactive contexts** (task bodies, callbacks). Mostly equivalent to `signal.get()` since there's nothing to untrack from, but reads more clearly as "I'm intentionally not subscribing."
+
+### `equalsById(a, b)`
+
+Equality comparator for objects with an optional `id` field. Designed for use as a `computed` `equals` option when the consumer should react to identity changes (Ham-shaped objects, JSON-API-shaped resources) but ignore internal updates that preserve the id.
+
+```ts
+const presentationByIdSignal = computed(() => state.presentation.get(), {
+  equals: equalsById,
+});
+```
+
+Handles undefined inputs symmetrically: both undefined → equal; one undefined → different.
+
+**When to use:** filtering out internal-update churn when a downstream consumer cares about presentation identity but not internal updates that preserve the id. Less common when the consumer is reactor-shaped (the state machine already filters at the state level), but useful for read-only consumers that can't or shouldn't restructure as a reactor.
+
+### `update(signal, updaterFn | partial)`
+
+Atomic read-then-write. Two overloads:
+
+- **Updater function**: `update(signal, (current) => next)` — works for any signal type, including `Signal<T | undefined>`.
+- **Partial object**: `update(signal, partial)` — merges partial into the current state. Requires `T extends object`.
+
+```ts
+update(state, { playbackRate: 2 });
+update(state.presentation, (current) =>
+  isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
+);
+```
+
+Prefer the function form when the updater needs to handle different shapes (e.g., undefined vs. resolved). The partial form is sugar for the merge case where the caller is supplying just the changed fields.
+
 ## Anti-patterns
 
 - **Typing a write-only slot as `ReadonlySignal<T>`** because the type happened to import that way. Subsequent `.set()` calls will be type errors at the body, not at the import.
@@ -125,8 +175,8 @@ Corollary: when a primitive already exposes its state as a signal (Actor snapsho
 This doc is intentionally scoped to the contract questions (read/write intent, seeding, multi-writer, external writes, primitive embedding). Several adjacent topics are live but not yet documented; capturing them here so they're tracked in-place rather than only in conversation:
 
 - **Signal-shape decomposition patterns.** When to take a flag-shaped slot (`abrDisabled`) and decompose it into intent-shaped slots (`userSelectedVideoTrackId` written by external code, plus an ABR-derived counterpart) with the resolution happening in a `computed` or pushed to config. The multi-writer section names "intent + default" as a legitimate pattern; the *how-to* (naming conventions for intent slots, where the resolution lives, when config beats a derived signal) wants its own section once the planned `abrDisabled` refactor lands and there's a real shape to document.
-- **`computed` best practices.** When to lift a derivation into a `computed` vs inline `.get()` calls, predicate-shaped computeds vs inline guards in `effect` bodies, computed-of-computed, what `computed` does and doesn't memoize.
-- **`effect` best practices.** Cleanup return-value conventions, `AbortController` integration, the perils of nested effects (briefly covered in `behaviors.md` sniffs but signal-specific guidance belongs here), batching, when an `effect` should become a `createMachineReactor`.
-- **Extending the SPF signals library.** Analogous to the missing-primitive bucket in [`behaviors.md`](behaviors.md): when a recurring derivation or composition pattern across behaviors warrants a named helper in `core/signals/`. Decision criteria: the same as for primitives — name the existing helpers you considered before declaring a gap, and surface the gap rather than force-fitting.
+- **`computed` best practices** beyond `equalsById`. When to lift a derivation into a `computed` vs inline `.get()` calls, predicate-shaped computeds vs inline guards in `effect` bodies, computed-of-computed, what `computed` does and doesn't memoize. (One concrete piece already documented: in reactor-shaped behaviors, source-identity filtering via custom `equals` is often unnecessary — the state machine handles relevant transitions at a different layer; see [`reactors.md`](reactors.md).)
+- **`effect` best practices.** Cleanup return-value conventions, `AbortController` integration, the perils of nested effects (briefly covered in `behaviors.md` sniffs but signal-specific guidance belongs here), batching, when an `effect` should become a `createMachineReactor` (see [`reactors.md`](reactors.md)).
+- **Extending the SPF signals library.** The `peek` / `equalsById` / `update`-overload landings (commits `abe38a48` / `51b0d9db` / `d8e97753`) are concrete examples of the pattern: when a recurring shape across behaviors warrants a named helper in `core/signals/`, surface it as a candidate, build it generically (no domain-specific assumptions), and consume it in the original site as a follow-up commit. Decision criteria mirror the missing-primitive bucket in [`behaviors.md`](behaviors.md) → name the existing helpers you considered before declaring a gap, and prefer overloads / structural typing over breaking-change signature redesigns.
 
 Each of these is a candidate for a sub-section under this doc; some may grow large enough to deserve their own doc (`computed.md`, `effects.md`). Defer that decision until the content forces it.
