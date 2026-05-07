@@ -142,20 +142,17 @@ function setupTrackResolution<K extends SelectedTrackKey>({
               // likely eventually passed down via config or a new "definitions" argument (CJP).
               new Task(
                 async (signal) => {
-                  const taskPresentationId = presentation.id;
                   const response = await fetchResolvable(track, { signal });
                   const text = await getResponseText(response);
                   const mediaTrack = parseMediaPlaylist(text, track);
 
-                  // Edge guard: state-exit-on-unresolved covers the common
-                  // URL change. This catches the pathological case where
-                  // presentation transitions resolved → resolved directly
-                  // (no unresolved intermediate), and serves as defense in
-                  // depth against signal-abort-through-body-read races.
-                  if (state.presentation.get()?.id !== taskPresentationId) return;
-
                   // Updater handles undefined inputs by returning current
                   // unchanged; isResolvedPresentation narrows for the patch.
+                  // State-exit on resolving→unresolved fires runner.abortAll
+                  // before any URL change settles, and per the Fetch spec the
+                  // signal abort cancels in-flight body reads — so by the
+                  // time we reach this point the presentation we resolved
+                  // against is the live one.
                   update(state.presentation, (current) =>
                     isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
                   );
