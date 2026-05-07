@@ -1,6 +1,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal, untrack, update } from '../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type {
@@ -127,10 +127,10 @@ function setupTrackResolution<K extends SelectedTrackKey>({
         effects: [
           () => {
             // The reactor's state transitions handle relevant presentation
-            // changes (resolved↔unresolved); within 'resolving' we read
-            // presentation untracked so internal updates (segments added
-            // by sibling tasks) don't re-fire the effect.
-            const presentation = untrack(() => state.presentation.get());
+            // changes (resolved↔unresolved); within 'resolving' we peek
+            // (untracked read) so internal updates (segments added by
+            // sibling tasks) don't re-fire the effect.
+            const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
 
