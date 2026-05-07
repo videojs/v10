@@ -104,49 +104,42 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
-  // Track id needing resolution, or undefined when there's nothing to do.
-  // Wrapping in a computed collapses presentation churn into id-level changes:
-  // the effect only re-fires when the answer to "what should we resolve next?"
-  // actually changes (selected id changes, or the track at that id transitions
-  // between unresolved and resolved/missing).
-  const idToResolve = computed(() => {
-    const presentation = state.presentation.get();
-    const trackId = state[selectedKey].get();
-    if (!presentation || !trackId) return undefined;
-    const track = findTrackToResolve(presentation, trackId);
-    if (!track || isResolvedTrack(track)) return undefined;
-    return trackId;
+  // Presentation tracked by source URL identity. Internal presentation
+  // updates (segments added by sibling resolution tasks) reuse the same URL
+  // and are filtered out by the equality check; only fresh streams or
+  // unset/reset transitions propagate. The effect re-fires on these
+  // relevant presentation changes and on selected-id changes.
+  const presentationByUrl = computed(() => state.presentation.get(), {
+    equals: (a, b) => a?.url === b?.url,
   });
 
   const cleanup = effect(() => {
-    const id = idToResolve.get();
-    if (id === undefined) return;
+    const presentation = presentationByUrl.get();
+    const trackId = state[selectedKey].get();
+    if (!presentation || !trackId) return;
+
+    const track = findTrackToResolve(presentation, trackId);
+    if (!track || isResolvedTrack(track)) return;
 
     runner.schedule(
       // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
       // likely eventually passed down via config or a new "definitions" argument (CJP).
       new Task(
         async (signal) => {
-          // Re-read presentation at task start. Multiple Tasks may be running
-          // concurrently (one per id being resolved); a sibling task may have
-          // already committed a resolved track at this id by the time this
-          // task runs.
-          const presentation = state.presentation.get();
-          if (!presentation) return;
-          const track = findTrackToResolve(presentation, id);
-          if (!track || isResolvedTrack(track)) return;
-
           const response = await fetchResolvable(track, { signal });
           const text = await getResponseText(response);
           const mediaTrack = parseMediaPlaylist(text, track);
 
-          // Commit against live state for the same reason: a sibling may have
-          // written between fetch start and parse complete.
+          // Multiple Tasks may be running concurrently (one per track being
+          // resolved); a sibling may have already committed a resolved
+          // track by the time this task completes. Reading live state
+          // ensures each task builds on top of whatever has been committed
+          // so far.
           const latestPresentation = state.presentation.get();
           if (!isResolvedPresentation(latestPresentation)) return;
           state.presentation.set(updateTrackInPresentation(latestPresentation, mediaTrack));
         },
-        { id }
+        { id: track.id }
       )
     );
   });
