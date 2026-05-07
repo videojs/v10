@@ -23,11 +23,13 @@ function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackTy
 // ============================================================================
 // Specialization helper
 //
-// Each `selectXTrack` export below is a thin wrapper that binds (selectedKey,
-// picker) at module load. Picker is variant-specific: video/audio use
-// `pickFirstTrackId` (works on any `MaybeResolvedPresentation`); text uses
-// `pickTextTrack` against a fully-resolved `Presentation`. The orchestration
-// — read presentation, no-op when already selected, pick, set — is shared.
+// `setupTrackSelection` has the same shape as a Behavior `setup` function:
+// `({ state, config }) => cleanup`. Each `selectXTrack` export below calls it
+// from inside its own `defineBehavior` setup, supplying its per-type config
+// inline. Picker is variant-specific: video/audio use `pickFirstTrackId`
+// (works on any `MaybeResolvedPresentation`); text uses `pickTextTrack`
+// against a fully-resolved `Presentation`. The orchestration — read
+// presentation, no-op when already selected, pick, set — is shared.
 // ============================================================================
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
@@ -36,11 +38,18 @@ type SelectStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<TrackSelectionState['presentation']>;
 } & { [P in K]: Signal<TrackSelectionState[P]> };
 
-function setupTrackSelection<K extends SelectedTrackKey>(
-  state: SelectStateMap<K>,
-  selectedKey: K,
-  picker: (presentation: MaybeResolvedPresentation) => string | undefined
-): () => void {
+interface TrackSelectionSetupConfig<K extends SelectedTrackKey> {
+  selectedKey: K;
+  picker: (presentation: MaybeResolvedPresentation) => string | undefined;
+}
+
+function setupTrackSelection<K extends SelectedTrackKey>({
+  state,
+  config: { selectedKey, picker },
+}: {
+  state: SelectStateMap<K>;
+  config: TrackSelectionSetupConfig<K>;
+}): () => void {
   return effect(() => {
     const presentation = state.presentation.get();
     if (!presentation || state[selectedKey].get()) return;
@@ -65,7 +74,13 @@ export const selectVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: SelectStateMap<'selectedVideoTrackId'> }) =>
-    setupTrackSelection(state, 'selectedVideoTrackId', (presentation) => pickFirstTrackId(presentation, 'video')),
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: 'selectedVideoTrackId',
+        picker: (presentation) => pickFirstTrackId(presentation, 'video'),
+      },
+    }),
 });
 
 /**
@@ -80,7 +95,13 @@ export const selectAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: SelectStateMap<'selectedAudioTrackId'> }) =>
-    setupTrackSelection(state, 'selectedAudioTrackId', (presentation) => pickFirstTrackId(presentation, 'audio')),
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: 'selectedAudioTrackId',
+        picker: (presentation) => pickFirstTrackId(presentation, 'audio'),
+      },
+    }),
 });
 
 /**
@@ -105,8 +126,14 @@ export const selectTextTrack = defineBehavior({
     state: SelectStateMap<'selectedTextTrackId'>;
     config: Omit<TextSelectionConfig, 'type'>;
   }) =>
-    setupTrackSelection(state, 'selectedTextTrackId', (presentation) => {
-      if (!isResolvedPresentation(presentation)) return undefined;
-      return pickTextTrack(presentation, { ...config, type: 'text' });
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: 'selectedTextTrackId',
+        picker: (presentation) => {
+          if (!isResolvedPresentation(presentation)) return undefined;
+          return pickTextTrack(presentation, { ...config, type: 'text' });
+        },
+      },
     }),
 });
