@@ -3,7 +3,13 @@ import { effect } from '../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
-import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
+import type {
+  MaybeResolvedPresentation,
+  PartiallyResolvedTrack,
+  Presentation,
+  ResolvedTrack,
+  TrackType,
+} from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
@@ -32,14 +38,32 @@ export function updateTrackInPresentation<T extends ResolvedTrack>(
   } as Presentation;
 }
 
+/**
+ * Find a track of the given type and id within a presentation.
+ *
+ * Returns the matching track from the first switching set of the matching
+ * selection set, or `undefined` if either is missing. The returned track may
+ * be partially resolved (URL only) or fully resolved (with segments) — callers
+ * narrow as needed.
+ */
+function findTrack(
+  presentation: MaybeResolvedPresentation,
+  type: TrackType,
+  trackId: string
+): PartiallyResolvedTrack | ResolvedTrack | undefined {
+  return presentation.selectionSets
+    ?.find(({ type: t }) => t === type)
+    ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId);
+}
+
 // ============================================================================
 // Specialization helper
 //
-// Each `resolveXTrack` export below binds (type, selectedKey) at module
-// load. The runtime `state[selectedKey]` access is dynamic, but the
-// generic K narrows to a single literal at the call site, so TypeScript
-// sees concrete signal access — no `config.type` discriminant carried at
-// runtime, no engine-side wrapping.
+// Each `resolveXTrack` export below is a thin wrapper that binds (selectedKey,
+// findTrackToResolve) at module load. The orchestration — gate on a selection,
+// short-circuit when the track is already resolved or missing, schedule the
+// fetch+parse, and patch the resolved track back into `state.presentation` —
+// is shared.
 // ============================================================================
 
 /**
@@ -59,10 +83,13 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
-function setupTrackResolution<T extends TrackType, K extends SelectedTrackKey>(
+function setupTrackResolution<K extends SelectedTrackKey>(
   state: ResolveTrackStateMap<K>,
-  type: T,
-  selectedKey: K
+  selectedKey: K,
+  findTrackToResolve: (
+    presentation: MaybeResolvedPresentation,
+    trackId: string
+  ) => PartiallyResolvedTrack | ResolvedTrack | undefined
 ): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
@@ -74,9 +101,7 @@ function setupTrackResolution<T extends TrackType, K extends SelectedTrackKey>(
     const trackId = state[selectedKey].get();
     if (!presentation || !trackId) return;
 
-    const track = presentation.selectionSets
-      ?.find(({ type: t }) => t === type)
-      ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId);
+    const track = findTrackToResolve(presentation, trackId);
     if (!track || isResolvedTrack(track)) return;
 
     runner.schedule(
@@ -121,7 +146,9 @@ export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
-    setupTrackResolution(state, 'video', 'selectedVideoTrackId'),
+    setupTrackResolution(state, 'selectedVideoTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'video', trackId)
+    ),
 });
 
 /**
@@ -132,7 +159,9 @@ export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedAudioTrackId'> }) =>
-    setupTrackResolution(state, 'audio', 'selectedAudioTrackId'),
+    setupTrackResolution(state, 'selectedAudioTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'audio', trackId)
+    ),
 });
 
 /**
@@ -143,5 +172,7 @@ export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedTextTrackId'> }) =>
-    setupTrackResolution(state, 'text', 'selectedTextTrackId'),
+    setupTrackResolution(state, 'selectedTextTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'text', trackId)
+    ),
 });
