@@ -123,6 +123,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
     states: {
       unresolved: {},
       resolving: {
+        // `entry` runs on state entry; the function it returns is the
+        // state-exit cleanup. Returning `() => runner.abortAll()` binds
+        // abort-of-in-flight-resolutions to leaving 'resolving' (presentation
+        // cleared/reset, or behavior destroyed) — source-change cancellation
+        // expressed structurally through the state machine.
         entry: () => () => runner.abortAll(),
         effects: [
           () => {
