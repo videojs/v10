@@ -59,11 +59,12 @@ function findTrack(
 // ============================================================================
 // Specialization helper
 //
-// Each `resolveXTrack` export below is a thin wrapper that binds (selectedKey,
-// findTrackToResolve) at module load. The orchestration — gate on a selection,
-// short-circuit when the track is already resolved or missing, schedule the
-// fetch+parse, and patch the resolved track back into `state.presentation` —
-// is shared.
+// `setupTrackResolution` has the same shape as a Behavior `setup` function:
+// `({ state, config }) => cleanup`. Each `resolveXTrack` export below calls it
+// from inside its own `defineBehavior` setup, supplying its per-type config
+// inline. The orchestration — gate on a selection, short-circuit when the
+// track is already resolved or missing, schedule the fetch+parse, and patch
+// the resolved track back into `state.presentation` — is shared.
 // ============================================================================
 
 /**
@@ -83,14 +84,23 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
-function setupTrackResolution<K extends SelectedTrackKey>(
-  state: ResolveTrackStateMap<K>,
-  selectedKey: K,
+interface TrackResolutionConfig<K extends SelectedTrackKey> {
+  selectedKey: K;
   findTrackToResolve: (
     presentation: MaybeResolvedPresentation,
     trackId: string
-  ) => PartiallyResolvedTrack | ResolvedTrack | undefined
-): () => void {
+  ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
+}
+
+function setupTrackResolution<K extends SelectedTrackKey>({
+  state,
+  config,
+}: {
+  state: ResolveTrackStateMap<K>;
+  config: TrackResolutionConfig<K>;
+}): () => void {
+  const { selectedKey, findTrackToResolve } = config;
+
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
@@ -146,9 +156,13 @@ export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
-    setupTrackResolution(state, 'selectedVideoTrackId', (presentation, trackId) =>
-      findTrack(presentation, 'video', trackId)
-    ),
+    setupTrackResolution({
+      state,
+      config: {
+        selectedKey: 'selectedVideoTrackId',
+        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'video', trackId),
+      },
+    }),
 });
 
 /**
@@ -159,9 +173,13 @@ export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedAudioTrackId'> }) =>
-    setupTrackResolution(state, 'selectedAudioTrackId', (presentation, trackId) =>
-      findTrack(presentation, 'audio', trackId)
-    ),
+    setupTrackResolution({
+      state,
+      config: {
+        selectedKey: 'selectedAudioTrackId',
+        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'audio', trackId),
+      },
+    }),
 });
 
 /**
@@ -172,7 +190,11 @@ export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
   setup: ({ state }: { state: ResolveTrackStateMap<'selectedTextTrackId'> }) =>
-    setupTrackResolution(state, 'selectedTextTrackId', (presentation, trackId) =>
-      findTrack(presentation, 'text', trackId)
-    ),
+    setupTrackResolution({
+      state,
+      config: {
+        selectedKey: 'selectedTextTrackId',
+        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'text', trackId),
+      },
+    }),
 });
