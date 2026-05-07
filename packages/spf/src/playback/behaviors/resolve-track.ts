@@ -1,6 +1,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type {
@@ -133,12 +133,16 @@ function setupTrackResolution<K extends SelectedTrackKey>({
 
           // Multiple Tasks may be running concurrently (one per track being
           // resolved); a sibling may have already committed a resolved
-          // track by the time this task completes. Reading live state
-          // ensures each task builds on top of whatever has been committed
-          // so far.
-          const latestPresentation = state.presentation.get();
-          if (!isResolvedPresentation(latestPresentation)) return;
-          state.presentation.set(updateTrackInPresentation(latestPresentation, mediaTrack));
+          // track by the time this task completes. The `update` callback
+          // re-reads live state so each task builds on top of whatever
+          // has been committed.
+          //
+          // Cast: `update`'s `T extends object` constraint disallows
+          // `| undefined`. The updater handles undefined inputs by
+          // returning the current value unchanged.
+          update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+            isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
+          );
         },
         { id: track.id }
       )
