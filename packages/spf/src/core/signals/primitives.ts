@@ -3,6 +3,19 @@ import { Signal as SignalNS } from 'signal-polyfill';
 /** Read a signal value without tracking it as a dependency. */
 export const untrack: <T>(fn: () => T) => T = SignalNS.subtle.untrack;
 
+/**
+ * Read a signal's current value without tracking it as a dependency. Sugar
+ * for `untrack(() => signal.get())` to reduce boilerplate at single-read
+ * sites. Structurally typed to accept any signal-like (Signal, Computed,
+ * ReadonlySignal).
+ *
+ * @example
+ * const value = peek(someSignal);
+ */
+export function peek<T>(source: { get(): T }): T {
+  return untrack(() => source.get());
+}
+
 /** A writable reactive value (read + write). */
 export type Signal<T> = SignalNS.State<T>;
 
