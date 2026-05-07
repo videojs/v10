@@ -14,7 +14,7 @@ Video.js v10 is the open-source video player for the web. Start with a small pla
 
 The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
 
-**Streaming formats.** Most production video isn't an MP4. It's HLS or DASH, broken into segments and adapted to each viewer's bandwidth. Safari plays HLS natively. Chrome and Firefox don't, and no major browser plays DASH. A player library closes the gap so the same `src` works everywhere.
+**Streaming formats.** Most production video isn't an MP4. It's HLS or DASH, broken into segments and adapted to each viewer's bandwidth. Not every browser supports HLS, and no major browser plays DASH. A player library closes the gap so the same `src` works everywhere.
 
 **Inconsistent, unstylable controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
 
@@ -22,7 +22,7 @@ The native `<video>` tag is great if you can describe your video as an image wit
 
 ## Why Video.js?
 
-### Pay only for what you use
+### Add only what you need
 
 Most player libraries ship every feature in one bundle, so you carry code you don't run: a quality menu in a hero video, an audio track switcher in a podcast page. Video.js v10 turns features into independent modules. You hand `createPlayer` the array you actually want, and what you don't import doesn't ship.
 
@@ -98,22 +98,22 @@ Streaming, captions, accessibility, and adaptive bitrate are easy to skip in a d
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { HlsVideo } from '@videojs/react/media/hls-video'; // [!code ++]
+import { HlsVideo } from '@videojs/react/media/hls-video'; // [!code focus]
 
 <Player.Provider>
   <VideoSkin>
-    <HlsVideo src="https://stream.mux.com/.../stream.m3u8" /> {/* [!code focus] */}
+    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
 </Player.Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<script type="module" src="@videojs/html/media/hls-video"></script> <!-- [!code ++] -->
+<script type="module" src="@videojs/html/media/hls-video"></script> <!-- [!code focus] -->
 
 <video-player>
   <video-skin>
-    <hls-video src="https://stream.mux.com/.../stream.m3u8"></hls-video> <!-- [!code focus] -->
+    <hls-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
   </video-skin>
 </video-player>
 ```
@@ -127,6 +127,6 @@ Documentation aimed at human readers usually doesn't help an agent. Video.js v10
 
 <DocsLinkCard slug="how-to/build-with-ai">Build with AI</DocsLinkCard>
 
-Video.js v10 is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects. Between us, our projects have served tens of billions of monthly video plays. Most of the choices on this page came from things we got wrong the first time, then the second, then the fifth. We've been supporting your edge cases for over a decade. Now we're shipping the player we always wanted to build.
+## About v10
 
-<DocsLinkCard slug="how-to/installation">Install Video.js</DocsLinkCard>
+Video.js v10 is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects. Between us, our projects have served tens of billions of monthly video plays. Most of the choices on this page came from things we got wrong the first time, then the second, then the fifth. We've been supporting your edge cases for over a decade. Now we're shipping the player we always wanted to build.
