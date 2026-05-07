@@ -194,22 +194,41 @@ The runtime cost is shared body code. Three modules currently share via a typed 
 
 ## Helpers and behavior factories
 
-Decomposition tools used *within* the Behavior shape, not alternatives to it. **This section is expected to iterate** as the cleanup pass surfaces real cases.
+Decomposition tools used *within* the Behavior shape, not alternatives to it. **This section is expected to iterate** as the cleanup pass surfaces real cases. Three forms are recognized.
 
-### Helper
+### Inline helper
 
-A function operating on already-resolved signals or values, called from inside a Behavior body. Has no setup/cleanup of its own; the Behavior owns its lifecycle. Lives near its caller (same file, or a sibling module if shared across a small group).
+A function operating on already-resolved values, called from inside a Behavior body. Has no setup/cleanup of its own; the Behavior owns its lifecycle. Lives near its caller (same file, or a sibling module if shared across a small group).
 
-When to extract a helper:
+When to extract an inline helper:
 
-- A piece of logic in a Behavior body is reused by another Behavior in the same module (or sibling).
+- A piece of pure logic in a Behavior body is reused by another Behavior in the same module (or sibling).
 - A computation that's pure given its inputs and is verbose enough to obscure the surrounding `effect` / `computed` body.
 - The same predicate or projection appears in two `computed` definitions.
 
-When **not** to extract a helper:
+When **not** to extract an inline helper:
 
 - The code is used only once and reads naturally inline.
-- The "helper" needs access to the composition's signal map. That's a sign the work belongs in another Behavior, not a helper called from one.
+- The helper needs to read or write composition signals. That's a setup-shape helper (see below), not an inline helper.
+
+### Setup-shape helper
+
+A function whose signature matches `Behavior.setup` — `({ state, context, config }) => cleanup` — called from inside a behavior's setup. Operates on signals (state/context), owns its own setup/cleanup contract, and bakes per-type or per-export parameterization into `config` at the call site (each per-type export adapts the call inline).
+
+`setupTrackResolution` (in `resolve-track.ts`, commit `54707e59`) is the canonical example: three per-type behaviors (`resolveVideoTrack`, `resolveAudioTrack`, `resolveTextTrack`) each call it from their `defineBehavior` setup, supplying their per-type config (`selectedKey`, `findTrackToResolve`) inline.
+
+When to use a setup-shape helper:
+
+- The orchestration shape repeats across 2+ Behaviors with per-type parameterization (selected key, finder fn, type discriminant).
+- The reuse is at the composition layer (touches signals), but each per-type export should keep its own `defineBehavior` declaration — for visibility of `stateKeys` at the call site, for the exhaustiveness check to run per export, or because each export has its own JSDoc / test boundary.
+- You want a uniform "helpers shaped like setup" convention reproducible across many shared helpers without each becoming a wrapper around `defineBehavior`.
+
+When **not** to use a setup-shape helper:
+
+- The reuse is pure logic over already-resolved values — that's an inline helper.
+- The lightest call sites are the priority and you're willing to hide `defineBehavior` inside a wrapper — that's a behavior factory.
+
+Trade-off: per-export call sites carry the `defineBehavior` boilerplate plus an inline `config` object (~3 extra lines per export vs. a factory). Acceptable when the shape uniformity is reproducible across many helpers and you want each export's slot intent legible at the export site.
 
 ### Behavior factory
 
@@ -217,28 +236,30 @@ A function that *returns* a Behavior, parameterized by the type/keys/config the 
 
 When to use a behavior factory:
 
-- The same Behavior shape applies to multiple keys (`makeShareSignals` works for any `S`/`C`).
-- A wider Behavior wants to be expressed as several narrow per-type variants whose bodies share most of their structure (the `select-tracks` / `resolve-track` / `load-segments` follow-up sits here).
+- The same Behavior shape applies to multiple keys, and you want the lightest call sites — each export is a single-line factory invocation, no `defineBehavior` boilerplate per export.
 - A Behavior is parameterized by something that varies *across compositions but is fixed within one* — pass it via factory args rather than via runtime `config`, so each composition gets a Behavior with the parameterization baked in (and dead branches drop out).
+- The `stateKeys`/`contextKeys` themselves are parameterized in a way the factory can express but a setup-shape helper can't (e.g. `makeShareSignals` declares zero keys regardless of `S`/`C`).
 
 When **not** to use a behavior factory:
 
-- When `config` already does the job. A factory parameter that ends up rebroadcast as `config` adds a layer for no gain.
+- The shape is reproducible without wrapping `defineBehavior` — a setup-shape helper is lighter.
+- `config` already does the job. A factory parameter that ends up rebroadcast as `config` adds a layer for no gain.
 - When parameters vary at runtime within a single composition. That's `config`'s domain, not the factory's.
 
-### Helper, factory, or another behavior?
+### Inline helper, setup-shape helper, factory, or another behavior?
 
-The decision pivots on *what's shared* and *what's parameterized*:
+The decision pivots on *what's shared*, *what's parameterized*, and *whether you want each export to keep its own `defineBehavior` declaration*.
 
 | Shared shape | Parameterized over | Reach for |
 | ------------ | ------------------ | --------- |
 | Inline computation, used by one Behavior body | (nothing — inline) | Inline code |
-| Pure logic shared by 2+ Behaviors | Their inputs (already resolved) | **Helper** |
-| Behavior shape shared, with the same slot intent across all variants | Slot-map types (`S`, `C`, …) | **Behavior factory** |
-| Behavior shape shared, but slot intent or set of touched keys varies | Per-type structure | **Per-type specialization** (separate exports) |
+| Pure logic over already-resolved values, shared by 2+ Behaviors | Their inputs | **Inline helper** |
+| Setup orchestration over signals, shared by 2+ Behaviors with per-type config; keep `defineBehavior` per export | Per-type config (passed via `config`) | **Setup-shape helper** |
+| Same as above, but lightest call sites preferred over per-export `defineBehavior` visibility | Slot-map types (`S`, `C`, …) or per-type opts | **Behavior factory** |
+| Behavior shape shared, but slot intent or set of touched keys varies per type | Per-type structure | **Per-type specialization** (separate exports), often combined with a setup-shape helper or factory |
 | Same problem solved twice in two unrelated places | (none — coincidence) | Leave as two |
 
-The "abstracted helpers should look like Behaviors" goal that motivated some of this thinking is real but cannot always be satisfied by reshaping signatures alone. When the reuse is internal to a body (operating on already-resolved values), forcing it into Behavior shape adds ceremony without buying composition. When the reuse is at the composition layer (same shape applied to different keys), a behavior factory is the right answer. The follow-up on `select-tracks` / `resolve-track` / `load-segments` is to apply this distinction case by case.
+The "abstracted helpers should look like Behaviors" goal is satisfiable through either the setup-shape helper or the behavior factory pattern. Pick by which trade-off you want: setup-shape preserves per-export `defineBehavior` (and its exhaustiveness check) at the cost of slightly verbose call sites; factory hides `defineBehavior` for lighter call sites at the cost of an extra wrapping layer. The follow-up on `select-tracks` and `load-segments` is to apply this distinction case by case (per `54707e59`, `resolve-track` adopted the setup-shape helper form).
 
 ## File placement
 
@@ -257,6 +278,7 @@ Actor factories the Behaviors instantiate live alongside in `playback/actors/` (
 - Files match the exported name in kebab-case: `sync-preload-attribute.ts` exports `syncPreloadAttribute`.
 - Per-type specializations co-locate in one module: `select-tracks.ts` exports `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`.
 - Behavior factories are named `make*`: `makeShareSignals`. The factory's product is a Behavior; the prefix distinguishes the factory from a Behavior export.
+- Setup-shape helpers are named `setup*`: `setupTrackResolution`. The shape is a `Behavior.setup`-style function called from inside a per-type behavior's setup.
 
 ## Testing
 
