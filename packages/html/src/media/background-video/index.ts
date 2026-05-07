@@ -7,8 +7,6 @@ function getTemplateHTML(attrs: Record<string, string>) {
     <style>
       :host {
         position: relative;
-        min-width: 300px;
-        min-height: 150px;
       }
 
       video {
