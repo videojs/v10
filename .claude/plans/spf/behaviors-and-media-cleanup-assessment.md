@@ -658,3 +658,44 @@ These are known follow-ups documented elsewhere; the assessment notes them when 
 - **Single-period / single-switching-set cluster**: `Presentation.startTime` always 0 with a comment about "future multi-period support" (types/index.ts:121-123); selection helpers always read `switchingSets[0]` (select-tracks.ts:132, 166, 209; track-selection.ts:71); parser builds at most one switching set per type (parse-multivariant.ts:312-358).
 - **Single-codec defaults cluster** (HEVC / 5.1 / Dolby pressure-list items): `parseCodecs` whitelists 4 prefixes (parse-attributes.ts:65-78); audio defaults sampleRate 48000 / channels 2 in two places (parse-multivariant.ts:224-225, 254-255); video defaults to `video/mp4` (parse-multivariant.ts:188).
 - **Implicit-ordering cluster** (axis B): `appendSegment` waits on `updateend` without an `error` listener (append-segment.ts:60-69); same in `flushBuffer` (buffer-flusher.ts:23-31); `back-buffer.ts:42` documents pre-sorted input but doesn't enforce; `mediaElement.load()` in detach (mediasource-setup.ts:99, 111) races with caller-side cleanup.
+
+## Source-reset audit (2026-05-07)
+
+Lens addendum — re-grouping the per-file findings under the source-reset framing introduced in [`behaviors.md` → "Source-reset handling (playback-engine behaviors)"](../../../internal/design/spf/conventions/behaviors.md#source-reset-handling-playback-engine-behaviors). Citations stand from the per-file findings above; this section reorganizes them by category. Three categories: async work tied to source / state derived from source / resources owned per source.
+
+### Likely src-reset gaps — state derived from source carried in closure-mutables
+
+- `quality-switching.ts:109-110, 123-124, 138-139` — closure-flag FSM (`lastUpgradeTime`, `firstMeaningfulFire`) survives source resets. Re-creating the behavior resets them, but mid-engine source change does not. Quality-switching policy (last upgrade time, throttle window) leaks across sources.
+- `end-of-stream.ts:292, 297-308` — `hasEnded` flag carried in closure state. Source change wouldn't reset it without explicit cleanup; could trigger spurious "ended" handling on a new source if not addressed.
+- `update-duration.ts:110-111` — `running` and `destroyed` flags carry through source changes. The race comments document the per-task race; the source-reset case is structurally similar but distinct.
+- `load-segments.ts:346-354` — `prevInputs` closure state holds the last-scheduled inputs identity. The equality check via `loadingInputsEq` filters re-fires but doesn't reset structurally on source identity change.
+
+### Likely src-reset gaps — resources owned per source without state-machine binding
+
+- `setup-mediasource.ts:50-93` — MediaSource owned via behavior. Cleanup uses `AbortController` for inner observers, but the resource lifecycle isn't structurally bound to a state-machine state. Source reset relies on the existing `canSetup` / `shouldSetup` flag-FSM dynamic.
+- `setup-sourcebuffer.ts:84-87, 134-135` — buffer + buffer-actor slots owned via behavior. Same shape — manual lifecycle management, no source-identity state.
+- `load-segments.ts:287-309` — actor lifecycle via `currentLoader` captured ref. Teardown is in the effect's cleanup which fires on signal changes, not necessarily source resets cleanly.
+
+### Likely src-reset gaps — async work without source-bound cancellation
+
+- `load-segments.ts` — segment-loader actor's in-flight work doesn't have an explicit abort-on-source-reset hook beyond what the actor's own lifecycle provides; the closure-state `prevInputs` filter is doing the work that a source-identity reactor state would do structurally.
+- `load-text-track-cues.ts:144-145` — already uses `createMachineReactor`; verify the per-state effect's tasks abort on source reset (likely yes via the reactor's monitor reading presentation, but worth confirming when this behavior is touched).
+
+### Resolved through reactor migration
+
+- `resolve-track.ts` — full migration to source-identity reactor; src-reset handling structural via state-exit cleanup. Commit series ending `f707b0e9`. Canonical worked example.
+- `resolve-presentation.ts:97-114` — already a reactor; entry returns `AbortController` for fetch cancellation. The pattern was already canonical pre-iteration.
+
+### Likely OK as-is
+
+- `sync-preload-attribute.ts` — single effect, no async work, no derived state. Source change flows through the signal naturally.
+- `track-current-time.ts`, `track-playback-rate.ts` — DOM-event-driven; source change happens at the mediaElement level, not presentation. Closure state `lastMediaElement` (track-current-time.ts:52) tracks element identity, which is the right axis.
+- `setup-text-track-actors.ts` — actors disposed in cleanup; no closure state across source changes.
+- `track-playback-initiated.ts` — already a reactor; per-state effect re-binds listeners on state entry.
+- `sync-text-tracks.ts` — already a reactor; entry creates DOM, exit cleans up.
+
+### How to use this audit
+
+When picking a behavior to refactor next, this section is the priority list. The "likely gaps" categories are ordered by ease of conversion to the source-identity reactor pattern: the `quality-switching` closure-FSM is simplest; `setup-mediasource` is the largest lift (resource ownership + multiple states + DOM event integration).
+
+For each refactor, run the [source-reset checklist](../../../internal/design/spf/conventions/behaviors.md#source-reset-checklist) and confirm the categories above before opening the cleanup.
