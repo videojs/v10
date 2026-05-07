@@ -1,6 +1,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, equalsById, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, untrack, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type {
@@ -104,12 +104,6 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
-  // Filter internal presentation updates (segments added by sibling tasks)
-  // so the effect inside 'resolving' doesn't re-fire on every commit.
-  const presentationById = computed(() => state.presentation.get(), {
-    equals: equalsById,
-  });
-
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'resolving' is entered when the presentation is fully
   // parsed (has a Ham id + selectionSets); leaving it (presentation
@@ -132,7 +126,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
         entry: () => () => runner.abortAll(),
         effects: [
           () => {
-            const presentation = presentationById.get();
+            // The reactor's state transitions handle relevant presentation
+            // changes (resolved↔unresolved); within 'resolving' we read
+            // presentation untracked so internal updates (segments added
+            // by sibling tasks) don't re-fire the effect.
+            const presentation = untrack(() => state.presentation.get());
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
 
