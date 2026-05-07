@@ -126,11 +126,33 @@ The 0-or-1 invariant would force decomposition for all three cases. That's too a
 
 **Decision:** drop the count invariant. Multi-writer slots are legitimate. The writer audit (`### Per-behavior writer audit`) documents who writes what; review serves the same purpose the count invariant would have.
 
-### Composition surface stays writable
+### Composition surface stays writable (for now)
 
-The original plan made `composition.state` / `composition.context` **uniformly read-only externally** — all writes had to go through behaviors or the `shareSignals` callback. Without the count invariant, this enforcement isn't necessary: the composition surface stays as `StateSignals<S>` / `ContextSignals<C>` (writable). External code can still write directly via `composition.state.X.set(...)` (the harness's deferred `selectedVideoTrackId` / `selectedTextTrackId` writes do this).
+The original plan made `composition.state` / `composition.context` **uniformly read-only externally** — all writes had to go through behaviors or the `shareSignals` callback. With the count invariant dropped, this enforcement isn't strictly necessary: the composition surface stays as `StateSignals<S>` / `ContextSignals<C>` (writable). External code can still write directly via `composition.state.X.set(...)` (the harness's deferred `selectedVideoTrackId` / `selectedTextTrackId` writes do this).
 
-Per-slot annotations are a **behavior-side** contract — they describe what each behavior reads and writes within its setup body. They're not a composition-surface contract.
+Per-slot annotations are a **behavior-side** contract — they describe what each behavior reads and writes within its setup body. They're not a composition-surface contract today.
+
+### Follow-up: read-only public composition surface
+
+A future change could narrow `Composition<S, C>`'s public `state` and `context` to read-only views — `{ [K in keyof S]-?: ReadonlySignal<S[K]> }` — making `shareSignals` + `config.onSignalsReady` the *only* external write path. TypeScript-only narrowing is enough; the runtime signals stay writable, behaviors get the writable refs through deps, and `Signal<T>` is structurally assignable to `ReadonlySignal<T>` so no runtime change or cast is required at the boundary.
+
+**Why we'd want it:**
+
+- **One canonical write path.** Discoverability goes from "two ways, both legal" to "one way, with the type system pointing at it."
+- **Eliminates the harness's `TODO(stage-d)` direct writes** — they currently bypass `shareSignals` because they can. A read-only public surface forces them through the boundary.
+- **Per-slot annotations land naturally** at the consumer side too — the `onSignalsReady` callback can declare per-slot intent the same way behaviors do.
+
+**Why we deferred it:**
+
+- **Pedagogical cost.** `composition.state.x.set(...)` from outside is the simplest first thing to show in a tutorial. Forcing every external write through `shareSignals` makes the simplest examples one indirection deeper, which complicates the learning arc in `fundamentals.md`. A NOTE callout there flags the future direction without re-pivoting the doc's structure.
+- **Minor downstream churn.** Two harness writes need migration; tests that exercise behaviors via `composition.state.X.set()` would need to capture refs via `shareSignals` in their fixtures or call `behavior.setup` directly with hand-built slot maps. ~30–60 min of focused work, but not zero.
+
+**Preconditions when we revisit:**
+
+- The `selectedVideoTrackId` decomposition cleanup (`abrDisabled` → `manualSelectedVideoTrackId` + `abrSelectedVideoTrackId`, derived `selected = manual ?? abr`) is independent and can land before. Either order works.
+- Decide whether `fundamentals.md`'s early "drive from outside" pedagogy moves the writes inside a tiny `driveCount` behavior, or shifts to using `shareSignals` from the first example. The tradeoff is "introduce shareSignals before defineBehavior" vs. "show direct writes first, then converge on shareSignals later."
+
+Not in scope for the current branch. Worth a follow-up issue.
 
 ### Follow-up: writer-audit lint rule
 

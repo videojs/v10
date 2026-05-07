@@ -156,6 +156,9 @@ const id = setInterval(() => {
 
 For external code that needs to drive a composition over its lifetime — set state on user input, swap a media element, etc. — there's a generic pattern using the `shareSignals` behavior; see [shareSignals](#sharesignals).
 
+> [!NOTE]
+> Direct writes from outside via `composition.state.x.set(...)` work today but are mostly a pedagogical convenience. For code with a longer lifecycle — a wrapper class, an adapter, anything that drives the composition over time — the canonical pattern is `shareSignals` + `config.onSignalsReady`. A future change may narrow `composition.state` / `composition.context` to read-only views on the public surface, making `shareSignals` the only external write path. Examples below continue to use direct writes where it keeps the focus on the concept being introduced.
+
 Destroying the composition runs each behavior's cleanup and awaits any async work — but anything you started out here is on you:
 
 ```ts
