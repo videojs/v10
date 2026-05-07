@@ -1,5 +1,5 @@
 import { defineBehavior } from '../../core/composition/create-composition';
-import { effect } from '../../core/signals/effect';
+import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
@@ -98,61 +98,80 @@ function setupTrackResolution<K extends SelectedTrackKey>({
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
-}): () => void {
+}) {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
-  // Presentation tracked by Ham id. The id is undefined for unresolved
-  // presentations (URL-only, no selectionSets) and a stable string once
-  // the multivariant is parsed; it changes on URL transitions and on the
-  // unresolved↔resolved transition. Internal updates (segments added by
-  // sibling resolution tasks) preserve the same id and are filtered out.
-  // The `(a, b) => a?.id === b?.id` check is generic over any Ham object.
+  // Filter internal presentation updates (segments added by sibling tasks)
+  // so the effect inside 'resolving' doesn't re-fire on every commit. The
+  // `(a, b) => a?.id === b?.id` check is generic over any Ham object.
   const presentationById = computed(() => state.presentation.get(), {
     equals: (a, b) => a?.id === b?.id,
   });
 
-  const cleanup = effect(() => {
-    const presentation = presentationById.get();
-    const trackId = state[selectedKey].get();
-    if (!presentation || !trackId) return;
+  // Reactor states model the FSM the previous effect-based body was
+  // hand-rolling. 'resolving' is entered when the presentation is fully
+  // parsed (has a Ham id + selectionSets); leaving it (presentation
+  // cleared or reset to an unresolved value) aborts all in-flight tasks
+  // via the entry-cleanup. Most URL changes go through 'unresolved'
+  // naturally (set undefined → set new partial → re-parse), so the
+  // common case is covered by state-exit alone; the task body's
+  // commit-time id check covers the pathological resolved→resolved-
+  // without-unresolved transition.
+  const derivedStateSignal = computed(() =>
+    isResolvedPresentation(state.presentation.get()) ? ('resolving' as const) : ('unresolved' as const)
+  );
 
-    const track = findTrackToResolve(presentation, trackId);
-    if (!track || isResolvedTrack(track)) return;
+  return createMachineReactor({
+    initial: 'unresolved',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      unresolved: {},
+      resolving: {
+        entry: () => () => runner.abortAll(),
+        effects: [
+          () => {
+            const presentation = presentationById.get();
+            const trackId = state[selectedKey].get();
+            if (!presentation || !trackId) return;
 
-    runner.schedule(
-      // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
-      // likely eventually passed down via config or a new "definitions" argument (CJP).
-      new Task(
-        async (signal) => {
-          const response = await fetchResolvable(track, { signal });
-          const text = await getResponseText(response);
-          const mediaTrack = parseMediaPlaylist(text, track);
+            const track = findTrackToResolve(presentation, trackId);
+            if (!track || isResolvedTrack(track)) return;
 
-          // Multiple Tasks may be running concurrently (one per track being
-          // resolved); a sibling may have already committed a resolved
-          // track by the time this task completes. The `update` callback
-          // re-reads live state so each task builds on top of whatever
-          // has been committed.
-          //
-          // Cast: `update`'s `T extends object` constraint disallows
-          // `| undefined`. The updater handles undefined inputs by
-          // returning the current value unchanged.
-          update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
-            isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
-          );
-        },
-        { id: track.id }
-      )
-    );
+            runner.schedule(
+              // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
+              // likely eventually passed down via config or a new "definitions" argument (CJP).
+              new Task(
+                async (signal) => {
+                  const taskPresentationId = presentation.id;
+                  const response = await fetchResolvable(track, { signal });
+                  const text = await getResponseText(response);
+                  const mediaTrack = parseMediaPlaylist(text, track);
+
+                  // Edge guard: state-exit-on-unresolved covers the common
+                  // URL change. This catches the pathological case where
+                  // presentation transitions resolved → resolved directly
+                  // (no unresolved intermediate), and serves as defense in
+                  // depth against signal-abort-through-body-read races.
+                  if (state.presentation.get()?.id !== taskPresentationId) return;
+
+                  // Cast: `update`'s `T extends object` constraint
+                  // disallows `| undefined`. The updater handles undefined
+                  // inputs by returning the current value unchanged.
+                  update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+                    isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
+                  );
+                },
+                { id: track.id }
+              )
+            );
+          },
+        ],
+      },
+    },
   });
-
-  return () => {
-    runner.abortAll();
-    cleanup();
-  };
 }
 
 // ============================================================================
