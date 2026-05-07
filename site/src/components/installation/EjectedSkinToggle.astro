@@ -1,0 +1,26 @@
+---
+import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+import EjectedSkinToggleClient from './EjectedSkinToggleClient';
+
+const framework = Astro.params.framework as 'html' | 'react';
+const defaultId = framework === 'react' ? 'default-video-react' : 'default-video';
+const minimalId = framework === 'react' ? 'minimal-video-react' : 'minimal-video';
+---
+
+<EjectedSkinToggleClient client:idle>
+  <div data-variant="default">
+    <EjectedSkin id={defaultId} />
+  </div>
+  <div data-variant="minimal">
+    <EjectedSkin id={minimalId} />
+  </div>
+</EjectedSkinToggleClient>
+
+<style>
+  :global([data-active-variant="default"] [data-variant="minimal"]) {
+    display: none;
+  }
+  :global([data-active-variant="minimal"] [data-variant="default"]) {
+    display: none;
+  }
+</style>
