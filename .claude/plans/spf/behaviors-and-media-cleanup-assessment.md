@@ -23,8 +23,8 @@ branch: fix/spf-behaviors-and-media-cleanup
 | Section | Files | Status |
 | ------- | ----- | ------ |
 | Behaviors (`packages/spf/src/playback/behaviors/`) | 17 | complete |
-| Media (`packages/spf/src/media/`) | 17 | not yet started |
-| Network (`packages/spf/src/network/`) | 2 | not yet started |
+| Media (`packages/spf/src/media/`) | 17 | complete |
+| Network (`packages/spf/src/network/`) | 2 | complete |
 
 ## Already-tracked follow-ups (excluded from new findings)
 
@@ -345,8 +345,316 @@ These are known follow-ups documented elsewhere; the assessment notes them when 
 
 ## Media
 
-_Not yet assessed._
+`packages/spf/src/media/` — DOM-free / signal-free except for `media/dom/` subdirs. Behaviors and signals conventions docs do not strongly apply; findings are anchored on axes and CLAUDE.md general code rules.
+
+### Per-file findings
+
+#### `packages/spf/src/media/abr/bandwidth-estimator.ts`
+
+**Purpose**: Dual-EWMA bandwidth estimator producing `min(fast, slow)` bandwidth estimate.
+
+**Axis findings**:
+- A: Estimator is bandwidth-only — no rendition/track-type tagging on samples; a single shared state combines all downloads regardless of whether they're audio, video, or text segments (bandwidth-estimator.ts:23-34, bandwidth-estimator.ts:85-123). Multi-bitrate audio (audio ABR) on the pressure list shares the same estimator state with video.
+- D: Pure functional shape — state-in/state-out, no class machinery (bandwidth-estimator.ts:85-123).
+
+**Repo-rule findings**:
+- Rich JSDoc with `@param`, `@returns`, `@example` on internal (non-API-reference) helpers (bandwidth-estimator.ts:65-83, 125-141, 163-176) — exceeds the "minimal JSDoc" rule for non-public-API exports.
+
+**Notable assumptions**:
+- Single global estimator state; no per-track-type partitioning (bandwidth-estimator.ts:23-34) — touches axis A pressure list (audio ABR).
+- Constants `8000`, `1000` inline in conversion math (bandwidth-estimator.ts:110, 114).
+
+#### `packages/spf/src/media/abr/ewma.ts`
+
+**Purpose**: Pure functional EWMA primitives (alpha, weighted average, zero-factor correction).
+
+**Repo-rule findings**:
+- `@param`/`@returns`/`@example` on every export (ewma.ts:8-23, 26-43, 49-67) — non-API-reference exports go above minimal-JSDoc.
+
+#### `packages/spf/src/media/abr/quality-selection.ts`
+
+**Purpose**: Bandwidth-driven track selector with safety-margin / resolution tiebreak.
+
+**Axis findings**:
+- A: Hardcoded to `PartiallyResolvedVideoTrack` — signature locks selection to video tracks only (quality-selection.ts:13, 58-62). Audio ABR (pressure list) requires a different track type; no generic `Track`-shaped overload exists.
+- A: Resolution tiebreak baked in (quality-selection.ts:80-86, 102-106) — irrelevant for audio quality selection (which would tiebreak on bitrate / channels).
+- A: Consumer cannot cap by max resolution — Mux 1080p+ resolution cap pressure-list item is not exposed via config (quality-selection.ts:18-25).
+- D: `selectQuality` does a sort followed by a linear scan + assignment to find the last matching element (quality-selection.ts:67-92).
+
+**Repo-rule findings**:
+- Verbose JSDoc with multiple `@example` blocks (quality-selection.ts:35-58, 94-101).
+
+**Notable assumptions**:
+- Video-only selection (quality-selection.ts:58-62) — touches axis A pressure list (multi-bitrate audio).
+- 1080p cap not configurable (quality-selection.ts:18-25) — touches axis A pressure list (Mux platform).
+
+#### `packages/spf/src/media/buffer/back-buffer.ts`
+
+**Purpose**: Compute back-buffer flush point by "keep N segments behind currentTime."
+
+**Axis findings**:
+- A: Strategy is segment-count-based; no time-based or memory-pressure-based variant (back-buffer.ts:13-19, 56-91). Mux buffer-stall recovery / quota-pressure scenarios on the pressure list have no swappable interface.
+- B: `segments` parameter is documented as "should be sorted by startTime" (back-buffer.ts:42) but the function does not sort or assert — silent breakage if caller passes unsorted.
+- D: Five branching returns in a single body (back-buffer.ts:61-91).
+
+#### `packages/spf/src/media/buffer/forward-buffer.ts`
+
+**Purpose**: Forward-buffer "what to load" + "what to flush ahead of position" calculators.
+
+**Axis findings**:
+- A: `getSegmentsToLoad` keys "is this position buffered" by `segment.startTime` only (forward-buffer.ts:108-122). Comment at forward-buffer.ts:107-108 explicitly notes this won't work for quality switches; no path to extend without rewriting.
+- B: `Math.min(...beyond.map(seg => seg.startTime))` (forward-buffer.ts:89) — for very large buffer arrays, spread of large maps risks call-stack issues; correctness aside, an assumed-small-array invariant is implicit.
+- D: Two top-level functions with overlapping config types in same file; one (`calculateForwardFlushPoint`) has its JSDoc placed between two unrelated functions, attached to the wrong block (forward-buffer.ts:51-73 vs 92).
+
+**Repo-rule findings**:
+- Doubled/orphaned JSDoc — the `getSegmentsToLoad` doc at forward-buffer.ts:28-50 is followed by a second JSDoc block (forward-buffer.ts:51-73) that documents `calculateForwardFlushPoint` instead, then `calculateForwardFlushPoint` is defined first (forward-buffer.ts:74) — function-doc order doesn't match.
+
+**Notable assumptions**:
+- Single SourceBuffer model; flushing decisions don't account for differing buffered ranges per video/audio buffer (forward-buffer.ts:74-90) — touches axis A pressure list (audio-only / multi-buffer).
+
+#### `packages/spf/src/media/dom/mse/append-segment.ts`
+
+**Purpose**: Serialize SourceBuffer appends (full buffer or chunked stream), with abort-aware partial cleanup.
+
+**Axis findings**:
+- A: No pre-append wait hook — pre-append DRM key handshake gating (pressure-list item) has no insertion point; appends happen unconditionally as soon as `updating` clears (append-segment.ts:60-69, 90-91).
+- A: No `timestampOffset` / `appendWindowStart`/`End` configuration — instant clips / non-zero PTS pressure-list item not addressable here without changing signature (append-segment.ts:22).
+- B: `updateend` listener at append-segment.ts:62-68 has no `error` listener — if the SourceBuffer errors while waiting, the promise never resolves (deadlock). The second phase (append-segment.ts:71-96) does add `error`, but the gating wait does not.
+- B: `sourceBuffer.abort()` swallowed in nested `try/catch` (append-segment.ts:48-54) — comment explains "thrown if MS not open"; passes silently regardless of the actual cause.
+
+**Repo-rule findings**:
+- Manual event listener add/remove (append-segment.ts:62-68, 73-89) instead of `AbortController` + `signal` pattern from CLAUDE.md "Cleanup Pattern".
+- DOMException instance-of + name compare (append-segment.ts:48) instead of a guard helper.
+
+#### `packages/spf/src/media/dom/mse/buffer-flusher.ts`
+
+**Purpose**: Wait-for-`updating`, then `remove(start, end)`, await `updateend`.
+
+**Axis findings**:
+- B: Pre-remove wait (buffer-flusher.ts:23-31) lacks `error` listener — same deadlock pattern as `appendSegment`'s wait phase.
+
+**Repo-rule findings**:
+- Same manual listener add/remove (buffer-flusher.ts:24-31, 34-50) duplicates the wait-for-updateend logic from `append-segment.ts`. Two separate copies of "wait until SourceBuffer is not updating."
+- Verbose JSDoc with `@param`/`@returns`/`@example` for non-public utility (buffer-flusher.ts:7-20).
+
+#### `packages/spf/src/media/dom/mse/mediasource-setup.ts`
+
+**Purpose**: MediaSource / ManagedMediaSource creation, attach/detach, source-buffer creation, `isTypeSupported` check, ready-state observer.
+
+**Axis findings**:
+- A: `createSourceBuffer` requires `mimeCodec` string up-front (mediasource-setup.ts:129-139) — no path for codec capability detection feedback (HEVC, 5.1) before commit; consumer must pre-check.
+- A: `attachMediaSource`'s ManagedMediaSource branch hardcodes `disableRemotePlayback = true` (mediasource-setup.ts:92) — opinionated AirPlay/remote-playback policy with no opt-out; conflicts with FairPlay/AirPlay path on pressure list.
+- B: `detach` path calls `mediaElement.load()` (mediasource-setup.ts:99, 111) — synchronous element reset that races with any in-flight network/append work; teardown ordering responsibility shifts to caller.
+- B: `onMediaSourceReadyStateChange` returns `void` (mediasource-setup.ts:178-188) — caller-only cleanup via abortSignal; no return-value to chain into broader cleanup.
+- D: Three type casts on `mediaElement` for `disableRemotePlayback`/`srcObject` (mediasource-setup.ts:92, 95, 98).
+
+**Repo-rule findings**:
+- Type cast `(mediaElement as HTMLMediaElement & { srcObject: ... })` (mediasource-setup.ts:95, 98) — `srcObject` is on `HTMLMediaElement` in lib.dom and these casts add no value; CLAUDE.md "No Pointless Type Casts."
+- Non-null assertion on `ManagedMediaSource!` (mediasource-setup.ts:49, 87) — relies on the `.d.ts` typing it as `... | undefined`; pattern inconsistent with the `supportsManagedMediaSource()` guard immediately preceding.
+
+**Notable assumptions**:
+- ManagedMediaSource availability checked once via `typeof` (mediasource-setup.ts:21-23); no caching or capability snapshot.
+
+#### `packages/spf/src/media/dom/mse/mediasource.d.ts`
+
+**Purpose**: Ambient types for ManagedMediaSource. (Trivial; no findings.)
+
+#### `packages/spf/src/media/dom/text/resolve-vtt-segment.ts`
+
+**Purpose**: Singleton-dummy-video-element VTT parser using browser-native `<track>`.
+
+**Axis findings**:
+- A: Singleton `dummyVideo` (resolve-vtt-segment.ts:9-20) — module-level state means concurrent `resolveVttSegment` calls share one element. Implicit single-resolver-at-a-time assumption; no queue.
+- B: Multiple in-flight `resolveVttSegment` calls share one `<video>` element and re-mount/unmount `<track>` children (resolve-vtt-segment.ts:54, 59) — race conditions on `track.track.cues` between concurrent calls (which `<track>`'s load fired? `default = true` is set on every track).
+- B: Track `error` event resolves nothing (resolve-vtt-segment.ts:46-49) — `track.error` does not fire on track elements in all browsers; under-detection of failure.
+- D: `destroyVttResolver` at resolve-vtt-segment.ts:64-66 does not remove DOM children, just nulls the module reference — the previous `<video>` element is GC'd only when no `<track>`s remain attached.
+
+**Repo-rule findings**:
+- Loop with index access then null-check (resolve-vtt-segment.ts:33-39).
+
+**Notable assumptions**:
+- VTT delivered as a fetchable URL (no inline-parsed text path) (resolve-vtt-segment.ts:22-27) — LL-HLS partial-segment / blob delivery may not fit this signature.
+- `track.crossOrigin = 'anonymous'` hardcoded (resolve-vtt-segment.ts:17) — no opt-in for credentialed VTT.
+
+#### `packages/spf/src/media/hls/parse-attributes.ts`
+
+**Purpose**: Tag/attribute-list parser primitives (regex-based) plus `AttributeList` typed accessor.
+
+**Axis findings**:
+- A: `parseCodecs` recognizes only `avc1.`, `hvc1.`, `hev1.`, `mp4a.` prefixes (parse-attributes.ts:65-78) — HEVC capability detection is partly here but no Dolby Vision (`dvh1`/`dvhe`), AV1 (`av01`), or 5.1 codec strings; pressure-list `codec capability detection` item does not extend without modification.
+- A: `parseFrameRate` only handles three NTSC fractional rates (parse-attributes.ts:42-51) — anything else is rounded to integer, losing precision.
+- D: `AttributeList` interface (parse-attributes.ts:117-124) is defined as a wide object literal then rebuilt in `createAttributeList` (parse-attributes.ts:129-167) — interface and implementation duplicate the shape.
+
+**Repo-rule findings**:
+- `AttributeList` `getInt(key, defaultValue?)` etc. (parse-attributes.ts:119-121, 137-149) — return type `number | undefined`, but signature documents fallback via `defaultValue`. Three near-identical accessor methods.
+
+#### `packages/spf/src/media/hls/parse-media-playlist.ts`
+
+**Purpose**: Parse media playlist text → resolved track with segments, init segment, byte ranges.
+
+**Axis findings**:
+- A: Live / DVR / LL-HLS unsupported — `#EXT-X-ENDLIST` is silently consumed (parse-media-playlist.ts:98-100); no signaling that the playlist is complete vs. live. Pressure-list `live/DVR sliding window` and `LL-HLS` items both invisible to caller.
+- A: Skipped tags (parse-media-playlist.ts:62-70) — `EXT-X-PLAYLIST-TYPE`, `EXT-X-TARGETDURATION` are dropped on the floor; `MediaPlaylistInfo` type (types/index.ts:308-316) anticipates them but parser doesn't surface them.
+- A: No `EXT-X-DISCONTINUITY` / `EXT-X-PROGRAM-DATE-TIME` / `EXT-X-KEY` / `EXT-X-MAP[KEYFORMAT]` handling — instant-clips PTS / DRM key gating / multi-period pressure-list items absent.
+- B: Branch at parse-media-playlist.ts:103 only emits a segment when `currentDuration > 0` — a `0`-duration `#EXTINF` (LL-HLS partial) silently drops the URL line.
+- D: Returned shape contains `as unknown as ResolveTrack<T>` cast (parse-media-playlist.ts:145).
+
+**Repo-rule findings**:
+- `as unknown as` double cast (parse-media-playlist.ts:145) — CLAUDE.md "No Pointless Type Casts" / type-safety.
+- `ResolveTrack` helper named per Resolve* convention (parse-media-playlist.ts:14-23) — conforms.
+
+**Notable assumptions**:
+- Init segment optional only for `text` tracks (parse-media-playlist.ts:130-135) — for audio/video tracks without `EXT-X-MAP` (TS / fMP4-without-init combos), assumes one or the empty-string fallback.
+
+#### `packages/spf/src/media/hls/parse-multivariant.ts`
+
+**Purpose**: Parse multivariant playlist → `Presentation` with partially-resolved video / audio / text tracks.
+
+**Axis findings**:
+- A: Single-pass classification by codec presence; an audio-only stream is detected only when `CODECS` string parses cleanly to mp4a-only (parse-multivariant.ts:153-176). Audio-only with no `CODECS` falls into video bucket (parse-multivariant.ts:154-158). Pressure-list `audio-only` item.
+- A: No `EXT-X-SESSION-KEY`, no DRM tag handling — pressure-list DRM item.
+- A: No `EXT-X-CONTENT-STEERING` / multi-CDN failover — pressure-list multi-CDN item; only the single STREAM-INF URI line is captured (parse-multivariant.ts:138-145).
+- A: `EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS` ignored (parse-multivariant.ts:88-122 only branches `AUDIO` and `SUBTITLES`).
+- A: Hardcoded mime/codec/sample-rate/channel defaults: `video/mp4` (parse-multivariant.ts:188), `audio/mp4` (parse-multivariant.ts:220, 252), `sampleRate: 48000`, `channels: 2` (parse-multivariant.ts:224-225, 254-255). Multi-language / multi-bitrate / 5.1 audio (pressure-list items) all start from these defaults.
+- D: Three `interface` declarations (`StreamInfo`, `AudioRenditionInfo`, `SubtitleRenditionInfo`) defined inside the function body (parse-multivariant.ts:36-62) — local types.
+- D: Selection-set assembly is three near-identical blocks (parse-multivariant.ts:312-358).
+
+**Repo-rule findings**:
+- `as const` on every track-type literal (parse-multivariant.ts:184, 217, 250, 283).
+- `||` for `groupId` fallback (parse-multivariant.ts:223) accepts empty string as falsy; `??` would treat only nullish.
+- Inline types with `| undefined` on optional fields (parse-multivariant.ts:39-43, 47-52, 56-62) — repeats `?:` + `| undefined`, doubled optionality.
+- `getInt('BANDWIDTH', 0)!` (parse-multivariant.ts:129) — non-null assertion on a value the helper still types as `| undefined` even with `defaultValue`; type-system gap leaks here.
+
+**Notable assumptions**:
+- Multi-language audio: all renditions get `name: 'Default'` if from audio-only stream (parse-multivariant.ts:223).
+- BCP-47 / language preference logic absent from parser; deferred to selector.
+- `default: true` for text only when `DEFAULT && AUTOSELECT` (parse-multivariant.ts:296) — comment cites hls.js parity. Audio rendition uses raw `DEFAULT` (parse-multivariant.ts:265-267) — inconsistency between text and audio.
+
+#### `packages/spf/src/media/hls/resolve-url.ts`
+
+**Purpose**: Resolve relative URL via WHATWG `URL` constructor. (One-line wrapper; no findings.)
+
+#### `packages/spf/src/media/primitives/select-tracks.ts`
+
+**Purpose**: Pure selection helpers (`pickVideoTrack` / `pickAudioTrack` / `pickTextTrack`) plus capability/should-select predicates over a `TrackSelectionState` shape.
+
+**Axis findings**:
+- A: `pickVideoTrack` always reads `switchingSets[0]` (select-tracks.ts:132) with the comment "HLS typically has one switching set per type" — multi-period / DASH / HLS with multiple groups would silently drop renditions.
+- A: `pickVideoTrack`'s ABR uses **initial** bandwidth only (select-tracks.ts:137-141) — comment in `shouldSelectTrack` (select-tracks.ts:262-264) flags "@TODO figure out reactive model for ABR cases".
+- A: `pickAudioTrack` selects by language → first-default → first (select-tracks.ts:158-189). No multi-bitrate audio (pressure-list) — picks track id without bitrate input.
+- B: `pickTextTrack` always returns `undefined` if no `enableDefaultTrack` and no language preference (select-tracks.ts:213-234) — explicit no-auto by design, but the same shape blocks resilience patterns where the text actor wants any track on null preference.
+- D: Three near-identical `pickXTrack` shapes (select-tracks.ts:124-189, 205-234) — find-by-language → find-by-default → fallback; no shared helper.
+- D: `as any` cast in `selectQuality` call (select-tracks.ts:141) and in `getSelectedTrack` (track-selection.ts:71, 64).
+
+**Repo-rule findings**:
+- `as any` (select-tracks.ts:141) — CLAUDE.md "Type Safety First / Avoid `any`."
+- `TrackSelectionState` redefined in two files (select-tracks.ts:20-25 and track-selection.ts:16-21) — same shape duplicated.
+- `TrackSelectionContext = Record<string, never>` reserved-for-future (select-tracks.ts:31) and unused `TrackSelectionAction` (select-tracks.ts:37) — speculative scaffolding; CLAUDE.md "don't gold-plate."
+- `@TODO` inline (select-tracks.ts:262) signed `(CJP)`.
+
+**Notable assumptions**:
+- One switching-set per selection-set (select-tracks.ts:132, 166, 209) — multi-period / multi-group pressure for live, multi-CDN.
+- `pickVideoTrack` uses single shared `DEFAULT_INITIAL_BANDWIDTH` constant (select-tracks.ts:11-15) regardless of network class.
+
+#### `packages/spf/src/media/types/index.ts`
+
+**Purpose**: HAM-shaped types: `Presentation`, `SelectionSet`, `SwitchingSet`, `Track` variants, `Segment`, type guards.
+
+**Axis findings**:
+- A: `Track` type unions video/audio/text via discriminated `type` (types/index.ts:124-175); no carrier for DRM/key info, no `language` mandatory on audio (it's `?:`), no `channels` count nuance. Pressure-list multi-language / DRM / 5.1.
+- A: `MediaPlaylistInfo` (types/index.ts:307-316) is defined but unused by the actual parser (`parseMediaPlaylist` returns a track shape directly) — dead-or-future type.
+- A: `Presentation` is single-period (types/index.ts:329-333; comment at types/index.ts:121-123 says "always 0 (for future multi-period support)" but no period type exists).
+- D: `MaybeResolvedPresentation` (types/index.ts:344) and `Presentation` overlap; comments at types/index.ts:336-343 explain the lifecycle.
+- E: Discriminated unions for tracks, switching sets, selection sets (types/index.ts:212-220, 232-256, 264-288) — each layer of generic helper types adds shape.
+
+**Repo-rule findings**:
+- `isResolvedTrack` overload (types/index.ts:354-360) — overload set + single implementation; conforms to type-guard convention.
+- Doubled JSDoc above `Track` type (types/index.ts:117-124) — two adjacent comment blocks for one declaration.
+
+**Notable assumptions**:
+- `Segment` has no `discontinuity`, `programDateTime`, `key`, or `partial` flag (types/index.ts:298) — all relevant for live/LL-HLS/DRM pressure-list items.
+- `VideoTrack.audioGroupId` (types/index.ts:148) baked into video track — implies HLS's audio group model is the canonical one.
+
+#### `packages/spf/src/media/utils/track-selection.ts`
+
+**Purpose**: State helpers (`SelectedTrackIdKeyByType`, `BufferKeyByType`, `getSelectedTrack`).
+
+**Axis findings**:
+- A: `BufferKeyByType` only has `video` and `audio` keys (track-selection.ts:36-39) — implicit "two-buffer model"; text never has a SourceBuffer (correct), but DRM key-handshake / per-rendition SB / instant-clip second-SB scenarios are not modeled.
+- D: `getSelectedTrack` body assumes `switchingSets[0]` (track-selection.ts:71) — same one-switching-set assumption as `select-tracks.ts`.
+- D: Triple-nested conditional return type (track-selection.ts:54-61) and `as any` return cast (track-selection.ts:64, 71).
+
+**Repo-rule findings**:
+- `as any` twice (track-selection.ts:64, 71) — CLAUDE.md "Avoid `any`."
+- `TrackSelectionState` redefined (track-selection.ts:16-21) duplicating `select-tracks.ts:20-25` — same name, same shape, two files.
 
 ## Network
 
-_Not yet assessed._
+`packages/spf/src/network/` — HTTP fetch + chunked-stream utilities; DOM-free, signal-free.
+
+### Per-file findings
+
+#### `packages/spf/src/network/chunked-stream-iterable.ts`
+
+**Purpose**: Min-chunk-size adapter from `ReadableStream<Uint8Array>` to async iterable.
+
+**Axis findings**:
+- B: `try/finally` releases reader lock (chunked-stream-iterable.ts:31-48) — clean. No abort signal plumbed in; cancellation depends on caller cancelling the underlying stream.
+- D: `concat` helper is local (chunked-stream-iterable.ts:52-57) — duplicated wherever else byte concat is needed in the package.
+
+**Repo-rule findings**:
+- Class with single iterator method + one `readonly` field (chunked-stream-iterable.ts:16-50).
+
+**Notable assumptions**:
+- No max-chunk-size cap (chunked-stream-iterable.ts:1) — unbounded `pending` accumulation if stream produces large bursts.
+- No back-pressure-aware behavior — relies on `ReadableStream`'s default queuing.
+
+#### `packages/spf/src/network/fetch.ts`
+
+**Purpose**: `Resource`-shaped fetch with byte-range header, plus stream and full-buffer convenience wrappers.
+
+**Axis findings**:
+- A: No retry / back-off / multi-CDN failover hook (fetch.ts:54-70) — pressure-list `multi-CDN failover` and `playback token expiry (4xx)` items have no extension point; consumer-side retry only.
+- A: No request hooks (auth header refresh, CMCD, query-param signing) (fetch.ts:54-70). Mux platform `playback token expiry` and Mux Data CMCD pressure-list items not addressable.
+- A: No timeout handling — relies on RequestInit `signal`, no library-level timeout (fetch.ts:54-70).
+- B: `fetchResolvable` does not check `response.ok` (fetch.ts:54-70) — 4xx/5xx returns Response normally. Caller must re-validate.
+- B: `fetchResolvableStream`'s spread-conditional `...(minChunkSize !== undefined ? [{minChunkSize}] : [])` (fetch.ts:101) — works, but noisier than direct option-passing.
+- D: `Resource` (fetch.ts:26-32) and media's `AddressableObject` (types/index.ts:24-30) are structurally identical — duplication noted in the JSDoc itself (fetch.ts:21-25). CLAUDE.md dependency rules disallow `network/` from importing media types.
+- D: `getResponseText` (fetch.ts:117-119) — single-line proxy for `response.text()`, exists as an export.
+
+**Repo-rule findings**:
+- Three exports' JSDoc has multi-`@example`, `@param`, `@returns` (fetch.ts:34-53, 71-78, 104-115) — non-API-reference utilities.
+- `fetchResolvableStream` is `async function*` returning `AsyncGenerator` — couples header-await with iteration in one function (fetch.ts:94-102).
+
+**Notable assumptions**:
+- All requests are `GET` (fetch.ts:64).
+- `Resource.byteRange.end` is inclusive (per HTTP Range spec) — implicit; documented only via the ASCII Range header (fetch.ts:60).
+
+## Cross-cutting (media + network)
+
+### Recurring patterns
+
+- **Manual SourceBuffer event listener add/remove** instead of `AbortController`+`signal`: append-segment.ts:62-68, 73-89; buffer-flusher.ts:24-31, 34-50. Three near-identical "wait for `updateend`" blocks across the two files.
+- **`switchingSets[0]` access** (one-switching-set assumption): select-tracks.ts:132, 166, 209; track-selection.ts:71. Comment at select-tracks.ts:131 acknowledges it; `parse-multivariant.ts:312-358` produces only one switching set per type.
+- **Hardcoded MIME / sample-rate / channel defaults**: parse-multivariant.ts:188 (`video/mp4`), parse-multivariant.ts:220, 252 (`audio/mp4`), parse-multivariant.ts:224-225, 254-255 (`48000` / `2`). Same defaults appear in audio-only and rendition branches.
+- **`as any` for selection-result narrowing**: select-tracks.ts:141; track-selection.ts:64, 71.
+- **Verbose JSDoc with `@param`/`@returns`/multi-`@example`** on internal utilities: bandwidth-estimator.ts:65-83 and many others; quality-selection.ts:35-58; ewma.ts:8-23; back-buffer.ts:28-55; forward-buffer.ts:28-50; buffer-flusher.ts:7-20; mediasource-setup.ts:36-43, 70-83; fetch.ts:34-53, 71-78. The "minimal JSDoc" rule applies to internal utilities; only API-reference exports get the rich form.
+- **Skipped/dropped HLS tags**: parse-media-playlist.ts:62-70 and parse-multivariant.ts:80-87 enumerate "tags we skip" — `EXT-X-PLAYLIST-TYPE`, `EXT-X-TARGETDURATION`, `EXT-X-INDEPENDENT-SEGMENTS` parsed only enough to skip; pressure-list items (LL-HLS, live, DRM, content-steering) all live in skipped or unhandled tag space.
+
+### Cross-file inconsistencies
+
+- **Two `TrackSelectionState` interfaces, same name, same shape** in select-tracks.ts:20-25 and track-selection.ts:16-21.
+- **Two byte-range `Resource` shapes**: fetch.ts:26-32 (`Resource`) and types/index.ts:24-30 (`AddressableObject`) — identical structure, intentionally separate per dependency rules; the duplication is explicit but unsoftened by any shared base in `@videojs/utils`.
+- **Default-track-when-DEFAULT** semantics differ between text (parse-multivariant.ts:296: `DEFAULT && AUTOSELECT`) and audio (parse-multivariant.ts:265-267: `DEFAULT` alone) renditions in the same parser; comment cites hls.js parity for text, audio path doesn't.
+- **`updateend` wait blocks** repeated in append-segment.ts:60-69 and buffer-flusher.ts:21-31; `appendChunk` and `flushBuffer` are structurally siblings.
+- **JSDoc style varies** — some files have rich `@example`-laden blocks (bandwidth-estimator.ts), others have one-liners (resolve-url.ts:1-3); same package, no consistent rule applied.
+
+### Assumption clusters
+
+- **Video-only / two-buffer-only cluster** (audio-only and audio ABR pressure-list items): `BufferKeyByType` (track-selection.ts:36-39) names only video/audio; `selectQuality` typed for `PartiallyResolvedVideoTrack` only (quality-selection.ts:13, 58-62); `pickVideoTrack` does ABR but `pickAudioTrack` does not (select-tracks.ts:124-189); `parseMultivariantPlaylist` falls back to "video" when codecs absent (parse-multivariant.ts:154-158).
+- **Single-CDN / single-URL cluster** (multi-CDN failover pressure-list item): `Resource` carries one URL (fetch.ts:26-32); `Track`/`AddressableObject` carry one URL (types/index.ts:24-30); `parseMultivariantPlaylist` captures one URI per stream (parse-multivariant.ts:138-145); no `EXT-X-CONTENT-STEERING`/alternate-URI handling; `fetchResolvable` has no rotation hook.
+- **DRM-absent cluster** (DRM pressure-list item): no `EXT-X-KEY` / `EXT-X-SESSION-KEY` in either parser; `Track` has no `keyInfo` field (types/index.ts:124-175); no pre-append wait hook in `appendSegment`; no `Encrypted` event plumbed through `mediasource-setup.ts`.
+- **VOD-only cluster** (live / DVR / LL-HLS pressure-list items): `parseMediaPlaylist` consumes `#EXT-X-ENDLIST` silently (parse-media-playlist.ts:98-100); no `MediaPlaylistInfo` `endList` propagation; no `targetDuration` exit; no partial / preload-hint / blocking-reload signal; `Presentation.duration` modeled as static (types/index.ts:329-333).
+- **Single-period / single-switching-set cluster**: `Presentation.startTime` always 0 with a comment about "future multi-period support" (types/index.ts:121-123); selection helpers always read `switchingSets[0]` (select-tracks.ts:132, 166, 209; track-selection.ts:71); parser builds at most one switching set per type (parse-multivariant.ts:312-358).
+- **Single-codec defaults cluster** (HEVC / 5.1 / Dolby pressure-list items): `parseCodecs` whitelists 4 prefixes (parse-attributes.ts:65-78); audio defaults sampleRate 48000 / channels 2 in two places (parse-multivariant.ts:224-225, 254-255); video defaults to `video/mp4` (parse-multivariant.ts:188).
+- **Implicit-ordering cluster** (axis B): `appendSegment` waits on `updateend` without an `error` listener (append-segment.ts:60-69); same in `flushBuffer` (buffer-flusher.ts:23-31); `back-buffer.ts:42` documents pre-sorted input but doesn't enforce; `mediaElement.load()` in detach (mediasource-setup.ts:99, 111) races with caller-side cleanup.
