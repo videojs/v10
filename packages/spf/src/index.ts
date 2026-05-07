@@ -30,6 +30,8 @@ export type {
   StateSignals,
 } from './core/composition/create-composition';
 export { createComposition, defineBehavior } from './core/composition/create-composition';
+export type { ShareSignalsConfig } from './core/composition/share-signals';
+export { makeShareSignals } from './core/composition/share-signals';
 
 // =============================================================================
 // Signals
