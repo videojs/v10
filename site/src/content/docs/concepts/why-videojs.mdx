@@ -1,0 +1,136 @@
+---
+title: 'Why Video.js?'
+description: 'The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.'
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+
+Video.js v10 is the open-source video player for the web. Start with a small player that picks up where the `<video>` tag leaves off, then add only what you need: streaming, captions, accessibility, a UI you control. Replace, restyle, or remove any part of it.
+
+## Why use a player library?
+
+The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
+
+**Streaming formats.** Most production video isn't an MP4. It's HLS or DASH, broken into segments and adapted to each viewer's bandwidth. Safari plays HLS natively. Chrome and Firefox don't, and no major browser plays DASH. A player library closes the gap so the same `src` works everywhere.
+
+**Inconsistent, unstylable controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
+
+**Multi-source playback.** YouTube, Vimeo, Mux, HLS, and DASH each speak their own API. Switching from a self-hosted MP4 to a hosted service shouldn't mean switching players. A library that abstracts the source lets you change where the video comes from without rewriting the surrounding code.
+
+## Why Video.js?
+
+### Pay only for what you use
+
+Most player libraries ship every feature in one bundle, so you carry code you don't run: a quality menu in a hero video, an audio track switcher in a podcast page. Video.js v10 turns features into independent modules. You hand `createPlayer` the array you actually want, and what you don't import doesn't ship.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, playback, time } from '@videojs/react';
+
+const Player = createPlayer({
+  features: [playback, time], // [!code focus]
+});
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, playback, time } from '@videojs/html';
+
+const { ProviderMixin, PlayerController, context } = createPlayer({
+  features: [playback, time], // [!code focus]
+});
+```
+</FrameworkCase>
+
+Pre-built feature bundles are still there if you'd rather not assemble the list by hand.
+
+<DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
+
+### Framework-native
+
+Many player libraries wrap a single web component for every framework. That works, until you reach the seams: refs you can't pass through, state that doesn't reconcile, prop names that aren't quite React or HTML. Video.js v10 ships idiomatic APIs in each framework: React components and hooks for React, custom elements and controllers for HTML. The player feels like the rest of your app.
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="Framework-native APIs">
+    <Tab client:idle value="react" initial>React</Tab>
+    <Tab client:idle value="html">HTML</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="react" initial>
+    ```tsx
+    import { Player, Video, VideoSkin } from '@videojs/react/video';
+
+    function MyPlayer() {
+      return (
+        <Player.Provider>
+          <VideoSkin>
+            <Video src="movie.mp4" />
+          </VideoSkin>
+        </Player.Provider>
+      );
+    }
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="html">
+    ```html
+    <script type="module" src="@videojs/html/video/player"></script>
+
+    <video-player>
+      <video-skin>
+        <video src="movie.mp4"></video>
+      </video-skin>
+    </video-player>
+    ```
+  </TabsPanel>
+</TabsRoot>
+
+### Eject and own
+
+Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js v10 lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
+
+<DocsLinkCard slug="how-to/customize-skins">Customize skins</DocsLinkCard>
+
+### Production concerns aren't afterthoughts
+
+Streaming, captions, accessibility, and adaptive bitrate are easy to skip in a demo and painful to add late. Video.js v10 ships them in the box. Swap the media element to move a player from MP4 to HLS without touching the UI:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { HlsVideo } from '@videojs/react/media/hls-video'; // [!code ++]
+
+<Player.Provider>
+  <VideoSkin>
+    <HlsVideo src="https://stream.mux.com/.../stream.m3u8" /> {/* [!code focus] */}
+  </VideoSkin>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module" src="@videojs/html/media/hls-video"></script> <!-- [!code ++] -->
+
+<video-player>
+  <video-skin>
+    <hls-video src="https://stream.mux.com/.../stream.m3u8"></hls-video> <!-- [!code focus] -->
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+Captions, ARIA roles, keyboard handling, and focus management are wired into the components by default. See <DocsLink slug="concepts/accessibility">Accessibility</DocsLink> for what we cover and where the limits are.
+
+### AI-native DX
+
+Documentation aimed at human readers usually doesn't help an agent. Video.js v10 publishes an `llms.txt` index, ships every docs page as both HTML and Markdown, and has a dedicated guide for building with AI assistants. Drop the player into a Claude or Cursor session and the docs come along for the ride.
+
+<DocsLinkCard slug="how-to/build-with-ai">Build with AI</DocsLinkCard>
+
+## Ready?
+
+<DocsLinkCard slug="how-to/installation">Install Video.js</DocsLinkCard>
+
+----
+
+Video.js v10 is built at Mux by the teams behind Video.js, Plyr, Vidstack, Media Chrome, and other players. Between us, our projects have served tens of billions of monthly video plays. Most of the choices on this page came from things we got wrong the first time, then the second, then the fifth. We've been supporting your edge cases for over a decade. Now we're shipping the player we always wanted to build.

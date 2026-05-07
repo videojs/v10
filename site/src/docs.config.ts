@@ -23,6 +23,7 @@ export const sidebar: Sidebar = [
     llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
+      { slug: 'concepts/why-videojs' },
       { slug: 'concepts/overview' },
       { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
