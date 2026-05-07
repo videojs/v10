@@ -1,6 +1,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
+import { computed, equalsById, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type {
@@ -105,10 +105,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   const runner = new ConcurrentRunner();
 
   // Filter internal presentation updates (segments added by sibling tasks)
-  // so the effect inside 'resolving' doesn't re-fire on every commit. The
-  // `(a, b) => a?.id === b?.id` check is generic over any Ham object.
+  // so the effect inside 'resolving' doesn't re-fire on every commit.
   const presentationById = computed(() => state.presentation.get(), {
-    equals: (a, b) => a?.id === b?.id,
+    equals: equalsById,
   });
 
   // Reactor states model the FSM the previous effect-based body was
@@ -157,10 +156,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // depth against signal-abort-through-body-read races.
                   if (state.presentation.get()?.id !== taskPresentationId) return;
 
-                  // Cast: `update`'s `T extends object` constraint
-                  // disallows `| undefined`. The updater handles undefined
-                  // inputs by returning the current value unchanged.
-                  update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+                  // Updater handles undefined inputs by returning current
+                  // unchanged; isResolvedPresentation narrows for the patch.
+                  update(state.presentation, (current) =>
                     isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
                   );
                 },
