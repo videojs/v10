@@ -31,12 +31,12 @@ Started small. Grow only when the assessment surfaces a recurring decision that 
 
 | Doc | Question it answers |
 | --- | ------------------- |
-| [behaviors.md](behaviors.md) | When to define a Behavior; behavior shape; helper vs behavior split; per-type specialization; file placement. |
-| [signals.md](signals.md) | When to use `Signal<T>` (writable) vs `ReadonlySignal<T>` (read-only); when to seed via `initialState`/`initialContext`; when to use `shareSignals`; multi-writer slots. |
+| [behaviors.md](behaviors.md) | When to define a Behavior; behavior shape; helper vs behavior split; per-type specialization; file placement; source-reset handling. |
+| [signals.md](signals.md) | When to use `Signal<T>` (writable) vs `ReadonlySignal<T>` (read-only); when to seed via `initialState`/`initialContext`; when to use `shareSignals`; multi-writer slots; `peek` and `equalsById` helpers. |
+| [reactors.md](reactors.md) | When to reach for `createMachineReactor`; the `deriveState` + `monitor` convention; the entry-returns-state-exit-cleanup idiom; source-identity states for source-driven work. |
 
 Planned but not yet written (drafted as the assessment or backlog surfaces a need):
 
-- `reactors.md` — when to reach for a Reactor.
 - `tasks.md` — when to use Tasks + TaskRunners/Schedulers.
 - `actors.md` — when to define an Actor.
 - `config.md` — when to bake an assumption in vs push it to config (the **A — Reusability** vs **D/E** decision).
