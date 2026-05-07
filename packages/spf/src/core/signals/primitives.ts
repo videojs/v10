@@ -9,11 +9,16 @@ export const untrack: <T>(fn: () => T) => T = SignalNS.subtle.untrack;
  * sites. Structurally typed to accept any signal-like (Signal, Computed,
  * ReadonlySignal).
  *
+ * Accepts an optional `transform` to project the value in the same call;
+ * the default is the identity function so the single-arg form returns `T`
+ * unchanged.
+ *
  * @example
  * const value = peek(someSignal);
+ * const id = peek(presentationSignal, (p) => p?.id);
  */
-export function peek<T>(source: { get(): T }): T {
-  return untrack(() => source.get());
+export function peek<T, R = T>(source: { get(): T }, transform: (value: T) => R = (v: T) => v as unknown as R): R {
+  return untrack(() => transform(source.get()));
 }
 
 /** A writable reactive value (read + write). */
