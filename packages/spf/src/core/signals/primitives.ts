@@ -27,17 +27,46 @@ export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T
 }
 
 /**
- * Update a writable signal. Accepts either a partial object to merge into the
- * current state, or an updater function that receives the current state and
- * returns the next state.
+ * Update a writable signal. Two forms:
+ *
+ * - **Updater function** `(current) => next`. Works for any signal type,
+ *   including `Signal<T | undefined>` — handle undefined in the updater.
+ * - **Partial object** to merge into the current state. Requires
+ *   `T extends object`.
  *
  * @example
  * update(state, { playbackRate: 2 });
  * update(state, (s) => ({ ...s, count: s.count + 1 }));
+ * update(maybeUndefinedSignal, (current) => current ?? defaultValue);
  */
-export function update<T extends object>(signal: Signal<T>, updater: Partial<T> | ((current: T) => T)): void {
+export function update<T>(signal: Signal<T>, updater: (current: T) => T): void;
+export function update<T extends object>(signal: Signal<T>, updater: Partial<T>): void;
+export function update<T>(signal: Signal<T>, updater: ((current: T) => T) | object): void {
   const current = untrack(() => signal.get());
-  signal.set(typeof updater === 'function' ? updater(current) : { ...current, ...updater });
+  if (typeof updater === 'function') {
+    signal.set((updater as (current: T) => T)(current));
+  } else {
+    // Partial<T> form — `T extends object` enforced by the public overload.
+    signal.set({ ...(current as object), ...updater } as T);
+  }
+}
+
+/**
+ * Equality comparator for objects with an optional `id` field. Designed for
+ * use as a `computed` `equals` option when reacting to identity changes
+ * (Ham-shaped objects, JSON-API-shaped resources) while filtering internal
+ * updates that preserve the id.
+ *
+ * Handles undefined inputs symmetrically: both undefined → equal; one
+ * undefined → different.
+ *
+ * @example
+ * const presentationById = computed(() => state.presentation.get(), {
+ *   equals: equalsById,
+ * });
+ */
+export function equalsById<T extends { id?: string }>(a: T | undefined, b: T | undefined): boolean {
+  return a?.id === b?.id;
 }
 
 /**
