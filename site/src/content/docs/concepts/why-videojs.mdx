@@ -8,17 +8,17 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
-Video.js v10 is the open-source video player for the web. Start with a small player that picks up where the `<video>` tag leaves off, then add only what you need: streaming, captions, accessibility, a UI you control. Replace, restyle, or remove any part of it.
+Video.js v10 is the open-source video player for the web — lightweight, accessible components built for performance and streaming. Start small and add only what you need. Replace, restyle, or remove any part of it.
 
-## Why use a player library?
+## Why not `<video>`?
 
 The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
 
 **Streaming formats.** Most professional and long-form video isn't an MP4. It's HLS or DASH, broken into segments and adapted to each viewer's bandwidth. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
 
-**Inconsistent, unstylable controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
+**Default video controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
 
-**Multi-source playback.** YouTube, Vimeo, Mux, HLS, and DASH each speak their own API. Switching from a self-hosted MP4 to a hosted service shouldn't mean switching players. A library that abstracts the source lets you change where the video comes from without rewriting the surrounding code.
+**Video hosting service support.** YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
 
 ## Why Video.js?
 
