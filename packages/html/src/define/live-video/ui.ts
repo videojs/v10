@@ -4,6 +4,9 @@
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
+import { CaptionsMenuElement } from '../../ui/captions-menu/captions-menu-element';
+import { CaptionsMenuTriggerElement } from '../../ui/captions-menu/captions-menu-trigger-element';
+import { CaptionsOptionsElement } from '../../ui/captions-menu/captions-options-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
@@ -21,6 +24,7 @@ import {
   defineControls,
   defineErrorDialog,
   defineInputIndicators,
+  defineMenu,
   defineTime,
   defineTimeSlider,
   defineVolumeSlider,
@@ -41,10 +45,14 @@ defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();
+defineMenu();
 
 // Standalone elements.
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
+safeDefine(CaptionsOptionsElement);
+safeDefine(CaptionsMenuTriggerElement);
+safeDefine(CaptionsMenuElement);
 safeDefine(CastButtonElement);
 safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);

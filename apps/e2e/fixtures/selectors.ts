@@ -33,7 +33,7 @@ export const SELECTORS = {
   muteButton: 'media-mute-button, .media-button--mute',
   fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
   pipButton: 'media-pip-button, .media-button--pip',
-  captionsButton: 'media-captions-button, .media-button--captions',
+  captionsButton: 'media-captions-menu-trigger, media-captions-button, .media-button--captions',
   playbackRateButton: [
     // Legacy cycle button / CSS skins (explicit class)
     withinControls('media-playback-rate-button'),

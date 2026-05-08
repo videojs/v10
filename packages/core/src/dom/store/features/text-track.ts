@@ -5,6 +5,10 @@ import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
 
+function isSubtitleTrack(track: Pick<TextTrackLike, 'kind'>): boolean {
+  return track.kind === 'subtitles' || track.kind === 'captions';
+}
+
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
   state: ({ target }): MediaTextTrackState => ({
@@ -17,10 +21,7 @@ export const textTrackFeature = definePlayerFeature({
       const { media } = target();
       if (!isMediaTextTrackCapable(media)) return false;
 
-      const subtitlesTracks = getTextTrackList(
-        media,
-        (track) => track.kind === 'subtitles' || track.kind === 'captions'
-      );
+      const subtitlesTracks = getTextTrackList(media, isSubtitleTrack);
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track) => track.mode === 'showing');
@@ -31,6 +32,25 @@ export const textTrackFeature = definePlayerFeature({
       }
 
       return nextShowing;
+    },
+    selectTextTrack(trackIndex: number | null) {
+      const { media } = target();
+      if (!isMediaTextTrackCapable(media)) return false;
+
+      const selectedTrack = trackIndex === null ? null : media.textTracks[trackIndex];
+
+      if (trackIndex !== null && (!selectedTrack || !isSubtitleTrack(selectedTrack))) {
+        return false;
+      }
+
+      for (let i = 0; i < media.textTracks.length; i++) {
+        const track = media.textTracks[i]!;
+        if (!isSubtitleTrack(track)) continue;
+
+        track.mode = track === selectedTrack ? 'showing' : 'disabled';
+      }
+
+      return selectedTrack !== null;
     },
   }),
 

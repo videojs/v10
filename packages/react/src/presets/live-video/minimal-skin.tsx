@@ -6,6 +6,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -20,7 +21,7 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
+import { CaptionsMenu, useCaptionsMenu } from '@/ui/captions-menu';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -28,6 +29,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -82,6 +84,23 @@ function VolumePopover(): ReactNode {
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>
+  );
+}
+
+function CaptionsMenuItems(): ReactNode {
+  const { options, setValue, value } = useCaptionsMenu();
+
+  return (
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Captions">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+            <CheckIcon className="media-icon" />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
   );
 }
 
@@ -149,17 +168,15 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
           <div className="media-button-group">
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className="media-button--captions" render={<Button />}>
-                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className="media-tooltip" />
-            </Tooltip.Root>
+            <CaptionsMenu.Root side="top" align="center">
+              <CaptionsMenu.Trigger className="media-button--captions" render={<Button />}>
+                <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+              </CaptionsMenu.Trigger>
+              <CaptionsMenu.Content className="media-popover media-menu media-menu--captions">
+                <CaptionsMenuItems />
+              </CaptionsMenu.Content>
+            </CaptionsMenu.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

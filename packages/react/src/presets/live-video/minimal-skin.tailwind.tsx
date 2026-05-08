@@ -8,6 +8,7 @@ import {
   icon,
   iconState,
   inputFeedback,
+  menu,
   overlay,
   popup,
   poster,
@@ -22,6 +23,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -36,7 +38,7 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
+import { CaptionsMenu, useCaptionsMenu } from '@/ui/captions-menu';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -44,6 +46,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -131,6 +134,23 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function CaptionsMenuItems(): ReactNode {
+  const { options, setValue, value } = useCaptionsMenu();
+
+  return (
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Captions">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
+            <CheckIcon className={icon} />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 
@@ -195,17 +215,15 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
           <div className={buttonGroupEnd}>
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+            <CaptionsMenu.Root side="top" align="center">
+              <CaptionsMenu.Trigger className={iconState.captions.button} render={<Button />}>
+                <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+                <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+              </CaptionsMenu.Trigger>
+              <CaptionsMenu.Content className={cn(popup.popover, menu.root)}>
+                <CaptionsMenuItems />
+              </CaptionsMenu.Content>
+            </CaptionsMenu.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
