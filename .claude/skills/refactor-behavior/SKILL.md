@@ -86,7 +86,17 @@ Three categories:
 - **Explicit gaps** — flagged in the assessment doc, in TODOs, in code
   comments.
 - **Process gaps** — closure-mutable state, defense-in-depth without an
-  articulated failure mode, fight-the-shape sniffs (per behaviors.md).
+  articulated failure mode, fight-the-shape sniffs (per behaviors.md),
+  `effect()` inside reactor `entry` (per reactors.md), helpers with
+  conditional branches around optional state-scoped work.
+
+**If this refactor is a merge of two behaviors, run gap analysis on
+each source behavior independently first.** Each side gets its own
+purpose, business rules, and gap analysis as a standalone refactor.
+Skipping per-side gap analysis means the merge produces a relocated
+mess instead of a refactored one — the inputs' anti-patterns survive
+into the merged form. See `behaviors.md` "Merging two behaviors —
+extra discipline."
 
 ### Step 4 — Pattern selection
 
@@ -104,7 +114,17 @@ Pick from the documented patterns:
 
 The **transition-driven vs state-driven** distinction in `reactors.md`
 is the most-commonly-missed call. If you're using `effects` for work
-that should fire only on state entry, that's a sniff.
+that should fire only on state entry, that's a sniff. Conversely: if
+you're calling `effect()` *inside* an `entry` body, that's a sniff —
+state-driven work belongs in `effects:`, not invoked manually from
+inside `entry`.
+
+**Helpers with conditional branches around optional state-scoped
+work** (`const x = optionEnabled ? doX() : undefined` inside a
+shared-helper's `entry`) are a leaky abstraction. The variant should
+supply the work; the helper shouldn't carry the conditional. (Specific
+composition shape is per-case; what matters is that the helper isn't
+parameterized by "is this optional thing on or off?")
 
 ### Step 5 — Convention checks
 
@@ -142,6 +162,14 @@ same refactor — make the merge/split decision *after* the refactor
 proposal lands so the simpler shape is what's evaluated. The merge
 often slots cleanly into the larger refactor of the *other* writer
 rather than landing as a standalone change.
+
+**If merge is the answer**: identify which source behavior has more
+architectural requirements (more states, more lifecycle phases, more
+failure modes, more configuration). Build the merged shape from that
+side; the simpler input fits as a special case within it. Building
+the other direction (extending the simpler shape outward) tends to
+produce conditional branches and afterthought integrations. Per
+`behaviors.md` "Merging two behaviors — extra discipline."
 
 ## Output format
 

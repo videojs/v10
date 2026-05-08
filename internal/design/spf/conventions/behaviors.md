@@ -199,6 +199,17 @@ If the purpose overlaps with another behavior's purpose — both writing the sam
 
 Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape. The decomposition merge often slots cleanly into the larger refactor of the *other* writer — e.g., `selectVideoTrack` would naturally merge into a refactored `quality-switching` rather than land as a standalone change.
 
+### Merging two behaviors — extra discipline
+
+When the decomposition check says merge, the refactor is **two separate exercises combined**, not one:
+
+1. **Refactor each input behavior independently** — apply Steps 1–5 (purpose, business rules, gap analysis, pattern selection, convention checks) to each *as a standalone behavior*, even though they're going away. The output of each is a "what should this body look like cleaned up" sketch.
+2. **Combine the cleaned shapes** — describe how the two cleaned bodies fit together as one behavior, with the merged purpose driving the structure.
+
+Skipping (1) and going straight to "combine the existing bodies" produces a relocated mess: each side's anti-patterns survive into the merged form (closure-state, fight-the-shape sniffs, defense-in-depth that has lost its rationale, etc.). Merge is not relocation.
+
+**Build from the more constrained side.** Identify which input behavior has more architectural requirements — more states, more lifecycle phases, more failure modes, more configuration. Use *that* as the starting structure for the merged shape; the simpler input fits as a special case (often a no-op or default) within the more constrained shape. Building the other direction (extending the simpler shape outward to host the complex case) tends to produce conditional branches and afterthought integrations.
+
 ## Source-reset handling (playback-engine behaviors)
 
 Behaviors composed into a playback engine almost always have an implicit dependency on a current source — typically `state.presentation`. Source reset (URL change, presentation cleared, behavior destroyed mid-stream) is a first-class concern: every playback-engine behavior should be designed with explicit semantics for it.
@@ -445,3 +456,5 @@ When a Behavior is augmented with an Actor, the Actor's own tests live in `playb
 - **Splitting by domain rather than by shape.** A "video" Behavior that's really three Behaviors (selection, loading, sync) glued together is harder to reuse in audio-only contexts than three small Behaviors with overlapping slot maps.
 - **Defense-in-depth checks without an articulated failure mode.** Every guard added "just in case" should name the specific thing it protects against. When the architecture changes, revisit the guard — it may have become unreachable. Carrying unreachable guards is technical debt that obscures the real safety properties of the surrounding code. (Concrete instance from this branch: a commit-time presentation id check in `setupTrackResolution` that became redundant once the reactor's state-exit abort + spec-compliant fetch signal propagation handled the same race; removed in commit `5456d9db`.)
 - **Closure-mutable state that should reset on source change.** See "Source-reset handling" — closure variables survive source resets. Express the state in a `createMachineReactor` state or a signal-derived `computed` so reset happens structurally.
+- **Merging without refactoring** — combining two behaviors by relocating their bodies into one file/helper without first running purpose-first analysis on each. Symptom: the merged behavior's body looks suspiciously like its inputs glued together; each side's anti-patterns (closure-state, hand-rolled FSMs, leaky abstractions, conditional branches around optional work) survive into the merge. See [Merging two behaviors — extra discipline](#merging-two-behaviors--extra-discipline).
+- **Building a merged behavior from the simpler side outward.** When merging behaviors of unequal architectural weight, extending the simpler shape outward to host the more constrained one produces conditional branches and afterthought integrations in the lifecycle helper. Build from the more constrained side; the simpler case fits as a special case within that shape.
