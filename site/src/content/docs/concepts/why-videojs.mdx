@@ -6,7 +6,11 @@ description: 'The open-source video player for React and HTML. Lightweight, acce
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+import chromeDefaultControls from '@/assets/docs/concepts/why-videojs/chrome-default-controls.png';
+import safariDefaultControls from '@/assets/docs/concepts/why-videojs/safari-default-controls.png';
+import firefoxDefaultControls from '@/assets/docs/concepts/why-videojs/firefox-default-controls.png';
 
 Video.js v10 is the open-source video player for the web — lightweight, accessible components built for performance and streaming. Start small and add only what you need. Replace, restyle, or remove any part of it.
 
@@ -14,26 +18,54 @@ Video.js v10 is the open-source video player for the web — lightweight, access
 
 The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
 
-**Streaming formats.** Most professional and long-form video isn't an MP4. It's HLS or DASH, broken into segments and adapted to each viewer's bandwidth. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
+### Default video controls
 
-**Default video controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
+Chrome, Safari, and Firefox each render the default `<video>` controls differently. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
 
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0;">
-  <figure style="margin: 0;">
-    <img src="/docs/concepts/why-videojs/chrome-default-controls.png" alt="Chrome's default video controls" style="width: 100%; height: auto;" />
-    <figcaption style="margin-top: 0.5rem; text-align: center;">Chrome</figcaption>
+<ContentWidth margins="lg" class="grid grid-cols-3 gap-4">
+  <figure>
+    <img 
+        src={chromeDefaultControls.src} 
+        width={chromeDefaultControls.width} 
+        height={chromeDefaultControls.height} 
+        alt="Chrome's default video controls" 
+        class="w-full h-auto"
+    />
+    <figcaption class="mt-2 text-center">Chrome</figcaption>
   </figure>
-  <figure style="margin: 0;">
-    <img src="/docs/concepts/why-videojs/safari-default-controls.png" alt="Safari's default video controls" style="width: 100%; height: auto;" />
-    <figcaption style="margin-top: 0.5rem; text-align: center;">Safari</figcaption>
+  <figure>
+    <img 
+        src={safariDefaultControls.src} 
+        width={safariDefaultControls.width} 
+        height={safariDefaultControls.height} 
+        alt="Safari's default video controls" 
+        class="w-full h-auto"
+    />
+    <figcaption class="mt-2 text-center">Safari</figcaption>
   </figure>
-  <figure style="margin: 0;">
-    <img src="/docs/concepts/why-videojs/firefox-default-controls.png" alt="Firefox's default video controls" style="width: 100%; height: auto;" />
-    <figcaption style="margin-top: 0.5rem; text-align: center;">Firefox</figcaption>
+  <figure>
+    <img 
+        src={firefoxDefaultControls.src} 
+        width={firefoxDefaultControls.width}
+        height={firefoxDefaultControls.height} 
+        alt="Firefox's default video controls" 
+        class="w-full h-auto" 
+    />
+    <figcaption class="mt-2 text-center">Firefox</figcaption>
   </figure>
-</div>
+</ContentWidth>
 
-**Video hosting service support.** YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
+### Production video features
+
+Production-grade video involves a lot more than an MP4 in ` src`. Features like adaptive bitrate, quality selection, chapters, Chromecast, AirPlay, DRM, and more are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>. Video.js v10 ships them in the box. 
+
+### Streaming formats and sources
+
+Behind video features like adaptive bitrate and quality selection are video formats like HLS or DASH -- videos broken into segments that can be selected according to bandwidth and preferences. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
+
+Of course, your video might not be coming from a `src` like that. It might be provided by a service. However, services like YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
+
+Video.js even considers sources like canvas-based MoQ or animated GIFs, all with the same components.
 
 ## Why Video.js?
 
@@ -106,37 +138,6 @@ Many player libraries wrap a single web component for every framework. That work
 Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js v10 lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
 
 <DocsLinkCard slug="how-to/customize-skins">Customize skins</DocsLinkCard>
-
-### Production concerns aren't afterthoughts
-
-Streaming, captions, accessibility, and adaptive bitrate are easy to skip in a demo and painful to add late. Video.js v10 ships them in the box. Swap the media element to move a player from MP4 to HLS without touching the UI:
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-import { HlsVideo } from '@videojs/react/media/hls-video'; // [!code focus]
-
-<Player.Provider>
-  <VideoSkin>
-    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
-  </VideoSkin>
-</Player.Provider>
-```
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-```html
-<script type="module" src="@videojs/html/media/hls-video"></script> <!-- [!code focus] -->
-
-<video-player>
-  <video-skin>
-    <hls-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
-  </video-skin>
-</video-player>
-```
-</FrameworkCase>
-
-The same swap works for hosting services like YouTube and Vimeo, canvas-based formats like MoQ, and even animated GIFs. The media layer is pluggable; the UI doesn't care.
-
-Captions, ARIA roles, keyboard handling, and focus management are wired into the components by default. See <DocsLink slug="concepts/accessibility">Accessibility</DocsLink> for what we cover and where the limits are.
 
 ### AI-native DX
 
