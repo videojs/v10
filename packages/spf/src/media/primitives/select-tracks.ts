@@ -112,6 +112,19 @@ export interface TextSelectionConfig<T extends TrackType = 'text'> extends Track
 // =============================================================================
 
 /**
+ * Pick the first track of the given type from a presentation.
+ *
+ * Returns the first track in the first switching set of the matching
+ * selection set, or `undefined` if either is missing. POC-shaped
+ * default-pick — `pickVideoTrack` / `pickAudioTrack` honor bandwidth +
+ * language preferences and will replace this once selection callers are
+ * ready.
+ */
+export function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackType): string | undefined {
+  return presentation.selectionSets?.find((set) => set.type === type)?.switchingSets[0]?.tracks[0]?.id;
+}
+
+/**
  * Pick video track using quality selection algorithm.
  *
  * Uses bandwidth-based selection with safety margin to pick
