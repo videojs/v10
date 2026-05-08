@@ -8,6 +8,7 @@ import {
   type TooltipChangeDetails,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useOptionalContainer } from '../../player/context';
@@ -46,7 +47,7 @@ export function TooltipRoot({
   const [core] = useState(() => new TooltipCore(coreProps));
   core.setProps(coreProps);
 
-  const isControlled = controlledOpen !== undefined;
+  const isControlled = !isUndefined(controlledOpen);
 
   const groupFromContext = useTooltipGroup();
 
@@ -91,7 +92,7 @@ export function TooltipRoot({
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {
-    if (controlledOpen === undefined) return;
+    if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = tooltip.input.current;
     if (controlledOpen === inputOpen) return;
@@ -104,7 +105,7 @@ export function TooltipRoot({
   }, [controlledOpen, tooltip]);
 
   useEffect(() => {
-    if (controls?.state.visible === undefined) return;
+    if (isUndefined(controls?.state.visible)) return;
 
     tooltip.syncControlsVisible(controls.state.visible);
   }, [controls?.state.visible, tooltip]);

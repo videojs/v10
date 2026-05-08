@@ -1,3 +1,5 @@
+import { isString } from '@videojs/utils/predicate';
+
 export function forceLayout(element: HTMLElement | null): void {
   element?.getBoundingClientRect();
 }
@@ -47,7 +49,7 @@ export function resolvePositioningBoundary(
   options: ResolvePositioningBoundaryOptions = {}
 ): Element | null {
   if (!boundary) return null;
-  if (typeof boundary !== 'string') return boundary;
+  if (!isString(boundary)) return boundary;
   if (boundary === 'viewport') return null;
   if (boundary === 'container') return options.container ?? null;
 

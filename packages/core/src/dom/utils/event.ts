@@ -1,7 +1,9 @@
+import { isFunction } from '@videojs/utils/predicate';
+
 export function isEventWithinElement(event: Event, element: Element | null): boolean {
   if (!element) return false;
 
-  if (typeof event.composedPath === 'function') {
+  if (isFunction(event.composedPath)) {
     return event.composedPath().includes(element);
   }
 

@@ -8,6 +8,7 @@ import {
   type PositioningBoundary,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
@@ -45,7 +46,7 @@ export function PopoverRoot({
   const [core] = useState(() => new PopoverCore(coreProps));
   core.setProps(coreProps);
 
-  const isControlled = controlledOpen !== undefined;
+  const isControlled = !isUndefined(controlledOpen);
 
   // Keep refs that always point to the latest values so the
   // createPopover closure never reads stale props.
@@ -88,7 +89,7 @@ export function PopoverRoot({
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {
-    if (controlledOpen === undefined) return;
+    if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = popover.input.current;
     if (controlledOpen === inputOpen) return;
@@ -101,7 +102,7 @@ export function PopoverRoot({
   }, [controlledOpen, popover]);
 
   useEffect(() => {
-    if (controls?.state.visible === undefined) return;
+    if (isUndefined(controls?.state.visible)) return;
 
     popover.syncControlsVisible(controls.state.visible);
   }, [controls?.state.visible, popover]);
