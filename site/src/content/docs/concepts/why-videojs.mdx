@@ -18,7 +18,7 @@ Video.js v10 is the open-source video player for the web — lightweight, access
 
 The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
 
-### Default video controls
+### Cross-browser inconsistency
 
 Chrome, Safari, and Firefox each render the default `<video>` controls differently. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
 
@@ -57,7 +57,7 @@ Chrome, Safari, and Firefox each render the default `<video>` controls different
 
 ### Production video features
 
-Production-grade video involves a lot more than an MP4 in ` src`. Features like adaptive bitrate, quality selection, chapters, Chromecast, AirPlay, DRM, and more are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>. Video.js v10 ships them in the box. 
+Production-grade video involves a lot more than an MP4 in `src`. Features like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, control localization, error UI, live-streaming UI, analytics, ads, 360 video, Chromecast, AirPlay, DRM, and more are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>. Video.js aims to handle this all out of the box (though some features are still under development!)
 
 ### Streaming formats and sources
 
