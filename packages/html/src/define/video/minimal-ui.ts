@@ -11,7 +11,9 @@ import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
-import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
+import { PlaybackRateMenuElement } from '../../ui/playback-rate-menu/playback-rate-menu-element';
+import { PlaybackRateMenuTriggerElement } from '../../ui/playback-rate-menu/playback-rate-menu-trigger-element';
+import { PlaybackRateOptionsElement } from '../../ui/playback-rate-menu/playback-rate-options-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
@@ -22,6 +24,7 @@ import {
   defineControls,
   defineErrorDialog,
   defineInputIndicators,
+  defineMenu,
   defineTime,
   defineTimeSlider,
   defineVolumeSlider,
@@ -42,6 +45,7 @@ defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();
+defineMenu();
 
 // Standalone elements.
 safeDefine(BufferingIndicatorElement);
@@ -53,7 +57,9 @@ safeDefine(HotkeyElement);
 safeDefine(MuteButtonElement);
 safeDefine(PiPButtonElement);
 safeDefine(PlayButtonElement);
-safeDefine(PlaybackRateButtonElement);
+safeDefine(PlaybackRateOptionsElement);
+safeDefine(PlaybackRateMenuTriggerElement);
+safeDefine(PlaybackRateMenuElement);
 safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(SeekButtonElement);

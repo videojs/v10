@@ -135,6 +135,8 @@ export class HotkeyCoordinator {
     // Let interactive elements handle their own activation keys.
     if (isInteractiveActivation(event)) return;
 
+    if (event.defaultPrevented) return;
+
     const editable = isEditableTarget(event);
 
     for (const binding of this.#bindings) {

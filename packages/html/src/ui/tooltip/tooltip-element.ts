@@ -7,7 +7,10 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
+  type PositioningBoundary,
   resolveOffsets,
+  resolvePositioningBoundary,
   type TooltipApi,
   type TooltipChangeDetails,
 } from '@videojs/core/dom';
@@ -17,6 +20,8 @@ import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
+import { containerContext } from '../../player/context';
+import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
@@ -42,7 +47,8 @@ export class TooltipElement extends MediaElement {
     closeDelay: { type: Number, attribute: 'close-delay' },
     disableHoverablePopup: { type: Boolean, attribute: 'disable-hoverable-popup' },
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props>;
+    boundary: { type: String },
+  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary'>;
 
   open = TooltipCore.defaultProps.open;
   defaultOpen = TooltipCore.defaultProps.defaultOpen;
@@ -52,9 +58,12 @@ export class TooltipElement extends MediaElement {
   closeDelay = TooltipCore.defaultProps.closeDelay;
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
+  boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
+  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
   readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
@@ -138,6 +147,8 @@ export class TooltipElement extends MediaElement {
     super.update(_changed);
     if (!this.#tooltip) return;
 
+    this.#syncControlsVisibility();
+
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
@@ -172,26 +183,26 @@ export class TooltipElement extends MediaElement {
 
     // Apply positioning styles to self.
     const posOpts = { side: state.side, align: state.align };
+    const boundaryElement = this.#getBoundaryElement();
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
+    const offsets = resolveOffsets(this, TooltipCSSVars);
 
     if (supportsAnchorPositioning()) {
-      // Native CSS Anchor Positioning — no JS rect measurements needed.
       applyStyles(
         this,
-        getAnchorPositionStyle(this.id, posOpts, undefined, undefined, undefined, undefined, TooltipCSSVars)
+        getAnchorPositionStyle(this.id, posOpts, triggerRect, undefined, boundaryRect, offsets, TooltipCSSVars)
       );
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
-      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
       const selfRect = getPopupPositionRect(this);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
-      const offsets = resolveOffsets(this, TooltipCSSVars);
       applyStyles(
         this,
         getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets, TooltipCSSVars)
       );
     }
 
-    this.#position.sync(this.#currentTrigger);
+    this.#position.sync(this.#currentTrigger, boundaryElement);
   }
 
   // --- Trigger management ---
@@ -229,5 +240,20 @@ export class TooltipElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #getBoundaryElement(): Element | null {
+    return resolvePositioningBoundary(this.boundary, {
+      container: this.#containerCtx.value?.container ?? null,
+      root: this.getRootNode() as Document | ShadowRoot,
+    });
+  }
+
+  #syncControlsVisibility(): void {
+    const controlsCtx = this.#controlsCtx.value ?? null;
+
+    if (!controlsCtx) return;
+
+    this.#tooltip?.syncControlsVisible(controlsCtx.state.visible);
   }
 }

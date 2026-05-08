@@ -8,6 +8,7 @@ import {
   iconContainer,
   iconFlipped,
   iconState,
+  menu,
   playbackRate,
   popup,
   root,
@@ -52,7 +53,7 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -60,7 +61,7 @@ function getTemplateHTML() {
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -68,7 +69,7 @@ function getTemplateHTML() {
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
           </div>
 
           <div class="${time.group}">
@@ -84,8 +85,19 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
-            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
-            <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-menu-trigger>
+            <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
+              <media-playback-rate-options class="${menu.group}">
+                <template>
+                  <media-menu-radio-item class="${menu.item}">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="${menu.indicator}">
+                      ${renderIcon('check', { class: icon })}
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-playback-rate-options>
+            </media-playback-rate-menu>
 
             <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
@@ -93,7 +105,7 @@ function getTemplateHTML() {
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
 
-            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.popover, popup.volume)}">
+            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popup.popover, popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>

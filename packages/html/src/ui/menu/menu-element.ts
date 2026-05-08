@@ -10,13 +10,16 @@ import {
   getMenuViewportAttrs,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
   getRootPositionOptions,
   isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
   type MenuViewTransitionState,
   type NavigationState,
+  type PositioningBoundary,
   resolveOffsets,
+  resolvePositioningBoundary,
   syncMenuViewRoot,
   syncMenuViewTransition,
   type UIFocusEvent,
@@ -26,13 +29,14 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
-
+import { containerContext } from '../../player/context';
+import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
 
 export class MenuElement extends MediaElement {
-  static readonly tagName = 'media-menu';
+  static readonly tagName: string = 'media-menu';
 
   static override properties = {
     open: { type: Boolean },
@@ -41,8 +45,9 @@ export class MenuElement extends MediaElement {
     align: { type: String },
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
     closeOnOutsideClick: { type: Boolean, attribute: 'close-on-outside-click' },
+    boundary: { type: String },
   } satisfies PropertyDeclarationMap<
-    'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick'
+    'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick' | 'boundary'
   >;
 
   open = MenuCore.defaultProps.open;
@@ -51,10 +56,13 @@ export class MenuElement extends MediaElement {
   align = MenuCore.defaultProps.align;
   closeOnEscape = MenuCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = MenuCore.defaultProps.closeOnOutsideClick;
+  boundary: PositioningBoundary = 'container';
 
   readonly #core = new MenuCore();
   readonly #provider = new ContextProvider(this, { context: menuContext });
   readonly #position = new PositionController(this);
+  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
+  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #menuViewTransition = createMenuViewTransition({
@@ -94,6 +102,7 @@ export class MenuElement extends MediaElement {
       },
       closeOnEscape: () => this.closeOnEscape,
       closeOnOutsideClick: () => this.closeOnOutsideClick,
+      group: () => (this.#parentCtx.value ? undefined : this.#containerCtx.value?.popupGroup),
     });
 
     // The element itself is the content (popup) for root menus.
@@ -149,7 +158,15 @@ export class MenuElement extends MediaElement {
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
 
-    this.#core.setProps({ ...this, isSubmenu });
+    this.#core.setProps({
+      open: this.open,
+      defaultOpen: this.defaultOpen,
+      side: this.side,
+      align: this.align,
+      closeOnEscape: this.closeOnEscape,
+      closeOnOutsideClick: this.closeOnOutsideClick,
+      isSubmenu,
+    });
 
     if (this.#menu && changed.has('open') && !isSubmenu) {
       const { active: interactionOpen } = this.#menu.input.current;
@@ -169,6 +186,10 @@ export class MenuElement extends MediaElement {
 
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
+
+    if (!isSubmenu) {
+      this.#syncControlsVisibility();
+    }
 
     this.#navState = this.#menu.navigationInput.current;
     const input = this.#menu.input.current;
@@ -226,17 +247,22 @@ export class MenuElement extends MediaElement {
     const positionOptions = getRootPositionOptions(state.side, state.align);
     if (!positionOptions) return;
 
+    const boundaryElement = this.#getBoundaryElement();
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
+    const offsets = resolveOffsets(this);
+
     if (supportsAnchorPositioning()) {
-      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions));
+      applyStyles(
+        this,
+        getAnchorPositionStyle(this.id, positionOptions, triggerRect, undefined, boundaryRect, offsets)
+      );
     } else {
-      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
       const selfRect = getPopupPositionRect(this);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
-      const offsets = resolveOffsets(this);
       applyStyles(this, getAnchorPositionStyle(this.id, positionOptions, triggerRect, selfRect, boundaryRect, offsets));
     }
 
-    this.#position.sync(this.#currentTrigger);
+    this.#position.sync(this.#currentTrigger, boundaryElement);
   }
 
   #updateAsSubmenu(parentCtx: MenuContextValue): void {
@@ -265,23 +291,32 @@ export class MenuElement extends MediaElement {
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
+    const isNavigationKey = isMenuNavigationKey(event);
+    const defaultPreventedBeforeMenu = event.defaultPrevented;
+
     this.#menu?.contentProps.onKeyDown(event);
 
     const parentCtx = this.#parentCtx.value ?? null;
 
-    if (!parentCtx) return;
+    if (!parentCtx) {
+      if (event.key === 'Escape') return;
+      if (isNavigationKey) {
+        event.stopPropagation();
+      }
+      return;
+    }
 
     const stack = parentCtx.menu.navigationInput.current.stack;
     const topEntry = stack[stack.length - 1];
     const ownsActiveSubmenu = topEntry?.menuId === this.id;
     const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
-    if (isBackNavigationKey && ownsActiveSubmenu && !event.defaultPrevented) {
+    if (isBackNavigationKey && ownsActiveSubmenu && !defaultPreventedBeforeMenu) {
       event.preventDefault();
       parentCtx.menu.pop();
     }
 
-    if (isMenuNavigationKey(event) && (!isBackNavigationKey || ownsActiveSubmenu)) {
+    if (isNavigationKey && (!isBackNavigationKey || ownsActiveSubmenu)) {
       event.stopPropagation();
     }
   };
@@ -289,6 +324,14 @@ export class MenuElement extends MediaElement {
   #handleContentFocusOut = (event: UIFocusEvent): void => {
     this.#menu?.contentProps.onFocusOut(event);
   };
+
+  #syncControlsVisibility(): void {
+    const controlsCtx = this.#controlsCtx.value ?? null;
+
+    if (!controlsCtx) return;
+
+    this.#menu?.syncControlsVisible(controlsCtx.state.visible);
+  }
 
   #syncTrigger(triggerElement: HTMLElement | null): void {
     if (triggerElement === this.#currentTrigger) return;
@@ -317,5 +360,12 @@ export class MenuElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #getBoundaryElement(): Element | null {
+    return resolvePositioningBoundary(this.boundary, {
+      container: this.#containerCtx.value?.container ?? null,
+      root: this.getRootNode() as Document | ShadowRoot,
+    });
   }
 }

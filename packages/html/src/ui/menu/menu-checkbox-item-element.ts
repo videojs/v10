@@ -60,7 +60,7 @@ export class MenuCheckboxItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
-            if (!this.disabled) currentCtx?.menu.highlight(this);
+            if (!this.disabled) currentCtx?.menu.highlight(this, { focus: false });
           },
         },
         { signal: this.#disconnect.signal }

@@ -1,4 +1,10 @@
-import type { Media, MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import {
+  createPopupGroup,
+  type Media,
+  type MediaContainer,
+  type PlayerStore,
+  type PlayerTarget,
+} from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
@@ -38,6 +44,7 @@ export function createProviderMixin<Store extends PlayerStore>(
       #detach: (() => void) | null = null;
       #media: Media | null = null;
       #container: MediaContainer | null = null;
+      #popupGroup = createPopupGroup();
       #fallbackQueued = false;
 
       #setMedia = (media: Media | null): void => {
@@ -50,7 +57,11 @@ export function createProviderMixin<Store extends PlayerStore>(
       #setContainer = (container: MediaContainer | null): void => {
         if (this.#container === container) return;
         this.#container = container;
-        this.#containerProvider.setValue({ container, setContainer: this.#setContainer });
+        this.#containerProvider.setValue({
+          container,
+          setContainer: this.#setContainer,
+          popupGroup: this.#popupGroup,
+        });
         this.#tryAttach();
       };
 
@@ -66,7 +77,11 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #containerProvider = new ContextProvider(this, {
         context: config.containerContext,
-        initialValue: { container: this.#container, setContainer: this.#setContainer },
+        initialValue: {
+          container: this.#container,
+          setContainer: this.#setContainer,
+          popupGroup: this.#popupGroup,
+        },
       });
 
       get store(): Store {
@@ -81,7 +96,11 @@ export function createProviderMixin<Store extends PlayerStore>(
         super.connectedCallback();
         this.#playerProvider.setValue(this.store);
         this.#mediaProvider.setValue({ media: this.#media, setMedia: this.#setMedia });
-        this.#containerProvider.setValue({ container: this.#container, setContainer: this.#setContainer });
+        this.#containerProvider.setValue({
+          container: this.#container,
+          setContainer: this.#setContainer,
+          popupGroup: this.#popupGroup,
+        });
         this.#tryAttach();
         this.#queueFallbackDiscovery();
       }

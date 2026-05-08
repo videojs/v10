@@ -10,6 +10,7 @@
 @import "./components/button.css";
 @import "./components/button-group.css";
 @import "./components/icons.css";
+@import "./components/menus.css";
 @import "./components/poster.css";
 @import "./components/preview.css";
 @import "./components/slider.css";
@@ -51,7 +52,9 @@
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
   --media-tooltip-side-offset: 0.75rem;
+  --media-tooltip-boundary-offset: 0.5rem;
   --media-popover-side-offset: 0.5rem;
+  --media-popover-boundary-offset: 0.5rem;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
@@ -159,6 +162,8 @@
   bottom: 0.5rem;
   z-index: 10;
   flex-wrap: wrap;
+  max-width: 56rem;
+  margin-inline: auto;
   color: var(--media-color-primary, oklch(1 0 0));
   transform-origin: bottom;
   transition-timing-function: var(--media-controls-transition-timing-function);
@@ -177,7 +182,7 @@
   &:not([data-visible]) {
     pointer-events: none;
     opacity: 0;
-    scale: 0.9;
+    scale: 0.95;
 
     @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
       filter: blur(8px);

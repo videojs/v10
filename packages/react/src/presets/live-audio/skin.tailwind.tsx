@@ -14,10 +14,12 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { LiveAudioSkinProps } from './skin';
@@ -79,7 +81,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.popover, popup.volume)}>
         <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
@@ -117,7 +119,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <PlayButton className={iconState.play.button} render={<Button />}>
@@ -140,6 +142,16 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
     </Container>
   );
 }

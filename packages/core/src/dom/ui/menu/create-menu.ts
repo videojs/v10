@@ -4,6 +4,7 @@ import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningOptions } from '../popover/popover-positioning';
+import type { PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
@@ -33,11 +34,13 @@ export interface MenuOptions {
   closeOnOutsideClick: () => boolean;
   /** Called when the highlighted item changes. */
   onHighlightChange?: (element: HTMLElement | null) => void;
+  group?: () => PopupGroup | undefined;
 }
 
 export interface MenuTriggerProps {
   /** Called when the trigger is clicked. Uses the DOM `UIEvent` type to match the Popover API. */
   onClick: (event: UIEvent) => void;
+  onKeyDown: (event: UIKeyboardEvent) => void;
 }
 
 export interface MenuContentProps {
@@ -46,6 +49,7 @@ export interface MenuContentProps {
 }
 
 export interface MenuHighlightOptions {
+  focus?: boolean;
   preventScroll?: boolean;
 }
 
@@ -87,6 +91,7 @@ export interface MenuApi {
   readonly contentElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
+  syncControlsVisible: (visible: boolean) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
@@ -120,6 +125,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
   let openRafId = 0;
+  let lastCloseReason: MenuOpenChangeReason | null = null;
 
   const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
 
@@ -161,10 +167,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (element) {
       element.tabIndex = 0;
       element.setAttribute(MenuItemDataAttrs.highlighted, '');
-      if (highlightOptions?.preventScroll) {
-        element.focus({ preventScroll: true });
-      } else {
-        element.focus();
+      if (highlightOptions?.focus !== false) {
+        if (highlightOptions?.preventScroll) {
+          element.focus({ preventScroll: true });
+        } else {
+          element.focus();
+        }
       }
     }
 
@@ -184,6 +192,10 @@ export function createMenu(options: MenuOptions): MenuApi {
     highlight(items[0] ?? null, options);
   }
 
+  function getInitialHighlightItem(): HTMLElement | null {
+    return items.find((item) => item.matches('[aria-checked="true"], [aria-selected="true"]')) ?? items[0] ?? null;
+  }
+
   // --- Type-ahead ---
 
   function clearTypeahead(): void {
@@ -201,7 +213,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       // Guard against close() being called before the RAF fires — active
       // stays true during the closing animation, so also check status.
       if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;
-      highlightFirstItem();
+      highlight(getInitialHighlightItem());
     });
   }
 
@@ -232,10 +244,11 @@ export function createMenu(options: MenuOptions): MenuApi {
   const popover = createPopover({
     transition: options.transition,
     onOpenChange(open, details) {
+      lastCloseReason = open ? null : details.reason;
       options.onOpenChange(open, details);
 
       if (open) {
-        // Focus the first item after the popover element becomes visible.
+        // Focus the selected item after the popover element becomes visible.
         // One RAF ensures the element has been shown via the Popover API.
         scheduleInitialHighlight();
       } else {
@@ -249,10 +262,13 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
-      if (!open) triggerElement?.focus();
+      if (!open && lastCloseReason !== 'controls-hidden' && lastCloseReason !== 'group-open') {
+        triggerElement?.focus();
+      }
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
+    ...(options.group ? { group: options.group } : {}),
   });
 
   // --- Content keyboard navigation ---
@@ -261,6 +277,10 @@ export function createMenu(options: MenuOptions): MenuApi {
     onFocusOut: popover.popupProps.onFocusOut,
     onKeyDown(event) {
       const { key } = event;
+
+      if (key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
+        event.preventDefault();
+      }
 
       if (items.length === 0) return;
 
@@ -302,6 +322,17 @@ export function createMenu(options: MenuOptions): MenuApi {
       }
     },
   };
+
+  function handleTriggerKeyDown(event: UIKeyboardEvent): void {
+    const input = popover.input.current;
+
+    if (!input.active || input.status === 'ending') return;
+    if (event.key === 'Escape') return;
+    if (!isMenuNavigationKey(event)) return;
+
+    contentProps.onKeyDown(event);
+    event.stopPropagation();
+  }
 
   // --- Element setters ---
 
@@ -359,6 +390,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     // Hover and focus-based open are disabled (openOnHover not set).
     triggerProps: {
       onClick: popover.triggerProps.onClick,
+      onKeyDown: handleTriggerKeyDown,
     },
     contentProps,
     get triggerElement(): HTMLElement | null {
@@ -369,6 +401,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     },
     setTriggerElement,
     setContentElement,
+    syncControlsVisible: popover.syncControlsVisible,
     registerItem,
     highlight,
     highlightFirstItem,

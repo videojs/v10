@@ -108,11 +108,15 @@
 /* Playback rate button */
 .media-default-skin .media-button--playback-rate {
   padding: 0;
+  font-variant-numeric: tabular-nums;
 
   &::after {
     width: 4ch;
-    font-variant-numeric: tabular-nums;
     content: attr(data-rate) "\00D7";
+  }
+
+  &[data-inline-rate-label]::after {
+    content: none;
   }
 }
 

@@ -4,8 +4,17 @@ import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
+import type { PopupGroup } from './popup-group';
 
-export type PopoverOpenChangeReason = 'click' | 'hover' | 'focus' | 'escape' | 'outside-click' | 'blur';
+export type PopoverOpenChangeReason =
+  | 'click'
+  | 'hover'
+  | 'focus'
+  | 'escape'
+  | 'outside-click'
+  | 'blur'
+  | 'controls-hidden'
+  | 'group-open';
 
 export interface PopoverChangeDetails {
   reason: PopoverOpenChangeReason;
@@ -22,6 +31,7 @@ export interface PopoverOptions {
   openOnHover?: () => boolean;
   delay?: () => number;
   closeDelay?: () => number;
+  group?: () => PopupGroup | undefined;
 }
 
 export interface PopoverTriggerProps {
@@ -47,6 +57,7 @@ export interface PopoverApi {
   readonly triggerElement: HTMLElement | null;
   setTriggerElement: (el: HTMLElement | null) => void;
   setPopupElement: (el: HTMLElement | null) => void;
+  syncControlsVisible: (visible: boolean) => void;
   open: (reason?: PopoverOpenChangeReason) => void;
   close: (reason?: PopoverOpenChangeReason) => void;
   destroy: () => void;
@@ -73,6 +84,11 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   });
 
   const state = layer.input;
+  const groupMember = {
+    close(reason: 'group-open') {
+      applyClose(reason);
+    },
+  };
 
   // --- Hover management ---
 
@@ -118,6 +134,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     const opening = layer.open();
     if (!opening) return;
 
+    options.group?.()?.open(groupMember);
+
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
 
@@ -130,6 +148,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
     const closing = layer.close(popupEl);
     if (!closing) return;
+
+    options.group?.()?.close(groupMember);
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(false, details);
@@ -151,6 +171,13 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     applyClose(reason);
   }
 
+  function syncControlsVisible(visible: boolean): void {
+    if (visible) return;
+    if (!state.current.active || state.current.status === 'ending') return;
+
+    applyClose('controls-hidden');
+  }
+
   // --- Outside-click handler ---
 
   function handleDocumentPointerdown(event: PointerEvent): void {
@@ -168,6 +195,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
+    options.group?.()?.close(groupMember);
     clearHoverTimeout();
     capturedPointers.clear();
     triggerEl = null;
@@ -311,6 +339,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     },
     setTriggerElement,
     setPopupElement,
+    syncControlsVisible,
     open,
     close,
     destroy: layer.destroy,

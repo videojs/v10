@@ -1,4 +1,3 @@
-import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 import {
   bufferingIndicator,
   button,
@@ -11,7 +10,9 @@ import {
   iconFlipped,
   iconState,
   inputFeedback,
+  menu,
   overlay,
+  playbackRate,
   popup,
   poster,
   preview,
@@ -28,6 +29,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
@@ -51,16 +53,17 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
-import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
@@ -148,6 +151,23 @@ function VolumePopover(): ReactNode {
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>
+  );
+}
+
+function PlaybackRateMenuItems(): ReactNode {
+  const { options, setValue, value } = usePlaybackRateMenu();
+
+  return (
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
+            <CheckIcon className={icon} />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
   );
 }
 
@@ -262,10 +282,12 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           </div>
 
           <div className={buttonGroupEnd}>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
-            </Tooltip.Root>
+            <PlaybackRateMenu.Root side="top" align="center">
+              <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
+              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
+                <PlaybackRateMenuItems />
+              </PlaybackRateMenu.Content>
+            </PlaybackRateMenu.Root>
 
             <VolumePopover />
 

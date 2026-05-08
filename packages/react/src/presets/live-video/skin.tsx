@@ -33,7 +33,7 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
-import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';

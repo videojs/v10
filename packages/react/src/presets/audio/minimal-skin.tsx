@@ -1,6 +1,7 @@
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  CheckIcon,
   PauseIcon,
   PlayIcon,
   RestartIcon,
@@ -11,11 +12,14 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -51,7 +55,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className="media-popover media-popover--volume">
         <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
@@ -62,6 +66,23 @@ function VolumePopover(): ReactNode {
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>
+  );
+}
+
+function PlaybackRateMenuItems(): ReactNode {
+  const { options, setValue, value } = usePlaybackRateMenu();
+
+  return (
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+            <CheckIcon className="media-icon" />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
   );
 }
 
@@ -89,7 +110,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
       <div className="media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <PlayButton className="media-button--play" render={<Button />}>
@@ -102,7 +123,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
               <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
@@ -116,7 +137,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
               <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
@@ -148,17 +169,36 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
-              />
-              <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
-            </Tooltip.Root>
+            <PlaybackRateMenu.Root side="top" align="center" boundary="viewport">
+              <PlaybackRateMenu.Trigger className="media-button--playback-rate" render={<Button />} />
+              <PlaybackRateMenu.Content className="media-popover media-menu media-menu--playback-rate">
+                <PlaybackRateMenuItems />
+              </PlaybackRateMenu.Content>
+            </PlaybackRateMenu.Root>
 
             <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <Hotkey keys="l" action="seekStep" value={10} />
+      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
     </Container>
   );
 }
