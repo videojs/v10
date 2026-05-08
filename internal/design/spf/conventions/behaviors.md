@@ -133,6 +133,65 @@ What to do when you've confirmed the gap:
 
 The example is illustrative and may decay — read the code first when applying these sniffs to it.
 
+## Refactoring an existing behavior
+
+Refactoring a behavior is a different exercise from writing one fresh. The trap: starting from the code and working inward — "what does this do? what's wrong with it? how do I fix it?" — produces refactors that improve the code but miss the *purpose*. Skipping the purpose step is the canonical failure.
+
+Use this sequence:
+
+### 1. Articulate the purpose
+
+In one sentence: what is this behavior **for**? Not what it does — the goal of having it.
+
+If the file has a [top-level JSDoc](#file-level-jsdoc) articulating purpose, start there. If not, that's itself a finding (and a doc gap to fix as part of the refactor). If you can't state the purpose without reading the body in detail, the behavior's responsibility is unclear; that's a finding too.
+
+### 2. List the business rules
+
+Given the stated purpose, what are the implicit rules the behavior should satisfy?
+
+- What should it do on **initial load** (first time the relevant inputs are available)?
+- What should it do on **source unload / reset** (inputs become unavailable)?
+- What should it do on **internal updates** (inputs change but identity preserved)?
+- What should it do on **external writes** to the slots it owns?
+- Are there **per-type / per-variant** rules?
+- What's **out of scope** — what other behaviors should handle?
+
+### 3. Gap analysis
+
+Compare current code to those rules. Where does it fall short?
+
+- **Implicit gaps** — rules the purpose implies but the code doesn't enforce. (Most common; the load-bearing finding.)
+- **Explicit gaps** — flagged in the assessment, in TODOs, in code comments.
+- **Process gaps** — closure-mutable state, defense-in-depth without an articulated failure mode, fight-the-shape sniffs.
+
+### 4. Pattern selection
+
+Pick from the documented patterns:
+
+- Continuous reactivity → `effect()`.
+- Distinct states with per-state continuous behavior → [`createMachineReactor`](reactors.md) with `effects`.
+- One-shot work on state transitions → `createMachineReactor` with `entry`.
+- Stateful resource ownership with serial work → `createMachineActor` or `createTransitionActor`.
+- Source-driven async work needing cancellation → reactor with [source-identity states](reactors.md#source-identity-states-for-source-driven-work) + abort-on-state-exit.
+
+The [transition-driven vs state-driven distinction](reactors.md#transition-driven-vs-state-driven-work) is the most-commonly-missed one for behaviors with FSM shape — using `effects` for transition-driven work produces spurious re-runs.
+
+### 5. Convention checks
+
+Before writing the refactor, run through:
+
+- Setup-shape helper signature?
+- [Pure helpers extracted to `media/` or `network/`](#pure-helpers-dont-belong-in-behaviors)?
+- File placement (DOM-free vs DOM-bound)?
+- [Naming](#naming) (descriptive verb, no `*Behavior` suffix; helpers `setup*`, factories `make*`)?
+- [File-level JSDoc](#file-level-jsdoc) articulating purpose?
+
+### 6. Decomposition check
+
+Having stated the purpose: **should this behavior still exist as-is?**
+
+If the purpose overlaps with another behavior's purpose — both writing the same slot, both reacting to the same source-identity transitions — the multi-writer arrangement may be a symptom of a single purpose split across two behaviors. Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape.
+
 ## Source-reset handling (playback-engine behaviors)
 
 Behaviors composed into a playback engine almost always have an implicit dependency on a current source — typically `state.presentation`. Source reset (URL change, presentation cleared, behavior destroyed mid-stream) is a first-class concern: every playback-engine behavior should be designed with explicit semantics for it.
@@ -331,6 +390,20 @@ This is the inverse of the smell already documented in [`packages/spf/src/CLAUDE
 Rule of thumb when reviewing a behavior file: scan the top-level helpers. If any are pure data-manipulation / lookup / format-handling code with no reactive concerns, they should move out.
 
 Concrete instance: `findTrack` and `updateTrackInPresentation` lived in `resolve-track.ts` until commit `a9ef69ba`; both operate purely on HAM-shaped types from `media/types` and were extracted to `media/utils/tracks.ts`.
+
+### File-level JSDoc
+
+Every behavior file should open with a top-level JSDoc / module comment articulating the behavior's *purpose* — what the module is for, not what it does. Example:
+
+```ts
+/**
+ * **Default track selection on src load.** When a presentation is resolved,
+ * sets `selectedTrackId` to a per-type-picker default if no selection
+ * already exists. Unselects on src unload.
+ */
+```
+
+Per-export JSDoc (already conventional) describes individual exports; the file-level comment names the *module's* purpose so reviewers and refactors can evaluate against it. The first step of [Refactoring an existing behavior](#refactoring-an-existing-behavior) starts here — if the file-level purpose is missing or misaligned with the body, that's a finding before any code change.
 
 ## Naming
 
