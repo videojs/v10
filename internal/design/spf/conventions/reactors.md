@@ -89,6 +89,35 @@ The double-arrow form is the minimal case where there's no setup work — just t
 
 `entry`'s cleanup runs *only on state exit*. This is distinct from `effects` cleanups, which run *between effect re-runs* (within the state) *and* on state exit. For exit-only behavior, use `entry`. For per-effect-re-run cleanup (e.g., re-attaching a listener as a signal changes), use the cleanup return from `effects`.
 
+### Bind cleanup to its setup, not to the next state's entry
+
+When state X's entry "does Y" and the inverse "undoes Y" should fire on state exit, **return the cleanup from X's entry**. Don't define the undo as the *next* state's entry. The latter form is *almost* mechanically equivalent but has two real downsides:
+
+- **Cohesion**: a reader has to look at two states to understand a single logical operation. The setup is in one entry; the teardown is in another state's entry. Operations and their cleanups belong together.
+- **Destroy correctness**: a reactor's destroy transitions `current → 'destroying' → 'destroyed'` *without* passing through arbitrary intermediate states. If state X's cleanup is expressed as state Y's entry, destroying mid-X never enters Y, so the cleanup is missed. The entry-returns-cleanup form fires on *any exit from X*, including via destroy.
+
+Concrete example: `select-tracks` enters `'resolved'` to pick a default and clears the selection on exit. Both belong in `'resolved'.entry`:
+
+```ts
+states: {
+  unresolved: {},
+  resolved: {
+    entry: () => {
+      // setup: pick default if not already selected
+      if (!state[selectedKey].get()) {
+        const id = picker(state.presentation.get());
+        if (id) state[selectedKey].set(id);
+      }
+      // cleanup: runs on src unload (resolved → unresolved) and on
+      // behavior destroy (resolved → destroying → destroyed)
+      return () => state[selectedKey].set(undefined);
+    },
+  },
+},
+```
+
+Splitting the clear into `unresolved.entry` would work for the src-unload path but silently miss the destroy path.
+
 ## Source-identity states for source-driven work
 
 Pattern for behaviors that schedule async work tied to an external source. The canonical playback case is `state.presentation`:
@@ -141,4 +170,5 @@ When *not* to use `peek` inside an effect: when you need the effect to re-run as
 - **Hand-rolled FSM via `computed` flags + nested effects** when `createMachineReactor` was the answer. (See `behaviors.md` fight-the-shape sniffs.)
 - **Tracking a source signal again inside per-state effects** when the reactor's `monitor` already tracks it. Use `peek` for non-state reads inside the state.
 - **Putting state-exit cleanup in an `effects` callback's return** instead of `entry`'s return. `effects` cleanups run between effect re-runs *and* on state exit. If you want exit-only behavior, put it in `entry`.
+- **Putting an operation's cleanup in a different state's `entry`** instead of returning it from the operation's own `entry`. Mechanically *almost* equivalent for normal transitions, but fragments the operation across two states (cohesion loss) and silently misses the destroy path (destroy goes `current → 'destroying' → 'destroyed'` without passing through arbitrary intermediate states). See [Bind cleanup to its setup](#bind-cleanup-to-its-setup-not-to-the-next-states-entry).
 - **State-scoped closure mutable state** (`let lastFoo`) instead of expressing the state in the state machine. The reactor *is* the state — adding parallel mutable closure state is double-bookkeeping.

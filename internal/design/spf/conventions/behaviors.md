@@ -170,7 +170,7 @@ Pick from the documented patterns:
 
 - Continuous reactivity → `effect()`.
 - Distinct states with per-state continuous behavior → [`createMachineReactor`](reactors.md) with `effects`.
-- One-shot work on state transitions → `createMachineReactor` with `entry`.
+- One-shot work on state transitions → `createMachineReactor` with `entry`. If the work has a cleanup that should fire on state exit, return it from the same `entry` rather than expressing it as the next state's `entry` — the entry-returns-cleanup form covers the destroy path that the next-state's-entry form silently misses. See [`reactors.md` → Bind cleanup to its setup](reactors.md#bind-cleanup-to-its-setup-not-to-the-next-states-entry).
 - Stateful resource ownership with serial work → `createMachineActor` or `createTransitionActor`.
 - Source-driven async work needing cancellation → reactor with [source-identity states](reactors.md#source-identity-states-for-source-driven-work) + abort-on-state-exit.
 
