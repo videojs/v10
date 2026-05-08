@@ -41,6 +41,28 @@ Why a separate `deriveState` + `derivedStateSignal`:
 
 When the derivation is trivial (one or two terms), inline it in `monitor` directly. The recurring shape is a separate function once it has more than the two-state-from-one-predicate case.
 
+## Transition-driven vs state-driven work
+
+Per-state behavior comes in two shapes; choosing between them is a primary design decision when structuring a Reactor:
+
+- **Transition-driven** (`entry`) — work that fires *once* when the state is entered, with an optional cleanup that fires once on state exit. The body runs untracked; signal changes inside the state don't re-fire the entry. Use when the work is "do X at the moment of becoming this state."
+- **State-driven** (`effects`) — work that fires on state entry *and* re-runs whenever signals read inside it change. Each `effects` array entry becomes its own `effect()` gated on the active state. Use when the work is "while we're in this state, react to inner signal changes."
+
+Concrete examples:
+
+| Work | Transition or state? | Where to put it |
+| ---- | -------------------- | --------------- |
+| Pick a default selection on entering 'resolved' | **Transition** | `entry` — fires once per entry; doesn't re-fire as other slots change. |
+| Clear stale selection on entering 'unresolved' | **Transition** | `entry` |
+| Schedule a fetch task that updates as `selectedTrackId` changes | **State** | `effects` — re-runs when the tracked id changes. |
+| Subscribe to DOM events while in 'playing' | **Transition** | `entry` — register on entry, return unsubscribe; cleanup on exit. |
+| Re-derive a "should buffer" decision from `currentTime` | **State** | `effects` — re-runs as currentTime ticks. |
+| Abort in-flight async work on leaving the active state | **Transition** (cleanup) | `entry: () => () => abort()` |
+
+The most common mistake is using `effects` for transition-driven work. The body looks the same in both cases — a function that does some work — but `effects` will re-fire on every signal change inside, producing spurious re-runs. If you find yourself adding `if (alreadyDoneThisOnce) return` guards inside an `effects` body, that's a sniff that the work is transition-driven and belongs in `entry`.
+
+The dual mistake — using `entry` for state-driven work — is rarer because entry's untracked body fails fast: the work just doesn't react to signal changes, and the omission is usually obvious in testing.
+
 ## The entry-returns-state-exit-cleanup idiom
 
 `entry: () => () => cleanup()` looks opaque. It's:
