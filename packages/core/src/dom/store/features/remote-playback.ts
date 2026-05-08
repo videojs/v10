@@ -34,6 +34,14 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     const syncState = () => set({ remotePlaybackState: media.remote.state as RemotePlaybackConnectionState });
 
+    // `webkitplaybacktargetavailabilitychanged` is a non-standard Safari event
+    // not present in lib.dom — type its `availability` field locally.
+    const webkitSyncState = (event: Event) => {
+      const { availability } = event as Event & { availability: 'available' | 'not-available' };
+      set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
+    };
+    listen(media, 'webkitplaybacktargetavailabilitychanged', webkitSyncState, { signal });
+
     syncState();
 
     listen(media.remote, 'connect', syncState, { signal });
