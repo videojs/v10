@@ -90,13 +90,12 @@ Three categories:
   `effect()` inside reactor `entry` (per reactors.md), helpers with
   conditional branches around optional state-scoped work.
 
-**If this refactor is a merge of two behaviors, run gap analysis on
-each source behavior independently first.** Each side gets its own
-purpose, business rules, and gap analysis as a standalone refactor.
-Skipping per-side gap analysis means the merge produces a relocated
-mess instead of a refactored one — the inputs' anti-patterns survive
-into the merged form. See `behaviors.md` "Merging two behaviors —
-extra discipline."
+**If this refactor is a merge of two behaviors, stop and use
+`/merge-behaviors` instead.** A merge is two analyses combined, not
+one — the per-side cleaned-shape sketch + complexity-driven direction
+declaration that merges need don't fit cleanly inside the
+single-behavior workflow. See `behaviors.md` "Merging two behaviors —
+extra discipline" and `.claude/skills/merge-behaviors/SKILL.md`.
 
 ### Step 4 — Pattern selection
 
@@ -163,13 +162,11 @@ proposal lands so the simpler shape is what's evaluated. The merge
 often slots cleanly into the larger refactor of the *other* writer
 rather than landing as a standalone change.
 
-**If merge is the answer**: identify which source behavior has more
-architectural requirements (more states, more lifecycle phases, more
-failure modes, more configuration). Build the merged shape from that
-side; the simpler input fits as a special case within it. Building
-the other direction (extending the simpler shape outward) tends to
-produce conditional branches and afterthought integrations. Per
-`behaviors.md` "Merging two behaviors — extra discipline."
+**If merge is the answer**: don't perform the merge inline. Recommend
+`/merge-behaviors` as the follow-up — it operationalizes the per-side
+cleaned-shape sketch + complexity-inventory + direction-declaration
+discipline that merges need. Per `behaviors.md` "Merging two behaviors
+— extra discipline."
 
 ## Output format
 

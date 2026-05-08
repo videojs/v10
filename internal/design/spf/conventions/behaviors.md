@@ -145,6 +145,16 @@ In one sentence: what is this behavior **for**? Not what it does — the goal of
 
 If the file has a [top-level JSDoc](#file-level-jsdoc) articulating purpose, start there. If not, that's itself a finding (and a doc gap to fix as part of the refactor). If you can't state the purpose without reading the body in detail, the behavior's responsibility is unclear; that's a finding too.
 
+**Purpose-statement verb diagnostic.** The verbs and timing markers in the purpose statement already foreshadow where the behavior lives in a reactor — and how much architectural weight it carries:
+
+| Verb shape | Reactor location | Complexity weight |
+| --- | --- | --- |
+| "pick X on Y", "clear X on Z", "set X when W" | `entry` + cleanup | Light |
+| "continuously adjust X based on Y", "track Y", "sync X to Y" | `effects:` | Heavy (state-driven) |
+| "adjust X based on Y, gated by Z, resetting on W" | `effects:` + `entry` reset + state-exit cancel | Heaviest |
+
+This matters for single refactors (a "continuously … gated by … resetting on …" purpose tells you you're in `createMachineReactor` territory before you read the body) and is load-bearing for [merges](#merging-two-behaviors--extra-discipline) where the heavier verb shape identifies the constrained side.
+
 ### 2. List the business rules
 
 Given the stated purpose, what are the implicit rules the behavior should satisfy?
@@ -199,16 +209,53 @@ If the purpose overlaps with another behavior's purpose — both writing the sam
 
 Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape. The decomposition merge often slots cleanly into the larger refactor of the *other* writer — e.g., `selectVideoTrack` would naturally merge into a refactored `quality-switching` rather than land as a standalone change.
 
+### Cleaned-shape sketch
+
+When projecting what a behavior should look like post-refactor — especially across two sides for [merge analysis](#merging-two-behaviors--extra-discipline) — use this structured format. The template makes shapes directly comparable and forces explicit answers to questions the unstructured "Proposed changes" prose tends to skim:
+
+```text
+- States:                            [list, or 'n/a' for non-FSM]
+- entry work:                        [what runs once on state entry]
+- effects: (continuous reactivity):  ['none' if not state-driven]
+- State-exit cleanup:                [what runs on state exit / behavior destroy]
+- Source-reset concerns:             ['none' or describe the reset contract]
+- Private temporal state:            ['none' or describe what + where it lives]
+```
+
+For single-behavior refactors the sketch is optional — "Proposed changes" prose usually carries the same content. For merges the sketch is **required for both sides** so the [complexity inventory](#complexity-inventory-which-side-is-more-constrained) and merge direction have a comparable artifact to operate on.
+
+A sketch is not a refactor commitment. If a side already conforms to current conventions, sketch from its current code; only project a cleaned shape when the side's gap analysis turned up real issues.
+
 ### Merging two behaviors — extra discipline
 
-When the decomposition check says merge, the refactor is **two separate exercises combined**, not one:
+> This section is the canonical reference for the merge workflow. The [`merge-behaviors`](../../../.claude/skills/merge-behaviors/SKILL.md) skill operationalizes it; either reach for that skill or follow the steps below directly.
 
-1. **Refactor each input behavior independently** — apply Steps 1–5 (purpose, business rules, gap analysis, pattern selection, convention checks) to each *as a standalone behavior*, even though they're going away. The output of each is a "what should this body look like cleaned up" sketch.
-2. **Combine the cleaned shapes** — describe how the two cleaned bodies fit together as one behavior, with the merged purpose driving the structure.
+When the decomposition check says merge, the refactor is **two separate analyses combined**, not one:
 
-Skipping (1) and going straight to "combine the existing bodies" produces a relocated mess: each side's anti-patterns survive into the merged form (closure-state, fight-the-shape sniffs, defense-in-depth that has lost its rationale, etc.). Merge is not relocation.
+1. **Per-side standalone analysis.** For each side, run Steps 1–4 of the refactoring sequence (purpose, business rules, gap analysis, pattern selection) *as if it were a standalone refactor*. Produce a [cleaned-shape sketch](#cleaned-shape-sketch) per side in the structured format. **A side that already conforms to current conventions doesn't need refactoring** — sketch from its current code. Only project a cleaned shape when the gap analysis finds real issues; don't steer toward refactors that aren't warranted.
+2. **Identify the constrained side** via the [complexity inventory](#complexity-inventory-which-side-is-more-constrained).
+3. **Declare merge direction explicitly.** "Building from \<constrained side\>'s reactor; folding \<simpler side\> into \<where\>." Pause for user confirmation before combining — direction is the load-bearing call and the natural place for human judgment to override the inventory.
+4. **Combine.** The constrained side's reactor is the host; the simpler side's `entry`/cleanup folds into the host's `entry`/cleanup; the constrained side's `effects:` ride along.
 
-**Build from the more constrained side.** Identify which input behavior has more architectural requirements — more states, more lifecycle phases, more failure modes, more configuration. Use *that* as the starting structure for the merged shape; the simpler input fits as a special case (often a no-op or default) within the more constrained shape. Building the other direction (extending the simpler shape outward to host the complex case) tends to produce conditional branches and afterthought integrations.
+Skipping per-side analysis and going straight to "combine the existing bodies" produces a relocated mess: each side's anti-patterns survive into the merged form (closure-state, fight-the-shape sniffs, defense-in-depth that has lost its rationale, etc.). **Merge is not relocation.**
+
+#### Complexity inventory: which side is more constrained?
+
+Count "yes" answers per side. The side with more is the constrained one — build the merged shape from there. Bias toward "yes": under-counting an item that's there is the failure mode (the simpler-side declaration arrives a sentence later either way; the inverse mistake leads you to extend the simpler shape outward, which produces conditional branches and afterthought integrations).
+
+| Inventory item | Yes if … |
+| --- | --- |
+| Multiple states / sub-states | the cleaned shape needs more than a single `resolved`/`unresolved` split |
+| `effects:` needed (continuous reactivity) | work has to re-fire on signal changes within a state |
+| Source-reset semantics | per-source state must reset on URL change / behavior destroy |
+| Per-source temporal state | timers, gates, accumulators, "last X at" comparisons |
+| Conditional / gating logic on the writes | downgrade-immediate / upgrade-gated / threshold-based decisions |
+| Hand-rolled FSM-shape sniffs in the current code | latent architectural weight even if expressed as a flat effect today |
+| Defense-in-depth or short-circuit guards beyond input validation | implies a failure mode worth explicit state-machine expression |
+
+**Common failure mode**: anchoring on the current *merged-helper parameter count* rather than the *cleaned standalone shape*. The merged helper's parameters reflect every input from both sides; the per-side cleaned-shape sketch is what shows architectural weight. The complexity inventory operates on the sketches, not on the merged file.
+
+**Build from the more constrained side.** Use the constrained side's cleaned shape as the starting structure for the merged shape; the simpler input fits as a special case (often a no-op or default) within it. Building the other direction (extending the simpler shape outward to host the complex case) tends to produce conditional branches and afterthought integrations — the leaky-abstraction sniff in [`reactors.md`](reactors.md).
 
 ## Source-reset handling (playback-engine behaviors)
 
