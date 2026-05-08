@@ -40,6 +40,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [docs](docs/SKILL.md)                   | Write Video.js 10 documentation (concepts, how-to, READMEs)    | Yes         |
 | [gh-issue](gh-issue/SKILL.md)           | Analyze GitHub issues and create implementation plans                  | No          |
 | [git](git/SKILL.md)                     | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
+| [refactor-behavior](refactor-behavior/SKILL.md) | Refactor an SPF behavior using purpose-first discipline       | No          |
 | [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
 | [rfc](rfc/SKILL.md)                     | Write RFCs — proposals needing buy-in (public API, product, DX)        | No          |
 
