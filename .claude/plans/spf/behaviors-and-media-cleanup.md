@@ -35,12 +35,6 @@ Out of bounds (own branches if they come up):
 
 _(populated as evaluations land)_
 
-## Pending
-
-### `select-tracks` ↔ `quality-switching` merge — redo
-
-The merge that landed in `31732fc4` is a working but convention-violating fold of the former `quality-switching` body into `selectVideoTrack` (effect-in-entry, helper carrying an `abr?` conditional). The redo should use [`/merge-behaviors`](../../skills/merge-behaviors/SKILL.md) with pre-merge inputs from commit `b7866e6a`'s tree. The skill operationalizes the per-side cleaned-shape sketch + complexity-inventory direction declaration that this merge needed and didn't get.
-
 ## Decisions
 
 ### `setupTrackResolution` reshaped to behavior-setup signature
