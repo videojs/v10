@@ -125,9 +125,23 @@ Having stated the purpose: **should this behavior still exist as-is?**
 If the purpose overlaps with another behavior's purpose (both writing
 the same slot, both reacting to the same source-identity transitions),
 the multi-writer arrangement may be a symptom of a single purpose split
-across two behaviors. Note this as a follow-up question; do not act on
-it in the same refactor — make the merge/split decision *after* the
-refactor proposal lands so the simpler shape is what's evaluated.
+across two behaviors.
+
+**Diagnostic — do the writers share a decision-making domain?**
+
+- **Same domain** (same inputs, same options) → likely split-symptom;
+  consider merging. Example: a default-on-load behavior and an
+  ongoing-adjustment behavior both writing the same selection slot
+  based on the same inputs are aspects of one concern.
+- **Different domains** (config vs DOM, intent vs derived default,
+  programmatic vs network-event-driven) → legitimate multi-writer;
+  keep separate.
+
+Note the decomposition as a follow-up question; do not act on it in the
+same refactor — make the merge/split decision *after* the refactor
+proposal lands so the simpler shape is what's evaluated. The merge
+often slots cleanly into the larger refactor of the *other* writer
+rather than landing as a standalone change.
 
 ## Output format
 

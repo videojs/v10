@@ -49,6 +49,8 @@ The general guidance is **0-or-1 writer behaviors per slot**, but multi-writer s
 
 If a slot has more than one writer and **doesn't** fit one of these shapes, that's a smell — it likely wants decomposition into separate slots with a derived signal computing the resolved value.
 
+**When the multi-writer is a behavior-decomposition smell** rather than a slot-decomposition smell: the writers share a decision-making domain (same inputs, same options) rather than reflecting genuinely different inputs. That's a signal of one purpose split across two behaviors, not one slot that needs splitting. See [`behaviors.md` → Decomposition check](behaviors.md#6-decomposition-check) for the diagnostic.
+
 A custom linter rule that warns on multi-writer slots with a `// writer-audit-allow: <reason>` ignore mechanism is a planned follow-up. Until it lands, the writer audit in `.claude/plans/spf/discrete-signals-and-behavior-objects.md` documents the legitimate cases.
 
 ## Seeding 0-writer slots: `initialState` / `initialContext`

@@ -190,7 +190,14 @@ Before writing the refactor, run through:
 
 Having stated the purpose: **should this behavior still exist as-is?**
 
-If the purpose overlaps with another behavior's purpose — both writing the same slot, both reacting to the same source-identity transitions — the multi-writer arrangement may be a symptom of a single purpose split across two behaviors. Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape.
+If the purpose overlaps with another behavior's purpose — both writing the same slot, both reacting to the same source-identity transitions — the multi-writer arrangement may be a symptom of a single purpose split across two behaviors.
+
+**Diagnostic — do the writers share a decision-making domain?**
+
+- **Same domain → likely split-symptom; consider merging.** Multiple writers that read the *same inputs* and choose among the *same options* are aspects of one concern. Example: `selectVideoTrack` (default on load) and `quality-switching` (ABR over bandwidth) both decide what to write to `selectedVideoTrackId` based on presentation + bandwidth + config. They're two aspects of one "manage video track selection" concern; merging dissolves the multi-writer arrangement.
+- **Different domains → legitimate multi-writer; keep separate.** Writers that reflect *genuinely different inputs* (config-driven default vs DOM-driven user action; intent vs derived default; programmatic vs network-event-driven) belong in separate behaviors. Example: `selectTextTrack` (config-driven default) and `sync-text-tracks` (DOM `change`-event-driven) both write `selectedTextTrackId` but reflect different sources of truth.
+
+Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape. The decomposition merge often slots cleanly into the larger refactor of the *other* writer — e.g., `selectVideoTrack` would naturally merge into a refactored `quality-switching` rather than land as a standalone change.
 
 ## Source-reset handling (playback-engine behaviors)
 
