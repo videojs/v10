@@ -18,6 +18,21 @@ The native `<video>` tag is great if you can describe your video as an image wit
 
 **Default video controls.** Chrome, Safari, and Firefox each render the default `<video>` controls differently, and the captions UI varies just as much. You can hide them, but you can't deeply style or rearrange them. Building UI that matches your product means starting from scratch.
 
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0;">
+  <figure style="margin: 0;">
+    <img src="/docs/concepts/why-videojs/chrome-default-controls.png" alt="Chrome's default video controls" style="width: 100%; height: auto;" />
+    <figcaption style="margin-top: 0.5rem; text-align: center;">Chrome</figcaption>
+  </figure>
+  <figure style="margin: 0;">
+    <img src="/docs/concepts/why-videojs/safari-default-controls.png" alt="Safari's default video controls" style="width: 100%; height: auto;" />
+    <figcaption style="margin-top: 0.5rem; text-align: center;">Safari</figcaption>
+  </figure>
+  <figure style="margin: 0;">
+    <img src="/docs/concepts/why-videojs/firefox-default-controls.png" alt="Firefox's default video controls" style="width: 100%; height: auto;" />
+    <figcaption style="margin-top: 0.5rem; text-align: center;">Firefox</figcaption>
+  </figure>
+</div>
+
 **Video hosting service support.** YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
 
 ## Why Video.js?
