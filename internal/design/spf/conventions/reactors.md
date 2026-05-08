@@ -118,6 +118,44 @@ states: {
 
 Splitting the clear into `unresolved.entry` would work for the src-unload path but silently miss the destroy path.
 
+### Cleanup as state-machine invariant — when the canonical rule has an exception
+
+The "bind cleanup to its setup" rule above assumes a 1:1 setup-cleanup relationship: one state owns the operation, that state's entry returns its inverse, and the cleanup binds to *that operation's* exit.
+
+It breaks down when the slot's **valid lifespan covers multiple FSM states**. If states X and Y both represent "the slot has a meaningful value" (and only state Z represents "empty"), then there's no single state to bind the clear to: putting it on `X.entry`'s return fires (incorrectly) on every `X → Y` transition and vice versa.
+
+In that case, the clear isn't the cleanup of a specific setup — it's the **invariant of the empty state**. Encode it as `Z.entry` directly:
+
+```ts
+states: {
+  emptySlotState: {
+    entry: () => state.theSlot.set(undefined),  // state invariant
+  },
+  validStateA: { entry: () => { /* setup if needed */ } },
+  validStateB: { entry: () => { /* setup if needed */ }, effects: [/* ... */] },
+}
+```
+
+This is *almost* the "splitting the clear into `unresolved.entry`" form the canonical rule warns against — but the framing is different. The canonical warning targets cases where one state owns a setup and the inverse logically pairs with it; the inverse should travel with the setup. Here, no single non-empty state owns the slot's setup — both valid states share custodianship of the slot's "valid" invariant — so there's no setup-cleanup pair to keep cohesive in the first place. The clear is the empty state's job, not a setup's cleanup.
+
+**Trade-offs accepted under this pattern**:
+
+- **Destroy doesn't clear**. Destroy goes `current → 'destroying' → 'destroyed'`, bypassing `emptySlotState`. The slot retains its last value post-destroy. Acceptable when (a) downstream consumers don't depend on post-destroy clear (typical — composition teardown releases the signals anyway), or (b) the slot's last value is meaningful enough that retaining it post-destroy is fine or preferable.
+- **Initial-entry clear is unconditional**. If `emptySlotState` is the initial state, the clear fires on setup. Pre-seeded values get clobbered. Usually fine — for a slot whose value refers to something inside a not-yet-resolved structure, the pre-seeded value can't be valid anyway.
+- **Cohesion split**. Set in valid-state entries, clear in empty-state entry. Worth a code comment explaining the slot-invariant framing so the next reader doesn't "fix" it back to the canonical form.
+
+**When to reach for this carve-out**:
+
+1. The slot's lifecycle is the structural concern of the FSM (not just an incidental side effect of one state's work).
+2. The FSM has multiple non-empty states that share the slot's "valid" invariant — at least two states where the slot may be set.
+3. Destroy-clear is acceptably moot for this slot.
+
+If your FSM can be reshaped so the slot's valid lifespan is one state, the canonical "bind cleanup to its setup" form is preferred. Reach for this carve-out only when the multi-state slot lifespan is structurally unavoidable.
+
+**Worked example**: `quality-switching.ts` (after the `selectVideoTrack` merge). The behavior owns `selectedVideoTrackId`; the slot is meaningful in both `'disabled'` (manual selection in play) and `'evaluating'` (ABR active). Clearing on `'evaluating'.entry`'s return would clobber the selection on every `abrDisabled` toggle. The canonical rule cannot apply cleanly. The clear lives in `'preconditions-unmet'.entry` as the empty state's invariant.
+
+A future refactor (separating manual selection from ABR selection via a `manualVideoTrackId` / `abrVideoTrackId` split) would collapse the FSM back to two states (`'preconditions-unmet'` ↔ `'evaluating'`), restoring the canonical cleanup-binds-to-setup pattern. The carve-out is the right answer for the *current* shape, not a permanent preference.
+
 ## Source-identity states for source-driven work
 
 Pattern for behaviors that schedule async work tied to an external source. The canonical playback case is `state.presentation`:
