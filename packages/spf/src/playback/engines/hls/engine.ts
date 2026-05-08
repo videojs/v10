@@ -25,7 +25,7 @@ import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
+import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
@@ -154,8 +154,9 @@ export function createSimpleHlsEngine(
       trackPlaybackInitiated,
       resolvePresentation,
 
-      // Track selection (reads config for initial preferences)
-      selectVideoTrack,
+      // Track selection (reads config for initial preferences).
+      // Video selection lives in switchVideoQuality, which owns the
+      // default-pick + ABR-driven adjustment for selectedVideoTrackId.
       selectAudioTrack,
       selectTextTrack,
 

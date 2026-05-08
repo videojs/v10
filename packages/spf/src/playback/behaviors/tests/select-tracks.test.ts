@@ -11,7 +11,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
+import { selectAudioTrack, selectTextTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -80,149 +80,8 @@ function createPresentation(config: {
   };
 }
 
-describe('selectVideoTrack', () => {
-  it('selects video track when presentation loaded', async () => {
-    const videoTracks: PartiallyResolvedVideoTrack[] = [
-      {
-        type: 'video',
-        id: 'video-360p',
-        url: 'http://example.com/360p.m3u8',
-        bandwidth: 500_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-    ];
-
-    const presentation = createPresentation({ video: videoTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectVideoTrack.setup({ state });
-
-    // Wait for selection
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBe('video-360p');
-
-    reactor.destroy();
-  });
-
-  it('does not select when video track already selected', async () => {
-    const presentation = createPresentation({ video: [] });
-    const state = makeState({ presentation, selectedVideoTrackId: 'existing-video' });
-
-    const reactor = selectVideoTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBe('existing-video');
-
-    reactor.destroy();
-  });
-
-  it('clears selection when presentation transitions to undefined (src unload)', async () => {
-    const videoTracks: PartiallyResolvedVideoTrack[] = [
-      {
-        type: 'video',
-        id: 'video-A',
-        url: 'http://example.com/A.m3u8',
-        bandwidth: 500_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-    ];
-
-    const presentation = createPresentation({ video: videoTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectVideoTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedVideoTrackId.get()).toBe('video-A');
-
-    state.presentation.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
-
-    reactor.destroy();
-  });
-
-  it('re-picks default after src reset (presentation undefined → new resolved)', async () => {
-    const videoTracksA: PartiallyResolvedVideoTrack[] = [
-      {
-        type: 'video',
-        id: 'video-A',
-        url: 'http://example.com/A.m3u8',
-        bandwidth: 500_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-    ];
-
-    const videoTracksB: PartiallyResolvedVideoTrack[] = [
-      {
-        type: 'video',
-        id: 'video-B',
-        url: 'http://example.com/B.m3u8',
-        bandwidth: 500_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-    ];
-
-    const presentationA = createPresentation({ video: videoTracksA });
-    const state = makeState({ presentation: presentationA });
-
-    const reactor = selectVideoTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedVideoTrackId.get()).toBe('video-A');
-
-    state.presentation.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
-
-    const presentationB = { ...createPresentation({ video: videoTracksB }), id: 'pres-2' };
-    state.presentation.set(presentationB);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBe('video-B');
-
-    reactor.destroy();
-  });
-
-  it.skip('uses bandwidth configuration for initial selection', async () => {
-    const videoTracks: PartiallyResolvedVideoTrack[] = [
-      {
-        type: 'video',
-        id: 'video-360p',
-        url: 'http://example.com/360p.m3u8',
-        bandwidth: 500_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-      {
-        type: 'video',
-        id: 'video-720p',
-        url: 'http://example.com/720p.m3u8',
-        bandwidth: 2_000_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-    ];
-
-    const presentation = createPresentation({ video: videoTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectVideoTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBe('video-720p');
-
-    reactor.destroy();
-  });
-});
+// Video track selection lives in switchVideoQuality (see
+// `quality-switching.test.ts`). This file covers audio + text only.
 
 describe('selectAudioTrack', () => {
   it('selects audio track when presentation loaded', async () => {

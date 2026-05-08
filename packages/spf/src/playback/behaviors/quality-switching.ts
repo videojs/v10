@@ -1,18 +1,28 @@
 /**
- * **Dynamic quality selection from media metrics.** While a presentation has
- * been (partially) resolved and ABR is enabled, observe the relevant media
- * metric and write the optimal track id to the type's selection slot — today
- * driven by throughput estimates via `selectQuality`. The metric inputs and
- * per-type selection algorithms are expected to evolve (audio-bitrate ABR is
- * the immediate next axis).
+ * **Manage the per-type ABR-eligible track selection slot.** While a
+ * presentation is resolved, owns the slot's lifecycle: pick a default on src
+ * load, dynamically adjust based on media metrics (today: bandwidth via
+ * `selectQuality`), clear on src unload. Yields control to external writers
+ * when ABR is disabled.
  *
- * Lifecycle: `'idle'` (no presentation, no tracks of this type, or `abrDisabled`)
- * ↔ `'evaluating'` (all inputs available + ABR enabled). Source-reset is
- * structural — re-entering `'evaluating'` starts fresh.
+ * Lifecycle (3 states):
+ * - `'preconditions-unmet'` — no resolved presentation. Slot is cleared on
+ *   entry as a state invariant.
+ * - `'disabled'` — presentation resolved, `abrDisabled` is true. Default-pick
+ *   fires on entry if no selection; ABR effect doesn't run. Slot is
+ *   relinquished to external writers (e.g., user-driven manual quality).
+ * - `'evaluating'` — presentation resolved, ABR enabled. Default-pick fires
+ *   on entry if no selection; ABR effect re-fires on bandwidth changes.
  *
  * Hysteresis: downgrades apply immediately; upgrades require the optimal
  * track's bandwidth to exceed the current track's by `upgradeMargin`. No
  * temporal state — short-term smoothing is the bandwidth estimator's job.
+ *
+ * @see internal/design/spf/conventions/reactors.md "Cleanup as state-
+ *      machine invariant" — explains why the clear is encoded as
+ *      `'preconditions-unmet'.entry` rather than as the cleanup-binds-to-
+ *      setup return from `'evaluating'.entry`. Driven by the slot's valid
+ *      lifespan spanning two FSM states (`'disabled'` and `'evaluating'`).
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -21,7 +31,13 @@ import { computed, peek, type ReadonlySignal, type Signal } from '../../core/sig
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
-import type { MaybeResolvedPresentation, PartiallyResolvedVideoTrack, VideoTrack } from '../../media/types';
+import { pickFirstTrackId } from '../../media/primitives/select-tracks';
+import {
+  isResolvedPresentation,
+  type MaybeResolvedPresentation,
+  type PartiallyResolvedVideoTrack,
+  type VideoTrack,
+} from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
 
 export interface QualitySwitchingState {
@@ -32,7 +48,10 @@ export interface QualitySwitchingState {
   // competing with ABR and explicitly opt out. A better long-term design would
   // separate ABR selection (abrVideoTrackId) from manual selection (manualVideoTrackId)
   // and derive the effective selectedVideoTrackId as manualVideoTrackId ?? abrVideoTrackId.
-  // That way the two concerns never write to the same field and consumers are unchanged.
+  // That refactor would also collapse this behavior's FSM to 2 states ('preconditions-
+  // unmet' / 'evaluating') and restore the canonical cleanup-binds-to-setup pattern,
+  // making the carve-out in reactors.md ("Cleanup as state-machine invariant")
+  // unnecessary for this behavior.
   /** When true, ABR quality switching is suppressed. Use for manual quality selection. */
   abrDisabled?: boolean;
 }
@@ -71,8 +90,9 @@ export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
 // `setupQualitySwitching` has the same shape as a Behavior `setup` function:
 // `({ state, config }) => Reactor`. Each `switchXQuality` export below calls
 // it from inside its own `defineBehavior` setup, supplying its per-type
-// config inline (slot key, track extractor, selection algorithm). The state-
-// machine shape — 'idle' ↔ 'evaluating' driven by a derived state — is shared.
+// config inline (slot key, default-picker, track extractor, selection
+// algorithm). The 3-state machine — 'preconditions-unmet' / 'disabled' /
+// 'evaluating' — is shared across types.
 // ============================================================================
 
 type SelectedAbrKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
@@ -87,6 +107,7 @@ type QualityStateMap<K extends SelectedAbrKey> = {
 
 interface QualitySwitchingSetupConfig<K extends SelectedAbrKey, T extends AbrTrack> extends QualitySwitchingConfig {
   selectedKey: K;
+  pickDefault: (presentation: MaybeResolvedPresentation) => string | undefined;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
   selectOptimal: (tracks: readonly T[], bandwidth: number, opts: { safetyMargin: number }) => T | undefined;
 }
@@ -101,26 +122,55 @@ function setupQualitySwitching<K extends SelectedAbrKey, T extends AbrTrack>({
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const upgradeMargin = config.upgradeMargin ?? DEFAULT_SWITCHING_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
-  const { selectedKey, getTracks, selectOptimal } = config;
+  const { selectedKey, pickDefault, getTracks, selectOptimal } = config;
+
+  // Idempotent default-pick: shared between 'disabled'.entry and
+  // 'evaluating'.entry so a default is set on src load regardless of
+  // abrDisabled. The if-guard makes re-entry (e.g., toggling abrDisabled)
+  // a no-op when a selection already exists.
+  const pickDefaultIfUnset = () => {
+    if (state[selectedKey].get()) return;
+    const presentation = state.presentation.get();
+    if (!presentation) return;
+    const id = pickDefault(presentation);
+    if (id) state[selectedKey].set(id);
+  };
 
   const derivedStateSignal = computed(() => {
-    if (state.abrDisabled.get() === true) return 'idle' as const;
-    const presentation = state.presentation.get();
-    if (!presentation) return 'idle' as const;
-    if (getTracks(presentation).length === 0) return 'idle' as const;
+    if (!isResolvedPresentation(state.presentation.get())) return 'preconditions-unmet' as const;
+    if (state.abrDisabled.get() === true) return 'disabled' as const;
     return 'evaluating' as const;
   });
 
   return createMachineReactor({
-    initial: 'idle',
+    initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
-      idle: {},
+      // Slot invariant: in 'preconditions-unmet', the slot is empty. The
+      // clear is encoded as the state's entry invariant rather than as the
+      // cleanup-binds-to-setup return from 'disabled'/'evaluating', because
+      // the slot's valid lifespan spans both 'disabled' and 'evaluating' —
+      // binding cleanup to either would fire incorrectly on the
+      // 'disabled' ↔ 'evaluating' transition. See reactors.md "Cleanup as
+      // state-machine invariant" for the full rationale and trade-offs.
+      'preconditions-unmet': {
+        entry: () => {
+          state[selectedKey].set(undefined);
+        },
+      },
+      disabled: {
+        entry: () => {
+          pickDefaultIfUnset();
+        },
+      },
       evaluating: {
+        entry: () => {
+          pickDefaultIfUnset();
+        },
         // While in 'evaluating': re-fire on bandwidthState and selected-id
-        // changes (tracked). Presentation and tracks are tracked at the state-
-        // machine level via the derivedStateSignal monitor — peek them inside
-        // the effect so internal updates don't double-fire.
+        // changes (tracked). Presentation is tracked at the state-machine
+        // level via the derivedStateSignal monitor — peek inside the effect
+        // so internal updates don't double-fire.
         effects: [
           () => {
             const bandwidthState = state.bandwidthState.get();
@@ -165,9 +215,8 @@ function setupQualitySwitching<K extends SelectedAbrKey, T extends AbrTrack>({
 // ============================================================================
 
 /**
- * Adjust `selectedVideoTrackId` to the optimal video rendition based on the
- * current bandwidth estimate, while a presentation is resolved and ABR is
- * enabled.
+ * Manage `selectedVideoTrackId`: pick a default on src load, dynamically
+ * adjust based on bandwidth while ABR is enabled, clear on src unload.
  *
  * @example
  * const reactor = switchVideoQuality.setup({ state });
@@ -181,6 +230,7 @@ export const switchVideoQuality = defineBehavior({
       config: {
         ...config,
         selectedKey: 'selectedVideoTrackId',
+        pickDefault: (presentation) => pickFirstTrackId(presentation, 'video'),
         getTracks: (presentation) =>
           getTracksByType(presentation, 'video') as readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
         selectOptimal: selectQuality,

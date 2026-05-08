@@ -73,50 +73,97 @@ const tracks = [
 // ============================================================================
 
 describe('switchVideoQuality', () => {
-  describe('idle conditions', () => {
-    it('does nothing without a presentation', async () => {
+  describe("'preconditions-unmet' state", () => {
+    it('clears selectedVideoTrackId on initial entry when no presentation is set', async () => {
+      // Slot invariant: in 'preconditions-unmet', the slot is empty. Even a
+      // pre-seeded id is cleared, since it can't refer to anything until a
+      // presentation is resolved.
       const state = makeState({
         bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '720p',
+        selectedVideoTrackId: 'stale-id',
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+
+    it('clears selectedVideoTrackId on src unload', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(3_000_000),
       });
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      state.presentation.set(undefined);
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
       reactor.destroy();
     });
+  });
 
-    it('does nothing without bandwidthState', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        selectedVideoTrackId: '360p',
-      });
+  describe('default-pick on src load', () => {
+    it("picks the first available video track when entering 'evaluating'", async () => {
+      const presentation = createPresentation([createVideoTrack('360p', 600_000)]);
+      const state = makeState({ presentation });
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('360p');
+
       reactor.destroy();
     });
 
-    it('does nothing when presentation has no video tracks', async () => {
-      const emptyPresentation: Presentation = {
-        id: 'p',
-        url: 'https://example.com/playlist.m3u8',
-        selectionSets: [],
-      };
-      const state = makeState({
-        presentation: emptyPresentation,
-        bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '720p',
-      });
+    it("picks default when starting in 'disabled' (abrDisabled=true at src load)", async () => {
+      const presentation = createPresentation([createVideoTrack('360p', 600_000)]);
+      const state = makeState({ presentation, abrDisabled: true });
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
       reactor.destroy();
     });
 
-    it('does nothing when abrDisabled is true', async () => {
+    it('does not overwrite an existing selection on src load', async () => {
+      const presentation = createPresentation(tracks);
+      const state = makeState({ presentation, selectedVideoTrackId: '1080p' });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      // Without bandwidth, ABR can't override; the pre-seeded value persists.
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('re-picks default after src reset (presentation undefined → new resolved)', async () => {
+      const state = makeState({ presentation: createPresentation(tracks) });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      state.presentation.set(undefined);
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
+      const newPresentation = { ...createPresentation(tracks), id: 'pres-2' };
+      state.presentation.set(newPresentation);
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      reactor.destroy();
+    });
+  });
+
+  describe("'disabled' state (abrDisabled === true)", () => {
+    it('does not run ABR while disabled', async () => {
       const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(6_000_000),
@@ -126,7 +173,102 @@ describe('switchVideoQuality', () => {
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
+      // 6 Mbps would normally select 1080p, but ABR is disabled.
       expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      reactor.destroy();
+    });
+
+    it('preserves selection when abrDisabled toggles true mid-stream', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(3_000_000),
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      state.abrDisabled.set(true);
+      await flush();
+      // Toggle moves us 'evaluating' → 'disabled'; the selection persists
+      // (no clear on this transition — only on entering 'preconditions-unmet').
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      // Manual write while disabled — ABR must not overwrite.
+      state.selectedVideoTrackId.set('360p');
+      state.bandwidthState.set(createBandwidthState(6_000_000));
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      reactor.destroy();
+    });
+
+    it('resumes ABR when abrDisabled toggles false', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(3_000_000),
+        selectedVideoTrackId: '360p',
+        abrDisabled: true,
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      state.abrDisabled.set(false);
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
+    it('clears selection on src unload from disabled', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        selectedVideoTrackId: '720p',
+        abrDisabled: true,
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      state.presentation.set(undefined);
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
+      reactor.destroy();
+    });
+  });
+
+  describe('ABR — first-evaluation', () => {
+    it('selects optimal track when entering with no selection and bandwidth available', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(3_000_000),
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      // Default-pick fires '360p' on entry; ABR effect immediately overrides
+      // to optimal (720p at 3 Mbps) since no upgradeMargin has a "previous
+      // upgrade" to compare against — there's no current track in the prior
+      // sense, just a fresh default.
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+      reactor.destroy();
+    });
+
+    it('first ABR evaluation is unthrottled (jumps multiple tiers at once)', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(6_000_000),
+        selectedVideoTrackId: '360p',
+      });
+
+      const reactor = switchVideoQuality.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
       reactor.destroy();
     });
 
@@ -144,34 +286,7 @@ describe('switchVideoQuality', () => {
     });
   });
 
-  describe('initial selection', () => {
-    it('selects optimal track on first evaluation when no track is selected', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-      });
-
-      const reactor = switchVideoQuality.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-      reactor.destroy();
-    });
-
-    it('first evaluation is unthrottled (jumps multiple tiers at once)', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(6_000_000),
-        selectedVideoTrackId: '360p',
-      });
-
-      const reactor = switchVideoQuality.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('1080p');
-      reactor.destroy();
-    });
-  });
-
-  describe('downgrade', () => {
+  describe('ABR — downgrade', () => {
     it('downgrades immediately when bandwidth drops', async () => {
       const state = makeState({
         presentation: createPresentation(tracks),
@@ -209,7 +324,7 @@ describe('switchVideoQuality', () => {
     });
   });
 
-  describe('upgrade', () => {
+  describe('ABR — upgrade', () => {
     it('applies upgrade when optimal exceeds current.bandwidth × upgradeMargin', async () => {
       // 720p (2.4M) → 1080p (4.8M): ratio is 2.0× — well above the default 1.15
       // upgradeMargin, so the upgrade applies once bandwidth is sufficient.
@@ -242,8 +357,6 @@ describe('switchVideoQuality', () => {
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
-      // Optimal at 1.5M with safetyMargin 0.85: 'high' needs 1.1M/0.85 ≈ 1.29M (fits).
-      // But upgrade gate: 1.1M >= 1.0M × 1.15 → 1.15M? No (1.1 < 1.15). Skip.
       expect(state.selectedVideoTrackId.get()).toBe('low');
 
       reactor.destroy();
@@ -252,9 +365,6 @@ describe('switchVideoQuality', () => {
 
   describe('configuration', () => {
     it('uses custom safetyMargin', async () => {
-      // safetyMargin=1.0 means tracks need bandwidth >= track.bandwidth (no
-      // headroom). At 3M, 1080p (4.8M required) still doesn't fit, but 720p
-      // (2.4M required) does.
       const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(3_000_000),
@@ -269,8 +379,6 @@ describe('switchVideoQuality', () => {
     });
 
     it('uses custom upgradeMargin', async () => {
-      // With upgradeMargin=1.05, the 1.0M → 1.1M upgrade clears the gate
-      // (1.1 >= 1.0 × 1.05 = 1.05).
       const closeTracks = [createVideoTrack('low', 1_000_000), createVideoTrack('high', 1_100_000)];
       const state = makeState({
         presentation: createPresentation(closeTracks),
@@ -305,80 +413,6 @@ describe('switchVideoQuality', () => {
       const reactor = switchVideoQuality.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
-      reactor.destroy();
-    });
-  });
-
-  describe('abrDisabled', () => {
-    it('disabling mid-evaluation stops further writes', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '360p',
-      });
-
-      const reactor = switchVideoQuality.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      state.abrDisabled.set(true);
-      await flush();
-
-      // External writer (or test) sets a manual selection — ABR must not
-      // overwrite even as bandwidth changes.
-      state.selectedVideoTrackId.set('360p');
-      state.bandwidthState.set(createBandwidthState(6_000_000));
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
-
-      reactor.destroy();
-    });
-
-    it('re-enabling resumes evaluation on next bandwidth tick', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '360p',
-        abrDisabled: true,
-      });
-
-      const reactor = switchVideoQuality.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
-
-      state.abrDisabled.set(false);
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      reactor.destroy();
-    });
-  });
-
-  describe('source reset', () => {
-    it('handles presentation undefined → new presentation', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-      });
-
-      const reactor = switchVideoQuality.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      // Source unload — selection clearing is selectVideoTrack's job, not
-      // this behavior's; but switchVideoQuality must structurally re-enter
-      // 'idle' so the next presentation starts fresh.
-      state.presentation.set(undefined);
-      state.selectedVideoTrackId.set(undefined);
-      await flush();
-
-      // New source with fresh tracks at low bandwidth — first decision is
-      // unthrottled regardless of any prior switching history.
-      state.presentation.set(createPresentation(tracks));
-      state.bandwidthState.set(createBandwidthState(800_000));
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
-
       reactor.destroy();
     });
   });

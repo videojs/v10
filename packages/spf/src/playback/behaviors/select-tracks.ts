@@ -1,13 +1,19 @@
 /**
- * **Default track selection on src load / unselect on src unload.** When a
- * presentation is resolved, sets `selectedTrackId` to a per-type-picker
- * default if no selection already exists. When the presentation is
- * unset/reset (transitions back to unresolved), clears the selection so a
- * stale id from the previous source doesn't persist.
+ * **Default audio/text track selection on src load / unselect on src unload.**
+ * When a presentation is resolved, sets `selectedAudioTrackId` /
+ * `selectedTextTrackId` to a per-type-picker default if no selection already
+ * exists. When the presentation is unset/reset (transitions back to
+ * unresolved), clears the selection so a stale id from the previous source
+ * doesn't persist.
  *
  * Lifecycle-driven: each transition fires its work once. Does not police
- * the selection between transitions; external writes (user picks, ABR) are
- * left alone.
+ * the selection between transitions; external writes (user picks) are left
+ * alone.
+ *
+ * Video selection lives in `switchVideoQuality` (`./quality-switching.ts`),
+ * which owns both the default-pick and the ABR-driven adjustment for
+ * `selectedVideoTrackId`. When audio-bitrate ABR ships, `selectAudioTrack`
+ * is expected to merge into a `switchAudioQuality` peer there.
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -34,7 +40,7 @@ import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../me
 // 'unresolved' — is shared.
 // ============================================================================
 
-type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+type SelectedTrackKey = 'selectedAudioTrackId' | 'selectedTextTrackId';
 
 type SelectStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<TrackSelectionState['presentation']>;
@@ -90,26 +96,6 @@ function setupTrackSelection<K extends SelectedTrackKey>({
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
-
-/**
- * Select the first available video track when a presentation loads. Clears
- * the selection on src unload.
- *
- * @example
- * const reactor = selectVideoTrack.setup({ state });
- */
-export const selectVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId'],
-  contextKeys: [],
-  setup: ({ state }: { state: SelectStateMap<'selectedVideoTrackId'> }) =>
-    setupTrackSelection({
-      state,
-      config: {
-        selectedKey: 'selectedVideoTrackId',
-        picker: (presentation) => pickFirstTrackId(presentation, 'video'),
-      },
-    }),
-});
 
 /**
  * Select the first available audio track when a presentation loads. Clears
