@@ -68,6 +68,17 @@ describe('createTooltip', () => {
 
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
     });
+
+    it('closes when controls become hidden', () => {
+      const { tooltip, onOpenChange } = createTestTooltip();
+
+      tooltip.open();
+      onOpenChange.mockClear();
+
+      tooltip.syncControlsVisible(false);
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'controls-hidden' });
+    });
   });
 
   describe('onOpenChangeComplete', () => {

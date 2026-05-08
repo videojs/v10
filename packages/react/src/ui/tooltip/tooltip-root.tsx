@@ -106,9 +106,8 @@ export function TooltipRoot({
 
   useEffect(() => {
     if (isUndefined(controls?.state.visible)) return;
-    if (controls.state.visible) return;
 
-    tooltip.close('imperative-action');
+    tooltip.syncControlsVisible(controls.state.visible);
   }, [controls?.state.visible, tooltip]);
 
   useDestroy(tooltip);

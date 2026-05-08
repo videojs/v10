@@ -11,7 +11,13 @@ import {
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
 
-export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
+export type TooltipOpenChangeReason =
+  | 'hover'
+  | 'focus'
+  | 'escape'
+  | 'blur'
+  | 'imperative-action'
+  | 'controls-hidden';
 
 export interface TooltipChangeDetails {
   reason: TooltipOpenChangeReason;
@@ -49,6 +55,7 @@ const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReaso
   escape: 'escape',
   blur: 'blur',
   'imperative-action': 'imperative-action',
+  'controls-hidden': 'controls-hidden',
 };
 
 export function createTooltip(options: TooltipOptions): TooltipApi {

@@ -95,6 +95,25 @@ describe('createPopover', () => {
       expect(onOpenChange).not.toHaveBeenCalled();
     });
 
+    it('closes when controls become hidden', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.open();
+      onOpenChange.mockClear();
+
+      popover.syncControlsVisible(false);
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'controls-hidden' });
+    });
+
+    it('ignores controls visibility sync while already closed', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.syncControlsVisible(false);
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
     it('closes the previously open grouped popover when another opens', () => {
       const group = createPopupGroup();
       const first = createTestPopover({ group: () => group });

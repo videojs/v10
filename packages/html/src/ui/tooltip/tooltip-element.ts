@@ -29,6 +29,7 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { containerContext } from '../../player/context';
+import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
@@ -70,6 +71,7 @@ export class TooltipElement extends MediaElement {
   readonly #core = new TooltipCore();
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
   readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
@@ -158,6 +160,8 @@ export class TooltipElement extends MediaElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     if (!this.#tooltip) return;
+
+    this.#syncControlsVisibility();
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
@@ -257,5 +261,13 @@ export class TooltipElement extends MediaElement {
       container: this.#containerCtx.value?.container ?? null,
       root: this.getRootNode() as Document | ShadowRoot,
     });
+  }
+
+  #syncControlsVisibility(): void {
+    const controlsCtx = this.#controlsCtx.value ?? null;
+
+    if (!controlsCtx) return;
+
+    this.#tooltip?.syncControlsVisible(controlsCtx.state.visible);
   }
 }

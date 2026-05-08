@@ -1,12 +1,8 @@
-import type { MediaControlsState } from '@videojs/core';
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import { ControlsDataAttrs } from '@videojs/core';
 import { ContextProvider } from '@videojs/element/context';
-import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { playerContext } from '../../../player/context';
-import { ControlsElement } from '../../controls/controls-element';
-import { MediaElement } from '../../media-element';
+import { controlsContext } from '../../controls/context';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuItemElement } from '../menu-item-element';
@@ -24,52 +20,24 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-function defineElement(tagName: string, Base: CustomElementConstructor): void {
-  if (!customElements.get(tagName)) {
-    customElements.define(tagName, Base);
-  }
-}
+class TestControlsProviderElement extends HTMLElement {
+  readonly #provider = new ContextProvider(this, { context: controlsContext });
 
-function createControlsStore(): AnyPlayerStore {
-  return createStore<unknown>()<MediaControlsState>({
-    name: 'controls',
-    state: ({ get, set }) => {
-      return {
-        userActive: true,
-        controlsVisible: true,
-        toggleControls() {
-          const visible = !(get().controlsVisible as boolean);
-
-          set({ userActive: visible, controlsVisible: visible });
-
-          return visible;
-        },
-      };
-    },
-  }) as unknown as AnyPlayerStore;
-}
-
-class TestPlayerProviderElement extends MediaElement {
-  store = createControlsStore();
-
-  readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
-
-  override connectedCallback(): void {
-    super.connectedCallback();
-    this.#provider.setValue(this.store);
+  connectedCallback(): void {
+    this.setVisible(true);
   }
 
   setVisible(visible: boolean): void {
-    const state = this.store.state as MediaControlsState;
-
-    if (state.controlsVisible === visible) return;
-
-    state.toggleControls();
-    flush();
+    this.#provider.setValue({
+      state: { visible, userActive: visible },
+      stateAttrMap: ControlsDataAttrs,
+    });
   }
 }
 
-defineElement('test-menu-player-provider', TestPlayerProviderElement);
+if (!customElements.get('test-menu-controls-provider')) {
+  customElements.define('test-menu-controls-provider', TestControlsProviderElement);
+}
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -522,9 +490,8 @@ describe('MenuElement', () => {
     expect(item.hasAttribute('data-highlighted')).toBe(true);
   });
 
-  it('closes an open root menu when parent controls hide', async () => {
-    const provider = document.createElement('test-menu-player-provider') as TestPlayerProviderElement;
-    const controls = createElement(ControlsElement);
+  it('closes an open root menu when parent controls become hidden', async () => {
+    const provider = document.createElement('test-menu-controls-provider') as TestControlsProviderElement;
     const trigger = document.createElement('button');
     const root = createElement(MenuElement);
     const item = createElement(MenuItemElement);
@@ -538,11 +505,9 @@ describe('MenuElement', () => {
 
     root.addEventListener('open-change', onOpenChange);
     root.append(item);
-    controls.append(trigger, root);
+    provider.append(trigger, root);
     document.body.append(provider);
-    provider.append(controls);
 
-    await controls.updateComplete;
     await root.updateComplete;
     await item.updateComplete;
 
@@ -553,7 +518,7 @@ describe('MenuElement', () => {
     });
 
     expect(onOpenChange).toHaveBeenCalledWith(
-      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'imperative-action' }) })
+      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'controls-hidden' }) })
     );
     expect(focus).not.toHaveBeenCalled();
   });
