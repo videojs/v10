@@ -322,6 +322,16 @@ The split is enforced by tsconfig `lib` settings — a non-DOM behavior that imp
 
 Actor factories the Behaviors instantiate live alongside in `playback/actors/` (or `playback/actors/dom/`). Cross-imports between sibling Behaviors and Actors are expected; reaching across `media/`, `network/`, or `core/` follows the dependency rules in CLAUDE.md.
 
+### Pure helpers don't belong in behaviors
+
+If a top-level function in a behavior module has no `core/` dependency (no signals, effects, or reactors), it probably doesn't belong in `playback/behaviors/`. Move it to `media/` (or `network/`, or `@videojs/utils` if generically useful).
+
+This is the inverse of the smell already documented in [`packages/spf/src/CLAUDE.md`](../../../../packages/spf/src/CLAUDE.md) (a primitive that reaches into `core/`). Same layering principle, opposite direction.
+
+Rule of thumb when reviewing a behavior file: scan the top-level helpers. If any are pure data-manipulation / lookup / format-handling code with no reactive concerns, they should move out.
+
+Concrete instance: `findTrack` and `updateTrackInPresentation` lived in `resolve-track.ts` until commit `a9ef69ba`; both operate purely on HAM-shaped types from `media/types` and were extracted to `media/utils/tracks.ts`.
+
 ## Naming
 
 - Behaviors are named as **descriptive verbs**: `syncPreloadAttribute`, `selectVideoTrack`, `loadVideoSegments`, `endOfStream`. No `*Behavior` suffix.

@@ -49,6 +49,8 @@ The substance: `core/`, `media/`, `network/` are framework-agnostic foundations.
 
 If a module looks like a primitive but reaches into `core/`, that's a smell — consider whether the signal binding can move to the call site (see `onMediaSourceReadyStateChange` for a callback-shaped primitive that lets the consumer create the signal).
 
+Conversely: if a function inside `playback/behaviors/` (or `playback/actors/`) has no `core/` dependency — no signals, effects, or reactors — it probably belongs in a layer below (`media/`, `network/`, or `@videojs/utils`). Same layering principle, opposite direction. When reviewing a behavior or actor file, scan its top-level helpers; any pure data-manipulation / lookup / format-handling code with no reactive concerns is a candidate to extract.
+
 ## DOM-vs-not enforcement
 
 The DOM/no-DOM split is enforced by `lib` settings on each subtree's `tsconfig.json`:
