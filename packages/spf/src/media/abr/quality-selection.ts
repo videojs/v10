@@ -10,7 +10,7 @@
  * - At same bandwidth, prefer higher resolution
  */
 
-import type { PartiallyResolvedVideoTrack } from '../types';
+import type { PartiallyResolvedVideoTrack, VideoTrack } from '../types';
 
 /**
  * Quality selection configuration.
@@ -56,10 +56,10 @@ export const DEFAULT_QUALITY_CONFIG: QualityConfig = {
  * const selected = selectQuality(tracks, 2_500_000);
  */
 export function selectQuality(
-  tracks: PartiallyResolvedVideoTrack[],
+  tracks: readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
   currentBandwidth: number,
   config: QualityConfig = DEFAULT_QUALITY_CONFIG
-): PartiallyResolvedVideoTrack | undefined {
+): PartiallyResolvedVideoTrack | VideoTrack | undefined {
   if (tracks.length === 0) {
     return undefined;
   }
@@ -68,7 +68,7 @@ export function selectQuality(
   const sortedTracks = tracks.slice().sort((a, b) => a.bandwidth - b.bandwidth);
 
   // Start with no selection
-  let chosen: PartiallyResolvedVideoTrack | undefined;
+  let chosen: PartiallyResolvedVideoTrack | VideoTrack | undefined;
 
   for (const track of sortedTracks) {
     // Check if we have enough bandwidth for this track with safety margin
@@ -99,7 +99,10 @@ export function selectQuality(
  * @param trackB - Second track to compare
  * @returns True if trackA has more pixels than trackB
  */
-function hasHigherResolution(trackA: PartiallyResolvedVideoTrack, trackB: PartiallyResolvedVideoTrack): boolean {
+function hasHigherResolution(
+  trackA: PartiallyResolvedVideoTrack | VideoTrack,
+  trackB: PartiallyResolvedVideoTrack | VideoTrack
+): boolean {
   const pixelsA = (trackA.width ?? 0) * (trackA.height ?? 0);
   const pixelsB = (trackB.width ?? 0) * (trackB.height ?? 0);
   return pixelsA > pixelsB;

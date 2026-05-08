@@ -709,7 +709,7 @@ http://example.com/seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    // Use a conservative initialBandwidth so switchQuality also selects 360p and
+    // Use a conservative initialBandwidth so switchVideoQuality also selects 360p and
     // doesn't immediately upgrade — verifying only the selected track is resolved.
     const engine = createSimpleHlsEngine({ initialBandwidth: 600_000 });
     const mediaElement = document.createElement('video');

@@ -102,4 +102,4 @@ export type {
   QualitySwitchingConfig,
   QualitySwitchingState,
 } from './playback/behaviors/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './playback/behaviors/quality-switching';
+export { DEFAULT_SWITCHING_CONFIG, switchVideoQuality } from './playback/behaviors/quality-switching';

@@ -22,7 +22,7 @@ import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
-import { switchQuality } from '../../behaviors/quality-switching';
+import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
@@ -174,7 +174,7 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchQuality,
+      switchVideoQuality,
 
       // Segment loading
       loadVideoSegments,
@@ -195,7 +195,7 @@ export function createSimpleHlsEngine(
     ],
     {
       config: finalConfig,
-      // Seed bandwidthState so switchQuality fires on initial subscribe
+      // Seed bandwidthState so switchVideoQuality fires on initial subscribe
       // with the `initialBandwidth` fallback rather than waiting for the
       // first chunk. The empty sample buffer means `getBandwidthEstimate`
       // returns the configured initial bandwidth until real samples land.

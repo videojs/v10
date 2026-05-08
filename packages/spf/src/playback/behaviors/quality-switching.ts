@@ -1,14 +1,29 @@
+/**
+ * **Dynamic quality selection from media metrics.** While a presentation has
+ * been (partially) resolved and ABR is enabled, observe the relevant media
+ * metric and write the optimal track id to the type's selection slot — today
+ * driven by throughput estimates via `selectQuality`. The metric inputs and
+ * per-type selection algorithms are expected to evolve (audio-bitrate ABR is
+ * the immediate next axis).
+ *
+ * Lifecycle: `'idle'` (no presentation, no tracks of this type, or `abrDisabled`)
+ * ↔ `'evaluating'` (all inputs available + ABR enabled). Source-reset is
+ * structural — re-entering `'evaluating'` starts fresh.
+ *
+ * Hysteresis: downgrades apply immediately; upgrades require the optimal
+ * track's bandwidth to exceed the current track's by `upgradeMargin`. No
+ * temporal state — short-term smoothing is the bandwidth estimator's job.
+ */
+
 import { defineBehavior } from '../../core/composition/create-composition';
-import { effect } from '../../core/signals/effect';
-import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
+import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
-import type { MaybeResolvedPresentation, VideoSelectionSet } from '../../media/types';
+import type { MaybeResolvedPresentation, PartiallyResolvedVideoTrack, VideoTrack } from '../../media/types';
+import { getTracksByType } from '../../media/utils/tracks';
 
-/**
- * State shape for quality switching.
- */
 export interface QualitySwitchingState {
   presentation?: MaybeResolvedPresentation;
   bandwidthState?: BandwidthState;
@@ -22,24 +37,20 @@ export interface QualitySwitchingState {
   abrDisabled?: boolean;
 }
 
-/**
- * Configuration for quality switching behavior.
- */
 export interface QualitySwitchingConfig {
   /**
-   * Safety margin for quality selection (0–1).
-   * Track is selected only when bandwidth >= track.bandwidth / safetyMargin.
-   * Default: 0.85 (15% headroom).
+   * Safety margin for quality selection (0–1). Track is selected only when
+   * bandwidth >= track.bandwidth / safetyMargin. Default: 0.85 (15% headroom).
    */
   safetyMargin?: number;
 
   /**
-   * Minimum milliseconds between upgrades.
-   * Prevents oscillation when bandwidth fluctuates around a quality threshold.
-   * Downgrades are always immediate regardless of this setting.
-   * Default: 8000 (8 seconds).
+   * Upgrade hysteresis ratio (>= 1). Apply an upgrade only when
+   * `optimal.bandwidth >= current.bandwidth * upgradeMargin`. Downgrades are
+   * always immediate. Default: 1.15 (15% headroom over the current track's
+   * bandwidth on top of `safetyMargin`'s headroom over the candidate's).
    */
-  minUpgradeInterval?: number;
+  upgradeMargin?: number;
 
   /**
    * Bandwidth estimate in bps to use before enough samples have been collected.
@@ -48,103 +59,131 @@ export interface QualitySwitchingConfig {
   initialBandwidth?: number;
 }
 
-/**
- * Default quality switching configuration.
- */
 export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
   safetyMargin: 0.85,
-  minUpgradeInterval: 8000,
+  upgradeMargin: 1.15,
   initialBandwidth: 5_000_000,
 };
 
-/**
- * Get all video tracks from a presentation's first switching set.
- * Returns [] when the presentation is still unresolved (no selectionSets yet).
- */
-function getVideoTracks(presentation: MaybeResolvedPresentation) {
-  const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
-  return videoSet?.switchingSets[0]?.tracks ?? [];
+// ============================================================================
+// Specialization helper
+//
+// `setupQualitySwitching` has the same shape as a Behavior `setup` function:
+// `({ state, config }) => Reactor`. Each `switchXQuality` export below calls
+// it from inside its own `defineBehavior` setup, supplying its per-type
+// config inline (slot key, track extractor, selection algorithm). The state-
+// machine shape — 'idle' ↔ 'evaluating' driven by a derived state — is shared.
+// ============================================================================
+
+type SelectedAbrKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
+
+type AbrTrack = { id: string; bandwidth: number };
+
+type QualityStateMap<K extends SelectedAbrKey> = {
+  presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
+  bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
+  abrDisabled: ReadonlySignal<QualitySwitchingState['abrDisabled']>;
+} & { [P in K]: Signal<string | undefined> };
+
+interface QualitySwitchingSetupConfig<K extends SelectedAbrKey, T extends AbrTrack> extends QualitySwitchingConfig {
+  selectedKey: K;
+  getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
+  selectOptimal: (tracks: readonly T[], bandwidth: number, opts: { safetyMargin: number }) => T | undefined;
 }
 
-/**
- * Quality switching orchestration (F9).
- *
- * Reacts to bandwidth estimate changes and updates `selectedVideoTrackId`
- * when a different quality is optimal:
- *
- * - **Downgrades** happen immediately to avoid buffering stalls.
- * - **Upgrades** are gated by `minUpgradeInterval` to prevent oscillation.
- * - The first switch (from any track, or no track) is always immediate.
- *
- * Smooth switching is handled downstream: when `selectedVideoTrackId` changes,
- * `resolveTrack` fetches the new playlist and `loadSegments` reloads the init
- * segment, then appends media segments from the current position in the new
- * quality. The browser's SourceBuffer replaces the overlapping buffered range.
- *
- * @example
- * const cleanup = switchQuality.setup({ state });
- * // Later, when done:
- * cleanup();
- */
-function switchQualitySetup({
+function setupQualitySwitching<K extends SelectedAbrKey, T extends AbrTrack>({
   state,
-  config = {},
+  config,
 }: {
-  state: {
-    presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
-    bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
-    selectedVideoTrackId: Signal<QualitySwitchingState['selectedVideoTrackId']>;
-    abrDisabled: ReadonlySignal<QualitySwitchingState['abrDisabled']>;
-  };
-  config?: QualitySwitchingConfig;
-}): () => void {
+  state: QualityStateMap<K>;
+  config: QualitySwitchingSetupConfig<K, T>;
+}) {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
-  const minUpgradeInterval = config.minUpgradeInterval ?? DEFAULT_SWITCHING_CONFIG.minUpgradeInterval;
+  const upgradeMargin = config.upgradeMargin ?? DEFAULT_SWITCHING_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
+  const { selectedKey, getTracks, selectOptimal } = config;
 
-  // Initialize to creation time so the interval starts counting immediately.
-  // The first time we have enough data to make a meaningful quality decision
-  // (presentation resolved + bandwidth available), the upgrade gate is skipped
-  // so the initial ABR correction does not wait for minUpgradeInterval.
-  let lastUpgradeTime = Date.now();
-  let firstMeaningfulFire = true;
+  const derivedStateSignal = computed(() => {
+    if (state.abrDisabled.get() === true) return 'idle' as const;
+    const presentation = state.presentation.get();
+    if (!presentation) return 'idle' as const;
+    if (getTracks(presentation).length === 0) return 'idle' as const;
+    return 'evaluating' as const;
+  });
 
-  return effect(() => {
-    const currentState = snapshot(state);
-    const { presentation, bandwidthState, selectedVideoTrackId, abrDisabled } = currentState;
+  return createMachineReactor({
+    initial: 'idle',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      idle: {},
+      evaluating: {
+        // While in 'evaluating': re-fire on bandwidthState and selected-id
+        // changes (tracked). Presentation and tracks are tracked at the state-
+        // machine level via the derivedStateSignal monitor — peek them inside
+        // the effect so internal updates don't double-fire.
+        effects: [
+          () => {
+            const bandwidthState = state.bandwidthState.get();
+            const selectedId = state[selectedKey].get();
+            const presentation = peek(state.presentation);
+            if (!bandwidthState || !presentation) return;
 
-    if (abrDisabled === true) return;
-    if (!presentation || !bandwidthState) return;
+            const tracks = getTracks(presentation);
+            if (tracks.length === 0) return;
 
-    const videoTracks = getVideoTracks(presentation);
-    if (videoTracks.length === 0) return;
+            const bandwidth = getBandwidthEstimate(bandwidthState, initialBandwidth);
+            const optimal = selectOptimal(tracks, bandwidth, { safetyMargin });
+            if (!optimal || optimal.id === selectedId) return;
 
-    // Consume the first-meaningful-fire flag now that we have all required data.
-    const isFirst = firstMeaningfulFire;
-    firstMeaningfulFire = false;
+            const currentTrack = tracks.find((t) => t.id === selectedId);
+            if (!currentTrack) {
+              // No current track in the active list — initialization or
+              // post-selection-cleared. Apply optimal directly.
+              state[selectedKey].set(optimal.id);
+              return;
+            }
 
-    const bandwidth = getBandwidthEstimate(bandwidthState, initialBandwidth);
-    const optimal = selectQuality(videoTracks as any, bandwidth, { safetyMargin });
-    if (!optimal || optimal.id === selectedVideoTrackId) return;
+            if (optimal.bandwidth < currentTrack.bandwidth) {
+              // Downgrade — apply immediately.
+              state[selectedKey].set(optimal.id);
+              return;
+            }
 
-    // Determine whether this is an upgrade or downgrade.
-    const currentTrack = videoTracks.find((t) => t.id === selectedVideoTrackId);
-    const isUpgrade = !currentTrack || optimal.bandwidth > currentTrack.bandwidth;
-
-    if (isUpgrade) {
-      const now = Date.now();
-      // Gate upgrades with minUpgradeInterval to prevent oscillation.
-      // Downgrades are always immediate; the first meaningful evaluation is always allowed.
-      if (!isFirst && now - lastUpgradeTime < minUpgradeInterval) return;
-      lastUpgradeTime = now;
-    }
-
-    state.selectedVideoTrackId.set(optimal.id);
+            // Upgrade — gate by magnitude hysteresis.
+            if (optimal.bandwidth >= currentTrack.bandwidth * upgradeMargin) {
+              state[selectedKey].set(optimal.id);
+            }
+          },
+        ],
+      },
+    },
   });
 }
 
-export const switchQuality = defineBehavior({
+// ============================================================================
+// Specialized exports — one per ABR-enabled track type
+// ============================================================================
+
+/**
+ * Adjust `selectedVideoTrackId` to the optimal video rendition based on the
+ * current bandwidth estimate, while a presentation is resolved and ABR is
+ * enabled.
+ *
+ * @example
+ * const reactor = switchVideoQuality.setup({ state });
+ */
+export const switchVideoQuality = defineBehavior({
   stateKeys: ['presentation', 'bandwidthState', 'selectedVideoTrackId', 'abrDisabled'],
   contextKeys: [],
-  setup: switchQualitySetup,
+  setup: ({ state, config }: { state: QualityStateMap<'selectedVideoTrackId'>; config?: QualitySwitchingConfig }) =>
+    setupQualitySwitching({
+      state,
+      config: {
+        ...config,
+        selectedKey: 'selectedVideoTrackId',
+        getTracks: (presentation) =>
+          getTracksByType(presentation, 'video') as readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
+        selectOptimal: selectQuality,
+      },
+    }),
 });
