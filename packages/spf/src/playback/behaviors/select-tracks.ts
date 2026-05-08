@@ -60,24 +60,27 @@ function setupTrackSelection<K extends SelectedTrackKey>({
     initial: 'unresolved',
     monitor: () => derivedStateSignal.get(),
     states: {
-      // Transition: clear selection on entering unresolved (initial setup or
-      // src unload). Initial setup is a no-op since selectedKey starts
-      // undefined.
-      unresolved: {
-        entry: () => {
-          if (state[selectedKey].get() !== undefined) state[selectedKey].set(undefined);
-        },
-      },
-      // Transition: pick a default on entering resolved if none is set.
-      // External writes (user picks, ABR) that already populated the slot
-      // are left alone.
+      unresolved: {},
       resolved: {
+        // Entry: pick a default on entering resolved if none is set.
+        // External writes (user picks, ABR) that already populated the slot
+        // are left alone.
+        //
+        // The returned cleanup runs on state exit — which fires on src
+        // unload (resolved → unresolved) AND on behavior destroy (resolved
+        // → destroying → destroyed). Putting the clear here rather than as
+        // unresolved.entry is more cohesive (operation + cleanup co-
+        // located) and correctly covers destroy (destroy doesn't pass
+        // through unresolved).
         entry: () => {
-          if (state[selectedKey].get()) return;
-          const presentation = state.presentation.get();
-          if (!presentation) return;
-          const id = picker(presentation);
-          if (id) state[selectedKey].set(id);
+          if (!state[selectedKey].get()) {
+            const presentation = state.presentation.get();
+            if (presentation) {
+              const id = picker(presentation);
+              if (id) state[selectedKey].set(id);
+            }
+          }
+          return () => state[selectedKey].set(undefined);
         },
       },
     },
