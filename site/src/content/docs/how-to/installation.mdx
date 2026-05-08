@@ -127,6 +127,16 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 <ContentWidth>
   <HTMLUsageCodeBlock client:idle />
 </ContentWidth>
+
+<Aside type="caution" title="Load your script as a module">
+When using a bundler (npm, pnpm, yarn, bun), load the resulting bundle with `type="module"`:
+
+```html
+<script type="module" src="/dist/player.js"></script>
+```
+
+Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. The CDN install path already uses `type="module"` — bundled installs need the same.
+</Aside>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
