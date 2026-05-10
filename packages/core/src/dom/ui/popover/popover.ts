@@ -14,7 +14,6 @@ export type PopoverOpenChangeReason =
   | 'outside-click'
   | 'blur'
   | 'imperative-action'
-  | 'controls-hidden'
   | 'group-open';
 
 export interface PopoverChangeDetails {
@@ -58,7 +57,6 @@ export interface PopoverApi {
   readonly triggerElement: HTMLElement | null;
   setTriggerElement: (el: HTMLElement | null) => void;
   setPopupElement: (el: HTMLElement | null) => void;
-  syncControlsVisible: (visible: boolean) => void;
   open: (reason?: PopoverOpenChangeReason) => void;
   close: (reason?: PopoverOpenChangeReason) => void;
   destroy: () => void;
@@ -170,13 +168,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
   function close(reason: PopoverOpenChangeReason = 'click'): void {
     applyClose(reason);
-  }
-
-  function syncControlsVisible(visible: boolean): void {
-    if (visible) return;
-    if (!state.current.active || state.current.status === 'ending') return;
-
-    applyClose('controls-hidden');
   }
 
   // --- Outside-click handler ---
@@ -340,7 +331,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     },
     setTriggerElement,
     setPopupElement,
-    syncControlsVisible,
     open,
     close,
     destroy: layer.destroy,

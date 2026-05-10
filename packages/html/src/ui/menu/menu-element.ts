@@ -31,7 +31,6 @@ import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
-import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
@@ -62,7 +61,6 @@ export class MenuElement extends MediaElement {
   readonly #core = new MenuCore();
   readonly #provider = new ContextProvider(this, { context: menuContext });
   readonly #position = new PositionController(this);
-  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
@@ -193,10 +191,6 @@ export class MenuElement extends MediaElement {
 
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
-
-    if (!isSubmenu) {
-      this.#syncControlsVisibility();
-    }
 
     this.#navState = this.#menu.navigationInput.current;
     const input = this.#menu.input.current;
@@ -331,14 +325,6 @@ export class MenuElement extends MediaElement {
   #handleContentFocusOut = (event: UIFocusEvent): void => {
     this.#menu?.contentProps.onFocusOut(event);
   };
-
-  #syncControlsVisibility(): void {
-    const controlsCtx = this.#controlsCtx.value ?? null;
-
-    if (!controlsCtx) return;
-
-    this.#menu?.syncControlsVisible(controlsCtx.state.visible);
-  }
 
   #syncTrigger(triggerElement: HTMLElement | null): void {
     if (triggerElement === this.#currentTrigger) return;

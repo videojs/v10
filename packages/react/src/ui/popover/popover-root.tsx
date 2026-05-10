@@ -103,8 +103,9 @@ export function PopoverRoot({
 
   useEffect(() => {
     if (isUndefined(controls?.state.visible)) return;
+    if (controls.state.visible) return;
 
-    popover.syncControlsVisible(controls.state.visible);
+    popover.close('imperative-action');
   }, [controls?.state.visible, popover]);
 
   useDestroy(popover);

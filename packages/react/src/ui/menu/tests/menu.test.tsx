@@ -557,7 +557,7 @@ describe('MenuContent', () => {
     rerender(<ControlsHiddenFixture visible={false} onOpenChange={onOpenChange} />);
 
     await waitFor(() => {
-      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'controls-hidden' }));
+      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'imperative-action' }));
     });
   });
 

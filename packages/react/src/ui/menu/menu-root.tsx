@@ -92,7 +92,7 @@ export function MenuRoot({
   useEffect(() => {
     if (isSubmenu || controls?.state.visible !== false) return;
 
-    menu.syncControlsVisible(controls.state.visible);
+    menu.close('imperative-action');
   }, [controls?.state.visible, isSubmenu, menu]);
 
   useDestroy(menu);

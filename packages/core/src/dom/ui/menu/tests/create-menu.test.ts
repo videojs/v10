@@ -364,22 +364,6 @@ describe('createMenu', () => {
       expect(focus).not.toHaveBeenCalled();
     });
 
-    it('does not restore focus when controls hide the menu', async () => {
-      const { menu } = createTestMenu();
-      const trigger = document.createElement('button');
-      const focus = vi.spyOn(trigger, 'focus');
-
-      menu.setTriggerElement(trigger);
-      menu.open();
-      menu.syncControlsVisible(false);
-
-      await vi.waitFor(() => {
-        expect(menu.input.current.active).toBe(false);
-      });
-
-      expect(focus).not.toHaveBeenCalled();
-    });
-
     it('does not restore focus when another grouped popup opens', async () => {
       const group = createPopupGroup();
       const first = createTestMenu({ group: () => group });
