@@ -76,21 +76,21 @@ describe('createPopover', () => {
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'hover' });
     });
 
-    it('closes when controls become hidden', () => {
+    it('supports imperative close reason', () => {
       const { popover, onOpenChange } = createTestPopover();
 
       popover.open();
       onOpenChange.mockClear();
 
-      popover.syncControlsVisible(false);
+      popover.close('imperative-action');
 
-      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'controls-hidden' });
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
     });
 
-    it('ignores controls visibility while already closed', () => {
+    it('ignores imperative close while already closed', () => {
       const { popover, onOpenChange } = createTestPopover();
 
-      popover.syncControlsVisible(false);
+      popover.close('imperative-action');
 
       expect(onOpenChange).not.toHaveBeenCalled();
     });

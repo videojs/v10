@@ -91,7 +91,6 @@ export interface MenuApi {
   readonly contentElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
-  syncControlsVisible: (visible: boolean) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
@@ -262,7 +261,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
-      if (!open && lastCloseReason !== 'controls-hidden' && lastCloseReason !== 'group-open') {
+      if (!open && lastCloseReason !== 'imperative-action' && lastCloseReason !== 'group-open') {
         triggerElement?.focus();
       }
     },
@@ -401,7 +400,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     },
     setTriggerElement,
     setContentElement,
-    syncControlsVisible: popover.syncControlsVisible,
     registerItem,
     highlight,
     highlightFirstItem,

@@ -1,4 +1,4 @@
-import { PopoverCore, PopoverDataAttrs, type PopoverInput, type PopoverProps } from '@videojs/core';
+import { POPUP_HOST_ATTR, PopoverCore, PopoverDataAttrs, type PopoverInput, type PopoverProps } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -10,6 +10,7 @@ import {
   getPositioningBoundaryRect,
   type PopoverApi,
   type PopoverChangeDetails,
+  type PopoverOpenChangeReason,
   type PositioningBoundary,
   resolveOffsets,
   resolvePositioningBoundary,
@@ -19,10 +20,8 @@ import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
-import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
 
@@ -54,7 +53,6 @@ export class PopoverElement extends MediaElement {
 
   readonly #core = new PopoverCore();
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
-  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
   readonly #position = new PositionController(this);
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
@@ -67,6 +65,8 @@ export class PopoverElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
+
+    this.setAttribute(POPUP_HOST_ATTR, '');
 
     this.#disconnect = new AbortController();
 
@@ -122,6 +122,10 @@ export class PopoverElement extends MediaElement {
     super.destroyCallback();
   }
 
+  close(reason: PopoverOpenChangeReason = 'imperative-action'): void {
+    this.#popover?.close(reason);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.#core.setProps(this);
@@ -142,8 +146,6 @@ export class PopoverElement extends MediaElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     if (!this.#popover) return;
-
-    this.#syncControlsVisibility();
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
@@ -233,13 +235,5 @@ export class PopoverElement extends MediaElement {
       container: this.#containerCtx.value?.container ?? null,
       root: this.getRootNode() as Document | ShadowRoot,
     });
-  }
-
-  #syncControlsVisibility(): void {
-    const controlsCtx = this.#controlsCtx.value ?? null;
-
-    if (!controlsCtx) return;
-
-    this.#popover?.syncControlsVisible(controlsCtx.state.visible);
   }
 }

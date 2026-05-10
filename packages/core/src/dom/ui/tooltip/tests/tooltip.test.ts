@@ -58,15 +58,15 @@ describe('createTooltip', () => {
       expect(onOpenChange).not.toHaveBeenCalled();
     });
 
-    it('closes when controls become hidden', () => {
+    it('supports imperative close reason', () => {
       const { tooltip, onOpenChange } = createTestTooltip();
 
       tooltip.open();
       onOpenChange.mockClear();
 
-      tooltip.syncControlsVisible(false);
+      tooltip.close('imperative-action');
 
-      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'controls-hidden' });
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
     });
   });
 

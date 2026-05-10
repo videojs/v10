@@ -1,4 +1,11 @@
-import { type ButtonState, TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
+import {
+  type ButtonState,
+  POPUP_HOST_ATTR,
+  TooltipCore,
+  TooltipCSSVars,
+  TooltipDataAttrs,
+  type TooltipInput,
+} from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -13,6 +20,7 @@ import {
   resolvePositioningBoundary,
   type TooltipApi,
   type TooltipChangeDetails,
+  type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
@@ -21,7 +29,6 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { containerContext } from '../../player/context';
-import { controlsContext } from '../controls/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
@@ -63,7 +70,6 @@ export class TooltipElement extends MediaElement {
   readonly #core = new TooltipCore();
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
-  readonly #controlsCtx = new ContextConsumer(this, { context: controlsContext, subscribe: true });
   readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
@@ -76,6 +82,8 @@ export class TooltipElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
+
+    this.setAttribute(POPUP_HOST_ATTR, '');
 
     this.#disconnect = new AbortController();
 
@@ -126,6 +134,10 @@ export class TooltipElement extends MediaElement {
     this.#disconnect = null;
   }
 
+  close(reason: TooltipOpenChangeReason = 'imperative-action'): void {
+    this.#tooltip?.close(reason);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.#core.setProps(this);
@@ -146,8 +158,6 @@ export class TooltipElement extends MediaElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     if (!this.#tooltip) return;
-
-    this.#syncControlsVisibility();
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
@@ -247,13 +257,5 @@ export class TooltipElement extends MediaElement {
       container: this.#containerCtx.value?.container ?? null,
       root: this.getRootNode() as Document | ShadowRoot,
     });
-  }
-
-  #syncControlsVisibility(): void {
-    const controlsCtx = this.#controlsCtx.value ?? null;
-
-    if (!controlsCtx) return;
-
-    this.#tooltip?.syncControlsVisible(controlsCtx.state.visible);
   }
 }

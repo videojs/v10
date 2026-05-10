@@ -348,14 +348,14 @@ describe('createMenu', () => {
       expect(event.stopPropagation).not.toHaveBeenCalled();
     });
 
-    it('does not restore focus when controls hide the menu', async () => {
+    it('does not restore focus after imperative close', async () => {
       const { menu } = createTestMenu();
       const trigger = document.createElement('button');
       const focus = vi.spyOn(trigger, 'focus');
 
       menu.setTriggerElement(trigger);
       menu.open();
-      menu.syncControlsVisible(false);
+      menu.close('imperative-action');
 
       await vi.waitFor(() => {
         expect(menu.input.current.active).toBe(false);

@@ -43,6 +43,7 @@ export * from './ui/playback-rate-menu/playback-rate-menu-data-attrs';
 export * from './ui/popover/popover-core';
 export * from './ui/popover/popover-css-vars';
 export * from './ui/popover/popover-data-attrs';
+export * from './ui/popover/popup-host-attr';
 export * from './ui/poster/poster-core';
 export * from './ui/poster/poster-data-attrs';
 export * from './ui/seek-button/seek-button-core';
