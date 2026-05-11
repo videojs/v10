@@ -27,43 +27,43 @@ import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-l
  * runner.
  *
  * @example
- * const reactor = loadTextTrackCues.setup({ state, context });
+ * const reactor = loadTextTrackSegments.setup({ state, context });
  */
-export interface TextTrackCueLoadingState {
+export interface TextTrackSegmentLoadingState {
   selectedTextTrackId?: string;
   presentation?: MaybeResolvedPresentation;
   /** Current playback position — used to gate segment fetching to the forward buffer window. */
   currentTime?: number;
 }
 
-export interface TextTrackCueLoadingContext {
+export interface TextTrackSegmentLoadingContext {
   segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
 }
 
-type LoadTextTrackCuesState = 'preconditions-unmet' | 'selected-track-resolved';
+type LoadTextTrackSegmentsState = 'preconditions-unmet' | 'selected-track-resolved';
 
-function loadTextTrackCuesSetup({
+function loadTextTrackSegmentsSetup({
   state,
   context,
 }: {
   state: {
-    selectedTextTrackId: ReadonlySignal<TextTrackCueLoadingState['selectedTextTrackId']>;
-    presentation: ReadonlySignal<TextTrackCueLoadingState['presentation']>;
-    currentTime: ReadonlySignal<TextTrackCueLoadingState['currentTime']>;
+    selectedTextTrackId: ReadonlySignal<TextTrackSegmentLoadingState['selectedTextTrackId']>;
+    presentation: ReadonlySignal<TextTrackSegmentLoadingState['presentation']>;
+    currentTime: ReadonlySignal<TextTrackSegmentLoadingState['currentTime']>;
   };
   context: {
-    segmentLoaderActor: ReadonlySignal<TextTrackCueLoadingContext['segmentLoaderActor']>;
+    segmentLoaderActor: ReadonlySignal<TextTrackSegmentLoadingContext['segmentLoaderActor']>;
   };
-}): Reactor<LoadTextTrackCuesState | 'destroying' | 'destroyed'> {
+}): Reactor<LoadTextTrackSegmentsState | 'destroying' | 'destroyed'> {
   const selectedTrackSignal = computed(() => {
     const track = findResolvedTextTrack(state.presentation.get(), state.selectedTextTrackId.get());
     return track && track.segments.length > 0 ? track : undefined;
   });
-  const derivedStateSignal = computed<LoadTextTrackCuesState>(() =>
+  const derivedStateSignal = computed<LoadTextTrackSegmentsState>(() =>
     context.segmentLoaderActor.get() && selectedTrackSignal.get() ? 'selected-track-resolved' : 'preconditions-unmet'
   );
 
-  return createMachineReactor<LoadTextTrackCuesState>({
+  return createMachineReactor<LoadTextTrackSegmentsState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
@@ -82,8 +82,8 @@ function loadTextTrackCuesSetup({
   });
 }
 
-export const loadTextTrackCues = defineBehavior({
+export const loadTextTrackSegments = defineBehavior({
   stateKeys: ['selectedTextTrackId', 'presentation', 'currentTime'],
   contextKeys: ['segmentLoaderActor'],
-  setup: loadTextTrackCuesSetup,
+  setup: loadTextTrackSegmentsSetup,
 });

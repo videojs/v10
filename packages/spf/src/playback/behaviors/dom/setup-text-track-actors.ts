@@ -12,7 +12,7 @@ import type { TextTracksActor } from '../../actors/text-tracks';
 /**
  * Context shape for text-track actors setup.
  *
- * Mirrors the shape `loadTextTrackCues` expects, but with `mediaElement`
+ * Mirrors the shape `loadTextTrackSegments` expects, but with `mediaElement`
  * typed as `HTMLMediaElement` (the concrete input the DOM factory needs)
  * and the actors parameterized over `VTTCue` (what the DOM factory produces).
  */
@@ -46,12 +46,12 @@ export interface TextTrackActorsConfig {
  * full context signal, so writing the actor slots back to `context` from
  * inside the effect does not re-trigger it.
  *
- * Pairs with the host-agnostic `loadTextTrackCues` behavior in
+ * Pairs with the host-agnostic `loadTextTrackSegments` behavior in
  * `behaviors/`: this setup manages actor lifecycle, the loader
  * orchestrates state transitions and dispatches load messages.
  *
  * @example
- * createComposition([setupTextTrackActors, loadTextTrackCues, ...], {
+ * createComposition([setupTextTrackActors, loadTextTrackSegments, ...], {
  *   config: { resolveTextTrackSegment: resolveVttSegment },
  * });
  */

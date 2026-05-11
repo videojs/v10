@@ -13,17 +13,17 @@ import type {
 import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../../actors/text-tracks';
 import {
-  loadTextTrackCues,
-  type TextTrackCueLoadingContext,
-  type TextTrackCueLoadingState,
-} from '../../load-text-track-cues';
+  loadTextTrackSegments,
+  type TextTrackSegmentLoadingContext,
+  type TextTrackSegmentLoadingState,
+} from '../../load-text-track-segments';
 import { setupTextTrackActors, type TextTrackActorsContext } from '../setup-text-track-actors';
 
 // The composed behaviors (setup in dom + loader in media) intersect their
 // context-shape contracts. The setup narrows `mediaElement` to
 // `HTMLMediaElement`; the loader keeps the abstract actor types. The test
 // signal map has to satisfy both.
-type ComposedContext = TextTrackCueLoadingContext & TextTrackActorsContext;
+type ComposedContext = TextTrackSegmentLoadingContext & TextTrackActorsContext;
 
 // Mock resolveVttSegment
 vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
@@ -36,7 +36,7 @@ vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
   destroyVttResolver: vi.fn(),
 }));
 
-function makeState(initial: TextTrackCueLoadingState = {}): StateSignals<TextTrackCueLoadingState> {
+function makeState(initial: TextTrackSegmentLoadingState = {}): StateSignals<TextTrackSegmentLoadingState> {
   return {
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
@@ -93,11 +93,11 @@ function createMockSegments(count: number): Segment[] {
   }));
 }
 
-function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialContext: ComposedContext) {
+function setupLoadTextTrackCues(initialState: TextTrackSegmentLoadingState, initialContext: ComposedContext) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const setupCleanup = setupTextTrackActors.setup({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
-  const reactor = loadTextTrackCues.setup({ state, context });
+  const reactor = loadTextTrackSegments.setup({ state, context });
   const cleanup = () => {
     reactor.destroy();
     setupCleanup();
@@ -105,7 +105,7 @@ function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialC
   return { state, context, cleanup };
 }
 
-describe('loadTextTrackCues', () => {
+describe('loadTextTrackSegments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

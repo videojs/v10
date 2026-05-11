@@ -21,7 +21,7 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
 import { updateDuration } from '../../behaviors/dom/update-duration';
-import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
+import { loadTextTrackSegments } from '../../behaviors/load-text-track-segments';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
@@ -193,7 +193,7 @@ export function createSimpleHlsEngine(
       // Text tracks
       syncTextTracks,
       setupTextTrackActors,
-      loadTextTrackCues,
+      loadTextTrackSegments,
 
       // Behavior whose sole purpose is to use a callback to allow for signal writing from the outside (e.g. an adapter)
       // NOTE: While not required, adding at the end since behaviors are setup in order, so this increases the likelihood

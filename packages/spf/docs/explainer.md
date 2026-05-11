@@ -119,7 +119,7 @@ function createSimpleHlsEngine(config = {}) {
 
       // Text tracks
       syncTextTracks,
-      loadTextTrackCues,
+      loadTextTrackSegments,
     ],
     { config, initialState: { bandwidthState: initialBandwidthState() } }
   );

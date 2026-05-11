@@ -58,7 +58,7 @@ export function createSimpleHlsEngine(
       // Text tracks
       syncTextTracks,
       setupTextTrackActors,
-      loadTextTrackCues,
+      loadTextTrackSegments,
 
       // Hands writable signal refs to the consumer's onSignalsReady callback
       // so external code (the adapter, or any direct consumer) can drive the
@@ -365,7 +365,7 @@ The behavior also handles the seek-back case: if `appendBuffer` re-opens an `'en
 ```ts
 syncTextTracks,
 setupTextTrackActors,
-loadTextTrackCues,
+loadTextTrackSegments,
 ```
 
 Text tracks are an interesting wrinkle. They don't go through MSE — VTT cues land directly on the `<track>` elements of the media element. The shape of this stage is therefore different from the MSE pipeline above: there are no source buffers, no append serialization, no end-of-stream gate. But the SPF patterns are the same.
@@ -376,9 +376,9 @@ Text tracks are an interesting wrinkle. They don't go through MSE — VTT cues l
 
 The cue parser (`resolveTextTrackSegment`) is supplied via engine config — it defaults to the DOM-bound `resolveVttSegment` resolver, which uses an offscreen `<track>` element to leverage the browser's VTT parser. A different engine could supply a different parser (a worker-based parser, a native VTT parser if one ever ships, etc.) without changing the behavior.
 
-**`loadTextTrackCues`** is the orchestrator. It watches the resolved text track and the actors, and dispatches `load` messages to the segment loader actor whenever new segments need fetching. The actor handles per-segment fetching (and abort on track switch); the orchestrator decides *when* to ask.
+**`loadTextTrackSegments`** is the orchestrator. It watches the resolved text track and the actors, and dispatches `load` messages to the segment loader actor whenever new segments need fetching. The actor handles per-segment fetching (and abort on track switch); the orchestrator decides *when* to ask.
 
-This is the same pattern as MSE: actor-as-resource (`setupTextTrackActors` puts it on context), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
+This is the same pattern as MSE: actor-as-resource (`setupTextTrackActors` puts it on context), orchestrator-as-behavior (`loadTextTrackSegments` decides when to send messages). Different platform, same shape.
 
 ---
 
