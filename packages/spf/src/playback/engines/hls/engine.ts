@@ -7,7 +7,7 @@ import {
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
-import type { MaybeResolvedPresentation } from '../../../media/types';
+import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
@@ -50,7 +50,7 @@ export interface SimpleHlsEngineState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
-  abrDisabled?: boolean;
+  userVideoTrackSelection?: Partial<VideoTrack>;
   currentTime?: number;
   playbackInitiated?: boolean;
   mediaSourceReadyState?: MediaSource['readyState'];

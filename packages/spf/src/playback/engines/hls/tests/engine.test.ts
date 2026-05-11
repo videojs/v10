@@ -38,7 +38,7 @@ describe('createSimpleHlsEngine', () => {
     // ABR machinery has a non-nullish starting point; everything else
     // starts as `undefined` and behaviors write their own slots.
     expect(snapshot(engine.state)).toEqual({
-      abrDisabled: undefined,
+      userVideoTrackSelection: undefined,
       bandwidthState: {
         fastEstimate: 0,
         fastTotalWeight: 0,

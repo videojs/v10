@@ -123,7 +123,7 @@ function renderRenditionPicker() {
   if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
   const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
-  const abrDisabled = engine.state.abrDisabled.get() === true;
+  const isManual = engine.state.userVideoTrackSelection.get() !== undefined;
   const tracks = getVideoTracks(presentation);
 
   if (tracks.length === 0) {
@@ -136,17 +136,17 @@ function renderRenditionPicker() {
   const statusRow = document.createElement('div');
   statusRow.className = 'abr-status';
   const modeLabel = document.createElement('span');
-  modeLabel.className = abrDisabled ? 'mode-manual' : 'mode-abr';
-  modeLabel.textContent = abrDisabled ? '🔒 Manual' : '⟳ ABR';
+  modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
+  modeLabel.textContent = isManual ? '🔒 Manual' : '⟳ ABR';
   statusRow.appendChild(modeLabel);
-  if (abrDisabled) {
+  if (isManual) {
     const enableBtn = document.createElement('button');
     enableBtn.type = 'button';
     enableBtn.className = 'enable-abr-btn';
     enableBtn.textContent = 'Enable ABR';
     enableBtn.addEventListener('click', () => {
       log('ABR re-enabled', 'success');
-      signals.state.abrDisabled.set(false);
+      signals.state.userVideoTrackSelection.set(undefined);
     });
     statusRow.appendChild(enableBtn);
   }
@@ -156,17 +156,14 @@ function renderRenditionPicker() {
     const isSelected = track.id === selectedVideoTrackId;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `rendition-btn${isSelected ? (abrDisabled ? ' selected-manual' : ' selected-abr') : ''}`;
+    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
     const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} @ ` : '';
-    const badge = isSelected ? (abrDisabled ? ' 🔒' : ' ⟳') : '';
+    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
     btn.textContent = `${res}${formatBandwidth(track.bandwidth)}${badge}`;
     btn.title = track.id;
     btn.addEventListener('click', () => {
       log(`Manual rendition select: ${formatBandwidth(track.bandwidth)} (ABR disabled)`, 'warning');
-      // TODO(stage-d): selectedVideoTrackId is the deferred reconciler case —
-      // direct write into composition state until intent/state split lands.
-      engine.state.selectedVideoTrackId.set(track.id);
-      signals.state.abrDisabled.set(true);
+      signals.state.userVideoTrackSelection.set({ id: track.id });
     });
     renditionButtonsDiv.appendChild(btn);
   }
@@ -322,7 +319,7 @@ function startEngine(src: string) {
     }
 
     if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
-      const mode = state.abrDisabled ? '(manual)' : '(ABR)';
+      const mode = state.userVideoTrackSelection ? '(manual)' : '(ABR)';
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
       prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
