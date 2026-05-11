@@ -37,7 +37,7 @@ export interface TextTrackSegmentLoadingState {
 }
 
 export interface TextTrackSegmentLoadingContext {
-  segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
 }
 
 type LoadTextTrackSegmentsState = 'preconditions-unmet' | 'selected-track-resolved';
@@ -52,7 +52,7 @@ function loadTextTrackSegmentsSetup({
     currentTime: ReadonlySignal<TextTrackSegmentLoadingState['currentTime']>;
   };
   context: {
-    segmentLoaderActor: ReadonlySignal<TextTrackSegmentLoadingContext['segmentLoaderActor']>;
+    textTrackSegmentLoaderActor: ReadonlySignal<TextTrackSegmentLoadingContext['textTrackSegmentLoaderActor']>;
   };
 }): Reactor<LoadTextTrackSegmentsState | 'destroying' | 'destroyed'> {
   const selectedTrackSignal = computed(() => {
@@ -60,7 +60,9 @@ function loadTextTrackSegmentsSetup({
     return track && track.segments.length > 0 ? track : undefined;
   });
   const derivedStateSignal = computed<LoadTextTrackSegmentsState>(() =>
-    context.segmentLoaderActor.get() && selectedTrackSignal.get() ? 'selected-track-resolved' : 'preconditions-unmet'
+    context.textTrackSegmentLoaderActor.get() && selectedTrackSignal.get()
+      ? 'selected-track-resolved'
+      : 'preconditions-unmet'
   );
 
   return createMachineReactor<LoadTextTrackSegmentsState>({
@@ -75,7 +77,7 @@ function loadTextTrackSegmentsSetup({
         effects: () => {
           const currentTime = state.currentTime.get() ?? 0;
           const track = selectedTrackSignal.get()!;
-          peek(context.segmentLoaderActor)!.send({ type: 'load', track, currentTime });
+          peek(context.textTrackSegmentLoaderActor)!.send({ type: 'load', track, currentTime });
         },
       },
     },
@@ -84,6 +86,6 @@ function loadTextTrackSegmentsSetup({
 
 export const loadTextTrackSegments = defineBehavior({
   stateKeys: ['selectedTextTrackId', 'presentation', 'currentTime'],
-  contextKeys: ['segmentLoaderActor'],
+  contextKeys: ['textTrackSegmentLoaderActor'],
   setup: loadTextTrackSegmentsSetup,
 });

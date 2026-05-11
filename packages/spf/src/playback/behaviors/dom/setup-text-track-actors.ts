@@ -19,7 +19,7 @@ import type { TextTracksActor } from '../../actors/text-tracks';
 export interface TextTrackActorsContext {
   mediaElement?: HTMLMediaElement | undefined;
   textTracksActor?: TextTracksActor<VTTCue> | undefined;
-  segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
 }
 
 /**
@@ -62,7 +62,7 @@ function setupTextTrackActorsSetup({
   context: {
     mediaElement: ReadonlySignal<TextTrackActorsContext['mediaElement']>;
     textTracksActor: Signal<TextTrackActorsContext['textTracksActor']>;
-    segmentLoaderActor: Signal<TextTrackActorsContext['segmentLoaderActor']>;
+    textTrackSegmentLoaderActor: Signal<TextTrackActorsContext['textTrackSegmentLoaderActor']>;
   };
   config: TextTrackActorsConfig;
 }): () => void {
@@ -73,21 +73,24 @@ function setupTextTrackActorsSetup({
     if (!mediaElement) return;
 
     const textTracksActor = createTextTracksActor(mediaElement);
-    const segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor, config.resolveTextTrackSegment);
+    const textTrackSegmentLoaderActor = createTextTrackSegmentLoaderActor(
+      textTracksActor,
+      config.resolveTextTrackSegment
+    );
     context.textTracksActor.set(textTracksActor);
-    context.segmentLoaderActor.set(segmentLoaderActor);
+    context.textTrackSegmentLoaderActor.set(textTrackSegmentLoaderActor);
 
     return () => {
       textTracksActor.destroy();
-      segmentLoaderActor.destroy();
+      textTrackSegmentLoaderActor.destroy();
       context.textTracksActor.set(undefined);
-      context.segmentLoaderActor.set(undefined);
+      context.textTrackSegmentLoaderActor.set(undefined);
     };
   });
 }
 
 export const setupTextTrackActors = defineBehavior({
   stateKeys: [],
-  contextKeys: ['mediaElement', 'textTracksActor', 'segmentLoaderActor'],
+  contextKeys: ['mediaElement', 'textTracksActor', 'textTrackSegmentLoaderActor'],
   setup: setupTextTrackActorsSetup,
 });

@@ -69,7 +69,7 @@ export interface SimpleHlsEngineContext {
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
   textTracksActor?: TextTracksActor;
-  segmentLoaderActor?: TextTrackSegmentLoaderActor;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 /**

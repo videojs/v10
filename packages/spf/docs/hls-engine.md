@@ -113,7 +113,7 @@ export interface SimpleHlsEngineContext {
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
   textTracksActor?: TextTracksActor;
-  segmentLoaderActor?: TextTrackSegmentLoaderActor;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {

@@ -52,7 +52,7 @@ function makeContext(initial: ComposedContext = {}): ContextSignals<ComposedCont
     textTracksActor: signal<TextTracksActor<VTTCue & Cue> | undefined>(
       initial.textTracksActor as TextTracksActor<VTTCue & Cue> | undefined
     ) as ContextSignals<ComposedContext>['textTracksActor'],
-    segmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.segmentLoaderActor),
+    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
   };
 }
 
