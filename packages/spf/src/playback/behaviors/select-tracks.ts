@@ -36,8 +36,8 @@ import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../me
 // config inline. Picker is variant-specific: video/audio use
 // `pickFirstTrackId` (works on any `MaybeResolvedPresentation`); text uses
 // `pickTextTrack` against a fully-resolved `Presentation`. The lifecycle —
-// pick on entering 'resolved' if not already selected; clear on entering
-// 'unresolved' — is shared.
+// pick on entering 'presentation-resolved' if not already selected; clear
+// on entering 'presentation-unresolved' — is shared.
 // ============================================================================
 
 type SelectedTrackKey = 'selectedAudioTrackId' | 'selectedTextTrackId';
@@ -59,25 +59,28 @@ function setupTrackSelection<K extends SelectedTrackKey>({
   config: TrackSelectionSetupConfig<K>;
 }) {
   const derivedStateSignal = computed(() =>
-    isResolvedPresentation(state.presentation.get()) ? ('resolved' as const) : ('unresolved' as const)
+    isResolvedPresentation(state.presentation.get())
+      ? ('presentation-resolved' as const)
+      : ('presentation-unresolved' as const)
   );
 
   return createMachineReactor({
-    initial: 'unresolved',
+    initial: 'presentation-unresolved',
     monitor: () => derivedStateSignal.get(),
     states: {
-      unresolved: {},
-      resolved: {
-        // Entry: pick a default on entering resolved if none is set.
-        // External writes (user picks, ABR) that already populated the slot
-        // are left alone.
+      'presentation-unresolved': {},
+      'presentation-resolved': {
+        // Entry: pick a default on entering presentation-resolved if none
+        // is set. External writes (user picks, ABR) that already populated
+        // the slot are left alone.
         //
         // The returned cleanup runs on state exit — which fires on src
-        // unload (resolved → unresolved) AND on behavior destroy (resolved
-        // → destroying → destroyed). Putting the clear here rather than as
-        // unresolved.entry is more cohesive (operation + cleanup co-
-        // located) and correctly covers destroy (destroy doesn't pass
-        // through unresolved).
+        // unload (presentation-resolved → presentation-unresolved) AND on
+        // behavior destroy (presentation-resolved → destroying →
+        // destroyed). Putting the clear here rather than as
+        // presentation-unresolved.entry is more cohesive (operation +
+        // cleanup co-located) and correctly covers destroy (destroy
+        // doesn't pass through presentation-unresolved).
         entry: () => {
           if (!state[selectedKey].get()) {
             const presentation = state.presentation.get();

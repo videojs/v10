@@ -74,7 +74,7 @@ const tracks = [
 // ============================================================================
 
 describe('switchVideoQuality', () => {
-  describe('lifecycle (preconditions-unmet ↔ evaluating)', () => {
+  describe('lifecycle (presentation-unresolved ↔ presentation-resolved)', () => {
     it('does nothing without a presentation', async () => {
       const state = makeState({ bandwidthState: createBandwidthState(3_000_000) });
 
@@ -112,7 +112,7 @@ describe('switchVideoQuality', () => {
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       reactor.destroy();
-      // Destroy fires the 'evaluating' entry's cleanup, which clears the slot.
+      // Destroy fires the 'presentation-resolved' entry's cleanup, which clears the slot.
       expect(state.selectedVideoTrackId.get()).toBeUndefined();
     });
 

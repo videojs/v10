@@ -9,10 +9,10 @@
  * choice is fully determined and ABR is short-circuited (no bandwidth read,
  * no effect re-fire on bandwidth changes).
  *
- * Lifecycle: `'preconditions-unmet'` (no resolved presentation) ↔
- * `'evaluating'` (presentation resolved). The `'evaluating'` state owns the
- * selection slot; its entry-returned cleanup clears the slot on exit
- * (canonical cleanup-binds-to-setup per `reactors.md`).
+ * Lifecycle: `'presentation-unresolved'` ↔ `'presentation-resolved'`. The
+ * `'presentation-resolved'` state owns the selection slot; its
+ * entry-returned cleanup clears the slot on exit (canonical
+ * cleanup-binds-to-setup per `reactors.md`).
  *
  * Hysteresis: downgrades apply immediately; upgrades require the optimal
  * track's bandwidth to exceed the current track's by `upgradeMargin`. No
@@ -176,18 +176,21 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
   const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
 
   const derivedStateSignal = computed(() =>
-    isResolvedPresentation(state.presentation.get()) ? ('evaluating' as const) : ('preconditions-unmet' as const)
+    isResolvedPresentation(state.presentation.get())
+      ? ('presentation-resolved' as const)
+      : ('presentation-unresolved' as const)
   );
 
   return createMachineReactor({
-    initial: 'preconditions-unmet',
+    initial: 'presentation-unresolved',
     monitor: () => derivedStateSignal.get(),
     states: {
-      'preconditions-unmet': {},
-      evaluating: {
+      'presentation-unresolved': {},
+      'presentation-resolved': {
         // Canonical cleanup-binds-to-setup: the selection slot's valid
-        // lifespan is exactly 'evaluating'. Clear fires on 'evaluating'
-        // exit, covering both src unload and behavior destroy.
+        // lifespan is exactly 'presentation-resolved'. Clear fires on
+        // 'presentation-resolved' exit, covering both src unload and
+        // behavior destroy.
         entry: () => () => state[selectionKey].set(undefined),
         effects: [
           () => {

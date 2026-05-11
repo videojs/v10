@@ -57,36 +57,40 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   const runner = new ConcurrentRunner();
 
   // Reactor states model the FSM the previous effect-based body was
-  // hand-rolling. 'resolving' is entered when the presentation is fully
-  // parsed (has a Ham id + selectionSets); leaving it (presentation
-  // cleared or reset to an unresolved value) aborts all in-flight tasks
-  // via the entry-cleanup. Most URL changes go through 'unresolved'
-  // naturally (set undefined → set new partial → re-parse), so the
-  // common case is covered by state-exit alone; the task body's
-  // commit-time id check covers the pathological resolved→resolved-
-  // without-unresolved transition.
+  // hand-rolling. 'presentation-resolved' is entered when the
+  // presentation is fully parsed (has a Ham id + selectionSets); leaving
+  // it (presentation cleared or reset to an unresolved value) aborts all
+  // in-flight tasks via the entry-cleanup. Most URL changes go through
+  // 'presentation-unresolved' naturally (set undefined → set new partial
+  // → re-parse), so the common case is covered by state-exit alone; the
+  // task body's commit-time id check covers the pathological
+  // resolved→resolved-without-unresolved transition.
   const derivedStateSignal = computed(() =>
-    isResolvedPresentation(state.presentation.get()) ? ('resolving' as const) : ('unresolved' as const)
+    isResolvedPresentation(state.presentation.get())
+      ? ('presentation-resolved' as const)
+      : ('presentation-unresolved' as const)
   );
 
   return createMachineReactor({
-    initial: 'unresolved',
+    initial: 'presentation-unresolved',
     monitor: () => derivedStateSignal.get(),
     states: {
-      unresolved: {},
-      resolving: {
+      'presentation-unresolved': {},
+      'presentation-resolved': {
         // `entry` runs on state entry; the function it returns is the
         // state-exit cleanup. Returning `() => runner.abortAll()` binds
-        // abort-of-in-flight-resolutions to leaving 'resolving' (presentation
-        // cleared/reset, or behavior destroyed) — source-change cancellation
-        // expressed structurally through the state machine.
+        // abort-of-in-flight-resolutions to leaving 'presentation-resolved'
+        // (presentation cleared/reset, or behavior destroyed) —
+        // source-change cancellation expressed structurally through the
+        // state machine.
         entry: () => () => runner.abortAll(),
         effects: [
           () => {
             // The reactor's state transitions handle relevant presentation
-            // changes (resolved↔unresolved); within 'resolving' we peek
-            // (untracked read) so internal updates (segments added by
-            // sibling tasks) don't re-fire the effect.
+            // changes (presentation-resolved ↔ presentation-unresolved);
+            // within 'presentation-resolved' we peek (untracked read) so
+            // internal updates (segments added by sibling tasks) don't
+            // re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;

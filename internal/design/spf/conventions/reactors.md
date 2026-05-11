@@ -52,8 +52,8 @@ Concrete examples:
 
 | Work | Transition or state? | Where to put it |
 | ---- | -------------------- | --------------- |
-| Pick a default selection on entering 'resolved' | **Transition** | `entry` — fires once per entry; doesn't re-fire as other slots change. |
-| Clear stale selection on entering 'unresolved' | **Transition** | `entry` |
+| Pick a default selection on entering `'presentation-resolved'` | **Transition** | `entry` — fires once per entry; doesn't re-fire as other slots change. |
+| Clear stale selection on entering `'presentation-unresolved'` | **Transition** | `entry` |
 | Schedule a fetch task that updates as `selectedTrackId` changes | **State** | `effects` — re-runs when the tracked id changes. |
 | Subscribe to DOM events while in 'playing' | **Transition** | `entry` — register on entry, return unsubscribe; cleanup on exit. |
 | Re-derive a "should buffer" decision from `currentTime` | **State** | `effects` — re-runs as currentTime ticks. |
@@ -96,27 +96,28 @@ When state X's entry "does Y" and the inverse "undoes Y" should fire on state ex
 - **Cohesion**: a reader has to look at two states to understand a single logical operation. The setup is in one entry; the teardown is in another state's entry. Operations and their cleanups belong together.
 - **Destroy correctness**: a reactor's destroy transitions `current → 'destroying' → 'destroyed'` *without* passing through arbitrary intermediate states. If state X's cleanup is expressed as state Y's entry, destroying mid-X never enters Y, so the cleanup is missed. The entry-returns-cleanup form fires on *any exit from X*, including via destroy.
 
-Concrete example: `select-tracks` enters `'resolved'` to pick a default and clears the selection on exit. Both belong in `'resolved'.entry`:
+Concrete example: `select-tracks` enters `'presentation-resolved'` to pick a default and clears the selection on exit. Both belong in `'presentation-resolved'.entry`:
 
 ```ts
 states: {
-  unresolved: {},
-  resolved: {
+  'presentation-unresolved': {},
+  'presentation-resolved': {
     entry: () => {
       // setup: pick default if not already selected
       if (!state[selectedKey].get()) {
         const id = picker(state.presentation.get());
         if (id) state[selectedKey].set(id);
       }
-      // cleanup: runs on src unload (resolved → unresolved) and on
-      // behavior destroy (resolved → destroying → destroyed)
+      // cleanup: runs on src unload (presentation-resolved →
+      // presentation-unresolved) and on behavior destroy
+      // (presentation-resolved → destroying → destroyed)
       return () => state[selectedKey].set(undefined);
     },
   },
 },
 ```
 
-Splitting the clear into `unresolved.entry` would work for the src-unload path but silently miss the destroy path.
+Splitting the clear into `'presentation-unresolved'.entry` would work for the src-unload path but silently miss the destroy path.
 
 ## Source-identity states for source-driven work
 
@@ -124,15 +125,17 @@ Pattern for behaviors that schedule async work tied to an external source. The c
 
 ```ts
 const derivedStateSignal = computed(() =>
-  isResolvedPresentation(state.presentation.get()) ? 'resolving' : 'unresolved'
+  isResolvedPresentation(state.presentation.get())
+    ? 'presentation-resolved'
+    : 'presentation-unresolved'
 );
 
 return createMachineReactor({
-  initial: 'unresolved',
+  initial: 'presentation-unresolved',
   monitor: () => derivedStateSignal.get(),
   states: {
-    unresolved: {},
-    resolving: {
+    'presentation-unresolved': {},
+    'presentation-resolved': {
       entry: () => () => runner.abortAll(),
       effects: [/* schedule tasks against runner */],
     },
@@ -140,9 +143,29 @@ return createMachineReactor({
 });
 ```
 
-The 'unresolved' ↔ 'resolving' transitions encode source-identity changes. Source resets (URL change, source cleared) drive the reactor through 'unresolved'; the `entry` exit-cleanup aborts in-flight tasks. Internal updates within the same source (e.g., segments added by sibling tasks) preserve the state and don't disturb in-flight work.
+The `'presentation-unresolved'` ↔ `'presentation-resolved'` transitions encode source-identity changes. Source resets (URL change, source cleared) drive the reactor through `'presentation-unresolved'`; the `entry` exit-cleanup aborts in-flight tasks. Internal updates within the same source (e.g., segments added by sibling tasks) preserve the state and don't disturb in-flight work.
 
 Source-change cancellation binds to the state machine **structurally** — there's no closure-state tracking "what was the prior source id." See `setupTrackResolution` in `packages/spf/src/playback/behaviors/resolve-track.ts` for the canonical worked example. See also `behaviors.md` → Source-reset handling for the broader concern.
+
+## State-name convention: name by world-fact, not by behavior-action
+
+State names describe *facts about the world that the reactor is responding to*, not *what this behavior does in that state*. The behavior's work lives in the file-level JSDoc and the `entry`/`effects` body — it doesn't need to be in the state name.
+
+The rules:
+
+1. **Single-condition gate (typically 2-state)** → name *both* states by the condition.
+   - The canonical case: presentation resolution. Use `'presentation-unresolved'` ↔ `'presentation-resolved'`.
+   - Behaviors gated on the same upstream condition share a vocabulary; a reader recognizes the gate at a glance. The `entry` body says *what happens in the resolved state* — e.g., schedule fetch tasks (`resolve-track`), pick a default + run ABR (`quality-switching`), pick a default (`select-tracks`).
+   - Avoid action verbs like `'evaluating'`, `'resolving'`, `'monitoring'` on the positive side when there's only one positive state — they describe the behavior, not the condition, and force readers to learn behavior-specific vocabulary for the same gate.
+
+2. **Compound gate** → use `'preconditions-unmet'` for the negative state.
+   - Use when the negative state bundles multiple inputs (e.g., element + actors + tracks, or context + state). There's no single named upstream signal to mirror, so the generic name is the honest one.
+   - Examples: `load-text-track-cues`, `track-playback-initiated`, `sync-text-tracks`.
+
+3. **Multi-state machines (3+ states)** → action/availability verbs are *load-bearing* on the positive side because they distinguish sub-states. Use them.
+   - Example: `resolve-presentation`'s `'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'` — `'idle'` and `'resolving'` both sit on the "URL exists, not yet resolved" side and must be distinguished.
+
+The trade-off the convention makes: reading a 2-state diagram in isolation no longer tells you "this behavior does ABR" or "this behavior resolves tracks" from the state names alone. That information lives in the file header and the entry body, where it already lives. What you gain in exchange is uniform vocabulary — anyone reading a new behavior recognizes `'presentation-unresolved' ↔ 'presentation-resolved'` as "one of those" rather than decoding a new pair of verbs per file.
 
 ## Reading non-tracked signals inside effects
 
