@@ -97,39 +97,83 @@ export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
 //
 // `setupQualitySwitching` has the same shape as a Behavior `setup` function:
 // `({ state, config }) => Reactor`. Each `switchXQuality` export below calls
-// it from inside its own `defineBehavior` setup, supplying its per-type
-// config inline (slot keys, track extractor, selection algorithm).
+// it from inside its own `defineBehavior` setup, passing the per-type slot
+// keys, track type, and selection algorithm explicitly via three generic
+// parameters — `S` (selection slot key), `U` (user-selection slot key), `T`
+// (ABR track type). The per-type export is the single point that ties them
+// together; the helper stays slot-agnostic.
+//
+// -- Design note: why narrow `SelectionKey` / `UserSelectionKey` unions ----
+// Goal we did not reach: have callers "fully pass in" the slot keys, with
+// the helper enforcing zero internal knowledge of which literals are valid.
+// What blocks it: indexing a mapped-type intersection by a generic key.
+// When `S extends keyof QualitySwitchingState` (or `string`), TS conservatively
+// treats `state[selectionKey]` as the union of every possible match across
+// the intersected mapped portions — including the fixed-key signals
+// (`presentation`, `bandwidthState`) — and widens to their value-type union.
+// The sibling pattern hits the same constraint and answers it the same way:
+// `SelectedTrackKey` in `select-tracks.ts:43` is a hardcoded narrow union
+// for the same reason.
+//
+// Routes considered for "fully passed in", with trade-offs (left here for
+// the larger-group conversation):
+//
+//   A. Derived constraint — `Exclude<keyof QualitySwitchingState, 'presentation'
+//      | 'bandwidthState'>`. Removes the literal enumeration; same narrowness,
+//      computed from the state shape. Still "knows" the fixed-key names.
+//   B. Broad constraint (`S extends keyof QualitySwitchingState`) + access-site
+//      casts (`state[selectionKey] as Signal<string | undefined>` at the top
+//      of the helper). Caller passes any keys; the type system stops checking
+//      S ≠ U or that the keys actually refer to selection slots. Once you
+//      cast at the top, the body is structurally the original remap pattern
+//      with extra ceremony.
+//   C. Remap pattern (pre-refactor) — caller passes signals under logical
+//      names (`selection`, `userSelection`); helper has no key generics.
+//      Cleanest types; inconsistent with the sibling helpers.
+//
+// Current pick is the narrow-union route because it matches siblings and
+// the unions read as documentation ("these are the slots this helper
+// manages") rather than restriction. Extending for audio is one literal
+// per union.
+// --------------------------------------------------------------------------
 // ============================================================================
 
 type AbrTrack = { id: string; bandwidth: number };
 
-interface QualitySwitchingSetupConfig<T extends AbrTrack> extends QualitySwitchingConfig {
+type SelectionKey = 'selectedVideoTrackId';
+type UserSelectionKey = 'userVideoTrackSelection';
+
+// Each mapped value references `P` so TS keeps the per-key dependency and
+// resolves `state[selectionKey]` / `state[userSelectionKey]` to the right
+// arm. `T` (track type) deliberately stays out of the state map — pulling
+// it in detaches the user-selection mapped value from `P` and TS collapses
+// the intersection. T flows through `QualitySwitchingSetupConfig` instead;
+// the user-filter access casts at the read site (see below).
+type QualitySwitchingStateMap<S extends SelectionKey, U extends UserSelectionKey> = {
+  presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
+  bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
+} & { [P in S]: Signal<QualitySwitchingState[P]> } & { [P in U]: ReadonlySignal<QualitySwitchingState[P]> };
+
+interface QualitySwitchingSetupConfig<S extends SelectionKey, U extends UserSelectionKey, T extends AbrTrack>
+  extends QualitySwitchingConfig {
+  selectionKey: S;
+  userSelectionKey: U;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
   selectOptimal: (tracks: readonly T[], bandwidth: number, opts: { safetyMargin: number }) => T | undefined;
 }
 
-// Internal state shape uses logical names (`selection`, `userSelection`)
-// rather than per-type physical names (`selectedVideoTrackId`,
-// `userVideoTrackSelection`). Per-type exports below remap their slot
-// references into this shape at the call site — avoids generic-mapped-type
-// indexing pitfalls and keeps the helper body slot-agnostic.
-function setupQualitySwitching<T extends AbrTrack>({
+function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKey, T extends AbrTrack>({
   state,
   config,
 }: {
-  state: {
-    presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
-    bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
-    selection: Signal<string | undefined>;
-    userSelection: ReadonlySignal<Partial<T> | undefined>;
-  };
-  config: QualitySwitchingSetupConfig<T>;
+  state: QualitySwitchingStateMap<S, U>;
+  config: QualitySwitchingSetupConfig<S, U, T>;
 }) {
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const upgradeMargin = config.upgradeMargin ?? DEFAULT_SWITCHING_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
   const minTotalBytes = config.minTotalBytes ?? DEFAULT_SWITCHING_CONFIG.minTotalBytes;
-  const { getTracks, selectOptimal } = config;
+  const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
 
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get()) ? ('evaluating' as const) : ('preconditions-unmet' as const)
@@ -144,7 +188,7 @@ function setupQualitySwitching<T extends AbrTrack>({
         // Canonical cleanup-binds-to-setup: the selection slot's valid
         // lifespan is exactly 'evaluating'. Clear fires on 'evaluating'
         // exit, covering both src unload and behavior destroy.
-        entry: () => () => state.selection.set(undefined),
+        entry: () => () => state[selectionKey].set(undefined),
         effects: [
           () => {
             const presentation = peek(state.presentation);
@@ -154,7 +198,12 @@ function setupQualitySwitching<T extends AbrTrack>({
             const [firstAllTrack] = allTracks;
             if (!firstAllTrack) return;
 
-            const userFilter = state.userSelection.get();
+            // State stores the filter as `Partial<VideoTrack>` (user-facing
+            // shape — includes V-only fields like `height`); the helper
+            // works against `Partial<T>` so filter and track access share
+            // one index type. Filter keys absent on a partially-resolved
+            // track read as `undefined` and just exclude that track.
+            const userFilter = state[userSelectionKey].get() as Partial<T> | undefined;
             const matching = userFilter
               ? allTracks.filter((track) => {
                   for (const key in userFilter) {
@@ -169,7 +218,7 @@ function setupQualitySwitching<T extends AbrTrack>({
             const candidates = matching.length > 0 ? matching : allTracks;
             if (!candidates.length) return;
 
-            const selectedId = state.selection.get();
+            const selectedId = state[selectionKey].get();
 
             // Common case: user has fully constrained the choice (e.g.,
             // `{ id: 'specific-720p' }` narrows to a single track). Skip
@@ -177,7 +226,7 @@ function setupQualitySwitching<T extends AbrTrack>({
             // so the effect doesn't re-fire on bandwidth changes while
             // the user's selection holds.
             if (candidates.length === 1) {
-              if (candidates[0]!.id !== selectedId) state.selection.set(candidates[0]!.id);
+              if (candidates[0]!.id !== selectedId) state[selectionKey].set(candidates[0]!.id);
               return;
             }
 
@@ -205,19 +254,19 @@ function setupQualitySwitching<T extends AbrTrack>({
               // No current track in the active candidate set —
               // initialization, post-cleared, or filter narrowed to
               // exclude the previous selection. Apply optimal directly.
-              state.selection.set(optimal.id);
+              state[selectionKey].set(optimal.id);
               return;
             }
 
             if (optimal.bandwidth < currentTrack.bandwidth) {
               // Downgrade — apply immediately.
-              state.selection.set(optimal.id);
+              state[selectionKey].set(optimal.id);
               return;
             }
 
             // Upgrade — gate by magnitude hysteresis.
             if (optimal.bandwidth >= currentTrack.bandwidth * upgradeMargin) {
-              state.selection.set(optimal.id);
+              state[selectionKey].set(optimal.id);
             }
           },
         ],
@@ -246,23 +295,15 @@ export const switchVideoQuality = defineBehavior({
     state,
     config,
   }: {
-    state: {
-      presentation: ReadonlySignal<QualitySwitchingState['presentation']>;
-      bandwidthState: ReadonlySignal<QualitySwitchingState['bandwidthState']>;
-      selectedVideoTrackId: Signal<string | undefined>;
-      userVideoTrackSelection: ReadonlySignal<Partial<VideoTrack> | undefined>;
-    };
+    state: QualitySwitchingStateMap<'selectedVideoTrackId', 'userVideoTrackSelection'>;
     config?: QualitySwitchingConfig;
   }) =>
-    setupQualitySwitching<PartiallyResolvedVideoTrack | VideoTrack>({
-      state: {
-        presentation: state.presentation,
-        bandwidthState: state.bandwidthState,
-        selection: state.selectedVideoTrackId,
-        userSelection: state.userVideoTrackSelection,
-      },
+    setupQualitySwitching<'selectedVideoTrackId', 'userVideoTrackSelection', PartiallyResolvedVideoTrack | VideoTrack>({
+      state,
       config: {
         ...config,
+        selectionKey: 'selectedVideoTrackId',
+        userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) =>
           getTracksByType(presentation, 'video') as readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
         selectOptimal: selectQuality,
