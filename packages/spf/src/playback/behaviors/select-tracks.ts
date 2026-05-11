@@ -18,10 +18,11 @@
  * like `preferredAudioLanguage` / `preferredSubtitleLanguage` reach the
  * picker without an intermediate wrapping layer.
  *
- * Video selection lives in `switchVideoQuality` (`./quality-switching.ts`),
- * which owns both the default-pick and the ABR-driven adjustment for
- * `selectedVideoTrackId`. When audio-bitrate ABR ships, `selectAudioTrack`
- * is expected to merge into a `switchAudioQuality` peer there.
+ * Compose `selectVideoTrack` for the simple "pick a default video track"
+ * behavior, or `switchVideoQuality` (`./quality-switching.ts`) for the
+ * ABR-driven variant — they're alternatives, not stackable (both write
+ * `selectedVideoTrackId`). The simple variant tree-shakes out the
+ * ABR machinery (bandwidth-estimator, quality-selection algorithms).
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -34,6 +35,7 @@ import {
   type TextSelectionConfig,
   type TrackPicker,
   type TrackSelectionState,
+  type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
 import { isResolvedPresentation } from '../../media/types';
 
@@ -48,7 +50,7 @@ import { isResolvedPresentation } from '../../media/types';
 // on entering 'presentation-unresolved' — is shared.
 // ============================================================================
 
-type SelectedTrackKey = 'selectedAudioTrackId' | 'selectedTextTrackId';
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 
 type SelectStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<TrackSelectionState['presentation']>;
@@ -108,6 +110,45 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
+
+/** Default video picker: first track in the video selection set. */
+const defaultVideoPicker: TrackPicker = (presentation) => pickFirstTrackId(presentation, 'video');
+
+/**
+ * Config for `selectVideoTrack`. Pass `picker` to fully override selection
+ * logic; otherwise the default `pickFirstTrackId` is used.
+ */
+export interface SelectVideoTrackConfig extends Omit<VideoSelectionConfig, 'type'> {
+  picker?: TrackPicker<SelectVideoTrackConfig>;
+}
+
+/**
+ * Select a video track when a presentation loads. Clears the selection on
+ * src unload.
+ *
+ * This is the simple, non-ABR counterpart to `switchVideoQuality` — compose
+ * one or the other, not both (both write `selectedVideoTrackId`). Composing
+ * `selectVideoTrack` alone tree-shakes out the ABR code path
+ * (bandwidth-estimator, quality-selection); use it for sources without
+ * meaningful quality variants, test setups, or players that intentionally
+ * pin a quality.
+ *
+ * @example
+ * const reactor = selectVideoTrack.setup({ state });
+ */
+export const selectVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  contextKeys: [],
+  setup: ({ state, config }: { state: SelectStateMap<'selectedVideoTrackId'>; config?: SelectVideoTrackConfig }) =>
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: 'selectedVideoTrackId',
+        picker: config?.picker ?? defaultVideoPicker,
+        pickerConfig: config,
+      },
+    }),
+});
 
 /** Default audio picker: first track in the audio selection set. */
 const defaultAudioPicker: TrackPicker = (presentation) => pickFirstTrackId(presentation, 'audio');

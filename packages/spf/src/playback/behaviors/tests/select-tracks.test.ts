@@ -11,7 +11,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectTextTrack } from '../select-tracks';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -80,8 +80,107 @@ function createPresentation(config: {
   };
 }
 
-// Video track selection lives in switchVideoQuality (see
-// `quality-switching.test.ts`). This file covers audio + text only.
+// `selectVideoTrack` is the simple (non-ABR) video selector — ABR-driven
+// selection is exercised in `quality-switching.test.ts`.
+
+describe('selectVideoTrack', () => {
+  it('selects first video track when presentation loaded', async () => {
+    const videoTracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'video-low',
+        url: 'http://example.com/video-low.m3u8',
+        bandwidth: 600_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+      {
+        type: 'video',
+        id: 'video-high',
+        url: 'http://example.com/video-high.m3u8',
+        bandwidth: 2_400_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: videoTracks });
+    const state = makeState({ presentation });
+
+    const reactor = selectVideoTrack.setup({ state });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBe('video-low');
+
+    reactor.destroy();
+  });
+
+  it('clears selectedVideoTrackId on src unload', async () => {
+    const videoTracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'video-only',
+        url: 'http://example.com/video-only.m3u8',
+        bandwidth: 1_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: videoTracks });
+    const state = makeState({ presentation });
+
+    const reactor = selectVideoTrack.setup({ state });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedVideoTrackId.get()).toBe('video-only');
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('honors a caller-supplied picker', async () => {
+    const videoTracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'video-low',
+        url: 'http://example.com/video-low.m3u8',
+        bandwidth: 600_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+      {
+        type: 'video',
+        id: 'video-high',
+        url: 'http://example.com/video-high.m3u8',
+        bandwidth: 2_400_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: videoTracks });
+    const state = makeState({ presentation });
+
+    // Custom picker bypasses the default first-track rule and pins to a
+    // specific id; the behavior should honor it.
+    const reactor = selectVideoTrack.setup({
+      state,
+      config: { picker: () => 'video-high' },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBe('video-high');
+
+    reactor.destroy();
+  });
+});
 
 describe('selectAudioTrack', () => {
   it('selects audio track when presentation loaded', async () => {
