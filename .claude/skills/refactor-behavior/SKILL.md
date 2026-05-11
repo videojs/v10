@@ -173,6 +173,44 @@ cleaned-shape sketch + complexity-inventory + direction-declaration
 discipline that merges need. Per `behaviors.md` "Merging two behaviors
 — extra discipline."
 
+### Step 7 — Final-shape audit (after writing the change)
+
+Re-run the convention checks against the *output*, not just the input.
+The pre-refactor audit only catches problems in the starting code;
+problems you introduce *during* the refactor (a new helper that should
+have been extracted, a new monitor closure that should have been a
+`derivedStateSignal`, an action-shaped state name that snuck in) are
+invisible to it.
+
+Run through, against the file as it stands post-edit:
+
+- **Any top-level function with no `core/` import?** → relocate to
+  `media/`, `network/`, or `@videojs/utils`. The rule applies to new
+  helpers introduced during the refactor, not just helpers that lived
+  in the file beforehand. Per `behaviors.md` → "Pure helpers don't
+  belong in behaviors."
+- **Monitor inline or extracted?** → match the sibling pattern. Every
+  reactor-using behavior in the codebase uses the `derivedStateSignal`
+  form; an inline monitor is correct only for a direct single-signal
+  read. Per `reactors.md` → "The `deriveState` + `monitor` convention."
+- **State names: action-verb on the positive side?** → rename to
+  world-fact. Per `reactors.md` → "State-name convention."
+- **Closure-mutable variables that should reset on source change?** →
+  restructure into reactor state or `computed`. Per `behaviors.md` →
+  "Source-reset handling."
+- **`stateKeys` / `contextKeys` overshoot the body's actual reads/
+  writes?** → narrow. The exhaustiveness check catches drift in the
+  other direction (declared but unused keys still typecheck); this is
+  the convention layer.
+- **Naming sibling-consistent?** → if per-type-specialized siblings
+  exist (`loadVideoSegments`, `loadAudioSegments`), the new/renamed
+  behavior should match (`loadTextTrackSegments`). Per `behaviors.md`
+  → "Naming" → "Name by the unit-of-work this behavior triggers."
+
+This is a deliberate second pass — the most common refactor failure
+mode is satisfying the rules pre-change and missing them post-change
+because the diff itself introduced new instances.
+
 ## Output format
 
 Propose changes in this order. Use markdown headers for each numbered
@@ -192,4 +230,6 @@ The canonical failure: jumping to "what does this code do" → "how does
 it break" → "how do I fix the break," producing refactors that improve
 the code but miss the goal. Steps 1–2 force the right framing before
 mechanical analysis. Steps 3–6 only make sense once the purpose is
-named.
+named. Step 7 catches what the pre-refactor audit can't see — new
+helpers, new closures, new state names introduced by the refactor diff
+itself.

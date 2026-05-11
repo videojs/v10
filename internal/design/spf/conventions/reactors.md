@@ -39,7 +39,7 @@ Why a separate `deriveState` + `derivedStateSignal`:
 - **Stable identity**: the `monitor` callback identity matters for the reactor's tracking; reading a stable computed avoids re-creating closures.
 - **Composability**: other code can read `derivedStateSignal` independently if needed.
 
-When the derivation is trivial (one or two terms), inline it in `monitor` directly. The recurring shape is a separate function once it has more than the two-state-from-one-predicate case.
+**Default to extracting** — every reactor-using behavior in the codebase (`resolve-track`, `sync-text-tracks`, `track-playback-initiated`, `resolve-presentation`, `load-text-track-segments`) uses the `derivedStateSignal` form. Inline `monitor` is only correct for the narrowest case: a single direct signal read with no conjuncts, e.g. `monitor: () => state.foo.get() ? 'on' : 'off'`. As soon as the derivation involves two predicates, a helper function call, or any composition, extract to `derivedStateSignal` — the stable-identity and testability wins outweigh the small body-saving, and matching the sibling shape is load-bearing for grep-ability.
 
 ## Transition-driven vs state-driven work
 
@@ -189,7 +189,7 @@ When *not* to use `peek` inside an effect: when you need the effect to re-run as
 ## Anti-patterns
 
 - **Reaching for a Reactor when an `effect` would do.** If the work is single-shape signal-driven mirroring (no states), an `effect` is simpler. The threshold: if you have only one branch of behavior and no per-state cleanup distinction, you don't need a state machine. **Corollary**: bidirectional dataflow expressed as two `effect`s in one behavior isn't a Reactor candidate either — the directions aren't states, just two effect-shaped concerns sharing a slot surface. See [`behaviors.md`](behaviors.md) → "Multi-effect behaviors."
-- **Inlining a non-trivial `deriveState` directly in `monitor`.** Hurts testability and re-creates closures. Trivial inline derivations are fine; multi-line derivations want their own function.
+- **Inlining `monitor` past the single-signal-read case.** Inline is only correct for a direct read with no composition (`monitor: () => state.foo.get() ? 'on' : 'off'`). Two predicates, a helper call, or any conjunction → extract to `derivedStateSignal`. Hurts testability, re-creates the closure on every read, and breaks consistency with every other reactor-using behavior in the codebase.
 - **Hand-rolled FSM via `computed` flags + nested effects** when `createMachineReactor` was the answer. (See `behaviors.md` fight-the-shape sniffs.)
 - **Tracking a source signal again inside per-state effects** when the reactor's `monitor` already tracks it. Use `peek` for non-state reads inside the state.
 - **Putting state-exit cleanup in an `effects` callback's return** instead of `entry`'s return. `effects` cleanups run between effect re-runs *and* on state exit. If you want exit-only behavior, put it in `entry`.

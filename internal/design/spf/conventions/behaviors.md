@@ -500,10 +500,12 @@ Per-export JSDoc (already conventional) describes individual exports; the file-l
 - Per-type specializations co-locate in one module: `select-tracks.ts` exports `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`.
 - Behavior factories are named `make*`: `makeShareSignals`. The factory's product is a Behavior; the prefix distinguishes the factory from a Behavior export.
 - Setup-shape helpers are named `setup*`: `setupTrackResolution`. The shape is a `Behavior.setup`-style function called from inside a per-type behavior's setup.
+- **Name by the unit-of-work this behavior triggers, not by its downstream observable.** When per-type-specialized behaviors exist (video / audio / text), the names must match the work they share — sibling consistency is load-bearing. `loadVideoSegments` triggers segment fetches; segments produce frames downstream, but we don't call it `loadVideoFrames`. Same for audio (`loadAudioSegments`, not `loadAudioSamples`) and text (`loadTextTrackSegments`, not `loadTextTrackCues`). A name that breaks the sibling pattern is a sniff that the author was thinking about a different layer than the convention assumes.
+- **Domain-prefix slot / context keys when a same-shape sibling can exist** in the engine's composition. `segmentLoaderActor` reads as generic when there's only one in scope, but the moment a sibling appears — text-track segment loader, audio segment loader — the unqualified name becomes ambiguous. Prefer `videoSegmentLoaderActor` / `textTrackSegmentLoaderActor` even if only one exists today; the rename later is non-trivial because the slot leaks through behavior signatures and engine state types.
 
 ## Testing
 
-Tests live in `tests/` next to the source (`packages/spf/src/playback/behaviors/tests/sync-preload-attribute.test.ts`). The vitest project assignment is automatic by path:
+Tests live in `tests/` next to the source (`packages/spf/src/playback/behaviors/tests/sync-preload.test.ts`). The vitest project assignment is automatic by path:
 
 - `playback/behaviors/**/*.test.ts` (non-DOM) → `behaviors` project (Node).
 - `playback/behaviors/dom/**/*.test.ts` (DOM) → `dom` project (Chromium).
