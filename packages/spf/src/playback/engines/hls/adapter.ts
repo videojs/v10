@@ -121,8 +121,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       this.#engine.destroy();
       this.#engine = this.#createEngine();
 
-      // Apply explicit preload before setting context so syncPreloadAttribute skips
-      // element inference and the explicit value is preserved across src changes.
+      // Apply explicit preload before setting context so it's already in
+      // state.preload when syncPreload's read effect runs on the attach —
+      // the read effect only overwrites when the element's `preload` is a
+      // W3C value (which a freshly-created <video> with no attribute is not).
       if (this.#preload) {
         this.#signals.state.preload.set(this.#preload);
       }

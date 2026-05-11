@@ -394,7 +394,7 @@ type ExhaustiveKeys<Keys extends readonly PropertyKey[], Slot extends object, Na
  *
  * @example
  * ```ts
- * export const syncPreloadAttribute = defineBehavior({
+ * export const syncPreload = defineBehavior({
  *   stateKeys: ['preload'],
  *   contextKeys: ['mediaElement'],
  *   setup: ({ state, context }: {

@@ -22,7 +22,7 @@ export function createSimpleHlsEngine(
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
   return createComposition(
     [
-      syncPreloadAttribute,
+      syncPreload,
       trackPlaybackInitiated,
       resolvePresentation,
 
@@ -142,12 +142,12 @@ Each behavior receives `{ state, context, config }` — but only the slots it de
 The first three entries are the lead-in:
 
 ```ts
-syncPreloadAttribute,
+syncPreload,
 trackPlaybackInitiated,
 resolvePresentation,
 ```
 
-**`syncPreloadAttribute`** mirrors the `<video preload>` attribute into `state.preload`. This makes the preload mode reactive — anything downstream that wants to react to preload changes (for example, "should we eagerly fetch the manifest?") can subscribe to a signal instead of polling the DOM.
+**`syncPreload`** bidirectionally syncs `state.preload` and the media element's `preload` property — DOM-side values feed state on attach or source change, and state-side values propagate back to the element. A configurable default (`'metadata'`) backfills when neither side has supplied a value. This makes the preload mode reactive — anything downstream that wants to react to preload changes (for example, "should we eagerly fetch the manifest?") can subscribe to a signal instead of polling the DOM.
 
 **`trackPlaybackInitiated`** sets `state.playbackInitiated` to `true` once the user has tried to play (the element is no longer paused). It's a small reactor that watches the media element's `play`/`pause` events. Why it matters: behaviors that should only run after the user interacts (or after autoplay fires) can gate on `state.playbackInitiated`.
 
@@ -287,7 +287,7 @@ trackCurrentTime,
 switchQuality,
 ```
 
-**`trackCurrentTime`** mirrors the media element's `currentTime` onto `state.currentTime`. Same shape as `syncPreloadAttribute` from stage 1: the DOM event becomes a signal write, and downstream behaviors gate on the reactive value rather than polling the element. `loadSegments` reads it to know how far ahead to fetch; `endOfStream` reads it to know whether the user has reached the end.
+**`trackCurrentTime`** mirrors the media element's `currentTime` onto `state.currentTime`. Same shape as `syncPreload` from stage 1: the DOM event becomes a signal write, and downstream behaviors gate on the reactive value rather than polling the element. `loadSegments` reads it to know how far ahead to fetch; `endOfStream` reads it to know whether the user has reached the end.
 
 **`switchQuality`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadVideoSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadVideoSegments` to start fetching from the new variant.
 

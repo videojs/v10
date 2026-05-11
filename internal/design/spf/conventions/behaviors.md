@@ -17,11 +17,11 @@ The right shape question is not "Behavior vs Actor" but "Behavior with what unde
 
 ## Simple vs primitive-augmented behaviors
 
-A **simple** behavior reaches only for `signal` / `computed` / `effect` from `core/signals`. The body is short, effect-shaped, and stateless beyond what the composition's signal map already gives it. `syncPreloadAttribute` is the canonical example: a single `effect` that mirrors a context value into a state slot when no explicit value has been set.
+A **simple** behavior reaches only for `signal` / `computed` / `effect` from `core/signals`. The body is effect-shaped and stateless beyond what the composition's signal map already gives it. Simple doesn't mean *single-effect* — a behavior can compose two `effect()`s in one setup and still be "simple" by this definition (see [Multi-effect behaviors](#multi-effect-behaviors)). `syncPreload` is the canonical example: two effects bidirectionally syncing `state.preload` and the host media element's `preload` property, with dedup and asymmetric `peek`/`get` reads.
 
 A **primitive-augmented** behavior pulls in additional infrastructure under its setup — instantiating an Actor, registering a Reactor, queueing Tasks against a Runner, or capturing references that span multiple effects. `loadVideoSegments` is at the far end of this spectrum: it composes a `SegmentLoaderActor`, a `SourceBufferActor`, bandwidth-state signals, and a `ChunkedStreamIterable`-backed fetch pipeline.
 
-Decision criterion: **the shape of the work, not its importance.** A trivial-feeling behavior can warrant an Actor (ownership of a stateful resource is the deciding factor), and an important-feeling behavior can be three lines of `effect` (`syncPreloadAttribute` is load-bearing despite being tiny).
+Decision criterion: **the shape of the work, not its importance.** A trivial-feeling behavior can warrant an Actor (ownership of a stateful resource is the deciding factor), and an important-feeling behavior can be a handful of `effect()` lines (`syncPreload` is load-bearing despite being a two-effect simple behavior).
 
 The set of primitives below describes **today's** options. SPF's primitive set isn't closed — when a behavior's shape doesn't fit either simple or any existing primitive, the right answer may be to surface a missing primitive rather than force-fit. See [Sniffs that say "no good fit yet"](#sniffs-that-say-no-good-fit-yet).
 
@@ -69,6 +69,29 @@ The decomposition question. The default leans toward **split until merging is re
 ### Anti-pattern: split-by-domain instead of split-by-shape
 
 A behavior named *after a domain concept* ("everything about audio") is often a merged version of three real behaviors (track selection, segment loading, sync). Conversely, a behavior named *after a small mechanical task* ("update the duration when buffered ranges change") is more likely to stay correctly sized. The split that matters is the slot-map split, not the conceptual one.
+
+## Multi-effect behaviors
+
+Most simple behaviors are a single `effect()`. The decomposition section above defaults to splitting before merging — but neither split nor merge fits a third shape: **multiple directions of dataflow over the same slot surface**, where each direction is shaped as its own continuous effect.
+
+`syncPreload` is the canonical case: state.preload ↔ mediaElement.preload, one effect per direction. Splitting into two behaviors would mean both touch the same two slots and have to coordinate; merging into a single effect would conflate read-reactivity and write-reactivity (one wants `peek`, the other wants `get` — see hazards below).
+
+### When to reach for it
+
+- More than one direction of dataflow across the same slot surface (read-side and write-side, or two writes from different signal triggers that would be hard to express in one body).
+- Each direction has a clean dependency set you wouldn't combine into one effect even if you could (one direction wants to react to a signal the other shouldn't subscribe to).
+- The directions share cleanup lifecycle and slot ownership — splitting would require coordination through context.
+
+### Hazards (and how `syncPreload` addresses each)
+
+- **Creation-order dependency.** When two effects share a dependency signal, they run in registration order. This is load-bearing if the directions resolve a conflict on the shared change. Order the `effect()` calls deliberately and **document the invariant inline** so a future reorder is a flagged regression. `syncPreload` puts read before write to get "most-recent-wins on attach."
+- **Echo loops.** A's write triggers B which writes back triggering A. Mitigate with **dedup before every write**: `if (target === current) return`. The dedup is also a brake against transitive triggers downstream (e.g., `resolvePresentation` reading `state.preload`).
+- **Asymmetric reactivity** — one direction subscribes (`get`), the other reads-without-subscribing (`peek`). The peek-side effect is the one that should *only* react to upstream changes, not to its own / its partner's writes. Easy to "fix" the peek into a get and silently break the invariant — annotate inline.
+- **Resolution-rule obligation.** When two effects fire on the same signal change, the first-to-write claims the slot. Spell out the *semantic* resolution rule (most-recent-wins, state-canonical, DOM-canonical, etc.) in the file-level JSDoc — not as an emergent property of effect order. The order is the *mechanism*; the rule is the contract.
+
+### Not a Reactor
+
+Bidirectional sync via two effects *looks* state-machine-y but has no states. The deciding factor is whether there are distinct states with per-state cleanup (cf. [`reactors.md`](reactors.md)). Two-effect simple behaviors don't qualify — leave them as `effect()`s.
 
 ## How to write a behavior — code sniffs
 
@@ -310,10 +333,10 @@ The cleanup pass should re-audit each behavior through this lens; the symptom-le
 Always construct via `defineBehavior` rather than building the behavior object literal manually. `defineBehavior` enforces single-behavior key/param consistency: declared `stateKeys` must equal `keyof S` inferred from the setup's state-param type. Drift between the declared keys and the body's reads/writes becomes a type error at the definition site.
 
 ```ts
-export const syncPreloadAttribute = defineBehavior({
-  stateKeys: ['preload'],
+export const syncPreload = defineBehavior({
+  stateKeys: ['preload', 'presentation'],
   contextKeys: ['mediaElement'],
-  setup: syncPreloadAttributeSetup,
+  setup: syncPreloadSetup,
 });
 ```
 
@@ -324,7 +347,7 @@ The narrow exception is `makeShareSignals` (and any future zero-key behavior fac
 Type the `setup` deps with `Signal<T>` for slots the body **writes** and `ReadonlySignal<T>` for slots the body only **reads**. This is a real contract enforced by the type system — `Signal<T>` permits `.set()`, `ReadonlySignal<T>` does not. See [`signals.md`](signals.md) for the broader treatment.
 
 ```ts
-function syncPreloadAttributeSetup({
+function syncPreloadSetup({
   state,
   context,
 }: {
@@ -472,8 +495,8 @@ Per-export JSDoc (already conventional) describes individual exports; the file-l
 
 ## Naming
 
-- Behaviors are named as **descriptive verbs**: `syncPreloadAttribute`, `selectVideoTrack`, `loadVideoSegments`, `endOfStream`. No `*Behavior` suffix.
-- Files match the exported name in kebab-case: `sync-preload-attribute.ts` exports `syncPreloadAttribute`.
+- Behaviors are named as **descriptive verbs**: `syncPreload`, `selectVideoTrack`, `loadVideoSegments`, `endOfStream`. No `*Behavior` suffix.
+- Files match the exported name in kebab-case: `sync-preload.ts` exports `syncPreload`.
 - Per-type specializations co-locate in one module: `select-tracks.ts` exports `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`.
 - Behavior factories are named `make*`: `makeShareSignals`. The factory's product is a Behavior; the prefix distinguishes the factory from a Behavior export.
 - Setup-shape helpers are named `setup*`: `setupTrackResolution`. The shape is a `Behavior.setup`-style function called from inside a per-type behavior's setup.

@@ -131,6 +131,7 @@ The optional second argument is a transform applied in the same call; the defaul
 
 - **Inside a reactor's per-state effect** when the reactor's `monitor` already tracks the signal at the state-machine level. Tracking it again creates redundant re-runs on internal updates that don't change the state. See [`reactors.md`](reactors.md) → "Reading non-tracked signals inside effects."
 - **One-off reads from non-reactive contexts** (task bodies, callbacks). Mostly equivalent to `signal.get()` since there's nothing to untrack from, but reads more clearly as "I'm intentionally not subscribing."
+- **In one direction of a bidirectional-sync behavior** when the effect reads-and-writes the same slot but should only re-run on upstream changes (not on its own writes or its partner effect's writes). The partner effect subscribes normally; the peek-side effect uses `peek` to break the self-trigger loop. See [`behaviors.md`](behaviors.md) → "Multi-effect behaviors" and `syncPreload` for the worked example.
 
 ### `equalsById(a, b)`
 

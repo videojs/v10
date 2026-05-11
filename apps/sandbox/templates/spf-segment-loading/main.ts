@@ -408,8 +408,9 @@ function startEngine(src: string) {
   log('✓ Reactive effects active', 'success');
 
   // ── Wire media element ──────────────────────────────────────────────────────
-  // Set preload on the element BEFORE wiring context so syncPreloadAttribute
-  // reads the correct value rather than the hardcoded "none" from the HTML.
+  // Set preload on the element BEFORE wiring context so syncPreload's read
+  // effect picks up the user-selected value rather than the hardcoded "none"
+  // from the HTML.
   video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
   signals.context.mediaElement.set(video);
   signals.state.presentation.set({ url: src });

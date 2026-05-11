@@ -82,7 +82,7 @@ function createSimpleHlsEngine(config = {}) {
   return createPlaybackEngine(
     [
       // Preload and playback tracking
-      syncPreloadAttribute,
+      syncPreload,
       trackPlaybackInitiated,
 
       // Manifest resolution

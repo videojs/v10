@@ -26,7 +26,7 @@ import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
-import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
+import { syncPreload } from '../../behaviors/sync-preload';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -156,7 +156,7 @@ export function createSimpleHlsEngine(
 
   return createComposition(
     [
-      syncPreloadAttribute,
+      syncPreload,
       trackPlaybackInitiated,
       resolvePresentation,
 

@@ -30,13 +30,14 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('initializes state with seeded bandwidthState and undefined elsewhere', () => {
+  it('initializes state with seeded bandwidthState and behavior-supplied defaults', () => {
     const engine = createSimpleHlsEngine();
 
-    // Composition creates one signal per declared key. The engine seeds
-    // `bandwidthState` to an empty BandwidthState via `initialState` so
-    // ABR machinery has a non-nullish starting point; everything else
-    // starts as `undefined` and behaviors write their own slots.
+    // Composition creates one signal per declared key. ABR machinery is
+    // seeded via `initialState` with an empty BandwidthState. `preload` is
+    // backfilled by `syncPreload` to its default (`'metadata'`).
+    // Everything else starts as `undefined` and behaviors write their
+    // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
       userVideoTrackSelection: undefined,
       bandwidthState: {
@@ -49,9 +50,8 @@ describe('createSimpleHlsEngine', () => {
       currentTime: undefined,
       mediaSourceReadyState: undefined,
       playbackInitiated: undefined,
-      preload: undefined,
+      preload: 'metadata',
       presentation: undefined,
-      presentationUrl: undefined,
       selectedAudioTrackId: undefined,
       selectedTextTrackId: undefined,
       selectedVideoTrackId: undefined,

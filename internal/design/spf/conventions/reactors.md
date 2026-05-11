@@ -188,7 +188,7 @@ When *not* to use `peek` inside an effect: when you need the effect to re-run as
 
 ## Anti-patterns
 
-- **Reaching for a Reactor when an `effect` would do.** If the work is single-shape signal-driven mirroring (no states), an `effect` is simpler. The threshold: if you have only one branch of behavior and no per-state cleanup distinction, you don't need a state machine.
+- **Reaching for a Reactor when an `effect` would do.** If the work is single-shape signal-driven mirroring (no states), an `effect` is simpler. The threshold: if you have only one branch of behavior and no per-state cleanup distinction, you don't need a state machine. **Corollary**: bidirectional dataflow expressed as two `effect`s in one behavior isn't a Reactor candidate either — the directions aren't states, just two effect-shaped concerns sharing a slot surface. See [`behaviors.md`](behaviors.md) → "Multi-effect behaviors."
 - **Inlining a non-trivial `deriveState` directly in `monitor`.** Hurts testability and re-creates closures. Trivial inline derivations are fine; multi-line derivations want their own function.
 - **Hand-rolled FSM via `computed` flags + nested effects** when `createMachineReactor` was the answer. (See `behaviors.md` fight-the-shape sniffs.)
 - **Tracking a source signal again inside per-state effects** when the reactor's `monitor` already tracks it. Use `peek` for non-state reads inside the state.

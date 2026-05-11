@@ -102,6 +102,11 @@ extra discipline" and `.claude/skills/merge-behaviors/SKILL.md`.
 Pick from the documented patterns:
 
 - Continuous reactivity → `effect()`.
+- Bidirectional sync between two slots (or a slot and a property) →
+  two `effect()`s in one behavior, per `behaviors.md` "Multi-effect
+  behaviors." Spell out the resolution rule (most-recent-wins,
+  state-canonical, etc.) in the file-level JSDoc; document
+  `peek`-vs-`get` inline.
 - Distinct states with per-state continuous behavior →
   `createMachineReactor` with `effects`.
 - One-shot work on state transitions → `createMachineReactor` with
