@@ -121,7 +121,8 @@ describe('switchVideoQuality', () => {
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
+      // initialBandwidth-driven default — see "default-pick" describe.
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       state.presentation.set(undefined);
       await flush();
@@ -130,29 +131,36 @@ describe('switchVideoQuality', () => {
       const newPresentation = { ...createPresentation(tracks), id: 'pres-2' };
       state.presentation.set(newPresentation);
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       reactor.destroy();
     });
   });
 
-  describe('default-pick (no bandwidth available)', () => {
-    it('picks the first available video track when no bandwidth and no selection', async () => {
+  describe('default-pick (no bandwidthState yet)', () => {
+    it('picks the initialBandwidth-optimal track when bandwidthState is undefined and no selection', async () => {
       const state = makeState({ presentation: createPresentation(tracks) });
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
+      // Default initialBandwidth is 5 Mbps; 1080p (4.8 Mbps) requires
+      // 5.65 Mbps with safetyMargin 0.85, so the optimal is 720p.
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       reactor.destroy();
     });
 
-    it('does not overwrite an existing selection when no bandwidth', async () => {
+    it('applies initialBandwidth-driven downgrade when bandwidthState is undefined', async () => {
+      // 1080p preselected, but at default initialBandwidth (5 Mbps) the
+      // optimal is 720p — so we downgrade immediately. Pre-refactor this
+      // branch preserved the existing selection; that protective behavior
+      // never fired in production (engine seeds bandwidthState) and is now
+      // unified with the pre-trust path.
       const state = makeState({ presentation: createPresentation(tracks), selectedVideoTrackId: '1080p' });
 
       const reactor = switchVideoQuality.setup({ state });
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       reactor.destroy();
     });
@@ -383,6 +391,37 @@ describe('switchVideoQuality', () => {
       const reactor = switchVideoQuality.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
+      reactor.destroy();
+    });
+
+    it('uses custom minTotalBytes threshold to trust the measured estimate sooner', async () => {
+      // 800 kbps measured, only 50 KB sampled — below the default 128 KB
+      // threshold (would fall back to initialBandwidth) but above our
+      // custom 40 KB override.
+      const partialState: BandwidthState = {
+        fastEstimate: 800_000,
+        fastTotalWeight: 10,
+        slowEstimate: 800_000,
+        slowTotalWeight: 10,
+        bytesSampled: 50_000,
+      };
+
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: partialState,
+        selectedVideoTrackId: '720p',
+      });
+
+      const config: QualitySwitchingConfig = {
+        minTotalBytes: 40_000,
+        initialBandwidth: 5_000_000,
+      };
+      const reactor = switchVideoQuality.setup({ state, config });
+      await flush();
+      // With the override the 800 kbps measurement is trusted and drives a
+      // downgrade to 360p; at the default threshold the 5 Mbps initial
+      // would have kept 720p.
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
       reactor.destroy();
     });
   });

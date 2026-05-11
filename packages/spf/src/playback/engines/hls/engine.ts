@@ -91,6 +91,12 @@ export type SimpleHlsEngineSignals = {
  */
 export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
   initialBandwidth?: number;
+  /**
+   * Minimum total bytes sampled before the measured bandwidth estimate is
+   * trusted for track selection. Below this threshold, `initialBandwidth`
+   * drives selection. Default: 128_000 (128 KB).
+   */
+  minTotalBytes?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;

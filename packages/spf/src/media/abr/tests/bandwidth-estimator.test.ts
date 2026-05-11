@@ -113,6 +113,12 @@ describe('sampleBandwidth', () => {
 });
 
 describe('getBandwidthEstimate', () => {
+  it('should return default estimate when state is undefined', () => {
+    const estimate = getBandwidthEstimate(undefined, 5_000_000);
+
+    expect(estimate).toBe(5_000_000);
+  });
+
   it('should return default estimate when insufficient data', () => {
     const state = createInitialState();
 

@@ -130,9 +130,10 @@ export function sampleBandwidth(
  * - When bandwidth drops, fast EWMA reacts first and dominates (quick adaptation)
  * - When bandwidth rises, slow EWMA lags behind and dominates (slow adaptation)
  *
- * Uses default estimate until enough data has been sampled.
+ * Uses default estimate until enough data has been sampled — and when no
+ * estimator state exists at all (`state === undefined`).
  *
- * @param state - Current estimator state
+ * @param state - Current estimator state, or `undefined` before any samples have been collected
  * @param defaultEstimate - Fallback estimate before sufficient samples (bps)
  * @param config - Optional estimator configuration (uses defaults if not provided)
  * @returns Bandwidth estimate in bits per second
@@ -141,12 +142,12 @@ export function sampleBandwidth(
  * const estimate = getBandwidthEstimate(state, 5_000_000); // 5 Mbps default
  */
 export function getBandwidthEstimate(
-  state: BandwidthState,
+  state: BandwidthState | undefined,
   defaultEstimate: number,
   config: BandwidthConfig = DEFAULT_BANDWIDTH_CONFIG
 ): number {
   // Use default until we have enough samples to trust our estimate
-  if (state.bytesSampled < config.minTotalBytes) {
+  if (!state || state.bytesSampled < config.minTotalBytes) {
     return defaultEstimate;
   }
 

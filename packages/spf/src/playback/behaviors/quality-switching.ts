@@ -23,7 +23,7 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
-import { getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
+import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectQuality } from '../../media/abr/quality-selection';
 import {
   isResolvedPresentation,
@@ -74,12 +74,22 @@ export interface QualitySwitchingConfig {
    * Default: 5_000_000 (5 Mbps).
    */
   initialBandwidth?: number;
+
+  /**
+   * Minimum total bytes sampled before the measured bandwidth estimate is
+   * trusted. Below this threshold, `initialBandwidth` drives selection —
+   * both for the initial pick and re-evaluations during the
+   * data-aggregation window. Default: matches
+   * `DEFAULT_BANDWIDTH_CONFIG.minTotalBytes` (128 KB).
+   */
+  minTotalBytes?: number;
 }
 
 export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
   safetyMargin: 0.85,
   upgradeMargin: 1.15,
   initialBandwidth: 5_000_000,
+  minTotalBytes: DEFAULT_BANDWIDTH_CONFIG.minTotalBytes,
 };
 
 // ============================================================================
@@ -118,6 +128,7 @@ function setupQualitySwitching<T extends AbrTrack>({
   const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
   const upgradeMargin = config.upgradeMargin ?? DEFAULT_SWITCHING_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
+  const minTotalBytes = config.minTotalBytes ?? DEFAULT_SWITCHING_CONFIG.minTotalBytes;
   const { getTracks, selectOptimal } = config;
 
   const derivedStateSignal = computed(() =>
@@ -156,8 +167,7 @@ function setupQualitySwitching<T extends AbrTrack>({
             // Fall back to all tracks when the filter excludes everything
             // (e.g., user-picked id doesn't exist in the current source).
             const candidates = matching.length > 0 ? matching : allTracks;
-            const [firstCandidate] = candidates;
-            if (!firstCandidate) return;
+            if (!candidates.length) return;
 
             const selectedId = state.selection.get();
 
@@ -167,20 +177,19 @@ function setupQualitySwitching<T extends AbrTrack>({
             // so the effect doesn't re-fire on bandwidth changes while
             // the user's selection holds.
             if (candidates.length === 1) {
-              if (firstCandidate.id !== selectedId) state.selection.set(firstCandidate.id);
+              if (candidates[0]!.id !== selectedId) state.selection.set(candidates[0]!.id);
               return;
             }
 
-            const bandwidthState = state.bandwidthState.get();
-            if (!bandwidthState) {
-              // Insufficient info for bandwidth-driven selection: pick a
-              // first-available default if nothing is selected, otherwise
-              // wait for bandwidth to land.
-              if (!selectedId) state.selection.set(firstCandidate.id);
-              return;
-            }
-
-            const bandwidth = getBandwidthEstimate(bandwidthState, initialBandwidth);
+            // Single path for pre-trust and post-trust:
+            // `getBandwidthEstimate` returns `initialBandwidth` when state is
+            // undefined or bytes sampled hasn't crossed `minTotalBytes`, so
+            // the initial pick + early-ABR window run the same `selectOptimal`
+            // path as a fully-trusted measurement.
+            const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, {
+              ...DEFAULT_BANDWIDTH_CONFIG,
+              minTotalBytes,
+            });
             const optimal = selectOptimal(candidates, bandwidth, { safetyMargin });
             if (!optimal || optimal.id === selectedId) return;
 
