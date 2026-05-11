@@ -46,10 +46,10 @@ defineVolumeSlider();
 defineTime();
 
 // Standalone elements.
+safeDefine(AirplayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);
-safeDefine(AirplayButtonElement);
 safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
