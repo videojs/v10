@@ -94,11 +94,12 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
         // doesn't pass through presentation-unresolved).
         entry: () => {
           if (!state[selectedKey].get()) {
-            const presentation = state.presentation.get();
-            if (presentation) {
-              const id = picker(presentation, pickerConfig);
-              if (id) state[selectedKey].set(id);
-            }
+            // `state.presentation.get()` is non-null inside this entry —
+            // the reactor's `'presentation-resolved'` gate is exactly
+            // `isResolvedPresentation(state.presentation.get())`, which
+            // requires a truthy Presentation.
+            const id = picker(state.presentation.get()!, pickerConfig);
+            if (id) state[selectedKey].set(id);
           }
           return () => state[selectedKey].set(undefined);
         },
