@@ -348,14 +348,14 @@ describe('pickTextTrack', () => {
 
     const presentation = createPresentation({ text: tracks });
 
-    const selected = pickTextTrack(presentation, { type: 'text' });
+    const selected = pickTextTrack(presentation);
     expect(selected).toBeUndefined();
   });
 
   it('returns undefined when no text tracks', () => {
     const presentation = createPresentation({ video: [] });
 
-    const selected = pickTextTrack(presentation, { type: 'text' });
+    const selected = pickTextTrack(presentation);
     expect(selected).toBeUndefined();
   });
 
@@ -392,7 +392,7 @@ describe('pickTextTrack', () => {
     const presentation = createPresentation({ text: tracks });
 
     // FORCED track excluded by default, even with DEFAULT=YES
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    const selected = pickTextTrack(presentation, { enableDefaultTrack: true });
     expect(selected).toBeUndefined();
   });
 
@@ -430,7 +430,6 @@ describe('pickTextTrack', () => {
 
     // FORCED track included and selected when enabled
     const selected = pickTextTrack(presentation, {
-      type: 'text',
       includeForcedTracks: true,
       enableDefaultTrack: true,
     });
@@ -467,7 +466,7 @@ describe('pickTextTrack', () => {
 
     const presentation = createPresentation({ text: tracks });
 
-    const selected = pickTextTrack(presentation, { type: 'text', preferredSubtitleLanguage: 'es' });
+    const selected = pickTextTrack(presentation, { preferredSubtitleLanguage: 'es' });
     expect(selected).toBe('text-es');
   });
 
@@ -502,7 +501,7 @@ describe('pickTextTrack', () => {
 
     const presentation = createPresentation({ text: tracks });
 
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    const selected = pickTextTrack(presentation, { enableDefaultTrack: true });
     expect(selected).toBe('text-es');
   });
 
@@ -538,7 +537,7 @@ describe('pickTextTrack', () => {
     const presentation = createPresentation({ text: tracks });
 
     // enableDefaultTrack defaults to false
-    const selected = pickTextTrack(presentation, { type: 'text' });
+    const selected = pickTextTrack(presentation);
     expect(selected).toBeUndefined();
   });
 
@@ -575,7 +574,6 @@ describe('pickTextTrack', () => {
 
     // Preferred language trumps DEFAULT
     const selected = pickTextTrack(presentation, {
-      type: 'text',
       preferredSubtitleLanguage: 'en',
       enableDefaultTrack: true,
     });
@@ -602,7 +600,7 @@ describe('pickTextTrack', () => {
     const presentation = createPresentation({ text: tracks });
 
     // All tracks filtered out - no selection
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    const selected = pickTextTrack(presentation, { enableDefaultTrack: true });
     expect(selected).toBeUndefined();
   });
 });

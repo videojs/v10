@@ -197,20 +197,9 @@ export const selectAudioTrack = defineBehavior({
  * logic; otherwise the default `pickTextTrack` is used, which honors the
  * other fields.
  */
-export interface SelectTextTrackConfig extends Omit<TextSelectionConfig, 'type'> {
+export interface SelectTextTrackConfig extends TextSelectionConfig {
   picker?: TrackPicker<SelectTextTrackConfig>;
 }
-
-/**
- * Default text picker: `pickTextTrack` with `isResolvedPresentation`
- * narrowing. Honors `preferredSubtitleLanguage`, `enableDefaultTrack`, and
- * `includeForcedTracks` from config; returns `undefined` when no
- * preference matches (text-track selection is user opt-in).
- */
-const defaultTextPicker: TrackPicker<SelectTextTrackConfig> = (presentation, config) => {
-  if (!isResolvedPresentation(presentation)) return undefined;
-  return pickTextTrack(presentation, { ...config, type: 'text' });
-};
 
 /**
  * Select a text track based on user preferences (preferred language,
@@ -232,7 +221,7 @@ export const selectTextTrack = defineBehavior({
       state,
       config: {
         selectedKey: 'selectedTextTrackId',
-        picker: config?.picker ?? defaultTextPicker,
+        picker: config?.picker ?? pickTextTrack,
         pickerConfig: config,
       },
     }),

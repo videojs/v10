@@ -77,9 +77,13 @@ export interface AudioSelectionConfig<T extends TrackType = 'audio'> extends Tra
 
 /**
  * Configuration for text track selection.
- * Generic with default to 'text' for convenience.
+ *
+ * Standalone (not extending `TrackSelectionConfig<'text'>`) because
+ * `pickTextTrack` hardcodes the `'text'` type lookup internally — the
+ * discriminant field carries no information at runtime, so we don't
+ * require callers to pass it.
  */
-export interface TextSelectionConfig<T extends TrackType = 'text'> extends TrackSelectionConfig<T> {
+export interface TextSelectionConfig {
   /**
    * Preferred subtitle language (ISO 639 code, e.g., "en", "es").
    * If specified, selects matching track if available.
@@ -220,7 +224,9 @@ export function pickAudioTrack(presentation: Presentation, config: AudioSelectio
 }
 
 /**
- * Pick text track to activate.
+ * Pick text track to activate. Conforms to the `TrackPicker` contract so it
+ * can be used directly as a default picker for `selectTextTrack` without an
+ * adapter wrapper.
  *
  * Selection priority (if enabled):
  * 1. User preference (preferredSubtitleLanguage)
@@ -228,24 +234,23 @@ export function pickAudioTrack(presentation: Presentation, config: AudioSelectio
  * 3. No auto-selection (user opt-in)
  *
  * By default, FORCED tracks are excluded per Apple's HLS spec.
- *
- * @param presentation - Presentation with text tracks
- * @param config - Selection configuration
- * @returns Track ID or undefined (no auto-selection)
  */
-export function pickTextTrack(presentation: Presentation, config: TextSelectionConfig): string | undefined {
-  const textSet = presentation.selectionSets.find((set) => set.type === 'text');
+export function pickTextTrack(
+  presentation: MaybeResolvedPresentation,
+  config?: TextSelectionConfig
+): string | undefined {
+  const textSet = presentation.selectionSets?.find((set) => set.type === 'text');
   if (!textSet?.switchingSets?.[0]?.tracks.length) return undefined;
 
   const tracks = textSet.switchingSets[0].tracks;
 
   // Filter out FORCED tracks by default (following hls.js/http-streaming pattern)
   // Per Apple spec: regular tracks MUST contain forced content when both exist
-  const availableTracks = config.includeForcedTracks ? tracks : tracks.filter((track) => !track.forced);
+  const availableTracks = config?.includeForcedTracks ? tracks : tracks.filter((track) => !track.forced);
 
   if (availableTracks.length === 0) return undefined;
 
-  const { preferredSubtitleLanguage, enableDefaultTrack = false } = config;
+  const { preferredSubtitleLanguage, enableDefaultTrack = false } = config ?? {};
 
   // 1. Preferred language match (if specified)
   if (preferredSubtitleLanguage) {
