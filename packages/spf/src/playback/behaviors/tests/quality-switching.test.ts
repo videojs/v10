@@ -394,6 +394,45 @@ describe('switchVideoQuality', () => {
       reactor.destroy();
     });
 
+    it('uses custom picker for initial pick; ABR adjusts from there', async () => {
+      // Picker pins the initial pick to 360p (lowest, regardless of bandwidth).
+      // At 6 Mbps, ABR would default-pick 1080p; the picker overrides for
+      // the initial pick. Subsequent ABR upgrade applies normally.
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(6_000_000),
+      });
+
+      const config: QualitySwitchingConfig = { picker: () => '360p' };
+      const reactor = switchVideoQuality.setup({ state, config });
+      await flush();
+      // Picker drives the initial selection.
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      // Bumping bandwidth re-fires the effect; the slot is no longer empty,
+      // so ABR runs and upgrades to 1080p (at 6 Mbps with default margins).
+      state.bandwidthState.set(createBandwidthState(6_000_001));
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('picker returning undefined falls back to bandwidth-aware default', async () => {
+      const state = makeState({
+        presentation: createPresentation(tracks),
+        bandwidthState: createBandwidthState(3_000_000),
+      });
+
+      const config: QualitySwitchingConfig = { picker: () => undefined };
+      const reactor = switchVideoQuality.setup({ state, config });
+      await flush();
+      // 3 Mbps with default safetyMargin 0.85 → 720p (1080p needs 5.65 Mbps).
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
     it('uses custom minTotalBytes threshold to trust the measured estimate sooner', async () => {
       // 800 kbps measured, only 50 KB sampled — below the default 128 KB
       // threshold (would fall back to initialBandwidth) but above our

@@ -17,6 +17,13 @@
  * Hysteresis: downgrades apply immediately; upgrades require the optimal
  * track's bandwidth to exceed the current track's by `upgradeMargin`. No
  * temporal state — short-term smoothing is the bandwidth estimator's job.
+ *
+ * Initial pick is configurable via `config.picker` — pass any `TrackPicker`
+ * to override the bandwidth-aware default for the empty-slot case. ABR
+ * re-evaluation (downgrade/upgrade) is unaffected. Composing
+ * `switchVideoQuality` with `picker: (p) => pickFirstTrackId(p, 'video')`
+ * yields "first track at load, ABR adjusts from there" — a non-bandwidth
+ * initial pick paired with bandwidth-driven re-evaluation.
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -25,6 +32,7 @@ import { computed, peek, type ReadonlySignal, type Signal } from '../../core/sig
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
+import type { TrackPicker } from '../../media/primitives/select-tracks';
 import {
   isResolvedPresentation,
   type MaybeResolvedPresentation,
@@ -83,9 +91,26 @@ export interface QualitySwitchingConfig {
    * `DEFAULT_BANDWIDTH_CONFIG.minTotalBytes` (128 KB).
    */
   minTotalBytes?: number;
+
+  /**
+   * Override the initial-pick algorithm. When set, the picker is called the
+   * first time the slot is empty in the `'presentation-resolved'` state;
+   * its returned id is set verbatim (no bandwidth-aware logic). Subsequent
+   * ABR re-evaluation (downgrade/upgrade by bandwidth + hysteresis) is
+   * unaffected and runs as usual.
+   *
+   * Default (no picker): a bandwidth-aware initial pick driven by
+   * `initialBandwidth` and `safetyMargin`, identical to ABR's downgrade
+   * branch — matches behavior pre-refactor.
+   *
+   * Honors of `userVideoTrackSelection` are the picker's responsibility
+   * when overridden. If the picker returns `undefined`, the bandwidth-aware
+   * default pick fires (graceful fallback).
+   */
+  picker?: TrackPicker<QualitySwitchingConfig>;
 }
 
-export const DEFAULT_SWITCHING_CONFIG: Required<QualitySwitchingConfig> = {
+export const DEFAULT_SWITCHING_CONFIG: Required<Omit<QualitySwitchingConfig, 'picker'>> = {
   safetyMargin: 0.85,
   upgradeMargin: 1.15,
   initialBandwidth: 5_000_000,
@@ -233,15 +258,39 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
               return;
             }
 
+            // Read bandwidth up front to establish the signal subscription —
+            // future bandwidth changes must re-fire this effect even when
+            // the picker branch below takes the early-return path. (If the
+            // picker bails out without ever touching `bandwidthState`, ABR
+            // would otherwise be deaf to subsequent bandwidth changes.)
+            //
             // Single path for pre-trust and post-trust:
-            // `getBandwidthEstimate` returns `initialBandwidth` when state is
-            // undefined or bytes sampled hasn't crossed `minTotalBytes`, so
-            // the initial pick + early-ABR window run the same `selectOptimal`
-            // path as a fully-trusted measurement.
+            // `getBandwidthEstimate` returns `initialBandwidth` when state
+            // is undefined or bytes sampled hasn't crossed `minTotalBytes`,
+            // so the initial pick + early-ABR window run the same
+            // `selectOptimal` path as a fully-trusted measurement.
             const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, {
               ...DEFAULT_BANDWIDTH_CONFIG,
               minTotalBytes,
             });
+
+            // Picker-driven initial pick: when the slot is empty and the
+            // caller supplied a `picker`, defer to it instead of the
+            // bandwidth-aware default. The picker sees the full
+            // presentation (not narrowed by `userVideoTrackSelection`) —
+            // honoring the filter is the picker's responsibility when
+            // overridden. Returning `undefined` falls through to the
+            // bandwidth-aware default (graceful fallback).
+            //
+            // ABR re-evaluation (downgrade/upgrade by bandwidth) runs as
+            // usual on subsequent effect re-runs once the slot is set.
+            if (!selectedId && config.picker) {
+              const id = config.picker(presentation, config);
+              if (id) {
+                state[selectionKey].set(id);
+                return;
+              }
+            }
             // Fallback to the lowest-bandwidth candidate when `selectOptimal`
             // returns nothing — preserves the slot-lifecycle invariant
             // ("while presentation is resolved, the selection slot has a
