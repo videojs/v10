@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack } from '../../types';
-import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../quality-selection';
+import { DEFAULT_QUALITY_CONFIG, selectLowestQuality, selectQuality } from '../quality-selection';
 
 // Helper to create test tracks
 const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): PartiallyResolvedVideoTrack => ({
@@ -275,5 +275,36 @@ describe('selectQuality', () => {
       const selected = selectQuality(tracks, 2_400_000);
       expect(selected?.id).toBe('720p');
     });
+  });
+});
+
+describe('selectLowestQuality', () => {
+  it('returns the lowest-bandwidth track', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      createTrack('720p', 2_000_000),
+      createTrack('360p', 500_000),
+      createTrack('1080p', 4_000_000),
+    ];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('360p');
+  });
+
+  it('returns undefined for an empty candidate set', () => {
+    expect(selectLowestQuality([])).toBeUndefined();
+  });
+
+  it('returns the sole track when only one candidate is given', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [createTrack('480p', 1_000_000)];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('480p');
+  });
+
+  it('accepts any shape with a numeric `bandwidth` field', () => {
+    const tracks = [
+      { id: 'high', bandwidth: 2_000_000 },
+      { id: 'low', bandwidth: 500_000 },
+    ];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('low');
   });
 });

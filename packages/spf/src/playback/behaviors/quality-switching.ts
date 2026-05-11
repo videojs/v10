@@ -24,7 +24,7 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
-import { selectQuality } from '../../media/abr/quality-selection';
+import { selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
 import {
   isResolvedPresentation,
   type MaybeResolvedPresentation,
@@ -190,8 +190,15 @@ function setupQualitySwitching<T extends AbrTrack>({
               ...DEFAULT_BANDWIDTH_CONFIG,
               minTotalBytes,
             });
-            const optimal = selectOptimal(candidates, bandwidth, { safetyMargin });
-            if (!optimal || optimal.id === selectedId) return;
+            // Fallback to the lowest-bandwidth candidate when `selectOptimal`
+            // returns nothing — preserves the slot-lifecycle invariant
+            // ("while presentation is resolved, the selection slot has a
+            // value") regardless of the algorithm's behavior. `selectQuality`
+            // falls back internally today; this catches future impls that
+            // don't. `selectLowestQuality` returns `undefined` only on empty
+            // input, and `candidates.length >= 2` here.
+            const optimal = selectOptimal(candidates, bandwidth, { safetyMargin }) ?? selectLowestQuality(candidates)!;
+            if (optimal.id === selectedId) return;
 
             const currentTrack = candidates.find((t) => t.id === selectedId);
             if (!currentTrack) {

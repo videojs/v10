@@ -92,6 +92,26 @@ export function selectQuality(
 }
 
 /**
+ * Select the lowest-bandwidth track from the candidate set.
+ *
+ * Used as a safety-net fallback by callers that need a definitive pick when
+ * a primary selection algorithm declines to choose. Pairs naturally with
+ * `selectQuality` — when ABR has no good answer (e.g., all candidates
+ * exceed available bandwidth and the algorithm doesn't fall back
+ * internally), the lowest bitrate is the safest default.
+ *
+ * @param tracks - Candidate tracks (can be unsorted)
+ * @returns The lowest-bandwidth track, or `undefined` if `tracks` is empty
+ *
+ * @example
+ * const fallback = selectLowestQuality(tracks);
+ */
+export function selectLowestQuality<T extends { bandwidth: number }>(tracks: readonly T[]): T | undefined {
+  if (tracks.length === 0) return undefined;
+  return tracks.reduce((min, t) => (t.bandwidth < min.bandwidth ? t : min));
+}
+
+/**
  * Check if track A has higher resolution than track B.
  * Compares by total pixel count (width × height).
  *
