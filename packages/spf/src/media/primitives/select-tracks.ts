@@ -112,6 +112,24 @@ export interface TextSelectionConfig<T extends TrackType = 'text'> extends Track
 // =============================================================================
 
 /**
+ * Contract for a track picker — a pure function that consults a
+ * presentation (and optional config) and returns the id of the track to
+ * select, or `undefined` to leave the slot unset.
+ *
+ * Behaviors that own a track-selection slot (`selectAudioTrack`,
+ * `selectTextTrack`, `selectVideoTrack`, `switchVideoQuality`) accept a
+ * `TrackPicker` via config. The behavior passes its own config straight
+ * through as the picker's second argument — pickers that need richer
+ * options (language preferences, default-track filtering, bandwidth-aware
+ * selection) read from `config`; pickers that don't (e.g., first-track)
+ * ignore it.
+ */
+export type TrackPicker<Config = unknown> = (
+  presentation: MaybeResolvedPresentation,
+  config?: Config
+) => string | undefined;
+
+/**
  * Pick the first track of the given type from a presentation.
  *
  * Returns the first track in the first switching set of the matching
