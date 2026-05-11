@@ -211,6 +211,71 @@ This is a deliberate second pass — the most common refactor failure
 mode is satisfying the rules pre-change and missing them post-change
 because the diff itself introduced new instances.
 
+### Step 8 — Commit (with user confirmation)
+
+After typecheck / tests / lint pass and Step 7 audit is clean:
+
+1. **Audit the working-tree state.** Run `git status -s`. If there's
+   pre-existing uncommitted work on files outside the refactor scope,
+   surface it explicitly — the user may want that work committed,
+   stashed, or left alone before the refactor lands. **Never commit
+   files the user didn't ask you to touch.**
+
+2. **Propose a commit structure.** Map the changes to natural
+   boundaries; common shapes:
+
+   - **Single commit** — small, self-contained refactor with no
+     spillover. Most refactors land here.
+   - **Refactor + rename** — when the refactor surfaces a file/symbol
+     rename. The rename is always its own commit; bundling logic +
+     rename diffs makes review hard (a rename diff dwarfs everything
+     else in a side-by-side view).
+   - **Refactor + slot/key rename** — when the refactor surfaces a
+     `stateKeys` / `contextKeys` rename that touches sibling behaviors
+     and the engine's aggregated context type. Separate from a
+     file/symbol rename because the scope is different (behavior
+     interface vs file identity).
+   - **Refactor + doc/skill updates** — when the refactor surfaces
+     genuine convention gaps (rule the conventions doc didn't anticipate,
+     skill step that was missing). Doc/skill commits stay separate
+     because they have a different review audience (conventions reviewer
+     vs code reviewer).
+   - **All of the above** — large refactors that surface multiple
+     concerns. Land as N separate commits in dependency order:
+     refactor → rename → slot rename → doc/skill.
+
+   State the proposal explicitly, naming the files per commit and the
+   commit message scope/type prefix (`refactor(spf)`, `docs(spf)`).
+
+3. **Ask the user to confirm via `AskUserQuestion`.** Standard options:
+
+   - "Land all commits as proposed."
+   - "Bundle into a single commit."
+   - "Skip — I'll handle the commit boundary."
+   - Plus the user can free-text a different structure.
+
+   Phrase the question so the user can see the proposal at a glance —
+   inline the file list per commit in the option description.
+
+4. **On confirmation, run the commits.** Stage per-commit (no `-A` /
+   `git add .`; always name files), use the repo's commit-message
+   format (Conventional Commits per the project's `git` skill),
+   verify each commit with `git status -s` afterward.
+
+5. **On decline or "skip," stop.** The user owns the commit boundary;
+   the skill doesn't.
+
+### Why a confirmation step (not auto-commit)
+
+CLAUDE.md is explicit that commits are an explicit user action. The
+confirmation step preserves that contract while still doing the
+useful work the skill is positioned to do: *naming the natural commit
+boundaries* from the refactor's actual scope. The pattern the user
+ends up following (single commit / refactor + rename / etc.) is
+predictable enough to recommend but variable enough that the user
+should always be the decider — especially when adjacent in-flight
+work on the same branch wants to be sequenced around.
+
 ## Output format
 
 Propose changes in this order. Use markdown headers for each numbered
@@ -232,4 +297,6 @@ the code but miss the goal. Steps 1–2 force the right framing before
 mechanical analysis. Steps 3–6 only make sense once the purpose is
 named. Step 7 catches what the pre-refactor audit can't see — new
 helpers, new closures, new state names introduced by the refactor diff
-itself.
+itself. Step 8 closes the loop by proposing the natural commit
+structure and asking before running anything, so the user retains the
+final say on commit boundaries.
