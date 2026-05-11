@@ -3,8 +3,10 @@ import type {
   PartiallyResolvedTrack,
   Presentation,
   ResolvedTrack,
+  TextTrack,
   TrackType,
 } from '../types';
+import { isResolvedTrack } from '../types';
 
 /**
  * Get the tracks of the given type from a presentation's first switching set.
@@ -39,6 +41,27 @@ export function findTrack(
   trackId: string
 ): PartiallyResolvedTrack | ResolvedTrack | undefined {
   return getTracksByType(presentation, type).find(({ id }) => id === trackId);
+}
+
+/**
+ * Find a text track of the given id within a presentation and narrow it to
+ * the fully-resolved `TextTrack` shape (segments populated). Returns
+ * `undefined` if no track matches the id, the matching track isn't a text
+ * track, or it hasn't been resolved yet.
+ *
+ * The segments-non-empty check stays at the call site — a resolved track
+ * with zero segments is a valid state, distinct from "ready to load."
+ */
+export function findResolvedTextTrack(
+  presentation: MaybeResolvedPresentation | undefined,
+  trackId: string | undefined
+): TextTrack | undefined {
+  if (!presentation || !trackId) return undefined;
+  const track = findTrack(presentation, 'text', trackId);
+  // `findTrack` returns the wide union; narrow via discriminant before
+  // applying `isResolvedTrack`'s text-specific overload.
+  if (!track || track.type !== 'text' || !isResolvedTrack(track)) return undefined;
+  return track;
 }
 
 /**

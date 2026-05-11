@@ -1,35 +1,33 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, snapshot, untrack } from '../../core/signals/primitives';
-import type { Cue, MaybeResolvedPresentation, MediaElementWithTextTracks, TextTrack } from '../../media/types';
-import { isResolvedTrack } from '../../media/types';
+import { computed, peek, type ReadonlySignal } from '../../core/signals/primitives';
+import type { MaybeResolvedPresentation } from '../../media/types';
+import { findResolvedTextTrack } from '../../media/utils/tracks';
 import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
-import type { TextTracksActor } from '../actors/text-tracks';
 
 /**
- * FSM states for text-track cue loading.
+ * Drive the text-track segment loader: as `currentTime` and the selected
+ * text track change, dispatch `load` messages so the loader can fetch
+ * and parse VTT segments inside its forward-buffer window.
  *
- * ```
- * 'preconditions-unmet' ── mediaElement + presentation + text tracks + actors ──→ 'pending'
- *        ↑                                                                              |
- *        │                                                            selectedTrack resolved + in element
- *        │                                                                              ↓
- *        └──── preconditions lost ───── 'monitoring-for-loads'
+ * Active when a `TextTrackSegmentLoaderActor` is in context and the
+ * selected text track resolves (in the current presentation) to a track
+ * with at least one segment.
  *
- * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
- * ```
+ * Companion to `setupTextTrackActors` (which owns actor lifecycle) and
+ * `syncTextTracks` (which mounts `<track>` elements). Composition order
+ * ensures mounting happens before this reactor evaluates; the
+ * `TextTracksActor` silently no-ops if a `load`'s cues arrive for a
+ * not-yet-mounted track, so we don't gate on DOM mount here.
  *
- * Actor lifecycle is NOT managed by this behavior — it reads
- * `textTracksActor` and `segmentLoaderActor` from context. A host-side
- * setup behavior (e.g. `setupTextTrackActors` in dom/) is
- * responsible for creating and destroying them when the media element
- * appears/disappears.
- */
-export type LoadTextTrackCuesState = 'preconditions-unmet' | 'pending' | 'monitoring-for-loads';
-
-/**
- * State shape for text-track cue loading.
+ * Source-reset / in-flight cancellation is the loader's responsibility,
+ * not this behavior's: the next `load` aborts in-flight work, and the
+ * loader's destroy (driven by `setupTextTrackActors`) tears down the
+ * runner.
+ *
+ * @example
+ * const reactor = loadTextTrackCues.setup({ state, context });
  */
 export interface TextTrackCueLoadingState {
   selectedTextTrackId?: string;
@@ -38,75 +36,12 @@ export interface TextTrackCueLoadingState {
   currentTime?: number;
 }
 
-/**
- * Context shape for text-track cue loading.
- *
- * The `mediaElement` is typed against the host-agnostic
- * `MediaElementWithTextTracks` shape; `HTMLMediaElement` satisfies it
- * structurally. Actors are expected to be supplied by a companion
- * provider behavior.
- */
 export interface TextTrackCueLoadingContext {
-  mediaElement?: MediaElementWithTextTracks | undefined;
-  textTracksActor?: TextTracksActor<Cue> | undefined;
   segmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
 }
 
-// ============================================================================
-// Helpers
-// ============================================================================
+type LoadTextTrackCuesState = 'preconditions-unmet' | 'selected-track-resolved';
 
-function getTextTracks(presentation: MaybeResolvedPresentation | undefined) {
-  return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks;
-}
-
-function findSelectedTrack(state: TextTrackCueLoadingState): TextTrack | undefined {
-  const track = getTextTracks(state.presentation)?.find((t) => t.id === state.selectedTextTrackId);
-  return track && isResolvedTrack(track) ? track : undefined;
-}
-
-function hasMountedTrack(mediaElement: MediaElementWithTextTracks, id: string): boolean {
-  for (const t of mediaElement.textTracks) {
-    if (t.id === id) return true;
-  }
-  return false;
-}
-
-function deriveState(state: TextTrackCueLoadingState, context: TextTrackCueLoadingContext): LoadTextTrackCuesState {
-  if (
-    !context.mediaElement ||
-    !getTextTracks(state.presentation)?.length ||
-    !context.textTracksActor ||
-    !context.segmentLoaderActor
-  ) {
-    return 'preconditions-unmet';
-  }
-  const track = findSelectedTrack(state);
-  if (!track || track.segments.length === 0) return 'pending';
-  if (!hasMountedTrack(context.mediaElement, state.selectedTextTrackId ?? '')) {
-    return 'pending';
-  }
-  return 'monitoring-for-loads';
-}
-
-// ============================================================================
-// Main export
-// ============================================================================
-
-/**
- * Text-track cue loading orchestration (host-agnostic).
- *
- * Waits for preconditions (mediaElement, presentation with text tracks,
- * actors in context, selected track mounted), then sends `load` messages
- * to the `segmentLoaderActor` whenever `currentTime` or the selected
- * track changes.
- *
- * Actors are provided by a host-side companion behavior — this behavior
- * does not create or destroy them.
- *
- * @example
- * const reactor = loadTextTrackCues.setup({ state, context });
- */
 function loadTextTrackCuesSetup({
   state,
   context,
@@ -117,32 +52,30 @@ function loadTextTrackCuesSetup({
     currentTime: ReadonlySignal<TextTrackCueLoadingState['currentTime']>;
   };
   context: {
-    mediaElement: ReadonlySignal<TextTrackCueLoadingContext['mediaElement']>;
-    textTracksActor: ReadonlySignal<TextTrackCueLoadingContext['textTracksActor']>;
     segmentLoaderActor: ReadonlySignal<TextTrackCueLoadingContext['segmentLoaderActor']>;
   };
 }): Reactor<LoadTextTrackCuesState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(snapshot(state), snapshot(context)));
-  const currentTimeSignal = computed(() => state.currentTime.get() ?? 0);
-  const selectedTrackSignal = computed(() => findSelectedTrack(snapshot(state)));
+  const selectedTrackSignal = computed(() => {
+    const track = findResolvedTextTrack(state.presentation.get(), state.selectedTextTrackId.get());
+    return track && track.segments.length > 0 ? track : undefined;
+  });
+  const derivedStateSignal = computed<LoadTextTrackCuesState>(() =>
+    context.segmentLoaderActor.get() && selectedTrackSignal.get() ? 'selected-track-resolved' : 'preconditions-unmet'
+  );
 
   return createMachineReactor<LoadTextTrackCuesState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
       'preconditions-unmet': {},
-      pending: {},
-      'monitoring-for-loads': {
-        // Re-runs whenever currentTime or selectedTrack changes, dispatching
-        // a load message. context is read with untrack() since actor presence
-        // is guaranteed by deriveState when in this state. The always monitor
-        // (registered before this effect) transitions us out before this
-        // re-runs if either invariant stops holding.
+      'selected-track-resolved': {
+        // Re-runs on currentTime/selectedTrack changes, dispatching a load.
+        // The loader actor reference is peeked — its presence is a state
+        // invariant, and writes to that slot transition us out via the monitor.
         effects: () => {
-          const currentTime = currentTimeSignal.get();
+          const currentTime = state.currentTime.get() ?? 0;
           const track = selectedTrackSignal.get()!;
-          const segmentLoaderActor = untrack(() => context.segmentLoaderActor.get());
-          segmentLoaderActor!.send({ type: 'load', track, currentTime });
+          peek(context.segmentLoaderActor)!.send({ type: 'load', track, currentTime });
         },
       },
     },
@@ -151,6 +84,6 @@ function loadTextTrackCuesSetup({
 
 export const loadTextTrackCues = defineBehavior({
   stateKeys: ['selectedTextTrackId', 'presentation', 'currentTime'],
-  contextKeys: ['mediaElement', 'textTracksActor', 'segmentLoaderActor'],
+  contextKeys: ['segmentLoaderActor'],
   setup: loadTextTrackCuesSetup,
 });
