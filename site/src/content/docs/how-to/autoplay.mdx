@@ -94,20 +94,22 @@ export type AutoplayStatus = 'playing' | 'muted' | 'blocked';
 export function AutoplayHandler({ onStatus }: { onStatus?: (status: AutoplayStatus) => void }) {
   const playback = usePlayer(selectPlayback);
   const volume = usePlayer(selectVolume);
-  const attemptedRef = useRef(false);
+  const attempted = useRef(false);
 
   useEffect(() => {
-    if (!playback || attemptedRef.current) return;
-    attemptedRef.current = true;
+    if (!playback || attempted.current) return;
+    attempted.current = true;
 
-    playback.play()
-      .then(() => onStatus?.('playing'))
-      .catch(() => {
+    playback.play().then(
+      () => onStatus?.('playing'),
+      () => {
         if (volume && !volume.muted) volume.toggleMuted();
-        playback.play()
-          .then(() => onStatus?.('muted'))
-          .catch(() => onStatus?.('blocked'));
-      });
+        playback.play().then(
+          () => onStatus?.('muted'),
+          () => onStatus?.('blocked'),
+        );
+      },
+    );
   }, [playback, volume, onStatus]);
 
   return null;
@@ -141,33 +143,30 @@ export class AutoplayHandlerElement extends MediaElement {
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
-    if (this.#attempted || !this.#playback.value) return;
 
-    this.#attempted = true;
-    this.#tryPlay();
-  }
-
-  async #tryPlay(): Promise<void> {
     const playback = this.#playback.value;
-    if (!playback) return;
+    if (this.#attempted || !playback) return;
+    this.#attempted = true;
 
-    try {
-      await playback.play();
-      this.#emit('playing');
-    } catch {
-      const volume = this.#volume.value;
-      if (volume && !volume.muted) volume.toggleMuted();
+    const attempt = async (): Promise<AutoplayStatus> => {
       try {
         await playback.play();
-        this.#emit('muted');
+        return 'playing';
       } catch {
-        this.#emit('blocked');
+        const volume = this.#volume.value;
+        if (volume && !volume.muted) volume.toggleMuted();
+        try {
+          await playback.play();
+          return 'muted';
+        } catch {
+          return 'blocked';
+        }
       }
-    }
-  }
+    };
 
-  #emit(status: AutoplayStatus): void {
-    this.dispatchEvent(new CustomEvent('autoplaystatus', { detail: status, bubbles: true }));
+    attempt().then((detail) =>
+      this.dispatchEvent(new CustomEvent('autoplaystatus', { detail, bubbles: true }))
+    );
   }
 }
 
