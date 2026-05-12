@@ -209,6 +209,8 @@ Pick from the documented patterns:
 
 The [transition-driven vs state-driven distinction](reactors.md#transition-driven-vs-state-driven-work) is the most-commonly-missed one for behaviors with FSM shape — using `effects` for transition-driven work produces spurious re-runs.
 
+For the lightest verb shape ("set X when Y resolves"), pattern selection isn't always decisive — see [Where both shapes are legitimate](#where-both-shapes-are-legitimate-the-light-reactor--simple-effect-band) below. Run the band check before locking in `effect()` vs `createMachineReactor` with `entry`.
+
 ### 5. Convention checks
 
 Before writing the refactor, run through:
@@ -231,6 +233,35 @@ If the purpose overlaps with another behavior's purpose — both writing the sam
 - **Different domains → legitimate multi-writer; keep separate.** Writers that reflect *genuinely different inputs* (config-driven default vs DOM-driven user action; intent vs derived default; programmatic vs network-event-driven) belong in separate behaviors. Example: `selectTextTrack` (config-driven default) and `sync-text-tracks` (DOM `change`-event-driven) both write `selectedTextTrackId` but reflect different sources of truth.
 
 Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape. The decomposition merge often slots cleanly into the larger refactor of the *other* writer — e.g., `selectVideoTrack` would naturally merge into a refactored `quality-switching` rather than land as a standalone change.
+
+### Where both shapes are legitimate: the light-reactor / simple-effect band
+
+For the lightest verb shape — "set X when Y resolves," with no follow-on continuous reactivity — both a single-positive-state `createMachineReactor` and a guarded `effect()` are legitimate. The trade-offs are real and don't generally favor one over the other; the choice is judgment-laden and local. Outside this band, the pattern is prescribed by [Step 4](#4-pattern-selection); the band is the narrow case where both forms genuinely apply.
+
+The band applies when **all four** of these hold. If any one fails, the pattern is prescribed (typically reactor for state-machine cases, effect for non-state-machine cases) — there's no choice to surface.
+
+1. **Single positive state.** One resolved/active condition; no per-state effects to distinguish.
+2. **Source-identity-driven.** The work is bounded by a source signal's lifecycle (typically `state.presentation`).
+3. **Re-fire-safe entry work.** The entry is idempotent on re-fire — an `if (already done) return` guard at the top is a natural no-op against internal source updates, not a fight-the-shape sniff.
+4. **No undo semantic on state exit.** The written value either lives inside an object that gets replaced wholesale on source change (e.g., a field of `state.presentation` itself), or the slot is re-initialized by another behavior on the new source. If the slot needs an explicit clear-on-unload (e.g., a top-level slot like `selectedTrackId` whose stale value would block downstream work), the band does not apply — expressing the clear in a simple effect requires closure-mutable transition state (anti-pattern), so the reactor is the answer.
+
+Trade-offs when all four hold:
+
+| Reactor (single-positive-state) wins on | Simple effect wins on |
+| --- | --- |
+| Sibling consistency with other reactor-using behaviors in the same engine | Cognitive overhead — matches the actual complexity of the work |
+| State-exit and destroy paths are structural and named | Less boilerplate — no `deriveState` / `derivedStateSignal` / `monitor` scaffolding for one positive state |
+| Future headroom if a second positive state emerges | Reads as appropriately light when the work stays single-state |
+| Self-documenting lifecycle (state names *are* the contract) | No fight-the-shape risk if the work stays this simple |
+
+Pick by local factors: sibling count and consistency in the engine, expected headroom, and how heavy the behavior reads at the call site.
+
+**Worked examples**:
+
+- `calculate-presentation-duration` — **in the band**. Lives as a simple effect because duration is written *into* the presentation object itself; a new source's presentation arrives with `duration === undefined` and no explicit clear is needed (criterion 4 holds).
+- `select-tracks` — **outside the band**. Lives as a reactor because `selectedTrackId` is a top-level slot that survives presentation replacement; a stale id blocks the new source's `resolve-track`, so explicit clear-on-unload is required (criterion 4 fails).
+
+Both behaviors share verb-shape "set X when Y resolves" and look superficially identical against the diagnostic in [Step 1](#1-articulate-the-purpose) — the band check is what distinguishes them.
 
 ### Cleaned-shape sketch
 

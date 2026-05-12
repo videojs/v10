@@ -130,6 +130,31 @@ supply the work; the helper shouldn't carry the conditional. (Specific
 composition shape is per-case; what matters is that the helper isn't
 parameterized by "is this optional thing on or off?")
 
+**Band check — when both light-reactor and simple-effect are
+legitimate.** Before locking in the pattern, evaluate the four
+criteria in `behaviors.md` → "Where both shapes are legitimate: the
+light-reactor / simple-effect band":
+
+1. Single positive state?
+2. Source-identity-driven?
+3. Re-fire-safe entry work?
+4. No undo semantic on state exit?
+
+If **all four** hold, the case lands in the band — both `effect()` and
+`createMachineReactor` with `entry` are legitimate, and the choice is
+judgment-laden and local. **Don't pick silently.** Surface the choice
+to the user via `AskUserQuestion`, presenting both shapes with the
+trade-off summary (sibling consistency / structural lifecycle /
+future-state headroom on the reactor side; less boilerplate / matches
+actual complexity on the effect side). On any one criterion failing,
+the pattern is prescribed by the bullets above — pick it and proceed.
+
+The band is narrow by design — most refactors fail at least one
+criterion and don't surface a choice. The most common disqualifier is
+criterion 4: a slot that needs explicit clear-on-unload requires the
+reactor's structural state-exit cleanup (`select-tracks` is the
+canonical example).
+
 ### Step 5 — Convention checks
 
 Before writing the refactor:

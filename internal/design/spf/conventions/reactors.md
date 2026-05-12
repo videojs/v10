@@ -17,6 +17,8 @@ A Reactor is the right shape when **all** of these are true:
 
 If you find yourself writing nested `effect` calls gated by flag-shaped `computed` signals (`canSetup`, `shouldX`, `isAttached`), you're hand-rolling a state machine — `createMachineReactor` is the answer. See `behaviors.md` "fight-the-shape" sniffs.
 
+**Single-positive-state reactors** are a legitimate degenerate case for the lightest verb shape ("set X when Y resolves") when the four band criteria in [`behaviors.md` → "Where both shapes are legitimate"](behaviors.md#where-both-shapes-are-legitimate-the-light-reactor--simple-effect-band) hold. A reactor with one positive state and `entry`-only handlers can be the right answer over a guarded `effect()` when lifecycle naming and structural state-exit cleanup are load-bearing for sibling consistency or future-state headroom. If neither is load-bearing, the simple-effect form is also legitimate — pick by local factors.
+
 ## The `deriveState` + `monitor` convention
 
 The recurring shape across SPF reactor-using behaviors (`resolve-presentation`, `resolve-track`, `load-text-track-cues`, `track-playback-initiated`, `sync-text-tracks`):
