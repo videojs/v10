@@ -29,7 +29,7 @@
  */
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
+import { type ReadonlySignal, type Signal, snapshot, untrack, update } from '../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../media/types';
 
 export interface PresentationDurationState {
@@ -64,10 +64,14 @@ function calculatePresentationDurationSetup({
     const presentation = state.presentation.get();
     if (!presentation || presentation.duration !== undefined) return;
 
-    const duration = config.resolveDuration(snapshot(state));
+    // presentation drives the effect; selection-only changes can't yield a
+    // writable duration on their own (resolver returns undefined until a
+    // track resolves, at which point resolve-track writes back through
+    // state.presentation anyway), so we read the rest untracked.
+    const duration = config.resolveDuration(untrack(() => snapshot(state)));
     if (duration === undefined || Number.isNaN(duration) || duration <= 0) return;
 
-    state.presentation.set({ ...presentation, duration });
+    update(state.presentation, (current) => (current ? { ...current, duration } : current));
   });
 }
 
