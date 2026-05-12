@@ -7,7 +7,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import Aside from '@/components/Aside.astro';
 
-Browser autoplay policies decide whether your player can start playing on its own, or whether you'll need to wait for the viewer to ask. The rules differ by browser, device, and user behavior, and they change. This guide explains how those rules work and shows two patterns for handling them: a declarative one for when you don't need to react to failure, and a programmatic one for when you do.
+Browser autoplay policies decide whether your player can start playing on its own, or whether the viewer has to press play first. The rules differ by browser, device, and prior engagement, and they change. This guide explains how those rules work and shows two patterns for handling them: a declarative one for when you don't need to react to failure, and a programmatic one for when you do.
 
 ## How browsers gate autoplay
 
@@ -20,7 +20,7 @@ A few gates worth knowing about:
 - **iOS Low Power Mode** — disables autoplay entirely until the viewer taps to play.
 - **Mobile browsers and embedded WebViews** — autoplay generally requires `playsinline`, and WebViews can apply additional restrictions. See <DocsLink slug="concepts/browser-support">Browser support</DocsLink> for our notes on WebViews and PWAs.
 
-For the full spec-level detail, see MDN's [Autoplay guide for media and Web Audio APIs](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay).
+For more, see MDN's [Autoplay guide for media and Web Audio APIs](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay).
 
 ## The simplest path: muted autoplay
 
@@ -59,7 +59,7 @@ function App() {
 ```
 </FrameworkCase>
 
-`playsinline` keeps the video from auto-fullscreening on iOS, which would block autoplay. Leaving any one of the three attributes off is the most common reason an "autoplay" video doesn't.
+`playsinline` keeps the video from auto-fullscreening on iOS, which would block autoplay. Leaving any one of the three attributes off is the most common reason autoplay fails.
 
 <FrameworkCase frameworks={["react"]}>
 For pre-packaged decorative video — autoplay, mute, and loop baked in, with no controls — use the `@videojs/react/background` preset. See <DocsLink slug="concepts/presets">Presets</DocsLink>.
@@ -83,14 +83,8 @@ video.play().catch(() => {
 In v10, route the same logic through the player store so it works for whatever media element you're using — a plain `<video>`, an HLS adapter, or any custom media element.
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/use-player">`usePlayer`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute as a fallback:
-</FrameworkCase>
+<DocsLink slug="reference/use-player">`usePlayer`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute on rejection:
 
-<FrameworkCase frameworks={["html"]}>
-<DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute as a fallback:
-</FrameworkCase>
-
-<FrameworkCase frameworks={["react"]}>
 ```tsx title="AutoplayHandler.tsx"
 import { selectPlayback, selectVolume, usePlayer } from '@videojs/react';
 import { useEffect, useRef } from 'react';
@@ -120,10 +114,12 @@ export function AutoplayHandler({ onStatus }: { onStatus?: (status: AutoplayStat
 }
 ```
 
-Render `<AutoplayHandler />` inside your `<Player.Provider>`, and drop the `autoPlay` attribute from `<Video>` when you do — combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
+Render `<AutoplayHandler />` inside your `<Player.Provider>` and drop the `autoPlay` attribute from `<Video>` when you do — combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+<DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute on rejection:
+
 ```ts title="autoplay-handler.ts"
 import {
   MediaElement,
@@ -145,16 +141,16 @@ export class AutoplayHandlerElement extends MediaElement {
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
-    if (this.#attempted) return;
+    if (this.#attempted || !this.#playback.value) return;
 
+    this.#attempted = true;
+    this.#tryPlay();
+  }
+
+  async #tryPlay(): Promise<void> {
     const playback = this.#playback.value;
     if (!playback) return;
 
-    this.#attempted = true;
-    this.#tryPlay(playback);
-  }
-
-  async #tryPlay(playback: NonNullable<typeof this.#playback.value>): Promise<void> {
     try {
       await playback.play();
       this.#emit('playing');
@@ -204,8 +200,8 @@ A rejected `play()` promise is a [`DOMException`](https://developer.mozilla.org/
 When even muted autoplay fails, autoplay isn't going to happen without the viewer's input. Treat it as expected, not as an error:
 
 - **Keep the poster visible.** The player isn't loading — it's waiting. Don't show a buffering spinner.
-- **Expose a clear play affordance.** A play button overlaid on the poster is the conventional pattern. The player's own controls already work for this; just make sure they render in the blocked state.
+- **Expose a clear play affordance.** A play button overlaid on the poster is the conventional pattern. The player's own controls already work for this — make sure they render in the blocked state.
 - **Don't retry on every render.** The browser's decision is based on engagement state that won't change without viewer input. Retrying in a loop wastes work and inflates analytics.
 - **Don't log autoplay rejection as a fatal error.** A blocked autoplay is the browser doing its job. If your analytics treats every `play()` rejection as a playback failure, your error rates will spike on first-visit sessions where the policy hasn't been earned yet. Distinguish a `NotAllowedError` on the initial autoplay attempt from real playback errors.
 
-Wire your UI to whichever status the handler above surfaces — a React state, a custom event, a store slice of your own — and only show the fallback overlay once status reaches `'blocked'`.
+Wire your UI to whichever status the handler above surfaces — a React state, a custom event, or a store slice of your own — and show the fallback overlay only when status reaches `'blocked'`.
