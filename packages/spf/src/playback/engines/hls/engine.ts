@@ -8,10 +8,14 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
-import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
+import {
+  calculatePresentationDuration,
+  type PresentationDurationResolver,
+} from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -107,6 +111,15 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * offscreen `<track>` element to parse WebVTT.
    */
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
+  /**
+   * Resolver for `presentation.duration`. Defaults to picking the first
+   * resolved selected track's duration (video preferred, audio fallback) —
+   * appropriate for VoD and audio-only. Live engines should supply a
+   * resolver that returns `Number.POSITIVE_INFINITY` once the presentation
+   * is established as live; downstream `updateDuration` propagates that
+   * value to `mediaSource.duration` per the MSE spec.
+   */
+  resolveDuration?: PresentationDurationResolver;
 }
 
 // ============================================================================
@@ -152,6 +165,7 @@ export function createSimpleHlsEngine(
   const finalConfig = {
     ...config,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+    resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
   };
 
   return createComposition(
