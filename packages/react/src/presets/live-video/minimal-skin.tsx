@@ -1,6 +1,7 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { AirplayIcon } from '@/icons';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -19,6 +20,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { AirplayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -171,6 +173,17 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                 }
               />
               <Tooltip.Popup className="media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirplayButton className="media-button--airplay" render={<Button />}>
+                    <AirplayIcon className="media-icon media-icon--airplay" />
+                  </AirplayButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">

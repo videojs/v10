@@ -39,4 +39,7 @@ export const iconState = {
       'hidden opacity-0 group-not-data-[cast-state=connected]:block group-not-data-[cast-state=connected]:opacity-100',
     exit: 'hidden opacity-0 group-data-[cast-state=connected]:block group-data-[cast-state=connected]:opacity-100',
   },
+  airplay: {
+    button: 'group',
+  },
 };

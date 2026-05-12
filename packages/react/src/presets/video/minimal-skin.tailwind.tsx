@@ -23,6 +23,7 @@ import {
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { AirplayIcon } from '@/icons';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -43,6 +44,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { AirplayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -291,6 +293,17 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirplayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirplayIcon className={cn(icon)} />
+                  </AirplayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
