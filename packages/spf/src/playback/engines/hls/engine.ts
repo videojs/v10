@@ -23,7 +23,7 @@ import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
-import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
+import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackSegments } from '../../behaviors/load-text-track-segments';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
@@ -56,7 +56,7 @@ export interface SimpleHlsEngineState {
   bandwidthState?: BandwidthState;
   userVideoTrackSelection?: Partial<VideoTrack>;
   currentTime?: number;
-  playbackInitiated?: boolean;
+  loadActivated?: boolean;
   mediaSourceReadyState?: MediaSource['readyState'];
 }
 
@@ -171,7 +171,7 @@ export function createSimpleHlsEngine(
   return createComposition(
     [
       syncPreload,
-      trackPlaybackInitiated,
+      trackLoadTriggers,
       resolvePresentation,
 
       // Track selection (reads config for initial preferences).

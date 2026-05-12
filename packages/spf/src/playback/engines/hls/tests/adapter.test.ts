@@ -209,11 +209,11 @@ describe('SimpleHlsMediaElement', () => {
       result.catch(() => {});
     });
 
-    it('sets playbackInitiated on engine state when called', () => {
+    it('sets loadActivated on engine state when called', () => {
       const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
-      expect(media.engine.state.playbackInitiated.get()).toBe(true);
+      expect(media.engine.state.loadActivated.get()).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {

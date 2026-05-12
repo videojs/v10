@@ -49,7 +49,7 @@ describe('createSimpleHlsEngine', () => {
       },
       currentTime: undefined,
       mediaSourceReadyState: undefined,
-      playbackInitiated: undefined,
+      loadActivated: undefined,
       preload: 'metadata',
       presentation: undefined,
       selectedAudioTrackId: undefined,

@@ -19,7 +19,7 @@ function makeState(initial: State = {}): StateSignals<PresentationState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<PresentationState['preload']>(initial.preload),
-    playbackInitiated: signal<boolean | undefined>(undefined),
+    loadActivated: signal<boolean | undefined>(undefined),
   };
 }
 

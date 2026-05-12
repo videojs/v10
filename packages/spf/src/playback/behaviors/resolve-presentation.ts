@@ -16,24 +16,24 @@ import { fetchResolvable, getResponseText } from '../../network/fetch';
 export interface PresentationState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none' | undefined;
-  /** True once the user has initiated playback — enables resolution regardless of preload. */
-  playbackInitiated?: boolean;
+  /** True once a preload-overriding event has fired for the current source — enables resolution regardless of preload. */
+  loadActivated?: boolean;
 }
 
 /**
- * Determines if resolution conditions are met based on preload policy and playback state.
+ * Determines if resolution conditions are met based on preload policy and load-activation state.
  *
  * Resolution conditions:
  * - State-driven: preload is 'auto' or 'metadata'
- * - Playback-driven: playbackInitiated is true
+ * - Load-activated: loadActivated is true (play / seek event observed for this source)
  */
 export function shouldResolve(state: PresentationState): boolean {
-  const { preload, playbackInitiated } = state;
+  const { preload, loadActivated } = state;
   return (
     // State-driven: preload allows (auto/metadata)
     ['auto', 'metadata'].includes(preload as any) ||
-    // Playback-driven: user has initiated playback
-    !!playbackInitiated
+    // Load-activated: a preload-overriding event has fired for this source
+    !!loadActivated
   );
 }
 
@@ -82,7 +82,7 @@ function resolvePresentationSetup({
   state: {
     presentation: Signal<PresentationState['presentation']>;
     preload: ReadonlySignal<PresentationState['preload']>;
-    playbackInitiated: ReadonlySignal<PresentationState['playbackInitiated']>;
+    loadActivated: ReadonlySignal<PresentationState['loadActivated']>;
   };
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(snapshot(state)));
@@ -120,7 +120,7 @@ function resolvePresentationSetup({
 }
 
 export const resolvePresentation = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'playbackInitiated'],
+  stateKeys: ['presentation', 'preload', 'loadActivated'],
   contextKeys: [],
   setup: resolvePresentationSetup,
 });

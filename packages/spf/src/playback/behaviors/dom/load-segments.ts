@@ -98,8 +98,8 @@ export interface SegmentLoadingState extends TrackSelectionState {
   bandwidthState?: BandwidthState;
   /** Current playback position in seconds. Defaults to 0 when undefined. */
   currentTime?: number;
-  /** True once the user has initiated playback. Allows segment loading regardless of preload setting. */
-  playbackInitiated?: boolean;
+  /** True once a preload-overriding event has fired for the current source. Allows full segment loading regardless of preload setting. */
+  loadActivated?: boolean;
 }
 
 /**
@@ -121,7 +121,7 @@ export interface SegmentLoadingContext {
  * A plain "pick" with one derived field (resolved track ID).
  */
 type LoadingInputs = {
-  playbackInitiated: boolean | undefined;
+  loadActivated: boolean | undefined;
   preload: string | undefined;
   currentTime: number | undefined;
   /** @TODO cleanup type precision via inference+generics */
@@ -133,10 +133,10 @@ function selectLoadingInputs(
   [segmentsCanLoad, state]: [boolean, SegmentLoadingState],
   type: MediaTrackType
 ): LoadingInputs {
-  const { playbackInitiated, preload, currentTime } = state;
+  const { loadActivated, preload, currentTime } = state;
   const track = getSelectedTrack(state, type);
   return {
-    playbackInitiated,
+    loadActivated,
     preload,
     currentTime,
     track,
@@ -147,16 +147,16 @@ function selectLoadingInputs(
 /**
  * Equality function encoding the condition hierarchy for relevant changes.
  *
- * Pre-play (!playbackInitiated):
+ * Preload-only (!loadActivated):
  *   Only preload changes matter. currentTime and resolvedTrackId are ignored
- *   (track changes not supported pre-play; currentTime value is used at
- *   trigger time but changes don't re-trigger).
+ *   (track changes not supported pre-activation; currentTime value is used
+ *   at trigger time but changes don't re-trigger).
  *
- * playbackInitiated transition:
+ * loadActivated transition:
  *   Always fires (handled in the subscriber; preload='auto' suppression
  *   applied there since equality functions have no memory of prior values).
  *
- * Post-play (playbackInitiated):
+ * Post-activation (loadActivated):
  *   resolvedTrackId changes (track switch or previously-unresolved track
  *   resolving) and currentTime changes both trigger. preload is irrelevant.
  */
@@ -176,13 +176,13 @@ const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack |
  */
 function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
   if (!curState.segmentsCanLoad) return true;
-  // Haven't started playback. Only care about preload changes.
-  if (!curState.playbackInitiated) {
+  // No load-activation yet — only care about preload changes.
+  if (!curState.loadActivated) {
     if (curState.preload === 'none') return true; // blocked — equal, don't fire
     return curState.preload === prevState.preload; // equal if preload unchanged
   }
-  // Transition: !playbackInitiated → playbackInitiated
-  if (!prevState.playbackInitiated && curState.playbackInitiated) {
+  // Transition: !loadActivated → loadActivated
+  if (!prevState.loadActivated && curState.loadActivated) {
     if (prevState.preload !== 'auto') return false; // fire — message shape changes
     // preload was 'auto': fall through to segment comparison (suppress if same position)
   }
@@ -193,7 +193,7 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
   // If we *do* have a currently resolved track, treat as a change if the track ids have changed
   if (prevState.track?.id !== curState.track.id && isResolvedTrack(curState.track)) return false;
 
-  // Finally, if playback has initiated *and* we have a resolved track, check if currentTime
+  // Finally, if load has activated *and* we have a resolved track, check if currentTime
   // has changed "significantly" (based on segment time range boundaries) and treat as a change
   // if so (regardless of whether or not the track has changed)
   return (
@@ -216,22 +216,17 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  *
  * Condition hierarchy (see SegmentLoadingKey for detail):
  *
- *   !playbackInitiated
+ *   !loadActivated
  *     preload==='none' (or unset)  → dormant; no trigger
  *     preload==='metadata'         → trigger on transition to 'metadata'
  *     preload==='auto'             → trigger on transition to 'auto'
  *
- *   !playbackInitiated → playbackInitiated
+ *   !loadActivated → loadActivated
  *     preload !== 'auto'           → trigger (message shape changes)
  *     preload === 'auto'           → suppressed (was already full-range mode;
- *                                    let segmentStart take over post-play)
- *                                    KNOWN LIMITATION: seek-before-play with
- *                                    preload='auto' is not supported — if the
- *                                    user seeks before pressing play, the
- *                                    first re-send is delayed until the next
- *                                    segment boundary crossing post-play.
+ *                                    let segmentStart take over post-activation)
  *
- *   playbackInitiated
+ *   loadActivated
  *     resolvedTrackId changes      → trigger
  *     segmentStart(currentTime) changes → trigger
  *
@@ -244,7 +239,7 @@ type SegmentLoadingStateMap = {
   preload: ReadonlySignal<SegmentLoadingState['preload']>;
   bandwidthState: ReadonlySignal<SegmentLoadingState['bandwidthState']>;
   currentTime: ReadonlySignal<SegmentLoadingState['currentTime']>;
-  playbackInitiated: ReadonlySignal<SegmentLoadingState['playbackInitiated']>;
+  loadActivated: ReadonlySignal<SegmentLoadingState['loadActivated']>;
   selectedVideoTrackId: ReadonlySignal<SegmentLoadingState['selectedVideoTrackId']>;
   selectedAudioTrackId: ReadonlySignal<SegmentLoadingState['selectedAudioTrackId']>;
   selectedTextTrackId: ReadonlySignal<SegmentLoadingState['selectedTextTrackId']>;
@@ -330,7 +325,7 @@ function setupSegmentLoading(
       preload: state.preload.get(),
       bandwidthState: state.bandwidthState.get(),
       currentTime: state.currentTime.get(),
-      playbackInitiated: state.playbackInitiated.get(),
+      loadActivated: state.loadActivated.get(),
       selectedVideoTrackId: state.selectedVideoTrackId.get(),
       selectedAudioTrackId: state.selectedAudioTrackId.get(),
       selectedTextTrackId: state.selectedTextTrackId.get(),
@@ -348,12 +343,12 @@ function setupSegmentLoading(
     const inputs = loadingInputs.get();
     if (prevInputs !== undefined && loadingInputsEq(prevInputs, inputs)) return;
 
-    const { preload, playbackInitiated, currentTime, track, segmentsCanLoad: canLoad } = inputs;
+    const { preload, loadActivated, currentTime, track, segmentsCanLoad: canLoad } = inputs;
     if (!canLoad) return;
 
     prevInputs = inputs;
 
-    const fullMode = preload === 'auto' || !!playbackInitiated;
+    const fullMode = preload === 'auto' || !!loadActivated;
     if (!fullMode) {
       // Metadata mode: init only, no range.
       /** @ts-expect-error */
@@ -383,7 +378,7 @@ const SEGMENT_LOADING_STATE_KEYS = [
   'preload',
   'bandwidthState',
   'currentTime',
-  'playbackInitiated',
+  'loadActivated',
   'selectedVideoTrackId',
   'selectedAudioTrackId',
   'selectedTextTrackId',
@@ -393,7 +388,7 @@ const SEGMENT_LOADING_CONTEXT_KEYS = ['videoBuffer', 'audioBuffer', 'videoBuffer
 
 /**
  * Load video segments — drives the video SourceBufferActor with media
- * segments based on bandwidth/preload/currentTime/playbackInitiated.
+ * segments based on bandwidth/preload/currentTime/loadActivated.
  * Tracks throughput per chunk and bridges samples back into
  * `state.bandwidthState` for ABR.
  */

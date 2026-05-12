@@ -150,7 +150,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       }
 
       // Signal play intent — enables loading even with preload="none"
-      this.#signals.state.playbackInitiated.set(true);
+      this.#signals.state.loadActivated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE

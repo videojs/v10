@@ -8,7 +8,7 @@ function makeState(initial: PresentationState = {}): StateSignals<PresentationSt
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<'auto' | 'metadata' | 'none' | undefined>(initial.preload),
-    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+    loadActivated: signal<boolean | undefined>(initial.loadActivated),
   };
 }
 
@@ -276,8 +276,8 @@ variant1.m3u8`)
     });
   });
 
-  describe('playbackInitiated resolution', () => {
-    it('resolves when playbackInitiated is set to true with preload "none"', async () => {
+  describe('loadActivated resolution', () => {
+    it('resolves when loadActivated is set to true with preload "none"', async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
@@ -293,7 +293,7 @@ variant1.m3u8`)
 
       expect(fetchSpy).not.toHaveBeenCalled();
 
-      state.playbackInitiated.set(true);
+      state.loadActivated.set(true);
 
       await vi.waitFor(() => {
         expect(state.presentation.get()).toHaveProperty('id');
@@ -304,7 +304,7 @@ variant1.m3u8`)
       reactor.destroy();
     });
 
-    it('does not resolve when playbackInitiated is false with preload "none"', async () => {
+    it('does not resolve when loadActivated is false with preload "none"', async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = makeState({
@@ -400,16 +400,16 @@ describe('shouldResolve', () => {
     expect(result).toBe(true);
   });
 
-  it('returns true when playbackInitiated is true with preload "none"', () => {
+  it('returns true when loadActivated is true with preload "none"', () => {
     const result = shouldResolve({
       presentation: { url: 'http://example.com/playlist.m3u8' },
       preload: 'none',
-      playbackInitiated: true,
+      loadActivated: true,
     });
     expect(result).toBe(true);
   });
 
-  it('returns false when preload is "none" and playbackInitiated is false', () => {
+  it('returns false when preload is "none" and loadActivated is false', () => {
     const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' });
     expect(result).toBe(false);
   });

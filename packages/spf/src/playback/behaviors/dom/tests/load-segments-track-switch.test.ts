@@ -29,7 +29,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     preload: signal<string | undefined>(initial.preload),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),
-    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+    loadActivated: signal<boolean | undefined>(initial.loadActivated),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -152,7 +152,7 @@ describe('loadSegments — track switch', () => {
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 5,
     });
 
@@ -194,7 +194,7 @@ describe('loadSegments — track switch', () => {
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 0,
     });
 
@@ -239,7 +239,7 @@ describe('loadSegments — track switch', () => {
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 25,
     });
 

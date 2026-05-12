@@ -21,7 +21,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     preload: signal<string | undefined>(initial.preload),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),
-    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+    loadActivated: signal<boolean | undefined>(initial.loadActivated),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -372,7 +372,7 @@ describe('loadSegments orchestration (metadata mode)', () => {
     cleanup();
   });
 
-  it('loads media segments after playbackInitiated becomes true', async () => {
+  it('loads media segments after loadActivated becomes true', async () => {
     const segments = [makeSegment('s1', 0, 10)];
 
     const fetchedUrls: string[] = [];
@@ -398,7 +398,7 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
 
-    state.playbackInitiated.set(true);
+    state.loadActivated.set(true);
 
     await vi.waitFor(
       () => {
@@ -467,7 +467,7 @@ describe('loadSegments seek handling', () => {
     const { state, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
-        playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
+        loadActivated: true, // seeks are a post-play concern; currentTime only tracked when playing
         selectedVideoTrackId: 'track-1',
         currentTime: 0,
         presentation: makePresentation(segments),
@@ -502,7 +502,7 @@ describe('loadSegments seek handling', () => {
     const { state, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
-        playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
+        loadActivated: true, // seeks are a post-play concern; currentTime only tracked when playing
         selectedVideoTrackId: 'track-1',
         currentTime: 0,
         presentation: makePresentation(segments),
@@ -544,7 +544,7 @@ describe('loadSegments seek handling', () => {
     const { cleanup } = setupLoadSegments(
       {
         preload: 'auto',
-        playbackInitiated: true, // currentTime advances are only tracked post-play
+        loadActivated: true, // currentTime advances are only tracked post-play
         selectedVideoTrackId: 'track-1',
         currentTime: 0,
         presentation: makePresentation(segments),
