@@ -333,7 +333,7 @@ The behavior holds derived state (closure flags, computed projections, accumulat
 
 **Reset contract**: reset the derived state when the source changes.
 
-**Pattern**: don't carry derived state in closure-mutable variables; either compute it via `computed` (auto-tracks the source signal) or scope it to a state-machine state so it's freshly initialized on each entry. Closure-mutable state (`let lastUpgradeTime`, `let hasEnded`) survives source resets and produces stale answers.
+**Pattern**: don't carry derived state in closure-mutable variables; either compute it via `computed` (auto-tracks the source signal), scope it to a state-machine state so it's freshly initialized on each entry, or — when the state has external observers — express it as a writable slot the reactor drives via [slot-driven derivation](reactors.md#slot-driven-state-derivation) + [effects-based cleanup](reactors.md#effects-based-cleanup-for-within-state-identity-changes). Closure-mutable state (`let lastUpgradeTime`, `let hasEnded`) survives source resets and produces stale answers.
 
 **Hazard**: the easy bug. `quality-switching`'s closure-state flags, `end-of-stream`'s `hasEnded`, `update-duration`'s `running` flag are all instances surfaced by the assessment as candidates for this category.
 

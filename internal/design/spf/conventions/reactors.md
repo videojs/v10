@@ -91,6 +91,53 @@ The double-arrow form is the minimal case where there's no setup work — just t
 
 `entry`'s cleanup runs *only on state exit*. This is distinct from `effects` cleanups, which run *between effect re-runs* (within the state) *and* on state exit. For exit-only behavior, use `entry`. For per-effect-re-run cleanup (e.g., re-attaching a listener as a signal changes), use the cleanup return from `effects`.
 
+### Effects-based cleanup for within-state identity changes
+
+`effects`-based cleanup is the right tool — not an anti-pattern — when the cleanup should fire on *both* state exit *and* within-state identity changes that the state machine can't transition through.
+
+The motivating case: a state machine where the positive state is gated on `signal.truthy()` rather than `signal.value`. A change from `value_a` to `value_b` (both truthy) doesn't transition the state machine — `deriveState` returns the same state — but downstream effects bound to the old value still need cleanup.
+
+`trackLoadTriggers` is the worked example. The positive state `'load-active'` is entered when `mediaElement + presentation.url + loadActivated` are all truthy. A URL-identity swap `url_a → url_b` (both truthy) doesn't transition the state, but `loadActivated` should reset for the new source:
+
+```ts
+'load-active': {
+  // effects (not entry) so the cleanup fires on within-state identity
+  // change in addition to state exit. The tracked reads make the effect
+  // re-fire on either URL or element identity change; the cleanup writes
+  // loadActivated = false → deriveState returns 'monitoring' → state
+  // transitions and re-attaches listeners for the new source.
+  effects: () => {
+    context.mediaElement.get();
+    state.presentation.get()?.url;
+    return () => state.loadActivated.set(false);
+  },
+},
+```
+
+The mechanism only closes when `deriveState` also reads the slot — see [Slot-driven state derivation](#slot-driven-state-derivation) below. Without that link, the cleanup writes the slot but no state transition follows.
+
+The combinatorial advantage: state-exit *and* within-state identity change get the same cleanup, expressed once. The dual mistake — putting this in `entry` because exit-cleanup-in-entry is the usual convention — would leave URL/element-identity changes within `'load-active'` unhandled.
+
+### Slot-driven state derivation
+
+`deriveState` reading a slot the behavior writes is *not* double-bookkeeping when the slot IS the canonical externally-observable state of the concern.
+
+Distinguish from the [state-scoped closure mutable state](#anti-patterns) anti-pattern: closure-state is *parallel* to the state machine (the reactor IS the state, plus some `let lastFoo` next to it — two things claiming to be the truth). Slot-driven derivation has *one* canonical truth (the slot, observable to other behaviors and the API surface); the state machine simply observes it alongside other inputs to gate per-state work.
+
+When applicable: the behavior writes a slot in response to events, the slot has external observers (other behaviors, adapter writes, the API surface), and the per-state effects/cleanup structure helps express the contract.
+
+`trackLoadTriggers` is the worked example. The slot `loadActivated` drives the `'monitoring'` ↔ `'load-active'` transition:
+
+```ts
+function deriveState(presentation, mediaElement, loadActivated) {
+  if (!mediaElement || !presentation?.url) return 'preconditions-unmet';
+  if (loadActivated) return 'load-active';
+  return 'monitoring';
+}
+```
+
+The behavior writes the slot (from DOM events or external writers); `deriveState` reading the slot is observing the same canonical truth from the other side. This pattern pairs naturally with [effects-based cleanup for within-state identity changes](#effects-based-cleanup-for-within-state-identity-changes) — the cleanup writes the slot, the slot drives `deriveState`, the state transitions, and the next state's setup re-attaches for the new source.
+
 ### Bind cleanup to its setup, not to the next state's entry
 
 When state X's entry "does Y" and the inverse "undoes Y" should fire on state exit, **return the cleanup from X's entry**. Don't define the undo as the *next* state's entry. The latter form is *almost* mechanically equivalent but has two real downsides:
@@ -194,7 +241,7 @@ When *not* to use `peek` inside an effect: when you need the effect to re-run as
 - **Inlining `monitor` past the single-signal-read case.** Inline is only correct for a direct read with no composition (`monitor: () => state.foo.get() ? 'on' : 'off'`). Two predicates, a helper call, or any conjunction → extract to `derivedStateSignal`. Hurts testability, re-creates the closure on every read, and breaks consistency with every other reactor-using behavior in the codebase.
 - **Hand-rolled FSM via `computed` flags + nested effects** when `createMachineReactor` was the answer. (See `behaviors.md` fight-the-shape sniffs.)
 - **Tracking a source signal again inside per-state effects** when the reactor's `monitor` already tracks it. Use `peek` for non-state reads inside the state.
-- **Putting state-exit cleanup in an `effects` callback's return** instead of `entry`'s return. `effects` cleanups run between effect re-runs *and* on state exit. If you want exit-only behavior, put it in `entry`.
+- **Putting state-exit cleanup in an `effects` callback's return** instead of `entry`'s return — *when you want exit-only behavior*. `effects` cleanups run between effect re-runs *and* on state exit. For exit-only cleanup, use `entry`. For cleanup that should fire on both state exit *and* within-state identity changes, `effects`-based cleanup is the right tool — see [Effects-based cleanup for within-state identity changes](#effects-based-cleanup-for-within-state-identity-changes).
 - **Putting an operation's cleanup in a different state's `entry`** instead of returning it from the operation's own `entry`. Mechanically *almost* equivalent for normal transitions, but fragments the operation across two states (cohesion loss) and silently misses the destroy path (destroy goes `current → 'destroying' → 'destroyed'` without passing through arbitrary intermediate states). See [Bind cleanup to its setup](#bind-cleanup-to-its-setup-not-to-the-next-states-entry).
 - **State-scoped closure mutable state** (`let lastFoo`) instead of expressing the state in the state machine. The reactor *is* the state — adding parallel mutable closure state is double-bookkeeping.
 - **Calling `effect()` inside `entry`'s body** to do state-driven work. Use the `effects:` array — bypassing it hand-manages a lifecycle the reactor was designed to handle. The failure mode is invisible at the test level (both forms produce the same observable behavior), which is why the anti-pattern needs explicit doc coverage. If a reviewer sees `effect(...)` inside an `entry` body, that's a sniff that the work belongs in `effects:` instead.
