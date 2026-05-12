@@ -24,10 +24,10 @@ export type HtmlSandboxState = {
   preload: PreloadValue;
 };
 
-export function createHtmlSandboxState(audioOnly?: boolean): HtmlSandboxState {
+export function createHtmlSandboxState(audioOnly?: boolean, vimeoOnly?: boolean): HtmlSandboxState {
   return {
     skin: getInitialSkin(),
-    source: getInitialSource(audioOnly),
+    source: getInitialSource(audioOnly, vimeoOnly),
     styling: getInitialStyling(),
     autoplay: getInitialAutoplay(),
     muted: getInitialMuted(),

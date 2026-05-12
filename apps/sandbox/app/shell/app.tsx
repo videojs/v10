@@ -6,9 +6,11 @@ import {
   DEFAULT_AUDIO_SOURCE,
   DEFAULT_DASH_SOURCE,
   DEFAULT_SOURCE,
+  DEFAULT_VIMEO_SOURCE,
   MP4_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
   SOURCES,
+  VIMEO_SOURCE_IDS,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -106,9 +108,19 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain source away from DASH for non-DASH presets
+  // Constrain source to Vimeo when switching to vimeo-video
+  useEffect(() => {
+    if (preset === 'vimeo-video' && SOURCES[source].type !== 'vimeo') {
+      setSource(DEFAULT_VIMEO_SOURCE);
+    }
+  }, [preset, source, setSource]);
+
+  // Constrain source away from DASH and Vimeo for non-matching presets
   useEffect(() => {
     if (preset !== 'dash-video' && SOURCES[source].type === 'dash') {
+      setSource(DEFAULT_SOURCE);
+    }
+    if (preset !== 'vimeo-video' && SOURCES[source].type === 'vimeo') {
       setSource(DEFAULT_SOURCE);
     }
   }, [preset, source, setSource]);
@@ -121,7 +133,13 @@ export function App() {
   }, [platform, preset, styling]);
 
   const availableSources =
-    preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : NON_DASH_SOURCE_IDS;
+    preset === 'audio'
+      ? MP4_SOURCE_IDS
+      : preset === 'dash-video'
+        ? DASH_SOURCE_IDS
+        : preset === 'vimeo-video'
+          ? VIMEO_SOURCE_IDS
+          : NON_DASH_SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
@@ -151,6 +169,7 @@ export function App() {
         isSimpleHlsVideo={preset === 'simple-hls-video'}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
+        isVimeoVideo={preset === 'vimeo-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

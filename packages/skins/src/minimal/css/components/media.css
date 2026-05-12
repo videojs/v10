@@ -3,14 +3,19 @@
    ========================================================================== */
 
 .media-minimal-skin ::slotted(video),
-.media-minimal-skin video {
+.media-minimal-skin ::slotted(vimeo-video),
+.media-minimal-skin video,
+.media-minimal-skin .media-vimeo {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
 }
-.media-minimal-skin ::slotted(video) {
+.media-minimal-skin ::slotted(video),
+.media-minimal-skin ::slotted(vimeo-video),
+.media-minimal-skin .media-vimeo {
+  overflow: hidden;
   border-radius: var(--media-video-border-radius);
 }
 .media-minimal-skin video {
@@ -18,6 +23,8 @@
 }
 
 .media-minimal-skin:fullscreen ::slotted(video),
-.media-minimal-skin:fullscreen video {
+.media-minimal-skin:fullscreen ::slotted(vimeo-video),
+.media-minimal-skin:fullscreen video,
+.media-minimal-skin:fullscreen .media-vimeo {
   object-fit: contain;
 }

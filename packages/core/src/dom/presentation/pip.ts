@@ -2,7 +2,9 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { MediaPictureInPictureCapability } from '../../core/media/types';
 import type { WebKitVideoElement } from './types';
 
-export function isPictureInPictureEnabled() {
+export function isPictureInPictureEnabled(media?: EventTarget) {
+  if (typeof navigator !== 'undefined' && /Firefox/.test(navigator.userAgent)) return false;
+  if (media && 'isPipCapable' in media && (media as { isPipCapable: boolean }).isPipCapable === false) return false;
   if (document.pictureInPictureEnabled) {
     const isSafari = /.*Version\/.*Safari\/.*/.test(navigator.userAgent);
     const isPWA = typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches;
@@ -52,12 +54,15 @@ export async function exitPictureInPicture(media: EventTarget) {
     return;
   }
 
-  if (isFunction(document.exitPictureInPicture)) {
-    return document.exitPictureInPicture();
-  }
-
+  // Check the media's own method first — iframe-based providers (e.g. Vimeo)
+  // manage PiP inside their own document, so document.exitPictureInPicture()
+  // on the parent page would fail with InvalidStateError.
   const video = media as unknown as MediaPictureInPictureCapability;
   if (isFunction(video.exitPictureInPicture)) {
     return video.exitPictureInPicture() as Promise<void>;
+  }
+
+  if (isFunction(document.exitPictureInPicture)) {
+    return document.exitPictureInPicture();
   }
 }

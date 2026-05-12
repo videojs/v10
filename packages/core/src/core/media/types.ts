@@ -179,6 +179,11 @@ export interface MediaFullscreenCapability {
   exitFullscreen(): Promise<unknown>;
 }
 
+export interface MediaPictureInPictureEvents {
+  enterpictureinpicture: EventLike;
+  leavepictureinpicture: EventLike;
+}
+
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
@@ -255,6 +260,7 @@ export interface VideoEvents
     MediaPlaybackRateEvents,
     MediaBufferEvents,
     MediaErrorEvents,
+    MediaPictureInPictureEvents,
     TextTrackListEvents {}
 
 export interface Video

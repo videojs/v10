@@ -9,6 +9,7 @@ export const PRESETS = [
   'mux-audio',
   'simple-hls-video',
   'dash-video',
+  'vimeo-video',
   'audio',
   'background-video',
 ] as const;

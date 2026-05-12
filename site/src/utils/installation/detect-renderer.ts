@@ -12,11 +12,11 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
   //   renderer: 'youtube',
   //   label: 'YouTube',
   // },
-  // {
-  //   match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
-  //   renderer: 'vimeo',
-  //   label: 'Vimeo',
-  // },
+  {
+    match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
+    renderer: 'vimeo',
+    label: 'Vimeo',
+  },
   // {
   //   match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
   //   renderer: 'mux-video',
@@ -127,7 +127,7 @@ const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
   // 'mux-background-video': 'a',
   // 'mux-video': 'a',
   // spotify: 'a',
-  // vimeo: 'a',
+  vimeo: 'a',
   // wistia: 'a',
   // youtube: 'a',
 };
