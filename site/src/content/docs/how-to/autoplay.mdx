@@ -83,111 +83,108 @@ video.play().catch(() => {
 In v10, route the same logic through the player store so it works for whatever media element you're using — a plain `<video>`, an HLS adapter, or any custom media element.
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/use-player">`usePlayer`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute on rejection:
+<DocsLink slug="reference/use-player">`usePlayer`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute on rejection. Wrap that up as a hook:
 
-```tsx title="AutoplayHandler.tsx"
+```tsx title="useAutoplay.ts"
 import { selectPlayback, selectVolume, usePlayer } from '@videojs/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export type AutoplayStatus = 'playing' | 'muted' | 'blocked';
 
-export function AutoplayHandler({ onStatus }: { onStatus?: (status: AutoplayStatus) => void }) {
-  const playback = usePlayer(selectPlayback);
-  const volume = usePlayer(selectVolume);
+export function useAutoplay(): AutoplayStatus | undefined {
+  const store = usePlayer();
+  const [status, setStatus] = useState<AutoplayStatus>();
   const attempted = useRef(false);
 
   useEffect(() => {
-    if (!playback || attempted.current) return;
-    attempted.current = true;
+    const tryNow = () => {
+      if (attempted.current || !store.target) return;
+      attempted.current = true;
+      const playback = selectPlayback(store.state);
+      if (!playback) return;
 
-    playback.play().then(
-      () => onStatus?.('playing'),
-      () => {
-        if (volume && !volume.muted) volume.toggleMuted();
-        playback.play().then(
-          () => onStatus?.('muted'),
-          () => onStatus?.('blocked'),
-        );
-      },
-    );
-  }, [playback, volume, onStatus]);
+      playback.play().then(
+        () => setStatus('playing'),
+        () => {
+          const volume = selectVolume(store.state);
+          if (volume && !volume.muted) volume.toggleMuted();
+          playback.play().then(
+            () => setStatus('muted'),
+            () => setStatus('blocked'),
+          );
+        },
+      );
+    };
+    tryNow();
+    return store.subscribe(tryNow);
+  }, [store]);
 
-  return null;
+  return status;
 }
 ```
 
-Render `<AutoplayHandler />` inside your `<Player.Provider>` and drop the `autoPlay` attribute from `<Video>` when you do — combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
+Call `useAutoplay()` inside any component nested in `<Player.Provider>`, condition your fallback UI on the returned status, and drop the `autoPlay` attribute from `<Video>` — the hook handles `play()` itself.
+
+```tsx title="HeroPlayer.tsx"
+function HeroPlayer() {
+  const status = useAutoplay();
+  return (
+    <Player.Container>
+      <Video src="hero.mp4" muted playsInline />
+      {status === 'blocked' && <ClickToPlayOverlay />}
+    </Player.Container>
+  );
+}
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-<DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> with <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> gives you a `play()` action that returns the same promise, and <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> lets you toggle mute on rejection:
-
-```ts title="autoplay-handler.ts"
-import {
-  MediaElement,
-  PlayerController,
-  playerContext,
-  type PropertyValues,
-  selectPlayback,
-  selectVolume,
-} from '@videojs/html';
-
-export type AutoplayStatus = 'playing' | 'muted' | 'blocked';
-
-export class AutoplayHandlerElement extends MediaElement {
-  static readonly tagName = 'autoplay-handler';
-
-  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
-  readonly #volume = new PlayerController(this, playerContext, selectVolume);
-  #attempted = false;
-
-  protected override update(changed: PropertyValues): void {
-    super.update(changed);
-
-    const playback = this.#playback.value;
-    if (this.#attempted || !playback) return;
-    this.#attempted = true;
-
-    const attempt = async (): Promise<AutoplayStatus> => {
-      try {
-        await playback.play();
-        return 'playing';
-      } catch {
-        const volume = this.#volume.value;
-        if (volume && !volume.muted) volume.toggleMuted();
-        try {
-          await playback.play();
-          return 'muted';
-        } catch {
-          return 'blocked';
-        }
-      }
-    };
-
-    attempt().then((detail) =>
-      this.dispatchEvent(new CustomEvent('autoplaystatus', { detail, bubbles: true }))
-    );
-  }
-}
-
-customElements.define(AutoplayHandlerElement.tagName, AutoplayHandlerElement);
-```
-
-Place `<autoplay-handler>` inside `<video-player>` and drop the `autoplay` attribute from your media — combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
+The provider element exposes its store on the `<video-player>` instance. Read <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink> for the `play()` action, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink> for the muted fallback, and `store.target` to gate the call on media being attached:
 
 ```html title="index.html"
-<script type="module">
-  import '@videojs/html/video/player';
-  import './autoplay-handler';
-</script>
-
 <video-player>
   <media-container>
     <video src="hero.mp4" muted playsinline></video>
   </media-container>
-  <autoplay-handler></autoplay-handler>
 </video-player>
+
+<script type="module">
+  import '@videojs/html/video/player';
+  import { selectPlayback, selectVolume } from '@videojs/html';
+
+  await customElements.whenDefined('video-player');
+  const player = document.querySelector('video-player');
+
+  const setStatus = (status) => {
+    player.dataset.autoplay = status; // drive your fallback UI from CSS
+  };
+
+  const tryPlay = () => {
+    if (!player.store.target) return false;
+    const playback = selectPlayback(player.store.state);
+    if (!playback) return false;
+
+    playback.play().then(
+      () => setStatus('playing'),
+      () => {
+        const volume = selectVolume(player.store.state);
+        if (volume && !volume.muted) volume.toggleMuted();
+        playback.play().then(
+          () => setStatus('muted'),
+          () => setStatus('blocked'),
+        );
+      },
+    );
+    return true;
+  };
+
+  if (!tryPlay()) {
+    const unsub = player.store.subscribe(() => { if (tryPlay()) unsub(); });
+  }
+</script>
 ```
+
+Drop the `autoplay` attribute from your media when you do this — combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
 </FrameworkCase>
 
 <Aside type="note">
@@ -203,4 +200,4 @@ When even muted autoplay fails, autoplay isn't going to happen without the viewe
 - **Don't retry on every render.** The browser's decision is based on engagement state that won't change without viewer input. Retrying in a loop wastes work and inflates analytics.
 - **Don't log autoplay rejection as a fatal error.** A blocked autoplay is the browser doing its job. If your analytics treats every `play()` rejection as a playback failure, your error rates will spike on first-visit sessions where the policy hasn't been earned yet. Distinguish a `NotAllowedError` on the initial autoplay attempt from real playback errors.
 
-Wire your UI to whichever status the handler above surfaces — a React state, a custom event, or a store slice of your own — and show the fallback overlay only when status reaches `'blocked'`.
+Wire your UI to whichever signal the handler above exposes, and show the fallback overlay only when status reaches `'blocked'`.
