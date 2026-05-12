@@ -30,35 +30,35 @@ export interface LoadTriggersContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
+type LoadTriggersFsmState = 'preconditions-unmet' | 'monitoring' | 'load-active';
+
 /**
- * FSM derived state. The state machine gates on source-identity preconditions
- * (element attached + presentation URL set); it does **not** read the slot it
- * writes (`state.loadActivated`). The state name `'load-active'` describes the
- * world-fact "we are managing this source's load lifecycle" — not "the
- * `loadActivated` slot is `true`."
+ * Slot-driven FSM. The slot `loadActivated` is the canonical externally-
+ * observable state; `deriveState` reads it (and the preconditions) to
+ * derive the local FSM state. The slot is *both* the state and the data —
+ * no separate internal bookkeeping.
  *
  * ```
- * 'preconditions-unmet' ──── element + URL ────→ 'load-active'
- *         ↑                                          │
- *         └── element / URL → undefined ─────────────┘
- *               (entry cleanup resets loadActivated → false)
+ * 'preconditions-unmet' ⟷ 'monitoring' ⟷ 'load-active'
  *
- * any state ──── destroy() ────→ 'destroying' ────→ 'destroyed'
+ * preconditions-unmet → monitoring        element + URL appear
+ * monitoring          → load-active       slot flips true (listener fires
+ *                                         or external write)
+ * load-active         → monitoring        within-state cleanup resets slot
+ *                                         (URL or element identity change)
+ * any                 → preconditions-unmet  element or URL → undefined
+ *
+ * any state → destroying → destroyed       on destroy()
  * ```
- *
- * Identity changes within either input (urlA → urlB, elementA → elementB
- * with no `undefined` intermediate) rely on the engine convention that
- * source swaps destroy the engine and recreate it; intermediate signal
- * states pass through `undefined` so the state machine exits the positive
- * state and fires the entry's cleanup. Direct in-place swap of either
- * signal would not flip the slot back to `false`.
  */
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
-  mediaElement: HTMLMediaElement | undefined
-): 'preconditions-unmet' | 'load-active' {
+  mediaElement: HTMLMediaElement | undefined,
+  loadActivated: boolean | undefined
+): LoadTriggersFsmState {
   if (!mediaElement || !presentation?.url) return 'preconditions-unmet';
-  return 'load-active';
+  if (loadActivated) return 'load-active';
+  return 'monitoring';
 }
 
 /**
@@ -70,13 +70,17 @@ function deriveState(
  * (`!el.paused` or `el.seeking`), mirroring autoplay / native-controls /
  * direct-DOM-`play()` scenarios.
  *
- * Sticky-true within a source: subsequent play/pause/seek cycles do not
- * flip the slot back. Resets to `false` on source change or behavior
- * destroy via the entry's state-exit cleanup.
+ * Sticky-true *within a source identity*: subsequent play/pause/seek
+ * cycles don't flip back. Source identity = (mediaElement, presentation
+ * URL). Either changing — including direct in-place swap with no
+ * `undefined` intermediate — resets the slot to `false`.
  *
  * Multi-writer with `hls/adapter.ts:play()` (which writes `true` directly
- * on programmatic play) is intentional — different domains. This behavior
- * is the DOM-side observer; the adapter records programmatic intent.
+ * on programmatic play) is intentional — different domains. The adapter
+ * records programmatic intent; this behavior is the DOM-side observer.
+ * Pre-existing `true` writes are honored because `deriveState` reads the
+ * slot — a `true` value routes directly to `'load-active'` without
+ * entering `'monitoring'`.
  *
  * @example
  * const reactor = trackLoadTriggers.setup({ state, context });
@@ -92,45 +96,59 @@ function trackLoadTriggersSetup({
     presentation: ReadonlySignal<LoadTriggersState['presentation']>;
   };
   context: { mediaElement: ReadonlySignal<LoadTriggersContext['mediaElement']> };
-}): Reactor<'preconditions-unmet' | 'load-active' | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(state.presentation.get(), context.mediaElement.get()));
+}): Reactor<LoadTriggersFsmState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() =>
+    deriveState(state.presentation.get(), context.mediaElement.get(), state.loadActivated.get())
+  );
+  // Sparse-firing source-URL signal. Emits whenever `presentation?.url`
+  // resolves to a different value — covering both URL string changes
+  // (url_a → url_b) and transitions where the URL becomes defined or
+  // undefined (presentation set, cleared, or replaced without a URL
+  // field). Does NOT emit when `state.presentation` is rewritten with
+  // the same URL: manifest parsing, duration calc, track resolution,
+  // and other enrichment paths re-write the presentation object
+  // frequently — tracking raw `state.presentation` here would spuriously
+  // reset the 'load-active' slot.
+  const urlSignal = computed(() => state.presentation.get()?.url);
 
-  return createMachineReactor<'preconditions-unmet' | 'load-active'>({
+  return createMachineReactor<LoadTriggersFsmState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
       'preconditions-unmet': {},
 
-      'load-active': {
-        entry: () => {
+      monitoring: {
+        // effects (not entry) so element-identity change within this state
+        // re-fires and re-attaches listeners to the new element. The monitor
+        // guarantees mediaElement is truthy while we're in this state.
+        effects: () => {
           const el = context.mediaElement.get()!;
 
-          // Pre-existing `true` write (e.g. adapter's `play()` ran before
-          // setup completed): treat as intent already recognized; skip the
-          // listener attach. The exit cleanup still resets on source change.
-          if (state.loadActivated.get()) {
-            return () => state.loadActivated.set(false);
-          }
-
-          // Element already in a load-eligible state at entry (autoplay,
-          // mid-seek attach, etc.). Sticky write and skip listeners.
+          const setLoadActivated = () => state.loadActivated.set(true);
           if (!el.paused || el.seeking) {
-            state.loadActivated.set(true);
-            return () => state.loadActivated.set(false);
+            setLoadActivated();
+            return;
           }
-
-          // Wait for the first qualifying DOM event. Either `play` or
-          // `seeking` flips the slot; both writes are idempotent so we
-          // don't bother detaching after the first fire.
-          const ac = new AbortController();
-          const onTrigger = () => state.loadActivated.set(true);
-          listen(el, 'play', onTrigger, { signal: ac.signal });
-          listen(el, 'seeking', onTrigger, { signal: ac.signal });
-
+          const cleanupPlay = listen(el, 'play', setLoadActivated);
+          const cleanupSeeking = listen(el, 'seeking', setLoadActivated);
           return () => {
-            ac.abort();
-            state.loadActivated.set(false);
+            cleanupPlay();
+            cleanupSeeking();
           };
+        },
+      },
+
+      'load-active': {
+        // effects-based cleanup (not entry) because the cleanup must fire on
+        // BOTH state exit AND within-state identity change (url_a → url_b,
+        // element_a → element_b — both truthy, no state transition).
+        // Re-firing tracked reads → cleanup writes loadActivated=false →
+        // deriveState (which reads loadActivated) returns 'monitoring' →
+        // state transitions → fresh listeners attached for the new source.
+        effects: () => {
+          context.mediaElement.get();
+          urlSignal.get();
+          return () => state.loadActivated.set(false);
         },
       },
     },

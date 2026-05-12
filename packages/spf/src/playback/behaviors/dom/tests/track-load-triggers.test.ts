@@ -115,7 +115,8 @@ describe('trackLoadTriggers', () => {
     await flush();
 
     expect(state.loadActivated.get()).toBe(true);
-    // Listeners not attached when slot is pre-set
+    // 'monitoring' state never entered — slot is true, deriveState goes
+    // directly to 'load-active', so play/seeking listeners aren't attached.
     expect(addEventListenerSpy.mock.calls.some(([type]) => type === 'play' || type === 'seeking')).toBe(false);
     reactor.destroy();
   });
@@ -142,7 +143,28 @@ describe('trackLoadTriggers', () => {
     reactor.destroy();
   });
 
-  it('resets loadActivated to false when presentation URL changes', async () => {
+  it('resets loadActivated to false on direct URL identity change (url_a → url_b)', async () => {
+    const { el, play } = makeMediaElement();
+    const { state, reactor } = setupTrackLoadTriggers(
+      { presentation: { url: 'http://example.com/stream1.m3u8' } },
+      { mediaElement: el }
+    );
+
+    play();
+    await flush();
+    expect(state.loadActivated.get()).toBe(true);
+
+    // Direct swap — no `undefined` intermediate. The 'load-active' effects
+    // re-fires on URL identity change → cleanup resets slot to false →
+    // deriveState returns 'monitoring' → state transitions and re-attaches.
+    state.presentation.set({ url: 'http://example.com/stream2.m3u8' });
+    await flush();
+
+    expect(state.loadActivated.get()).toBe(false);
+    reactor.destroy();
+  });
+
+  it('resets loadActivated to false on URL change through undefined', async () => {
     const { el, play, pause } = makeMediaElement();
     const { state, reactor } = setupTrackLoadTriggers(
       { presentation: { url: 'http://example.com/stream1.m3u8' } },
@@ -153,7 +175,6 @@ describe('trackLoadTriggers', () => {
     await flush();
     expect(state.loadActivated.get()).toBe(true);
 
-    // Engine convention: URL transitions through undefined on src swap
     pause();
     state.presentation.set(undefined);
     await flush();
@@ -166,7 +187,7 @@ describe('trackLoadTriggers', () => {
     reactor.destroy();
   });
 
-  it('resets loadActivated to false when the media element is swapped through undefined', async () => {
+  it('resets loadActivated to false on direct media element identity change', async () => {
     const { el, play } = makeMediaElement();
     const { state, context, reactor } = setupTrackLoadTriggers(
       { presentation: { url: 'http://example.com/stream.m3u8' } },
@@ -177,16 +198,12 @@ describe('trackLoadTriggers', () => {
     await flush();
     expect(state.loadActivated.get()).toBe(true);
 
-    // Engine convention: source swaps destroy + recreate; element signal
-    // passes through undefined so the state machine exits the positive state.
-    context.mediaElement.set(undefined);
-    await flush();
-    expect(state.loadActivated.get()).toBe(false);
-
+    // Direct swap — no `undefined` intermediate. Same identity-change
+    // mechanism as URL swap above.
     context.mediaElement.set(document.createElement('video'));
     await flush();
-    expect(state.loadActivated.get()).toBe(false);
 
+    expect(state.loadActivated.get()).toBe(false);
     reactor.destroy();
   });
 
@@ -223,6 +240,30 @@ describe('trackLoadTriggers', () => {
     await flush();
 
     expect(state.loadActivated.get()).toBe(false);
+    reactor.destroy();
+  });
+
+  it('re-attaches listeners on element identity change in monitoring state', async () => {
+    const { el: el1 } = makeMediaElement();
+    const { el: el2, play: play2 } = makeMediaElement();
+    const { state, context, reactor } = setupTrackLoadTriggers(
+      { presentation: { url: 'http://example.com/stream.m3u8' } },
+      { mediaElement: el1 }
+    );
+
+    // Stay in 'monitoring' — no trigger fired yet on el1.
+    await flush();
+    expect(state.loadActivated.get()).toBeFalsy();
+
+    // Swap to el2 while still in 'monitoring' — effects re-fires, listener
+    // detaches from el1 and re-attaches to el2.
+    context.mediaElement.set(el2);
+    await flush();
+
+    play2();
+    await flush();
+
+    expect(state.loadActivated.get()).toBe(true);
     reactor.destroy();
   });
 
