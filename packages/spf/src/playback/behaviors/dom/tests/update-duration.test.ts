@@ -140,15 +140,18 @@ describe('shouldUpdateDuration', () => {
     expect(shouldUpdateDuration(state, context)).toBe(false);
   });
 
-  it('returns false when duration is Infinity', () => {
+  it('returns true when duration is Infinity (live)', () => {
+    // Per the MSE spec, `mediaSource.duration = Number.POSITIVE_INFINITY` is
+    // how live playback signals an indefinite duration.
     const state: DurationUpdateState = {
-      presentation: { duration: Infinity } as Presentation,
+      presentation: { duration: Number.POSITIVE_INFINITY } as Presentation,
+      mediaSourceReadyState: 'open',
     };
     const context: DurationUpdateContext = {
-      mediaSource: { readyState: 'open', duration: 0 } as MediaSource,
+      mediaSource: { readyState: 'open', duration: Number.NaN } as MediaSource,
     };
 
-    expect(shouldUpdateDuration(state, context)).toBe(false);
+    expect(shouldUpdateDuration(state, context)).toBe(true);
   });
 
   it('returns false when duration is 0', () => {
@@ -277,13 +280,26 @@ describe('updateDuration', () => {
     state.presentation.set({ duration: NaN } as Presentation);
     expect(mockMediaSource.duration).toBe(0); // presentation validation guard fired
 
-    // Try Infinity
-    state.presentation.set({ duration: Infinity } as Presentation);
-    expect(mockMediaSource.duration).toBe(0);
-
     // Try negative
     state.presentation.set({ duration: -10 } as Presentation);
     expect(mockMediaSource.duration).toBe(0);
+
+    cleanup();
+  });
+
+  it('writes Infinity to MediaSource.duration for live', async () => {
+    // Per the MSE spec, `mediaSource.duration = Number.POSITIVE_INFINITY` is
+    // the canonical live signal. The buffered-range clamp doesn't fire
+    // (`anyEnd > Infinity` is always false), so Infinity passes through.
+    const { state, context, cleanup } = setupUpdateDuration({}, {});
+
+    const mockMediaSource = makeMediaSource(Number.NaN);
+    context.mediaSource.set(mockMediaSource);
+    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(Number.POSITIVE_INFINITY);
+    });
 
     cleanup();
   });

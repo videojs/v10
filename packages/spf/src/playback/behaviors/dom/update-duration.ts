@@ -59,8 +59,10 @@ export function shouldUpdateDuration(state: DurationUpdateState, context: Durati
 
   const duration = presentation!.duration!;
 
-  // Validate duration: finite, positive, not NaN
-  if (!Number.isFinite(duration) || Number.isNaN(duration) || duration <= 0) return false;
+  // Validate duration: positive, not NaN. `Infinity` is allowed — per the
+  // MSE spec, `mediaSource.duration = Number.POSITIVE_INFINITY` is how live
+  // playback signals an indefinite duration.
+  if (Number.isNaN(duration) || duration <= 0) return false;
 
   // Only set duration on initial MediaSource setup, when it hasn't been set yet.
   // A freshly opened MediaSource has duration === NaN. Once set (either by this
