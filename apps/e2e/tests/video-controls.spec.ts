@@ -49,7 +49,7 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
     // --- Seek ---
 
     test('seek forward advances playback', async () => {
-      test.skip(media === 'simple-hls-video' || media === 'native-hls-video', 'seek before playback not yet supported');
+      test.skip(media === 'native-hls-video', 'seek before playback not yet supported');
 
       await player.seekForward.click();
       await expect(player.playButton).toHaveAttribute(DATA_ATTRS.started, '');
