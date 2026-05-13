@@ -403,7 +403,36 @@ Return one of:
 - `void` — when the behavior only registers handlers that are owned by something with its own lifecycle.
 - `{ destroy(): void | Promise<void> }` — when cleanup is multi-step or async.
 
-Use `AbortController` internally when there are multiple cleanups to coordinate (see CLAUDE.md "Cleanup Pattern"). If a behavior owns an Actor, the cleanup should call the Actor's `destroy()` (or equivalent) — leaving an Actor running past its parent behavior's teardown is a leak.
+If a behavior owns an Actor, the cleanup should call the Actor's `destroy()` (or equivalent) — leaving an Actor running past its parent behavior's teardown is a leak.
+
+#### Multi-cleanup: collect named cleanups, return a wrapper
+
+When a behavior's setup — or an `effect()` body inside it — produces multiple cleanups, collect each as a named `const` and return a wrapper function that calls them. Do **not** reach for `AbortController` to coordinate in-behavior multi-cleanup, even though CLAUDE.md → "Cleanup Pattern" suggests it. That guidance applies to class-based long-lived lifecycle (e.g., a controller's `connect()` / `disconnect()` where the signal needs to be shared across methods); it does not apply inside behavior bodies.
+
+```ts
+// At behavior return — multiple effects' cleanups
+const cleanupRead = effect(() => { ... });
+const cleanupWrite = effect(() => { ... });
+return () => {
+  cleanupRead();
+  cleanupWrite();
+};
+
+// Inside an effect — multiple listeners' cleanups
+return effect(() => {
+  const mediaElement = context.mediaElement.get();
+  if (!mediaElement) return;
+
+  const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
+  const removeSeeking = listen(mediaElement, 'seeking', sync);
+  return () => {
+    removeTimeupdate();
+    removeSeeking();
+  };
+});
+```
+
+Why: each `listen` / `subscribe` call already returns its own removal function — that's the natural cleanup contract. Collecting them into a named wrapper makes the cleanup set explicit ("these specific things, in order") and composes directly with `effect()`'s cleanup-return shape. `AbortController` introduces a control-plane primitive (controller + signal) that isn't necessary inline and routes cleanup through a side channel less direct than calling the returned removers. See `sync-preload.ts` (multi-effect behavior cleanup) and `track-current-time.ts` (multi-listener inside one effect) for the canonical shape.
 
 ## Per-type specialization
 
