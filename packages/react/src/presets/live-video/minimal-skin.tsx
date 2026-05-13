@@ -1,8 +1,9 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { AirplayIcon } from '@/icons';
 import {
+  AirplayEnterIcon,
+  AirplayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -179,7 +180,8 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
               <Tooltip.Trigger
                 render={
                   <AirplayButton className="media-button--airplay" render={<Button />}>
-                    <AirplayIcon className="media-icon media-icon--airplay" />
+                    <AirplayEnterIcon className="media-icon media-icon--airplay-enter" />
+                    <AirplayExitIcon className="media-icon media-icon--airplay-exit" />
                   </AirplayButton>
                 }
               />

@@ -134,7 +134,8 @@ function getTemplateHTML() {
               </media-cast-button>
               <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
-                ${renderIcon('airplay', { class: cn(icon) })}
+                ${renderIcon('airplay-enter', { class: cn(icon, iconState.airplay.enter) })}
+                ${renderIcon('airplay-exit', { class: cn(icon, iconState.airplay.exit) })}
               </media-airplay-button>
               <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">

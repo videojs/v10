@@ -24,7 +24,8 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
-  AirplayIcon,
+  AirplayEnterIcon,
+  AirplayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -295,7 +296,8 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={
                   <AirplayButton className={iconState.airplay.button} render={<Button />}>
-                    <AirplayIcon className={cn(icon)} />
+                    <AirplayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirplayExitIcon className={cn(icon, iconState.airplay.exit)} />
                   </AirplayButton>
                 }
               />

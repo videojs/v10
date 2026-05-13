@@ -41,5 +41,8 @@ export const iconState = {
   },
   airplay: {
     button: 'group',
+    enter:
+      'hidden opacity-0 group-not-data-[airplay-state=connected]:block group-not-data-[airplay-state=connected]:opacity-100',
+    exit: 'hidden opacity-0 group-data-[airplay-state=connected]:block group-data-[airplay-state=connected]:opacity-100',
   },
 };
