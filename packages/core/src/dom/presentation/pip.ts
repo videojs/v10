@@ -3,7 +3,6 @@ import type { MediaPictureInPictureCapability } from '../../core/media/types';
 import type { WebKitVideoElement } from './types';
 
 export function isPictureInPictureEnabled(media?: EventTarget) {
-  if (typeof navigator !== 'undefined' && /Firefox/.test(navigator.userAgent)) return false;
   if (media && 'isPipCapable' in media && (media as { isPipCapable: boolean }).isPipCapable === false) return false;
   if (document.pictureInPictureEnabled) {
     const isSafari = /.*Version\/.*Safari\/.*/.test(navigator.userAgent);
