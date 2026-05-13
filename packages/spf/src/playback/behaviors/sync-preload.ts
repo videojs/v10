@@ -67,12 +67,12 @@ function syncPreloadSetup({
     // Extended sticky: leave non-W3C values (e.g. 'canplay') alone.
     if (current !== undefined && !isStandardPreload(current)) return;
 
-    let target: StandardPreload | undefined;
-    if (mediaElement && isStandardPreload(mediaElement.preload)) {
-      target = mediaElement.preload;
-    } else if (current === undefined) {
-      target = defaultPreload;
-    }
+    const target: StandardPreload | undefined =
+      mediaElement && isStandardPreload(mediaElement.preload)
+        ? mediaElement.preload
+        : current === undefined
+          ? defaultPreload
+          : undefined;
     if (target === undefined || target === current) return;
     state.preload.set(target);
   });
