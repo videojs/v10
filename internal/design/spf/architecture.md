@@ -120,7 +120,7 @@ The orchestration hub. Initializes all features in a fixed order, wiring shared 
 | 3 | `resolveTrack` | Fetch media playlist for each selected track |
 | 3.5 | `calculatePresentationDuration` | Derive duration from playlists |
 | 4 | `setupMediaSource` | Create `MediaSource`, attach to `<video>` |
-| 4.5 | `updateDuration` | Set `mediaSource.duration` |
+| 4.5 | `updateMediaSourceDuration` | Set `mediaSource.duration` |
 | 5 | `setupSourceBuffers` | Create both `SourceBuffer` instances **together** |
 | 5.5 | `trackCurrentTime` | Poll `currentTime`, update state |
 | 5.75 | `switchQuality` (ABR) | Monitor bandwidth, update `selectedVideoTrackId` |

@@ -77,3 +77,24 @@ Internal paths are not part of the public API. Don't import from `@videojs/spf/p
 - `types` — type-only tests via tsgo
 
 When adding a test in a new location, check the project globs match.
+
+## Code style
+
+SPF-specific style preferences. These extend the workspace-wide rules in the root `CLAUDE.md` — they apply across `packages/spf/src/`, not just behaviors. (Style guidance specific to a single domain — behavior naming, reactor state names, signal access patterns — lives in `internal/design/spf/conventions/` instead.)
+
+### Prefer `const` + ternary over `let` + conditional reassignment
+
+For single-branch derivations of one value, use a `const` with a ternary rather than a `let` that gets conditionally overwritten:
+
+```ts
+// Good
+const duration = maxBufferedEnd > target ? maxBufferedEnd : target;
+
+// Avoid
+let duration = target;
+if (maxBufferedEnd > duration) {
+  duration = maxBufferedEnd;
+}
+```
+
+The `const`-ternary form makes the value's identity immutable from its first binding — readers don't have to scan ahead for reassignment, and the dependency on each branch's inputs is structurally clear. `let` is appropriate when the variable is genuinely mutable across multiple statements (accumulators, loop indices, state that flips on conditions other than a single-shot derivation); reserve it for those cases.

@@ -165,7 +165,26 @@ Before writing the refactor:
 - File placement (DOM-free vs DOM-bound)?
 - Naming (descriptive verb, no `*Behavior` suffix; helpers `setup*`,
   factories `make*`)?
+- **Behavior name domain-prefixed enough to disambiguate?** If the
+  bare verb could plausibly act on more than one similarly-shaped
+  target (e.g., "duration" exists on `presentation`, `mediaSource`,
+  and the `<video>` element), prefix it with the target. Diagnostic:
+  if removing the qualifier would make a future reader ask "which
+  X?", the qualifier was load-bearing. Per `behaviors.md` → "Naming"
+  → "Domain-prefix behavior names." Worked example: `updateDuration`
+  → `updateMediaSourceDuration`.
 - File-level JSDoc articulating purpose?
+- **`stateKeys` / `contextKeys` composed at the right aggregation
+  level?** A behavior that enumerates per-type slot pairs
+  (`videoBuffer` + `audioBuffer`, `videoSegmentLoaderActor` +
+  `audioSegmentLoaderActor`) but treats them interchangeably in its
+  body is composing at the wrong level — it locks the engine to a
+  fixed track configuration. Compose against the aggregating resource
+  (e.g., `mediaSource.sourceBuffers`). The per-type slots stay
+  reserved for behaviors that genuinely vary per type. Per
+  `behaviors.md` → "Inverse: behaviors that operate uniformly across
+  tracks." Diagnostic: would an audio-only or video-only engine be
+  able to compose this behavior without wiring no-op slots?
 
 ### Step 6 — Decomposition check
 
@@ -227,10 +246,26 @@ Run through, against the file as it stands post-edit:
   writes?** → narrow. The exhaustiveness check catches drift in the
   other direction (declared but unused keys still typecheck); this is
   the convention layer.
+- **`stateKeys` / `contextKeys` composed at the right aggregation
+  level?** → if a per-type slot pair (`videoBuffer` + `audioBuffer`,
+  per-type actors) was introduced or kept during the refactor and the
+  body treats the pair interchangeably (uniform iteration, same
+  predicate applied to each, forwarded into a helper that doesn't
+  distinguish), compose against the aggregating resource
+  (`mediaSource.sourceBuffers`, `mediaElement.textTracks`) instead.
+  Per `behaviors.md` → "Inverse: behaviors that operate uniformly
+  across tracks." This is invisible to the exhaustiveness check —
+  both keys *are* used; the smell is that they're used identically.
 - **Naming sibling-consistent?** → if per-type-specialized siblings
   exist (`loadVideoSegments`, `loadAudioSegments`), the new/renamed
   behavior should match (`loadTextTrackSegments`). Per `behaviors.md`
   → "Naming" → "Name by the unit-of-work this behavior triggers."
+- **Behavior name domain-prefixed?** → if the bare verb could
+  plausibly act on more than one similarly-shaped target, prefix it
+  with the target. Refactors are the right time to fix this since
+  the rename ripples through engine composition, imports, and tests
+  — surfacing it post-refactor is more costly. Per `behaviors.md` →
+  "Naming" → "Domain-prefix behavior names."
 
 This is a deliberate second pass — the most common refactor failure
 mode is satisfying the rules pre-change and missing them post-change

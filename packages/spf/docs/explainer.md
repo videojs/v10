@@ -103,7 +103,7 @@ function createSimpleHlsEngine(config = {}) {
 
       // MSE setup
       setupMediaSource,
-      updateDuration,
+      updateMediaSourceDuration,
       setupSourceBuffers,
 
       // Playback tracking and ABR

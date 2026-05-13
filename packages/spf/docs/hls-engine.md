@@ -41,7 +41,7 @@ export function createSimpleHlsEngine(
 
       // MSE setup
       setupMediaSource,
-      updateDuration,
+      updateMediaSourceDuration,
       setupSourceBuffers,
 
       // Playback tracking
@@ -256,7 +256,7 @@ The next three behaviors stand up the MSE pipeline:
 
 ```ts
 setupMediaSource,
-updateDuration,
+updateMediaSourceDuration,
 setupSourceBuffers,
 ```
 
@@ -266,7 +266,7 @@ This is where the engine first touches the media element directly. Up until now,
 
 The split between context and state is deliberate. The MediaSource itself is a resource — you call `addSourceBuffer()` on it, you set its `duration` — so it lives in context. Its readyState is data — a string that other behaviors gate decisions on — so it lives in state. The DOM events that drive readyState changes get bridged into the SPF signal graph by the small primitive in `media/dom/mse/`, keeping `setupMediaSource` clean.
 
-**`updateDuration`** waits for the resolved presentation duration (from stage 4) and a MediaSource that's open with idle source buffers, then writes `mediaSource.duration = presentation.duration`. The order matters: setting duration while a SourceBuffer has `updating === true` throws `InvalidStateError`, so the behavior waits for any in-flight appends to settle before writing.
+**`updateMediaSourceDuration`** waits for the resolved presentation duration (from stage 4) and a MediaSource that's open with idle source buffers, then writes `mediaSource.duration = presentation.duration`. The order matters: setting duration while a SourceBuffer has `updating === true` throws `InvalidStateError`, so the behavior waits for any in-flight appends to settle before writing.
 
 This is the first place the engine has real coordination concerns: timing among multiple resources. The behavior expresses it declaratively — `effect()` re-runs when any input signal changes, and the gate function checks every precondition. There's no manual sequencing, no callbacks-on-callbacks. Each precondition becomes a signal read; the framework figures out when to fire.
 

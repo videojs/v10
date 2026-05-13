@@ -335,7 +335,7 @@ The behavior holds derived state (closure flags, computed projections, accumulat
 
 **Pattern**: don't carry derived state in closure-mutable variables; either compute it via `computed` (auto-tracks the source signal), scope it to a state-machine state so it's freshly initialized on each entry, or — when the state has external observers — express it as a writable slot the reactor drives via [slot-driven derivation](reactors.md#slot-driven-state-derivation) + [effects-based cleanup](reactors.md#effects-based-cleanup-for-within-state-identity-changes). Closure-mutable state (`let lastUpgradeTime`, `let hasEnded`) survives source resets and produces stale answers.
 
-**Hazard**: the easy bug. `quality-switching`'s closure-state flags, `end-of-stream`'s `hasEnded`, `update-duration`'s `running` flag are all instances surfaced by the assessment as candidates for this category.
+**Hazard**: the easy bug. `quality-switching`'s closure-state flags and `end-of-stream`'s `hasEnded` are open instances of this category; `update-mediasource-duration`'s former `running` flag was dissolved when the behavior migrated to a reactor (state-exit cleanup replaces the manual serialization flag).
 
 ### 3. Resources owned per source
 
@@ -494,6 +494,36 @@ Engines opt into specific tracks (e.g. an audio-only engine uses `selectAudioTra
 
 The runtime cost is shared body code. Three modules currently share via a typed helper (`resolve-track`'s `setupTrackResolution`, `select-tracks`'s now-fully-inlined bodies, `load-segments`'s `setupSegmentLoading`); the trade-off is documented in `.claude/plans/spf/discrete-signals-and-behavior-objects.md` under "Code-reuse compromise" and is a pending follow-up — see [Helpers and behavior factories](#helpers-and-behavior-factories) below.
 
+### Inverse: behaviors that operate uniformly across tracks
+
+Per-type specialization addresses behaviors whose *logic varies* by type. The dual case is behaviors whose logic is *uniform across tracks* — they do one thing that crosses all attached tracks at once. `updateMediaSourceDuration` is the canonical example: it writes a single `mediaSource.duration` covering the whole presentation, regardless of which tracks are loaded. These behaviors should compose against the aggregating resource, **not** enumerate per-type slot pairs.
+
+**Sniff**: `contextKeys` (or `stateKeys`) enumerates a per-type slot pair (`videoBuffer` + `audioBuffer`, `videoSegmentLoaderActor` + `audioSegmentLoaderActor`, etc.) and the behavior's body treats them interchangeably — filtering both into a single collection, iterating both with identical logic, or referencing them only to forward into helpers that operate uniformly.
+
+**Why this is a problem**: per-type slots in a generic behavior lock the engine to a fixed track configuration. An audio-only engine (no `videoBuffer` slot) or video-only engine (no `audioBuffer` slot) can't compose the behavior without either typing trickery or wiring no-op slots — both costs the behavior's call site shouldn't bear. The behavior's slot map advertises a per-type structure it doesn't actually need.
+
+**Fix**: compose against the resource that aggregates the per-type units. For MSE-spec work that crosses all attached buffers, that's `mediaSource.sourceBuffers` (the spec-canonical aggregate). For text-track DOM work, that's `mediaElement.textTracks`. The per-type slots stay reserved for behaviors that genuinely vary per type (per-type segment loading, per-type resolution).
+
+```ts
+// bad — locked to two-track configuration
+export const updateMediaSourceDuration = defineBehavior({
+  contextKeys: ['mediaSource', 'videoBuffer', 'audioBuffer'],
+  // body iterates [videoBuffer, audioBuffer] uniformly
+});
+
+// good — reads `mediaSource.sourceBuffers` directly
+export const updateMediaSourceDuration = defineBehavior({
+  contextKeys: ['mediaSource'],
+  // body passes `mediaSource.sourceBuffers` into helpers
+});
+```
+
+**The aggregate doesn't need to be a signal-map slot when the owning resource is.** `mediaSource.sourceBuffers` is a mutable DOM collection; the behavior reads it at use-time, not via `computed(...)`. That's fine — buffer additions/removals don't drive state transitions in a duration-write behavior; only `updating` flags and `buffered` ranges, which are sampled at use-time anyway.
+
+**Worked example**: `updateMediaSourceDuration` originally took `videoBuffer` + `audioBuffer` slots; it now reads `mediaSource.sourceBuffers` directly, so audio-only and video-only engines compose it without modification. The cleanup removed two slots from `contextKeys` *and* dropped a slot-pair smell from the engine context type for any future variant.
+
+**Don't confuse with legitimate per-type pairs**: a behavior that *does* specialize per type (per-type body, per-type config, per-type slot writes) is in the [Per-type specialization](#per-type-specialization) shape above, not this one. The diagnostic is "does the body treat the pair interchangeably?" — if yes, this is the smell; if no, the pair is load-bearing.
+
 ## Helpers and behavior factories
 
 Decomposition tools used *within* the Behavior shape, not alternatives to it. **This section is expected to iterate** as the cleanup pass surfaces real cases. Three forms are recognized.
@@ -607,6 +637,7 @@ Per-export JSDoc (already conventional) describes individual exports; the file-l
 - Setup-shape helpers are named `setup*`: `setupTrackResolution`. The shape is a `Behavior.setup`-style function called from inside a per-type behavior's setup.
 - **Name by the unit-of-work this behavior triggers, not by its downstream observable.** When per-type-specialized behaviors exist (video / audio / text), the names must match the work they share — sibling consistency is load-bearing. `loadVideoSegments` triggers segment fetches; segments produce frames downstream, but we don't call it `loadVideoFrames`. Same for audio (`loadAudioSegments`, not `loadAudioSamples`) and text (`loadTextTrackSegments`, not `loadTextTrackCues`). A name that breaks the sibling pattern is a sniff that the author was thinking about a different layer than the convention assumes.
 - **Domain-prefix slot / context keys when a same-shape sibling can exist** in the engine's composition. `segmentLoaderActor` reads as generic when there's only one in scope, but the moment a sibling appears — text-track segment loader, audio segment loader — the unqualified name becomes ambiguous. Prefer `videoSegmentLoaderActor` / `textTrackSegmentLoaderActor` even if only one exists today; the rename later is non-trivial because the slot leaks through behavior signatures and engine state types.
+- **Domain-prefix behavior names** when the bare verb could plausibly act on more than one similarly-shaped target. `updateDuration` reads as generic because "duration" exists at three layers — `presentation.duration`, `mediaSource.duration`, the `<video>` element's `duration` — and the unqualified name doesn't say which one the behavior writes. Prefer `updateMediaSourceDuration` (or whichever target is right) so the verb-noun pair is unambiguous at the call site, in the engine composition list, and in greps. Same diagnostic as the slot-key rule above: if removing the qualifier would make a future reader ask "which X?", the qualifier was load-bearing. Worked example: `updateDuration` → `updateMediaSourceDuration`.
 
 ## Testing
 
@@ -635,3 +666,4 @@ When a Behavior is augmented with an Actor, the Actor's own tests live in `playb
 - **Closure-mutable state that should reset on source change.** See "Source-reset handling" — closure variables survive source resets. Express the state in a `createMachineReactor` state or a signal-derived `computed` so reset happens structurally.
 - **Merging without refactoring** — combining two behaviors by relocating their bodies into one file/helper without first running purpose-first analysis on each. Symptom: the merged behavior's body looks suspiciously like its inputs glued together; each side's anti-patterns (closure-state, hand-rolled FSMs, leaky abstractions, conditional branches around optional work) survive into the merge. See [Merging two behaviors — extra discipline](#merging-two-behaviors--extra-discipline).
 - **Building a merged behavior from the simpler side outward.** When merging behaviors of unequal architectural weight, extending the simpler shape outward to host the more constrained one produces conditional branches and afterthought integrations in the lifecycle helper. Build from the more constrained side; the simpler case fits as a special case within that shape.
+- **Per-type slot pairs in a uniform-across-tracks behavior.** A behavior whose `contextKeys` enumerates `videoBuffer` + `audioBuffer` (or any per-type slot pair) while its body treats them interchangeably is composing at the wrong aggregation level — it locks the behavior to a fixed track configuration and forces audio-only / video-only engines to wire no-op slots. Compose against the aggregating resource (e.g., `mediaSource.sourceBuffers`). See [Inverse: behaviors that operate uniformly across tracks](#inverse-behaviors-that-operate-uniformly-across-tracks).
