@@ -10,10 +10,20 @@ export function isStandardPreload(value: unknown): value is StandardPreload {
 }
 
 /**
+ * Default `preload` value used as the fallback across behaviors
+ * (`syncPreload`, `resolvePresentation`, `isBlockingPreload`). Matches the
+ * `<video>`/`<audio>` element's implicit default.
+ */
+export const DEFAULT_PRELOAD = 'metadata';
+
+/**
  * True when the preload value blocks initial resolution / loading.
  * Falsy values (undefined, empty) fall back to `defaultPreload` (default
- * `'metadata'`); the resolved value blocks iff it is `'none'`.
+ * `DEFAULT_PRELOAD`); the resolved value blocks iff it is `'none'`.
  */
-export function isBlockingPreload(preload: string | undefined, defaultPreload: StandardPreload = 'metadata'): boolean {
+export function isBlockingPreload(
+  preload: string | undefined,
+  defaultPreload: StandardPreload = DEFAULT_PRELOAD
+): boolean {
   return (preload || defaultPreload) === 'none';
 }

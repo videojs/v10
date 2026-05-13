@@ -22,7 +22,7 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { MediaElementLike } from '../../media/types';
-import { isStandardPreload, type StandardPreload } from '../../media/utils/preload';
+import { DEFAULT_PRELOAD, isStandardPreload, type StandardPreload } from '../../media/utils/preload';
 import type { PresentationState } from './resolve-presentation';
 
 export interface SyncPreloadConfig {
@@ -47,7 +47,7 @@ function syncPreloadSetup({
   context: { mediaElement: ReadonlySignal<MediaElementLike | undefined> };
   config?: SyncPreloadConfig;
 }): () => void {
-  const defaultPreload: StandardPreload = config?.defaultPreload ?? 'metadata';
+  const defaultPreload: StandardPreload = config?.defaultPreload ?? DEFAULT_PRELOAD;
   const presentationUrl = computed(() => state.presentation.get()?.url);
 
   // Read must be registered before write: effects re-run in registration

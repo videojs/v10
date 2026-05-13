@@ -37,7 +37,7 @@ import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation, type Presentation } from '../../media/types';
-import { isBlockingPreload, type StandardPreload } from '../../media/utils/preload';
+import { DEFAULT_PRELOAD, isBlockingPreload, type StandardPreload } from '../../media/utils/preload';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
 export interface PresentationState {
@@ -90,7 +90,7 @@ function resolvePresentationSetup({
   config: ResolvePresentationConfig;
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
   const { parsePresentation } = config;
-  const defaultPreload: StandardPreload = config.defaultPreload ?? 'metadata';
+  const defaultPreload: StandardPreload = config.defaultPreload ?? DEFAULT_PRELOAD;
 
   const derivedStateSignal = computed(() =>
     deriveState(state.presentation.get(), state.preload.get(), state.loadActivated.get(), defaultPreload)
