@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import { type PlaybackRateContext, type PlaybackRateState, trackPlaybackRate } from '../track-playback-rate';
+import {
+  type PlaybackRateContext,
+  type PlaybackRateState,
+  type TrackPlaybackRateConfig,
+  trackPlaybackRate,
+} from '../track-playback-rate';
 
 function makeState(initial: PlaybackRateState = {}): StateSignals<PlaybackRateState> {
   return { playbackRate: signal<number | undefined>(initial.playbackRate) };
@@ -11,10 +16,14 @@ function makeContext(initial: PlaybackRateContext = {}): ContextSignals<Playback
   return { mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement) };
 }
 
-function setupTrackPlaybackRate(initialState: PlaybackRateState = {}, initialContext: PlaybackRateContext = {}) {
+function setupTrackPlaybackRate(
+  initialState: PlaybackRateState = {},
+  initialContext: PlaybackRateContext = {},
+  config?: TrackPlaybackRateConfig
+) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = trackPlaybackRate.setup({ state, context });
+  const cleanup = trackPlaybackRate.setup({ state, context, config });
   return { state, context, cleanup };
 }
 
@@ -62,12 +71,43 @@ describe('trackPlaybackRate', () => {
     cleanup();
   });
 
-  it('does nothing when no mediaElement', async () => {
+  it('writes defaultPlaybackRate (1) when no mediaElement', async () => {
     const { state, cleanup } = setupTrackPlaybackRate();
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
-    expect(state.playbackRate.get()).toBeUndefined();
+    cleanup();
+  });
+
+  it('resets to defaultPlaybackRate when mediaElement is removed', async () => {
+    const mediaElement = document.createElement('video');
+    mediaElement.playbackRate = 2;
+
+    const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
+
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(2));
+
+    context.mediaElement.set(undefined);
+
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
+
+    cleanup();
+  });
+
+  it('honors config.defaultPlaybackRate override on initial and on removal', async () => {
+    const { state, context, cleanup } = setupTrackPlaybackRate({}, {}, { defaultPlaybackRate: 1.5 });
+
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1.5));
+
+    const mediaElement = document.createElement('video');
+    mediaElement.playbackRate = 2;
+    context.mediaElement.set(mediaElement);
+
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(2));
+
+    context.mediaElement.set(undefined);
+
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1.5));
 
     cleanup();
   });
@@ -97,14 +137,14 @@ describe('trackPlaybackRate', () => {
   it('starts tracking when mediaElement is added later', async () => {
     const { state, context, cleanup } = setupTrackPlaybackRate();
 
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(state.playbackRate.get()).toBeUndefined();
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
     const mediaElement = document.createElement('video');
+    mediaElement.playbackRate = 2;
     context.mediaElement.set(mediaElement);
 
     await vi.waitFor(() => {
-      expect(state.playbackRate.get()).toBe(1);
+      expect(state.playbackRate.get()).toBe(2);
     });
 
     cleanup();
@@ -113,20 +153,21 @@ describe('trackPlaybackRate', () => {
   it('stops listening to old mediaElement when replaced', async () => {
     const element1 = document.createElement('video');
     const element2 = document.createElement('video');
+    element2.playbackRate = 2;
 
     const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement: element1 });
 
     await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
     context.mediaElement.set(element2);
-    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
+    await vi.waitFor(() => expect(state.playbackRate.get()).toBe(2));
 
     // Old element ratechange should no longer affect state
     element1.playbackRate = 3;
     element1.dispatchEvent(new Event('ratechange'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.playbackRate.get()).toBe(1);
+    expect(state.playbackRate.get()).toBe(2);
 
     cleanup();
   });
