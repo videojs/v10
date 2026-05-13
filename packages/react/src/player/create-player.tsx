@@ -16,7 +16,7 @@ import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -82,11 +82,21 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return store.attach({ media, container });
     }, [media, container, store]);
 
-    return (
-      <PlayerContextProvider value={{ store, media, setMedia, container, setContainer, popupGroup }}>
-        {children}
-      </PlayerContextProvider>
+    // Memoize the context value so its identity only changes when one of its
+    // members actually changes. Without this, every render of a component
+    // above the Provider rebuilds the value object, which forces every
+    // `useContext(PlayerContext)` consumer to re-render even when nothing
+    // it depends on changed. `setMedia` and `setContainer` are `useState`
+    // setters and are identity-stable; `store` and `popupGroup` are also
+    // initialized once via `useState(() => ...)` and never change for the
+    // lifetime of the Provider. They're listed in the dep array to satisfy
+    // `useExhaustiveDependencies`. See #1296.
+    const value = useMemo(
+      () => ({ store, media, setMedia, container, setContainer, popupGroup }),
+      [store, media, container, popupGroup]
     );
+
+    return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
   }
 
   if (__DEV__ && config.displayName) {
