@@ -5,7 +5,13 @@ import type {
   MediaButtonComponent,
   StateAttrMap,
 } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
+import {
+  applyElementProps,
+  applyStateDataAttrs,
+  createButton,
+  HOTKEY_SHORTCUT_CHANGE_EVENT,
+  logMissingFeature,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
@@ -32,19 +38,27 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */
   protected readonly hotkeyAction: string | undefined = undefined;
 
+  /** Override to match hotkeys that use action values, such as seek steps. */
+  protected get hotkeyValue(): number | undefined {
+    return undefined;
+  }
+
   get $state(): State<ButtonState> {
     return this.core.state;
   }
 
   #disconnect: AbortController | null = null;
   #hotkeyRegistry: AriaKeyShortcutsController | null = null;
+  #lastHotkeyShortcut: string | undefined;
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
 
     if (this.hotkeyAction && !this.#hotkeyRegistry) {
-      this.#hotkeyRegistry = new AriaKeyShortcutsController(this, this.hotkeyAction);
+      this.#hotkeyRegistry = new AriaKeyShortcutsController(this, this.hotkeyAction, {
+        value: () => this.hotkeyValue,
+      });
     }
 
     this.#disconnect = new AbortController();
@@ -72,6 +86,10 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     return this.core.state.current.label || undefined;
   }
 
+  getShortcut(): string | undefined {
+    return this.#hotkeyRegistry?.shortcut;
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.core.setProps?.(this);
@@ -88,8 +106,18 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     const state = this.core.getState();
     applyElementProps(this, {
       ...this.core.getAttrs?.(state),
-      'aria-keyshortcuts': this.#hotkeyRegistry?.value,
+      'aria-keyshortcuts': this.#hotkeyRegistry?.aria,
     });
     applyStateDataAttrs(this, state, this.stateAttrMap);
+    this.#syncHotkeyShortcut();
+  }
+
+  #syncHotkeyShortcut(): void {
+    const shortcut = this.getShortcut();
+
+    if (shortcut === this.#lastHotkeyShortcut) return;
+
+    this.#lastHotkeyShortcut = shortcut;
+    this.dispatchEvent(new CustomEvent(HOTKEY_SHORTCUT_CHANGE_EVENT));
   }
 }

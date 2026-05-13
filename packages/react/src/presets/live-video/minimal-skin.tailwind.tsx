@@ -131,6 +131,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className={cn(popup.tooltip)} {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className={popup.tooltipShortcut} />
+    </Tooltip.Popup>
+  );
+}
+
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 
@@ -184,7 +193,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
@@ -204,7 +213,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -216,7 +225,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -228,7 +237,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -240,7 +249,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

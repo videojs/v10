@@ -27,6 +27,7 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -117,6 +118,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className={cn(popup.tooltip)} {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className={popup.tooltipShortcut} />
+    </Tooltip.Popup>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNode {
@@ -153,7 +163,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -167,7 +177,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -181,7 +191,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
 
@@ -204,13 +214,29 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
           <div className={buttonGroup}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <Hotkey keys="l" action="seekStep" value={10} />
+      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
     </Container>
   );
 }

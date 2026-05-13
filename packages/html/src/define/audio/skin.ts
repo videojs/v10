@@ -36,7 +36,10 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -44,7 +47,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -52,7 +58,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
 
           <div class="media-time-controls">
@@ -69,7 +78,10 @@ function getTemplateHTML() {
 
           <div class="media-button-group">
             <media-playback-rate-button commandfor="playback-rate-tooltip" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
-            <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}

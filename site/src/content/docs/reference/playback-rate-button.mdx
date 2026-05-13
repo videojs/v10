@@ -63,7 +63,7 @@ Use the `render` prop for rate display:
 
 ## Accessibility
 
-Renders a `<button>` with an automatic `aria-label` of `"Playback rate {rate}"` (e.g., `"Playback rate 1.5"`). Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+Renders a `<button>` with `role="spinbutton"`, `aria-label` `"Playback speed"` (override with the `label` prop), `aria-valuenow` / `aria-valuetext` (e.g. `1×`), and `aria-valuemin` / `aria-valuemax` from the current `playbackRates` list when it is non-empty. Tooltip copy matches the `aria-label`. Activate with <kbd>Enter</kbd> / <kbd>Space</kbd> or the speed-up hotkey.
 
 ## Examples
 

@@ -85,6 +85,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+export function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-surface media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 /**
  * Default video skin configured for live playback. Mirrors {@link VideoSkin}
  * but omits the time slider and the duration / current-time displays. A
@@ -139,7 +148,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
@@ -159,7 +168,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -171,7 +180,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -183,7 +192,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -195,7 +204,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

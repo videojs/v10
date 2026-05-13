@@ -93,6 +93,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className={cn(popup.tooltip)} {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className={popup.tooltipShortcut} />
+    </Tooltip.Popup>
+  );
+}
+
 export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
@@ -127,7 +136,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />

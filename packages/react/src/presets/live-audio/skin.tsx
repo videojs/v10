@@ -53,6 +53,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+export function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-surface media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 /**
  * Default audio skin configured for live playback. Mirrors {@link AudioSkin}
  * but omits the time slider and the current / duration time displays. A
@@ -93,7 +102,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />

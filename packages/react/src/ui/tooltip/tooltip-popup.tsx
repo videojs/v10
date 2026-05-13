@@ -1,7 +1,6 @@
 'use client';
 
-import type { TooltipState } from '@videojs/core';
-import { TooltipCSSVars } from '@videojs/core';
+import { TooltipCSSVars, type TooltipState } from '@videojs/core';
 import { getAnchorPositionStyle, getPopupPositionRect, resolveOffsets } from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties } from 'react';
@@ -11,6 +10,8 @@ import type { UIComponentProps } from '../../utils/types';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useTooltipContext } from './context';
+import { TooltipLabel } from './tooltip-label';
+import { TooltipShortcut } from './tooltip-shortcut';
 
 export interface TooltipPopupProps extends UIComponentProps<'div', TooltipState> {}
 
@@ -18,10 +19,10 @@ const POPUP_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0
 
 /** Container for the tooltip content. Positioned relative to the trigger using CSS anchor positioning with a JavaScript fallback. */
 export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(function TooltipPopup(
-  { render, className, style, ...elementProps },
+  { render, className, style, children, ...elementProps },
   forwardedRef
 ) {
-  const { core, tooltip, state, stateAttrMap, anchorName, popupId, content } = useTooltipContext();
+  const { core, tooltip, state, stateAttrMap, anchorName, popupId } = useTooltipContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -42,7 +43,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
 
   // CSS Anchor Positioning — computed from state, no measurement needed.
   // `position-anchor` is set imperatively in the ref callback above
-  // because React's style prop silently drops unrecognised CSS properties.
+  // because React's style prop silently drops unrecognized CSS properties.
   const anchorStyle = useMemo(() => {
     if (!supportsAnchorPositioning()) return null;
     const { positionAnchor: _, ...rest } = getAnchorPositionStyle(
@@ -140,6 +141,16 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
     return null;
   }
 
+  const content =
+    children !== undefined ? (
+      children
+    ) : (
+      <>
+        <TooltipLabel />
+        <TooltipShortcut />
+      </>
+    );
+
   // Remap DOM focus events to React synthetic event names.
   const { onFocusOut, ...restPopupProps } = tooltip.popupProps;
 
@@ -156,7 +167,6 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
           style: positioningStyle,
           ...core.getPopupAttrs(state),
         },
-        // Forwarded content as default children — explicit children override.
         { children: content },
         { ...restPopupProps, onBlur: onFocusOut },
         elementProps,

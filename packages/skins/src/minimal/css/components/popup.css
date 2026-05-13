@@ -92,6 +92,13 @@
     0 2px 4px -2px oklch(0 0 0 / 0.1);
   backdrop-filter: var(--media-tooltip-backdrop-filter);
 
+  /* `display: flex` must not apply while closed — it overrides UA `[popover]` hiding. */
+  &[data-open] {
+    display: flex;
+    column-gap: 0.25rem;
+    align-items: center;
+  }
+
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {
     height: var(--media-tooltip-side-offset);
@@ -99,6 +106,18 @@
   &[data-side="left"]::before,
   &[data-side="right"]::before {
     width: var(--media-tooltip-side-offset);
+  }
+
+  & .media-tooltip__kbd {
+    min-width: 1.5em;
+    padding: 0 0.2em;
+    font-family: inherit;
+    font-size: 90%;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    border: 1px solid oklch(from currentColor l c h / 0.3);
+    border-radius: 0.25rem;
   }
 }
 

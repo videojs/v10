@@ -1,6 +1,6 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
+import { isFunction, isUndefined } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
@@ -15,6 +15,10 @@ export interface PlaybackRateButtonProps {
 
 export interface PlaybackRateButtonState extends ButtonState {
   rate: number;
+  /** Minimum rate from `playbackRates`, when non-empty. */
+  rateMin: number | undefined;
+  /** Maximum rate from `playbackRates`, when non-empty. */
+  rateMax: number | undefined;
 }
 
 export class PlaybackRateButtonCore {
@@ -26,6 +30,8 @@ export class PlaybackRateButtonCore {
   readonly state = createState<PlaybackRateButtonState>({
     rate: 1,
     label: '',
+    rateMin: undefined,
+    rateMax: undefined,
   });
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
@@ -49,14 +55,28 @@ export class PlaybackRateButtonCore {
       return label;
     }
 
-    return `Playback rate ${state.rate}`;
+    return 'Playback speed';
   }
 
-  getAttrs(state: PlaybackRateButtonState) {
-    return {
+  getAttrs(state: PlaybackRateButtonState): Record<string, string | undefined> {
+    const rate = PlaybackRateButtonCore.#rateToAriaString(state.rate);
+
+    const attrs: Record<string, string | undefined> = {
+      role: 'spinbutton',
       'aria-label': this.getLabel(state),
+      'aria-valuenow': rate,
+      'aria-valuetext': `${rate}×`,
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
+
+    if (!isUndefined(state.rateMin)) {
+      attrs['aria-valuemin'] = PlaybackRateButtonCore.#rateToAriaString(state.rateMin);
+    }
+    if (!isUndefined(state.rateMax)) {
+      attrs['aria-valuemax'] = PlaybackRateButtonCore.#rateToAriaString(state.rateMax);
+    }
+
+    return attrs;
   }
 
   setMedia(media: MediaPlaybackRateState): void {
@@ -65,7 +85,11 @@ export class PlaybackRateButtonCore {
 
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
-    this.state.patch({ rate: media.playbackRate });
+    const { playbackRates, playbackRate } = media;
+    const rateMin = playbackRates.length > 0 ? Math.min(...playbackRates) : undefined;
+    const rateMax = playbackRates.length > 0 ? Math.max(...playbackRates) : undefined;
+
+    this.state.patch({ rate: playbackRate, rateMin, rateMax });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
@@ -84,6 +108,12 @@ export class PlaybackRateButtonCore {
         : playbackRates[(idx + 1) % playbackRates.length]!;
 
     media.setPlaybackRate(next);
+  }
+
+  static #rateToAriaString(rate: number): string {
+    if (!Number.isFinite(rate)) return '0';
+    const rounded = Math.round(rate * 1000) / 1000;
+    return String(rounded);
   }
 }
 

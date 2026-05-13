@@ -85,6 +85,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 /**
  * Minimal video skin configured for live playback. Mirrors
  * {@link MinimalVideoSkin} but omits the time slider and the current /
@@ -138,7 +147,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
@@ -158,7 +167,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -170,7 +179,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -182,7 +191,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -194,7 +203,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

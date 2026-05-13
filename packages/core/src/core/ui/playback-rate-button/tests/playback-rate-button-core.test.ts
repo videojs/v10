@@ -17,6 +17,8 @@ function createState(overrides: Partial<PlaybackRateButtonState> = {}): Playback
   return {
     rate: 1,
     label: '',
+    rateMin: 0.2,
+    rateMax: 2,
     ...overrides,
   };
 }
@@ -31,17 +33,35 @@ describe('PlaybackRateButtonCore', () => {
 
       expect(state.rate).toBe(1.5);
     });
+
+    it('derives rate bounds from playbackRates', () => {
+      const core = new PlaybackRateButtonCore();
+      core.setMedia(createMediaState());
+      const state = core.getState();
+
+      expect(state.rateMin).toBe(0.2);
+      expect(state.rateMax).toBe(2);
+    });
+
+    it('leaves rate bounds undefined when playbackRates is empty', () => {
+      const core = new PlaybackRateButtonCore();
+      core.setMedia(createMediaState({ playbackRates: [], playbackRate: 1 }));
+      const state = core.getState();
+
+      expect(state.rateMin).toBeUndefined();
+      expect(state.rateMax).toBeUndefined();
+    });
   });
 
   describe('getLabel', () => {
-    it('returns default label with rate', () => {
+    it('returns default label without embedding the rate', () => {
       const core = new PlaybackRateButtonCore();
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate 1.5');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback speed');
     });
 
     it('returns default label for rate 1', () => {
       const core = new PlaybackRateButtonCore();
-      expect(core.getLabel(createState({ rate: 1 }))).toBe('Playback rate 1');
+      expect(core.getLabel(createState({ rate: 1 }))).toBe('Playback speed');
     });
 
     it('returns custom string label', () => {
@@ -60,15 +80,48 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore({
         label: () => '',
       });
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate 1.5');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback speed');
     });
   });
 
   describe('getAttrs', () => {
-    it('returns aria-label', () => {
+    it('uses aria-label Playback speed with matching valuenow and valuetext for fractional rates', () => {
       const core = new PlaybackRateButtonCore();
-      const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toBe('Playback rate 1.5');
+      const attrs = core.getAttrs(createState({ rate: 1.25, rateMin: 0.5, rateMax: 2 }));
+
+      expect(attrs['aria-label']).toBe('Playback speed');
+      expect(attrs['aria-valuenow']).toBe('1.25');
+      expect(attrs['aria-valuetext']).toBe('1.25×');
+    });
+
+    it('exposes spinbutton semantics and value', () => {
+      const core = new PlaybackRateButtonCore();
+      const attrs = core.getAttrs(createState({ rate: 1.5, rateMin: 0.2, rateMax: 2 }));
+
+      expect(attrs.role).toBe('spinbutton');
+      expect(attrs['aria-label']).toBe('Playback speed');
+      expect(attrs['aria-valuenow']).toBe('1.5');
+      expect(attrs['aria-valuetext']).toBe('1.5×');
+      expect(attrs['aria-valuemin']).toBe('0.2');
+      expect(attrs['aria-valuemax']).toBe('2');
+    });
+
+    it('formats valuemin and valuemax with the same rounding as valuenow', () => {
+      const core = new PlaybackRateButtonCore();
+      const imprecise = 0.1 + 0.2;
+      const attrs = core.getAttrs(createState({ rate: imprecise, rateMin: imprecise, rateMax: 2 }));
+
+      expect(attrs['aria-valuenow']).toBe('0.3');
+      expect(attrs['aria-valuemin']).toBe('0.3');
+      expect(attrs['aria-valuemax']).toBe('2');
+    });
+
+    it('omits valuemin and valuemax when bounds are unknown', () => {
+      const core = new PlaybackRateButtonCore();
+      const attrs = core.getAttrs(createState({ rate: 1, rateMin: undefined, rateMax: undefined }));
+
+      expect(attrs['aria-valuemin']).toBeUndefined();
+      expect(attrs['aria-valuemax']).toBeUndefined();
     });
 
     it('sets aria-disabled when disabled', () => {

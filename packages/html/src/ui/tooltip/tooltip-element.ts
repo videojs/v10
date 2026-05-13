@@ -7,6 +7,7 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  HOTKEY_SHORTCUT_CHANGE_EVENT,
   resolveOffsets,
   type TooltipApi,
   type TooltipChangeDetails,
@@ -15,14 +16,17 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
-import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { applyStyles, listen, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
+import { TooltipLabelElement } from './tooltip-label-element';
+import { TooltipShortcutElement } from './tooltip-shortcut-element';
 
 type TriggerElement = HTMLElement & {
   getLabel(): string | undefined;
+  getShortcut?: (() => string | undefined) | undefined;
   $state: State<ButtonState>;
 };
 
@@ -213,12 +217,34 @@ export class TooltipElement extends MediaElement {
         triggerEl.$state.subscribe(() => this.#syncContent(triggerEl), {
           signal: this.#triggerAbort.signal,
         });
+        listen(triggerEl, HOTKEY_SHORTCUT_CHANGE_EVENT, () => this.#syncContent(triggerEl), {
+          signal: this.#triggerAbort.signal,
+        });
       }
     }
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    this.textContent = triggerEl.getLabel() ?? '';
+    const label = triggerEl.getLabel() ?? '';
+    const shortcut = triggerEl.getShortcut?.();
+
+    let labelEl = TooltipLabelElement.findIn(this);
+    let shortcutEl = TooltipShortcutElement.findIn(this);
+
+    if (!labelEl && !shortcutEl) {
+      if (this.#hostHasAuthoredTooltipContent()) return;
+
+      labelEl = TooltipLabelElement.create();
+      shortcutEl = TooltipShortcutElement.create();
+      this.replaceChildren(labelEl, shortcutEl);
+    }
+
+    labelEl?.setSyncedText(label);
+    shortcutEl?.setSyncedShortcut(shortcut);
+  }
+
+  #hostHasAuthoredTooltipContent(): boolean {
+    return Array.from(this.childNodes).some((node) => node.nodeType !== Node.TEXT_NODE || !!node.textContent?.trim());
   }
 
   #cleanupTrigger(): void {

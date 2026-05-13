@@ -93,6 +93,15 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'className'>): ReactNode {
+  return (
+    <Tooltip.Popup className="media-tooltip" {...props}>
+      <Tooltip.Label />
+      <Tooltip.Shortcut className="media-tooltip__kbd" />
+    </Tooltip.Popup>
+  );
+}
+
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 
@@ -139,7 +148,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -153,7 +162,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -167,7 +176,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
 
@@ -200,7 +209,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <VolumePopover />
@@ -214,7 +223,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </CaptionsButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -226,7 +235,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -238,7 +247,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -250,7 +259,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <TooltipPopup />
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>
