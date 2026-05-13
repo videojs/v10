@@ -53,14 +53,28 @@ export const SOURCES = {
     url: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
     type: 'dash',
   },
+  'vimeo-1': {
+    label: 'The World In HDR 4K',
+    url: 'https://vimeo.com/648359100',
+    type: 'vimeo',
+  },
+  'vimeo-2': {
+    label: 'Caminandes 1: Llama Drama',
+    url: 'https://vimeo.com/638371504',
+    type: 'vimeo',
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
-export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
+export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter(
+  (id) => SOURCES[id].type !== 'dash' && SOURCES[id].type !== 'vimeo'
+);
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
+export const VIMEO_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'vimeo');
+export const DEFAULT_VIMEO_SOURCE: SourceId = 'vimeo-1';
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';

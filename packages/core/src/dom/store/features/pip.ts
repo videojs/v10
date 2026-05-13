@@ -52,7 +52,7 @@ export const pipFeature = definePlayerFeature({
     const { media } = target;
 
     set({
-      pipAvailability: isPictureInPictureEnabled() ? 'available' : 'unsupported',
+      pipAvailability: isPictureInPictureEnabled(media) ? 'available' : 'unsupported',
     });
 
     const sync = () =>

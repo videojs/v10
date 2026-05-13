@@ -1,6 +1,6 @@
 import { SKINS } from '@app/constants';
 import type { Skin } from '@app/types';
-import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
+import { DEFAULT_AUDIO_SOURCE, DEFAULT_VIMEO_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
 export type PreloadValue = (typeof PRELOAD_VALUES)[number];
@@ -55,11 +55,15 @@ export function onSkinChange(callback: (skin: Skin) => void): () => void {
   };
 }
 
-export function getInitialSource(audioOnly?: boolean): SourceId {
+export function getInitialSource(audioOnly?: boolean, vimeoOnly?: boolean): SourceId {
   const stored = currentSource;
 
   if (audioOnly && SOURCES[stored].type !== 'mp4') {
     return DEFAULT_AUDIO_SOURCE;
+  }
+
+  if (vimeoOnly && SOURCES[stored].type !== 'vimeo') {
+    return DEFAULT_VIMEO_SOURCE;
   }
 
   return stored;

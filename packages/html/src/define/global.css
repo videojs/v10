@@ -12,6 +12,7 @@ Required to override any default video and image styles (such as
 Tailwind's CSS reset) and ensure they fill the container as expected.
 */
 video-player video,
+video-player vimeo-video,
 video-player [slot="poster"],
 live-video-player video,
 live-video-player [slot="poster"] {
