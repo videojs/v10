@@ -1,18 +1,43 @@
+/**
+ * **Resolve an unresolved presentation by fetching and parsing its manifest.**
+ *
+ * Reads `state.presentation`; when it holds `{ url }` (unresolved) and the
+ * preload / load-activation gate is met, fetches the manifest, parses it via
+ * `config.parsePresentation` (default: HLS multivariant playlist parser), and
+ * writes the resolved `Presentation` back to the same slot.
+ *
+ * Source-identity-driven, expressed as a 4-state machine:
+ *
+ * ```
+ * 'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'
+ * ```
+ *
+ * - `'preconditions-unmet'`: no presentation, or presentation has no URL.
+ * - `'idle'`: URL present, unresolved, gate unmet (blocking preload + no
+ *   load-activation). Waits for the gate to open.
+ * - `'resolving'`: URL present, unresolved, gate met. Entry starts the fetch
+ *   and returns the AbortController — the reactor calls `.abort()` on state
+ *   exit, so source change / gate-close / destroy all cancel cleanly.
+ * - `'resolved'`: `state.presentation` holds a resolved `Presentation`.
+ *
+ * Gate semantics live in `isBlockingPreload` (`media/utils/preload`):
+ * a preload value blocks resolution if falsy or in `config.blockingPreloads`
+ * (default `['none']`). `state.loadActivated` is an override — true bypasses
+ * the preload gate entirely.
+ *
+ * Multi-writer with the engine adapter, which writes the initial unresolved
+ * `{ url }` to `state.presentation` from src input. Different domains
+ * (config-input vs. derived state via fetch) — legitimate multi-writer.
+ */
 import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { parseMultivariantPlaylist } from '../../media/hls/parse-multivariant';
-import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
+import { isResolvedPresentation, type MaybeResolvedPresentation, type Presentation } from '../../media/types';
+import { isBlockingPreload } from '../../media/utils/preload';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
-/**
- * State shape for presentation resolution.
- *
- * `presentation` is a single slot whose value may or may not be resolved.
- * A caller writes `{ url }`; resolvePresentation parses the manifest and
- * populates the rest in place.
- */
 export interface PresentationState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none' | undefined;
@@ -20,72 +45,53 @@ export interface PresentationState {
   loadActivated?: boolean;
 }
 
-/**
- * Determines if resolution conditions are met based on preload policy and load-activation state.
- *
- * Resolution conditions:
- * - State-driven: preload is 'auto' or 'metadata'
- * - Load-activated: loadActivated is true (play / seek event observed for this source)
- */
-export function shouldResolve(state: PresentationState): boolean {
-  const { preload, loadActivated } = state;
-  return (
-    // State-driven: preload allows (auto/metadata)
-    ['auto', 'metadata'].includes(preload as any) ||
-    // Load-activated: a preload-overriding event has fired for this source
-    !!loadActivated
-  );
-}
+export type ParsePresentation = (text: string, presentation: MaybeResolvedPresentation) => Presentation;
 
-/**
- * True when there's a presentation with a URL that hasn't been resolved yet.
- */
-export function canResolve(
-  state: PresentationState
-): state is PresentationState & { presentation: MaybeResolvedPresentation } {
-  return !!state.presentation?.url && !isResolvedPresentation(state.presentation);
+export interface ResolvePresentationConfig {
+  /**
+   * Preload values that block initial resolution. Defaults to `['none']`.
+   * Falsy preload (undefined / empty) always blocks regardless of this list.
+   */
+  blockingPreloads?: readonly string[];
+  /**
+   * Parses a manifest body into a resolved `Presentation`. Defaults to the
+   * HLS multivariant-playlist parser; engines for other formats (DASH, etc.)
+   * supply their own.
+   */
+  parsePresentation?: ParsePresentation;
 }
 
 export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
 
-/**
- * Derives the current state from current state conditions.
- *
- * States are mutually exclusive and exhaustive:
- * - `'preconditions-unmet'`: no presentation, or presentation has no URL
- * - `'idle'`: URL present, unresolved, shouldResolve not met
- * - `'resolving'`: URL present, unresolved, shouldResolve met
- * - `'resolved'`: presentation has been resolved
- */
-function deriveState(state: PresentationState): ResolvePresentationState {
-  const { presentation } = state;
+function deriveState(
+  presentation: MaybeResolvedPresentation | undefined,
+  preload: PresentationState['preload'],
+  loadActivated: boolean | undefined,
+  blockingPreloads: readonly string[] | undefined
+): ResolvePresentationState {
   if (!presentation?.url) return 'preconditions-unmet';
   if (isResolvedPresentation(presentation)) return 'resolved';
-  return shouldResolve(state) ? 'resolving' : 'idle';
+  const gateOpen = !!loadActivated || !isBlockingPreload(preload, blockingPreloads);
+  return gateOpen ? 'resolving' : 'idle';
 }
 
-/**
- * Resolves an unresolved presentation into a parsed `Presentation`.
- *
- * FSM driven by `deriveState` — a single `always` monitor keeps the state in
- * sync with conditions at all times. `'resolving'` additionally runs the fetch
- * task and returns an AbortController so the framework aborts it on state exit.
- *
- * @example
- * const reactor = resolvePresentation.setup({ state });
- * // later:
- * reactor.destroy();
- */
 function resolvePresentationSetup({
   state,
+  config,
 }: {
   state: {
     presentation: Signal<PresentationState['presentation']>;
     preload: ReadonlySignal<PresentationState['preload']>;
     loadActivated: ReadonlySignal<PresentationState['loadActivated']>;
   };
+  config?: ResolvePresentationConfig;
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(snapshot(state)));
+  const parsePresentation = config?.parsePresentation ?? parseMultivariantPlaylist;
+  const blockingPreloads = config?.blockingPreloads;
+
+  const derivedStateSignal = computed(() =>
+    deriveState(state.presentation.get(), state.preload.get(), state.loadActivated.get(), blockingPreloads)
+  );
 
   return createMachineReactor<ResolvePresentationState>({
     initial: 'preconditions-unmet',
@@ -94,8 +100,6 @@ function resolvePresentationSetup({
       'preconditions-unmet': {},
       idle: {},
       resolving: {
-        // Entry: start fetch on state entry; return AbortController so the
-        // framework aborts the in-flight request on state exit.
         entry: () => {
           const presentation = state.presentation.get()!;
           const ac = new AbortController();
@@ -103,12 +107,13 @@ function resolvePresentationSetup({
           fetchResolvable(presentation, { signal: ac.signal })
             .then((response) => getResponseText(response))
             .then((text) => {
-              const parsed = parseMultivariantPlaylist(text, presentation);
+              const parsed = parsePresentation(text, presentation);
               state.presentation.set(parsed);
             })
             .catch((error) => {
               if (error instanceof Error && error.name === 'AbortError') return;
-              throw error;
+              // TODO(error-management): route to a state-error slot once one exists.
+              console.error('[resolvePresentation] manifest fetch/parse failed:', error);
             });
 
           return ac;

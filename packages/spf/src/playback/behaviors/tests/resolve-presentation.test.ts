@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
-import { type PresentationState, resolvePresentation, shouldResolve } from '../resolve-presentation';
+import { type PresentationState, resolvePresentation } from '../resolve-presentation';
 
 function makeState(initial: PresentationState = {}): StateSignals<PresentationState> {
   return {
@@ -386,39 +386,5 @@ variant1.m3u8`)
 
       reactor.destroy();
     });
-  });
-});
-
-describe('shouldResolve', () => {
-  it('returns true when preload is "auto"', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' });
-    expect(result).toBe(true);
-  });
-
-  it('returns true when preload is "metadata"', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'metadata' });
-    expect(result).toBe(true);
-  });
-
-  it('returns true when loadActivated is true with preload "none"', () => {
-    const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'none',
-      loadActivated: true,
-    });
-    expect(result).toBe(true);
-  });
-
-  it('returns false when preload is "none" and loadActivated is false', () => {
-    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' });
-    expect(result).toBe(false);
-  });
-
-  it('returns false when preload is undefined', () => {
-    const result = shouldResolve({
-      presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: undefined,
-    });
-    expect(result).toBe(false);
   });
 });

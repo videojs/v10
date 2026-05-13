@@ -89,8 +89,12 @@ export { fetchResolvable, getResponseText } from './network/fetch';
 // Features (F1)
 // =============================================================================
 
-export type { PresentationState } from './playback/behaviors/resolve-presentation';
-export { canResolve, resolvePresentation, shouldResolve } from './playback/behaviors/resolve-presentation';
+export type {
+  ParsePresentation,
+  PresentationState,
+  ResolvePresentationConfig,
+} from './playback/behaviors/resolve-presentation';
+export { resolvePresentation } from './playback/behaviors/resolve-presentation';
 export { syncPreload } from './playback/behaviors/sync-preload';
 
 // =============================================================================
