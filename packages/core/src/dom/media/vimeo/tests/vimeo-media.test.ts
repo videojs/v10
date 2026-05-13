@@ -34,6 +34,7 @@ function makeMockPlayer() {
     getPaused: vi.fn(() => Promise.resolve(true)),
     getDuration: vi.fn(() => Promise.resolve(NaN)),
     getPlaybackRate: vi.fn(() => Promise.resolve(1)),
+    ready: vi.fn(() => Promise.resolve()),
     // Helper to fire events from tests.
     _emit(event: string, data?: unknown) {
       handlers[event]?.(data);
