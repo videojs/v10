@@ -44,6 +44,26 @@ export function findTrack(
 }
 
 /**
+ * Find a track by id across all selection sets in a presentation, without
+ * knowing its type up front. Used when the caller has a track id obtained
+ * from a downstream consumer (e.g. `SourceBufferActor.initTrackId`) and
+ * needs to locate the corresponding track in the presentation.
+ *
+ * Track ids are unique within a presentation per the HLS spec; the first
+ * match wins.
+ */
+export function findTrackById(
+  presentation: MaybeResolvedPresentation,
+  trackId: string
+): PartiallyResolvedTrack | ResolvedTrack | undefined {
+  for (const selectionSet of presentation.selectionSets ?? []) {
+    const track = selectionSet.switchingSets[0]?.tracks.find(({ id }) => id === trackId);
+    if (track) return track;
+  }
+  return undefined;
+}
+
+/**
  * Find a text track of the given id within a presentation and narrow it to
  * the fully-resolved `TextTrack` shape (segments populated). Returns
  * `undefined` if no track matches the id, the matching track isn't a text

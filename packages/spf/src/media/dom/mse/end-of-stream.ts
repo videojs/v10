@@ -1,20 +1,14 @@
 /**
  * End-of-stream detection helpers.
  *
- * Pure predicates that compare a presentation's last-segment expectations
- * against what an MSE SourceBufferActor has actually appended. Consumed by
- * the `endOfStream` playback behavior to decide when to call
+ * Pure predicate that compares a track's expected segment list against the
+ * appended-segment list from an MSE SourceBufferActor's snapshot. Consumed
+ * by the `endOfStream` playback behavior to decide when to call
  * `MediaSource.endOfStream()`.
  *
- * Kept here so the layering stays clean: predicates have no `core/`
- * reactivity and operate on a plain `TrackSelectionState` + appended-
- * segments lists extracted by the caller. The caller is responsible for
- * pulling `actor.snapshot.get().context.segments` from each SourceBufferActor
- * — so the helpers stay independent of any `playback/` actor type.
+ * Kept here so the layering stays clean: predicate has no `core/`
+ * reactivity and operates on plain segment lists extracted by the caller.
  */
-
-import { isResolvedTrack } from '../../types';
-import { getSelectedTrack, type TrackSelectionState } from '../../utils/track-selection';
 
 /**
  * Minimum information about an appended segment needed to decide whether
@@ -50,42 +44,4 @@ export function isLastSegmentAppended(
   const lastSeg = expectedSegments[expectedSegments.length - 1];
   if (!lastSeg) return false;
   return appendedSegments?.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
-}
-
-/**
- * Check if the last segment has been appended for each selected video and
- * audio track. Text tracks are excluded — their cues don't flow through
- * SourceBuffers.
- *
- * Unresolved tracks (e.g. mid quality switch, when `selectedVideoTrackId`
- * has flipped to a track whose media playlist hasn't been fetched yet) are
- * treated as not ready — fast-paths the quality-switch window where the
- * new track's last segment isn't yet known.
- *
- * `appendedByType` typically comes from each per-type SourceBufferActor's
- * `snapshot.get().context.segments`. An absent or empty entry is treated
- * the same as "no segments appended for this type."
- */
-export function hasLastSegmentLoaded(
-  state: TrackSelectionState,
-  appendedByType: {
-    video?: readonly AppendedSegment[] | undefined;
-    audio?: readonly AppendedSegment[] | undefined;
-  }
-): boolean {
-  const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
-  const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
-
-  if (videoTrack && !isResolvedTrack(videoTrack)) return false;
-  if (audioTrack && !isResolvedTrack(audioTrack)) return false;
-
-  if (videoTrack && isResolvedTrack(videoTrack)) {
-    if (!isLastSegmentAppended(videoTrack.segments, appendedByType.video)) return false;
-  }
-
-  if (audioTrack && isResolvedTrack(audioTrack)) {
-    if (!isLastSegmentAppended(audioTrack.segments, appendedByType.audio)) return false;
-  }
-
-  return true;
 }
