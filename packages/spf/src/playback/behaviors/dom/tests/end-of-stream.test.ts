@@ -3,14 +3,7 @@ import type { ContextSignals, StateSignals } from '../../../../core/composition/
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
-import {
-  canEndStream,
-  type EndOfStreamContext,
-  type EndOfStreamState,
-  endOfStream,
-  hasLastSegmentLoaded,
-  shouldEndStream,
-} from '../end-of-stream';
+import { type EndOfStreamContext, type EndOfStreamState, endOfStream } from '../end-of-stream';
 
 function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamState> {
   return {
@@ -18,7 +11,7 @@ function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamStat
     mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(initial.mediaSourceReadyState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
-    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+    currentTime: signal<number | undefined>(initial.currentTime),
   };
 }
 
@@ -26,31 +19,32 @@ function makeContext(initial: EndOfStreamContext = {}): ContextSignals<EndOfStre
   return {
     mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
     mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement),
-    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
-    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
   };
 }
 
 function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfStreamContext) {
-  // Default mediaSourceReadyState to 'open' to mirror what setupMediaSource
-  // would have written. Tests that exercise other readyState values pass it
-  // explicitly.
-  const state = makeState({ mediaSourceReadyState: 'open', ...initialState });
+  // Default `mediaSourceReadyState` to 'open' and `currentTime` well past
+  // any test scenario's last-segment startTime — tests that exercise the
+  // gates pass their own values.
+  const state = makeState({ mediaSourceReadyState: 'open', currentTime: 1000, ...initialState });
   const context = makeContext(initialContext);
-  const cleanup = endOfStream.setup({ state, context });
-  return { state, context, cleanup };
+  const reactor = endOfStream.setup({ state, context });
+  return { state, context, reactor };
 }
 
 // ============================================================================
 // Mock helpers
 // ============================================================================
 
-function makeMediaSource(overrides: { readyState?: string; duration?: number } = {}): MediaSource {
+function makeMediaSource(
+  overrides: { readyState?: string; duration?: number; sourceBuffers?: SourceBuffer[] } = {}
+): MediaSource {
   const ms = Object.create(MediaSource.prototype, {
     readyState: { value: overrides.readyState ?? 'open', writable: true },
     duration: { value: overrides.duration ?? 0, writable: true },
+    sourceBuffers: { value: (overrides.sourceBuffers ?? []) as unknown as SourceBufferList, writable: false },
   }) as MediaSource;
   ms.endOfStream = vi.fn();
   return ms;
@@ -113,10 +107,6 @@ function makePresentation(videoTrack: VideoTrack, id = 'pres-1'): Presentation {
   } as unknown as Presentation;
 }
 
-/**
- * Create a SourceBufferActor pre-seeded with the given segment IDs.
- * Uses a fresh SourceBuffer mock; segments get timing derived from their index.
- */
 function makeActorWithSegments(segmentIds: string[], trackId = 'video-1'): SourceBufferActor {
   return createSourceBufferActor(makeSourceBuffer(), {
     initTrackId: trackId,
@@ -130,264 +120,6 @@ function makeActorWithSegments(segmentIds: string[], trackId = 'video-1'): Sourc
 }
 
 // ============================================================================
-// canEndStream
-// ============================================================================
-
-describe('canEndStream', () => {
-  it('returns false when mediaSource is missing', () => {
-    const state: EndOfStreamState = { presentation: { id: 'p', url: 'x' } as Presentation };
-    expect(canEndStream(state, {})).toBe(false);
-  });
-
-  it('returns false when presentation is missing', () => {
-    expect(canEndStream({}, { mediaSource: makeMediaSource() })).toBe(false);
-  });
-
-  it('returns true when both present', () => {
-    const state: EndOfStreamState = { presentation: { id: 'p', url: 'x' } as Presentation };
-    expect(canEndStream(state, { mediaSource: makeMediaSource() })).toBe(true);
-  });
-});
-
-// ============================================================================
-// hasLastSegmentLoaded
-// ============================================================================
-
-describe('hasLastSegmentLoaded', () => {
-  it('returns true when no tracks are selected', () => {
-    expect(hasLastSegmentLoaded({ presentation: { id: 'p', url: 'x' } as Presentation }, {})).toBe(true);
-  });
-
-  it('returns false when last segment ID is not in actor context', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    // seg-3 (the last segment) is missing
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2']),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(false);
-  });
-
-  it('returns true when last segment ID is present (seek-back scenario)', () => {
-    const track = makeResolvedVideoTrack(10);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    // Last segment is in the SourceBuffer from a prior play-through.
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9']),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(true);
-  });
-
-  it('returns true when last segment ID is in actor context', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(true);
-  });
-
-  it('returns true after back-buffer flushing when last segment ID remains', () => {
-    const track = makeResolvedVideoTrack(10);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    // Early segments flushed, last segment still present
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(true);
-  });
-
-  it('returns true when track has no segments', () => {
-    const track = makeResolvedVideoTrack(0);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments([]),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(true);
-  });
-
-  it('returns false when last segment is present but marked partial', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    // Last segment (seg-3) is in context but still streaming
-    const actor = createSourceBufferActor(makeSourceBuffer(), {
-      initTrackId: 'video-1',
-      segments: [
-        { id: 'seg-0', startTime: 0, duration: 2.5, trackId: 'video-1' },
-        { id: 'seg-1', startTime: 2.5, duration: 2.5, trackId: 'video-1' },
-        { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
-        { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1', partial: true },
-      ],
-    });
-    expect(hasLastSegmentLoaded(state, { videoBufferActor: actor })).toBe(false);
-  });
-
-  it('returns true when last segment is present and partial is cleared', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    const actor = createSourceBufferActor(makeSourceBuffer(), {
-      initTrackId: 'video-1',
-      segments: [
-        { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
-        { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' }, // partial: undefined = complete
-      ],
-    });
-    expect(hasLastSegmentLoaded(state, { videoBufferActor: actor })).toBe(true);
-  });
-
-  it('returns false when video last segment is loaded but audio last segment is not', () => {
-    const videoTrack = makeResolvedVideoTrack(4);
-    const presentation = {
-      id: 'pres-1',
-      url: 'https://example.com/playlist.m3u8',
-      selectionSets: [
-        { type: 'video', switchingSets: [{ tracks: [videoTrack] }] },
-        {
-          type: 'audio',
-          switchingSets: [
-            {
-              tracks: [
-                {
-                  id: 'audio-1',
-                  type: 'audio',
-                  segments: makeSegments(4).map((s) => ({ ...s, id: `audio-${s.id}` })),
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    } as unknown as Presentation;
-
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      selectedAudioTrackId: 'audio-1',
-      presentation,
-    };
-    const context: EndOfStreamContext = {
-      videoBufferActor: makeActorWithSegments(['seg-3'], 'video-1'),
-      audioBufferActor: makeActorWithSegments(['audio-seg-0'], 'audio-1'),
-    };
-    expect(hasLastSegmentLoaded(state, context)).toBe(false);
-  });
-});
-
-// ============================================================================
-// shouldEndStream
-// ============================================================================
-
-describe('shouldEndStream', () => {
-  it('returns false when MediaSource is not open', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-      mediaSourceReadyState: 'ended',
-    };
-    expect(
-      shouldEndStream(state, {
-        mediaSource: makeMediaSource({ readyState: 'ended' }),
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-      })
-    ).toBe(false);
-  });
-
-  it('returns false when mediaElement has not reached HAVE_METADATA', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    expect(
-      shouldEndStream(state, {
-        mediaSource: makeMediaSource(),
-        mediaElement: document.createElement('video'), // readyState = HAVE_NOTHING
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-      })
-    ).toBe(false);
-  });
-
-  it('returns false when video SourceBuffer is not yet created', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    expect(shouldEndStream(state, { mediaSource: makeMediaSource() })).toBe(false);
-  });
-
-  it('returns false when last segment is not yet loaded', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-    };
-    expect(
-      shouldEndStream(state, {
-        mediaSource: makeMediaSource(),
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']), // last segment (seg-3) missing
-      })
-    ).toBe(false);
-  });
-
-  it('returns true when last segment is in actor context', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-      mediaSourceReadyState: 'open',
-    };
-    expect(
-      shouldEndStream(state, {
-        mediaSource: makeMediaSource(),
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-      })
-    ).toBe(true);
-  });
-
-  it('returns true after back-buffer flushing when last segment ID remains', () => {
-    const track = makeResolvedVideoTrack(10);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-      mediaSourceReadyState: 'open',
-    };
-    expect(
-      shouldEndStream(state, {
-        mediaSource: makeMediaSource(),
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
-      })
-    ).toBe(true);
-  });
-});
-
-// ============================================================================
 // endOfStream
 // ============================================================================
 
@@ -396,11 +128,10 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    const { cleanup } = setupEndOfStream(
+    const { reactor } = setupEndOfStream(
       { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
       {
         mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
         videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
       }
     );
@@ -408,19 +139,18 @@ describe('endOfStream', () => {
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-    cleanup();
+    reactor.destroy();
   });
 
   it('calls MediaSource.endOfStream() after back-buffer flushing', async () => {
     const track = makeResolvedVideoTrack(10);
     const mockMs = makeMediaSource();
 
-    // Back buffer flushed, only last few segments remain — last segment still present
-    const { cleanup } = setupEndOfStream(
+    const { reactor } = setupEndOfStream(
       { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
       {
         mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
+        // Back buffer flushed; last segment still present.
         videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
       }
     );
@@ -428,129 +158,100 @@ describe('endOfStream', () => {
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-    cleanup();
+    reactor.destroy();
   });
 
-  it('calls endOfStream() only once while MediaSource stays ended', async () => {
+  it('does not call endOfStream() when MediaSource is not open', async () => {
     const track = makeResolvedVideoTrack(4);
-    const mockMs = makeMediaSource();
+    const mockMs = makeMediaSource({ readyState: 'ended' });
 
-    // Simulate real MSE behaviour: endOfStream() transitions readyState to 'ended'
-    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      (mockMs as unknown as { readyState: string }).readyState = 'ended';
-    });
-
-    const { state, cleanup } = setupEndOfStream(
-      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+    const { reactor } = setupEndOfStream(
+      {
+        selectedVideoTrackId: 'video-1',
+        presentation: makePresentation(track),
+        mediaSourceReadyState: 'ended',
+      },
       {
         mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
         videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
       }
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+    reactor.destroy();
+  });
+
+  it('does not call endOfStream() when currentTime has not reached the last segment', async () => {
+    const track = makeResolvedVideoTrack(4); // lastSeg.startTime = 7.5
+    const mockMs = makeMediaSource();
+
+    const { reactor } = setupEndOfStream(
+      {
+        selectedVideoTrackId: 'video-1',
+        presentation: makePresentation(track),
+        currentTime: 5, // mid-stream — user hasn't reached the end
+      },
+      {
+        mediaSource: mockMs,
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+    reactor.destroy();
+  });
+
+  it('fires once currentTime reaches the last segment startTime', async () => {
+    const track = makeResolvedVideoTrack(4); // lastSeg.startTime = 7.5
+    const mockMs = makeMediaSource();
+
+    const { state, reactor } = setupEndOfStream(
+      {
+        selectedVideoTrackId: 'video-1',
+        presentation: makePresentation(track),
+        currentTime: 5, // start mid-stream
+      },
+      {
+        mediaSource: mockMs,
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+
+    // Playback ticks to the last segment — reactor transitions to eos-ready.
+    state.currentTime.set(7.5);
+
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-
-    // Trigger another state change — readyState is 'ended' so must not call again
-    state.presentation.set(makePresentation(track));
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not call endOfStream() when last segment is not yet loaded', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    const { cleanup } = setupEndOfStream(
+    const { reactor } = setupEndOfStream(
       { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
       {
         mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']),
-      } // missing seg-3
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']), // missing seg-2, seg-3
+      }
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 30));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
-    cleanup();
+    reactor.destroy();
   });
 
-  it('calls endOfStream() again after seek-back re-opens the MediaSource', async () => {
+  it('calls endOfStream() once when actor context is updated to include the last segment', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
-
-    const { state, cleanup } = setupEndOfStream(
-      {
-        selectedVideoTrackId: 'video-1',
-        presentation: makePresentation(track),
-        mediaSourceReadyState: 'open',
-      },
-      {
-        mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-      }
-    );
-
-    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
-    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      (mockMs as unknown as { readyState: string }).readyState = 'ended';
-      state.mediaSourceReadyState.set('ended');
-    });
-
-    // First play-through: endOfStream() is called, readyState transitions to 'ended'.
-    await vi.waitFor(() => {
-      expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-    });
-
-    // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec.
-    // The state update drives re-evaluation.
-    (mockMs as unknown as { readyState: string }).readyState = 'open';
-    state.mediaSourceReadyState.set('open');
-
-    // endOfStream() should be called again driven purely by the state update.
-    await vi.waitFor(() => {
-      expect(mockMs.endOfStream).toHaveBeenCalledTimes(2);
-    });
-    cleanup();
-  });
-
-  it('does not call endOfStream() again while MediaSource is still ended', async () => {
-    const track = makeResolvedVideoTrack(4);
-    const mockMs = makeMediaSource();
-
-    const { state, cleanup } = setupEndOfStream(
-      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
-      {
-        mediaSource: mockMs,
-        videoBuffer: makeSourceBuffer(),
-        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
-      }
-    );
-
-    await vi.waitFor(() => {
-      expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-    });
-
-    // MediaSource stays in 'ended' state (no seek-back append)
-    (mockMs as unknown as { readyState: string }).readyState = 'ended';
-
-    // Trigger a state change — should not call endOfStream() again
-    state.presentation.set(makePresentation(track));
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
-    cleanup();
-  });
-
-  it('calls endOfStream() when actor context is updated to include the last segment', async () => {
-    const track = makeResolvedVideoTrack(4);
-    const mockMs = makeMediaSource();
-    // Start with only first two segments loaded
+    // Start with only first two segments loaded.
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer, {
       initTrackId: 'video-1',
@@ -560,16 +261,16 @@ describe('endOfStream', () => {
       ],
     });
 
-    const { cleanup } = setupEndOfStream(
+    const { reactor } = setupEndOfStream(
       { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
-      { mediaSource: mockMs, videoBuffer: sourceBuffer, videoBufferActor: actor }
+      { mediaSource: mockMs, videoBufferActor: actor }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
 
-    // Append the last two segments via the actor — this updates actor context
-    // and triggers the actor subscribers that endOfStream watches.
+    // Append the remaining segments via the actor — its snapshot signal
+    // re-fires and the reactor transitions to 'eos-ready'.
     actor.send({
       type: 'batch',
       messages: [
@@ -589,6 +290,111 @@ describe('endOfStream', () => {
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
-    cleanup();
+    reactor.destroy();
+  });
+
+  it('calls endOfStream() only once while MediaSource stays ended', async () => {
+    const track = makeResolvedVideoTrack(4);
+    const mockMs = makeMediaSource();
+
+    // Simulate real MSE: endOfStream() transitions readyState to 'ended' and
+    // setupMediaSource's mirror would write 'ended' into state.
+    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (mockMs as unknown as { readyState: string }).readyState = 'ended';
+    });
+
+    const { state, reactor } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
+
+    await vi.waitFor(() => {
+      expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
+    });
+
+    // setupMediaSource's mirror would have set 'ended' — match that here.
+    state.mediaSourceReadyState.set('ended');
+
+    // Force a re-evaluation (presentation re-set) while still 'ended'.
+    state.presentation.set(makePresentation(track));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
+    reactor.destroy();
+  });
+
+  it('calls endOfStream() again after seek-back re-opens the MediaSource', async () => {
+    const track = makeResolvedVideoTrack(4);
+    const mockMs = makeMediaSource();
+
+    const { state, reactor } = setupEndOfStream(
+      {
+        selectedVideoTrackId: 'video-1',
+        presentation: makePresentation(track),
+        mediaSourceReadyState: 'open',
+      },
+      {
+        mediaSource: mockMs,
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
+
+    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
+    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (mockMs as unknown as { readyState: string }).readyState = 'ended';
+      state.mediaSourceReadyState.set('ended');
+    });
+
+    // First play-through.
+    await vi.waitFor(() => {
+      expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
+    });
+
+    // Seek-back: appendBuffer() re-opens the MediaSource per MSE spec; the
+    // mirror flips state.mediaSourceReadyState back to 'open'.
+    (mockMs as unknown as { readyState: string }).readyState = 'open';
+    state.mediaSourceReadyState.set('open');
+
+    // Reactor re-enters 'eos-ready' and re-fires endOfStream().
+    await vi.waitFor(() => {
+      expect(mockMs.endOfStream).toHaveBeenCalledTimes(2);
+    });
+    reactor.destroy();
+  });
+
+  it('aborts in-flight wait when presentation is cleared mid-flight', async () => {
+    const track = makeResolvedVideoTrack(4);
+    // Use a buffer that stays in 'updating' so the wait-for-ready never
+    // resolves on its own.
+    const buffer = {
+      buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+      updating: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as SourceBuffer;
+    const mockMs = makeMediaSource({ sourceBuffers: [buffer] });
+
+    const { state, reactor } = setupEndOfStream(
+      { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
+      {
+        mediaSource: mockMs,
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      }
+    );
+
+    // Behavior is awaiting waitForSourceBuffersReady — clear presentation.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+
+    state.presentation.set(undefined);
+
+    // Even if the buffer eventually settles (it won't here, but simulate
+    // anyway), the abort should have prevented the endOfStream call.
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+    reactor.destroy();
   });
 });

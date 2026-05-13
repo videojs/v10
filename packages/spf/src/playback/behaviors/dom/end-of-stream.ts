@@ -1,13 +1,70 @@
+/**
+ * **Drive each `open → ended` transition of the MediaSource.** Calls
+ * `MediaSource.endOfStream()` once the temporally last segments of all
+ * selected non-text tracks are fully appended and the user has reached
+ * them — letting the browser finalize duration and fire `ended` on the
+ * media element.
+ *
+ * Re-fires on every subsequent `open → ended → open` cycle. Per the MSE
+ * spec, `appendBuffer()` after `endOfStream()` transitions the MediaSource
+ * back to `'open'`; seek-back replays and back-buffer refills that re-load
+ * earlier segments take this path, so the behavior must call
+ * `endOfStream()` again once the last segments are reappended. The reactor's
+ * `'preconditions-unmet'` ↔ `'eos-ready'` cycle *is* the re-arm mechanism:
+ * a successful `endOfStream()` flips `mediaSourceReadyState` to `'ended'`,
+ * which exits `'eos-ready'`; the next `'open'` re-evaluates preconditions
+ * and may re-enter.
+ *
+ * The entry resolves the MSE-spec preconditions in order before mutating
+ * the MediaSource:
+ *
+ * 1. **MediaElement metadata** — `waitForMediaElementMetadata` defers until
+ *    `readyState >= HAVE_METADATA`. Chromium throws DEMUXER_ERROR if
+ *    `endOfStream()` is called before metadata is parsed.
+ * 2. **All SourceBuffers idle** — `waitForSourceBuffersReady` defers per
+ *    the MSE-spec rule that `endOfStream()` cannot be called while any
+ *    buffer has `updating === true`.
+ * 3. **Buffered-range clamp** — `getMaxBufferedEnd` sets the final
+ *    duration from actual container timestamps (more accurate than the
+ *    playlist-derived value for both shorter-than-declared and
+ *    longer-than-declared assets). `endOfStream()` only clamps up
+ *    implicitly; setting it explicitly here keeps the final value
+ *    deterministic.
+ *
+ * The buffer-set helpers operate across `mediaSource.sourceBuffers` (the
+ * canonical aggregate), so the behavior composes uniformly across
+ * audio-only, video-only, and mixed configurations.
+ *
+ * `currentTime` gates state entry: it must have reached the last segment's
+ * `startTime`. Without this, back-buffer `remove()`/`appendBuffer()` work
+ * during the middle of playback briefly re-opens the MediaSource (the
+ * spec's `'ended' → 'open'` transition fires on either mutation), which
+ * would otherwise drive a spurious `'eos-ready'` re-entry.
+ *
+ * Source-identity-driven via `state.presentation`. State-exit cleanup
+ * (`controller.abort()`) cancels any in-flight wait on source unload,
+ * presentation replace, or behavior destroy.
+ *
+ * Concurrent with `updateMediaSourceDuration`, which writes the initial
+ * `mediaSource.duration` from `presentation.duration`; this behavior
+ * writes the final value from the buffered end. The two domains don't
+ * overlap (initial-from-playlist vs final-from-container-timestamps).
+ */
 import { defineBehavior } from '../../../core/composition/create-composition';
-import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, snapshot } from '../../../core/signals/primitives';
+import type { Reactor } from '../../../core/reactors/create-machine-reactor';
+import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
+import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
+import { waitForMediaElementMetadata } from '../../../media/dom/mediaelement-setup';
+import { getMaxBufferedEnd, waitForSourceBuffersReady } from '../../../media/dom/mse/duration';
+import { hasLastSegmentLoaded } from '../../../media/dom/mse/end-of-stream';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 
-export interface EndOfStreamState extends TrackSelectionState {
+export interface EndOfStreamState extends Omit<TrackSelectionState, 'selectedTextTrackId'> {
   presentation?: MaybeResolvedPresentation;
+  currentTime?: number;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
   mediaSourceReadyState?: MediaSource['readyState'];
 }
@@ -15,253 +72,76 @@ export interface EndOfStreamState extends TrackSelectionState {
 export interface EndOfStreamContext {
   mediaSource?: MediaSource;
   mediaElement?: HTMLMediaElement | undefined;
-  videoBuffer?: SourceBuffer;
-  audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
 }
 
-// ## When to call endOfStream()
-//
-// Per the MSE spec, endOfStream() should be called once the last media
-// segments — temporally speaking — have been completely appended to all
-// active SourceBuffers. Specifically it signals two things:
-//   1. The temporally latest segments for both audio and video have been
-//      appended (i.e. the buffer covers the end of the stream content).
-//   2. The MediaSource will transition from 'open' to 'ended'. Appending
-//      additional (earlier) segments after this — e.g. for a seek-back or
-//      back-buffer refill — will re-open the MediaSource, at which point
-//      endOfStream() must be called again once loading reaches the end.
-//
-// The browser uses this signal to finalise MediaSource.duration and allow
-// the media element to fire the `ended` event. Without it, playback stalls
-// at the end of the buffered range waiting for data that will never arrive.
-//
-// The "any track" qualifier is intentional: per the HLS spec, all renditions
-// in a switching set are time-aligned, so the last segment of any rendition
-// covers the same end-of-stream content. We don't need to be tied to the
-// currently selected track.
-//
-// The right long-term condition is therefore:
-//   - The last segment of the video content (from any resolved video track)
-//     has been completely appended to the video SourceBuffer, AND
-//   - The last segment of the audio content (from any resolved audio track)
-//     has been completely appended to the audio SourceBuffer (when active), AND
-//   - currentTime is within the time range of that last segment.
-//
-// The currentTime gate prevents unnecessary re-invocations when back-buffer
-// refills or other mid-stream appends briefly re-open the MediaSource while
-// the user is far from the end.
-//
-/**
- * Check if the last segment of a track has been appended to a SourceBuffer.
- *
- * Checks by segment ID rather than a pipeline flag, so it is robust across
- * quality switches (different tracks have different segment IDs) and
- * back-buffer flushes (flushed segment IDs are removed from the model).
- */
-function isLastSegmentAppended(segments: readonly { id: string }[], actor: SourceBufferActor | undefined): boolean {
-  if (segments.length === 0) return true;
-  const lastSeg = segments[segments.length - 1];
-  if (!lastSeg) return false;
-  // A partial segment is still streaming — the last segment is not ready until
-  // its entry is present and not marked partial.
-  return actor?.snapshot.get().context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
+type EndOfStreamFsmState = 'preconditions-unmet' | 'eos-ready';
+
+function deriveState(
+  presentation: MaybeResolvedPresentation | undefined,
+  mediaSource: MediaSource | undefined,
+  mediaSourceReadyState: MediaSource['readyState'] | undefined,
+  selectedVideoTrackId: string | undefined,
+  selectedAudioTrackId: string | undefined,
+  videoBufferActor: SourceBufferActor | undefined,
+  audioBufferActor: SourceBufferActor | undefined,
+  currentTime: number | undefined
+): EndOfStreamFsmState {
+  if (!mediaSource || !presentation || mediaSourceReadyState !== 'open') {
+    return 'preconditions-unmet';
+  }
+
+  const hasVideo = !!selectedVideoTrackId;
+  const hasAudio = !!selectedAudioTrackId;
+
+  // A selected track must have its actor available before its last segment
+  // can be appended. Without one the selected-tracks-vs-buffers wiring isn't
+  // yet complete; bail and wait.
+  if (hasVideo && !videoBufferActor) return 'preconditions-unmet';
+  if (hasAudio && !audioBufferActor) return 'preconditions-unmet';
+
+  // Buffer actors must be idle. The actor stays in 'updating' for the entire
+  // multi-chunk append (only flipping to 'idle' once the runner settles —
+  // i.e. no more queued or in-flight tasks). `buffer.updating` alone is
+  // insufficient: for chunked fMP4 streaming, `updateend` fires after each
+  // chunk while the actor's for-await loop synchronously enqueues the next
+  // `appendBuffer()` — so the buffer flips `!updating → updating` across a
+  // microtask boundary. Entering 'eos-ready' against an updating actor
+  // races the entry's `mediaSource.duration = X` write against the next
+  // chunk's appendBuffer, throwing InvalidStateError.
+  if (videoBufferActor?.snapshot.get().value === 'updating') return 'preconditions-unmet';
+  if (audioBufferActor?.snapshot.get().value === 'updating') return 'preconditions-unmet';
+
+  const trackState: TrackSelectionState = { presentation, selectedVideoTrackId, selectedAudioTrackId };
+
+  // Reading actor.snapshot inside this body subscribes the surrounding
+  // `computed` to each actor's snapshot signal — segment-append progress
+  // drives re-evaluation.
+  if (
+    !hasLastSegmentLoaded(trackState, {
+      video: videoBufferActor?.snapshot.get().context.segments,
+      audio: audioBufferActor?.snapshot.get().context.segments,
+    })
+  ) {
+    return 'preconditions-unmet';
+  }
+
+  // currentTime gate: prevents 'eos-ready' entry when a back-buffer
+  // remove()/appendBuffer() briefly re-opens the MediaSource while the
+  // user is mid-stream. HLS rendition time-alignment means any active
+  // track works as the time reference.
+  const refTrack =
+    (hasVideo ? getSelectedTrack(trackState, 'video') : undefined) ??
+    (hasAudio ? getSelectedTrack(trackState, 'audio') : undefined);
+  if (refTrack && isResolvedTrack(refTrack) && refTrack.segments.length > 0) {
+    const lastSeg = refTrack.segments[refTrack.segments.length - 1]!;
+    if ((currentTime ?? 0) < lastSeg.startTime) return 'preconditions-unmet';
+  }
+
+  return 'eos-ready';
 }
 
-/**
- * Check if the last segment has been appended for each selected track.
- *
- * Handles video-only, audio-only, and video+audio scenarios.
- * A track with no segments (e.g. unresolved) is considered not ready.
- */
-export function hasLastSegmentLoaded(state: EndOfStreamState, context: EndOfStreamContext): boolean {
-  const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
-  const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
-
-  // An unresolved track means we don't yet know its segments — cannot be done.
-  // Fast-paths the quality-switch window: when selectedVideoTrackId has changed
-  // to a new (unresolved) track, we cannot yet determine if its last segment
-  // is loaded.
-  if (videoTrack && !isResolvedTrack(videoTrack)) return false;
-  if (audioTrack && !isResolvedTrack(audioTrack)) return false;
-
-  if (videoTrack && isResolvedTrack(videoTrack)) {
-    if (!isLastSegmentAppended(videoTrack.segments, context.videoBufferActor)) return false;
-  }
-
-  if (audioTrack && isResolvedTrack(audioTrack)) {
-    if (!isLastSegmentAppended(audioTrack.segments, context.audioBufferActor)) return false;
-  }
-
-  return true;
-}
-
-/**
- * Check if we can call endOfStream.
- */
-export function canEndStream(state: EndOfStreamState, context: EndOfStreamContext): boolean {
-  return !!(context.mediaSource && state.presentation);
-}
-
-/**
- * Check if we should call endOfStream.
- */
-export function shouldEndStream(state: EndOfStreamState, context: EndOfStreamContext): boolean {
-  if (!canEndStream(state, context)) return false;
-
-  const { mediaElement } = context;
-
-  // MediaSource must be open — read from state.mediaSourceReadyState so the
-  // computed re-evaluates when readyState changes (e.g. 'ended' → 'open' on seek-back).
-  if (state.mediaSourceReadyState !== 'open') return false;
-
-  // CRITICAL: MediaElement must have metadata before calling endOfStream
-  // Calling endOfStream before HAVE_METADATA causes DEMUXER_ERROR
-  // https://github.com/chromium/chromium/blob/main/media/filters/chunk_demuxer.cc
-  if (mediaElement && mediaElement.readyState < HTMLMediaElement.HAVE_METADATA) {
-    return false;
-  }
-
-  // SourceBuffers must exist for selected tracks before we can end the stream
-  // (otherwise we'd close the MediaSource before SourceBuffers are created)
-  const hasVideoTrack = !!state.selectedVideoTrackId;
-  const hasAudioTrack = !!state.selectedAudioTrackId;
-
-  if (hasVideoTrack && !context.videoBuffer) return false;
-  if (hasAudioTrack && !context.audioBuffer) return false;
-
-  // SourceBufferActors must be idle — setting duration while a SourceBuffer is
-  // updating throws InvalidStateError. The actor subscriber in endOfStream() will
-  // re-evaluate when each actor transitions back to idle.
-  if (context.videoBufferActor?.snapshot.get().value === 'updating') return false;
-  if (context.audioBufferActor?.snapshot.get().value === 'updating') return false;
-
-  // Last segment must be appended for each selected track
-  if (!hasLastSegmentLoaded(state, context)) return false;
-
-  // currentTime must have reached the last segment. Guards against re-ending
-  // the stream when a back-buffer remove() re-opens the MediaSource while the
-  // user is far from the end (remove() re-opens 'ended' → 'open' per MSE spec,
-  // same as appendBuffer()).
-  if (mediaElement) {
-    const videoTrack = hasVideoTrack ? getSelectedTrack(state, 'video') : undefined;
-    const audioTrack = hasAudioTrack ? getSelectedTrack(state, 'audio') : undefined;
-    const refTrack =
-      videoTrack && isResolvedTrack(videoTrack)
-        ? videoTrack
-        : audioTrack && isResolvedTrack(audioTrack)
-          ? audioTrack
-          : undefined;
-    if (refTrack && refTrack.segments.length > 0) {
-      const lastSeg = refTrack.segments[refTrack.segments.length - 1]!;
-      if (mediaElement.currentTime < lastSeg.startTime) return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * Wait for all currently-updating SourceBufferActors to finish.
- * Uses actor state rather than raw SourceBuffer.updating so the wait is
- * aligned with the same abstraction that owns all buffer operations.
- */
-function waitForSourceBuffersReady(context: EndOfStreamContext): Promise<void> {
-  const updatingActors = [context.videoBufferActor, context.audioBufferActor].filter(
-    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().value === 'updating'
-  );
-
-  if (updatingActors.length === 0) return Promise.resolve();
-
-  return Promise.all(
-    updatingActors.map(
-      (actor) =>
-        new Promise<void>((resolve) => {
-          // effect() runs its body synchronously on creation, then re-runs on the
-          // next microtask after any dependency changes. If the actor is already
-          // idle by the time effect() is called, resolve fires immediately and
-          // cleanup is scheduled via queueMicrotask to avoid unwatching during
-          // the watcher notification cycle.
-          let cleanup: (() => void) | undefined;
-          let resolved = false;
-          cleanup = effect(() => {
-            if (actor.snapshot.get().value !== 'updating') {
-              if (!resolved) {
-                resolved = true;
-                resolve();
-              }
-              queueMicrotask(() => cleanup?.());
-            }
-          });
-        })
-    )
-  ).then(() => undefined);
-}
-
-/**
- * Get the highest buffered end time across all active SourceBuffers.
- * Used to set the final duration from actual container timestamps rather
- * than playlist metadata, which handles both shorter and longer cases.
- */
-function getMaxBufferedEnd(context: EndOfStreamContext): number {
-  let max = 0;
-  for (const buf of [context.videoBuffer, context.audioBuffer]) {
-    if (buf && buf.buffered.length > 0) {
-      const end = buf.buffered.end(buf.buffered.length - 1);
-      if (end > max) max = end;
-    }
-  }
-  return max;
-}
-
-/**
- * End of stream task (module-level, pure).
- * Sets the final duration from actual buffered end time, then calls endOfStream().
- */
-const endOfStreamTask = async (
-  { currentContext }: { currentContext: EndOfStreamContext },
-  _context: object
-): Promise<void> => {
-  const { mediaSource } = currentContext;
-
-  // Double-check MediaSource isn't already ended (in case of race)
-  if (mediaSource!.readyState === 'ended') {
-    return;
-  }
-
-  // Wait for any in-progress SourceBuffer operations to finish before calling
-  // endOfStream() — the MSE spec forbids it while any buffer has updating === true.
-  await waitForSourceBuffersReady(currentContext);
-
-  // Re-check after the async wait
-  if (mediaSource!.readyState !== 'open') return;
-
-  // Set the final duration from actual buffered container timestamps.
-  // This is more accurate than the playlist-derived duration and correctly
-  // handles both shorter (common with CMAF) and longer actual media durations.
-  // Per MSE spec, endOfStream() will only *increase* duration if needed, so
-  // setting it here first ensures the value from the buffer wins in all cases.
-  const bufferedEnd = getMaxBufferedEnd(currentContext);
-  if (bufferedEnd > 0) {
-    mediaSource!.duration = bufferedEnd;
-  }
-
-  mediaSource!.endOfStream();
-
-  // Wait a frame to allow async state updates to flush
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-};
-
-/**
- * Call endOfStream when the last segment has been appended.
- * This signals to the browser that the stream is complete.
- *
- * Per the MSE spec, appendBuffer() remains valid after endOfStream() —
- * seeks that require re-appending earlier segments will still work.
- * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
- * and MediaSource.duration updates.
- */
 function endOfStreamSetup({
   state,
   context,
@@ -270,56 +150,82 @@ function endOfStreamSetup({
     presentation: ReadonlySignal<EndOfStreamState['presentation']>;
     selectedVideoTrackId: ReadonlySignal<EndOfStreamState['selectedVideoTrackId']>;
     selectedAudioTrackId: ReadonlySignal<EndOfStreamState['selectedAudioTrackId']>;
-    selectedTextTrackId: ReadonlySignal<EndOfStreamState['selectedTextTrackId']>;
+    currentTime: ReadonlySignal<EndOfStreamState['currentTime']>;
     mediaSourceReadyState: ReadonlySignal<EndOfStreamState['mediaSourceReadyState']>;
   };
   context: {
     mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']>;
     mediaElement: ReadonlySignal<EndOfStreamContext['mediaElement']>;
-    videoBuffer: ReadonlySignal<EndOfStreamContext['videoBuffer']>;
-    audioBuffer: ReadonlySignal<EndOfStreamContext['audioBuffer']>;
     videoBufferActor: ReadonlySignal<EndOfStreamContext['videoBufferActor']>;
     audioBufferActor: ReadonlySignal<EndOfStreamContext['audioBufferActor']>;
   };
-}): () => void {
-  // Derived condition. Transitively tracks through context into each actor's
-  // snapshot signal — when context changes and points to a new actor, this computed
-  // re-tracks to the new actor's signal on next evaluation.
-  // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
-  // reads are automatically tracked by the Signal.Computed dependency graph.
-  const shouldEnd = computed(() => shouldEndStream(snapshot(state), snapshot(context)));
+}): Reactor<EndOfStreamFsmState | 'destroying' | 'destroyed'> {
+  const derivedStateSignal = computed(() =>
+    deriveState(
+      state.presentation.get(),
+      context.mediaSource.get(),
+      state.mediaSourceReadyState.get(),
+      state.selectedVideoTrackId.get(),
+      state.selectedAudioTrackId.get(),
+      context.videoBufferActor.get(),
+      context.audioBufferActor.get(),
+      state.currentTime.get()
+    )
+  );
 
-  let hasEnded = false;
+  return createMachineReactor<EndOfStreamFsmState>({
+    initial: 'preconditions-unmet',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      'preconditions-unmet': {},
 
-  const cleanupEffect = effect(() => {
-    if (!shouldEnd.get()) return;
-    const currentContext = snapshot(context);
-    if (hasEnded) {
-      // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
-      // readyState is 'ended' automatically transitions it back to 'open'.
-      // This happens on seek-back after end-of-stream — allow endOfStream()
-      // to be called again once the last segment is reloaded.
-      if (state.mediaSourceReadyState.get() !== 'open') return;
-      hasEnded = false;
-    }
+      'eos-ready': {
+        // entry body is auto-untracked. deriveState handles source resets
+        // and the MS readyState flip from 'open' to 'ended' that
+        // endOfStream() produces; this entry resolves the MSE-spec
+        // preconditions and binds its cleanup (abort) to state exit +
+        // destroy.
+        entry: () => {
+          const mediaSource = context.mediaSource.get()!;
+          const mediaElement = context.mediaElement.get();
+          const controller = new AbortController();
 
-    // Set flag before awaiting to close the re-entry window between
-    // endOfStream() being called and the async task completing.
-    hasEnded = true;
-    endOfStreamTask({ currentContext }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
+          const endStreamWhenReady = async () => {
+            if (mediaElement) {
+              await waitForMediaElementMetadata(mediaElement, controller.signal);
+              if (controller.signal.aborted) return;
+            }
+
+            await waitForSourceBuffersReady(mediaSource.sourceBuffers, controller.signal);
+            if (controller.signal.aborted) return;
+
+            // Narrow race: another behavior (or our own previous call) could
+            // have transitioned readyState out of 'open' between our wait
+            // resolution and here. Re-read the DOM property to catch this.
+            if (mediaSource.readyState !== 'open') return;
+
+            // MSE spec: duration cannot be less than any buffered range, and
+            // endOfStream() will only clamp up implicitly. Setting it
+            // explicitly here from actual container timestamps keeps the
+            // final value deterministic for assets whose declared duration
+            // disagrees with the buffered end (common with CMAF).
+            const bufferedEnd = getMaxBufferedEnd(mediaSource.sourceBuffers);
+            if (bufferedEnd > 0) mediaSource.duration = bufferedEnd;
+
+            mediaSource.endOfStream();
+          };
+
+          endStreamWhenReady().catch((err) => console.error('Failed to call endOfStream:', err));
+
+          return () => controller.abort();
+        },
+      },
+    },
   });
-
-  return cleanupEffect;
 }
 
 export const endOfStream = defineBehavior({
-  stateKeys: [
-    'presentation',
-    'selectedVideoTrackId',
-    'selectedAudioTrackId',
-    'selectedTextTrackId',
-    'mediaSourceReadyState',
-  ],
-  contextKeys: ['mediaSource', 'mediaElement', 'videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId', 'currentTime', 'mediaSourceReadyState'],
+  contextKeys: ['mediaSource', 'mediaElement', 'videoBufferActor', 'audioBufferActor'],
   setup: endOfStreamSetup,
 });
