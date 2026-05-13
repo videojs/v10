@@ -3,8 +3,10 @@
  *
  * Reads `state.presentation`; when it holds `{ url }` (unresolved) and the
  * preload / load-activation gate is met, fetches the manifest, parses it via
- * `config.parsePresentation` (default: HLS multivariant playlist parser), and
- * writes the resolved `Presentation` back to the same slot.
+ * the **required** `config.parsePresentation`, and writes the resolved
+ * `Presentation` back to the same slot. The behavior is format-neutral: the
+ * composing engine wires in its parser (e.g. the HLS engine supplies the
+ * multivariant-playlist parser).
  *
  * Source-identity-driven, expressed as a 4-state machine:
  *
@@ -20,10 +22,11 @@
  *   exit, so source change / gate-close / destroy all cancel cleanly.
  * - `'resolved'`: `state.presentation` holds a resolved `Presentation`.
  *
- * Gate semantics live in `isBlockingPreload` (`media/utils/preload`):
- * a preload value blocks resolution if falsy or in `config.blockingPreloads`
- * (default `['none']`). `state.loadActivated` is an override — true bypasses
- * the preload gate entirely.
+ * Gate semantics: `state.preload` (or `config.defaultPreload`, default
+ * `'metadata'`, when state.preload is unset) blocks resolution when its
+ * value is `'none'` (see `isBlockingPreload` in `media/utils/preload`).
+ * `state.loadActivated` is an override — true bypasses the preload gate
+ * entirely.
  *
  * Multi-writer with the engine adapter, which writes the initial unresolved
  * `{ url }` to `state.presentation` from src input. Different domains
@@ -33,9 +36,8 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import { parseMultivariantPlaylist } from '../../media/hls/parse-multivariant';
 import { isResolvedPresentation, type MaybeResolvedPresentation, type Presentation } from '../../media/types';
-import { isBlockingPreload } from '../../media/utils/preload';
+import { isBlockingPreload, type StandardPreload } from '../../media/utils/preload';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 
 export interface PresentationState {
@@ -49,16 +51,17 @@ export type ParsePresentation = (text: string, presentation: MaybeResolvedPresen
 
 export interface ResolvePresentationConfig {
   /**
-   * Preload values that block initial resolution. Defaults to `['none']`.
-   * Falsy preload (undefined / empty) always blocks regardless of this list.
+   * Parses a manifest body into a resolved `Presentation`. **Required** —
+   * the behavior is format-neutral and the composing engine supplies its
+   * own parser (HLS, DASH, etc.).
    */
-  blockingPreloads?: readonly string[];
+  parsePresentation: ParsePresentation;
   /**
-   * Parses a manifest body into a resolved `Presentation`. Defaults to the
-   * HLS multivariant-playlist parser; engines for other formats (DASH, etc.)
-   * supply their own.
+   * Fallback used when `state.preload` is unset (undefined / empty) for the
+   * resolution-gate decision. Defaults to `'metadata'`, matching
+   * `syncPreload`'s own `defaultPreload`.
    */
-  parsePresentation?: ParsePresentation;
+  defaultPreload?: StandardPreload;
 }
 
 export type ResolvePresentationState = 'preconditions-unmet' | 'idle' | 'resolving' | 'resolved';
@@ -67,11 +70,11 @@ function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   preload: PresentationState['preload'],
   loadActivated: boolean | undefined,
-  blockingPreloads: readonly string[] | undefined
+  defaultPreload: StandardPreload
 ): ResolvePresentationState {
   if (!presentation?.url) return 'preconditions-unmet';
   if (isResolvedPresentation(presentation)) return 'resolved';
-  const gateOpen = !!loadActivated || !isBlockingPreload(preload, blockingPreloads);
+  const gateOpen = !!loadActivated || !isBlockingPreload(preload, defaultPreload);
   return gateOpen ? 'resolving' : 'idle';
 }
 
@@ -84,13 +87,13 @@ function resolvePresentationSetup({
     preload: ReadonlySignal<PresentationState['preload']>;
     loadActivated: ReadonlySignal<PresentationState['loadActivated']>;
   };
-  config?: ResolvePresentationConfig;
+  config: ResolvePresentationConfig;
 }): Reactor<ResolvePresentationState | 'destroying' | 'destroyed'> {
-  const parsePresentation = config?.parsePresentation ?? parseMultivariantPlaylist;
-  const blockingPreloads = config?.blockingPreloads;
+  const { parsePresentation } = config;
+  const defaultPreload: StandardPreload = config.defaultPreload ?? 'metadata';
 
   const derivedStateSignal = computed(() =>
-    deriveState(state.presentation.get(), state.preload.get(), state.loadActivated.get(), blockingPreloads)
+    deriveState(state.presentation.get(), state.preload.get(), state.loadActivated.get(), defaultPreload)
   );
 
   return createMachineReactor<ResolvePresentationState>({

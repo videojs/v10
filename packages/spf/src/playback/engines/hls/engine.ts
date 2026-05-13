@@ -7,6 +7,7 @@ import {
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
+import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -27,7 +28,7 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackSegments } from '../../behaviors/load-text-track-segments';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
-import { resolvePresentation } from '../../behaviors/resolve-presentation';
+import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
 import { syncPreload } from '../../behaviors/sync-preload';
@@ -120,6 +121,12 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * value to `mediaSource.duration` per the MSE spec.
    */
   resolveDuration?: PresentationDurationResolver;
+  /**
+   * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
+   * multivariant-playlist parser; supply your own for alternate format
+   * support without forking the engine.
+   */
+  parsePresentation?: ParsePresentation;
 }
 
 // ============================================================================
@@ -166,6 +173,7 @@ export function createSimpleHlsEngine(
     ...config,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
+    parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
   };
 
   return createComposition(

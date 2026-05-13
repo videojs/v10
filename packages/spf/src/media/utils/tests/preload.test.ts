@@ -23,13 +23,13 @@ describe('isStandardPreload', () => {
 });
 
 describe('isBlockingPreload', () => {
-  describe('default blocklist', () => {
-    it('treats undefined as blocking', () => {
-      expect(isBlockingPreload(undefined)).toBe(true);
+  describe("default defaultPreload ('metadata')", () => {
+    it('treats undefined as non-blocking (falls back to metadata)', () => {
+      expect(isBlockingPreload(undefined)).toBe(false);
     });
 
-    it('treats empty string as blocking', () => {
-      expect(isBlockingPreload('')).toBe(true);
+    it('treats empty string as non-blocking (falls back to metadata)', () => {
+      expect(isBlockingPreload('')).toBe(false);
     });
 
     it("treats 'none' as blocking", () => {
@@ -46,19 +46,18 @@ describe('isBlockingPreload', () => {
     });
   });
 
-  describe('custom blocklist', () => {
-    it('blocks values in the supplied list', () => {
-      expect(isBlockingPreload('canplay', ['none', 'canplay'])).toBe(true);
-      expect(isBlockingPreload('metadata', ['metadata'])).toBe(true);
+  describe('custom defaultPreload', () => {
+    it("treats undefined as blocking when defaultPreload is 'none'", () => {
+      expect(isBlockingPreload(undefined, 'none')).toBe(true);
+      expect(isBlockingPreload('', 'none')).toBe(true);
     });
 
-    it("does not block 'none' when the list does not include it", () => {
-      expect(isBlockingPreload('none', [])).toBe(false);
+    it("explicit 'auto' is non-blocking even when defaultPreload is 'none'", () => {
+      expect(isBlockingPreload('auto', 'none')).toBe(false);
     });
 
-    it('still treats falsy preload as blocking regardless of list', () => {
-      expect(isBlockingPreload(undefined, [])).toBe(true);
-      expect(isBlockingPreload('', ['auto'])).toBe(true);
+    it("explicit 'none' is blocking even when defaultPreload is 'auto'", () => {
+      expect(isBlockingPreload('none', 'auto')).toBe(true);
     });
   });
 });
