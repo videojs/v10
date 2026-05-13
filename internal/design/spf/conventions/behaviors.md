@@ -395,6 +395,51 @@ When a behavior touches only a few keys of a wider state shape (`PresentationSta
 type State = Pick<PresentationState, 'preload'>;
 ```
 
+### Required vs optional config
+
+A behavior's `config` fields are typically optional with sensible defaults (`defaultPreload?: StandardPreload`, `defaultCurrentTime?: number`). Mark a field **required** only when supplying a default would force the behavior to depend on a layer it shouldn't.
+
+**When to require:**
+
+- The default would couple the behavior to a format / platform / library it doesn't otherwise import. `parsePresentation` defaulting to `parseMultivariantPlaylist` would force `resolve-presentation.ts` to import HLS — coupling a format-neutral behavior to one specific format.
+- No format-neutral default exists — the value is intrinsically caller-specific (a parser, decoder, or resolver whose shape varies by format).
+
+**When to keep optional with a default:**
+
+- The default is a true spec/standard fallback (`'metadata'` is a W3C preload value, not a library binding).
+- The default lives at the same layer as the behavior — no upward dep.
+- The default is correct ≥99% of the time and overriding is the exceptional case.
+
+**How required config composes through the stack:**
+
+Mark the field as required on the behavior's `Config` interface and drop the `?` on the setup-fn deps' `config:`. `defineBehavior`'s `RequireIfNonEmpty<'config', Cfg>` already makes the config arg required at the behavior call site whenever `Cfg` has any keys; the new force is at the *field* level, propagated through `ResolveBehaviorConfig` so `createComposition`'s intersected `Cfg` carries the required field — typecheck forces the engine to supply it.
+
+The composing engine binds the default in its own `finalConfig`; the engine-level config field stays optional so engine users don't think about it unless they want a non-default value:
+
+```ts
+// In the behavior — required, no default
+export interface ResolvePresentationConfig {
+  parsePresentation: ParsePresentation; // required
+  defaultPreload?: StandardPreload;     // optional, spec-fallback
+}
+
+// In the engine — optional, defaulted in finalConfig
+interface SimpleHlsEngineConfig {
+  parsePresentation?: ParsePresentation;
+  // ...
+}
+
+const finalConfig = {
+  ...config,
+  parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
+  // ...
+};
+```
+
+The behavior stays format-neutral; the engine binds it to HLS at compose time. Engines for other formats wire their own parser without touching `resolvePresentation`.
+
+**Worked example**: `resolvePresentation.parsePresentation` (required) + `SimpleHlsEngineConfig.parsePresentation?` (optional, defaults to `parseMultivariantPlaylist`).
+
 ### Cleanup contract
 
 Return one of:
