@@ -12,7 +12,10 @@ import chromeDefaultControls from '@/assets/docs/concepts/why-videojs/chrome-def
 import safariDefaultControls from '@/assets/docs/concepts/why-videojs/safari-default-controls.png';
 import firefoxDefaultControls from '@/assets/docs/concepts/why-videojs/firefox-default-controls.png';
 
-Video.js v10 is the open-source video player for the web — lightweight, accessible components built for performance and streaming. Start small and add only what you need. Replace, restyle, or remove any part of it.
+Video.js is the open-source video player for the web. It makes web video easy, performant, accessible, and customizable. 
+
+Let's dig into when you'd want to use Video.js, starting with the the question we hear most...
+
 
 ## Why not `<video>`?
 
@@ -55,13 +58,15 @@ Chrome, Safari, and Firefox each render the default `<video>` controls different
   </figure>
 </ContentWidth>
 
-### Production video features
+### Video interactions
 
-Production-grade video involves a lot more than an MP4 in `src`. Features like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, control localization, error UI, live-streaming UI, analytics, ads, 360 video, Chromecast, AirPlay, DRM, and more are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>. Video.js aims to handle this all out of the box (though some features are still under development!)
+Video often involves a lot more than an MP4 in `src`. Rich playback features (like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, control localization, error UI, live-streaming UI, analytics, ads, 360 video, Chromecast, AirPlay, DRM, and more) are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>.
+
+Video.js aims to handle this all out of the box. (Though some features are still under development. Stay tuned!)
 
 ### Streaming formats and sources
 
-Behind video features like adaptive bitrate and quality selection are video formats like HLS or DASH -- videos broken into segments that can be selected according to bandwidth and preferences. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
+Behind features like adaptive bitrate and quality selection are video formats like HLS or DASH -- videos broken into segments that can be selected according to bandwidth and preferences. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
 
 Of course, your video might not be coming from a `src` like that. It might be provided by a service. However, services like YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
 
@@ -69,9 +74,13 @@ Video.js even considers sources like canvas-based MoQ or animated GIFs, all with
 
 ## Why Video.js?
 
+Video.js is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects. Between us, our projects have served tens of billions of monthly video plays. Most of the choices on this page came from things we got wrong the first time, then the second, then the fifth. We've been supporting your edge cases for over a decade. Now we're shipping the player we always wanted to build.
+
+Let's dig into some of the design principles that help explain why we built Video.js and why it may be the best choice for your project or team. 
+
 ### Add only what you need
 
-Most player libraries ship every feature in one bundle, so you carry code you don't run: a quality menu in a hero video, an audio track switcher in a podcast page. Video.js v10 turns features into independent modules. You hand `createPlayer` the array you actually want, and what you don't import doesn't ship.
+Most player libraries ship every feature in one bundle, so you carry code you don't run. If your video doesn't need a feature like DRM, why ship that code? Video.js turns features into independent, _composable_ modules. You hand `createPlayer` the array you actually want, and what you don't import doesn't ship.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -92,13 +101,17 @@ const { ProviderMixin, PlayerController, context } = createPlayer({
 ```
 </FrameworkCase>
 
-Pre-built feature bundles are still there if you'd rather not assemble the list by hand.
-
 <DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
+
+Of course, you don't have to think about every feature you're going to need if you don't want to. Pre-built feature bundles are still there if you'd rather not assemble the list by hand.
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
 
 ### Framework-native
 
-Many player libraries wrap a single web component for every framework. That works, until you reach the seams: refs you can't pass through, state that doesn't reconcile, prop names that aren't quite React or HTML. Video.js v10 ships idiomatic APIs in each framework: React components and hooks for React, custom elements and controllers for HTML. The same approach will extend to new frameworks as we add them. The player feels like the rest of your app.
+Many player libraries wrap a single web component for every framework. That works, until you reach the seams: refs you can't pass through, state that doesn't reconcile, prop names that aren't quite React or HTML. Video.js ships idiomatic APIs in each framework: React components and hooks for React, custom elements and controllers for HTML. (And we plan on supporting more frameworks in the futrue!) 
+
+The player feels like the rest of your app.
 
 <TabsRoot client:idle>
   <TabsList client:idle label="Framework-native APIs">
@@ -135,16 +148,12 @@ Many player libraries wrap a single web component for every framework. That work
 
 ### Eject and own
 
-Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js v10 lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
+Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
 
 <DocsLinkCard slug="how-to/customize-skins">Customize skins</DocsLinkCard>
 
 ### AI-native DX
 
-Documentation aimed at human readers usually doesn't help an agent. Video.js v10 publishes an `llms.txt` index, ships every docs page as both HTML and Markdown, and has a dedicated guide for building with AI assistants. Drop the player into a Claude or Cursor session and the docs come along for the ride.
+Documentation aimed at human readers usually doesn't help an agent. Video.js publishes an `llms.txt` index, ships every docs page as both HTML and Markdown, and has a dedicated guide for building with AI assistants. Drop the player into a Claude or Cursor session and the docs come along for the ride.
 
 <DocsLinkCard slug="how-to/build-with-ai">Build with AI</DocsLinkCard>
-
-## About v10
-
-Video.js v10 is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects. Between us, our projects have served tens of billions of monthly video plays. Most of the choices on this page came from things we got wrong the first time, then the second, then the fifth. We've been supporting your edge cases for over a decade. Now we're shipping the player we always wanted to build.
