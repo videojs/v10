@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { syncTextTracks, type TextTrackSyncContext, type TextTrackSyncState } from '../sync-text-tracks';
+import { syncTextTracks } from '../sync-text-tracks';
+
+interface State {
+  presentation?: MaybeResolvedPresentation;
+  selectedTextTrackId?: string | undefined;
+}
+
+interface Context {
+  mediaElement?: HTMLMediaElement | undefined;
+}
 
 function makePresentation(tracks: Array<{ id: string; kind?: string; language?: string }>) {
   return {
@@ -33,20 +41,14 @@ function makePresentation(tracks: Array<{ id: string; kind?: string; language?: 
   } as any;
 }
 
-function makeState(initial: TextTrackSyncState = {}): StateSignals<TextTrackSyncState> {
-  return {
-    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
-    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+function setup(initialState: State = {}, initialContext: Context = {}) {
+  const state = {
+    presentation: signal<MaybeResolvedPresentation | undefined>(initialState.presentation),
+    selectedTextTrackId: signal<string | undefined>(initialState.selectedTextTrackId),
   };
-}
-
-function makeContext(initial: TextTrackSyncContext = {}): ContextSignals<TextTrackSyncContext> {
-  return { mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement) };
-}
-
-function setup(initialState: TextTrackSyncState = {}, initialContext: TextTrackSyncContext = {}) {
-  const state = makeState(initialState);
-  const context = makeContext(initialContext);
+  const context = {
+    mediaElement: signal<HTMLMediaElement | undefined>(initialContext.mediaElement),
+  };
   const reactor = syncTextTracks.setup({ state, context });
   return { state, context, reactor };
 }
@@ -250,6 +252,40 @@ describe('syncTextTracks', () => {
 
     reactor.destroy();
     expect(mediaElement.children.length).toBe(0);
+  });
+
+  it('removes track elements on src unload', async () => {
+    const mediaElement = document.createElement('video');
+    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
+
+    const { state, context, reactor } = setup({ presentation });
+    context.mediaElement.set(mediaElement);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(mediaElement.children.length).toBe(1);
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(mediaElement.children.length).toBe(0);
+
+    reactor.destroy();
+  });
+
+  it('preserves selectedTextTrackId on src unload (selectTextTrack owns the clear)', async () => {
+    const mediaElement = document.createElement('video');
+    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
+
+    const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    context.mediaElement.set(mediaElement);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedTextTrackId.get()).toBe('track-en');
+
+    reactor.destroy();
   });
 
   it('creates tracks only once (idempotent on re-runs)', async () => {
