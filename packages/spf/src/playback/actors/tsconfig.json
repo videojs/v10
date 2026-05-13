@@ -1,0 +1,12 @@
+{
+  "extends": "../../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2022", "WebWorker"],
+    "exactOptionalPropertyTypes": false,
+    "declarationDir": "../../../types/playback/actors"
+  },
+  "references": [{ "path": "../../../../utils" }, { "path": "../../core" }, { "path": "../../media" }],
+  "include": ["./*.ts", "./tests/**/*.ts"],
+  "exclude": ["./dom/**"]
+}

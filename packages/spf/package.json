@@ -28,10 +28,10 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./playback-engine": {
-      "types": "./dist/dev/dom/playback-engine.d.ts",
-      "development": "./dist/dev/dom/playback-engine.js",
-      "default": "./dist/default/dom/playback-engine.js"
+    "./hls": {
+      "types": "./dist/dev/hls.d.ts",
+      "development": "./dist/dev/hls.js",
+      "default": "./dist/default/hls.js"
     }
   },
   "main": "dist/default/index.js",
@@ -47,7 +47,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'",
-    "size": "node scripts/measure-size.js --playback-engine",
+    "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {

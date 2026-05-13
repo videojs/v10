@@ -4,7 +4,7 @@ import { reset } from './reset';
 export const root = cn(
   reset,
   // Layout & containment
-  'block relative isolate @container/media-root',
+  'block relative isolate h-full w-full @container/media-root',
   // Appearance
   'rounded-(--media-border-radius,0.75rem)',
   'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] leading-normal subpixel-antialiased',

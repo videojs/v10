@@ -175,6 +175,32 @@ export type TextTrack = Track & {
 };
 
 /**
+ * Minimal text-track cue shape — start time, end time, and display text.
+ *
+ * Host-agnostic representation. `VTTCue` structurally satisfies this
+ * interface, so DOM consumers pass `VTTCue` values directly. Non-DOM
+ * hosts (workers, test fakes, non-browser engines) can satisfy the same
+ * shape without pulling in DOM types.
+ */
+export interface Cue {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+/**
+ * Media element with an iterable text-track list, host-agnostic.
+ *
+ * Extends `MediaElementLike` with the minimum surface needed to observe
+ * which text tracks are currently mounted on the media. `HTMLMediaElement`
+ * structurally satisfies this (its `textTracks` is a `TextTrackList`,
+ * which is iterable with `{ id }` items).
+ */
+export interface MediaElementWithTextTracks extends MediaElementLike {
+  readonly textTracks: Iterable<{ readonly id: string }>;
+}
+
+/**
  * Partially resolved text track from multivariant playlist.
  * Has metadata but no segments or initialization yet (media playlist not fetched).
  */
@@ -306,6 +332,17 @@ export type Presentation = Ham &
     selectionSets: SelectionSet[];
   };
 
+/**
+ * State-shaped presentation that may or may not be resolved yet.
+ *
+ * The lifecycle is a single value: a caller writes `{ url }`, and the
+ * resolver populates the rest in place. `url` is always present; resolved
+ * fields (`id`, `selectionSets`, duration) appear once parsing succeeds.
+ *
+ * Use `isResolvedPresentation` to narrow to `Presentation`.
+ */
+export type MaybeResolvedPresentation = AddressableObject & Partial<Omit<Presentation, keyof AddressableObject>>;
+
 // =============================================================================
 // Type Guards
 // =============================================================================
@@ -327,7 +364,22 @@ export function isResolvedTrack(track: PartiallyResolvedTrack | ResolvedTrack): 
  * Narrows type to include required duration.
  */
 export function hasPresentationDuration(
-  presentation: Presentation
-): presentation is Presentation & { duration: number } {
+  presentation: MaybeResolvedPresentation
+): presentation is MaybeResolvedPresentation & { duration: number } {
   return presentation.duration !== undefined;
+}
+
+/**
+ * Narrows a `MaybeResolvedPresentation` to a fully resolved `Presentation`.
+ *
+ * A presentation is resolved once `resolvePresentation` has parsed the
+ * manifest and populated both `id` and `selectionSets`. Both must be
+ * present — a partial value with only one of them isn't usable, and
+ * letting it through would have downstream behaviors crash when they
+ * access `selectionSets`.
+ */
+export function isResolvedPresentation(
+  presentation: MaybeResolvedPresentation | undefined
+): presentation is Presentation {
+  return presentation !== undefined && presentation.id !== undefined && presentation.selectionSets !== undefined;
 }

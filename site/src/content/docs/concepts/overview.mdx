@@ -11,6 +11,8 @@ import Aside from '@/components/Aside.astro';
 
 Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
+For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>.
+
 ## 1. State management
 <FrameworkCase frameworks={["react"]}>
 State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.

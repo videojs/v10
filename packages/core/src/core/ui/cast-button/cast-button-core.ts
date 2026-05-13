@@ -27,7 +27,7 @@ export class CastButtonCore {
 
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
-    availability: 'unavailable',
+    availability: 'unsupported',
     label: '',
   });
 

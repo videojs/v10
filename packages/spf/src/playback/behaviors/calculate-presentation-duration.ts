@@ -1,0 +1,92 @@
+import { defineBehavior } from '../../core/composition/create-composition';
+import { effect } from '../../core/signals/effect';
+import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
+import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../media/types';
+import { isResolvedTrack } from '../../media/types';
+import { getSelectedTrack } from '../../media/utils/track-selection';
+
+export interface PresentationDurationState {
+  presentation?: MaybeResolvedPresentation;
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+}
+
+/**
+ * Check if we can calculate presentation duration (have required data).
+ */
+export function canCalculateDuration(state: PresentationDurationState): boolean {
+  if (!state.presentation) return false;
+  // Need at least one selected track
+  return !!(state.selectedVideoTrackId || state.selectedAudioTrackId);
+}
+
+/**
+ * Check if we should calculate presentation duration (conditions met).
+ */
+export function shouldCalculateDuration(state: PresentationDurationState): boolean {
+  if (!canCalculateDuration(state)) return false;
+
+  const { presentation } = state;
+
+  // Don't recalculate if already set
+  if (presentation!.duration !== undefined) return false;
+
+  // Check if any selected track is resolved
+  const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
+  const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
+
+  // At least one track must be resolved (has segments and duration)
+  return !!((videoTrack && isResolvedTrack(videoTrack)) || (audioTrack && isResolvedTrack(audioTrack)));
+}
+
+/**
+ * Get duration from the first resolved track (prefer video, fallback to audio).
+ */
+export function getDurationFromResolvedTracks(state: PresentationDurationState): number | undefined {
+  // Try video track first
+  const videoTrack = state.selectedVideoTrackId
+    ? (getSelectedTrack(state, 'video') as VideoTrack | undefined)
+    : undefined;
+  if (videoTrack && isResolvedTrack(videoTrack)) {
+    return videoTrack.duration;
+  }
+
+  // Fallback to audio track
+  const audioTrack = state.selectedAudioTrackId
+    ? (getSelectedTrack(state, 'audio') as AudioTrack | undefined)
+    : undefined;
+  if (audioTrack && isResolvedTrack(audioTrack)) {
+    return audioTrack.duration;
+  }
+
+  return undefined;
+}
+
+/**
+ * Calculate and set presentation duration from resolved tracks.
+ */
+function calculatePresentationDurationSetup({
+  state,
+}: {
+  state: {
+    presentation: Signal<PresentationDurationState['presentation']>;
+    selectedVideoTrackId: ReadonlySignal<PresentationDurationState['selectedVideoTrackId']>;
+    selectedAudioTrackId: ReadonlySignal<PresentationDurationState['selectedAudioTrackId']>;
+  };
+}): () => void {
+  return effect(() => {
+    const currentState = snapshot(state);
+    if (!shouldCalculateDuration(currentState)) return;
+
+    const duration = getDurationFromResolvedTracks(currentState);
+    if (duration === undefined || !Number.isFinite(duration)) return;
+
+    state.presentation.set({ ...currentState.presentation!, duration });
+  });
+}
+
+export const calculatePresentationDuration = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId'],
+  contextKeys: [],
+  setup: calculatePresentationDurationSetup,
+});

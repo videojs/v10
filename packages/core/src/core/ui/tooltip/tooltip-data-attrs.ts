@@ -1,3 +1,4 @@
+import { TransitionDataAttrs } from '../transition';
 import type { StateAttrMap } from '../types';
 import type { TooltipState } from './tooltip-core';
 
@@ -8,8 +9,5 @@ export const TooltipDataAttrs = {
   side: 'data-side',
   /** Indicates how the tooltip is aligned relative to the specified side. */
   align: 'data-align',
-  /** Present when the open transition is in progress. */
-  transitionStarting: 'data-starting-style',
-  /** Present when the close transition is in progress. */
-  transitionEnding: 'data-ending-style',
+  ...TransitionDataAttrs,
 } as const satisfies StateAttrMap<TooltipState>;
