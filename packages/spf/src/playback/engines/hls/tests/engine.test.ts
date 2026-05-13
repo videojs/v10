@@ -35,7 +35,8 @@ describe('createSimpleHlsEngine', () => {
 
     // Composition creates one signal per declared key. ABR machinery is
     // seeded via `initialState` with an empty BandwidthState. `preload` is
-    // backfilled by `syncPreload` to its default (`'metadata'`).
+    // backfilled by `syncPreload` to its default (`'metadata'`); `currentTime`
+    // is backfilled by `trackCurrentTime` to its default (`0`).
     // Everything else starts as `undefined` and behaviors write their
     // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
@@ -47,7 +48,7 @@ describe('createSimpleHlsEngine', () => {
         slowTotalWeight: 0,
         bytesSampled: 0,
       },
-      currentTime: undefined,
+      currentTime: 0,
       mediaSourceReadyState: undefined,
       loadActivated: undefined,
       preload: 'metadata',

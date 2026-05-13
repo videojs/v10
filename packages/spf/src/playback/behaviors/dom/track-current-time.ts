@@ -1,86 +1,66 @@
+/**
+ * Mirror `mediaElement.currentTime` into reactive state. Listens for:
+ * - `timeupdate` — fires during playback (~4 Hz)
+ * - `seeking` — fires when a seek begins; per spec, `currentTime` is already
+ *   at the new position when this event dispatches, so buffer management can
+ *   react immediately rather than waiting for `timeupdate`, which does not
+ *   fire while paused.
+ *
+ * Also syncs immediately when a media element becomes available.
+ *
+ * When no media element is attached, writes `config.defaultCurrentTime`
+ * (default-default `0`, matching the HTMLMediaElement spec) so consumers
+ * always see a defined position. Read-only mirror; does not push
+ * `state.currentTime` back to the element.
+ */
 import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
 
-/**
- * State shape for current time tracking.
- */
 export interface CurrentTimeState {
   currentTime?: number;
 }
 
-/**
- * Context shape for current time tracking.
- */
 export interface CurrentTimeContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
-/**
- * Check if we can track current time.
- *
- * Requires:
- * - mediaElement exists in context
- */
-export function canTrackCurrentTime(context: CurrentTimeContext): boolean {
-  return !!context.mediaElement;
+export interface TrackCurrentTimeConfig {
+  /**
+   * Value written to `state.currentTime` when no media element is attached.
+   * Defaults to `0` — the HTMLMediaElement spec default.
+   */
+  defaultCurrentTime?: number;
 }
 
-/**
- * Track current playback position from the media element.
- *
- * Mirrors `mediaElement.currentTime` into reactive state on:
- * - `timeupdate` — fires during playback (~4 Hz)
- * - `seeking` — fires when a seek begins; per spec, `currentTime` is
- *   already at the new position when this event dispatches, so buffer
- *   management can react immediately rather than waiting for `timeupdate`,
- *   which does not fire while paused.
- *
- * Also syncs immediately when a media element becomes available.
- *
- * @example
- * const cleanup = trackCurrentTime.setup({ state, context });
- */
 function trackCurrentTimeSetup({
   state,
   context,
+  config,
 }: {
   state: { currentTime: Signal<CurrentTimeState['currentTime']> };
   context: { mediaElement: ReadonlySignal<CurrentTimeContext['mediaElement']> };
+  config?: TrackCurrentTimeConfig;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListeners: (() => void) | null = null;
+  const defaultCurrentTime = config?.defaultCurrentTime ?? 0;
 
-  const cleanupEffect = effect(() => {
+  return effect(() => {
     const mediaElement = context.mediaElement.get();
+    if (!mediaElement) {
+      state.currentTime.set(defaultCurrentTime);
+      return;
+    }
 
-    if (mediaElement === lastMediaElement) return;
-
-    removeListeners?.();
-    removeListeners = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    const sync = () => {
-      state.currentTime.set(mediaElement.currentTime);
-    };
-
-    // Sync immediately so consumers don't wait for the first event
+    const sync = () => state.currentTime.set(mediaElement.currentTime);
     sync();
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
-    removeListeners = () => {
+    return () => {
       removeTimeupdate();
       removeSeeking();
     };
   });
-
-  return () => {
-    removeListeners?.();
-    cleanupEffect();
-  };
 }
 
 export const trackCurrentTime = defineBehavior({

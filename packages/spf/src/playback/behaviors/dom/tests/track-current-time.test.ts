@@ -4,7 +4,7 @@ import { signal } from '../../../../core/signals/primitives';
 import {
   type CurrentTimeContext,
   type CurrentTimeState,
-  canTrackCurrentTime,
+  type TrackCurrentTimeConfig,
   trackCurrentTime,
 } from '../track-current-time';
 
@@ -20,189 +20,199 @@ function makeContext(initial: CurrentTimeContext = {}): ContextSignals<CurrentTi
   };
 }
 
-function setupTrackCurrentTime(initialState: CurrentTimeState, initialContext: CurrentTimeContext) {
+function setupTrackCurrentTime(
+  initialState: CurrentTimeState,
+  initialContext: CurrentTimeContext,
+  config?: TrackCurrentTimeConfig
+) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = trackCurrentTime.setup({ state, context });
+  const cleanup = trackCurrentTime.setup({ state, context, config });
   return { state, context, cleanup };
 }
 
 describe('trackCurrentTime', () => {
-  describe('canTrackCurrentTime', () => {
-    it('returns false when no mediaElement', () => {
-      const context: CurrentTimeContext = {};
+  it('syncs currentTime immediately when mediaElement is provided', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
 
-      expect(canTrackCurrentTime(context)).toBe(false);
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+
+    await vi.waitFor(() => {
+      expect(state.currentTime.get()).toBe(5.5);
     });
 
-    it('returns true when mediaElement exists', () => {
-      const context: CurrentTimeContext = {
-        mediaElement: document.createElement('video'),
-      };
-
-      expect(canTrackCurrentTime(context)).toBe(true);
-    });
+    cleanup();
   });
 
-  describe('trackCurrentTime orchestration', () => {
-    it('syncs currentTime immediately when mediaElement is provided', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
+  it('updates currentTime on timeupdate events', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-      await vi.waitFor(() => {
-        expect(state.currentTime.get()).toBe(5.5);
-      });
+    (mediaElement as any).currentTime = 10.0;
+    mediaElement.dispatchEvent(new Event('timeupdate'));
 
-      cleanup();
+    await vi.waitFor(() => {
+      expect(state.currentTime.get()).toBe(10.0);
     });
 
-    it('updates currentTime on timeupdate events', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
+    cleanup();
+  });
 
-      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+  it('continues tracking on subsequent timeupdate events', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      // Simulate playback progress
-      (mediaElement as any).currentTime = 10.0;
-      mediaElement.dispatchEvent(new Event('timeupdate'));
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-      await vi.waitFor(() => {
-        expect(state.currentTime.get()).toBe(10.0);
-      });
+    (mediaElement as any).currentTime = 3.0;
+    mediaElement.dispatchEvent(new Event('timeupdate'));
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(3.0));
 
-      cleanup();
+    (mediaElement as any).currentTime = 7.5;
+    mediaElement.dispatchEvent(new Event('timeupdate'));
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(7.5));
+
+    cleanup();
+  });
+
+  it('does not re-setup when context updates but mediaElement is unchanged', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 5, writable: true });
+
+    const addEventListenerSpy = vi.spyOn(mediaElement, 'addEventListener');
+
+    const state = makeState();
+    const context: ContextSignals<CurrentTimeContext> & { videoBuffer: ReturnType<typeof signal<unknown>> } = {
+      mediaElement: signal<HTMLMediaElement | undefined>(mediaElement),
+      videoBuffer: signal<unknown>(undefined),
+    };
+    const cleanup = trackCurrentTime.setup({ state, context });
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(5));
+
+    const callsBefore = addEventListenerSpy.mock.calls.length;
+
+    context.videoBuffer.set({});
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(addEventListenerSpy.mock.calls.length).toBe(callsBefore);
+
+    cleanup();
+  });
+
+  it('writes defaultCurrentTime (0) when no mediaElement', async () => {
+    const { state, cleanup } = setupTrackCurrentTime({}, {});
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
+
+    cleanup();
+  });
+
+  it('resets to defaultCurrentTime when mediaElement is removed', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
+
+    const { state, context, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(5.5));
+
+    context.mediaElement.set(undefined);
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
+
+    cleanup();
+  });
+
+  it('honors config.defaultCurrentTime override on initial and on removal', async () => {
+    const { state, context, cleanup } = setupTrackCurrentTime({}, {}, { defaultCurrentTime: 10 });
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(10));
+
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
+    context.mediaElement.set(mediaElement);
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(5.5));
+
+    context.mediaElement.set(undefined);
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(10));
+
+    cleanup();
+  });
+
+  it('starts tracking when mediaElement is added later', async () => {
+    const { state, context, cleanup } = setupTrackCurrentTime({}, {});
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
+
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 2.0, writable: true });
+    context.mediaElement.set(mediaElement);
+
+    await vi.waitFor(() => {
+      expect(state.currentTime.get()).toBe(2.0);
     });
 
-    it('continues tracking on subsequent timeupdate events', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
+    cleanup();
+  });
 
-      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+  it('stops listening to old mediaElement when replaced', async () => {
+    const element1 = document.createElement('video');
+    Object.defineProperty(element1, 'currentTime', { value: 1.0, writable: true });
+    const element2 = document.createElement('video');
+    Object.defineProperty(element2, 'currentTime', { value: 20.0, writable: true });
 
-      (mediaElement as any).currentTime = 3.0;
-      mediaElement.dispatchEvent(new Event('timeupdate'));
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(3.0));
+    const { state, context, cleanup } = setupTrackCurrentTime({}, { mediaElement: element1 });
 
-      (mediaElement as any).currentTime = 7.5;
-      mediaElement.dispatchEvent(new Event('timeupdate'));
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(7.5));
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(1.0));
 
-      cleanup();
+    context.mediaElement.set(element2);
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(20.0));
+
+    (element1 as any).currentTime = 99.0;
+    element1.dispatchEvent(new Event('timeupdate'));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(state.currentTime.get()).toBe(20.0);
+
+    cleanup();
+  });
+
+  it('updates currentTime on seeking events (seek while paused)', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
+
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+
+    (mediaElement as any).currentTime = 60.0;
+    mediaElement.dispatchEvent(new Event('seeking'));
+
+    await vi.waitFor(() => {
+      expect(state.currentTime.get()).toBe(60.0);
     });
 
-    it('does not re-setup when context updates but mediaElement is unchanged', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 5, writable: true });
+    cleanup();
+  });
 
-      const addEventListenerSpy = vi.spyOn(mediaElement, 'addEventListener');
+  it('removes all listeners on cleanup', async () => {
+    const mediaElement = document.createElement('video');
+    Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const state = makeState();
-      const context: ContextSignals<CurrentTimeContext> & { videoBuffer: ReturnType<typeof signal<unknown>> } = {
-        mediaElement: signal<HTMLMediaElement | undefined>(mediaElement),
-        videoBuffer: signal<unknown>(undefined),
-      };
-      const cleanup = trackCurrentTime.setup({ state, context });
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(5));
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
 
-      const callsBefore = addEventListenerSpy.mock.calls.length;
+    cleanup();
 
-      // Set an unrelated context field — mediaElement is the same object
-      context.videoBuffer.set({});
-      await new Promise((resolve) => setTimeout(resolve, 30));
+    (mediaElement as any).currentTime = 50.0;
+    mediaElement.dispatchEvent(new Event('timeupdate'));
+    mediaElement.dispatchEvent(new Event('seeking'));
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
-      // No new listeners should have been added
-      expect(addEventListenerSpy.mock.calls.length).toBe(callsBefore);
-
-      cleanup();
-    });
-
-    it('does nothing when no mediaElement', async () => {
-      const { state, cleanup } = setupTrackCurrentTime({}, {});
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(state.currentTime.get()).toBeUndefined();
-
-      cleanup();
-    });
-
-    it('starts tracking when mediaElement is added later', async () => {
-      const { state, context, cleanup } = setupTrackCurrentTime({}, {});
-
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      expect(state.currentTime.get()).toBeUndefined();
-
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 2.0, writable: true });
-      context.mediaElement.set(mediaElement);
-
-      await vi.waitFor(() => {
-        expect(state.currentTime.get()).toBe(2.0);
-      });
-
-      cleanup();
-    });
-
-    it('stops listening to old mediaElement when replaced', async () => {
-      const element1 = document.createElement('video');
-      Object.defineProperty(element1, 'currentTime', { value: 1.0, writable: true });
-      const element2 = document.createElement('video');
-      Object.defineProperty(element2, 'currentTime', { value: 20.0, writable: true });
-
-      const { state, context, cleanup } = setupTrackCurrentTime({}, { mediaElement: element1 });
-
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(1.0));
-
-      // Replace with new element
-      context.mediaElement.set(element2);
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(20.0));
-
-      // Old element timeupdate should no longer affect state
-      (element1 as any).currentTime = 99.0;
-      element1.dispatchEvent(new Event('timeupdate'));
-      await new Promise((resolve) => setTimeout(resolve, 30));
-
-      expect(state.currentTime.get()).toBe(20.0);
-
-      cleanup();
-    });
-
-    it('updates currentTime on seeking events (seek while paused)', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
-
-      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
-
-      // Simulate a seek while paused — timeupdate does not fire, only seeking does
-      (mediaElement as any).currentTime = 60.0;
-      mediaElement.dispatchEvent(new Event('seeking'));
-
-      await vi.waitFor(() => {
-        expect(state.currentTime.get()).toBe(60.0);
-      });
-
-      cleanup();
-    });
-
-    it('removes all listeners on cleanup', async () => {
-      const mediaElement = document.createElement('video');
-      Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
-
-      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
-
-      await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
-
-      cleanup();
-
-      (mediaElement as any).currentTime = 50.0;
-      mediaElement.dispatchEvent(new Event('timeupdate'));
-      mediaElement.dispatchEvent(new Event('seeking'));
-      await new Promise((resolve) => setTimeout(resolve, 30));
-
-      expect(state.currentTime.get()).toBe(0);
-    });
+    expect(state.currentTime.get()).toBe(0);
   });
 });
