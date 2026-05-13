@@ -13,7 +13,7 @@
  *   (no video selected → audio is the first resolved track).
  * - **Live** — return `Number.POSITIVE_INFINITY` once the presentation is
  *   established as live. This is the MSE-spec value for `mediaSource.duration`
- *   under live playback; downstream `updateDuration` propagates it through.
+ *   under live playback; downstream `updateMediaSourceDuration` propagates it through.
  *
  * Validation: writes whatever the resolver returns as long as it's a positive
  * number, including `Infinity`. `undefined` / `NaN` / `<= 0` are skipped.
@@ -25,7 +25,7 @@
  * tracked-slot changes re-run the effect until the resolver commits a value.
  *
  * Downstream of `resolveVideoTrack` / `resolveAudioTrack`; upstream of
- * `updateDuration` (which writes the value through to `mediaSource.duration`).
+ * `updateMediaSourceDuration` (which writes the value through to `mediaSource.duration`).
  */
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';

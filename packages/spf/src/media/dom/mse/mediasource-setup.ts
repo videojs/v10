@@ -186,3 +186,36 @@ export function onMediaSourceReadyStateChange(
   mediaSource.addEventListener('sourceended', update, options);
   mediaSource.addEventListener('sourceclose', update, options);
 }
+
+/**
+ * Wait until `mediaSource.readyState` transitions away from `'closed'`
+ * (the next `sourceopen`/`sourceended`/`sourceclose` event), or until
+ * `signal` aborts — whichever fires first.
+ *
+ * Resolves immediately when `readyState` is already `'open'` or `'ended'`
+ * (no further transition is coming, so there's nothing to wait for). The
+ * caller is expected to re-check `readyState` after the await to
+ * distinguish `'open'` from terminal states.
+ *
+ * Companion to `onMediaSourceReadyStateChange` for one-shot use in async
+ * sequences (e.g., a behavior's reactor entry that needs to wait for the
+ * MediaSource to attach before performing a spec-conforming mutation).
+ *
+ * @example
+ * await waitForMediaSourceOpen(mediaSource, signal);
+ * if (signal.aborted || mediaSource.readyState !== 'open') return;
+ * // safe to perform 'open'-state-only work
+ */
+export function waitForMediaSourceOpen(mediaSource: MediaSource, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+  if (mediaSource.readyState !== 'closed') return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    const done = () => resolve();
+    const options = { once: true, signal };
+    mediaSource.addEventListener('sourceopen', done, options);
+    mediaSource.addEventListener('sourceended', done, options);
+    mediaSource.addEventListener('sourceclose', done, options);
+    signal.addEventListener('abort', done, { once: true });
+  });
+}

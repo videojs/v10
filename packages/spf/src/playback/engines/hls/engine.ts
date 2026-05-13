@@ -25,7 +25,7 @@ import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actor
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
-import { updateDuration } from '../../behaviors/dom/update-duration';
+import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { loadTextTrackSegments } from '../../behaviors/load-text-track-segments';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
@@ -117,8 +117,8 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * resolved selected track's duration (video preferred, audio fallback) —
    * appropriate for VoD and audio-only. Live engines should supply a
    * resolver that returns `Number.POSITIVE_INFINITY` once the presentation
-   * is established as live; downstream `updateDuration` propagates that
-   * value to `mediaSource.duration` per the MSE spec.
+   * is established as live; downstream `updateMediaSourceDuration` propagates
+   * that value to `mediaSource.duration` per the MSE spec.
    */
   resolveDuration?: PresentationDurationResolver;
   /**
@@ -198,7 +198,7 @@ export function createSimpleHlsEngine(
 
       // MSE setup
       setupMediaSource,
-      updateDuration,
+      updateMediaSourceDuration,
       setupSourceBuffers,
 
       // Playback tracking
