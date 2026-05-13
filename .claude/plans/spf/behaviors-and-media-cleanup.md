@@ -33,7 +33,28 @@ Out of bounds (own branches if they come up):
 
 ## Findings
 
-_(populated as evaluations land)_
+### `*State` / `*Context` slot-shape interfaces as discrete-signals-era vestiges
+
+**Raised during**: `updateDuration` refactor (this branch). The behavior wound up with single-field `DurationUpdateState` and `DurationUpdateContext` interfaces, which read as pure ceremony — every call site dereferenced them via `Interface['field']` to recover the underlying type.
+
+**Observation**: the pattern `export interface FooState { ... }` then `state: { x: ReadonlySignal<FooState['x']> }` everywhere looks like a value-shape contract — exactly what you'd want when `state` was `Signal<FooState>` (the whole object). In the post-discrete-signals world (`refactor/spf-discrete-signals-and-behavior-objects`), `state` is an object of independent signals; the interface has become a slot-shape *map* unpacked via `keyof`-indexed access, rather than the value type of any single signal.
+
+**What the interfaces still do today**:
+1. **Slot-value-type indirection in setup-params** — `ReadonlySignal<FooState['presentation']>`. Vestigial; could be inlined.
+2. **Engine state-map intersection** — `defineBehavior` already infers slot maps from `stateKeys` + setup-param shapes; `createComposition` intersects them. The interfaces aren't consumed by the type machinery, just by humans writing setup-params.
+3. **External-consumer naming** — tests use `StateSignals<FooState>`. Convenient but replaceable with `Pick<EngineState, ...>` or inline literals.
+4. **Documentation surface for slot prose** — the only non-vestigial role. JSDoc on individual slot fields (e.g., `loadActivated`'s "True once a preload-overriding event has fired …" in `PresentationState`) has no other home if the interface goes away.
+
+**Wrinkle on (4)**: the same slot can live in multiple behaviors' interfaces with potentially divergent JSDoc — `loadActivated` is in `PresentationState` (read dep of `resolvePresentation`) and presumably in the writer behavior's state, two homes for the same slot's documentation. Suggests slots want a canonical-definition spot, not per-behavior re-declaration.
+
+**Three coherent positions**:
+- **A. Keep everywhere** (current convention). Consistency, even for one-slot cases. Scatters JSDoc for shared slots.
+- **B. Drop everywhere; canonical slot JSDoc lives once at engine-state level**. Behaviors `Pick` from `SimpleHlsEngineState`. Removes the vestige; gives slots one home for prose. Bigger refactor; couples behaviors to engine-state names; loses the "this behavior cares about these slots" reading surface.
+- **C. Drop for single-field only**. Small change, addresses the ceremony case. Inconsistent by field count; doesn't solve the shared-slot-JSDoc-duplication problem.
+
+**Recommendation**: surface for design pass before mass-edit. The load-bearing axis is "slot ownership and slot documentation," not the field-count axis. Probably wants a short design doc or RFC because the convention will outlive any one refactor.
+
+**Current state of the branch**: `updateDuration` dropped its single-field interfaces under (C) — no slot-level JSDoc was lost since both were prose-free. Rest of codebase unchanged.
 
 ## Decisions
 
