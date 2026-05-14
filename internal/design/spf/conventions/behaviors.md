@@ -179,6 +179,19 @@ If the file has a [top-level JSDoc](#file-level-jsdoc) articulating purpose, sta
 
 This matters for single refactors (a "continuously … gated by … resetting on …" purpose tells you you're in `createMachineReactor` territory before you read the body) and is load-bearing for [merges](#merging-two-behaviors--extra-discipline) where the heavier verb shape identifies the constrained side.
 
+**Per-type structure diagnostic.** Independent of verb shape, the *grammatical subject* of the purpose statement signals per-type structure vs uniform operation:
+
+| Subject shape | Implication |
+| --- | --- |
+| "Atomically X all Y" / "X every Z" / "X all needed Y" | Atomic-aggregate framing. Often hides a per-type axis under a cross-cutting constraint. |
+| "Per available track type, X the Y for that type" / "For each type, X" | Explicit per-type structure. Each type is a unit; cross-type concerns are constraints linking the units, not the headline operation. |
+
+If the file declares an inline per-type axis (`type FooType = 'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)` loop), the purpose statement should match. Atomic-aggregate framing on per-type-structured work hides the axis and propagates the miss through downstream steps — `/refactor-behavior`'s split-candidate check (Step 6a) is unlikely to recover the axis from body-iteration sniffs alone if Step 1's framing already collapsed it. The per-type axis is a Step-1 concern, not a Step-6 discovery.
+
+Cross-type constraints (atomicity, ordering, shared-lifecycle) are *secondary* to the per-type axis in the purpose statement — they describe how the per-type units interact, not what the behavior does. Demoting atomicity from headline verb ("atomically X") to constraint clause ("…in one synchronous block") is what surfaces the per-type axis as primary.
+
+**Worked example**: `setup-sourcebuffer.ts`'s current file-level JSDoc opens with "atomically create all needed `SourceBuffer`s for the current source" — atomic-aggregate framing on per-type-structured work. Corrected: "per available track type, when the selected track of that type is resolved with codecs, create a `SourceBuffer` + actor for that type; do all the `addSourceBuffer` calls in one synchronous block per the Firefox `mozHasAudio` invariant; on `mediaSource` detach or destroy, tear down per type." Atomicity demotes from headline verb to constraint clause; the per-type axis becomes the headline. Step 6a's per-type-axis trigger then fires from the purpose statement alone, before any body-iteration analysis.
+
 ### 2. List the business rules
 
 Given the stated purpose, what are the implicit rules the behavior should satisfy?

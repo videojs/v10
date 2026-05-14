@@ -57,6 +57,45 @@ that's itself a finding and a doc gap to fix as part of the refactor.
 If you can't articulate the purpose without reading the body in detail,
 the behavior's responsibility is unclear — that's a finding too.
 
+**Per-type structure check.** Before locking the purpose statement,
+check whether the work is per-type-structured (video / audio / text).
+Signals: the file declares `type FooType = 'video' | 'audio'`, a
+`KeyByType` map, or a `for (const type of types)` write loop. If so,
+the purpose statement must expose the per-type axis — phrase the
+per-type unit as the verb's object ("**per available track type**,
+when the selected track of that type resolves, create X for that
+type") rather than collapsing it under an atomic-aggregate verb
+("atomically create all needed X"). Atomic-aggregate framing hides
+the per-type axis under a cross-cutting constraint; Step 6a's per-
+type-axis diagnostic is unlikely to recover the axis from body-
+iteration sniffs alone if Step 1's framing already collapsed it.
+**The per-type axis is a Step-1 concern, not a Step-6 discovery.**
+
+Cross-type constraints (atomicity, ordering, shared-lifecycle) are
+secondary in the purpose statement — they describe how the per-type
+units interact, not what the behavior does. Demote them to constraint
+clauses ("…in one synchronous block") so the per-type axis stays
+primary.
+
+If the existing file-level JSDoc uses atomic-aggregate framing on
+per-type-structured work, flag the JSDoc itself as a finding — the
+prior author likely missed the per-type axis too, and the refactor
+should correct the framing as part of its scope.
+
+Worked example: `setup-sourcebuffer.ts`'s current JSDoc opens with
+"atomically create all needed `SourceBuffer`s for the current
+source" (atomic-aggregate, axis-hiding) despite the file declaring
+`MediaTrackType`, `BufferKeyByType`, and a per-type write loop.
+Corrected framing: "per available track type, when the selected
+track of that type is resolved with codecs, create a `SourceBuffer`
++ actor for that type; do all the `addSourceBuffer` calls in one
+synchronous block per the Firefox `mozHasAudio` invariant; on
+`mediaSource` detach or destroy, tear down per type." Atomicity
+demotes to a constraint clause; the per-type axis surfaces as the
+headline; Step 6a's split-candidate trigger then fires from the
+purpose statement alone. Per `behaviors.md` → "Per-type structure
+diagnostic."
+
 **Stop and report back to the user with your purpose statement before
 proceeding.** This is the load-bearing step; getting it wrong invalidates
 everything downstream. The user may correct your framing.
