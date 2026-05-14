@@ -201,17 +201,84 @@ Before writing the refactor:
   level?** A behavior that enumerates per-type slot pairs
   (`videoBuffer` + `audioBuffer`, `videoSegmentLoaderActor` +
   `audioSegmentLoaderActor`) but treats them interchangeably in its
-  body is composing at the wrong level — it locks the engine to a
-  fixed track configuration. Compose against the aggregating resource
-  (e.g., `mediaSource.sourceBuffers`). The per-type slots stay
-  reserved for behaviors that genuinely vary per type. Per
-  `behaviors.md` → "Inverse: behaviors that operate uniformly across
-  tracks." Diagnostic: would an audio-only or video-only engine be
-  able to compose this behavior without wiring no-op slots?
+  body is composing at the wrong level for one of two reasons —
+  *which* reason depends on the downstream consumer interface:
+  - **Downstream consumers operate uniformly** → compose against the
+    aggregating resource (e.g., `mediaSource.sourceBuffers`,
+    `mediaElement.textTracks`). The per-type slots stay reserved for
+    behaviors that genuinely vary per type. Per `behaviors.md` →
+    "Inverse: behaviors that operate uniformly across tracks."
+  - **Downstream consumers operate per-type** → this isn't an
+    in-place fix; this is a **split candidate**. Defer the resolution
+    to Step 6a — recommend `/split-behavior` rather than rewriting
+    the slot map here.
+
+  Diagnostic: would an audio-only or video-only engine be able to
+  compose this behavior without wiring no-op slots? (Both paths
+  answer "yes" — the difference is whether the fix is in-place
+  aggregate composition or a per-type split.)
 
 ### Step 6 — Decomposition check
 
 Having stated the purpose: **should this behavior still exist as-is?**
+Two questions, asked symmetrically: should it *merge* with another
+behavior, and should it *split* into per-type variants. The most common
+miss on a blind ask is the split — Step 6 used to lead with merge, so
+this step now runs split first.
+
+#### 6a — Split candidate?
+
+A blind refactor on a per-type-friendly behavior commonly ships an
+in-place tightening when the right answer was per-type split with a
+shared setup-shape helper. The miss happens because the body's uniform
+iteration over a `KeyByType` map looks superficially like the
+"uniform-across-tracks" foil (which prescribes aggregate composition,
+not split). The distinguishing signals below pull split apart from
+uniform-aggregate.
+
+**Diagnostic — three split-candidate triggers. Any one firing is enough
+to recommend `/split-behavior` as the follow-up.**
+
+- **Explicit per-type axis declared inline.** A `type FooType =
+  'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)`
+  write loop. The axis being declared inline is itself a sniff that
+  per-type specialization was already in mind when the merged form was
+  written — the merged form usually exists because of a *perceived
+  cross-type constraint*. Don't pre-decide the constraint here; surface
+  it as the invariant `/split-behavior`'s cross-boundary audit will
+  evaluate.
+- **Sibling precedents at the same engine layer.** If per-type-
+  specialized siblings already exist (`resolveVideoTrack`/`Audio`/
+  `Text`, `loadVideoSegments`/`AudioSegments`, `selectVideoTrack`/
+  `Audio`/`TextTrack`) with shared setup-shape helpers
+  (`setupTrackResolution`, `setupSegmentLoading`), a same-shape
+  behavior should follow the precedent unless a cross-type constraint
+  actively forbids it. Sibling precedent here is C-axis weight
+  earning its keep across many call sites.
+- **Per-type consumers downstream.** If the slots this behavior
+  writes are consumed per-type by `*Video*` / `*Audio*` siblings
+  (e.g., `loadVideoSegments` reads `videoBufferActor`,
+  `loadAudioSegments` reads `audioBufferActor`), the per-type
+  interface is the destination shape; per-type writers fit it
+  naturally. This is what distinguishes split-candidate from the
+  uniform-across-tracks foil — the foil applies when consumers
+  iterate `mediaSource.sourceBuffers` or similar aggregates, not when
+  consumers consume per-type slots.
+
+**If any trigger fires**: recommend `/split-behavior` as the follow-up
+(don't perform the split inline, and don't pre-decide the cross-
+boundary constraint — that's the skill's audit step). Per `behaviors.md`
+"Per-type specialization" (destination shape for per-type splits) and
+"Sniffs that say 'split'" (the pre-existing slot-map-cluster sniffs).
+
+**Anti-rationalization check**: a perceived cross-type constraint
+(atomicity, ordering, shared lifecycle) is not a reason to foreclose
+the split inline — it's the *invariant the audit will evaluate*. The
+audit's possible outcomes include "split is fine, the invariant
+survives" and "keep merged, the invariant doesn't survive cleanly."
+Pre-deciding short-circuits the skill's value.
+
+#### 6b — Merge candidate?
 
 If the purpose overlaps with another behavior's purpose (both writing
 the same slot, both reacting to the same source-identity transitions),
@@ -240,14 +307,8 @@ cleaned-shape sketch + complexity-inventory + direction-declaration
 discipline that merges need. Per `behaviors.md` "Merging two behaviors
 — extra discipline."
 
-**If split is the answer**: don't perform the split inline. Recommend
-`/split-behavior` as the follow-up — it operationalizes the explicit
-axis declaration (per-type horizontal vs. per-concern vertical) +
-cross-boundary constraint audit that splits need to avoid silently
-dropping implicit invariants the merged code was enforcing. Per
-`behaviors.md` "Per-type specialization" (destination shape for
-per-type splits) and "Sniffs that say 'split'" (the pre-existing
-decomposition sniffs).
+(The split path is handled in 6a above. Recommend `/split-behavior` if
+any of the three triggers fire there.)
 
 ### Step 7 — Final-shape audit (after writing the change)
 
@@ -292,11 +353,19 @@ Run through, against the file as it stands post-edit:
   per-type actors) was introduced or kept during the refactor and the
   body treats the pair interchangeably (uniform iteration, same
   predicate applied to each, forwarded into a helper that doesn't
-  distinguish), compose against the aggregating resource
-  (`mediaSource.sourceBuffers`, `mediaElement.textTracks`) instead.
-  Per `behaviors.md` → "Inverse: behaviors that operate uniformly
-  across tracks." This is invisible to the exhaustiveness check —
-  both keys *are* used; the smell is that they're used identically.
+  distinguish), check the downstream consumer interface:
+  - **Consumers uniform** → compose against the aggregating resource
+    (`mediaSource.sourceBuffers`, `mediaElement.textTracks`) instead.
+    Per `behaviors.md` → "Inverse: behaviors that operate uniformly
+    across tracks."
+  - **Consumers per-type** → this is a split candidate, not a
+    post-refactor in-place fix. Step 6a should have caught it
+    pre-edit; surface it now if it didn't (the refactor's output is
+    a re-entry point for the decomposition question, not a place to
+    paper over a missed split).
+
+  This is invisible to the exhaustiveness check — both keys *are*
+  used; the smell is that they're used identically.
 - **Naming sibling-consistent?** → if per-type-specialized siblings
   exist (`loadVideoSegments`, `loadAudioSegments`), the new/renamed
   behavior should match (`loadTextTrackSegments`). Per `behaviors.md`
