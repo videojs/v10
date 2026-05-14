@@ -185,7 +185,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
                   </AirplayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
