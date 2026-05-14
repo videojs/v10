@@ -651,6 +651,7 @@ export class VimeoMedia
     });
 
     // Seed cached state from current player values to handle already-loaded videos.
+    const seededPlayer = player;
     Promise.all([
       player.getVolume(),
       player.getMuted(),
@@ -659,6 +660,7 @@ export class VimeoMedia
       player.getPlaybackRate(),
     ])
       .then(([volume, muted, paused, duration, rate]) => {
+        if (this.#player !== seededPlayer) return;
         this.#volume = volume;
         this.#muted = muted;
         this.#paused = paused;
