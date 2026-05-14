@@ -138,22 +138,45 @@ light-reactor / simple-effect band":
 1. Single positive state?
 2. Source-identity-driven?
 3. Re-fire-safe entry work?
-4. No undo semantic on state exit?
+4. No undo on state exit (criterion 4a), OR sole-writer effect
+   cleanup handles it (criterion 4b)?
 
-If **all four** hold, the case lands in the band — both `effect()` and
-`createMachineReactor` with `entry` are legitimate, and the choice is
-judgment-laden and local. **Don't pick silently.** Surface the choice
-to the user via `AskUserQuestion`, presenting both shapes with the
-trade-off summary (sibling consistency / structural lifecycle /
-future-state headroom on the reactor side; less boilerplate / matches
-actual complexity on the effect side). On any one criterion failing,
-the pattern is prescribed by the bullets above — pick it and proceed.
+If **all four** hold, the case lands in the band. **Default to D —
+the simple `effect()` form — unless C factors are load-bearing for
+this case.** Per `evaluation-axes.md`'s C vs D tension and the band
+intro in `behaviors.md`: A and B are correct either way inside the
+band, so the choice sits on C (sibling consistency, structural
+naming) vs D (less scaffolding, matches actual complexity). D is the
+default tiebreaker; C overrides only when the convention is earning
+its keep at this site — many established siblings, named lifecycle
+that aids external observers, plausible additional state on the
+pressure list.
 
-The band is narrow by design — most refactors fail at least one
-criterion and don't surface a choice. The most common disqualifier is
-criterion 4: a slot that needs explicit clear-on-unload requires the
-reactor's structural state-exit cleanup (`select-tracks` is the
-canonical example).
+When C plausibly overrides D, **don't pick silently.** Surface the
+choice via `AskUserQuestion` with the trade-off summary and an
+explicit C-earn-its-keep check. When C clearly doesn't override —
+file-name kinship alone with no other reactor signals — proceed with
+the effect form and note it as a D-priority call.
+
+**D-priority diagnostic — the easy in-band case.** If the work is
+`create() → destroy()` for a single resource, this behavior is the
+**sole writer** of the lifecycle slots, no async, no per-state
+continuous reactivity → criterion 4b applies and the simple
+`effect()` form is strongly preferred. The effect's natural cleanup
+return handles destroy + slot clear structurally. Treat sibling
+pattern-matching as a C-signal that needs to earn its keep: verify
+the adjacent `setup*` reactors carry genuine A/B weight (async +
+cancellation, multi-state, transition + state-driven split) before
+letting their file-name kinship pull you to the heavier shape —
+`setupTextTrackActors` (effect, D-priority) sitting alongside
+`setupMediaSource` (reactor for async + abort-on-state-exit) is the
+worked example.
+
+On any one criterion failing, the pattern is prescribed by the
+bullets above — pick it and proceed. The most common disqualifier is
+criterion 4's multi-writer clause: a slot with multiple writers that
+needs explicit clear-on-unload requires the reactor's structural
+state-exit cleanup (`select-tracks` is the canonical example).
 
 ### Step 5 — Convention checks
 

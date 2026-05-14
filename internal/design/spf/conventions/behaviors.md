@@ -236,14 +236,22 @@ Make this decision *after* the refactor proposal lands so the simpler shape is w
 
 ### Where both shapes are legitimate: the light-reactor / simple-effect band
 
-For the lightest verb shape — "set X when Y resolves," with no follow-on continuous reactivity — both a single-positive-state `createMachineReactor` and a guarded `effect()` are legitimate. The trade-offs are real and don't generally favor one over the other; the choice is judgment-laden and local. Outside this band, the pattern is prescribed by [Step 4](#4-pattern-selection); the band is the narrow case where both forms genuinely apply.
+For the lightest verb shape — "set X when Y resolves," with no follow-on continuous reactivity — both a single-positive-state `createMachineReactor` and a guarded `effect()` are legitimate. Outside this band, the pattern is prescribed by [Step 4](#4-pattern-selection); the band is the narrow case where both forms genuinely apply.
+
+By definition, the band is the case where both forms are correct on **A — Reusability** and **B — Robustness** (per [`../evaluation-axes.md`](../evaluation-axes.md)). The choice sits on the **C vs D tension**: the reactor wins on **C — Patternability** (sibling consistency, structural state-exit naming); the simple effect wins on **D — Simplicity** (less scaffolding, matches actual complexity).
+
+**Default to D — pick the simpler form unless C factors are load-bearing for this specific case.** Load-bearing C looks like: many siblings already established, external observers that benefit from named lifecycle states, plausible additional state on the [pressure list](../evaluation-axes.md#pressure-list-axis-a-target). "An adjacent file uses X" is a C-axis signal that needs to earn its keep at this call site, not be applied by file-name kinship. Per the C vs D tension entry in `evaluation-axes.md`: *"the convention earns its keep across many call sites, not at any one."*
 
 The band applies when **all four** of these hold. If any one fails, the pattern is prescribed (typically reactor for state-machine cases, effect for non-state-machine cases) — there's no choice to surface.
 
 1. **Single positive state.** One resolved/active condition; no per-state effects to distinguish.
 2. **Source-identity-driven.** The work is bounded by a source signal's lifecycle (typically `state.presentation`).
 3. **Re-fire-safe entry work.** The entry is idempotent on re-fire — an `if (already done) return` guard at the top is a natural no-op against internal source updates, not a fight-the-shape sniff.
-4. **No undo semantic on state exit.** The written value either lives inside an object that gets replaced wholesale on source change (e.g., a field of `state.presentation` itself), or the slot is re-initialized by another behavior on the new source. If the slot needs an explicit clear-on-unload (e.g., a top-level slot like `selectedTrackId` whose stale value would block downstream work), the band does not apply — expressing the clear in a simple effect requires closure-mutable transition state (anti-pattern), so the reactor is the answer.
+4. **No undo semantic on state exit, OR the undo is structurally bound to a single effect run.** Two sub-cases keep you in the band:
+   - **4a — No undo needed**: the written value lives inside an object replaced wholesale on source change (e.g., a field of `state.presentation`), or the slot is re-initialized by another behavior on the new source.
+   - **4b — Undo is one effect-cleanup away**: this behavior is the **sole writer** of the slot it clears, and the clear is the effect's natural cleanup return — no `let lastFoo` closure-state needed. Synchronous resource ownership (`create() → destroy()` driven by a single signal) fits here.
+
+   The band does *not* apply when the slot has **multiple writers** AND a stale value would block downstream work — a simple effect there would need closure-mutable transition state (`let wroteLastTick`) to know whether to clear, which is the anti-pattern the reactor's structural state-exit cleanup solves.
 
 Trade-offs when all four hold:
 
@@ -254,14 +262,15 @@ Trade-offs when all four hold:
 | Future headroom if a second positive state emerges | Reads as appropriately light when the work stays single-state |
 | Self-documenting lifecycle (state names *are* the contract) | No fight-the-shape risk if the work stays this simple |
 
-Pick by local factors: sibling count and consistency in the engine, expected headroom, and how heavy the behavior reads at the call site.
+Concretely: weigh the table against the D-default framing above. Sibling count, expected headroom, and how heavy the behavior reads at the call site are all C-axis weights; they only override D when load-bearing for this case.
 
 **Worked examples**:
 
-- `calculate-presentation-duration` — **in the band**. Lives as a simple effect because duration is written *into* the presentation object itself; a new source's presentation arrives with `duration === undefined` and no explicit clear is needed (criterion 4 holds).
-- `select-tracks` — **outside the band**. Lives as a reactor because `selectedTrackId` is a top-level slot that survives presentation replacement; a stale id blocks the new source's `resolve-track`, so explicit clear-on-unload is required (criterion 4 fails).
+- `calculate-presentation-duration` — **in the band, lives as a simple effect (D wins).** Duration is written *into* the presentation object itself; a new source's presentation arrives with `duration === undefined` and no explicit clear is needed (criterion 4a).
+- `setupTextTrackActors` — **in the band, lives as a simple effect (D wins).** Single-resource synchronous create/destroy (the `TextTracksActor` + `TextTrackSegmentLoaderActor` co-owned pair), sole writer of `textTracksActor` / `textTrackSegmentLoaderActor`, no async, no per-state continuous reactivity. Criterion 4b applies: the effect's cleanup return handles destroy + slot clear structurally with no closure state. File-name kinship with `setupMediaSource` (reactor) is a C-axis pull that doesn't earn its keep here — that sibling carries genuine A/B weight (async + source-reset cancellation via `waitForMediaSourceOpen` + abort-on-state-exit) that this behavior lacks.
+- `select-tracks` — **outside the band, lives as a reactor.** `selectedTrackId` is a top-level slot with multiple writers (default-on-load *and* DOM-driven sync); a stale id blocks the new source's `resolve-track`, so explicit clear-on-unload is required *and* the effect form would need closure-mutable transition state to coordinate with the other writers (criterion 4 fails on the multi-writer clause).
 
-Both behaviors share verb-shape "set X when Y resolves" and look superficially identical against the diagnostic in [Step 1](#1-articulate-the-purpose) — the band check is what distinguishes them.
+The first three behaviors share verb-shape "set X when Y resolves" and look superficially identical against the diagnostic in [Step 1](#1-articulate-the-purpose) — the band check (and the D-default inside the band) is what distinguishes them.
 
 ### Cleaned-shape sketch
 
