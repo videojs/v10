@@ -1,37 +1,50 @@
 /**
  * **Per-type SourceBuffer + SourceBufferActor setup.** Per available track
- * type (video / audio), when the selected track of that type is resolved
- * with codecs (and every other type present in the presentation is also
- * resolved), creates a `SourceBuffer` + `SourceBufferActor` for that type
- * and publishes the per-type slots. On `mediaSource` detach or behavior
- * destroy, destroys the actor and clears the per-type slots so the next
- * source starts fresh.
+ * type (video / audio), when `mediaSource` is attached and the selected
+ * track of that type is present in the presentation with codecs (partial
+ * resolution from the multivariant playlist is enough — codecs live on
+ * the `EXT-X-STREAM-INF` line, not in the per-type media playlist), creates
+ * a `SourceBuffer` + `SourceBufferActor` and publishes the per-type slots.
+ * On `mediaSource` detach or behavior destroy, destroys the actor and
+ * clears the per-type slots so the next source starts fresh.
  *
  * Each per-type variant (`setupVideoSourceBuffer` / `setupAudioSourceBuffer`)
  * is a single-positive-state reactor (`'preconditions-unmet'` ↔
- * `'buffer-ready'`); both variants share the same gating predicate
- * (`mediaSource + every presentation type resolved with codecs`) so they
- * flip in the same monitor evaluation triggered by the upstream signal
- * write.
+ * `'buffer-ready'`) gating only on its own type. No cross-type coupling
+ * in `stateKeys` — `setupVideoSourceBuffer` carries only
+ * `selectedVideoTrackId`, and audio mirrors.
  *
- * # Atomic creation invariant (Firefox `mozHasAudio`)
+ * # Firefox `mozHasAudio` invariant
  *
- * All `addSourceBuffer` calls must complete before any `appendBuffer`
- * call — appending to a video `SourceBuffer` before the audio
- * `SourceBuffer` exists causes `mozHasAudio` to be permanently false in
- * Firefox. The invariant is preserved structurally across the per-type
- * split:
+ * Appending to a video `SourceBuffer` before the audio `SourceBuffer`
+ * exists causes `mozHasAudio` to be permanently false in Firefox. With
+ * the two per-type variants decoupled, the invariant is no longer
+ * structural to a single `entry` body (as it was when both buffers were
+ * created in one synchronous block inside a merged behavior). It's now
+ * preserved by a chain of assumptions about how this behavior composes
+ * with its upstream and downstream siblings:
  *
- * - Both per-type reactors share the same `deriveState` predicate, so
- *   they both flip to `'buffer-ready'` in the same monitor evaluation
- *   triggered by the same source-signal write.
- * - Composition registration order (`setupVideoSourceBuffer` before
- *   `setupAudioSourceBuffer` in `engine.ts`) determines `addSourceBuffer`
- *   ordering on that evaluation; both calls complete before any further
- *   microtask boundary.
- * - Downstream `appendBuffer` requires a `SegmentLoaderActor` whose
- *   `'load'` message triggers an async network fetch — many microtasks
- *   past both `addSourceBuffer` calls.
+ * 1. **Upstream — default selections land in one `runPending`.**
+ *    `selectAudioTrack` (default audio) and `switchVideoQuality`
+ *    (default video) both subscribe to `state.presentation` flipping to
+ *    resolved; their effects run in the same `runPending` iteration and
+ *    write `selectedAudioTrackId` + `selectedVideoTrackId` within it.
+ * 2. **Self — both per-type monitors flip in one `runPending`.**
+ *    After (1), both monitors re-evaluate and flip to `'buffer-ready'`
+ *    in the next `runPending`. Both `entry` bodies run synchronously
+ *    within that iteration — both `addSourceBuffer` calls land before
+ *    the iteration ends.
+ * 3. **Downstream — `appendBuffer` is async.** `loadVideoSegments` /
+ *    `loadAudioSegments` read the per-type `xBufferActor` slots; their
+ *    effects fire in the *next* `runPending` and the actual
+ *    `appendBuffer` requires a network round-trip via the
+ *    `SegmentLoaderActor` — many microtasks past both `addSourceBuffer`
+ *    calls.
+ *
+ * The cross-tick failure mode — a user-initiated audio track switch
+ * *after* video segments have begun appending — is out of scope for
+ * this behavior and would be addressed in the buffer/segment-loading
+ * path via `changeType`-aware logic.
  *
  * # Sole writer
  *
@@ -47,9 +60,13 @@ import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { buildMimeCodec, createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
-import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
-import { isResolvedTrack } from '../../../media/types';
-import { getSelectedTrack } from '../../../media/utils/track-selection';
+import type { MaybeResolvedPresentation, PartiallyResolvedTrack } from '../../../media/types';
+import {
+  getSelectedTrack,
+  SelectedTrackIdKeyByType,
+  type TrackSelectionState,
+} from '../../../media/utils/track-selection';
+import { hasCodecs } from '../../../media/utils/tracks';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
 
 /**
@@ -74,12 +91,11 @@ export interface SourceBufferContext {
 
 type SourceBufferFsmState = 'preconditions-unmet' | 'buffer-ready';
 
-function getPresentationMediaTypes(presentation: MaybeResolvedPresentation | undefined): MediaTrackType[] {
-  if (!presentation?.selectionSets) return [];
-  return presentation.selectionSets
-    .map(({ type }) => type)
-    .filter((type): type is MediaTrackType => type === 'video' || type === 'audio');
-}
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
+
+type SourceBufferStateMap<K extends SelectedTrackKey> = {
+  presentation: ReadonlySignal<SourceBufferState['presentation']>;
+} & { [P in K]: ReadonlySignal<SourceBufferState[P]> };
 
 // ============================================================================
 // Specialization helper
@@ -87,62 +103,36 @@ function getPresentationMediaTypes(presentation: MaybeResolvedPresentation | und
 // `setupSourceBuffer` has the same shape as a Behavior `setup` function:
 // `({ state, context, config }) => reactor`. Each `setupXSourceBuffer` export
 // below calls it from inside its own `defineBehavior` setup, supplying its
-// per-type slot signals and `type` discriminator inline.
+// per-type slot signals + `type` discriminator inline.
 //
-// The shared gate (`mediaSource attached + every presentation type resolved
-// with codecs`) lives here so both per-type variants flip state on the same
-// monitor evaluation — that's what preserves the Firefox `mozHasAudio`
-// invariant structurally (see file-level JSDoc).
+// Gating is per-type only: no cross-type coupling. See the file-level JSDoc
+// for how the Firefox `mozHasAudio` invariant survives the split via SPF's
+// effect coalescing.
 // ============================================================================
 
-type SourceBufferStateMap = {
-  presentation: ReadonlySignal<SourceBufferState['presentation']>;
-  selectedVideoTrackId: ReadonlySignal<SourceBufferState['selectedVideoTrackId']>;
-  selectedAudioTrackId: ReadonlySignal<SourceBufferState['selectedAudioTrackId']>;
-};
-
-type SourceBufferContextSlice = {
-  mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
-  buffer: Signal<SourceBuffer | undefined>;
-  actor: Signal<SourceBufferActor | undefined>;
-};
-
-function deriveStateFor(
-  type: MediaTrackType,
-  presentation: MaybeResolvedPresentation | undefined,
-  mediaSource: MediaSource | undefined,
-  selectedVideoTrackId: string | undefined,
-  selectedAudioTrackId: string | undefined
-): SourceBufferFsmState {
-  if (!mediaSource) return 'preconditions-unmet';
-  const types = getPresentationMediaTypes(presentation);
-  if (!types.includes(type)) return 'preconditions-unmet';
-  const s: SourceBufferState = { presentation, selectedVideoTrackId, selectedAudioTrackId };
-  const allResolved = types.every((t) => {
-    const track = getSelectedTrack(s, t);
-    return track && isResolvedTrack(track) && !!track.codecs?.length;
-  });
-  return allResolved ? 'buffer-ready' : 'preconditions-unmet';
-}
-
-function setupSourceBuffer({
+function setupSourceBuffer<K extends SelectedTrackKey>({
   state,
   context,
   config: { type },
 }: {
-  state: SourceBufferStateMap;
-  context: SourceBufferContextSlice;
+  state: SourceBufferStateMap<K>;
+  context: {
+    mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
+    buffer: Signal<SourceBuffer | undefined>;
+    actor: Signal<SourceBufferActor | undefined>;
+  };
   config: { type: MediaTrackType };
 }): Reactor<SourceBufferFsmState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() =>
-    deriveStateFor(
-      type,
-      state.presentation.get(),
-      context.mediaSource.get(),
-      state.selectedVideoTrackId.get(),
-      state.selectedAudioTrackId.get()
-    )
-  );
+  const selectedKey = SelectedTrackIdKeyByType[type] as K;
+
+  const derivedStateSignal = computed<SourceBufferFsmState>(() => {
+    if (!context.mediaSource.get()) return 'preconditions-unmet';
+    const selection: TrackSelectionState = {
+      presentation: state.presentation.get(),
+      [selectedKey]: state[selectedKey].get(),
+    };
+    return hasCodecs(getSelectedTrack(selection, type)) ? 'buffer-ready' : 'preconditions-unmet';
+  });
 
   return createMachineReactor<SourceBufferFsmState>({
     initial: 'preconditions-unmet',
@@ -151,25 +141,36 @@ function setupSourceBuffer({
       'preconditions-unmet': {},
 
       'buffer-ready': {
-        // Both per-type variants flip into `'buffer-ready'` on the same
-        // monitor evaluation (shared gate); registration order in the
-        // engine composition determines `addSourceBuffer` ordering on
-        // that evaluation. State-exit cleanup destroys the actor and
-        // clears the per-type slots — fires when mediaSource detaches,
-        // the presentation drops resolution, or the behavior is destroyed.
         entry: () => {
           const mediaSource = context.mediaSource.get()!;
-          const s: SourceBufferState = {
+          const selection: TrackSelectionState = {
             presentation: state.presentation.get(),
-            selectedVideoTrackId: state.selectedVideoTrackId.get(),
-            selectedAudioTrackId: state.selectedAudioTrackId.get(),
+            [selectedKey]: state[selectedKey].get(),
           };
-          const track = getSelectedTrack(s, type) as ResolvedTrack;
+          const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const actor = createSourceBufferActor(buffer);
+
+          // Synchronous slot writes — load-bearing for the Firefox
+          // `mozHasAudio` invariant (see file-level JSDoc). The prior
+          // single-behavior impl made this structural: both
+          // `addSourceBuffer` calls happened inside one `entry` body, so
+          // atomicity was guaranteed by the JS call stack. The per-type
+          // split moves atomicity into a contract on how this behavior
+          // composes with siblings: both per-type entries must run in the
+          // same `runPending` iteration as one another, which assumes the
+          // engine's default-pick behaviors (selectAudio, switchVideoQuality)
+          // write both `selectedXTrackId`s from one upstream
+          // `state.presentation` change. Synchronous (vs. deferred) slot
+          // writes keep the entry bodies in one contiguous JS frame within
+          // that iteration; downstream `loadXSegments` effects fire in the
+          // *next* `runPending`, and their `appendBuffer` is many
+          // microtasks past the network fetch.
           context.buffer.set(buffer);
           context.actor.set(actor);
 
+          // State-exit cleanup — fires when `mediaSource` detaches, the
+          // selection unsets, or the behavior is destroyed.
           return () => {
             actor.destroy();
             context.buffer.set(undefined);
@@ -185,22 +186,20 @@ function setupSourceBuffer({
 // Specialized exports — one per media type
 // ============================================================================
 
-const SOURCE_BUFFER_STATE_KEYS = ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId'] as const;
-
 /**
  * Set up the video `SourceBuffer` + `SourceBufferActor`. Fires when
- * `mediaSource` is attached, the presentation has a video selection set,
- * and every type in the presentation has a resolved track with codecs
- * (shared gate — see file-level JSDoc on the `mozHasAudio` invariant).
+ * `mediaSource` is attached and the selected video track is present in
+ * the presentation with codecs. Gates only on video state — no cross-type
+ * coupling.
  */
 export const setupVideoSourceBuffer = defineBehavior({
-  stateKeys: SOURCE_BUFFER_STATE_KEYS,
+  stateKeys: ['presentation', 'selectedVideoTrackId'] as const,
   contextKeys: ['mediaSource', 'videoBuffer', 'videoBufferActor'] as const,
   setup: ({
     state,
     context,
   }: {
-    state: SourceBufferStateMap;
+    state: SourceBufferStateMap<'selectedVideoTrackId'>;
     context: {
       mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
       videoBuffer: Signal<SourceBufferContext['videoBuffer']>;
@@ -223,13 +222,13 @@ export const setupVideoSourceBuffer = defineBehavior({
  * `setupVideoSourceBuffer`, narrowed to audio.
  */
 export const setupAudioSourceBuffer = defineBehavior({
-  stateKeys: SOURCE_BUFFER_STATE_KEYS,
+  stateKeys: ['presentation', 'selectedAudioTrackId'] as const,
   contextKeys: ['mediaSource', 'audioBuffer', 'audioBufferActor'] as const,
   setup: ({
     state,
     context,
   }: {
-    state: SourceBufferStateMap;
+    state: SourceBufferStateMap<'selectedAudioTrackId'>;
     context: {
       mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
       audioBuffer: Signal<SourceBufferContext['audioBuffer']>;

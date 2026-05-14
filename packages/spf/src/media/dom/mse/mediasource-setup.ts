@@ -7,8 +7,6 @@
  * Global ManagedMediaSource types are defined in ./mediasource.d.ts
  */
 
-import type { ResolvedTrack } from '../../types';
-
 /**
  * Check if MediaSource API is supported.
  */
@@ -141,16 +139,18 @@ export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string):
 }
 
 /**
- * Build a MIME codec string from a resolved track's `mimeType` + `codecs`.
+ * Build a MIME codec string from a track's `mimeType` + `codecs`. Works
+ * on partially-resolved tracks — both fields come from the multivariant
+ * playlist and are available before media-playlist resolution.
  *
- * @param track - Resolved track carrying `mimeType` and `codecs`
+ * @param track - Track carrying `mimeType` and `codecs`
  * @returns MIME codec string suitable for `MediaSource.addSourceBuffer`
  *
  * @example
  * buildMimeCodec({ mimeType: 'video/mp4', codecs: ['avc1.42E01E'] })
  * // => 'video/mp4; codecs="avc1.42E01E"'
  */
-export function buildMimeCodec(track: ResolvedTrack): string {
+export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): string {
   const codecString = track.codecs?.join(',') ?? '';
   return `${track.mimeType}; codecs="${codecString}"`;
 }

@@ -259,43 +259,53 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
     cleanup();
   });
 
-  it('waits for audio to resolve before creating video SourceBuffer when both are selected', async () => {
-    const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
-
+  it('creates each SourceBuffer independently as its own type selection lands', async () => {
+    // Per-type variants gate only on their own type — video doesn't wait
+    // for audio selection. Selection + codecs (available from the
+    // multivariant playlist) is enough.
     const videoTrack = createResolvedVideoTrack();
-    const unresolvedAudio = createResolvedAudioTrack();
-    // Simulate unresolved audio track (no segments/initialization — not a ResolvedTrack)
-    const {
-      segments: _s,
-      initialization: _i,
-      startTime: _st,
-      duration: _d,
-      ...unresolvedAudioPartial
-    } = unresolvedAudio;
-
+    const audioTrack = createResolvedAudioTrack();
     const { state, context, cleanup } = setupSetupSourceBuffers();
 
     context.mediaSource.set({} as MediaSource);
-    // Both track IDs selected, but audio track is not yet resolved
-    state.presentation.set(
-      createPresentationWithTracks({
-        video: videoTrack,
-        audio: unresolvedAudioPartial as AudioTrack,
-      })
-    );
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: audioTrack }));
+
+    // Video selection lands first; audio selection has not landed yet.
     state.selectedVideoTrackId.set('video-1');
-    state.selectedAudioTrackId.set('audio-1');
-
-    // Video is resolved but audio is not — neither SourceBuffer should be created yet
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(createSourceBuffer).not.toHaveBeenCalled();
-
-    // Now audio resolves
-    state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: unresolvedAudio }));
 
     await vi.waitFor(() => {
-      expect(createSourceBuffer).toHaveBeenCalledTimes(2);
       expect(context.videoBuffer.get()).toBeDefined();
+      expect(context.audioBuffer.get()).toBeUndefined();
+    });
+
+    // Audio selection lands later — audio buffer creates independently.
+    state.selectedAudioTrackId.set('audio-1');
+
+    await vi.waitFor(() => {
+      expect(context.audioBuffer.get()).toBeDefined();
+    });
+
+    cleanup();
+  });
+
+  it('creates SourceBuffer from partial resolution (no segments yet)', async () => {
+    // Buffers must create on partial resolution — codecs from the
+    // multivariant playlist are sufficient; per-type media playlist
+    // resolution (segments) is not required.
+    const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+
+    const resolvedAudio = createResolvedAudioTrack();
+    const { segments: _s, initialization: _i, startTime: _st, duration: _d, ...partiallyResolvedAudio } = resolvedAudio;
+
+    const { state, context, cleanup } = setupSetupSourceBuffers();
+
+    const mediaSource = {} as MediaSource;
+    context.mediaSource.set(mediaSource);
+    state.presentation.set(createPresentationWithTracks({ audio: partiallyResolvedAudio as AudioTrack }));
+    state.selectedAudioTrackId.set('audio-1');
+
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
       expect(context.audioBuffer.get()).toBeDefined();
     });
 

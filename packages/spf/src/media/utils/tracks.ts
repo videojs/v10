@@ -85,6 +85,19 @@ export function findResolvedTextTrack(
 }
 
 /**
+ * Whether a track carries a non-empty `codecs` array. Both partially-
+ * resolved and fully-resolved tracks may carry codecs — they come from
+ * the multivariant playlist's `EXT-X-STREAM-INF` line, not from the
+ * per-type media playlist — so this works at either resolution stage.
+ *
+ * `TextTrack` doesn't declare a `codecs` field; the `'codecs' in track`
+ * check narrows it out for the false branch.
+ */
+export function hasCodecs(track: PartiallyResolvedTrack | ResolvedTrack | undefined): boolean {
+  return !!track && 'codecs' in track && !!track.codecs?.length;
+}
+
+/**
  * Updates a track within a presentation (immutably). Generic — works for
  * video, audio, or text tracks.
  */
