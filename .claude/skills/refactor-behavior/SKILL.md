@@ -162,12 +162,40 @@ you're calling `effect()` *inside* an `entry` body, that's a sniff —
 state-driven work belongs in `effects:`, not invoked manually from
 inside `entry`.
 
+**Identity-change check for resources owned in a state.** When a state
+owns a resource bound to *upstream identity* (not just presence) — e.g.
+a child actor tied 1:1 to an upstream actor's reference, a listener
+bound to an element identity — `entry` is the wrong place. State-
+exit cleanup only fires when the state transitions away; if the
+upstream identity swaps *within* the same state (truthy → different
+truthy), `entry` doesn't re-run, and the resource stays bound to the
+stale upstream. Use the `effects:`-based cleanup idiom in
+`reactors.md` → "Effects-based cleanup for within-state identity
+changes": the effect's tracked read on the upstream signal drives
+both state-exit cleanup *and* within-state identity-change rebuild.
+Worked example: `setupSegmentLoading`'s loader-lifecycle effect in
+`load-segments.ts` — destroys and recreates the `SegmentLoaderActor`
+when the upstream `xBufferActor` reference is replaced (quality
+switch), without transitioning the state machine.
+
 **Helpers with conditional branches around optional state-scoped
 work** (`const x = optionEnabled ? doX() : undefined` inside a
 shared-helper's `entry`) are a leaky abstraction. The variant should
 supply the work; the helper shouldn't carry the conditional. (Specific
 composition shape is per-case; what matters is that the helper isn't
 parameterized by "is this optional thing on or off?")
+
+**Reactor-owning-an-actor's-lifecycle is a documented shape, not a
+boundary violation.** The reactor / actor distinction in
+`actor-reactor-factories.md` reads as binary (resource ownership vs.
+observe-and-react), but real reactors often *own* a child actor's
+existence — `setupTrackResolution` owns a `ConcurrentRunner`,
+`setupSegmentLoading` owns a `SegmentLoaderActor`. The reactor owns
+the actor's *lifetime*; the actor still owns its *internal state*.
+State-exit cleanup (or effects-based cleanup, per above) destroys
+the child actor. This pattern is correct when the child actor's
+existence is bound to a reactive condition the parent reactor
+monitors.
 
 **Band check — when both light-reactor and simple-effect are
 legitimate.** Before locking in the pattern, evaluate the four
@@ -222,8 +250,19 @@ state-exit cleanup (`select-tracks` is the canonical example).
 Before writing the refactor:
 
 - Setup-shape helper signature (`({ state, config }) => cleanup`)?
-- Pure helpers (no `core/` deps) extracted to `media/` or `network/`?
-  (See "Pure helpers don't belong in behaviors" in behaviors.md.)
+- **Pure-helper inverse-layering audit.** Scan top-level functions in
+  the behavior file. For each, check imports: no `core/` deps + only
+  `media/` or `network/` deps → candidate for extraction. Includes
+  helpers freshly visible from a recent refactor (e.g., a function
+  the prior layout had hidden inside a complex closure). Audit
+  encompasses *the whole file*, not just helpers introduced during
+  this refactor — sometimes the right home for a helper only becomes
+  visible after a structural change clarifies its role. Worked
+  examples surfaced during the SPF behavior sweep: `fetchStream` +
+  `createTrackedFetch` (load-segments → `network/fetch.ts`),
+  `segmentStartFor` (load-segments → `media/buffer/forward-buffer.ts`),
+  `hasCodecs` (setup-sourcebuffer → `media/utils/tracks.ts`). Per
+  `behaviors.md` → "Pure helpers don't belong in behaviors."
 - File placement (DOM-free vs DOM-bound)?
 - Naming (descriptive verb, no `*Behavior` suffix; helpers `setup*`,
   factories `make*`)?
@@ -409,6 +448,23 @@ Run through, against the file as it stands post-edit:
   exist (`loadVideoSegments`, `loadAudioSegments`), the new/renamed
   behavior should match (`loadTextTrackSegments`). Per `behaviors.md`
   → "Naming" → "Name by the unit-of-work this behavior triggers."
+- **Specialization helper parameterized consistently with siblings?**
+  → when the refactor produces a `setup*` helper (`setupTrackResolution`,
+  `setupSegmentLoading`, `setupSourceBuffer`), check that *how the
+  helper accepts per-type parameterization* matches sibling helpers.
+  Two shapes exist in the codebase: (1) **alias slot names** in the
+  helper signature, with variants mapping their per-type slots into
+  the abstract names at the call site (`buffer` / `actor` aliases in
+  `setupSourceBuffer`); (2) **parameterize by typed key**, with
+  variants passing `state` / `context` through directly and supplying
+  the key as `config` (`selectedKey` in `setupTrackResolution`,
+  `selectedKey` + `actorKey` in `setupSegmentLoading`). Either is
+  workable, but mixing them across sibling helpers in the same area
+  is a sniff the convention check can't catch (each helper looks
+  internally consistent on its own). Default: match the
+  parameterize-by-key shape — sibling precedent is in `resolve-track.ts`
+  and `load-segments.ts`; variants pass state/context through with
+  no aliasing.
 - **Behavior name domain-prefixed?** → if the bare verb could
   plausibly act on more than one similarly-shaped target, prefix it
   with the target. Refactors are the right time to fix this since

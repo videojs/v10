@@ -106,3 +106,34 @@ Building on the entry above, the full iteration on `setupTrackResolution` produc
 - "Manual cleanup composition" — **dissolved** as a side effect of the reactor refactor.
 - "Inline TODOs about `createTaskRunner` / `createResolveTrackTask`" — **still pending** (no-good-fit-yet held visibly).
 - "`switchingSets[0]` in `findTrack`" — **still untouched** (cross-cutting cluster).
+
+### Session arc — setup-sourcebuffer + load-segments + text-track sweep
+
+Following the resolve-track arc above, a multi-session sweep migrated the remaining MSE-pipeline behaviors. Commits, in branch order:
+
+1. `0b570dcd` — **`split-behavior` skill applied** to `setupSourceBuffers`. Per-type split with shared gate: `setupVideoSourceBuffer` + `setupAudioSourceBuffer` + `setupSourceBuffer` helper. Initial shape gated on full track resolution (matched the prior merged-form gate).
+2. `12b9a12a` — **Dropped cross-type coupling** in `setup-sourcebuffer`. Per-type variants now gate on partial resolution (codecs from the multivariant playlist), not media-playlist resolution. `selectedAudioTrackId` removed from `setupVideoSourceBuffer.stateKeys`, etc. `mozHasAudio` invariant now preserved via documented upstream contract (default-pick selections landing in the same `runPending`).
+3. `aba159dc` — **`refactor-behavior` skill applied** to `load-segments`. Rewrote `setupSegmentLoading` as `createMachineReactor` with source-identity states. Loader lifecycle uses effects-based cleanup pattern (`reactors.md` → "Effects-based cleanup for within-state identity changes") — destroys + recreates `SegmentLoaderActor` on upstream `xBufferActor` identity change. Closure-mutable `currentLoader` / `prevInputs` replaced with state-machine-scoped lifecycle and dedup-reset-on-loader-recreate. Helper fetch-neutral (variants supply their own fetch), forecloses the future audio-ABR refactor as a localized change.
+4. `1d14981a` — **Pure-helper relocations** surfaced by the load-segments refactor: `bandwidth-estimator` + `ewma` (`media/abr/` → `network/` — bandwidth estimation is a network-throughput concern); `fetchStream` + `createTrackedFetch` (load-segments → `network/fetch.ts`, `createTrackedFetch` API simplified to drop the `Signal` dep); `segmentStartFor` (load-segments → `media/buffer/forward-buffer.ts`, renamed to `segmentStartForTime`).
+5. `57464daf` — **Text-track stale-cache fix**. Identified via text-track architecture cross-reference investigation. `TextTracksActor` lifecycle is bound to `mediaElement`, not presentation, so its `loaded` + `segments` context survived source resets while the DOM `<track>` slots were evicted. Added a `'clear'` message; `syncTextTracks` sends it on `'sync-active'` state-exit cleanup.
+
+**Skill / conventions updates landed in this session** (commit pending):
+
+- `/refactor-behavior` Step 4: identity-change check for resources owned in a state; reactor-owning-actor's-lifecycle clarification.
+- `/refactor-behavior` Step 5: pure-helper inverse-layering audit prompt sharpened (whole-file scan, not just helpers-added-this-refactor).
+- `/refactor-behavior` Step 7: specialization-helper parameterization consistency check (alias slot names vs. parameterize by typed key).
+- `behaviors.md` "Helpers and behavior factories" → new subsection "Parameterization shape: alias slot names vs. parameterize by typed key."
+
+**Outstanding follow-ups** (not in this session's scope):
+
+1. **`setup-sourcebuffer.ts` aliasing → parameterize-by-key.** Aliases `buffer` / `actor` in helper signature; should match `setupSegmentLoading`'s parameterize-by-key shape now that the convention is documented.
+2. **Two `@ts-expect-error` lines + `LoadingInputs.track` typing TODO** in `load-segments.ts`. Pre-existing tech debt; opportunistic during the actor refactor.
+3. **`SegmentLoaderActor` evaluation.** User flagged the `SegmentLoaderActor` itself as worth examining — its `inFlightInitTrackId` / `inFlightSegmentId` fields could be sub-states. Bundle with the `/refactor-actor` skill design.
+4. **`/refactor-actor` skill creation.** Three actor shapes in the codebase to compare (`CallbackActor`, `TransitionActor`, `MessageActor` from `createMachineActor`); skill workflow for actor refactors hasn't been operationalized.
+5. **Other text-track sniffs from the cross-reference investigation:**
+   - `syncTextTracks`'s entangled four-concern entry (mount + initial-selection + change-bridge + settling-window). Likely stays as-is per merge-sniffs; worth a doc-level note about why the entanglement is deliberate.
+   - Lifecycle-ownership asymmetry: video/audio segment-loader-actor lifecycle in the dispatcher helper; text segment-loader-actor lifecycle in `setupTextTrackActors`. Probably principled (text has no quality switching → no upstream-actor identity to bind); the unifying rule is "the loader-actor lifecycle goes where the writer of its upstream binding lives." Worth confirming when the actor skill lands.
+   - `getSegmentsToLoad` planning happens at message-receipt (text) vs. inside the task body (video/audio). Different idioms; consistency check during the actor refactor.
+6. **More improvements to track segment loading implementations** (user-flagged, not yet specified).
+
+**Branch state** (end of session): clean, 7 commits on top of the parent branch. Not shipped — more work planned.

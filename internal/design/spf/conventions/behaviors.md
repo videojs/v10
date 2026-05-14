@@ -594,6 +594,51 @@ When **not** to use a setup-shape helper:
 
 Trade-off: per-export call sites carry the `defineBehavior` boilerplate plus an inline `config` object (~3 extra lines per export vs. a factory). Acceptable when the shape uniformity is reproducible across many helpers and you want each export's slot intent legible at the export site.
 
+#### Parameterization shape: alias slot names vs. parameterize by typed key
+
+Setup-shape helpers in the codebase use one of two shapes for accepting per-type parameterization. Both work; mixing them across sibling helpers in the same area is a sniff each helper looks internally consistent enough to hide.
+
+**Shape A — alias slot names in the helper signature.** The helper's `state` / `context` types use abstract names (`buffer`, `actor`); each variant maps its per-type slots onto those names at the call site:
+
+```ts
+// Helper signature uses abstract slot names.
+function setupSourceBuffer({ state, context, config }: {
+  state: { /* ... */ };
+  context: { mediaSource; buffer; actor };
+  config: { type: MediaTrackType };
+}) { /* reads context.buffer, context.actor */ }
+
+// Variant maps per-type slots to abstract names.
+setupSourceBuffer({
+  state,
+  context: { mediaSource: context.mediaSource, buffer: context.videoBuffer, actor: context.videoBufferActor },
+  config: { type: 'video' },
+});
+```
+
+**Shape B — parameterize by typed key.** The helper takes a `selectedKey` / `actorKey` / similar in `config`; variants pass `state` and `context` through directly and supply the key:
+
+```ts
+// Helper is generic over the key type.
+function setupSegmentLoading<K extends SelectedTrackKey, A extends BufferActorKey>({
+  state, context, config,
+}: {
+  state: SegmentLoadingStateMap<K>;
+  context: SegmentLoadingContextMap<A>;
+  config: { type; selectedKey: K; actorKey: A; fetch };
+}) { /* reads state[selectedKey], context[actorKey] */ }
+
+// Variant passes state/context through; config carries the typed keys.
+setupSegmentLoading({
+  state, context,
+  config: { type: 'video', selectedKey: 'selectedVideoTrackId', actorKey: 'videoBufferActor', fetch },
+});
+```
+
+**Default: Shape B (parameterize by typed key).** Sibling precedent is `setupTrackResolution` in `resolve-track.ts` and `setupSegmentLoading` in `load-segments.ts`. Variants pass `state` / `context` through with no aliasing, keeping the call site spread-style. Shape A is acceptable when the helper's per-type concern is genuinely abstract (the helper *doesn't care* which concrete slot the variant supplies), but it's the rarer case — most setup-shape helpers carry per-type behavior that's tied to the concrete key, and Shape B makes the binding explicit.
+
+**Cross-helper consistency:** when adding a new sibling helper in an area that already has setup-shape helpers, match the existing shape. If you're introducing Shape B alongside existing Shape A siblings, plan for a follow-up that converts the Shape A siblings, or accept the inconsistency deliberately and note it.
+
 ### Behavior factory
 
 A function that *returns* a Behavior, parameterized by the type/keys/config the caller cares about. The product is a Behavior; the factory captures the parameterization. `makeShareSignals<S, C>()` is the canonical example.
