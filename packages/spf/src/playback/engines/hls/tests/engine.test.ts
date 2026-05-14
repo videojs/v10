@@ -49,7 +49,6 @@ describe('createSimpleHlsEngine', () => {
         bytesSampled: 0,
       },
       currentTime: 0,
-      mediaSourceReadyState: undefined,
       loadActivated: undefined,
       preload: 'metadata',
       presentation: undefined,

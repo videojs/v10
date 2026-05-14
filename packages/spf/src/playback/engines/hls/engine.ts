@@ -63,7 +63,6 @@ export interface SimpleHlsEngineState {
   userVideoTrackSelection?: Partial<VideoTrack>;
   currentTime?: number;
   loadActivated?: boolean;
-  mediaSourceReadyState?: MediaSource['readyState'];
 }
 
 /**
