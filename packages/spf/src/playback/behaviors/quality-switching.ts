@@ -29,8 +29,6 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import type { BandwidthState } from '../../media/abr/bandwidth-estimator';
-import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../media/abr/bandwidth-estimator';
 import { selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
 import type { TrackPicker } from '../../media/primitives/select-tracks';
 import {
@@ -40,6 +38,8 @@ import {
   type VideoTrack,
 } from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
+import type { BandwidthState } from '../../network/bandwidth-estimator';
+import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
 
 export interface QualitySwitchingState {
   presentation?: MaybeResolvedPresentation;

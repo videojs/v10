@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
-import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedVideoTrack,
@@ -9,6 +8,7 @@ import type {
   VideoSelectionSet,
   VideoTrack,
 } from '../../../media/types';
+import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { type QualitySwitchingConfig, type QualitySwitchingState, switchVideoQuality } from '../quality-switching';
 
 // ============================================================================

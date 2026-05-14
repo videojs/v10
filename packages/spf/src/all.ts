@@ -22,18 +22,18 @@ export { resolveUrl } from './media/hls/resolve-url';
 // ABR (P6, P7)
 // =============================================================================
 
+export type { QualityConfig } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
 export type {
   BandwidthConfig,
   BandwidthState,
-} from './media/abr/bandwidth-estimator';
+} from './network/bandwidth-estimator';
 export {
   DEFAULT_BANDWIDTH_CONFIG,
   getBandwidthEstimate,
   hasGoodEstimate,
   sampleBandwidth,
-} from './media/abr/bandwidth-estimator';
-export type { QualityConfig } from './media/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
+} from './network/bandwidth-estimator';
 
 // =============================================================================
 // Buffer Management (P8, P9)

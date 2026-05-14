@@ -5,8 +5,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
 import type { MaybeResolvedPresentation, Segment } from '../../../../media/types';
+import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   loadAudioSegments,

@@ -33,13 +33,12 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
-import { type BandwidthState, sampleBandwidth } from '../../../media/abr/bandwidth-estimator';
-import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../../media/buffer/forward-buffer';
-import type { AddressableObject, MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
+import { DEFAULT_FORWARD_BUFFER_CONFIG, segmentStartForTime } from '../../../media/buffer/forward-buffer';
+import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
-import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../../../network/chunked-stream-iterable';
-import { fetchResolvable } from '../../../network/fetch';
+import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
 import {
   type BufferState,
   createSegmentLoaderActor,
@@ -51,68 +50,6 @@ import type { MediaTrackType } from './setup-sourcebuffer';
 
 // Re-export buffer state types for consumers that import them from this module.
 export type { BufferState, SourceBufferState };
-
-// ============================================================================
-// FETCH FUNCTIONS (variant-supplied)
-// ============================================================================
-
-type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
-export type FetchBytes = (addressable: AddressableObject, options?: FetchOptions) => Promise<AsyncIterable<Uint8Array>>;
-
-/**
- * Bandwidth-sampling fetch: eagerly starts the request, then returns a lazy
- * iterable over the response body that samples bandwidth per chunk and
- * propagates samples outward via `onSample`. Used by `loadVideoSegments`
- * for ABR; future audio-ABR will use the same shape.
- *
- * Separating connection start from body reading ensures `fetch()` is called
- * as soon as the task begins — not deferred until the actor's append loop
- * first pulls a chunk. This makes fetch timing predictable and observable
- * (e.g. in tests that record fetched URLs) regardless of downstream consumers.
- */
-export function createTrackedFetch(
-  throughput: Signal<BandwidthState>,
-  onSample: (next: BandwidthState) => void
-): FetchBytes {
-  return async (addressable, options) => {
-    const { minChunkSize, ...fetchOptions } = options ?? {};
-    const response = await fetchResolvable(addressable, fetchOptions);
-    if (!response.body) throw new Error('Response has no body');
-    const body = response.body;
-    return {
-      [Symbol.asyncIterator]: async function* () {
-        let chunkStart = performance.now();
-        for await (const chunk of new ChunkedStreamIterable(
-          body,
-          ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
-        )) {
-          const elapsed = performance.now() - chunkStart;
-          const next = sampleBandwidth(throughput.get(), elapsed, chunk.byteLength);
-          throughput.set(next);
-          onSample(next);
-          yield chunk;
-          chunkStart = performance.now();
-        }
-      },
-    };
-  };
-}
-
-/**
- * Non-sampling fetch: eagerly starts the request and returns the response
- * body as a lazy chunk iterable. Used by `loadAudioSegments` today; audio
- * ABR would swap this for a `createTrackedFetch` call. Pure helper —
- * candidate to move to `network/` in a follow-up.
- */
-export async function fetchStream(
-  addressable: AddressableObject,
-  options?: FetchOptions
-): Promise<AsyncIterable<Uint8Array>> {
-  const { minChunkSize, ...fetchOptions } = options ?? {};
-  const response = await fetchResolvable(addressable, fetchOptions);
-  if (!response.body) throw new Error('Response has no body');
-  return new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
-}
 
 // ============================================================================
 // STATE & CONTEXT
@@ -169,14 +106,6 @@ function selectLoadingInputs(
   };
 }
 
-const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
-  if (currentTime == null) return undefined;
-  return track?.segments.find(
-    ({ startTime, duration }, i, segments) =>
-      currentTime >= startTime && (currentTime < startTime + duration || i === segments.length - 1)
-  )?.startTime;
-};
-
 /**
  * Returns true when the inputs are equal (no meaningful change — don't fire).
  *
@@ -210,8 +139,8 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
   if (prevState.track?.id !== curState.track.id && isResolvedTrack(curState.track)) return false;
 
   return (
-    segmentStartFor(prevState.currentTime, curState.track as ResolvedTrack) ===
-    segmentStartFor(curState.currentTime, curState.track as ResolvedTrack)
+    segmentStartForTime(prevState.currentTime, (curState.track as ResolvedTrack).segments) ===
+    segmentStartForTime(curState.currentTime, (curState.track as ResolvedTrack).segments)
   );
 }
 
@@ -381,18 +310,18 @@ export const loadVideoSegments = defineBehavior({
       videoBufferActor: ReadonlySignal<SegmentLoadingContext['videoBufferActor']>;
     };
   }) => {
-    // Variant-scoped throughput signal + tracked fetch. The bridge
-    // callback writes samples back into engine state for ABR.
-    const throughput = signal<BandwidthState>(
+    // Bandwidth-sampling fetch. The factory accumulates EWMA state
+    // internally; the callback bridges samples to engine state for ABR.
+    const trackedFetch = createTrackedFetch(
       state.bandwidthState.get() ?? {
         fastEstimate: 0,
         fastTotalWeight: 0,
         slowEstimate: 0,
         slowTotalWeight: 0,
         bytesSampled: 0,
-      }
+      },
+      (next) => state.bandwidthState.set(next)
     );
-    const trackedFetch = createTrackedFetch(throughput, (next) => state.bandwidthState.set(next));
 
     return setupSegmentLoading({
       state,
