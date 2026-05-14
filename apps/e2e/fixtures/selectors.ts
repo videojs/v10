@@ -9,6 +9,12 @@
  *
  * Each selector uses a CSS `,` (or) to match either renderer.
  */
+
+/** Toolbar: HTML wraps controls in `<media-controls>`, React in `<div class="media-controls">`. */
+function withinControls(selector: string): string {
+  return `media-controls ${selector}, .media-controls ${selector}`;
+}
+
 export const SELECTORS = {
   // Player containers
   // HTML: <video-player>, React: wrapper div around VideoSkin
@@ -28,7 +34,20 @@ export const SELECTORS = {
   fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
   pipButton: 'media-pip-button, .media-button--pip',
   captionsButton: 'media-captions-button, .media-button--captions',
-  playbackRateButton: 'media-playback-rate-button, .media-button--playback-rate',
+  playbackRateButton: [
+    // Legacy cycle button / CSS skins (explicit class)
+    withinControls('media-playback-rate-button'),
+    withinControls('.media-button--playback-rate'),
+    // HTML menu trigger — exclude nested settings-submenu rows (.media-menu__item)
+    withinControls('media-playback-rate-menu-trigger:not(.media-menu__item)'),
+    // Tailwind skins (utility classes only) + React menu triggers
+    withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
+  ].join(', '),
+  /**
+   * Open playback rate surface: trigger is also `data-rate`, so require `role="menu"` too
+   * (covers HTML `<media-playback-rate-menu>` and React/Tailwind without `media-menu--playback-rate`).
+   */
+  playbackRateMenuPanel: '[data-rate][role="menu"]',
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
