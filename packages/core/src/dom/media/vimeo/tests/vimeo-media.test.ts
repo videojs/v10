@@ -366,6 +366,20 @@ describe('VimeoMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
+    it('volumechange event without muted preserves cached muted state', () => {
+      const { media } = setup();
+
+      // Establish a known muted state via a full payload first.
+      mockPlayerInstance._emit('volumechange', { volume: 1, muted: true });
+      expect(media.muted).toBe(true);
+
+      // SDK emits without muted (legacy behaviour) — cached value must survive.
+      mockPlayerInstance._emit('volumechange', { volume: 0.8 });
+
+      expect(media.volume).toBe(0.8);
+      expect(media.muted).toBe(true);
+    });
+
     it('playbackratechange event updates playbackRate and dispatches ratechange', () => {
       const { media } = setup();
       const handler = vi.fn();
@@ -655,6 +669,77 @@ describe('VimeoMedia', () => {
       media.quality = '1080p';
 
       expect(mockPlayerInstance.setQuality).toHaveBeenCalledWith('1080p');
+    });
+
+    it.each([
+      ['dnt', false],
+      ['byline', false],
+      ['portrait', false],
+      ['title', false],
+      ['controls', true],
+      ['background', true],
+      ['playsinline', false],
+      ['speed', false],
+      ['transparent', false],
+    ] as const)('%s setter remounts the player with the new value', (prop, newValue) => {
+      const { media } = setup();
+      const callsBefore = MockPlayer.mock.calls.length;
+
+      (media as unknown as Record<string, unknown>)[prop] = newValue;
+
+      expect(MockPlayer.mock.calls.length).toBe(callsBefore + 1);
+      const opts = MockPlayer.mock.calls.at(-1)![1] as Record<string, unknown>;
+      expect(opts[prop]).toBe(newValue);
+    });
+
+    it('embed-only setter does not remount when value is unchanged', () => {
+      const { media } = setup();
+      const callsBefore = MockPlayer.mock.calls.length;
+
+      media.dnt = vimeoMediaDefaultProps.dnt;
+
+      expect(MockPlayer.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('embed-only setter before mount stores value without mounting', () => {
+      const media = new VimeoMedia();
+      media.dnt = false;
+      expect(MockPlayer).not.toHaveBeenCalled();
+
+      const container = makeContainer();
+      media.src = '123456789';
+      media.attach(container);
+
+      expect((capturedOptions as { dnt: boolean }).dnt).toBe(false);
+    });
+
+    it('texttrack setter calls enableTextTrack() when player is running', () => {
+      const { media } = setup();
+
+      media.texttrack = 'en';
+
+      expect(mockPlayerInstance.enableTextTrack).toHaveBeenCalledWith('en');
+    });
+
+    it('texttrack setter calls disableTextTrack() when set to empty string', () => {
+      const { media } = setup();
+      media.texttrack = 'en';
+
+      media.texttrack = '';
+
+      expect(mockPlayerInstance.disableTextTrack).toHaveBeenCalled();
+    });
+
+    it('texttrack setter stores value for use on next mount', () => {
+      const media = new VimeoMedia();
+      media.texttrack = 'fr';
+      expect(mockPlayerInstance?.enableTextTrack).not.toHaveBeenCalled();
+
+      const container = makeContainer();
+      media.src = '123456789';
+      media.attach(container);
+
+      expect((capturedOptions as { texttrack: string }).texttrack).toBe('fr');
     });
   });
 

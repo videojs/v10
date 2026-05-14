@@ -356,7 +356,9 @@ export class VimeoMedia
   }
 
   set dnt(value: boolean) {
+    if (this.#dnt === value) return;
     this.#dnt = value;
+    if (this.#player) this.#mount();
   }
 
   get autoplay() {
@@ -381,7 +383,9 @@ export class VimeoMedia
   }
 
   set background(value: boolean) {
+    if (this.#background === value) return;
     this.#background = value;
+    if (this.#player) this.#mount();
   }
 
   get byline() {
@@ -389,7 +393,9 @@ export class VimeoMedia
   }
 
   set byline(value: boolean) {
+    if (this.#byline === value) return;
     this.#byline = value;
+    if (this.#player) this.#mount();
   }
 
   get color() {
@@ -406,7 +412,9 @@ export class VimeoMedia
   }
 
   set controls(value: boolean) {
+    if (this.#controls === value) return;
     this.#controls = value;
+    if (this.#player) this.#mount();
   }
 
   get loop() {
@@ -423,7 +431,9 @@ export class VimeoMedia
   }
 
   set playsinline(value: boolean) {
+    if (this.#playsinline === value) return;
     this.#playsinline = value;
+    if (this.#player) this.#mount();
   }
 
   get portrait() {
@@ -431,7 +441,9 @@ export class VimeoMedia
   }
 
   set portrait(value: boolean) {
+    if (this.#portrait === value) return;
     this.#portrait = value;
+    if (this.#player) this.#mount();
   }
 
   get quality() {
@@ -448,7 +460,9 @@ export class VimeoMedia
   }
 
   set responsive(value: boolean) {
+    if (this.#responsive === value) return;
     this.#responsive = value;
+    if (this.#player) this.#mount();
   }
 
   get speed() {
@@ -456,7 +470,9 @@ export class VimeoMedia
   }
 
   set speed(value: boolean) {
+    if (this.#speed === value) return;
     this.#speed = value;
+    if (this.#player) this.#mount();
   }
 
   get texttrack() {
@@ -464,7 +480,11 @@ export class VimeoMedia
   }
 
   set texttrack(value: string) {
+    if (this.#texttrack === value) return;
     this.#texttrack = value;
+    if (!this.#player) return;
+    if (value) this.#player.enableTextTrack(value);
+    else this.#player.disableTextTrack();
   }
 
   get title() {
@@ -472,7 +492,9 @@ export class VimeoMedia
   }
 
   set title(value: boolean) {
+    if (this.#title === value) return;
     this.#title = value;
+    if (this.#player) this.#mount();
   }
 
   get transparent() {
@@ -480,7 +502,9 @@ export class VimeoMedia
   }
 
   set transparent(value: boolean) {
+    if (this.#transparent === value) return;
     this.#transparent = value;
+    if (this.#player) this.#mount();
   }
 
   // -- Private --
@@ -600,7 +624,9 @@ export class VimeoMedia
 
     player.on('volumechange', ({ volume, muted }) => {
       this.#volume = volume;
-      this.#muted = muted;
+      // The Vimeo SDK historically emits only { volume } — `muted` was added
+      // later and may be absent. Fall back to cached value to avoid corruption.
+      this.#muted = muted ?? this.#muted;
       this.dispatchEvent(new Event('volumechange'));
     });
 
