@@ -1,23 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
+import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
-import {
-  buildMimeCodec,
-  type SourceBufferContext,
-  type SourceBufferState,
-  setupSourceBuffers,
-} from '../setup-sourcebuffer';
+import { type SourceBufferContext, type SourceBufferState, setupSourceBuffers } from '../setup-sourcebuffer';
 
-// Mock the DOM utilities
-vi.mock('../../../../media/dom/mse/mediasource-setup', () => ({
-  createSourceBuffer: vi.fn((_mediaSource: MediaSource, mimeCodec: string) => ({
-    mimeCodec,
-    mode: 'segments',
-    updating: false,
-  })),
-}));
+// Mock only `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
+// exercise the actual implementation.
+vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../media/dom/mse/mediasource-setup')>();
+  return {
+    ...actual,
+    createSourceBuffer: vi.fn((_mediaSource: MediaSource, mimeCodec: string) => ({
+      mimeCodec,
+      mode: 'segments',
+      updating: false,
+    })),
+  };
+});
 
 // Helper to create a resolved video track
 function createResolvedVideoTrack(id = 'video-1'): VideoTrack {
@@ -142,7 +143,6 @@ function makeState(initial: SourceBufferState = {}): StateSignals<SourceBufferSt
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
-    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
   };
 }
 
@@ -159,7 +159,8 @@ function makeContext(initial: SourceBufferContext = {}): ContextSignals<SourceBu
 function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialContext: SourceBufferContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const cleanup = setupSourceBuffers.setup({ state, context });
+  const reactor = setupSourceBuffers.setup({ state, context });
+  const cleanup = () => reactor.destroy();
   return { state, context, cleanup };
 }
 
