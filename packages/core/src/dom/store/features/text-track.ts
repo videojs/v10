@@ -1,9 +1,9 @@
 import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
-
+import { isMediaTextTrackCapable } from '../../../core/media/predicate';
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
+import { isQuerySelectorAllCapable } from '../../media/predicate';
 
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
