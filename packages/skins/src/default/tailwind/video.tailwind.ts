@@ -29,6 +29,13 @@ export const root = (isShadowDOM: boolean) =>
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
+    // Vimeo embed element
+    {
+      '[&_::slotted(vimeo-video)]:block [&_::slotted(vimeo-video)]:w-full [&_::slotted(vimeo-video)]:h-full [&_::slotted(vimeo-video)]:overflow-hidden [&_::slotted(vimeo-video)]:rounded-(--media-video-border-radius)':
+        isShadowDOM,
+      '[&_.media-vimeo]:block [&_.media-vimeo]:w-full [&_.media-vimeo]:h-full [&_.media-vimeo]:overflow-hidden [&_.media-vimeo]:rounded-(--media-video-border-radius)':
+        !isShadowDOM,
+    },
     '[--media-spring-timing-function:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     '[--media-controls-transition-duration:100ms]',
