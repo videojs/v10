@@ -11,18 +11,21 @@
  * the canonical write path for selection.
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'sync-active'`):
- * the entry allocates the slots, attaches the `change` listener, and opens
- * a brief Chromium settling-window guard — all transition-driven, fire-once
- * on state entry, with paired cleanup on state exit. A single `effects:`
- * mirrors selection changes from `selectedTextTrackId` into the
- * `mode`s; that's the only continuous-reactivity concern.
+ * the entry allocates the slots, applies the initial selection, attaches
+ * the `change` listener, and opens a brief Chromium settling-window guard —
+ * all transition-driven, fire-once on state entry, with paired cleanup on
+ * state exit. A single `effects:` mirrors subsequent
+ * `selectedTextTrackId` changes into `mode`s; that's the only
+ * continuous-reactivity concern.
  *
  * Multi-writer with `selectTextTrack` is intentional and orthogonal:
  * `selectTextTrack` owns the *default-on-load / clear-on-unload* contract
  * for `selectedTextTrackId`; this behavior writes only from DOM `change`
  * events. They reflect distinct decision-making domains (config-driven
  * intent vs DOM-driven user action), so this behavior never clears the
- * slot itself — that's `selectTextTrack`'s contract.
+ * slot on source unload — that's `selectTextTrack`'s contract. (It *does*
+ * write `undefined` when a user disables all tracks via native UI, since
+ * that's a real user action that should round-trip into SPF state.)
  */
 
 import { listen } from '@videojs/utils/dom';
@@ -30,11 +33,35 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
-import { addTextTrackSlot, syncTextTrackModes } from '../../../media/dom/text/text-track-slots';
+import { syncTextTrackModes } from '../../../media/dom/text/text-track-slots';
 import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../../../media/types';
 import { getTracksByType } from '../../../media/utils/tracks';
 
 type SyncTextTracksFsmState = 'preconditions-unmet' | 'sync-active';
+
+export interface SyncTextTracksConfig {
+  /**
+   * Create and append SPF-owned `<track>` slots on `mediaElement`, one per
+   * model text track. Implementation tags each element so the read/remove
+   * helpers can scope to SPF-owned slots. **Required** — the behavior is
+   * DOM-binding-neutral and the composing engine supplies the integration.
+   */
+  addSubtitlesTracksToMedia: (
+    mediaElement: HTMLMediaElement,
+    modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
+  ) => void;
+  /**
+   * Return the SPF-owned subtitle/caption `TextTrack` currently in `'showing'`
+   * mode, or `undefined` if none. Used by the DOM `change` bridge to mirror
+   * native-UI selection back into `selectedTextTrackId`.
+   */
+  getShowingSubtitlesTrackFromMedia: (mediaElement: HTMLMediaElement) => globalThis.TextTrack | undefined;
+  /**
+   * Remove every SPF-owned `<track>` child from `mediaElement`. Called on
+   * state exit (source unload, behavior destroy) to evict slots.
+   */
+  removeAllSubtitlesTracksFromMedia: (mediaElement: HTMLMediaElement) => void;
+}
 
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
@@ -47,13 +74,17 @@ function deriveState(
 function syncTextTracksSetup({
   state,
   context,
+  config,
 }: {
   state: {
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
     selectedTextTrackId: Signal<string | undefined>;
   };
   context: { mediaElement: ReadonlySignal<HTMLMediaElement | undefined> };
+  config: SyncTextTracksConfig;
 }): Reactor<SyncTextTracksFsmState | 'destroying' | 'destroyed'> {
+  const { addSubtitlesTracksToMedia, getShowingSubtitlesTrackFromMedia, removeAllSubtitlesTracksFromMedia } = config;
+
   const derivedStateSignal = computed(() => deriveState(state.presentation.get(), context.mediaElement.get()));
 
   return createMachineReactor<SyncTextTracksFsmState>({
@@ -63,23 +94,33 @@ function syncTextTracksSetup({
       'preconditions-unmet': {},
 
       'sync-active': {
-        // Allocate slots, attach the change listener, and open the settling
-        // window — all transition-driven (fire once per state entry). The
-        // returned cleanup detaches and evicts on state exit (src reset
-        // through 'preconditions-unmet') and on destroy.
+        // Allocate slots, apply the initial selection, attach the change
+        // listener, and open the settling window — all transition-driven
+        // (fire once per state entry). Entry is auto-untracked, so `.get()`
+        // here doesn't subscribe; the returned cleanup detaches and evicts
+        // on state exit (src reset through 'preconditions-unmet') and on
+        // destroy.
         entry: () => {
-          const mediaElement = peek(context.mediaElement)!;
+          const mediaElement = context.mediaElement.get()!;
           // `getTracksByType('text', ...)` returns text tracks only — the
           // selection-set filter inside the helper ensures that — but its
           // declared return is the wide track union. Mirror the cast
           // pattern used by `quality-switching` for the video branch.
-          const modelTextTracks = getTracksByType(peek(state.presentation)!, 'text') as readonly (
+          const modelTextTracks = getTracksByType(state.presentation.get()!, 'text') as readonly (
             | PartiallyResolvedTextTrack
             | TextTrack
           )[];
 
-          const slotElements = modelTextTracks.map((track) => addTextTrackSlot(mediaElement, track));
-          syncTextTrackModes(mediaElement.textTracks, peek(state.selectedTextTrackId));
+          addSubtitlesTracksToMedia(mediaElement, modelTextTracks);
+          // Apply our selection synchronously so the change-event tasks
+          // these mode writes queue land in the macrotask queue *before*
+          // the settling-close `setTimeout(0)` queued below. This keeps
+          // the settling window open long enough to swallow Chromium's
+          // own auto-selection task (also scheduled in the next tick after
+          // `<track>` insertion); if the order flipped, our handler would
+          // treat Chromium's auto-pick as a user action. The `effects:`
+          // block below handles subsequent `selectedTextTrackId` changes.
+          syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
 
           // Chromium re-applies its own selection across the next task tick
           // after `<track>` insertion (default-track auto-pick, language
@@ -93,17 +134,14 @@ function syncTextTracksSetup({
 
           const onChange = (): void => {
             if (inSettlingWindow) {
-              syncTextTrackModes(mediaElement.textTracks, peek(state.selectedTextTrackId));
+              syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
               return;
             }
-            const showingTrack = Array.from(mediaElement.textTracks).find(
-              (t) => t.mode === 'showing' && (t.kind === 'subtitles' || t.kind === 'captions')
-            );
-            // `showingTrack.id` matches the SPF id we set in `addTextTrackSlot`.
-            // Empty-string ids fall through to `undefined` — those tracks
-            // aren't SPF-managed.
+            const showingTrack = getShowingSubtitlesTrackFromMedia(mediaElement);
+            // `showingTrack.id` matches the SPF id we set when the slot was
+            // allocated. Empty-string ids fall through to `undefined`.
             const nextId = showingTrack?.id || undefined;
-            if (nextId === peek(state.selectedTextTrackId)) return;
+            if (nextId === state.selectedTextTrackId.get()) return;
             state.selectedTextTrackId.set(nextId);
           };
 
@@ -112,7 +150,7 @@ function syncTextTracksSetup({
           return () => {
             unlisten();
             clearTimeout(settlingTimeout);
-            slotElements.forEach((el) => el.remove());
+            removeAllSubtitlesTracksFromMedia(mediaElement);
           };
         },
 

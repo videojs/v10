@@ -1,29 +1,66 @@
 import type { PartiallyResolvedTextTrack, TextTrack } from '../../types';
 
 /**
- * Allocate a text-track slot on `mediaElement` by creating and appending a
- * `<track>` child whose attributes mirror the model track. Returns the
- * element so callers can `.remove()` it to evict the slot — the spec has no
- * `removeTextTrack` API, so removing the `<track>` element is the only way
- * to take a slot back out of `mediaElement.textTracks`.
- *
- * Marks the element with `data-src-track` so external code (devtools, host
- * page integrations) can distinguish SPF-owned slots from `<track>` children
- * the host page added directly.
+ * SPF-owned `<track>` selector. Each slot created by
+ * `addSubtitlesTracksToMedia` carries this attribute so reads and removals can
+ * filter SPF-owned tracks from host-page-owned ones.
  */
-export function addTextTrackSlot(
+const SPF_TRACK_SELECTOR = 'track[data-src-track]';
+
+/**
+ * Allocate text-track slots on `mediaElement` for each model track by creating
+ * and appending `<track>` children. Marks each element with `data-src-track`
+ * so it can be distinguished from `<track>` children the host page added
+ * directly — used by `getShowingSubtitlesTrackFromMedia` and
+ * `removeAllSubtitlesTracksFromMedia` to scope their reads/removals to
+ * SPF-owned slots. The spec has no `removeTextTrack` API, so creating
+ * `<track>` elements is the only mechanism for adding *and* removing entries
+ * to `mediaElement.textTracks`.
+ */
+export function addSubtitlesTracksToMedia(
   mediaElement: HTMLMediaElement,
-  modelTrack: PartiallyResolvedTextTrack | TextTrack
-): HTMLTrackElement {
-  const el = document.createElement('track');
-  el.id = modelTrack.id;
-  el.kind = modelTrack.kind;
-  el.label = modelTrack.label;
-  el.toggleAttribute('data-src-track', true);
-  if (modelTrack.language) el.srclang = modelTrack.language;
-  if (modelTrack.default) el.default = true;
-  mediaElement.appendChild(el);
-  return el;
+  modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
+): void {
+  for (const modelTrack of modelTextTracks) {
+    const el = document.createElement('track');
+    el.id = modelTrack.id;
+    el.kind = modelTrack.kind;
+    el.label = modelTrack.label;
+    el.toggleAttribute('data-src-track', true);
+    if (modelTrack.language) el.srclang = modelTrack.language;
+    if (modelTrack.default) el.default = true;
+    mediaElement.appendChild(el);
+  }
+}
+
+/**
+ * Return the SPF-owned subtitle/caption `TextTrack` currently in `'showing'`
+ * mode, or `undefined` if none. Restricts the search to slots created by
+ * `addSubtitlesTracksToMedia` (via the `data-src-track` selector) so a showing
+ * track that the host page added directly is ignored — SPF selection only
+ * mirrors tracks it owns.
+ */
+export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement): globalThis.TextTrack | undefined {
+  const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
+  for (const el of elements) {
+    const track = el.track;
+    if (track.mode === 'showing' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+      return track;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Remove every SPF-owned `<track>` child from `mediaElement` (those tagged
+ * with `data-src-track` by `addSubtitlesTracksToMedia`). `<track>` elements
+ * the host page added directly are left in place.
+ */
+export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement): void {
+  const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
+  for (const el of elements) {
+    el.remove();
+  }
 }
 
 /**

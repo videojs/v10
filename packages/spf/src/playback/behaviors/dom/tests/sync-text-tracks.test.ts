@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
+import {
+  addSubtitlesTracksToMedia,
+  getShowingSubtitlesTrackFromMedia,
+  removeAllSubtitlesTracksFromMedia,
+} from '../../../../media/dom/text/text-track-slots';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { syncTextTracks } from '../sync-text-tracks';
+
+const baseConfig = {
+  addSubtitlesTracksToMedia,
+  getShowingSubtitlesTrackFromMedia,
+  removeAllSubtitlesTracksFromMedia,
+};
 
 interface State {
   presentation?: MaybeResolvedPresentation;
@@ -49,7 +60,7 @@ function setup(initialState: State = {}, initialContext: Context = {}) {
   const context = {
     mediaElement: signal<HTMLMediaElement | undefined>(initialContext.mediaElement),
   };
-  const reactor = syncTextTracks.setup({ state, context });
+  const reactor = syncTextTracks.setup({ state, context, config: baseConfig });
   return { state, context, reactor };
 }
 

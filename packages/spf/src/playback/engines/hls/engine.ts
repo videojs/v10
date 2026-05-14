@@ -7,6 +7,11 @@ import {
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
+import {
+  addSubtitlesTracksToMedia,
+  getShowingSubtitlesTrackFromMedia,
+  removeAllSubtitlesTracksFromMedia,
+} from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
@@ -127,6 +132,24 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * support without forking the engine.
    */
   parsePresentation?: ParsePresentation;
+  /**
+   * Allocate SPF-owned text-track slots on the media element. Defaults to
+   * the standard `<track>`-element implementation in
+   * `media/dom/text/text-track-slots`.
+   */
+  addSubtitlesTracksToMedia?: typeof addSubtitlesTracksToMedia;
+  /**
+   * Return the SPF-owned subtitle/caption `TextTrack` currently in showing
+   * mode. Defaults to the standard selector-based implementation in
+   * `media/dom/text/text-track-slots`.
+   */
+  getShowingSubtitlesTrackFromMedia?: typeof getShowingSubtitlesTrackFromMedia;
+  /**
+   * Evict all SPF-owned text-track slots from the media element. Defaults to
+   * the standard selector-based implementation in
+   * `media/dom/text/text-track-slots`.
+   */
+  removeAllSubtitlesTracksFromMedia?: typeof removeAllSubtitlesTracksFromMedia;
 }
 
 // ============================================================================
@@ -174,6 +197,9 @@ export function createSimpleHlsEngine(
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
+    addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
+    getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
+    removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
   };
 
   return createComposition(
