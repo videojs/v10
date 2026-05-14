@@ -25,7 +25,7 @@ import {
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
-import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
+import { setupAudioSourceBuffer, setupVideoSourceBuffer } from '../../behaviors/dom/setup-sourcebuffer';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
@@ -221,10 +221,15 @@ export function createSimpleHlsEngine(
       // Presentation duration
       calculatePresentationDuration,
 
-      // MSE setup
+      // MSE setup. Video buffer is registered first so that, when both
+      // per-type variants flip to `'buffer-ready'` on the shared gate's
+      // monitor evaluation, `addSourceBuffer(video)` runs before
+      // `addSourceBuffer(audio)` — see the Firefox `mozHasAudio` invariant
+      // in setup-sourcebuffer.ts.
       setupMediaSource,
       updateMediaSourceDuration,
-      setupSourceBuffers,
+      setupVideoSourceBuffer,
+      setupAudioSourceBuffer,
 
       // Playback tracking
       trackCurrentTime,

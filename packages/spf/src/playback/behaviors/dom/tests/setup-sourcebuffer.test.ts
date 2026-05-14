@@ -4,7 +4,12 @@ import { signal } from '../../../../core/signals/primitives';
 import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
-import { type SourceBufferContext, type SourceBufferState, setupSourceBuffers } from '../setup-sourcebuffer';
+import {
+  type SourceBufferContext,
+  type SourceBufferState,
+  setupAudioSourceBuffer,
+  setupVideoSourceBuffer,
+} from '../setup-sourcebuffer';
 
 // Mock only `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
 // exercise the actual implementation.
@@ -156,15 +161,36 @@ function makeContext(initial: SourceBufferContext = {}): ContextSignals<SourceBu
   };
 }
 
+// Compose both per-type variants in the same registration order as the
+// engine (video first, audio second) — the Firefox `mozHasAudio` invariant
+// classification relies on that order.
 function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialContext: SourceBufferContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = setupSourceBuffers.setup({ state, context });
-  const cleanup = () => reactor.destroy();
+  const videoReactor = setupVideoSourceBuffer.setup({
+    state,
+    context: {
+      mediaSource: context.mediaSource,
+      videoBuffer: context.videoBuffer,
+      videoBufferActor: context.videoBufferActor,
+    },
+  });
+  const audioReactor = setupAudioSourceBuffer.setup({
+    state,
+    context: {
+      mediaSource: context.mediaSource,
+      audioBuffer: context.audioBuffer,
+      audioBufferActor: context.audioBufferActor,
+    },
+  });
+  const cleanup = () => {
+    videoReactor.destroy();
+    audioReactor.destroy();
+  };
   return { state, context, cleanup };
 }
 
-describe('setupSourceBuffers', () => {
+describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

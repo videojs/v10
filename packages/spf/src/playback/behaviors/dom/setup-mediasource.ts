@@ -23,17 +23,19 @@
  *    `sourceopen` event (or any readyState transition out of `'closed'`).
  * 3. **Publish on `'open'`** — re-check `readyState === 'open'` after the
  *    await (covers `'ended'` / `'closed'` race) before writing to
- *    `context.mediaSource`. Downstream `setupSourceBuffers` calls
- *    `addSourceBuffer` directly, which throws on non-open, so publish-only-
- *    when-open is the load-bearing contract.
+ *    `context.mediaSource`. Downstream `setupVideoSourceBuffer` /
+ *    `setupAudioSourceBuffer` call `addSourceBuffer` directly, which
+ *    throws on non-open, so publish-only-when-open is the load-bearing
+ *    contract.
  *
  * State-exit cleanup aborts the in-flight wait, detaches the MediaSource,
  * and clears `context.mediaSource`. Order: abort first (prevents a late
  * publish racing the slot clear), then detach, then clear.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
- * (`setupSourceBuffers`, `updateMediaSourceDuration`, `endOfStream`,
- * `loadVideoSegments`) only read.
+ * (`setupVideoSourceBuffer`, `setupAudioSourceBuffer`,
+ * `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`) only
+ * read.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
@@ -111,12 +113,13 @@ function setupMediaSourceSetup({
             // instead of `'open'`, the attach window is gone and we leave
             // the slot unpublished. The session is dead within this source
             // either way — publishing wouldn't help because
-            // `setupSourceBuffers` calls `addSourceBuffer` which throws on
-            // non-open. The next source-reset re-enters this state with a
-            // fresh MediaSource and recovers. Warn so the case is at least
-            // diagnosable; in practice it requires the MediaSource to
-            // close/end before its very first `sourceopen`, which a freshly
-            // attached MS shouldn't do.
+            // `setupVideoSourceBuffer` / `setupAudioSourceBuffer` calls
+            // `addSourceBuffer` which throws on non-open. The next
+            // source-reset re-enters this state with a fresh MediaSource
+            // and recovers. Warn so the case is at least diagnosable; in
+            // practice it requires the MediaSource to close/end before its
+            // very first `sourceopen`, which a freshly attached MS
+            // shouldn't do.
             if (mediaSource.readyState !== 'open') {
               console.warn(
                 `[setupMediaSource] MediaSource transitioned to '${mediaSource.readyState}' before first 'sourceopen' — slot left unpublished; recoverable on next source reset.`
