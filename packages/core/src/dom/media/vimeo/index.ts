@@ -227,7 +227,31 @@ export class VimeoMedia
   }
 
   set currentTime(value: number) {
-    this.#player?.setCurrentTime(value);
+    if (!this.#player) return;
+    if (!this.#paused) {
+      this.#player.setCurrentTime(value);
+      return;
+    }
+    const seekingPlayer = this.#player;
+    const previousTime = this.#currentTime;
+    this.#currentTime = value;
+    this.#seeking = true;
+    this.dispatchEvent(new Event('seeking'));
+    this.#player.setCurrentTime(value).then(
+      (time) => {
+        if (this.#player !== seekingPlayer) return;
+        this.#currentTime = time;
+        this.#seeking = false;
+        this.dispatchEvent(new Event('timeupdate'));
+        this.dispatchEvent(new Event('seeked'));
+      },
+      () => {
+        if (this.#player !== seekingPlayer || !this.#seeking) return;
+        this.#currentTime = previousTime;
+        this.#seeking = false;
+        this.dispatchEvent(new Event('seeked'));
+      }
+    );
   }
 
   get duration() {
@@ -669,6 +693,8 @@ export class VimeoMedia
         // Notify the store of the actual initial state — the feature's sync()
         // ran before these promises resolved, so the store needs a nudge.
         this.dispatchEvent(new Event('volumechange'));
+        this.dispatchEvent(new Event('durationchange'));
+        this.dispatchEvent(new Event('ratechange'));
       })
       .catch(() => {});
 

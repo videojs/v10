@@ -131,6 +131,34 @@ describe('VimeoMedia', () => {
     });
   });
 
+  describe('state seeding', () => {
+    it('dispatches durationchange and ratechange after seeding so time/rate features sync', async () => {
+      // biome-ignore lint: must be a regular function so `new Player()` works
+      MockPlayer.mockImplementationOnce(function (element: unknown, options: unknown) {
+        capturedElement = element;
+        capturedOptions = options;
+        mockPlayerInstance = makeMockPlayer();
+        mockPlayerInstance.getDuration.mockResolvedValue(120);
+        mockPlayerInstance.getPlaybackRate.mockResolvedValue(1.5);
+        return mockPlayerInstance;
+      });
+
+      const { media } = setup();
+
+      const events: string[] = [];
+      media.addEventListener('durationchange', () => events.push('durationchange'));
+      media.addEventListener('ratechange', () => events.push('ratechange'));
+
+      // Promise.all over 5 resolved promises takes several microtask ticks to settle.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(events).toContain('durationchange');
+      expect(events).toContain('ratechange');
+      expect(media.duration).toBe(120);
+      expect(media.playbackRate).toBe(1.5);
+    });
+  });
+
   describe('attach', () => {
     it('creates a Player with the container element', () => {
       const media = new VimeoMedia();
@@ -499,6 +527,67 @@ describe('VimeoMedia', () => {
       media.currentTime = 30;
 
       expect(mockPlayerInstance.setCurrentTime).toHaveBeenCalledWith(30);
+    });
+
+    it('currentTime setter while paused synthesizes seeking, timeupdate, seeked events and updates currentTime', async () => {
+      const { media } = setup();
+      mockPlayerInstance.setCurrentTime.mockResolvedValueOnce(30);
+
+      const events: string[] = [];
+      media.addEventListener('seeking', () => events.push('seeking'));
+      media.addEventListener('timeupdate', () => events.push('timeupdate'));
+      media.addEventListener('seeked', () => events.push('seeked'));
+
+      media.currentTime = 30;
+
+      expect(events).toEqual(['seeking']);
+      expect(media.seeking).toBe(true);
+
+      await Promise.resolve();
+
+      expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+      expect(media.currentTime).toBe(30);
+      expect(media.seeking).toBe(false);
+    });
+
+    it('currentTime setter while paused reverts and dispatches seeked when setCurrentTime rejects', async () => {
+      const { media } = setup();
+      mockPlayerInstance.setCurrentTime.mockRejectedValueOnce(new Error('invalid time'));
+
+      const events: string[] = [];
+      media.addEventListener('seeked', () => events.push('seeked'));
+
+      const previousTime = media.currentTime;
+      media.currentTime = Number.NaN;
+
+      await Promise.resolve();
+
+      expect(events).toEqual(['seeked']);
+      expect(media.currentTime).toBe(previousTime);
+      expect(media.seeking).toBe(false);
+    });
+
+    it('currentTime setter while paused ignores resolution if player changed before promise resolves', async () => {
+      const { media } = setup();
+
+      let resolveSeek!: (time: number) => void;
+      mockPlayerInstance.setCurrentTime.mockReturnValueOnce(
+        new Promise<number>((resolve) => {
+          resolveSeek = resolve;
+        })
+      );
+
+      const events: string[] = [];
+      media.addEventListener('timeupdate', () => events.push('timeupdate'));
+      media.addEventListener('seeked', () => events.push('seeked'));
+
+      media.currentTime = 30;
+      media.detach();
+
+      resolveSeek(30);
+      await Promise.resolve();
+
+      expect(events).toEqual([]);
     });
 
     it('volume setter calls player.setVolume()', () => {
