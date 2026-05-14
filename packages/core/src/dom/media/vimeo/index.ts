@@ -50,7 +50,7 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   playsinline: true,
   portrait: true,
   quality: 'auto',
-  responsive: true,
+  responsive: false,
   speed: true,
   texttrack: '',
   title: true,
@@ -462,7 +462,6 @@ export class VimeoMedia
   set responsive(value: boolean) {
     if (this.#responsive === value) return;
     this.#responsive = value;
-    if (this.#player) this.#mount();
   }
 
   get speed() {
