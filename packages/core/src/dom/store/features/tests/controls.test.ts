@@ -225,6 +225,78 @@ describe('controlsFeature', () => {
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
     });
+
+    it('touch pointermove while controls are hidden does not show controls', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Let controls auto-hide
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Touch pointermove should not flip controlsVisible
+      container!.dispatchEvent(createPointerEvent('pointermove', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+      expect(store.state.userActive).toBe(false);
+    });
+
+    it('touch pointermove while controls are visible keeps idle timer alive without re-patching state', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Advance partway through idle delay
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      // Touch pointermove should keep the timer alive without forcing a state change
+      container!.dispatchEvent(createPointerEvent('pointermove', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Advance past the original deadline — still active because timer was reset
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+
+      // Wait the full idle delay from the pointermove — now it should go inactive
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+    });
+
+    it('synthetic mouseleave shortly after touch pointerup does not call setInactive', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Let controls auto-hide first
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Tap shows controls (controlsVisible=false → setActive path)
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Synthetic mouseleave within 500 ms of touchend should be ignored
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
   });
 
   describe('playback state interaction', () => {

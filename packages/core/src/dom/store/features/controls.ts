@@ -76,12 +76,17 @@ export const controlsFeature = definePlayerFeature({
 
     // Touch tap-to-toggle
     let pointerDownTime = 0;
+    let lastTouchUpAt = 0;
 
     function onPointerDown() {
       pointerDownTime = Date.now();
     }
 
     function onPointerUp(event: PointerEvent) {
+      if (event.pointerType === 'touch') {
+        lastTouchUpAt = Date.now();
+      }
+
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
         // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
         const coordinator = findGestureCoordinator(container as HTMLElement);
@@ -117,15 +122,36 @@ export const controlsFeature = definePlayerFeature({
       }
     };
 
+    function onPointerMove(event: PointerEvent): void {
+      if (event.pointerType === 'touch') {
+        // On touch, don't flip visibility mid-gesture — only keep the idle timer alive when
+        // already active. The tap recognizer defers its toggle by 200 ms (doubletap window)
+        // and reads live state; if pointermove flipped controlsVisible to true before the
+        // deferred callback fires, the toggle inverts to hide instead of show (Android flash).
+        if (get().userActive) scheduleIdle();
+        return;
+      }
+      setActive();
+    }
+
     // Container event listeners
-    listen(container, 'pointermove', setActive, { signal });
+    listen(container, 'pointermove', onPointerMove, { signal });
     listen(container, 'pointerdown', onPointerDown, { signal });
     listen(container, 'pointerup', onPointerUp, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(container, 'focusin', setActive, { signal });
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.
     // https://w3c.github.io/pointerevents/#dfn-pointerup
-    listen(container, 'mouseleave', setInactive, { signal });
+    listen(
+      container,
+      'mouseleave',
+      () => {
+        // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
+        if (lastTouchUpAt > 0 && Date.now() - lastTouchUpAt < 500) return;
+        setInactive();
+      },
+      { signal }
+    );
 
     // Media event listeners for playback state changes.
     listen(media, 'play', onPlaybackChange, { signal });
