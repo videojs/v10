@@ -30,8 +30,6 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
 
 function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
   return {
-    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
-    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
   };
@@ -157,8 +155,13 @@ function setupLoadSegments(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const behavior = type === 'video' ? loadVideoSegments : loadAudioSegments;
-  const cleanup = behavior.setup({ state, context });
+  // Helper invokes whichever per-type behavior matches `type`. The
+  // resulting setups have narrower context-types than the test's shared
+  // `makeContext` shape, but they only read the slot they care about —
+  // structural compatibility is fine.
+  const reactor =
+    type === 'video' ? loadVideoSegments.setup({ state, context }) : loadAudioSegments.setup({ state, context });
+  const cleanup = () => reactor.destroy();
   return { state, context, cleanup };
 }
 
@@ -183,7 +186,7 @@ describe('loadSegments orchestration (F5)', () => {
     });
 
     const track = makeResolvedVideoTrack(segments);
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -197,7 +200,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -224,7 +227,7 @@ describe('loadSegments orchestration (F5)', () => {
 
     const track = makeResolvedVideoTrack(segments);
     // Init already loaded for this track — actor context has initTrackId set
-    const { sourceBuffer, actor } = makeSourceBufferWithActor([], [], 'track-1');
+    const { actor } = makeSourceBufferWithActor([], [], 'track-1');
     const { cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -238,7 +241,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -262,7 +265,7 @@ describe('loadSegments orchestration (F5)', () => {
 
     const track = makeResolvedVideoTrack(segments);
     // s1 already loaded — actor pre-seeded with s1 and init
-    const { sourceBuffer, actor } = makeSourceBufferWithActor(
+    const { actor } = makeSourceBufferWithActor(
       [[0, 10]],
       [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1' }],
       'track-1'
@@ -280,7 +283,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -326,10 +329,10 @@ describe('loadSegments orchestration (metadata mode)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -353,10 +356,10 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { context, cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -382,10 +385,10 @@ describe('loadSegments orchestration (metadata mode)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { state, context, cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -463,7 +466,7 @@ describe('loadSegments seek handling', () => {
     const { fetch, fetchedUrls, resolve } = makeControllableFetch();
     globalThis.fetch = fetch;
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { state, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -472,7 +475,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -498,7 +501,7 @@ describe('loadSegments seek handling', () => {
     const { fetch, fetchedUrls, resolveAll } = makeControllableFetch();
     globalThis.fetch = fetch;
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { state, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -507,7 +510,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -540,7 +543,7 @@ describe('loadSegments seek handling', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -549,7 +552,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -632,7 +635,7 @@ describe('loadSegments back buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -679,7 +682,7 @@ describe('loadSegments back buffer flushing', () => {
           ],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -703,7 +706,7 @@ describe('loadSegments back buffer flushing', () => {
 
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor(
+    const { actor } = makeSourceBufferWithActor(
       [[0, 40]],
       [
         { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
@@ -715,7 +718,7 @@ describe('loadSegments back buffer flushing', () => {
     );
     const { context, cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -791,7 +794,7 @@ describe('loadSegments forward buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -821,14 +824,14 @@ describe('loadSegments forward buffer flushing', () => {
     globalThis.fetch = fetch;
 
     // Seed buffered ranges to match the pre-seeded actor context
-    const { sourceBuffer, actor } = makeSourceBufferWithActor(
+    const { actor } = makeSourceBufferWithActor(
       [[0, 50]],
       segments.map((s) => ({ id: s.id, startTime: s.startTime, duration: s.duration, trackId: 'track-1' })),
       'track-1'
     );
     const { context, cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -864,7 +867,7 @@ describe('loadSegments forward buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -921,7 +924,7 @@ describe('loadSegments byte-range segment fetching', () => {
       duration: 12,
     };
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { context, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -935,7 +938,7 @@ describe('loadSegments byte-range segment fetching', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -963,7 +966,7 @@ describe('loadSegments byte-range segment fetching', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { context, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -983,7 +986,7 @@ describe('loadSegments byte-range segment fetching', () => {
           ],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -1047,7 +1050,7 @@ describe('loadSegments bandwidth tracking', () => {
       bytesSampled: 0,
     };
 
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const { actor } = makeSourceBufferWithActor();
     const { state, context, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
@@ -1062,7 +1065,7 @@ describe('loadSegments bandwidth tracking', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 
@@ -1125,7 +1128,7 @@ describe('loadSegments bandwidth tracking', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      { videoBufferActor: actor },
       'video'
     );
 

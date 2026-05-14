@@ -38,8 +38,6 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
 
 function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
   return {
-    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
-    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
   };
@@ -156,9 +154,9 @@ describe('loadSegments — track switch', () => {
       currentTime: 5,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBufferActor });
 
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -177,7 +175,7 @@ describe('loadSegments — track switch', () => {
     const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
     expect(hasNewSegments).toBeTruthy();
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
@@ -198,8 +196,8 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const context = makeContext({ videoBufferActor });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
@@ -217,7 +215,7 @@ describe('loadSegments — track switch', () => {
       timeout: 3000,
     });
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('loads segments at currentTime position when track switches mid-playback', async () => {
@@ -243,8 +241,8 @@ describe('loadSegments — track switch', () => {
       currentTime: 25,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const context = makeContext({ videoBufferActor });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -268,7 +266,7 @@ describe('loadSegments — track switch', () => {
     expect(fetchedUrls).not.toContain('https://example.com/b1.m4s');
     expect(fetchedUrls).not.toContain('https://example.com/b2.m4s');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does NOT flush on first init load (no prior track)', async () => {
@@ -288,13 +286,13 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBufferActor });
 
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const reactor = loadVideoSegments.setup({ state, context });
     await new Promise((r) => setTimeout(r, 50));
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    cleanup();
+    reactor.destroy();
   });
 });
