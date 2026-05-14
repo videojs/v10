@@ -2,6 +2,7 @@ import { createTransitionActor } from '../../../core/actors/create-transition-ac
 import type { Cue } from '../../../media/types';
 import type {
   AddCuesMessage,
+  ClearMessage,
   CueSegmentMeta,
   TextTracksActor,
   TextTracksActorContext,
@@ -10,7 +11,14 @@ import type {
 
 // Re-export the host-agnostic types so existing dom-side consumers can keep
 // importing from this module.
-export type { AddCuesMessage, CueSegmentMeta, TextTracksActor, TextTracksActorContext, TextTracksActorMessage };
+export type {
+  AddCuesMessage,
+  ClearMessage,
+  CueSegmentMeta,
+  TextTracksActor,
+  TextTracksActorContext,
+  TextTracksActorMessage,
+};
 
 // =============================================================================
 // Helpers
@@ -27,6 +35,14 @@ function isDuplicateCue(cue: VTTCue, existing: Cue[]): boolean {
 /** TextTrack actor: wraps all text tracks on a media element, owns cue operations. */
 export function createTextTracksActor(mediaElement: HTMLMediaElement): TextTracksActor<VTTCue> {
   return createTransitionActor({ loaded: {}, segments: {} } as TextTracksActorContext, (context, message) => {
+    if (message.type === 'clear') {
+      // Reset the cue + segment cache. DOM cleanup is the caller's job —
+      // by the time we get here, `syncTextTracks` has already removed
+      // the `<track>` children (and their cues) via
+      // `removeAllSubtitlesTracksFromMedia`.
+      return { loaded: {}, segments: {} };
+    }
+
     // NOTE: Currently assumes cues are applied to a non-disabled TextTrack. Discuss different approaches here, including:
     // - Making the message responsible for auto-selection of the textTrack (changes logic in sync-text-tracks)
     // - Silent gating/console warning + early bail

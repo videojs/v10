@@ -6,6 +6,7 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../../media/dom/text/text-track-slots';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
+import { createTextTracksActor, type TextTracksActor } from '../../../actors/dom/text-tracks';
 import { syncTextTracks } from '../sync-text-tracks';
 
 const baseConfig = {
@@ -21,6 +22,7 @@ interface State {
 
 interface Context {
   mediaElement?: HTMLMediaElement | undefined;
+  textTracksActor?: TextTracksActor<VTTCue> | undefined;
 }
 
 function makePresentation(tracks: Array<{ id: string; kind?: string; language?: string }>) {
@@ -59,6 +61,7 @@ function setup(initialState: State = {}, initialContext: Context = {}) {
   };
   const context = {
     mediaElement: signal<HTMLMediaElement | undefined>(initialContext.mediaElement),
+    textTracksActor: signal<TextTracksActor<VTTCue> | undefined>(initialContext.textTracksActor),
   };
   const reactor = syncTextTracks.setup({ state, context, config: baseConfig });
   return { state, context, reactor };
@@ -316,6 +319,34 @@ describe('syncTextTracks', () => {
 
     expect(mediaElement.children.length).toBe(1);
     expect(mediaElement.children[0]).toBe(firstChild);
+
+    reactor.destroy();
+  });
+
+  it("clears the TextTracksActor cache on src unload (so a reused trackId doesn't appear pre-buffered)", async () => {
+    const mediaElement = document.createElement('video');
+    const textTracksActor = createTextTracksActor(mediaElement);
+    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
+
+    const { state, reactor } = setup({ presentation }, { mediaElement, textTracksActor });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Simulate the segment loader having populated the actor cache for
+    // the current source's track-en.
+    textTracksActor.send({
+      type: 'add-cues',
+      meta: { trackId: 'track-en', id: 'seg-0', startTime: 0, duration: 10 },
+      cues: [new VTTCue(0, 2, 'A0')],
+    });
+    expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(1);
+
+    // Src unload — `syncTextTracks` exits 'sync-active' and should send
+    // 'clear' to the actor as part of its cleanup.
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(textTracksActor.snapshot.get().context.loaded).toEqual({});
+    expect(textTracksActor.snapshot.get().context.segments).toEqual({});
 
     reactor.destroy();
   });

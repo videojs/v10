@@ -18,6 +18,15 @@
  * `selectedTextTrackId` changes into `mode`s; that's the only
  * continuous-reactivity concern.
  *
+ * State-exit cleanup also sends a `'clear'` message to the
+ * `TextTracksActor` so its cue+segment cache (keyed by trackId) is
+ * dropped alongside the DOM `<track>` slots. The actor itself is owned
+ * by `setupTextTrackActors` and bound to mediaElement, not presentation,
+ * so it survives source resets; clearing its context here keeps the
+ * cache consistent with the DOM. Without this, a subsequent
+ * presentation reusing a trackId would have `getSegmentsToLoad` treat
+ * its segments as already-buffered and skip loading them.
+ *
  * Multi-writer with `selectTextTrack` is intentional and orthogonal:
  * `selectTextTrack` owns the *default-on-load / clear-on-unload* contract
  * for `selectedTextTrackId`; this behavior writes only from DOM `change`
@@ -36,6 +45,7 @@ import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/
 import { syncTextTrackModes } from '../../../media/dom/text/text-track-slots';
 import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../../../media/types';
 import { getTracksByType } from '../../../media/utils/tracks';
+import type { TextTracksActor } from '../../actors/text-tracks';
 
 type SyncTextTracksFsmState = 'preconditions-unmet' | 'sync-active';
 
@@ -80,7 +90,10 @@ function syncTextTracksSetup({
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
     selectedTextTrackId: Signal<string | undefined>;
   };
-  context: { mediaElement: ReadonlySignal<HTMLMediaElement | undefined> };
+  context: {
+    mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
+    textTracksActor: ReadonlySignal<TextTracksActor<VTTCue> | undefined>;
+  };
   config: SyncTextTracksConfig;
 }): Reactor<SyncTextTracksFsmState | 'destroying' | 'destroyed'> {
   const { addSubtitlesTracksToMedia, getShowingSubtitlesTrackFromMedia, removeAllSubtitlesTracksFromMedia } = config;
@@ -151,6 +164,15 @@ function syncTextTracksSetup({
             unlisten();
             clearTimeout(settlingTimeout);
             removeAllSubtitlesTracksFromMedia(mediaElement);
+            // Clear the TextTracksActor's cue+segment cache, which is
+            // keyed by trackId. If we don't, a subsequent presentation
+            // reusing a trackId would have `getSegmentsToLoad` treat its
+            // segments as already-buffered. The DOM cleanup above
+            // already evicted the live cues; this drops the cache that
+            // tracked them. The actor itself is owned by
+            // `setupTextTrackActors` (mediaElement-bound lifecycle), so
+            // we send rather than destroy.
+            peek(context.textTracksActor)?.send({ type: 'clear' });
           };
         },
 
@@ -168,6 +190,6 @@ function syncTextTracksSetup({
 
 export const syncTextTracks = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
-  contextKeys: ['mediaElement'],
+  contextKeys: ['mediaElement', 'textTracksActor'],
   setup: syncTextTracksSetup,
 });
