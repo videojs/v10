@@ -240,6 +240,15 @@ cleaned-shape sketch + complexity-inventory + direction-declaration
 discipline that merges need. Per `behaviors.md` "Merging two behaviors
 — extra discipline."
 
+**If split is the answer**: don't perform the split inline. Recommend
+`/split-behavior` as the follow-up — it operationalizes the explicit
+axis declaration (per-type horizontal vs. per-concern vertical) +
+cross-boundary constraint audit that splits need to avoid silently
+dropping implicit invariants the merged code was enforcing. Per
+`behaviors.md` "Per-type specialization" (destination shape for
+per-type splits) and "Sniffs that say 'split'" (the pre-existing
+decomposition sniffs).
+
 ### Step 7 — Final-shape audit (after writing the change)
 
 Re-run the convention checks against the *output*, not just the input.
