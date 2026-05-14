@@ -242,6 +242,15 @@ Run through, against the file as it stands post-edit:
 - **Closure-mutable variables that should reset on source change?** →
   restructure into reactor state or `computed`. Per `behaviors.md` →
   "Source-reset handling."
+- **`peek` reads inside an `entry` body?** → convert to `.get()`.
+  `entry` bodies run auto-untracked, so `peek` and `.get()` are
+  functionally identical there — the `peek` adds no behavior and falsely
+  implies the choice is load-bearing. A reader can't tell "this peek
+  suppresses tracking" from "this peek is dead weight" by inspection;
+  standardizing on `.get()` inside entry makes the load-bearing `peek`
+  calls (inside `effects:`, `computed`, or other tracked contexts)
+  self-documenting. Per `reactors.md` → "Entry bodies are already
+  untracked — don't `peek` there."
 - **`stateKeys` / `contextKeys` overshoot the body's actual reads/
   writes?** → narrow. The exhaustiveness check catches drift in the
   other direction (declared but unused keys still typecheck); this is

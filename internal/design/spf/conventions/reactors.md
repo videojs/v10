@@ -235,12 +235,23 @@ The effect re-runs on state entry and when *its* tracked signals change. `peek` 
 
 When *not* to use `peek` inside an effect: when you need the effect to re-run as that signal changes (mid-state). For source-identity-driven work, the state machine handles those transitions, so `peek` is correct.
 
+### Entry bodies are already untracked — don't `peek` there
+
+`entry` bodies run auto-untracked (see [Transition-driven vs state-driven work](#transition-driven-vs-state-driven-work)) — every `.get()` inside an `entry` body is functionally identical to a `peek`. Writing `peek(signal)` inside `entry` adds no behavior; it just looks like the `effects:` convention copied into the wrong place.
+
+Use plain `.get()` inside `entry` bodies. Reserve `peek` for contexts where it actually suppresses a subscription: `effects:` blocks, `computed` callbacks, signal-tracked code elsewhere.
+
+The sniff: a `peek` inside `entry` is dead weight. A reader can't distinguish "this `peek` is load-bearing" from "this `peek` is noise" by inspection — both look like a deliberate untracking choice. Standardizing on `.get()` inside `entry` makes the genuine `peek` calls (in `effects:` and `computed`) self-documenting.
+
+The same principle applies in the inverse direction: a `peek` *inside* `entry`'s cleanup function (the returned `() => { ... }`) is also dead weight, because the cleanup body runs outside any reactive context.
+
 ## Anti-patterns
 
 - **Reaching for a Reactor when an `effect` would do.** If the work is single-shape signal-driven mirroring (no states), an `effect` is simpler. The threshold: if you have only one branch of behavior and no per-state cleanup distinction, you don't need a state machine. **Corollary**: bidirectional dataflow expressed as two `effect`s in one behavior isn't a Reactor candidate either — the directions aren't states, just two effect-shaped concerns sharing a slot surface. See [`behaviors.md`](behaviors.md) → "Multi-effect behaviors."
 - **Inlining `monitor` past the single-signal-read case.** Inline is only correct for a direct read with no composition (`monitor: () => state.foo.get() ? 'on' : 'off'`). Two predicates, a helper call, or any conjunction → extract to `derivedStateSignal`. Hurts testability, re-creates the closure on every read, and breaks consistency with every other reactor-using behavior in the codebase.
 - **Hand-rolled FSM via `computed` flags + nested effects** when `createMachineReactor` was the answer. (See `behaviors.md` fight-the-shape sniffs.)
 - **Tracking a source signal again inside per-state effects** when the reactor's `monitor` already tracks it. Use `peek` for non-state reads inside the state.
+- **`peek` reads inside an `entry` body** (or inside `entry`'s returned cleanup). `entry` runs auto-untracked, so `peek` and `.get()` are functionally identical — the `peek` adds no behavior and falsely implies the choice is load-bearing. See [Entry bodies are already untracked — don't `peek` there](#entry-bodies-are-already-untracked--dont-peek-there).
 - **Putting state-exit cleanup in an `effects` callback's return** instead of `entry`'s return — *when you want exit-only behavior*. `effects` cleanups run between effect re-runs *and* on state exit. For exit-only cleanup, use `entry`. For cleanup that should fire on both state exit *and* within-state identity changes, `effects`-based cleanup is the right tool — see [Effects-based cleanup for within-state identity changes](#effects-based-cleanup-for-within-state-identity-changes).
 - **Putting an operation's cleanup in a different state's `entry`** instead of returning it from the operation's own `entry`. Mechanically *almost* equivalent for normal transitions, but fragments the operation across two states (cohesion loss) and silently misses the destroy path (destroy goes `current → 'destroying' → 'destroyed'` without passing through arbitrary intermediate states). See [Bind cleanup to its setup](#bind-cleanup-to-its-setup-not-to-the-next-states-entry).
 - **State-scoped closure mutable state** (`let lastFoo`) instead of expressing the state in the state machine. The reactor *is* the state — adding parallel mutable closure state is double-bookkeeping.
