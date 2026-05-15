@@ -557,6 +557,7 @@ CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skill
 | Documentation               | `docs` skill               |
 | Component reference pages   | `api-reference` skill      |
 | API design and DX           | `api` skill                |
+| CSS → Tailwind migration    | `css-to-tailwind` skill    |
 | Updating AI docs            | `claude-update` skill      |
 
 When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.

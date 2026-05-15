@@ -10,14 +10,16 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Building HTML components   | `component` + `aria`               |
 | Building React components  | `component` + `aria`               |
 | Writing documentation      | `docs`                             |
-| Writing component reference| `api-reference`                     |
-| Writing Design Docs / RFCs | `design` or `rfc`                        |
-| Reviewing API/architecture | `api` → `review/workflow.md`             |
+| Writing component reference| `api-reference`                    |
+| Writing Design Docs / RFCs | `design` or `rfc`                  |
+| Reviewing API/architecture | `api` → `review/workflow.md`       |
 | Reviewing documentation    | `docs` → `review/workflow.md`      |
 | Reviewing components       | `component` → `review/workflow.md` |
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
 | Accessibility audit        | `aria`                             |
 | Committing / creating PRs  | `git` or `/commit-pr`              |
+| CSS → Tailwind migration   | `css-to-tailwind`                  |
+| Reviewing Tailwind migration | `css-to-tailwind` → `review/workflow.md` |
 | Reviewing branch changes   | `/review-branch`                   |
 | Analyzing GitHub issues    | `/gh-issue`                        |
 | Creating GitHub issues     | `/create-issue`                    |
@@ -33,6 +35,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns              | No          |
 | [commit-pr](commit-pr/SKILL.md)         | Commit changes and create/update PRs with conventions                  | No          |
 | [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [css-to-tailwind](css-to-tailwind/SKILL.md) | Migrate CSS/SCSS/styled-components to Tailwind v4 — `@theme`, tokens, parity, reporting | Yes   |
 | [create-issue](create-issue/SKILL.md)   | Create GitHub issues with consistent formatting and conventions       | No          |
 | [create-skill](create-skill/SKILL.md)   | Create new skills with proper structure and conventions                | No          |
 | [design](design/SKILL.md)               | Write Design Docs — decisions you own, component specs, feature designs| No          |
@@ -60,9 +63,10 @@ skill/
 | Skill               | Review Focus                                      |
 | ------------------- | ------------------------------------------------- |
 | `api/review/`       | API design, architecture, DX, type safety         |
-| `docs/review/`       | Documentation quality — tone, structure, examples |
+| `docs/review/`      | Documentation quality — tone, structure, examples |
 | `component/review/` | Component architecture, state, props, styling     |
 | `aria/review/`      | Accessibility — ARIA, keyboard, focus, WCAG       |
+| `css-to-tailwind/review/` | Tailwind migration — utilities, arbitrary values, theme gaps |
 
 ## Skill Structure
 
@@ -101,7 +105,7 @@ skill-name/
 
 When code changes introduce new patterns that a skill should cover:
 
-1. Identify affected skill (component, aria, api, docs)
+1. Identify affected skill (component, aria, api, docs, css-to-tailwind)
 2. Update the relevant reference file or add a new one
 3. If pattern is cross-cutting, update CLAUDE.md Code Rules instead
 
@@ -111,5 +115,6 @@ When code changes introduce new patterns that a skill should cover:
 - New accessibility patterns (ARIA, keyboard, focus)
 - New API design decisions (extensibility, type safety)
 - New DX considerations (inference, defaults, naming)
+- New Tailwind or skin parity patterns (`packages/skins`)
 
 For detailed guidance and consistency checklists, run `/claude-update`.
