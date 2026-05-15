@@ -65,3 +65,14 @@
   display: block;
   opacity: 1;
 }
+
+/* --- Pause keyframe animations on inactive icons --- */
+
+/* The airplay-exit SVG defines its keyframes against CSS variables (mirroring
+   the spinner pattern). When the AirPlay session isn't active the SVG is
+   still in the DOM — just `display: none` — so its animations would keep
+   running. Set the variables to `none` to short-circuit the keyframes. */
+.media-button--airplay:not([data-airplay-state="connected"]) {
+  --media-icon--airplay__fill-animation: none;
+  --media-icon--airplay__triangle-animation: none;
+}
