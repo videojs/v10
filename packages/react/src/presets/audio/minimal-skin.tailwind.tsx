@@ -8,6 +8,7 @@ import {
   iconFlipped,
   iconState,
   menu,
+  playButton,
   playbackRate,
   popup,
   root,
@@ -23,11 +24,13 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpinnerIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
@@ -179,21 +182,30 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top" boundary="viewport">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
-                  </PlayButton>
-                }
+            <span className={playButton.wrapper}>
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className={cn(playButton.bufferingRoot, props.className)}>
+                    <SpinnerIcon className={icon} />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className={cn(iconState.play.button, playButton.control)} render={<Button />}>
+                      <RestartIcon className={cn(icon, iconState.play.restart)} />
+                      <PlayIcon className={cn(icon, iconState.play.play)} />
+                      <PauseIcon className={cn(icon, iconState.play.pause)} />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className={cn(popup.tooltip)}>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger

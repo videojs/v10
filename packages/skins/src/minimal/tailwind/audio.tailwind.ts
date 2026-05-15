@@ -58,6 +58,18 @@ export const controls = cn(
   'ring-1 ring-(color:--media-controls-border-color)'
 );
 
+export const playButton = {
+  wrapper: 'group/play inline-flex relative',
+  /** `peer/play-buffering` on `bufferingRoot`; merge onto the play trigger after the peer in DOM. */
+  control: 'peer-data-visible/play-buffering:[&>svg]:opacity-0',
+  bufferingRoot: cn(
+    'peer/play-buffering',
+    'absolute inset-0 z-10 hidden place-content-center pointer-events-none text-inherit',
+    'not-data-visible:[--media-spinner-animation:none]',
+    'data-visible:grid'
+  ),
+};
+
 /* ==========================================================================
    Popup
    ========================================================================== */

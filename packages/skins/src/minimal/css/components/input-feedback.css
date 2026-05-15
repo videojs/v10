@@ -145,18 +145,13 @@
 /* --- Bubble ---------------------------------------------------------------- */
 
 .media-minimal-skin .media-input-feedback-bubble {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   grid-row: 1;
   grid-column: 2; /* default to center for status bubbles and undirected seeks */
-  align-items: center;
-  justify-content: center;
+  place-content: center;
   padding: 1rem;
+  text-align: center;
   transition: opacity 250ms ease-out;
-
-  @container media-root (width > 24rem) {
-    padding: 2rem;
-  }
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -169,6 +164,14 @@
 .media-minimal-skin .media-input-feedback-bubble[data-direction="backward"] {
   grid-column: 1;
   justify-self: left;
+}
+
+.media-minimal-skin .media-input-feedback-bubble[data-direction] {
+  gap: 0.25rem;
+
+  @container media-root (width > 24rem) {
+    padding: 1.5rem;
+  }
 }
 
 .media-minimal-skin .media-input-feedback-bubble:not([data-direction]) {
@@ -200,13 +203,15 @@
 
 .media-minimal-skin .media-input-feedback-bubble .media-icon {
   display: none;
-  width: 36px;
-  height: 36px;
+  width: calc(var(--media-icon-size) * 2);
+  height: calc(var(--media-icon-size) * 2);
 }
 
 /* seek: seek icon, flipped for backward */
 .media-minimal-skin .media-input-feedback-bubble[data-direction] .media-icon--seek {
   display: block;
+  width: calc(var(--media-icon-size) * 1.5);
+  height: calc(var(--media-icon-size) * 1.5);
 }
 
 .media-minimal-skin .media-input-feedback-bubble[data-direction="backward"] .media-icon--seek {
