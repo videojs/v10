@@ -2,6 +2,7 @@
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
+import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateMenuElement } from '../../ui/playback-rate-menu/playback-rate-menu-element';
@@ -30,6 +31,7 @@ defineTime();
 defineMenu();
 
 // Standalone elements.
+safeDefine(BufferingIndicatorElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PlaybackRateOptionsElement);

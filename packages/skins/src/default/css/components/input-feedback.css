@@ -134,18 +134,13 @@
 /* --- Bubble ---------------------------------------------------------------- */
 
 .media-default-skin .media-input-feedback-bubble {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   grid-row: 1;
   grid-column: 2; /* default to center for status bubbles and undirected seeks */
-  align-items: center;
-  justify-content: center;
+  place-content: center;
   padding: 1rem;
+  text-align: center;
   transition: opacity 250ms ease-out;
-
-  @container media-root (width > 24rem) {
-    padding: 2rem;
-  }
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -161,8 +156,19 @@
   justify-self: left;
 }
 
+.media-default-skin .media-input-feedback-bubble[data-direction] {
+  gap: 0.25rem;
+
+  @container media-root (width > 24rem) {
+    padding: 1.5rem;
+  }
+}
+
 .media-default-skin .media-input-feedback-bubble:not([data-direction]) {
   grid-column: 2;
+  background: oklch(0 0 0 / 0.35);
+  border-radius: 100%;
+  backdrop-filter: blur(8px);
   transition-timing-function:
     ease-out, linear(0, 0.12 1.5%, 1.35 9.7%, 2.2 13.9%, 3 19.9%, 2.7 21.8%, 0.62 37.5%, 0.96 50.9%, 1);
   transition-duration: 600ms;
@@ -190,8 +196,12 @@
 
 .media-default-skin .media-input-feedback-bubble .media-icon {
   display: none;
-  width: 36px;
-  height: 36px;
+  width: calc(var(--media-icon-size) * 1.5);
+  height: calc(var(--media-icon-size) * 1.5);
+
+  &.media-icon--play {
+    translate: 1px 0;
+  }
 }
 
 /* seek: seek icon, flipped for backward */
