@@ -594,29 +594,9 @@ When **not** to use a setup-shape helper:
 
 Trade-off: per-export call sites carry the `defineBehavior` boilerplate plus an inline `config` object (~3 extra lines per export vs. a factory). Acceptable when the shape uniformity is reproducible across many helpers and you want each export's slot intent legible at the export site.
 
-#### Parameterization shape: alias slot names vs. parameterize by typed key
+#### Parameterization shape: parameterize by typed key
 
-Setup-shape helpers in the codebase use one of two shapes for accepting per-type parameterization. Both work; mixing them across sibling helpers in the same area is a sniff each helper looks internally consistent enough to hide.
-
-**Shape A — alias slot names in the helper signature.** The helper's `state` / `context` types use abstract names (`buffer`, `actor`); each variant maps its per-type slots onto those names at the call site:
-
-```ts
-// Helper signature uses abstract slot names.
-function setupSourceBuffer({ state, context, config }: {
-  state: { /* ... */ };
-  context: { mediaSource; buffer; actor };
-  config: { type: MediaTrackType };
-}) { /* reads context.buffer, context.actor */ }
-
-// Variant maps per-type slots to abstract names.
-setupSourceBuffer({
-  state,
-  context: { mediaSource: context.mediaSource, buffer: context.videoBuffer, actor: context.videoBufferActor },
-  config: { type: 'video' },
-});
-```
-
-**Shape B — parameterize by typed key.** The helper takes a `selectedKey` / `actorKey` / similar in `config`; variants pass `state` and `context` through directly and supply the key:
+**Rule: parameterize by typed key.** The helper takes a `selectedKey` / `actorKey` / similar in `config`; variants pass `state` and `context` through directly and supply the key. Generic parameters on the helper carry the key type, so reads (`state[selectedKey]`, `context[actorKey]`) are typed exactly to the supplied slot.
 
 ```ts
 // Helper is generic over the key type.
@@ -635,9 +615,32 @@ setupSegmentLoading({
 });
 ```
 
-**Default: Shape B (parameterize by typed key).** Sibling precedent is `setupTrackResolution` in `resolve-track.ts` and `setupSegmentLoading` in `load-segments.ts`. Variants pass `state` / `context` through with no aliasing, keeping the call site spread-style. Shape A is acceptable when the helper's per-type concern is genuinely abstract (the helper *doesn't care* which concrete slot the variant supplies), but it's the rarer case — most setup-shape helpers carry per-type behavior that's tied to the concrete key, and Shape B makes the binding explicit.
+Sibling precedents: `setupTrackResolution` in `resolve-track.ts`, `setupSegmentLoading` in `load-segments.ts`, `setupSourceBuffer` in `setup-sourcebuffer.ts`. Variants pass `state` / `context` through with no aliasing, keeping the call site spread-style.
 
-**Cross-helper consistency:** when adding a new sibling helper in an area that already has setup-shape helpers, match the existing shape. If you're introducing Shape B alongside existing Shape A siblings, plan for a follow-up that converts the Shape A siblings, or accept the inconsistency deliberately and note it.
+**Antipattern: alias slot names in the helper signature.** Don't rename the per-type slots to abstract names (`buffer`, `actor`) and have each variant remap its per-type slots onto those names at the call site:
+
+```ts
+// Antipattern — don't do this.
+function setupSourceBuffer({ state, context, config }: {
+  state: { /* ... */ };
+  context: { mediaSource; buffer; actor };  // ← abstract names
+  config: { type: MediaTrackType };
+}) { /* reads context.buffer, context.actor */ }
+
+// Variant reconstructs the context to fit the helper's aliasing.
+setupSourceBuffer({
+  state,
+  context: { mediaSource: context.mediaSource, buffer: context.videoBuffer, actor: context.videoBufferActor },
+  config: { type: 'video' },
+});
+```
+
+Two failure modes combined:
+
+1. **Aliasing to a generic name loses per-type intent at the call site.** A reader scanning `setupVideoSourceBuffer.setup` sees `buffer: context.videoBuffer` and has to follow into the helper to learn what `buffer` means in this slot. The slot's concrete identity (`videoBuffer`) was meaningful — flattening it to `buffer` erases that.
+2. **The caller reconstructs the context object to fit the helper.** This inverts the natural helper-declares-shape / caller-binds-values relationship: the caller has to know the helper's internal slot mapping (`videoBuffer` → `buffer`, `videoBufferActor` → `actor`) and assemble a bespoke object that matches it. Shape B parameterizes the binding via `config` instead — the helper still declares its shape (generic over the typed keys), but the variant supplies the bindings as keys rather than as an aliasing remap.
+
+**Cross-helper consistency:** when adding a new sibling helper in an area that already has setup-shape helpers, match the existing shape. If you encounter a Shape A helper in older code, the conversion to Shape B is mechanical — bring it across when you next touch the area.
 
 ### Behavior factory
 

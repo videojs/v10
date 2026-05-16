@@ -61,11 +61,7 @@ import { createMachineReactor } from '../../../core/reactors/create-machine-reac
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { buildMimeCodec, createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack } from '../../../media/types';
-import {
-  getSelectedTrack,
-  SelectedTrackIdKeyByType,
-  type TrackSelectionState,
-} from '../../../media/utils/track-selection';
+import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import { hasCodecs } from '../../../media/utils/tracks';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
 
@@ -92,39 +88,45 @@ export interface SourceBufferContext {
 type SourceBufferFsmState = 'preconditions-unmet' | 'buffer-ready';
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
+type BufferKey = 'videoBuffer' | 'audioBuffer';
+type BufferActorKey = 'videoBufferActor' | 'audioBufferActor';
 
 type SourceBufferStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<SourceBufferState['presentation']>;
 } & { [P in K]: ReadonlySignal<SourceBufferState[P]> };
+
+type SourceBufferContextMap<B extends BufferKey, A extends BufferActorKey> = {
+  mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
+} & { [P in B]: Signal<SourceBuffer | undefined> } & { [P in A]: Signal<SourceBufferActor | undefined> };
 
 // ============================================================================
 // Specialization helper
 //
 // `setupSourceBuffer` has the same shape as a Behavior `setup` function:
 // `({ state, context, config }) => reactor`. Each `setupXSourceBuffer` export
-// below calls it from inside its own `defineBehavior` setup, supplying its
-// per-type slot signals + `type` discriminator inline.
+// below calls it from inside its own `defineBehavior` setup, passing its
+// narrowed `state` / `context` through directly and supplying the per-type
+// `selectedKey`, `bufferKey`, `actorKey`, and `type` discriminator inline.
 //
 // Gating is per-type only: no cross-type coupling. See the file-level JSDoc
 // for how the Firefox `mozHasAudio` invariant survives the split via SPF's
 // effect coalescing.
 // ============================================================================
 
-function setupSourceBuffer<K extends SelectedTrackKey>({
+function setupSourceBuffer<K extends SelectedTrackKey, B extends BufferKey, A extends BufferActorKey>({
   state,
   context,
-  config: { type },
+  config: { type, selectedKey, bufferKey, actorKey },
 }: {
   state: SourceBufferStateMap<K>;
-  context: {
-    mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
-    buffer: Signal<SourceBuffer | undefined>;
-    actor: Signal<SourceBufferActor | undefined>;
+  context: SourceBufferContextMap<B, A>;
+  config: {
+    type: MediaTrackType;
+    selectedKey: K;
+    bufferKey: B;
+    actorKey: A;
   };
-  config: { type: MediaTrackType };
 }): Reactor<SourceBufferFsmState | 'destroying' | 'destroyed'> {
-  const selectedKey = SelectedTrackIdKeyByType[type] as K;
-
   const derivedStateSignal = computed<SourceBufferFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -166,15 +168,15 @@ function setupSourceBuffer<K extends SelectedTrackKey>({
           // that iteration; downstream `loadXSegments` effects fire in the
           // *next* `runPending`, and their `appendBuffer` is many
           // microtasks past the network fetch.
-          context.buffer.set(buffer);
-          context.actor.set(actor);
+          context[bufferKey].set(buffer);
+          context[actorKey].set(actor);
 
           // State-exit cleanup — fires when `mediaSource` detaches, the
           // selection unsets, or the behavior is destroyed.
           return () => {
             actor.destroy();
-            context.buffer.set(undefined);
-            context.actor.set(undefined);
+            context[bufferKey].set(undefined);
+            context[actorKey].set(undefined);
           };
         },
       },
@@ -200,20 +202,17 @@ export const setupVideoSourceBuffer = defineBehavior({
     context,
   }: {
     state: SourceBufferStateMap<'selectedVideoTrackId'>;
-    context: {
-      mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
-      videoBuffer: Signal<SourceBufferContext['videoBuffer']>;
-      videoBufferActor: Signal<SourceBufferContext['videoBufferActor']>;
-    };
+    context: SourceBufferContextMap<'videoBuffer', 'videoBufferActor'>;
   }) =>
     setupSourceBuffer({
       state,
-      context: {
-        mediaSource: context.mediaSource,
-        buffer: context.videoBuffer,
-        actor: context.videoBufferActor,
+      context,
+      config: {
+        type: 'video',
+        selectedKey: 'selectedVideoTrackId',
+        bufferKey: 'videoBuffer',
+        actorKey: 'videoBufferActor',
       },
-      config: { type: 'video' },
     }),
 });
 
@@ -229,19 +228,16 @@ export const setupAudioSourceBuffer = defineBehavior({
     context,
   }: {
     state: SourceBufferStateMap<'selectedAudioTrackId'>;
-    context: {
-      mediaSource: ReadonlySignal<SourceBufferContext['mediaSource']>;
-      audioBuffer: Signal<SourceBufferContext['audioBuffer']>;
-      audioBufferActor: Signal<SourceBufferContext['audioBufferActor']>;
-    };
+    context: SourceBufferContextMap<'audioBuffer', 'audioBufferActor'>;
   }) =>
     setupSourceBuffer({
       state,
-      context: {
-        mediaSource: context.mediaSource,
-        buffer: context.audioBuffer,
-        actor: context.audioBufferActor,
+      context,
+      config: {
+        type: 'audio',
+        selectedKey: 'selectedAudioTrackId',
+        bufferKey: 'audioBuffer',
+        actorKey: 'audioBufferActor',
       },
-      config: { type: 'audio' },
     }),
 });

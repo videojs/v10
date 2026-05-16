@@ -448,23 +448,19 @@ Run through, against the file as it stands post-edit:
   exist (`loadVideoSegments`, `loadAudioSegments`), the new/renamed
   behavior should match (`loadTextTrackSegments`). Per `behaviors.md`
   → "Naming" → "Name by the unit-of-work this behavior triggers."
-- **Specialization helper parameterized consistently with siblings?**
-  → when the refactor produces a `setup*` helper (`setupTrackResolution`,
-  `setupSegmentLoading`, `setupSourceBuffer`), check that *how the
-  helper accepts per-type parameterization* matches sibling helpers.
-  Two shapes exist in the codebase: (1) **alias slot names** in the
-  helper signature, with variants mapping their per-type slots into
-  the abstract names at the call site (`buffer` / `actor` aliases in
-  `setupSourceBuffer`); (2) **parameterize by typed key**, with
-  variants passing `state` / `context` through directly and supplying
-  the key as `config` (`selectedKey` in `setupTrackResolution`,
-  `selectedKey` + `actorKey` in `setupSegmentLoading`). Either is
-  workable, but mixing them across sibling helpers in the same area
-  is a sniff the convention check can't catch (each helper looks
-  internally consistent on its own). Default: match the
-  parameterize-by-key shape — sibling precedent is in `resolve-track.ts`
-  and `load-segments.ts`; variants pass state/context through with
-  no aliasing.
+- **Specialization helper parameterized by typed key?** → when the
+  refactor produces a `setup*` helper (`setupTrackResolution`,
+  `setupSegmentLoading`, `setupSourceBuffer`), it should parameterize
+  by typed key: variants pass `state` / `context` through directly
+  and supply the key as `config` (`selectedKey` in
+  `setupTrackResolution`, `selectedKey` + `actorKey` in
+  `setupSegmentLoading`, `selectedKey` + `bufferKey` + `actorKey` in
+  `setupSourceBuffer`). The antipattern is aliasing the per-type
+  slots to abstract names (`buffer`, `actor`) in the helper signature
+  and having variants remap into the aliases at the call site — this
+  loses per-type intent at the call site and inverts the
+  helper-declares / caller-binds relationship. Per `behaviors.md` →
+  "Parameterization shape: parameterize by typed key."
 - **Behavior name domain-prefixed?** → if the bare verb could
   plausibly act on more than one similarly-shaped target, prefix it
   with the target. Refactors are the right time to fix this since
