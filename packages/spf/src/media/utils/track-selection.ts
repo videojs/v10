@@ -31,15 +31,6 @@ export const SelectedTrackIdKeyByType = {
 } as const;
 
 /**
- * Map track type to buffer owner property key.
- * Used for SourceBuffer references in owners.
- */
-export const BufferKeyByType = {
-  video: 'videoBuffer',
-  audio: 'audioBuffer',
-} as const;
-
-/**
  * Get selected track from state by type.
  * Returns properly typed track (partially or fully resolved) or undefined.
  * Type parameter T is inferred from the type argument.

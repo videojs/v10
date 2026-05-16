@@ -23,8 +23,8 @@
  *    `sourceopen` event (or any readyState transition out of `'closed'`).
  * 3. **Publish on `'open'`** — re-check `readyState === 'open'` after the
  *    await (covers `'ended'` / `'closed'` race) before writing to
- *    `context.mediaSource`. Downstream `setupVideoSourceBuffer` /
- *    `setupAudioSourceBuffer` call `addSourceBuffer` directly, which
+ *    `context.mediaSource`. Downstream `setupVideoBufferActors` /
+ *    `setupAudioBufferActors` call `addSourceBuffer` directly, which
  *    throws on non-open, so publish-only-when-open is the load-bearing
  *    contract.
  *
@@ -33,7 +33,7 @@
  * publish racing the slot clear), then detach, then clear.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
- * (`setupVideoSourceBuffer`, `setupAudioSourceBuffer`,
+ * (`setupVideoBufferActors`, `setupAudioBufferActors`,
  * `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`) only
  * read.
  */
@@ -113,7 +113,7 @@ function setupMediaSourceSetup({
             // instead of `'open'`, the attach window is gone and we leave
             // the slot unpublished. The session is dead within this source
             // either way — publishing wouldn't help because
-            // `setupVideoSourceBuffer` / `setupAudioSourceBuffer` calls
+            // `setupVideoBufferActors` / `setupAudioBufferActors` calls
             // `addSourceBuffer` which throws on non-open. The next
             // source-reset re-enters this state with a fresh MediaSource
             // and recovers. Warn so the case is at least diagnosable; in

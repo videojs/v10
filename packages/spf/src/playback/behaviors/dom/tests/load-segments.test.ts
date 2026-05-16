@@ -7,6 +7,8 @@ import type { ContextSignals, StateSignals } from '../../../../core/composition/
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Segment } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
+import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../../network/fetch';
+import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   loadAudioSegments,
@@ -19,7 +21,6 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<string | undefined>(initial.preload),
-    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
@@ -28,10 +29,24 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
   };
 }
 
-function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
+type TestContext = ContextSignals<SegmentLoadingContext> & {
+  videoBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+  audioBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+};
+
+function makeContext(
+  initial: {
+    videoBufferActor?: SourceBufferActor;
+    audioBufferActor?: SourceBufferActor;
+    videoSegmentLoaderActor?: SegmentLoaderActor;
+    audioSegmentLoaderActor?: SegmentLoaderActor;
+  } = {}
+): TestContext {
   return {
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
+    audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
   };
 }
 
@@ -148,21 +163,33 @@ function makeSourceBufferWithActor(
   return { sourceBuffer, actor };
 }
 
+/**
+ * Test driver: composes a per-type segment-loader-actor against the
+ * supplied SourceBufferActor and wires it to the per-type
+ * `load{Video,Audio}Segments` dispatcher. Production code creates the
+ * loader inside `setup{Video,Audio}BufferActors`; tests do the wiring
+ * directly to keep the dispatcher under test isolated.
+ */
 function setupLoadSegments(
   initialState: SegmentLoadingState,
-  initialContext: SegmentLoadingContext,
-  type: 'video' | 'audio'
+  bufferActor: SourceBufferActor,
+  type: 'video' | 'audio',
+  fetchFn: FetchBytes = fetchStream
 ) {
   const state = makeState(initialState);
-  const context = makeContext(initialContext);
-  // Helper invokes whichever per-type behavior matches `type`. The
-  // resulting setups have narrower context-types than the test's shared
-  // `makeContext` shape, but they only read the slot they care about —
-  // structural compatibility is fine.
+  const loaderActor = createSegmentLoaderActor(bufferActor, fetchFn);
+  const context = makeContext(
+    type === 'video'
+      ? { videoBufferActor: bufferActor, videoSegmentLoaderActor: loaderActor }
+      : { audioBufferActor: bufferActor, audioSegmentLoaderActor: loaderActor }
+  );
   const reactor =
     type === 'video' ? loadVideoSegments.setup({ state, context }) : loadAudioSegments.setup({ state, context });
-  const cleanup = () => reactor.destroy();
-  return { state, context, cleanup };
+  const cleanup = () => {
+    reactor.destroy();
+    loaderActor.destroy();
+  };
+  return { state, context, bufferActor, loaderActor, cleanup };
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +227,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -241,7 +268,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -283,7 +310,7 @@ describe('loadSegments orchestration (F5)', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -332,7 +359,7 @@ describe('loadSegments orchestration (metadata mode)', () => {
     const { actor } = makeSourceBufferWithActor();
     const { cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -357,20 +384,20 @@ describe('loadSegments orchestration (metadata mode)', () => {
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
     const { actor } = makeSourceBufferWithActor();
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.initTrackId).toBe('track-1');
+        expect(bufferActor.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
 
-    expect(context.videoBufferActor.get()?.snapshot.get().context.segments.length ?? 0).toBe(0);
+    expect(bufferActor.snapshot.get().context.segments.length ?? 0).toBe(0);
 
     cleanup();
   });
@@ -386,15 +413,15 @@ describe('loadSegments orchestration (metadata mode)', () => {
     });
 
     const { actor } = makeSourceBufferWithActor();
-    const { state, context, cleanup } = setupLoadSegments(
+    const { state, bufferActor, cleanup } = setupLoadSegments(
       { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.initTrackId).toBe('track-1');
+        expect(bufferActor.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
@@ -475,7 +502,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -510,7 +537,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -552,7 +579,7 @@ describe('loadSegments seek handling', () => {
         currentTime: 0,
         presentation: makePresentation(segments),
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -635,7 +662,7 @@ describe('loadSegments back buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -663,7 +690,7 @@ describe('loadSegments back buffer flushing', () => {
       [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1' }],
       'track-1'
     );
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
         selectedVideoTrackId: 'track-1',
@@ -682,11 +709,11 @@ describe('loadSegments back buffer flushing', () => {
           ],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
-    await vi.waitFor(() => (context.videoBufferActor.get()?.snapshot.get().context.segments.length ?? 0) > 1, {
+    await vi.waitFor(() => (bufferActor.snapshot.get().context.segments.length ?? 0) > 1, {
       timeout: 3000,
     });
 
@@ -716,19 +743,15 @@ describe('loadSegments back buffer flushing', () => {
       ],
       'track-1'
     );
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        const ids =
-          context.videoBufferActor
-            .get()
-            ?.snapshot.get()
-            .context.segments.map((s: { id: string }) => s.id) ?? [];
+        const ids = bufferActor.snapshot.get().context.segments.map((s: { id: string }) => s.id) ?? [];
         expect(ids).not.toContain('s1');
         expect(ids).not.toContain('s2');
       },
@@ -794,7 +817,7 @@ describe('loadSegments forward buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -829,9 +852,9 @@ describe('loadSegments forward buffer flushing', () => {
       segments.map((s) => ({ id: s.id, startTime: s.startTime, duration: s.duration, trackId: 'track-1' })),
       'track-1'
     );
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -839,11 +862,7 @@ describe('loadSegments forward buffer flushing', () => {
 
     await vi.waitFor(
       () => {
-        const ids =
-          context.videoBufferActor
-            .get()
-            ?.snapshot.get()
-            .context.segments.map((s: { id: string }) => s.id) ?? [];
+        const ids = bufferActor.snapshot.get().context.segments.map((s: { id: string }) => s.id) ?? [];
         expect(ids).not.toContain('s4');
         expect(ids).not.toContain('s5');
         expect(ids).toContain('s1');
@@ -867,7 +886,7 @@ describe('loadSegments forward buffer flushing', () => {
     );
     const { cleanup } = setupLoadSegments(
       { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
@@ -925,7 +944,7 @@ describe('loadSegments byte-range segment fetching', () => {
     };
 
     const { actor } = makeSourceBufferWithActor();
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
         selectedVideoTrackId: 'track-1',
@@ -938,13 +957,13 @@ describe('loadSegments byte-range segment fetching', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.segments).toHaveLength(2);
+        expect(bufferActor.snapshot.get().context.segments).toHaveLength(2);
       },
       { timeout: 3000 }
     );
@@ -967,7 +986,7 @@ describe('loadSegments byte-range segment fetching', () => {
     });
 
     const { actor } = makeSourceBufferWithActor();
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
         selectedVideoTrackId: 'track-1',
@@ -986,13 +1005,13 @@ describe('loadSegments byte-range segment fetching', () => {
           ],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.segments).toHaveLength(1);
+        expect(bufferActor.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
@@ -1005,6 +1024,11 @@ describe('loadSegments byte-range segment fetching', () => {
 
 // ---------------------------------------------------------------------------
 // Streaming bandwidth tracking
+//
+// Post-refactor: `setupVideoBufferActors` owns trackedFetch creation +
+// `bandwidthState` writes in production. These tests construct the
+// trackedFetch directly to verify the dispatcher → loader → fetch loop
+// still feeds samples through to the supplied callback.
 // ---------------------------------------------------------------------------
 
 describe('loadSegments bandwidth tracking', () => {
@@ -1020,7 +1044,7 @@ describe('loadSegments bandwidth tracking', () => {
     });
   }
 
-  it('samples bandwidth per chunk and updates state.bandwidthState', async () => {
+  it('samples bandwidth per chunk via supplied trackedFetch', async () => {
     const chunkSize = 50_000; // 50 KB — below 128 KB default, so whole segment = one flush
     const numChunks = 3;
     const chunks = Array.from({ length: numChunks }, () => new Uint8Array(chunkSize).fill(1));
@@ -1041,22 +1065,24 @@ describe('loadSegments bandwidth tracking', () => {
       duration: 10,
     };
 
-    // Seeding bandwidthState activates the onSample bridge → state.bandwidthState updates
-    const initialBandwidth = {
+    const initialBandwidth: BandwidthState = {
       fastEstimate: 0,
       fastTotalWeight: 0,
       slowEstimate: 0,
       slowTotalWeight: 0,
       bytesSampled: 0,
     };
+    let latestBandwidth: BandwidthState = initialBandwidth;
+    const trackedFetch = createTrackedFetch(initialBandwidth, (next) => {
+      latestBandwidth = next;
+    });
 
     const { actor } = makeSourceBufferWithActor();
-    const { state, context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
         selectedVideoTrackId: 'track-1',
         currentTime: 0,
-        bandwidthState: initialBandwidth,
         presentation: {
           id: 'p1',
           url: 'http://example.com/playlist.m3u8',
@@ -1065,22 +1091,23 @@ describe('loadSegments bandwidth tracking', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
-      'video'
+      actor,
+      'video',
+      trackedFetch
     );
 
     // Wait for both init and segment to be appended (actor context will have 1 segment)
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.segments).toHaveLength(1);
+        expect(bufferActor.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
 
     // All bytes (init + segment) should be counted in bytesSampled
     const totalExpected = chunkSize * numChunks * 2; // init fetch + segment fetch, each 3×50KB
-    expect(state.bandwidthState.get()?.bytesSampled).toBeGreaterThan(0);
-    expect(state.bandwidthState.get()?.bytesSampled).toBeLessThanOrEqual(totalExpected);
+    expect(latestBandwidth.bytesSampled).toBeGreaterThan(0);
+    expect(latestBandwidth.bytesSampled).toBeLessThanOrEqual(totalExpected);
 
     cleanup();
   });
@@ -1115,7 +1142,7 @@ describe('loadSegments bandwidth tracking', () => {
     };
 
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const { context, cleanup } = setupLoadSegments(
+    const { bufferActor, cleanup } = setupLoadSegments(
       {
         preload: 'auto',
         selectedVideoTrackId: 'track-1',
@@ -1128,13 +1155,13 @@ describe('loadSegments bandwidth tracking', () => {
           selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
         },
       },
-      { videoBufferActor: actor },
+      actor,
       'video'
     );
 
     await vi.waitFor(
       () => {
-        expect(context.videoBufferActor.get()?.snapshot.get().context.segments).toHaveLength(1);
+        expect(bufferActor.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );

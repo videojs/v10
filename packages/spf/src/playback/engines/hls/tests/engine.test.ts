@@ -258,13 +258,13 @@ http://example.com/audio-seg1.m4s
         expect(owners.mediaSource).toBeDefined();
         expect(owners.mediaSource?.readyState).toBe('open');
 
-        // 6. Video SourceBuffer should be created
-        expect(owners.videoBuffer).toBeDefined();
-        expect(owners.videoBuffer).toBeInstanceOf(SourceBuffer);
+        // 6. Video buffer cluster should be created (actor presence implies
+        //    `addSourceBuffer` ran; SourceBuffer itself is private to
+        //    `setupVideoBufferActors`).
+        expect(owners.videoBufferActor).toBeDefined();
 
-        // 7. Audio SourceBuffer should be created
-        expect(owners.audioBuffer).toBeDefined();
-        expect(owners.audioBuffer).toBeInstanceOf(SourceBuffer);
+        // 7. Audio buffer cluster should be created
+        expect(owners.audioBufferActor).toBeDefined();
       },
       { timeout: 5000 }
     );
@@ -317,11 +317,11 @@ http://example.com/video-seg1.m4s
 
         // Should create video track and buffer
         expect(state.selectedVideoTrackId).toBeDefined();
-        expect(owners.videoBuffer).toBeDefined();
+        expect(owners.videoBufferActor).toBeDefined();
 
         // Should NOT create audio track or buffer
         expect(state.selectedAudioTrackId).toBeUndefined();
-        expect(owners.audioBuffer).toBeUndefined();
+        expect(owners.audioBufferActor).toBeUndefined();
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
@@ -379,11 +379,11 @@ http://example.com/audio-seg1.m4s
 
         // Should create audio track and buffer
         expect(state.selectedAudioTrackId).toBeDefined();
-        expect(owners.audioBuffer).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
 
         // Should NOT create video track or buffer
         expect(state.selectedVideoTrackId).toBeUndefined();
-        expect(owners.videoBuffer).toBeUndefined();
+        expect(owners.videoBufferActor).toBeUndefined();
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
@@ -511,7 +511,7 @@ http://example.com/video-seg1.m4s
     // Should NOT create MediaSource or SourceBuffers without mediaElement
     expect(owners.mediaElement).toBeUndefined();
     expect(owners.mediaSource).toBeUndefined();
-    expect(owners.videoBuffer).toBeUndefined();
+    expect(owners.videoBufferActor).toBeUndefined();
 
     engine.destroy();
   });
@@ -591,8 +591,8 @@ http://example.com/audio-seg1.m4s
 
         expect(owners.mediaSource).toBeDefined();
         expect(owners.mediaSource?.readyState).toBe('open');
-        expect(owners.videoBuffer).toBeDefined();
-        expect(owners.audioBuffer).toBeDefined();
+        expect(owners.videoBufferActor).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
       },
       { timeout: 2000 }
     );

@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation, VideoSelectionSet } from '../../../../media/types';
-import type { BandwidthState } from '../../../../network/bandwidth-estimator';
+import { fetchStream } from '../../../../network/fetch';
+import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
 import { loadVideoSegments } from '../load-segments';
@@ -27,7 +28,6 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<string | undefined>(initial.preload),
-    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
@@ -36,10 +36,22 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
   };
 }
 
-function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
+function makeContext(
+  initial: {
+    videoBufferActor?: SourceBufferActor;
+    audioBufferActor?: SourceBufferActor;
+    videoSegmentLoaderActor?: SegmentLoaderActor;
+    audioSegmentLoaderActor?: SegmentLoaderActor;
+  } = {}
+): ContextSignals<SegmentLoadingContext> & {
+  videoBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+  audioBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+} {
   return {
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
+    audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
   };
 }
 
@@ -145,6 +157,7 @@ describe('loadSegments — track switch', () => {
         { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
       ],
     });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
@@ -154,7 +167,7 @@ describe('loadSegments — track switch', () => {
       currentTime: 5,
     });
 
-    const context = makeContext({ videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
 
     const reactor = loadVideoSegments.setup({ state, context });
 
@@ -166,7 +179,7 @@ describe('loadSegments — track switch', () => {
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    const ctx = context.videoBufferActor.get()?.snapshot.get().context;
+    const ctx = videoBufferActor.snapshot.get().context;
     expect(ctx?.initTrackId).toBe('track-b');
 
     const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
@@ -176,6 +189,7 @@ describe('loadSegments — track switch', () => {
     expect(hasNewSegments).toBeTruthy();
 
     reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
@@ -187,6 +201,7 @@ describe('loadSegments — track switch', () => {
     const presentation = makePresentation(trackA, trackB);
     const videoBuffer = makeMockSourceBuffer();
     const videoBufferActor = createSourceBufferActor(videoBuffer);
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
@@ -196,7 +211,7 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
     const reactor = loadVideoSegments.setup({ state, context });
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
@@ -211,11 +226,12 @@ describe('loadSegments — track switch', () => {
 
     resolve('https://example.com/track-b-init.mp4');
 
-    await vi.waitFor(() => expect(context.videoBufferActor.get()?.snapshot.get().context.initTrackId).toBe('track-b'), {
+    await vi.waitFor(() => expect(videoBufferActor.snapshot.get().context.initTrackId).toBe('track-b'), {
       timeout: 3000,
     });
 
     reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('loads segments at currentTime position when track switches mid-playback', async () => {
@@ -232,6 +248,7 @@ describe('loadSegments — track switch', () => {
         { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
       ],
     });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
@@ -241,7 +258,7 @@ describe('loadSegments — track switch', () => {
       currentTime: 25,
     });
 
-    const context = makeContext({ videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
     const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
@@ -267,6 +284,7 @@ describe('loadSegments — track switch', () => {
     expect(fetchedUrls).not.toContain('https://example.com/b2.m4s');
 
     reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('does NOT flush on first init load (no prior track)', async () => {
@@ -278,6 +296,7 @@ describe('loadSegments — track switch', () => {
     const videoBuffer = makeMockSourceBuffer();
 
     const videoBufferActor = createSourceBufferActor(videoBuffer);
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
@@ -286,7 +305,7 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
 
     const reactor = loadVideoSegments.setup({ state, context });
     await new Promise((r) => setTimeout(r, 50));
@@ -294,5 +313,6 @@ describe('loadSegments — track switch', () => {
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     reactor.destroy();
+    videoLoader.destroy();
   });
 });

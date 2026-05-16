@@ -3,15 +3,17 @@ import type { ContextSignals, StateSignals } from '../../../../core/composition/
 import { signal } from '../../../../core/signals/primitives';
 import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
+import type { BandwidthState } from '../../../../network/bandwidth-estimator';
+import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
-  type SourceBufferContext,
-  type SourceBufferState,
-  setupAudioSourceBuffer,
-  setupVideoSourceBuffer,
-} from '../setup-sourcebuffer';
+  type BufferActorsContext,
+  type BufferActorsState,
+  setupAudioBufferActors,
+  setupVideoBufferActors,
+} from '../setup-buffer-actors';
 
-// Mock only `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
+// Mock `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
 // exercise the actual implementation.
 vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../media/dom/mse/mediasource-setup')>();
@@ -22,6 +24,20 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) =>
       mode: 'segments',
       updating: false,
     })),
+  };
+});
+
+// Mock `createSegmentLoaderActor` — the real implementation needs a working
+// SourceBufferActor + fetch loop which we don't exercise here. The test
+// verifies the call shape and slot publication, not actor internals.
+vi.mock('../../../actors/dom/segment-loader', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../actors/dom/segment-loader')>();
+  return {
+    ...actual,
+    createSegmentLoaderActor: vi.fn(
+      (_sourceBufferActor: SourceBufferActor, _fetchBytes: unknown): SegmentLoaderActor =>
+        ({ destroy: vi.fn() }) as unknown as SegmentLoaderActor
+    ),
   };
 });
 
@@ -143,44 +159,45 @@ describe('buildMimeCodec', () => {
   });
 });
 
-function makeState(initial: SourceBufferState = {}): StateSignals<SourceBufferState> {
+function makeState(initial: BufferActorsState = {}): StateSignals<BufferActorsState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
   };
 }
 
-function makeContext(initial: SourceBufferContext = {}): ContextSignals<SourceBufferContext> {
+function makeContext(initial: BufferActorsContext = {}): ContextSignals<BufferActorsContext> {
   return {
     mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
-    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
-    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
+    audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
   };
 }
 
 // Compose both per-type variants in the same registration order as the
 // engine (video first, audio second) — the Firefox `mozHasAudio` invariant
 // classification relies on that order.
-function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialContext: SourceBufferContext = {}) {
+function setupSetupBufferActors(initialState: BufferActorsState = {}, initialContext: BufferActorsContext = {}) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const videoReactor = setupVideoSourceBuffer.setup({
+  const videoReactor = setupVideoBufferActors.setup({
     state,
     context: {
       mediaSource: context.mediaSource,
-      videoBuffer: context.videoBuffer,
       videoBufferActor: context.videoBufferActor,
+      videoSegmentLoaderActor: context.videoSegmentLoaderActor,
     },
   });
-  const audioReactor = setupAudioSourceBuffer.setup({
+  const audioReactor = setupAudioBufferActors.setup({
     state,
     context: {
       mediaSource: context.mediaSource,
-      audioBuffer: context.audioBuffer,
       audioBufferActor: context.audioBufferActor,
+      audioSegmentLoaderActor: context.audioSegmentLoaderActor,
     },
   });
   const cleanup = () => {
@@ -190,16 +207,17 @@ function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialCo
   return { state, context, cleanup };
 }
 
-describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
+describe('setupVideoBufferActors + setupAudioBufferActors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('creates video SourceBuffer for video-only source', async () => {
+  it('creates video buffer + loader actors for video-only source', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = {} as MediaSource;
     context.mediaSource.set(mediaSource);
@@ -208,18 +226,22 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
-      expect(context.videoBuffer.get()).toBeDefined();
-      expect(context.audioBuffer.get()).toBeUndefined();
+      expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
+      expect(context.videoBufferActor.get()).toBeDefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeDefined();
+      expect(context.audioBufferActor.get()).toBeUndefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeUndefined();
     });
 
     cleanup();
   });
 
-  it('creates audio SourceBuffer for audio-only source', async () => {
+  it('creates audio buffer + loader actors for audio-only source', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const audioTrack = createResolvedAudioTrack();
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = {} as MediaSource;
     context.mediaSource.set(mediaSource);
@@ -228,19 +250,23 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(context.audioBuffer.get()).toBeDefined();
-      expect(context.videoBuffer.get()).toBeUndefined();
+      expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
+      expect(context.audioBufferActor.get()).toBeDefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeDefined();
+      expect(context.videoBufferActor.get()).toBeUndefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
     });
 
     cleanup();
   });
 
-  it('creates both SourceBuffers together when both tracks are selected', async () => {
+  it('creates both clusters together when both tracks are selected', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const videoTrack = createResolvedVideoTrack();
     const audioTrack = createResolvedAudioTrack();
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = {} as MediaSource;
     context.mediaSource.set(mediaSource);
@@ -252,20 +278,23 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
       expect(createSourceBuffer).toHaveBeenCalledTimes(2);
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(context.videoBuffer.get()).toBeDefined();
-      expect(context.audioBuffer.get()).toBeDefined();
+      expect(createSegmentLoaderActor).toHaveBeenCalledTimes(2);
+      expect(context.videoBufferActor.get()).toBeDefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeDefined();
+      expect(context.audioBufferActor.get()).toBeDefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeDefined();
     });
 
     cleanup();
   });
 
-  it('creates each SourceBuffer independently as its own type selection lands', async () => {
+  it('creates each cluster independently as its own type selection lands', async () => {
     // Per-type variants gate only on their own type — video doesn't wait
     // for audio selection. Selection + codecs (available from the
     // multivariant playlist) is enough.
     const videoTrack = createResolvedVideoTrack();
     const audioTrack = createResolvedAudioTrack();
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     context.mediaSource.set({} as MediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: audioTrack }));
@@ -274,22 +303,25 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
     state.selectedVideoTrackId.set('video-1');
 
     await vi.waitFor(() => {
-      expect(context.videoBuffer.get()).toBeDefined();
-      expect(context.audioBuffer.get()).toBeUndefined();
+      expect(context.videoBufferActor.get()).toBeDefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeDefined();
+      expect(context.audioBufferActor.get()).toBeUndefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeUndefined();
     });
 
-    // Audio selection lands later — audio buffer creates independently.
+    // Audio selection lands later — audio cluster creates independently.
     state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
-      expect(context.audioBuffer.get()).toBeDefined();
+      expect(context.audioBufferActor.get()).toBeDefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeDefined();
     });
 
     cleanup();
   });
 
-  it('creates SourceBuffer from partial resolution (no segments yet)', async () => {
-    // Buffers must create on partial resolution — codecs from the
+  it('creates cluster from partial resolution (no segments yet)', async () => {
+    // Clusters must create on partial resolution — codecs from the
     // multivariant playlist are sufficient; per-type media playlist
     // resolution (segments) is not required.
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
@@ -297,7 +329,7 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
     const resolvedAudio = createResolvedAudioTrack();
     const { segments: _s, initialization: _i, startTime: _st, duration: _d, ...partiallyResolvedAudio } = resolvedAudio;
 
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = {} as MediaSource;
     context.mediaSource.set(mediaSource);
@@ -306,17 +338,19 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(context.audioBuffer.get()).toBeDefined();
+      expect(context.audioBufferActor.get()).toBeDefined();
+      expect(context.audioSegmentLoaderActor.get()).toBeDefined();
     });
 
     cleanup();
   });
 
-  it('does not create SourceBuffer when track has no codecs', async () => {
+  it('does not create cluster when track has no codecs', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const videoTrack: VideoTrack = { ...createResolvedVideoTrack(), codecs: [] };
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     context.mediaSource.set({} as MediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
@@ -324,40 +358,80 @@ describe('setupVideoSourceBuffer + setupAudioSourceBuffer', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).not.toHaveBeenCalled();
+    expect(createSegmentLoaderActor).not.toHaveBeenCalled();
 
     cleanup();
   });
 
-  it('does not create SourceBuffers more than once', async () => {
+  it('does not create cluster more than once', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, context, cleanup } = setupSetupSourceBuffers();
+    const { state, context, cleanup } = setupSetupBufferActors();
 
     context.mediaSource.set({} as MediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     state.selectedVideoTrackId.set('video-1');
 
-    await vi.waitFor(() => expect(createSourceBuffer).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledTimes(1);
+      expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
+    });
 
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).toHaveBeenCalledTimes(1);
+    expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
 
     cleanup();
   });
 
   it('does not create without a MediaSource', async () => {
     const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, cleanup } = setupSetupSourceBuffers();
+    const { state, cleanup } = setupSetupBufferActors();
 
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     state.selectedVideoTrackId.set('video-1');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).not.toHaveBeenCalled();
+    expect(createSegmentLoaderActor).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
+  it('destroys loader before buffer-actor on state exit', async () => {
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
+
+    const videoTrack = createResolvedVideoTrack();
+    const { state, context, cleanup } = setupSetupBufferActors();
+
+    const mediaSource = {} as MediaSource;
+    context.mediaSource.set(mediaSource);
+    state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
+    state.selectedVideoTrackId.set('video-1');
+
+    await vi.waitFor(() => {
+      expect(context.videoBufferActor.get()).toBeDefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeDefined();
+    });
+
+    const loader = context.videoSegmentLoaderActor.get()!;
+    const loaderDestroy = loader.destroy as ReturnType<typeof vi.fn>;
+    expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
+
+    // Detach mediaSource → state machine transitions to 'preconditions-unmet'
+    context.mediaSource.set(undefined);
+
+    await vi.waitFor(() => {
+      expect(loaderDestroy).toHaveBeenCalled();
+      expect(context.videoBufferActor.get()).toBeUndefined();
+      expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
+    });
 
     cleanup();
   });

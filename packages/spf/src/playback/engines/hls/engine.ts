@@ -15,6 +15,7 @@ import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant
 import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
@@ -24,8 +25,8 @@ import {
 } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
-import { setupAudioSourceBuffer, setupVideoSourceBuffer } from '../../behaviors/dom/setup-sourcebuffer';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
@@ -73,10 +74,10 @@ export interface SimpleHlsEngineState {
 export interface SimpleHlsEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
-  videoBuffer?: SourceBuffer;
-  audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
+  videoSegmentLoaderActor?: SegmentLoaderActor;
+  audioSegmentLoaderActor?: SegmentLoaderActor;
   textTracksActor?: TextTracksActor;
   textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
@@ -221,15 +222,15 @@ export function createSimpleHlsEngine(
       // Presentation duration
       calculatePresentationDuration,
 
-      // MSE setup. Video buffer is registered first so that, when both
+      // MSE setup. Video cluster is registered first so that, when both
       // per-type variants flip to `'buffer-ready'` on the shared gate's
       // monitor evaluation, `addSourceBuffer(video)` runs before
       // `addSourceBuffer(audio)` — see the Firefox `mozHasAudio` invariant
-      // in setup-sourcebuffer.ts.
+      // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
-      setupVideoSourceBuffer,
-      setupAudioSourceBuffer,
+      setupVideoBufferActors,
+      setupAudioBufferActors,
 
       // Playback tracking
       trackCurrentTime,
