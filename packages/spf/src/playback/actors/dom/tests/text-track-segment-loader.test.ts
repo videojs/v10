@@ -186,6 +186,115 @@ describe('TextTrackSegmentLoaderActor', () => {
     textTracksActor.destroy();
   });
 
+  it('continues in-flight fetch when new send keeps the same segment in the plan', async () => {
+    const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
+
+    let resolveSeg0!: (cues: VTTCue[]) => void;
+    vi.mocked(resolveVttSegment)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSeg0 = resolve;
+          })
+      )
+      .mockResolvedValue([new VTTCue(0, 5, 'Cue')]);
+
+    const video = makeMediaElement(['track-en']);
+    const textTracksActor = createTextTracksActor(video);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
+    const track = makeResolvedTextTrack('track-en', [
+      'https://example.com/seg-0.vtt',
+      'https://example.com/seg-1.vtt',
+      'https://example.com/seg-2.vtt',
+    ]);
+
+    // First load — starts fetching seg-0 (held pending). seg-1 and seg-2
+    // wait in the runner's chain behind it.
+    actor.send({ type: 'load', track, currentTime: 0 });
+    await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
+    expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/seg-0.vtt');
+
+    // Second load with the same inputs. seg-0 is in-flight and the new
+    // plan still wants it → continue path: abortPending kills the queue,
+    // schedules [seg-1, seg-2] anew, but seg-0 keeps fetching.
+    actor.send({ type: 'load', track, currentTime: 0 });
+
+    // Crucially: seg-0 was NOT re-fetched. Under the old `abortAll on
+    // every send` shape, the in-flight seg-0 would be aborted and
+    // re-scheduled, producing a second call to resolveSegment for it.
+    expect(resolveVttSegment).toHaveBeenCalledTimes(1);
+
+    // Unblock seg-0 and let the rest play out.
+    resolveSeg0([new VTTCue(0, 5, 'seg-0 cue')]);
+
+    await vi.waitFor(() => {
+      expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(3);
+    });
+
+    // seg-0 was fetched exactly once across the two sends.
+    const seg0Calls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url]) => url === 'https://example.com/seg-0.vtt'
+    );
+    expect(seg0Calls).toHaveLength(1);
+
+    actor.destroy();
+    textTracksActor.destroy();
+  });
+
+  it('preempts in-flight fetch when new send drops it from the plan (e.g. seek out of window)', async () => {
+    const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
+
+    let resolveSeg0!: (cues: VTTCue[]) => void;
+    vi.mocked(resolveVttSegment)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSeg0 = resolve;
+          })
+      )
+      .mockResolvedValue([new VTTCue(0, 5, 'Cue')]);
+
+    const video = makeMediaElement(['track-en']);
+    const textTracksActor = createTextTracksActor(video);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
+    // Six segments at 10s each; default forward window is 30s, so a
+    // currentTime jump from 0 → 40 drops seg-0..seg-2 from the plan and
+    // keeps seg-4..seg-5 (window [40, 70)).
+    const track = makeResolvedTextTrack('track-en', [
+      'https://example.com/seg-0.vtt',
+      'https://example.com/seg-1.vtt',
+      'https://example.com/seg-2.vtt',
+      'https://example.com/seg-3.vtt',
+      'https://example.com/seg-4.vtt',
+      'https://example.com/seg-5.vtt',
+    ]);
+
+    actor.send({ type: 'load', track, currentTime: 0 });
+    await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
+    expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/seg-0.vtt');
+
+    // Seek — seg-0 is no longer in the forward window. Preempt:
+    // abortAll the in-flight + queue, schedule the new plan from scratch.
+    actor.send({ type: 'load', track, currentTime: 40 });
+
+    // Unblock the original seg-0 fetch. Its signal is aborted, so the
+    // cues are discarded.
+    resolveSeg0([new VTTCue(0, 5, 'should be discarded')]);
+
+    await vi.waitFor(() => {
+      const segs = textTracksActor.snapshot.get().context.segments['track-en'] ?? [];
+      const ids = segs.map((s) => s.id);
+      expect(ids).toContain('seg-4');
+    });
+
+    const ids = (textTracksActor.snapshot.get().context.segments['track-en'] ?? []).map((s) => s.id);
+    // seg-0 was preempted — its cues didn't land.
+    expect(ids).not.toContain('seg-0');
+
+    actor.destroy();
+    textTracksActor.destroy();
+  });
+
   it('does not schedule work after destroy()', async () => {
     const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
 
