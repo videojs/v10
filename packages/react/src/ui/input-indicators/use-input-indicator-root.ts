@@ -7,7 +7,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { useDestroy } from '../../utils/use-destroy';
 import { useIndicatorVisibility } from './use-indicator-visibility';
 import { useInputActionSubscription } from './use-input-action-subscription';
-import { useRenderedIndicatorState } from './use-rendered-indicator-state';
+import { type RenderedIndicatorOptions, useRenderedIndicatorState } from './use-rendered-indicator-state';
 
 interface InputIndicatorRootCore<IndicatorState extends IndicatorLifecycleState, Props> {
   readonly state: StoreState<IndicatorState>;
@@ -19,7 +19,8 @@ interface InputIndicatorRootCore<IndicatorState extends IndicatorLifecycleState,
 
 export function useInputIndicatorRoot<IndicatorState extends IndicatorLifecycleState, Props>(
   createCore: () => InputIndicatorRootCore<IndicatorState, Props>,
-  props: Props
+  props: Props,
+  options?: RenderedIndicatorOptions
 ) {
   const [core] = useState(createCore);
   useDestroy(core);
@@ -36,5 +37,5 @@ export function useInputIndicatorRoot<IndicatorState extends IndicatorLifecycleS
     () => core.state.current
   );
 
-  return useRenderedIndicatorState(currentState);
+  return useRenderedIndicatorState(currentState, options);
 }

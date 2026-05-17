@@ -7,7 +7,7 @@ import {
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
 
-import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
+import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
 export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicatorCore.State> {
@@ -26,6 +26,7 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
     dataAttrs: VolumeIndicatorDataAttrs,
     render: renderVolumeIndicator,
   });
+  readonly #options = { replayOnUpdate: false } satisfies InputIndicatorOptions;
 
   protected get core() {
     return this.#core;
@@ -37,6 +38,10 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
 
   protected get liveIndicator() {
     return this.#liveIndicator;
+  }
+
+  protected override get options() {
+    return this.#options;
   }
 
   protected override syncCoreProps(): void {

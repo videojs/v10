@@ -18,7 +18,11 @@ export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
   const { render, className, style, closeDelay, ...elementProps } = componentProps;
-  const { elementRef, present, state } = useInputIndicatorRoot(() => new VolumeIndicatorCore(), { closeDelay });
+  const { elementRef, present, state } = useInputIndicatorRoot(
+    () => new VolumeIndicatorCore(),
+    { closeDelay },
+    { replayOnUpdate: false }
+  );
 
   if (!present) return null;
 

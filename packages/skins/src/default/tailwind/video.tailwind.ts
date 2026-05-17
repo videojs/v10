@@ -186,13 +186,10 @@ export const menu = {
 };
 
 /* ==========================================================================
-   Buffering (with video surface)
+   Buffering
    ========================================================================== */
 
-export const bufferingIndicator = {
-  ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
-};
+export const bufferingIndicator = baseBufferingIndicator;
 
 /* ==========================================================================
    Error (with video surface)
