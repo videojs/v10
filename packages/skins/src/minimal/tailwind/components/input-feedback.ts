@@ -135,7 +135,8 @@ export const inputFeedback = {
     ),
     icon: 'hidden size-[calc(var(--media-icon-size)*2)]',
     shownSeek: cn(
-      'size-[calc(var(--media-icon-size)*1.5)]',
+      // Avoid two arbitrary `size-*` utilities on one element (order-dependent); mirror CSS `[data-direction] .media-icon--seek` specificity.
+      'group-data-direction/input-indicator:size-[calc(var(--media-icon-size)*1.5)]',
       'group-data-direction/input-indicator:block',
       'group-data-[direction=backward]/input-indicator:-scale-x-100',
       // Slide animation (keyframes registered in companion CSS)
