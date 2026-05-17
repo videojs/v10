@@ -24,7 +24,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import type { PresetReference, PresetResult, PresetSkinDef } from './pipeline.js';
+import type { PresetFeatureRef, PresetReference, PresetResult, PresetSkinDef } from './pipeline.js';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -307,6 +307,31 @@ function findReactMediaElement(filePath: string): string | undefined {
 
 // ─── Feature Bundle Resolution ──────────────────────────────────────
 
+/**
+ * Feature names whose kebab-cased form doesn't match the docs page slug.
+ * Example: `textTrack` → `feature-text-tracks.mdx`.
+ */
+const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
+  textTrack: 'text-tracks',
+};
+
+function featureDocsSlug(featureName: string): string {
+  const override = FEATURE_SLUG_OVERRIDES[featureName];
+  if (override) return `reference/feature-${override}`;
+  const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+  return `reference/feature-${kebab}`;
+}
+
+function featureReferenceExists(monorepoRoot: string, slug: string): boolean {
+  const mdxPath = path.join(monorepoRoot, 'site/src/content/docs', `${slug}.mdx`);
+  return fs.existsSync(mdxPath);
+}
+
+function resolveFeatureRef(name: string, monorepoRoot: string): PresetFeatureRef {
+  const slug = featureDocsSlug(name);
+  return { name, slug, hasReference: featureReferenceExists(monorepoRoot, slug) };
+}
+
 function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
   const map = new Map<string, string[]>();
   if (!fs.existsSync(presetsFilePath)) return map;
@@ -411,7 +436,11 @@ function scanReactDirectory(scanDir: string, barrelPath: string): PresetSkinDef[
 
 // ─── Preset Reference Building ──────────────────────────────────────
 
-function buildPresetReference(preset: PresetInfo, featureBundleMap: Map<string, string[]>): PresetResult | null {
+function buildPresetReference(
+  preset: PresetInfo,
+  featureBundleMap: Map<string, string[]>,
+  monorepoRoot: string
+): PresetResult | null {
   // Find feature bundle name from barrel files (try both frameworks)
   const bundleName =
     (preset.html && findFeatureBundleExport(preset.html.barrelPath)) ??
@@ -419,7 +448,8 @@ function buildPresetReference(preset: PresetInfo, featureBundleMap: Map<string, 
 
   if (!bundleName) return null;
 
-  const features = featureBundleMap.get(bundleName) ?? [];
+  const featureNames = featureBundleMap.get(bundleName) ?? [];
+  const features = featureNames.map((name) => resolveFeatureRef(name, monorepoRoot));
 
   // Scan HTML directory
   const htmlResult = preset.html ? scanHtmlDirectory(preset.html.scanDir) : { skins: [] as PresetSkinDef[] };
@@ -460,7 +490,7 @@ export function generatePresetReferences(monorepoRoot: string): PresetResult[] {
 
   const results: PresetResult[] = [];
   for (const preset of presets) {
-    const result = buildPresetReference(preset, featureBundleMap);
+    const result = buildPresetReference(preset, featureBundleMap, monorepoRoot);
     if (result) results.push(result);
   }
 

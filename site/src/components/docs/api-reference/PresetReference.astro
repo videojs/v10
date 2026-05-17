@@ -31,14 +31,6 @@ const { framework } = Astro.params;
 const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
 
 /**
- * Feature slug overrides for cases where kebabCase(featureName) doesn't
- * match the docs page slug.
- */
-const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
-  textTrack: 'text-tracks',
-};
-
-/**
  * Native media elements used by presets that don't have a custom element.
  * The pipeline can't detect these since they're not classes with `static tagName`.
  */
@@ -46,13 +38,6 @@ const NATIVE_MEDIA_ELEMENTS: Record<string, string> = {
   video: 'video',
   audio: 'audio',
 };
-
-function featureDocsSlug(featureName: string): string {
-  const override = FEATURE_SLUG_OVERRIDES[featureName];
-  if (override) return `reference/feature-${override}`;
-  const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
-  return `reference/feature-${kebab}`;
-}
 
 function htmlMediaElement(preset: PresetReferenceType): string | undefined {
   return preset.html.mediaElement ?? NATIVE_MEDIA_ELEMENTS[preset.name];
@@ -122,19 +107,27 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       <dd>
                         {preset.features.length > 0
                           ? listFormat
-                              .formatToParts(preset.features)
-                              .map((part) =>
-                                part.type === "element" ? (
+                              .formatToParts(preset.features.map((f) => f.name))
+                              .map((part) => {
+                                if (part.type !== "element") {
+                                  return <span>{part.value}</span>;
+                                }
+                                const feature = preset.features.find(
+                                  (f) => f.name === part.value,
+                                )!;
+                                return feature.hasReference ? (
                                   <DocsLink
                                     class="inline-block whitespace-nowrap"
-                                    slug={featureDocsSlug(part.value)}
+                                    slug={feature.slug}
                                   >
-                                    {part.value}
+                                    {feature.name}
                                   </DocsLink>
                                 ) : (
-                                  <span>{part.value}</span>
-                                ),
-                              )
+                                  <span class="inline-block whitespace-nowrap">
+                                    {feature.name}
+                                  </span>
+                                );
+                              })
                           : "–"}
                       </dd>
 
