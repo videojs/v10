@@ -9,6 +9,7 @@ const buildModes: BuildMode[] = ['dev', 'default'];
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
+    i18n: './src/core/i18n/index.ts',
     dom: './src/dom/index.ts',
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls/index': './src/dom/media/hls/index.ts',
