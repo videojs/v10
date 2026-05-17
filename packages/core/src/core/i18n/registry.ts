@@ -20,13 +20,18 @@ function stripUnicodeExtensions(tag: string): string {
   return idx === -1 ? tag : tag.slice(0, idx);
 }
 
+/** Registry map key: normalized tag with unicode extensions removed (same base as {@link localeLookupChain}). */
+function canonicalLocaleRegistryKey(locale: string): string {
+  return stripUnicodeExtensions(normalizeLocaleTag(locale));
+}
+
 /**
  * Most-specific-first BCP 47 lookup tags (normalized). Always ends with `en` when missing from the truncated chain.
  *
  * @example `es-419-u-nu-latn` → `['es-419', 'es', 'en']`
  */
 export function localeLookupChain(locale: string): string[] {
-  const base = stripUnicodeExtensions(normalizeLocaleTag(locale));
+  const base = canonicalLocaleRegistryKey(locale);
   if (!base) {
     return ['en'];
   }
@@ -66,7 +71,7 @@ function mergeLookupChain(chain: string[]): Translations {
 }
 
 export function registerI18n(locale: string, translations: Partial<Translations>): void {
-  const tag = normalizeLocaleTag(locale);
+  const tag = canonicalLocaleRegistryKey(locale);
   const existing = registry.get(tag) ?? {};
   registry.set(tag, { ...existing, ...translations });
   notify();
@@ -84,7 +89,7 @@ export function onI18nRegistryChange(callback: () => void): () => void {
 }
 
 export function hasRegisteredI18n(locale: string): boolean {
-  return registry.has(normalizeLocaleTag(locale));
+  return registry.has(canonicalLocaleRegistryKey(locale));
 }
 
 /** Restores the registry to built-in English only (test isolation). */

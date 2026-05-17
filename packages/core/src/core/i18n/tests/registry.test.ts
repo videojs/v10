@@ -35,6 +35,12 @@ describe('i18n registry', () => {
     expect(merged.play).toBe('ES-generic');
   });
 
+  it('registers unicode-extension locales under the same key as localeLookupChain', () => {
+    registerI18n('es-u-nu-latn', { play: 'Latin-numerals ES' });
+    expect(hasRegisteredI18n('es-u-nu-latn')).toBe(true);
+    expect(getI18nTranslations('es-u-nu-latn').play).toBe('Latin-numerals ES');
+  });
+
   it('walks zh-Hant-HK → zh-Hant → zh → en', () => {
     expect(localeLookupChain('zh-Hant-HK')).toEqual(['zh-hant-hk', 'zh-hant', 'zh', 'en']);
     registerI18n('zh', { play: 'ZH' });
