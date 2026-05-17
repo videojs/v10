@@ -57,27 +57,26 @@ export type TranslationParams = {
   mediaErrorCustom: never;
 };
 
-type TranslationsValue<K extends keyof TranslationParams> = TranslationParams[K] extends never
-  ? string
-  : K extends 'seekForwardSeconds' | 'seekBackwardSeconds'
-    ? Contains<'{seconds}'>
-    : K extends 'playbackRateAria'
-      ? Contains<'{rate}'>
-      : K extends 'playbackRateMultiplier'
-        ? Contains<'{rate}'>
-        : K extends 'timeSliderValueTextRange'
-          ? Contains<'{current}'> & Contains<'{duration}'>
-          : K extends 'timeSliderValueTextCurrent'
-            ? Contains<'{current}'>
-            : K extends 'volumeSliderValueText' | 'volumeSliderValueTextMuted'
-              ? Contains<'{percent}'>
-              : K extends 'indicatorVolumeWithValue'
-                ? Contains<'{value}'>
-                : string;
+/** Placeholder shape for each key that accepts `t(key, params)`. Omitting a key here is a type error when defining strings. */
+type ParametricTranslations = {
+  seekForwardSeconds: Contains<'{seconds}'>;
+  seekBackwardSeconds: Contains<'{seconds}'>;
+  playbackRateAria: Contains<'{rate}'>;
+  playbackRateMultiplier: Contains<'{rate}'>;
+  timeSliderValueTextRange: Contains<'{current}'> & Contains<'{duration}'>;
+  timeSliderValueTextCurrent: Contains<'{current}'>;
+  volumeSliderValueText: Contains<'{percent}'>;
+  volumeSliderValueTextMuted: Contains<'{percent}'>;
+  indicatorVolumeWithValue: Contains<'{value}'>;
+};
 
 /** Player copy keyed by camelCase tokens; all entries are optional overlay keys. */
 export type Translations = {
-  [K in keyof TranslationParams]?: TranslationsValue<K>;
+  [K in keyof TranslationParams]?: TranslationParams[K] extends never
+    ? string
+    : K extends keyof ParametricTranslations
+      ? ParametricTranslations[K]
+      : never;
 };
 
 export type Translator = <K extends keyof TranslationParams>(
