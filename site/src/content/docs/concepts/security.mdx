@@ -5,11 +5,11 @@ description: How to configure Content Security Policy, CORS, and Subresource Int
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-Video.js does not interpolate source URLs into HTML, does not render caption cues with `innerHTML`, and ships no `eval` or `Function` constructor use. The browser does the rendering. This page covers the controls you set yourself when deploying the player.
+Values you pass to the player, like source URLs, captions, and posters, never run as code. The player sets URLs as attributes, renders captions through the browser's `TextTrack` API, and never calls `eval` or `new Function()`. The rest of this page covers settings you configure yourself.
 
 ## Content Security Policy
 
-If your application sets a [Content Security Policy](https://developer.mozilla.org/docs/Web/HTTP/CSP), allow the sources the player loads. CSP is sent as an HTTP response header by your server or hosting platform — see [MDN's CSP guide](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy) for where to set it in common setups.
+If your application sets a [Content Security Policy](https://developer.mozilla.org/docs/Web/HTTP/CSP), allow the sources the player loads. Your server or hosting platform sends CSP as an HTTP response header. See [MDN's CSP guide](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy) for where to set it in common setups.
 
 | Directive | What to allow |
 | --- | --- |
@@ -17,7 +17,7 @@ If your application sets a [Content Security Policy](https://developer.mozilla.o
 | `img-src` | Origins for posters and thumbnail tracks |
 | `connect-src` | Origins for HLS manifests, segments, and caption files |
 | `worker-src` | `blob:` if you load `hls.js` variants |
-| `style-src` | `'unsafe-inline'`, or a nonce or hash — see [Inline styles](#inline-styles) |
+| `style-src` | `'unsafe-inline'`, or a nonce or hash (see [Inline styles](#inline-styles)) |
 
 A reasonable starting point:
 
@@ -35,11 +35,11 @@ Replace the origins to match where your media, posters, and captions are hosted.
 
 ### Inline styles
 
-The player applies inline styles for layout and state transitions. Allowing them needs `'unsafe-inline'` in `style-src`, or a [nonce or hash](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src) if your build setup can generate them. A nonce is the narrowest practical option — generate one per request and apply it to both the response header and the player's served styles.
+The player uses inline styles for layout and state transitions. Add `'unsafe-inline'` to `style-src` to allow them, or use a [nonce or hash](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src) if your build can generate them. A nonce is the tightest option: generate one per request, and apply it to both the response header and the player's served styles.
 
 ## `crossorigin` attribute
 
-Set [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) on the player when you load media, captions, or posters from a different origin. Use `anonymous` for the common case — the browser issues a CORS request without cookies, which is what HLS manifests, WebVTT captions, and SRI-protected scripts all expect. Use `use-credentials` only when the cross-origin request must include cookies or auth headers, for example with cookie-signed segment URLs.
+Set [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) on the player when you load media, captions, or posters from a different origin. Use `anonymous` for the common case: the browser sends a cross-origin request without cookies, which is what HLS manifests, WebVTT captions, and SRI-protected scripts all expect. Use `use-credentials` only when the cross-origin request must include cookies or auth headers, for example with cookie-signed segment URLs.
 
 <FrameworkCase frameworks={["html"]}>
 
