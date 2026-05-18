@@ -5,6 +5,7 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
@@ -34,7 +35,7 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { type QualityTuning, switchVideoQuality } from '../../behaviors/quality-switching';
+import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
@@ -174,9 +175,9 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
   /**
    * Quality-selection tuning. `safetyMargin` is the bandwidth-headroom
    * multiplier used by `selectQuality`; `upgradeMargin` is the hysteresis
-   * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_TUNING` (0.85 / 1.15).
+   * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
-  quality?: QualityTuning;
+  quality?: Partial<QualityConfig>;
 }
 
 // ============================================================================

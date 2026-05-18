@@ -29,7 +29,12 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import { DEFAULT_QUALITY_CONFIG, selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
+import {
+  DEFAULT_QUALITY_CONFIG,
+  type QualityConfig,
+  selectLowestQuality,
+  selectQuality,
+} from '../../media/abr/quality-selection';
 import type { TrackPicker } from '../../media/primitives/select-tracks';
 import {
   isResolvedPresentation,
@@ -62,37 +67,13 @@ export interface QualitySwitchingState {
   userVideoTrackSelection?: Partial<VideoTrack>;
 }
 
-/**
- * Quality-switching tunables specific to the ABR upgrade/downgrade
- * decision. `safetyMargin` mirrors `QualityConfig.safetyMargin` (the
- * selection algorithm's headroom requirement); `upgradeMargin` is the
- * hysteresis ratio gating upgrades on top of safety.
- */
-export interface QualityTuning {
-  /**
-   * Safety margin for quality selection (0–1). Track is selected only when
-   * bandwidth >= track.bandwidth / safetyMargin. Default: 0.85 (15% headroom).
-   */
-  safetyMargin?: number;
-
-  /**
-   * Upgrade hysteresis ratio (>= 1). Apply an upgrade only when
-   * `optimal.bandwidth >= current.bandwidth * upgradeMargin`. Downgrades are
-   * always immediate. Default: 1.15 (15% headroom over the current track's
-   * bandwidth on top of `safetyMargin`'s headroom over the candidate's).
-   */
-  upgradeMargin?: number;
-}
-
-/** Default values for `QualityTuning`. `safetyMargin` is the single source of truth in `DEFAULT_QUALITY_CONFIG`. */
-export const DEFAULT_QUALITY_TUNING: Required<QualityTuning> = {
-  safetyMargin: DEFAULT_QUALITY_CONFIG.safetyMargin,
-  upgradeMargin: 1.15,
-};
-
 export interface QualitySwitchingConfig {
-  /** Quality-tuning sub-config (`safetyMargin`, `upgradeMargin`). Defaults: `DEFAULT_QUALITY_TUNING`. */
-  quality?: QualityTuning;
+  /**
+   * Quality-selection tuning. `safetyMargin` is the bandwidth-headroom
+   * multiplier; `upgradeMargin` is the hysteresis ratio gating upgrades.
+   * Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
+   */
+  quality?: Partial<QualityConfig>;
 
   /**
    * Bandwidth-estimator tuning passed through to `getBandwidthEstimate`.
@@ -194,7 +175,11 @@ interface QualitySwitchingSetupConfig<S extends SelectionKey, U extends UserSele
   selectionKey: S;
   userSelectionKey: U;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
-  selectOptimal: (tracks: readonly T[], bandwidth: number, opts: { safetyMargin: number }) => T | undefined;
+  selectOptimal: (
+    tracks: readonly T[],
+    bandwidth: number,
+    opts: { safetyMargin: number; upgradeMargin: number; currentTrack?: T }
+  ) => T | undefined;
 }
 
 function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKey, T extends AbrTrack>({
@@ -204,8 +189,8 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
   state: QualitySwitchingStateMap<S, U>;
   config: QualitySwitchingSetupConfig<S, U, T>;
 }) {
-  const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_TUNING.safetyMargin;
-  const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_TUNING.upgradeMargin;
+  const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+  const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
   const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
   const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
@@ -298,35 +283,21 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
                 return;
               }
             }
-            // Fallback to the lowest-bandwidth candidate when `selectOptimal`
-            // returns nothing — preserves the slot-lifecycle invariant
-            // ("while presentation is resolved, the selection slot has a
-            // value") regardless of the algorithm's behavior. `selectQuality`
-            // falls back internally today; this catches future impls that
-            // don't. `selectLowestQuality` returns `undefined` only on empty
-            // input, and `candidates.length >= 2` here.
-            const optimal = selectOptimal(candidates, bandwidth, { safetyMargin }) ?? selectLowestQuality(candidates)!;
-            if (optimal.id === selectedId) return;
-
+            // `selectOptimal` decides the track to apply now given current
+            // selection + bandwidth + tuning. It returns:
+            //   - the optimal when no current track or on a downgrade
+            //   - the optimal when an upgrade clears `upgradeMargin`
+            //   - the current track itself when an upgrade doesn't clear margin
+            //     (caller's id-compare below no-ops in that case)
+            // Outer `?? selectLowestQuality` is defensive — `selectQuality` falls
+            // back to lowest internally; this catches future impls that don't.
+            // `selectLowestQuality` returns `undefined` only on empty input,
+            // and `candidates.length >= 2` here.
             const currentTrack = candidates.find((t) => t.id === selectedId);
-            if (!currentTrack) {
-              // No current track in the active candidate set —
-              // initialization, post-cleared, or filter narrowed to
-              // exclude the previous selection. Apply optimal directly.
-              state[selectionKey].set(optimal.id);
-              return;
-            }
-
-            if (optimal.bandwidth < currentTrack.bandwidth) {
-              // Downgrade — apply immediately.
-              state[selectionKey].set(optimal.id);
-              return;
-            }
-
-            // Upgrade — gate by magnitude hysteresis.
-            if (optimal.bandwidth >= currentTrack.bandwidth * upgradeMargin) {
-              state[selectionKey].set(optimal.id);
-            }
+            const optimal =
+              selectOptimal(candidates, bandwidth, { safetyMargin, upgradeMargin, currentTrack }) ??
+              selectLowestQuality(candidates)!;
+            if (optimal.id !== selectedId) state[selectionKey].set(optimal.id);
           },
         ],
       },

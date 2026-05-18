@@ -101,13 +101,5 @@ export { syncPreload } from './playback/behaviors/sync-preload';
 // Features (F9 - Quality Switching)
 // =============================================================================
 
-export type {
-  QualitySwitchingConfig,
-  QualitySwitchingState,
-  QualityTuning,
-} from './playback/behaviors/quality-switching';
-export {
-  DEFAULT_INITIAL_BANDWIDTH,
-  DEFAULT_QUALITY_TUNING,
-  switchVideoQuality,
-} from './playback/behaviors/quality-switching';
+export type { QualitySwitchingConfig, QualitySwitchingState } from './playback/behaviors/quality-switching';
+export { DEFAULT_INITIAL_BANDWIDTH, switchVideoQuality } from './playback/behaviors/quality-switching';
