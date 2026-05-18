@@ -74,16 +74,24 @@ export const controlsFeature = definePlayerFeature({
       },
     });
 
-    // Touch tap-to-toggle
+    // Touch tap-to-toggle.
+    //
+    // When the skin registers `tap action="toggleControls"` alongside
+    // `doubletap` gestures, the tap recognizer defers its callback by 200 ms
+    // (doubletap window) and re-reads live state at fire time. Any synthetic
+    // event that flips visibility during that window inverts the toggle —
+    // Android first-tap flash. The guards below short-circuit such events
+    // inside a touch interaction.
+    //
+    // `lastTouchAt` is recorded on pointerdown as well as pointerup: the
+    // container's own pointerup listener calls this.focus() synchronously
+    // before ours runs, firing focusin while lastTouchAt would otherwise
+    // still be 0.
     let pointerDownTime = 0;
     let lastTouchAt = 0;
 
     function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
-      // Track touch start as well as touch end: the container's own pointerup
-      // listener calls this.focus() before our pointerup handler runs, firing
-      // focusin synchronously. If we only recorded the timestamp on pointerup,
-      // the focusin guard below would see lastTouchAt=0 and not block.
       if (event.pointerType === 'touch') {
         lastTouchAt = pointerDownTime;
       }
@@ -130,11 +138,8 @@ export const controlsFeature = definePlayerFeature({
     };
 
     function onPointerMove(event: PointerEvent): void {
+      // On touch, don't flip visibility mid-gesture — just keep the idle timer alive.
       if (event.pointerType === 'touch') {
-        // On touch, don't flip visibility mid-gesture — only keep the idle timer alive when
-        // already active. The tap recognizer defers its toggle by 200 ms (doubletap window)
-        // and reads live state; if pointermove flipped controlsVisible to true before the
-        // deferred callback fires, the toggle inverts to hide instead of show (Android flash).
         if (get().userActive) scheduleIdle();
         return;
       }
@@ -150,11 +155,7 @@ export const controlsFeature = definePlayerFeature({
       container,
       'focusin',
       () => {
-        // Ignore focusin caused by the container's own pointerup focus grab
-        // after a touch tap. The tap recognizer defers its toggle by 200 ms
-        // (doubletap window) and reads live state; if focusin flipped
-        // controlsVisible to true before the deferred callback fires, the
-        // toggle inverts to hide instead of show (Android flash).
+        // Ignore focusin from the container's own pointerup focus grab.
         if (lastTouchAt > 0 && Date.now() - lastTouchAt < 500) return;
         setActive();
       },
