@@ -16,7 +16,7 @@ import {
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
-import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
@@ -34,7 +34,7 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { switchVideoQuality } from '../../behaviors/quality-switching';
+import { type QualityTuning, switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
@@ -101,13 +101,11 @@ export type SimpleHlsEngineSignals = {
  * has no config beyond what its behaviors read.
  */
 export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
-  initialBandwidth?: number;
   /**
-   * Minimum total bytes sampled before the measured bandwidth estimate is
-   * trusted for track selection. Below this threshold, `initialBandwidth`
-   * drives selection. Default: 128_000 (128 KB).
+   * Bandwidth estimate in bps to use before enough samples have been
+   * collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
    */
-  minTotalBytes?: number;
+  initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
@@ -166,6 +164,19 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * segment-loader actor only (text tracks don't use back-buffer eviction).
    */
   backBuffer?: Partial<BackBufferConfig>;
+  /**
+   * Bandwidth-estimator tuning. Overrides any field of `BandwidthConfig`
+   * (`fastHalfLife`, `slowHalfLife`, `minTotalBytes`, `minBytes`,
+   * `minDuration`). `bandwidth.minTotalBytes` supersedes the flat
+   * `minTotalBytes` field above. Defaults: see `DEFAULT_BANDWIDTH_CONFIG`.
+   */
+  bandwidth?: Partial<BandwidthConfig>;
+  /**
+   * Quality-selection tuning. `safetyMargin` is the bandwidth-headroom
+   * multiplier used by `selectQuality`; `upgradeMargin` is the hysteresis
+   * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_TUNING` (0.85 / 1.15).
+   */
+  quality?: QualityTuning;
 }
 
 // ============================================================================

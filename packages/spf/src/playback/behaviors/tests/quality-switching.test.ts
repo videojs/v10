@@ -349,7 +349,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: QualitySwitchingConfig = { safetyMargin: 1.0 };
+      const config: QualitySwitchingConfig = { quality: { safetyMargin: 1.0 } };
       const reactor = switchVideoQuality.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -364,7 +364,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: 'low',
       });
 
-      const config: QualitySwitchingConfig = { upgradeMargin: 1.05 };
+      const config: QualitySwitchingConfig = { quality: { upgradeMargin: 1.05 } };
       const reactor = switchVideoQuality.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('high');
@@ -452,7 +452,7 @@ describe('switchVideoQuality', () => {
       });
 
       const config: QualitySwitchingConfig = {
-        minTotalBytes: 40_000,
+        bandwidth: { minTotalBytes: 40_000 },
         initialBandwidth: 5_000_000,
       };
       const reactor = switchVideoQuality.setup({ state, config });

@@ -104,5 +104,10 @@ export { syncPreload } from './playback/behaviors/sync-preload';
 export type {
   QualitySwitchingConfig,
   QualitySwitchingState,
+  QualityTuning,
 } from './playback/behaviors/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchVideoQuality } from './playback/behaviors/quality-switching';
+export {
+  DEFAULT_INITIAL_BANDWIDTH,
+  DEFAULT_QUALITY_TUNING,
+  switchVideoQuality,
+} from './playback/behaviors/quality-switching';

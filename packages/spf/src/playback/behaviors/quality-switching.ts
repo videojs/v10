@@ -29,7 +29,7 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import { selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
+import { DEFAULT_QUALITY_CONFIG, selectLowestQuality, selectQuality } from '../../media/abr/quality-selection';
 import type { TrackPicker } from '../../media/primitives/select-tracks';
 import {
   isResolvedPresentation,
@@ -38,7 +38,7 @@ import {
   type VideoTrack,
 } from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
-import type { BandwidthState } from '../../network/bandwidth-estimator';
+import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
 
 export interface QualitySwitchingState {
@@ -62,7 +62,13 @@ export interface QualitySwitchingState {
   userVideoTrackSelection?: Partial<VideoTrack>;
 }
 
-export interface QualitySwitchingConfig {
+/**
+ * Quality-switching tunables specific to the ABR upgrade/downgrade
+ * decision. `safetyMargin` mirrors `QualityConfig.safetyMargin` (the
+ * selection algorithm's headroom requirement); `upgradeMargin` is the
+ * hysteresis ratio gating upgrades on top of safety.
+ */
+export interface QualityTuning {
   /**
    * Safety margin for quality selection (0–1). Track is selected only when
    * bandwidth >= track.bandwidth / safetyMargin. Default: 0.85 (15% headroom).
@@ -76,21 +82,29 @@ export interface QualitySwitchingConfig {
    * bandwidth on top of `safetyMargin`'s headroom over the candidate's).
    */
   upgradeMargin?: number;
+}
+
+/** Default values for `QualityTuning`. `safetyMargin` is the single source of truth in `DEFAULT_QUALITY_CONFIG`. */
+export const DEFAULT_QUALITY_TUNING: Required<QualityTuning> = {
+  safetyMargin: DEFAULT_QUALITY_CONFIG.safetyMargin,
+  upgradeMargin: 1.15,
+};
+
+export interface QualitySwitchingConfig {
+  /** Quality-tuning sub-config (`safetyMargin`, `upgradeMargin`). Defaults: `DEFAULT_QUALITY_TUNING`. */
+  quality?: QualityTuning;
+
+  /**
+   * Bandwidth-estimator tuning passed through to `getBandwidthEstimate`.
+   * Merged over `DEFAULT_BANDWIDTH_CONFIG`.
+   */
+  bandwidth?: Partial<BandwidthConfig>;
 
   /**
    * Bandwidth estimate in bps to use before enough samples have been collected.
    * Default: 5_000_000 (5 Mbps).
    */
   initialBandwidth?: number;
-
-  /**
-   * Minimum total bytes sampled before the measured bandwidth estimate is
-   * trusted. Below this threshold, `initialBandwidth` drives selection —
-   * both for the initial pick and re-evaluations during the
-   * data-aggregation window. Default: matches
-   * `DEFAULT_BANDWIDTH_CONFIG.minTotalBytes` (128 KB).
-   */
-  minTotalBytes?: number;
 
   /**
    * Override the initial-pick algorithm. When set, the picker is called the
@@ -100,8 +114,8 @@ export interface QualitySwitchingConfig {
    * unaffected and runs as usual.
    *
    * Default (no picker): a bandwidth-aware initial pick driven by
-   * `initialBandwidth` and `safetyMargin`, identical to ABR's downgrade
-   * branch — matches behavior pre-refactor.
+   * `initialBandwidth` and `quality.safetyMargin`, identical to ABR's
+   * downgrade branch.
    *
    * Honors of `userVideoTrackSelection` are the picker's responsibility
    * when overridden. If the picker returns `undefined`, the bandwidth-aware
@@ -110,12 +124,8 @@ export interface QualitySwitchingConfig {
   picker?: TrackPicker<QualitySwitchingConfig>;
 }
 
-export const DEFAULT_SWITCHING_CONFIG: Required<Omit<QualitySwitchingConfig, 'picker'>> = {
-  safetyMargin: 0.85,
-  upgradeMargin: 1.15,
-  initialBandwidth: 5_000_000,
-  minTotalBytes: DEFAULT_BANDWIDTH_CONFIG.minTotalBytes,
-};
+/** Default initial-bandwidth value used by quality-switching variants before measurements arrive. */
+export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 
 // ============================================================================
 // Specialization helper
@@ -194,10 +204,10 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
   state: QualitySwitchingStateMap<S, U>;
   config: QualitySwitchingSetupConfig<S, U, T>;
 }) {
-  const safetyMargin = config.safetyMargin ?? DEFAULT_SWITCHING_CONFIG.safetyMargin;
-  const upgradeMargin = config.upgradeMargin ?? DEFAULT_SWITCHING_CONFIG.upgradeMargin;
-  const initialBandwidth = config.initialBandwidth ?? DEFAULT_SWITCHING_CONFIG.initialBandwidth;
-  const minTotalBytes = config.minTotalBytes ?? DEFAULT_SWITCHING_CONFIG.minTotalBytes;
+  const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_TUNING.safetyMargin;
+  const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_TUNING.upgradeMargin;
+  const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
+  const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
   const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
 
   const derivedStateSignal = computed(() =>
@@ -269,10 +279,7 @@ function setupQualitySwitching<S extends SelectionKey, U extends UserSelectionKe
             // is undefined or bytes sampled hasn't crossed `minTotalBytes`,
             // so the initial pick + early-ABR window run the same
             // `selectOptimal` path as a fully-trusted measurement.
-            const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, {
-              ...DEFAULT_BANDWIDTH_CONFIG,
-              minTotalBytes,
-            });
+            const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig);
 
             // Picker-driven initial pick: when the slot is empty and the
             // caller supplied a `picker`, defer to it instead of the
