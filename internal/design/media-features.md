@@ -5,26 +5,22 @@ date: 2026-05-14
 
 # Composable Media
 
-Compose media behavior by registering small extensions and swapping the active
+Compose media behavior by registering host extensions and swapping the active
 strategy at runtime.
 
 ## Problem
 
-Today, behavior on top of the base media classes is layered with class mixins
-with mixin-prefixed props:
+Today, behavior on top of the base media classes is layered with class
+mixins with mixin-prefixed props:
 
 ```ts
-type MuxMediaProps = {
-  src: string;
-  type: 'video/mp4' | 'application/vnd.apple.mpegurl';
-  castSrc: string;
-  castContentType: 'video/mp4' | 'application/vnd.apple.mpegurl';
-  castReceiverApplicationId: string;
-};
-
-// packages/core/src/dom/media/mux/index.ts
+// packages/core/src/dom/media/mux/index.ts (legacy pattern)
 export class MuxVideoMedia extends MuxDataMediaMixin(GoogleCastMixin(HlsMedia))
   implements MuxMediaProps {}
+
+// MuxMediaProps surfaces the union of every mixin's props on the host:
+type MuxMediaProps = HlsMediaProps & GoogleCastMediaProps & MuxDataMediaProps;
+// e.g. castSrc, castContentType, castReceiverApplicationId, muxEnvKey, …
 ```
 
 That pattern has costs we want to remove:
@@ -33,7 +29,7 @@ That pattern has costs we want to remove:
    code-split or lazy loaded. Once mixed in, behavior can't be added,
    removed, or swapped at runtime. Cast doesn't have a way to truly turn
    itself off.
-2. **Muddled mixin API.** Mixins add config props to the media API surface
+2. **Muddled media API.** Mixins add config props to the media API surface
    which need to be prefixed to avoid conflicts.
 
 We want a model where Cast, Ads, and future extensions are independent
@@ -161,13 +157,16 @@ disambiguates them (`@videojs/react/media/google-cast` for the component,
 ### Host
 
 `HTMLMediaElementHost` (see [`media.md`](./media.md) for the host hierarchy)
-gains two methods:
+extends an abstract `Host<MediaStrategy>` that provides the composition
+primitives:
 
 ```ts
-class HTMLMediaElementHost<T, Events> extends EventTarget {
+abstract class Host<Surface extends object> extends EventTarget {
   use(extension: Extension<this>): () => void;
-  route(strategy: MediaStrategy | null, options?: { base?: boolean }): () => void;
+  route(strategy: (Surface & Strategy<this>) | null, options?: { base?: boolean }): () => void;
 }
+
+class HTMLMediaElementHost<T, Events> extends Host<MediaStrategy> { … }
 ```
 
 Every accessor and method on the host (`paused`, `currentTime`, `play`, …) is
@@ -175,32 +174,35 @@ a one-liner that forwards to the currently active strategy.
 
 | Member | Purpose |
 | - | - |
-| `use(extension)` | Register an extension. Returns a disposer that detaches it. Calling `use()` twice with the same `id` warns in `__DEV__` and is a no-op. |
-| `route(strategy)` | Route the host's media surface to a strategy. Returns a disposer that restores the previous routing *only if* this strategy is still the active one when called — so an extension never accidentally clears a strategy that another extension has since installed. Pass `null` to route back to the default unconditionally. Dispatches a `strategychange` event. |
+| `use(extension)` | Register an extension. Returns a disposer that detaches it. Calling `use()` twice with the same `id` is a no-op. |
+| `route(strategy)` | Route the host's media surface to a strategy. Returns a disposer that restores the previous routing *only if* this strategy is still the active one when called — so an extension never accidentally clears a strategy that another extension has since installed. Pass `null` to clear the routed slot. |
 | `route(strategy, { base: true })` | Same shape, different slot: replaces the host's always-on **base** strategy instead of layering on top of it. Used by extensions that want to extend defaults rather than take over (e.g. cast adds a `remote` accessor to the base so it's available even when no session is connected). The active routed strategy still overlays the base; clearing the base disposer restores the host's built-in default. |
 
-That's the entire new surface. The default strategy (the direct-to-`target`
-`BaseMediaStrategy`) and the currently active strategy are both internal state.
-External code observes changes via the `strategychange` event.
+That's the entire new surface. The base strategy (the direct-to-`target`
+`BaseMediaStrategy`) and the currently routed strategy are both internal
+state, accessed via the protected `strategy` getter.
 
-### MediaExtension
+### Extension
 
 ```ts
-abstract class MediaExtension {
-  abstract readonly id: string;
-  install?(host: HTMLMediaElementHost<any, any>): (() => void) | void;
+interface Extension<HostType = unknown> {
+  readonly id: string;
+  install?(host: HostType): (() => void) | void;
 }
 ```
 
-An `id` for dedup/lookup, and an optional `install` that returns an optional
-uninstaller. That's it. Everything else is implementation.
+An `id` for dedup, and an optional `install` that returns an optional
+uninstaller. Extensions are plain classes that `implements Extension<Host>`.
+Everything else is implementation.
 
 ### BaseMediaStrategy and strategies
 
 ```ts
-class BaseMediaStrategy<T extends HTMLMediaElement> implements MediaStrategy {
-  protected host: HTMLMediaElementHost<T, any> | null;
-  protected get target(): T | null;
+class BaseMediaStrategy<T extends HTMLMediaElement>
+  implements MediaStrategy, Strategy<HTMLMediaElementHost<T, any>>
+{
+  #host: HTMLMediaElementHost<T, any> | null = null;
+  get #target(): T | null { return this.#host?.target ?? null; }
 
   activate(host: HTMLMediaElementHost<T, any>): void;
   deactivate(): void;
@@ -208,43 +210,47 @@ class BaseMediaStrategy<T extends HTMLMediaElement> implements MediaStrategy {
   get paused(): boolean;
   get currentTime(): number;
   set currentTime(v: number);
-  // …full MediaStrategy, all forwarding to this.target
+  // …full MediaStrategy, all forwarding to this.#target
 }
 ```
 
-A strategy is any class extending `BaseMediaStrategy` that overrides the parts it
-owns. Native `super` + inheritance — no chain machinery.
+A strategy is any class extending `BaseMediaStrategy` that overrides the
+parts it owns. Native `super` + inheritance — no chain machinery. The
+`#host` reference (and hence `#target`) is per-class private, so subclasses
+that need their own host reference declare their own `#host`; calling
+`super.activate(host)` keeps the base-class plumbing working.
 
 `activate(host)` and `deactivate()` are called by the host on `route`
 swaps — strategies don't need a host at construction time. Override
 `activate` / `deactivate` to wire and unwire host-level listeners; always
-call `super.activate` / `super.deactivate`.
+call `super.activate` / `super.deactivate` so the base forwarders keep
+working.
 
 ### MediaStrategy
 
-A single interface defines the interceptable shape. `BaseMediaStrategy` and every
-strategy implements it, so TypeScript catches drift between the two.
+A single interface defines the interceptable shape, composed from the
+framework-agnostic capability interfaces in `core/media/types.ts`.
+`BaseMediaStrategy` and every strategy implements it, so TypeScript catches
+drift between the two.
 
 ```ts
-interface MediaStrategy {
-  paused: boolean;
-  ended: boolean;
-  seeking: boolean;
-  readyState: number;
-  duration: number;
-  currentTime: number;
-  muted: boolean;
-  volume: number;
-  playbackRate: number;
-  // …
-  play(): Promise<void>;
-  pause(): void;
-  load(): void;
-}
+export interface MediaStrategy
+  extends MediaPlaybackCapability,
+    MediaPauseCapability,
+    MediaSeekCapability,
+    MediaSourceCapability,
+    MediaVolumeCapability,
+    MediaPlaybackRateCapability,
+    MediaBufferCapability,
+    MediaErrorCapability,
+    MediaTextTrackCapability,
+    MediaRemotePlaybackCapability {}
 ```
 
-Adding a new interceptable accessor is two lines: extend `MediaStrategy`,
-implement it in `BaseMediaStrategy`. Strategies inherit the default automatically.
+Adding a new interceptable accessor is two steps: declare it on the
+relevant capability interface (or extend `MediaStrategy` with a new one),
+then implement it in `BaseMediaStrategy`. Strategies inherit the default
+automatically.
 
 ## Examples
 
@@ -356,10 +362,10 @@ No strategy needed — Mux Data observes lifecycle and initializes the SDK
 against the underlying element.
 
 ```ts
-export class MuxData extends MediaExtension {
+export class MuxData implements Extension<HTMLMediaElementHost<HTMLMediaElement, any>> {
   readonly id = 'mux-data';
 
-  constructor(private options: MuxDataOptions) { super(); }
+  constructor(private options: MuxDataOptions) {}
 
   install(host: HTMLMediaElementHost<HTMLMediaElement, any>) {
     const off = new AbortController();
@@ -379,10 +385,10 @@ routes the appropriate strategy:
 ```ts
 import HlsJs from 'hls.js';
 
-export class HlsExtension extends MediaExtension {
+export class HlsExtension implements Extension<HTMLVideoElementHost<any, any>> {
   readonly id = 'hls';
 
-  constructor(private options: HlsOptions = {}) { super(); }
+  constructor(private options: HlsOptions = {}) {}
 
   install(host: HTMLVideoElementHost<any, any>) {
     const off = new AbortController();
@@ -404,7 +410,7 @@ export const hls = (options?: HlsOptions) => new HlsExtension(options);
 ```
 
 `HlsJsMedia` and `NativeHlsMedia` are `BaseMediaStrategy` subclasses — same
-shape as `GoogleCastMedia`, just owning their own engine. The legacy
+shape as `GoogleCastProvider`, just owning their own engine. The legacy
 `HlsMedia` class, its `#delegate` field, the manual `bridgeEvents`
 plumbing, and the `#shouldEngineUpdate` book-keeping collapse to one
 extension + two strategies. `createHlsMedia` installs `hls()` for you;
@@ -425,26 +431,28 @@ way.
 
 ### Strategy switching
 
-- One active strategy at a time. Calling `route` while another strategy is
-  active replaces it. No stacking.
-- `route` calls `strategy.activate(host)` on the incoming strategy and
-  `prevStrategy.deactivate()` on the outgoing one before swapping `#active`,
-  then dispatches `strategychange`. UI code can listen for that event to
-  react ("we're now casting").
+- One active strategy at a time per slot (base and routed). Calling `route`
+  while another strategy is active in the same slot replaces it.
+- `route` calls `prevStrategy.deactivate()` on the outgoing strategy,
+  swaps the slot, then calls `strategy.activate(host)` on the incoming one.
 - Strategies are constructed without a host. They get the host in
-  `activate(host)` and lose it in `deactivate()`. `super.target` reads
-  through the host once activated, so accessors that fall through to the
-  underlying element (`super.paused`, `super.currentTime`) just work.
-- Strategies are responsible for controlling event propagation during their
-  tenure. `GoogleCastMedia`, for example, swallows or synthesizes
+  `activate(host)` and lose it in `deactivate()`. Accessors that fall
+  through to the underlying element (`super.paused`, `super.currentTime`)
+  just work once activated.
+- Strategies are responsible for controlling event propagation during
+  their tenure. `GoogleCastProvider`, for example, swallows or synthesizes
   `timeupdate` to reflect the cast receiver's clock, not the local
-  `<video>`. Wire those listeners in `activate`, unwire them in `deactivate`.
+  `<video>`. Wire those listeners in `activate`, unwire them in
+  `deactivate`.
 
-### Disposal order
+### Disposal
 
-- Calling `host.destroy()` (or the equivalent teardown) iterates registered
-  extensions in registration order and runs each disposer, then resets the
-  active strategy to the default.
+- Each `use(extension)` and `route(strategy, …)` call returns its own
+  disposer. Holding onto them lets callers unregister or unroute
+  individually.
+- Tearing down a host means calling every disposer the caller held. The
+  host itself doesn't expose a bulk `destroy()` today — see
+  [Open Questions](#open-questions).
 
 ## Trade-offs
 
@@ -455,6 +463,48 @@ way.
 | `super` and native class inheritance — no Proxy, no prototype mutation, no chain dispatcher | Adding a new interceptable accessor touches two places (`MediaStrategy` + `BaseMediaStrategy`) |
 | Extensions are tree-shakeable, independently testable modules | Combined behaviors that aren't naturally mutually exclusive (e.g. ads-while-casting) must be modeled at the strategy level (subclass one from the other) |
 | Generalizes the existing `HlsMedia.#delegate` pattern; no new mental model | A handful of features (HLS engine selection) drop a private idiom for a public API call |
+| Stable, owner-controlled host API surface | Extensions can't add public accessors / methods to the host the way mixins do |
+
+### About a fixed host surface
+
+Mixins extended the host's public API: installing `GoogleCastMixin` added
+`castSrc`, `castReceiver`, `castContentType`, `castStreamType`, and
+`castCustomData` to the host's surface; `MuxDataMediaMixin` added another set
+of props. Each extra prop had to be prefixed to avoid collisions, leaked
+into TypeScript types regardless of whether the extension was actually
+installed at runtime, and made the host's public shape depend on which
+mixins happened to be applied.
+
+Extensions intentionally **do not** widen `HTMLMediaElementHost`'s API.
+`host.use(extension)` registers behavior — it doesn't add accessors or
+methods. The host's public surface is whatever `MediaStrategy` defines, full
+stop. Trade-offs:
+
+- The host API is stable, predictable, and owned by us. Adding a new
+  extension never changes the host's public shape.
+- TypeScript types don't have to encode every possible mixin combination.
+- Extensions own their own configuration (passed to their constructor) and
+  their own events (dispatched on the host or on objects they expose). Cast
+  config is `new GoogleCast({ receiverApplicationId: '…' })`, not
+  `host.castReceiver = '…'`.
+- Extension-private state stays in the extension. Callers who need to reach
+  it can keep the instance reference returned from `new GoogleCast(...)` and
+  talk to it directly.
+
+Escape hatches we can add later if real use-cases demand them, none of which
+require redesigning the core:
+
+- A generic `host.extensions` registry (`host.extensions.get('google-cast')`)
+  for opt-in lookup by id.
+- A typed proxy / forwarder helper that lets an extension declare a small
+  set of accessors it wants surfaced on the host, with explicit conflict
+  rules.
+- Per-extension events bridged onto the host's `EventTarget` for the cases
+  where dispatching on the extension itself isn't ergonomic.
+
+Starting from a closed, controlled surface and opening it deliberately is
+the inverse of where mixins land — wide surface first, conflicts and
+ergonomics second — and we'd rather be the ones to choose when to widen.
 
 ### About single-strategy
 
@@ -479,34 +529,31 @@ The pattern doesn't care that the surface is `MediaStrategy` — it works
 anywhere "one active implementation at a time, with pluggable lifecycle
 behavior around it" applies.
 
-Concretely, future iframe-based players (YouTube, Vimeo, …) don't share
-`HTMLMediaElement` semantics, but they want the same composition story:
-swap implementations at runtime, attach Mux Data or other extensions
-identically. They'd extend their own host with their own surface and reuse
-`Extension` / `route` unchanged.
-
-When a second concrete host appears, the shared machinery can be lifted
-into an abstract `Host<Surface>`:
+The shared machinery already lives in an abstract `Host<Surface>` in
+`@videojs/core/dom/media/host` so future hosts can reuse it directly:
 
 ```ts
-abstract class Host<Surface> {
+abstract class Host<Surface extends object> extends EventTarget {
   use(extension: Extension<this>): () => void;
-  route(strategy: Surface | null): () => void;
+  route(strategy: (Surface & Strategy<this>) | null, options?: { base?: boolean }): () => void;
 }
 
 class HTMLMediaElementHost<T, Events> extends Host<MediaStrategy> { … }
+// future:
 class IframePlayerHost<Events> extends Host<IframePlayerSurface> { … }
 ```
+
+Concretely, future iframe-based players (YouTube, Vimeo, …) don't share
+`HTMLMediaElement` semantics, but they want the same composition story:
+swap implementations at runtime, attach Mux Data or other extensions
+identically. They'd extend `Host` with their own surface and reuse
+`Extension` / `route` unchanged.
 
 `Host` is deliberately the most boring noun — it pairs with the existing
 `HTMLMediaElementHost` naming, scales to `IframePlayerHost`, `EditorHost`,
 etc., and reads as "this class is what makes it a host." The two operations
 on it (`use`, `route`) describe its capabilities; neither verb on its own is
 strong enough to headline the class name.
-
-This is a forward-looking note, not part of the initial migration. The
-abstract base gets extracted when the second concrete host arrives — until
-then, the pattern lives on `HTMLMediaElementHost` directly.
 
 ## Prior Art
 
@@ -532,20 +579,29 @@ then, the pattern lives on `HTMLMediaElementHost` directly.
   source of truth. Two options:
   1. Strategy `activate`/`deactivate` hooks responsible for hooking and unhooking
      event forwarding (mirrors today's `bridgeEvents` per delegate).
-  2. The host centralizes a small forwarder that re-targets when
-     `route` fires `strategychange`.
+  2. The host centralizes a small forwarder that re-targets on every
+     `route` call. Would also need a hook (e.g. a `strategychange` event)
+     so external code can react to swaps.
 
   Leaning toward (1) — each strategy already owns its source, so it owns
   its events.
 
-- **Multi-host extensions.** A single `MediaExtension` instance is currently
+- **Multi-host extensions.** A single `Extension` instance is currently
   scoped to one host (it captures `host` in its `install` closure). Should
   the contract require fresh instances per host, or allow one instance to
   install into multiple hosts? Today's Mux Data and Cast are per-host anyway,
   so the simpler "one instance per host" contract is the starting point.
 
+- **Bulk teardown.** Callers track individual disposers returned from `use`
+  and `route` today. A bulk `host.destroy()` (uninstall every extension,
+  clear every routing slot, abort outstanding work) would simplify lifecycle
+  for hosts created and discarded as a unit — but raises questions about
+  re-use after destroy and interaction with custom elements'
+  `disconnectedCallback`. Out of scope for the initial migration.
+
 ## HLS media composition
 
+Again not part of the initial migration, but it leaves the door open for it.
 Lazy load the much heavier HlsJsVideo component only when needed.
 
 ```tsx
