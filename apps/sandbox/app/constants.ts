@@ -10,6 +10,7 @@ export const PRESETS = [
   'simple-hls-video',
   'dash-video',
   'vimeo-video',
+  'youtube-video',
   'audio',
   'background-video',
 ] as const;

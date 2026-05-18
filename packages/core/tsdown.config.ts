@@ -17,6 +17,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     'dom/media/native-hls/index': './src/dom/media/native-hls/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
     'dom/media/vimeo/index': './src/dom/media/vimeo/index.ts',
+    'dom/media/youtube/index': './src/dom/media/youtube/index.ts',
   },
   platform: 'neutral',
   format: 'es',

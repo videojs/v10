@@ -52,6 +52,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'simple-hls-video': 'Simple HLS Video',
   'dash-video': 'DASH Video',
   'vimeo-video': 'Vimeo Video',
+  'youtube-video': 'Youtube Video',
   audio: 'Audio',
   'background-video': 'Background Video',
 };

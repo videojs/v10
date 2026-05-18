@@ -63,18 +63,30 @@ export const SOURCES = {
     url: 'https://vimeo.com/638371504',
     type: 'vimeo',
   },
+  'youtube-1': {
+    label: 'Big Buck Bunny',
+    url: 'https://www.youtube.com/watch?v=YE7VzlLtp-4',
+    type: 'youtube',
+  },
+  'youtube-2': {
+    label: 'Tears of Steel',
+    url: 'https://www.youtube.com/watch?v=eRsGyueVLvQ',
+    type: 'youtube',
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter(
-  (id) => SOURCES[id].type !== 'dash' && SOURCES[id].type !== 'vimeo'
+  (id) => SOURCES[id].type !== 'dash' && SOURCES[id].type !== 'vimeo' && SOURCES[id].type !== 'youtube'
 );
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 export const VIMEO_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'vimeo');
+export const YOUTUBE_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'youtube');
 export const DEFAULT_VIMEO_SOURCE: SourceId = 'vimeo-1';
+export const DEFAULT_YOUTUBE_SOURCE: SourceId = 'youtube-1';
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';

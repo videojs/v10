@@ -1,13 +1,6 @@
 import type { VimeoEmbedParameters, VimeoUrl } from '@vimeo/player';
 import Player from '@vimeo/player';
-import type {
-  MediaEngineHost,
-  MediaPictureInPictureCapability,
-  MediaTextTrackCapability,
-  TimeRangeLike,
-  VideoEvents,
-} from '../../../core/media/types';
-import { TypedEventTarget } from '../../../core/media/types';
+import { IframeMediaHost } from '../iframe-host';
 
 export interface VimeoMediaProps {
   /** Vimeo video URL or numeric video ID as a string. */
@@ -57,56 +50,9 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   transparent: true,
 };
 
-const EMPTY_TIME_RANGES: Readonly<TimeRangeLike> = Object.freeze({
-  length: 0,
-  start() {
-    return 0;
-  },
-  end() {
-    return 0;
-  },
-});
-
-export class VimeoMedia
-  extends TypedEventTarget<VideoEvents>()
-  implements
-    MediaEngineHost<Player, HTMLElement>,
-    VimeoMediaProps,
-    MediaPictureInPictureCapability,
-    MediaTextTrackCapability
-{
+export class VimeoMedia extends IframeMediaHost<Player> implements VimeoMediaProps {
+  // Local typed reference — kept in sync with base `engine` via `updateEngine`.
   #player: Player | null = null;
-  #container: HTMLElement | null = null;
-  #overlay: HTMLDivElement | null = null;
-  #activationCleanup: (() => void) | null = null;
-  #destroyed = false;
-
-  // PiP only works on Safari via webkit's cross-origin iframe mechanism.
-  readonly isPipCapable =
-    typeof navigator !== 'undefined' &&
-    /Version\/.*Safari\//.test(navigator.userAgent) &&
-    !/Chrome|Chromium/.test(navigator.userAgent);
-
-  // Cached playback state — kept in sync via Vimeo SDK events so sync
-  // getters always return a meaningful value without extra async round-trips.
-  #paused = true;
-  #ended = false;
-  #duration = NaN;
-  #currentTime = 0;
-  #buffered = 0;
-  #readyState = 0;
-  #volume = 1;
-  // `#muted` serves both as the initial embed prop and the cached live value.
-  // The setter updates it (for pre-mount config) and the volumechange handler
-  // keeps it current after the player is running.
-  #muted = vimeoMediaDefaultProps.muted;
-  #playbackRate = 1;
-  #seeking = false;
-  #pip = false;
-  #error: { code: number; message: string } | null = null;
-  #textTracksVideo: HTMLVideoElement | null = null;
-  #mountedTracks: TextTrack[] = [];
-  #textTracksAbort: AbortController | null = null;
 
   // Embed props
   #src = vimeoMediaDefaultProps.src;
@@ -127,79 +73,25 @@ export class VimeoMedia
   #title = vimeoMediaDefaultProps.title;
   #transparent = vimeoMediaDefaultProps.transparent;
 
-  get engine() {
-    return this.#player;
-  }
-
-  get target() {
-    return this.#container;
-  }
-
-  attach(container: HTMLElement) {
-    this.#container = container;
-    container.style.position = 'relative';
-
-    // Overlay: sits above the iframe so pointer events reach <media-container>
-    // for controlsFeature (hover-to-show, idle timer, etc.).
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;inset:0;z-index:1;';
-    container.appendChild(overlay);
-    this.#overlay = overlay;
-
-    // PiP requires the iframe's browsing context to have user activation.
-    // Since the overlay intercepts clicks, the iframe never gets direct
-    // interaction. Work around this by focusing the iframe on every user click
-    // anywhere in the document — iframe.focus() during a user gesture gives
-    // the iframe activation via Chrome's focus-delegation mechanism.
-    const focusIframe = () => {
-      const iframe = this.#container?.querySelector<HTMLIFrameElement>('iframe');
-      iframe?.focus();
-    };
-    globalThis.document?.addEventListener('click', focusIframe, { capture: true });
-    this.#activationCleanup = () => globalThis.document?.removeEventListener('click', focusIframe, { capture: true });
-
-    if (this.#src) this.#mount();
-  }
-
-  detach() {
-    this.#overlay?.remove();
-    this.#overlay = null;
-    this.#activationCleanup?.();
-    this.#activationCleanup = null;
-    this.#unmount();
-    this.#container = null;
-  }
-
-  destroy() {
-    if (this.#destroyed) return;
-    this.#destroyed = true;
-    this.detach();
-  }
-
   // -- Source --
 
-  get src() {
+  // Overrides `protected abstract get src()` with public access — satisfies both
+  // the base class contract and VimeoMediaProps.
+  get src(): string {
     return this.#src;
   }
 
   set src(value: string) {
     if (this.#src === value) return;
     this.#src = value;
-    if (!this.#container) return;
-    if (value) this.#mount();
-    else this.#unmount();
+    const container = this.target;
+    if (!container) return;
+    if (value) this.mount(container);
+    else this.unmount();
   }
 
   get currentSrc() {
     return this.#src;
-  }
-
-  get readyState() {
-    return this.#readyState;
-  }
-
-  load() {
-    if (this.#container && this.#src) this.#mount();
   }
 
   // -- Playback --
@@ -209,144 +101,52 @@ export class VimeoMedia
   }
 
   pause() {
-    this.#player?.pause();
-  }
-
-  get paused() {
-    return this.#paused;
-  }
-
-  get ended() {
-    return this.#ended;
+    return this.#player?.pause() ?? Promise.resolve();
   }
 
   // -- Seek --
 
   get currentTime() {
-    return this.#currentTime;
+    return super.currentTime;
   }
 
   set currentTime(value: number) {
     if (!this.#player) return;
-    if (!this.#paused) {
+    if (!this.paused) {
       this.#player.setCurrentTime(value);
       return;
     }
     const seekingPlayer = this.#player;
-    const previousTime = this.#currentTime;
-    this.#currentTime = value;
-    this.#seeking = true;
+    const previousTime = this.currentTime;
+    this.updateState({ currentTime: value, seeking: true });
     this.dispatchEvent(new Event('seeking'));
     this.#player.setCurrentTime(value).then(
       (time) => {
         if (this.#player !== seekingPlayer) return;
-        this.#currentTime = time;
-        this.#seeking = false;
+        this.updateState({ currentTime: time, seeking: false });
         this.dispatchEvent(new Event('timeupdate'));
         this.dispatchEvent(new Event('seeked'));
       },
       () => {
-        if (this.#player !== seekingPlayer || !this.#seeking) return;
-        this.#currentTime = previousTime;
-        this.#seeking = false;
+        if (this.#player !== seekingPlayer || !this.seeking) return;
+        this.updateState({ currentTime: previousTime, seeking: false });
         this.dispatchEvent(new Event('seeked'));
       }
     );
   }
 
-  get duration() {
-    return this.#duration;
-  }
+  // -- Volume / playback rate delegates --
 
-  get seeking() {
-    return this.#seeking;
-  }
-
-  // -- Volume --
-
-  get volume() {
-    return this.#volume;
-  }
-
-  set volume(value: number) {
+  protected onSetVolume(value: number) {
     this.#player?.setVolume(value);
   }
 
-  get muted() {
-    return this.#muted;
-  }
-
-  set muted(value: boolean) {
-    this.#muted = value;
+  protected onSetMuted(value: boolean) {
     this.#player?.setMuted(value);
   }
 
-  // -- Playback rate --
-
-  get playbackRate() {
-    return this.#playbackRate;
-  }
-
-  set playbackRate(value: number) {
+  protected onSetPlaybackRate(value: number) {
     this.#player?.setPlaybackRate(value);
-  }
-
-  // -- Buffer --
-
-  get buffered(): TimeRangeLike {
-    if (this.#buffered > 0) {
-      const end = this.#buffered;
-      return Object.freeze({ length: 1, start: () => 0, end: () => end });
-    }
-    return EMPTY_TIME_RANGES;
-  }
-
-  get seekable(): TimeRangeLike {
-    return EMPTY_TIME_RANGES;
-  }
-
-  // -- Picture-in-picture --
-
-  get isPictureInPicture() {
-    return this.#pip;
-  }
-
-  requestPictureInPicture() {
-    // Only attempt PiP on Safari — webkit's cross-origin iframe mechanism works
-    // without requiring user activation in the iframe's browsing context.
-    if (this.isPipCapable) this.#postVimeoMethod('requestPictureInPicture');
-    return Promise.resolve();
-  }
-
-  exitPictureInPicture() {
-    if (this.isPipCapable) this.#postVimeoMethod('exitPictureInPicture');
-    return Promise.resolve();
-  }
-
-  #postVimeoMethod(method: string) {
-    const iframe = this.#container?.querySelector<HTMLIFrameElement>('iframe');
-    if (!iframe?.contentWindow || !iframe.src) return;
-    try {
-      const origin = new URL(iframe.src).origin;
-      iframe.contentWindow.postMessage({ method }, origin);
-    } catch {
-      // Ignore cross-origin or URL parse errors.
-    }
-  }
-
-  // -- Error --
-
-  get error() {
-    return this.#error;
-  }
-
-  // -- Text tracks --
-
-  get textTracks(): TextTrackList {
-    if (!this.#textTracksVideo) {
-      this.#textTracksVideo = document.createElement('video');
-    }
-    return this.#textTracksVideo.textTracks;
   }
 
   // -- Embed params --
@@ -358,7 +158,7 @@ export class VimeoMedia
   set dnt(value: boolean) {
     if (this.#dnt === value) return;
     this.#dnt = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get autoplay() {
@@ -385,7 +185,7 @@ export class VimeoMedia
   set background(value: boolean) {
     if (this.#background === value) return;
     this.#background = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get byline() {
@@ -395,7 +195,7 @@ export class VimeoMedia
   set byline(value: boolean) {
     if (this.#byline === value) return;
     this.#byline = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get color() {
@@ -414,7 +214,7 @@ export class VimeoMedia
   set controls(value: boolean) {
     if (this.#controls === value) return;
     this.#controls = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get loop() {
@@ -433,7 +233,7 @@ export class VimeoMedia
   set playsinline(value: boolean) {
     if (this.#playsinline === value) return;
     this.#playsinline = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get portrait() {
@@ -443,7 +243,7 @@ export class VimeoMedia
   set portrait(value: boolean) {
     if (this.#portrait === value) return;
     this.#portrait = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get quality() {
@@ -471,7 +271,7 @@ export class VimeoMedia
   set speed(value: boolean) {
     if (this.#speed === value) return;
     this.#speed = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get texttrack() {
@@ -493,7 +293,7 @@ export class VimeoMedia
   set title(value: boolean) {
     if (this.#title === value) return;
     this.#title = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
   get transparent() {
@@ -503,14 +303,14 @@ export class VimeoMedia
   set transparent(value: boolean) {
     if (this.#transparent === value) return;
     this.#transparent = value;
-    if (this.#player) this.#mount();
+    if (this.#player) this.mount(this.target!);
   }
 
-  // -- Private --
+  // -- Protected lifecycle --
 
-  #mount() {
-    this.#unmount();
-    if (!this.#container || !this.#src) return;
+  protected mount(container: HTMLElement) {
+    this.unmount();
+    if (!this.#src) return;
 
     const options: VimeoEmbedParameters = {
       dnt: this.#dnt,
@@ -520,7 +320,7 @@ export class VimeoMedia
       byline: this.#byline,
       controls: this.#controls,
       loop: this.#loop,
-      muted: this.#muted,
+      muted: this.muted,
       playsinline: this.#playsinline,
       portrait: this.#portrait,
       quality: this.#quality,
@@ -541,10 +341,11 @@ export class VimeoMedia
       options.url = src as VimeoUrl;
     }
 
-    this.#player = new Player(this.#container, options);
+    this.#player = new Player(container, options);
+    this.updateEngine(this.#player);
 
     // Make the iframe fill its container completely in both HTML and React contexts.
-    const iframe = this.#container.querySelector('iframe');
+    const iframe = container.querySelector('iframe');
     if (iframe) {
       iframe.style.width = '100%';
       iframe.style.height = '100%';
@@ -561,108 +362,98 @@ export class VimeoMedia
     mountedPlayer.ready().then(
       () => {
         if (this.#player !== mountedPlayer) return;
-        const iframe = this.#container?.querySelector<HTMLIFrameElement>('iframe');
+        const iframe = container.querySelector<HTMLIFrameElement>('iframe');
         if (iframe) {
           iframe.style.width = '100%';
           iframe.style.height = '100%';
         }
       },
       (err: Error) => {
-        if (this.#player !== mountedPlayer || this.#error) return;
-        this.#error = { code: 4, message: err?.message ?? 'Failed to load Vimeo video' };
+        if (this.#player !== mountedPlayer || this.error) return;
+        this.updateState({ error: { code: 4, message: err?.message ?? 'Failed to load Vimeo video' } });
         this.dispatchEvent(new Event('error'));
       }
     );
   }
 
-  #unmount() {
+  protected unmount() {
     if (!this.#player) return;
-    this.#textTracksAbort?.abort();
-    this.#textTracksAbort = null;
-    for (const track of this.#mountedTracks) {
-      track.mode = 'disabled';
-    }
-    this.#mountedTracks = [];
+    this.resetTextTracks();
     this.#player.destroy();
     this.#player = null;
-    this.#resetState();
+    this.updateEngine(null);
+    this.resetState();
   }
+
+  // -- Private --
 
   #subscribe(player: Player) {
     player.on('play', () => {
-      this.#paused = false;
-      this.#ended = false;
-      // Vimeo only fires 'play' when the video is actually ready to play,
-      // so readyState must be HAVE_ENOUGH_DATA before syncing the store.
-      this.#readyState = 4;
+      this.updateState({ paused: false, ended: false, readyState: 4 });
       this.dispatchEvent(new Event('play'));
       this.dispatchEvent(new Event('playing'));
     });
 
     player.on('pause', () => {
-      this.#paused = true;
+      this.updateState({ paused: true });
       this.dispatchEvent(new Event('pause'));
     });
 
     player.on('ended', () => {
-      this.#paused = true;
-      this.#ended = true;
+      this.updateState({ paused: true, ended: true });
       this.dispatchEvent(new Event('ended'));
       this.dispatchEvent(new Event('pause'));
     });
 
     player.on('timeupdate', ({ seconds }) => {
-      this.#currentTime = seconds;
+      this.updateState({ currentTime: seconds });
       this.dispatchEvent(new Event('timeupdate'));
     });
 
     player.on('durationchange', ({ duration }) => {
-      this.#duration = duration;
+      this.updateState({ duration });
       this.dispatchEvent(new Event('durationchange'));
     });
 
     player.on('volumechange', ({ volume, muted }) => {
-      this.#volume = volume;
       // The Vimeo SDK historically emits only { volume } — `muted` was added
       // later and may be absent. Fall back to cached value to avoid corruption.
-      this.#muted = muted ?? this.#muted;
+      this.updateState({ volume, muted: muted ?? this.muted });
       this.dispatchEvent(new Event('volumechange'));
     });
 
     player.on('playbackratechange', ({ playbackRate }) => {
-      this.#playbackRate = playbackRate;
+      this.updateState({ playbackRate });
       this.dispatchEvent(new Event('ratechange'));
     });
 
     player.on('seeking', () => {
       // Seeking means the current position's data is no longer available.
-      this.#readyState = 2;
-      this.#seeking = true;
+      this.updateState({ readyState: 2, seeking: true });
       this.dispatchEvent(new Event('seeking'));
     });
 
     player.on('seeked', () => {
-      this.#readyState = 4;
-      this.#seeking = false;
+      this.updateState({ readyState: 4, seeking: false });
       this.dispatchEvent(new Event('seeked'));
     });
 
     player.on('bufferstart', () => {
       // Rebuffering — data at current position only.
-      this.#readyState = 2;
+      this.updateState({ readyState: 2 });
       this.dispatchEvent(new Event('waiting'));
     });
 
     player.on('bufferend', () => {
-      this.#readyState = 4;
+      this.updateState({ readyState: 4 });
       this.dispatchEvent(new Event('canplay'));
       // Dispatch 'playing' so playbackFeature re-syncs waiting → false.
-      if (!this.#paused) this.dispatchEvent(new Event('playing'));
+      if (!this.paused) this.dispatchEvent(new Event('playing'));
     });
 
     player.on('loaded', () => {
       // 'loaded' fires when the video is ready to play — treat as HAVE_ENOUGH_DATA.
-      this.#readyState = 4;
+      this.updateState({ readyState: 4 });
       this.dispatchEvent(new Event('loadstart'));
       this.dispatchEvent(new Event('loadedmetadata'));
       this.dispatchEvent(new Event('loadeddata'));
@@ -676,22 +467,22 @@ export class VimeoMedia
       // not playback errors and should not trigger the error dialog.
       if (name === 'NotAllowedError') return;
       // Map Vimeo error names to MediaError codes (3 = MEDIA_ERR_DECODE, 4 = MEDIA_ERR_SRC_NOT_SUPPORTED)
-      this.#error = { code: name === 'NotFoundError' ? 4 : 3, message };
+      this.updateState({ error: { code: name === 'NotFoundError' ? 4 : 3, message } });
       this.dispatchEvent(new Event('error'));
     });
 
     player.on('enterpictureinpicture', () => {
-      this.#pip = true;
+      this.updateState({ pip: true });
       this.dispatchEvent(new Event('enterpictureinpicture'));
     });
 
     player.on('leavepictureinpicture', () => {
-      this.#pip = false;
+      this.updateState({ pip: false });
       this.dispatchEvent(new Event('leavepictureinpicture'));
     });
 
     player.on('progress', ({ seconds }) => {
-      this.#buffered = seconds;
+      this.updateState({ buffered: seconds });
       this.dispatchEvent(new Event('progress'));
     });
 
@@ -708,13 +499,9 @@ export class VimeoMedia
       player.getDuration(),
       player.getPlaybackRate(),
     ])
-      .then(([volume, muted, paused, duration, rate]) => {
+      .then(([volume, muted, paused, duration, playbackRate]) => {
         if (this.#player !== seededPlayer) return;
-        this.#volume = volume;
-        this.#muted = muted;
-        this.#paused = paused;
-        this.#duration = duration;
-        this.#playbackRate = rate;
+        this.updateState({ volume, muted, paused, duration, playbackRate });
         // Notify the store of the actual initial state — the feature's sync()
         // ran before these promises resolved, so the store needs a nudge.
         this.dispatchEvent(new Event('volumechange'));
@@ -724,10 +511,7 @@ export class VimeoMedia
       .catch(() => {});
 
     // Populate the synthetic TextTrackList from the Vimeo API.
-    if (!this.#textTracksVideo) {
-      this.#textTracksVideo = document.createElement('video');
-    }
-    const textTracksVideo = this.#textTracksVideo;
+    const textTracksVideo = this.syntheticTextTracksVideo;
     const mountedPlayer = player;
 
     player
@@ -737,19 +521,18 @@ export class VimeoMedia
         for (const t of vimeoTracks) {
           const track = textTracksVideo.addTextTrack(t.kind as TextTrackKind, t.label, t.language);
           track.mode = t.mode === 'showing' ? 'showing' : 'disabled';
-          this.#mountedTracks.push(track);
+          this.addMountedTrack(track);
         }
       })
       .catch(() => {});
 
     // Forward track-mode changes made by the UI back to the Vimeo iframe.
-    this.#textTracksAbort?.abort();
-    this.#textTracksAbort = new AbortController();
+    const abort = this.startTextTrackAbort();
     textTracksVideo.textTracks.addEventListener(
       'change',
       () => {
         const active = Array.from(textTracksVideo.textTracks).find(
-          (t) => t.mode === 'showing' && this.#mountedTracks.includes(t as TextTrack)
+          (t) => t.mode === 'showing' && this.isMountedTrack(t as TextTrack)
         );
         if (active) {
           player.enableTextTrack(active.language, active.kind);
@@ -757,23 +540,7 @@ export class VimeoMedia
           player.disableTextTrack();
         }
       },
-      { signal: this.#textTracksAbort.signal }
+      { signal: abort.signal }
     );
-  }
-
-  #resetState() {
-    this.#paused = true;
-    this.#ended = false;
-    this.#duration = NaN;
-    this.#currentTime = 0;
-    this.#buffered = 0;
-    this.#readyState = 0;
-    this.#volume = 1;
-    this.#playbackRate = 1;
-    this.#seeking = false;
-    this.#pip = false;
-    this.#error = null;
-    // #muted is intentionally preserved — it's both prop config and cached state.
-    this.dispatchEvent(new Event('emptied'));
   }
 }

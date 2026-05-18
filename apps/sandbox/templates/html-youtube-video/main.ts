@@ -1,5 +1,5 @@
 import '@videojs/html/video/player';
-import '@videojs/html/media/vimeo-video';
+import '@videojs/html/media/youtube-video';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import {
@@ -13,7 +13,7 @@ import { SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-const state = createHtmlSandboxState(false, true);
+const state = createHtmlSandboxState(false, false, true);
 const loadLatest = createLatestLoader();
 
 async function render() {
@@ -27,12 +27,12 @@ async function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <vimeo-video
+        <youtube-video
           src="${SOURCES[state.source].url}"
           ${autoplay}
           ${muted}
           ${loop}
-        ></vimeo-video>
+        ></youtube-video>
       </${tag}>
     </video-player>
   `;
