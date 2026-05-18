@@ -1,0 +1,55 @@
+---
+import EmbedMethodSectionClient from './EmbedMethodSectionClient';
+---
+
+<EmbedMethodSectionClient client:idle>
+  <slot />
+</EmbedMethodSectionClient>
+
+<style>
+  /* Pre-hydration: hide ejected by default */
+  :global([data-embed-variant="ejected"]) {
+    display: none;
+  }
+  /* After hydration: embed method controls visibility */
+  :global([data-active-embed-method="ejected"] [data-embed-variant="ejected"]) {
+    display: block;
+  }
+  :global(
+    [data-active-embed-method="ejected"] [data-embed-variant="packaged"]
+  ) {
+    display: none;
+  }
+  /* Skin variants: "video" shows by default; others hidden until their skin is active */
+  :global([data-skin-variant="audio"]) {
+    display: none;
+  }
+  :global([data-skin-variant="minimal-video"]) {
+    display: none;
+  }
+  :global([data-skin-variant="minimal-audio"]) {
+    display: none;
+  }
+  :global([data-active-skin="audio"] [data-skin-variant="audio"]) {
+    display: block;
+  }
+  :global([data-active-skin="audio"] [data-skin-variant="video"]) {
+    display: none;
+  }
+  :global(
+    [data-active-skin="minimal-video"] [data-skin-variant="minimal-video"]
+  ) {
+    display: block;
+  }
+  :global([data-active-skin="minimal-video"] [data-skin-variant="video"]) {
+    display: none;
+  }
+  :global(
+    [data-active-skin="minimal-audio"] [data-skin-variant="minimal-audio"]
+  ) {
+    display: block;
+  }
+  :global([data-active-skin="minimal-audio"] [data-skin-variant="video"]) {
+    display: none;
+  }
+</style>

@@ -1,0 +1,19 @@
+---
+import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+
+const framework = Astro.params.framework as 'html' | 'react';
+const suffix = framework === 'react' ? '-react' : '';
+---
+
+<div data-skin-variant="video">
+  <EjectedSkin id={`default-video${suffix}`} />
+</div>
+<div data-skin-variant="audio">
+  <EjectedSkin id={`default-audio${suffix}`} />
+</div>
+<div data-skin-variant="minimal-video">
+  <EjectedSkin id={`minimal-video${suffix}`} />
+</div>
+<div data-skin-variant="minimal-audio">
+  <EjectedSkin id={`minimal-audio${suffix}`} />
+</div>

@@ -6,6 +6,8 @@ export type UseCase = 'default-video' | 'default-audio' | 'background-video';
 
 export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
 
+export type EmbedMethod = 'packaged' | 'ejected';
+
 export const VALID_RENDERERS: Record<UseCase, Renderer[]> = {
   'default-video': ['html5-video', 'hls'],
   'default-audio': ['html5-audio'],

@@ -19,8 +19,9 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
-import EjectedSkinToggle from '@/components/installation/EjectedSkinToggle.astro';
+import EmbedMethodPickerSection from '@/components/installation/EmbedMethodPickerSection.astro';
+import EmbedMethodSection from '@/components/installation/EmbedMethodSection.astro';
+import EmbedMethodEjectedSkins from '@/components/installation/EmbedMethodEjectedSkins.astro';
 
 <Aside type="caution" title="Beta Software">
 Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md) for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
@@ -45,7 +46,8 @@ npx @videojs/cli docs how-to/installation \
   --skin <default|minimal> \
   --media <html5-video|html5-audio|hls|background-video> \
   --source-url <url> \
-  --install-method <cdn|npm|pnpm|yarn|bun>
+  --install-method <cdn|npm|pnpm|yarn|bun> \
+  --embed-method <packaged|ejected>
 ```
 </div>
 </LLMCase>
@@ -74,7 +76,9 @@ The default presets work well for general website playback. More pre-built playe
   <SkinPickerSection />
 </ContentWidth>
 
-Want full control over the skin? You can [eject it](#ejecting-a-skin) copy the source into your project and customize it freely.
+<ContentWidth margins="lg">
+  <EmbedMethodPickerSection />
+</ContentWidth>
 
 ## Choose your media source type
 
@@ -85,8 +89,6 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 </ContentWidth>
 
 </HumanCase>
-
-<div data-cli-replace="installation" class="contents">
 
 ## Install Video.js
 
@@ -124,6 +126,10 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   </TabsRoot>
 </FrameworkCase>
 
+<EmbedMethodSection>
+
+<div data-embed-variant="packaged" data-cli-replace="installation">
+
 <FrameworkCase frameworks={["html"]}>
 
 ## Use your player
@@ -159,16 +165,13 @@ Add it to your components folder in a new file.
 </ContentWidth>
 </FrameworkCase>
 
-
-## Ejecting a skin
-
-Skins ship pre-built. To customize beyond CSS variables, **eject** — copy the skin source into your project and own it from there. Pick whichever built-in skin is closest to your goal as a starting point.
-
-<ContentWidth margins="lg">
-<EjectedSkinToggle />
-</ContentWidth>
-
 </div>
+
+<div data-embed-variant="ejected" data-cli-omit="installation">
+  <EmbedMethodEjectedSkins />
+</div>
+
+</EmbedMethodSection>
 
 ## CSP
 

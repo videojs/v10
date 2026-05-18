@@ -1,6 +1,6 @@
 import { VJS10_DEMO_VIDEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -9,6 +9,7 @@ export interface InstallationOptions {
   renderer: Renderer;
   sourceUrl: string;
   installMethod: InstallMethod;
+  embedMethod?: EmbedMethod;
 }
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
