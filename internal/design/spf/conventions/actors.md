@@ -162,6 +162,8 @@ loadXSegments                               ←  dispatcher (reader)
 
 The dispatcher's setup never calls `createSegmentLoaderActor`. It reads the slot, encodes its policy modes as reactor states (see [`reactors.md`](reactors.md) → "Policy modes as states"), and dispatches. Lifecycle concerns — actor creation, actor destroy, slot publication — belong upstream.
 
+**Config threading:** actor factories accept a config arg at construction (e.g. `createSegmentLoaderActor(actor, fetch, { forwardBuffer, backBuffer })`). The setup-actor behavior is the natural place to thread engine config into the actor, because it's where the actor is created. See [`config.md`](config.md) → "Threading paths" → "Actor factories" for the full pattern.
+
 ## Anti-patterns
 
 - **Actor that reads signals directly.** Actors are message-driven, not signal-driven. If an actor needs to react to a signal, the dispatcher behavior should observe the signal and `send()` a message. The reverse coupling makes the actor's behavior depend on a reactive context the actor itself doesn't expose, hiding causality from readers.

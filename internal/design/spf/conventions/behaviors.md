@@ -673,6 +673,8 @@ Why:
 
 Canonical examples: `load-segments.ts` (`VIDEO_SEGMENT_LOADING_CONFIG` / `AUDIO_SEGMENT_LOADING_CONFIG` / `TEXT_SEGMENT_LOADING_CONFIG`), `setup-buffer-actors.ts` (variants spread `VIDEO_TYPE_CONFIG` / `AUDIO_TYPE_CONFIG` directly + their own per-helper additions), `resolve-track.ts` (`VIDEO_TRACK_RESOLUTION_CONFIG` etc.), `select-tracks.ts` (`VIDEO_TRACK_SELECTION_CONFIG` etc.).
 
+See [`config.md`](config.md) for the broader patterns this slots into: engine config as single source of truth, nested sub-configs at the engine surface, threading through to helpers / actors / lower-layer functions, multi-layer source-of-truth principle.
+
 The `config?: object` type on the variant's setup is intentionally loose — engines pass whatever fits, and helper-side constraints catch invalid combinations. Tighter typing (e.g. `Partial<typeof VIDEO_SEGMENT_LOADING_CONFIG>`) is fine when the engine config schema is fully nailed down; the loose type is the right default while overrides are accumulating.
 
 #### Inferred-Track generic for typed-message-send helpers

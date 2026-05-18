@@ -40,6 +40,10 @@ Read these before proposing changes:
   states.
 - `internal/design/spf/conventions/signals.md` — `peek`, `equalsById`,
   `update` overloads.
+- `internal/design/spf/conventions/config.md` — when to push a value
+  to config vs bake it in; engine config as single source of truth;
+  threading paths; multi-layer source-of-truth principle; decision
+  logic with the algorithm.
 - `packages/spf/src/CLAUDE.md` — source layout and dependency rules
   (the inverse-layering smell for pure helpers).
 - `internal/design/spf/evaluation-axes.md` — A/B/C/D/E axes.
@@ -295,6 +299,42 @@ Before writing the refactor:
   compose this behavior without wiring no-op slots? (Both paths
   answer "yes" — the difference is whether the fix is in-place
   aggregate composition or a per-type split.)
+- **Config audit — hardcoded values that should be threaded.** Scan
+  the behavior body for module-level constants referenced inline
+  (`DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration`,
+  `DEFAULT_QUALITY_CONFIG.safetyMargin`, etc.) and for magic-number
+  literals. For each, run the diagnostic from `config.md` → "When to
+  make something config": *who would override this, and why?* If the
+  answer names a plausible engine variant (low-latency live, VOD
+  bandwidth-tuning, audio-only, test stub) → thread from engine
+  config through the variant + helper / actor. If the answer is
+  "no one — it's internal correctness" → it's implementation detail;
+  leave hardcoded or extract to a shared constant (e.g.
+  `SEGMENT_TIME_EPSILON`), don't thread.
+
+  **Multi-layer source-of-truth check.** Once you've named a tunable,
+  audit *every other consumer of the same value*: other behaviors,
+  actor factories, lower-layer functions. If any of them also default
+  from the module constant independently, both consumers must thread
+  from the same engine source — independent defaulting from the
+  module constant is a latent bug where engine overrides reach one
+  layer but not the others. Per `config.md` → "The multi-layer
+  source-of-truth principle." Worked example surfaced during the SPF
+  config sweep: `bufferDuration` was used by the load-segments
+  dispatcher AND the segment-loader actor's `getSegmentsToLoad` /
+  `calculateForwardFlushPoint`; both now thread from
+  `config.forwardBuffer?.bufferDuration` instead of independently
+  reading the module constant.
+
+  **Decision-logic-with-the-algorithm check.** If the behavior
+  branches on an algorithm's output using values the algorithm could
+  read from its config, push the decision INTO the algorithm rather
+  than post-processing in the caller. The caller's job becomes "ask
+  the algorithm; apply the answer." Per `config.md` → "Decision
+  logic with the algorithm, not the caller." Worked example:
+  `selectQuality` now owns upgrade-margin gating given `currentTrack`,
+  collapsing the quality-switching dispatcher from 3 branches to one
+  `set-if-different`.
 
 ### Step 6 — Decomposition check
 
@@ -467,6 +507,16 @@ Run through, against the file as it stands post-edit:
   the rename ripples through engine composition, imports, and tests
   — surfacing it post-refactor is more costly. Per `behaviors.md` →
   "Naming" → "Domain-prefix behavior names."
+- **New inline module-level config references in the diff?** → if
+  the refactor introduced or kept a `DEFAULT_*_CONFIG.x` reference
+  in the body where the same value is also consulted elsewhere (other
+  behaviors, actor factories, lower-layer functions), thread it from
+  engine config so every consumer agrees on overrides. The pre-
+  refactor audit (Step 5's config check) catches existing instances;
+  this second pass catches ones the refactor diff itself introduced
+  — a new helper that references the module constant, a new state's
+  entry that defaults inline. Per `config.md` → "Multi-layer source-
+  of-truth principle."
 
 This is a deliberate second pass — the most common refactor failure
 mode is satisfying the rules pre-change and missing them post-change
