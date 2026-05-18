@@ -14,7 +14,8 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "exports": {
     ".": {
@@ -100,7 +101,8 @@
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist docs types '*.tsbuildinfo'",
+    "prepack": "node ../../site/scripts/copy-package-docs.js react"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",

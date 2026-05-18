@@ -20,7 +20,8 @@
   ],
   "files": [
     "dist",
-    "cdn"
+    "cdn",
+    "docs"
   ],
   "exports": {
     ".": {
@@ -131,7 +132,8 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rimraf --glob dist cdn types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
+    "prepack": "node ../../site/scripts/copy-package-docs.js html"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",

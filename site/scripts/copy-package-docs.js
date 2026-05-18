@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+/**
+ * Copies the per-framework markdown documentation subtree emitted by the site
+ * build into a target package's `docs/` directory, ready to be shipped in the
+ * package tarball.
+ *
+ * Invoked from each package's `prepack` lifecycle script:
+ *   "prepack": "node ../../site/scripts/copy-package-docs.js html"
+ *
+ * Reads `site/dist/docs/framework/<framework>/` (produced by the llms-markdown
+ * integration), rewrites absolute site URLs to local relative paths, strips
+ * the breadcrumb footer from each .md file, synthesizes a short cold-start
+ * `docs/README.md`, and writes the result to `packages/<framework>/docs/`.
+ *
+ * Hard-errors if `site/dist` is missing — run `pnpm build:site` first.
+ */
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, posix, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const SITE_DIR = resolve(__dirname, '..');
+const WORKSPACE_ROOT = resolve(SITE_DIR, '..');
+
+const PACKAGE_NAMES = {
+  html: '@videojs/html',
+  react: '@videojs/react',
+};
+
+const DOCS_SITE_BASE = 'https://videojs.org';
+
+// ──────────────────────────────────────────────────────────────────────────
+// Pure transforms (exported for unit tests)
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Removes the trailing breadcrumb block the site appends to every .md page
+ * and to llms.txt (looks like `---\n\n<framework> documentation: ...`).
+ * Mirrors the regex the CLI uses in `packages/cli/src/utils/docs.ts`.
+ */
+export function stripFooter(content) {
+  return content.replace(/\n+---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
+}
+
+/**
+ * Rewrites URLs that point at this framework's docs subtree into paths
+ * relative to the source file's location, so an agent reading from
+ * node_modules can follow links locally instead of via WebFetch.
+ *
+ * - sourceSlug is the path of the file the content belongs to, relative to
+ *   the framework root and without an extension: e.g. `concepts/overview`
+ *   for `concepts/overview.md`, or `llms` for the index `llms.txt`.
+ * - URLs outside the framework's docs subtree (e.g. the root /llms.txt,
+ *   blog posts, the other framework) are left untouched.
+ */
+export function rewriteLinks(content, sourceSlug, framework) {
+  const frameworkPath = `/docs/framework/${framework}/`;
+  // Match an optional scheme+host, then the framework path, then a slug.
+  // Stop at characters that end a URL in markdown link or autolink syntax.
+  const pattern = new RegExp(
+    `(?:https?://[^\\s)\\]]+)?${escapeForRegex(frameworkPath)}([^\\s)\\]#]*?)(\\.md|/)?(?=[)\\s\\]#])`,
+    'g'
+  );
+  const sourceDir = posix.dirname(sourceSlug);
+  return content.replace(pattern, (_match, slug) => {
+    return toRelativePath(sourceDir, `${slug}.md`);
+  });
+}
+
+/**
+ * Body for the synthesized `docs/README.md` cold-start file. Short on purpose:
+ * agents reflexively read README, this gets them to the structured index.
+ */
+export function synthesizeReadme({ framework, version }) {
+  const packageName = PACKAGE_NAMES[framework];
+  if (!packageName) throw new Error(`Unknown framework: ${framework}`);
+  const versionSuffix = version ? ` v${version}` : '';
+  return [
+    `# ${packageName} documentation`,
+    '',
+    `Bundled markdown documentation for \`${packageName}\`${versionSuffix}.`,
+    '',
+    `Start at [\`./llms.txt\`](./llms.txt) — it's the structured index of every page in this directory.`,
+    '',
+    `Canonical online version: ${DOCS_SITE_BASE}/docs/framework/${framework}`,
+    '',
+  ].join('\n');
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────────────
+
+function escapeForRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function toRelativePath(sourceDir, targetFile) {
+  const fromDir = sourceDir === '.' || sourceDir === '' ? '.' : sourceDir;
+  const rel = posix.relative(fromDir, targetFile);
+  return rel.startsWith('.') ? rel : `./${rel}`;
+}
+
+function isDocFile(path) {
+  return path.endsWith('.md') || path.endsWith('.txt');
+}
+
+function walk(dir) {
+  /** @type {string[]} */
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...walk(full));
+    } else if (entry.isFile() && isDocFile(full)) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+function slugFor(relPath) {
+  // 'concepts/overview.md' -> 'concepts/overview'
+  // 'llms.txt' -> 'llms'
+  return relPath.replace(/\.(md|txt)$/, '');
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Main IO
+// ──────────────────────────────────────────────────────────────────────────
+
+function main() {
+  const framework = process.argv[2];
+  if (!framework || !(framework in PACKAGE_NAMES)) {
+    console.error(`Usage: node copy-package-docs.js <html|react>`);
+    process.exit(1);
+  }
+
+  const sourceDir = join(SITE_DIR, 'dist', 'docs', 'framework', framework);
+  if (!existsSync(sourceDir)) {
+    console.error(`✗ ${sourceDir} not found — run \`pnpm build:site\` first.`);
+    process.exit(1);
+  }
+
+  const targetDir = join(WORKSPACE_ROOT, 'packages', framework, 'docs');
+  const version = process.env.npm_package_version;
+
+  rmSync(targetDir, { recursive: true, force: true });
+  mkdirSync(targetDir, { recursive: true });
+
+  const files = walk(sourceDir);
+  for (const sourcePath of files) {
+    const relPath = posix.relative(sourceDir.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
+    const slug = slugFor(relPath);
+    const raw = readFileSync(sourcePath, 'utf-8');
+    const transformed = rewriteLinks(stripFooter(raw), slug, framework);
+    const destPath = join(targetDir, relPath);
+    mkdirSync(dirname(destPath), { recursive: true });
+    writeFileSync(destPath, transformed, 'utf-8');
+  }
+
+  writeFileSync(join(targetDir, 'README.md'), synthesizeReadme({ framework, version }), 'utf-8');
+
+  console.log(`✓ Copied ${files.length} doc files to packages/${framework}/docs/`);
+}
+
+const isEntrypoint = process.argv[1] && resolve(process.argv[1]) === resolve(__filename);
+if (isEntrypoint) {
+  main();
+}

@@ -10,6 +10,12 @@
 Web Components. It provides a complete set of Custom Elements, state management, controllers,
 and utilities for creating feature-rich, accessible video and audio players.
 
+## Documentation
+
+Read the docs at [videojs.org](https://videojs.org/docs/framework/html), or after installing,
+browse the bundled markdown at `node_modules/@videojs/html/docs/` (start with `llms.txt` for the
+structured index).
+
 ## Community
 
 If you need help with anything related to Video.js 10, or if you'd like to casually chat with other
