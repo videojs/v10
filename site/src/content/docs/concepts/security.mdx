@@ -11,8 +11,6 @@ You make a few security choices when you ship a video player. This page covers t
 - **The `crossorigin` attribute** controls how the browser fetches videos, captions, and posters from other domains.
 - **Subresource Integrity** lets the browser verify that a script you loaded from a CDN hasn't been tampered with.
 
-You don't need to scrub URLs or caption text before passing them to the player. The player sets URLs as HTML attributes, renders captions through the browser's `TextTrack` API, and never calls `eval` or `new Function()`.
-
 ## Content Security Policy
 
 A Content Security Policy (CSP) is a list of rules your site sends to the browser saying which URLs are allowed to load scripts, media, images, and so on. This limits the damage a malicious script could do if one got onto your page.
@@ -23,29 +21,25 @@ When you do have a CSP, allow the sources the player loads:
 
 | Directive | What to allow |
 | --- | --- |
-| `media-src` | Your media origins, plus `blob:` for HLS playback |
+| `media-src` | Origins for media files and caption files loaded via `<track>` elements. Add `blob:` for HLS playback |
 | `img-src` | Origins for posters and thumbnail tracks |
-| `connect-src` | Origins for HLS manifests, segments, and caption files |
+| `connect-src` | Origins for HLS manifests, playlists, segments, and captions when using HLS playback |
 | `worker-src` | `blob:` if you load `hls.js` variants |
-| `style-src` | `'unsafe-inline'`, or a nonce or hash (see [Inline styles](#inline-styles)) |
+| `style-src` | `'unsafe-inline'`, currently required for player UI styles |
 
 A reasonable starting point:
 
 ```http
 Content-Security-Policy:
-  default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';
   img-src 'self' https: data:;
   media-src 'self' https: blob:;
   connect-src 'self' https:;
   worker-src 'self' blob:;
-  style-src 'self' 'unsafe-inline';
 ```
 
 Replace the origins to match where your media, posters, and captions are hosted.
-
-### Inline styles
-
-The player uses inline styles for layout and state transitions. Add `'unsafe-inline'` to `style-src` to allow them, or use a [nonce or hash](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src) if your build can generate them. A nonce is the tightest option: generate one per request, and apply it to both the response header and the player's served styles.
 
 ## `crossorigin` attribute
 
