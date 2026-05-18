@@ -12,12 +12,23 @@ import type {
 } from '../../../../media/types';
 import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../../actors/text-tracks';
-import {
-  loadTextTrackSegments,
-  type TextTrackSegmentLoadingContext,
-  type TextTrackSegmentLoadingState,
-} from '../../load-text-track-segments';
+import { loadTextTrackSegments } from '../load-segments';
 import { setupTextTrackActors, type TextTrackActorsContext } from '../setup-text-track-actors';
+
+// Local narrow type aliases — the text-specific slice of the
+// `SegmentLoadingState` / `SegmentLoadingContext` shapes that
+// `loadTextTrackSegments` (now defined in `load-segments.ts`) consumes.
+interface TextTrackSegmentLoadingState {
+  selectedTextTrackId?: string;
+  presentation?: MaybeResolvedPresentation;
+  currentTime?: number;
+  preload?: string;
+  loadActivated?: boolean;
+}
+
+interface TextTrackSegmentLoadingContext {
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
+}
 
 // The composed behaviors (setup in dom + loader in media) intersect their
 // context-shape contracts. The setup narrows `mediaElement` to

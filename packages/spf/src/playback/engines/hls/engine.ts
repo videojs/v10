@@ -24,7 +24,7 @@ import {
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
-import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
@@ -32,7 +32,6 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { loadTextTrackSegments } from '../../behaviors/load-text-track-segments';
 import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';

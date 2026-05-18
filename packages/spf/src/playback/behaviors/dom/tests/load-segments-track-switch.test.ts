@@ -5,6 +5,7 @@ import type { MaybeResolvedPresentation, Presentation, VideoSelectionSet } from 
 import { fetchStream } from '../../../../network/fetch';
 import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
+import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
 import { loadVideoSegments } from '../load-segments';
 
@@ -42,6 +43,7 @@ function makeContext(
     audioBufferActor?: SourceBufferActor;
     videoSegmentLoaderActor?: SegmentLoaderActor;
     audioSegmentLoaderActor?: SegmentLoaderActor;
+    textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
   } = {}
 ): ContextSignals<SegmentLoadingContext> & {
   videoBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
@@ -52,6 +54,7 @@ function makeContext(
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
     videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
     audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
+    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
   };
 }
 

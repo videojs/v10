@@ -12,10 +12,11 @@
  * `textTracksActor` / `textTrackSegmentLoaderActor`, the effect's cleanup
  * return handles destroy + slot clear structurally).
  *
- * Pairs with the host-agnostic `loadTextTrackSegments` behavior, which
- * only reads `textTrackSegmentLoaderActor`. The cue resolver is injected
- * via `config` so this behavior is the only DOM-bound piece of the
- * text-track pipeline.
+ * Pairs with the `loadTextTrackSegments` behavior (a per-type variant of
+ * `setupSegmentLoading` in `load-segments.ts`), which only reads
+ * `textTrackSegmentLoaderActor`. The cue resolver is injected via
+ * `config` so this behavior owns the DOM-bound part of the text-track
+ * pipeline.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';

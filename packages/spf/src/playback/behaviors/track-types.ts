@@ -42,3 +42,18 @@ export const AUDIO_TYPE_CONFIG = {
   actorKey: 'audioBufferActor',
   loaderKey: 'audioSegmentLoaderActor',
 } as const;
+
+/**
+ * Type-identity bundle for text-track-typed behaviors. Text tracks have
+ * no `SourceBufferActor` (MSE doesn't apply), so this bundle omits
+ * `actorKey`. The `loaderKey` points at the text-track-segment-loader
+ * actor (a `MessageActor` with continue-vs-preempt semantics, parallel
+ * to v/a's `SegmentLoaderActor`).
+ *
+ * @see loadTextTrackSegments, setupTextTrackActors
+ */
+export const TEXT_TYPE_CONFIG = {
+  type: 'text',
+  selectedKey: 'selectedTextTrackId',
+  loaderKey: 'textTrackSegmentLoaderActor',
+} as const;

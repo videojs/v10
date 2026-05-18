@@ -10,6 +10,7 @@ import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../../network/fetch';
 import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
+import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import {
   loadAudioSegments,
   loadVideoSegments,
@@ -40,6 +41,7 @@ function makeContext(
     audioBufferActor?: SourceBufferActor;
     videoSegmentLoaderActor?: SegmentLoaderActor;
     audioSegmentLoaderActor?: SegmentLoaderActor;
+    textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
   } = {}
 ): TestContext {
   return {
@@ -47,6 +49,7 @@ function makeContext(
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
     videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
     audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
+    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
   };
 }
 

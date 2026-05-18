@@ -1,64 +1,58 @@
 /**
  * **Per-type segment loading dispatch.** Per available track type (video /
- * audio), reads the per-type `SegmentLoaderActor` from context and sends
- * typed `'load'` messages whenever a meaningful loading condition changes
- * (selected track, current time crossing a segment boundary).
+ * audio / text), reads the per-type segment-loader actor from context and
+ * sends typed `'load'` messages whenever a meaningful loading condition
+ * changes (selected track, current time crossing a segment boundary).
  *
- * Loader-actor lifecycle is owned upstream by `setupVideoBufferActors` /
- * `setupAudioBufferActors`, which create the loader alongside the
- * `SourceBufferActor` and publish both to context. This behavior is
- * pure-consumer: it reads `context.xSegmentLoaderActor` and dispatches.
+ * Loader-actor lifecycle is owned upstream:
+ * - Video: `setupVideoBufferActors`
+ * - Audio: `setupAudioBufferActors`
+ * - Text: `setupTextTrackActors`
+ *
+ * This behavior is pure-consumer: it reads `context[loaderKey]` and
+ * dispatches typed messages via the variant's per-type `findResolvedTrack`
+ * resolver.
  *
  * # Load modes as reactor states
  *
- * Four states encode the load-gating policy directly, replacing the prior
- * `loadingInputsEq` + `prevInputs` hand-rolled discriminator over a flat
- * dispatcher effect:
+ * Four states encode the load-gating policy directly:
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected
- *   track hasn't resolved to a track with segments.
- * - `'dormant'` — `preload === 'none' && !loadActivated`. Nothing fires;
- *   media + init are gated behind explicit activation.
+ *   track hasn't resolved.
+ * - `'dormant'` — `preload === 'none' && !loadActivated`. Nothing fires.
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`.
- *   Covers `preload === 'metadata'` and the undefined-preload default. Fires
- *   an init-segment-only `load` message (no `range`) **once on entry**;
- *   selection changes while still in this state are intentionally not
- *   followed. Matches HTMLMediaElement's `preload='metadata'` semantics
- *   (surface enough info to populate metadata for the entry-time selection)
- *   and avoids wasted init fetches when the user reselects a track three
- *   times before pressing play. The eventual `'full-range'` entry handles
- *   whichever track is actually selected at playback start.
+ *   Fires an init-segment-only `load` message **once on entry**. The
+ *   variant's loader actor decides what to do — v/a's actor fetches the
+ *   init segment; text's actor no-ops (no init concept).
  * - `'full-range'` — `loadActivated || preload === 'auto'`. Effect re-fires
- *   on selected-track change and on segment-boundary crossing (a `computed`
- *   over `segmentStartForTime(currentTime, segments)` dedups within-segment
- *   `currentTime` ticks via signal-polyfill's default `Object.is` equality).
+ *   on selected-track change and on segment-boundary crossing.
  *
- * Mode flips (`preload` changes, `loadActivated` true↔false) drive state
- * transitions; within-mode refinements (track change, time tick) are tracked
- * inside the active state's `effects:`. The `prevInputs` closure variable
- * and `loadingInputsEq` equality function dissolve.
+ * # Per-type parameterization (inference-driven)
  *
- * # Source-reset
+ * The helper is generic over `Track` — the resolved-track type. Each
+ * variant supplies its own `findResolvedTrack` resolver via config; TS
+ * infers `Track` from the resolver's return type. The loader signal's
+ * value type is constrained to `SegmentLoaderLike<Track>` — anything with
+ * a `send` method accepting the `Track`-parameterized message. Concrete
+ * actor types (`SegmentLoaderActor`, `TextTrackSegmentLoaderActor`)
+ * satisfy this via function-parameter contravariance: an actor whose
+ * `.send` accepts a wider track type is assignable to a slot expecting a
+ * narrower track type.
  *
- * Loader-actor identity changes are observed via `'preconditions-unmet'`
- * transitions (the setup-actor behavior nulls the slot on state exit, the
- * reactor's `monitor` returns `'preconditions-unmet'`, and re-entry to a
- * positive state on the next loader fires a fresh dispatch). No closure
- * state, no defensive identity guard.
- *
- * Reads `xSegmentLoaderActor` from `setupXBufferActors`.
+ * No widening of actor message types is needed; no casts inside the
+ * helper. Per-variant wiring (right loader paired with right resolver)
+ * is enforced at the variant call site.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
 import { DEFAULT_FORWARD_BUFFER_CONFIG, segmentStartForTime } from '../../../media/buffer/forward-buffer';
-import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
-import { isResolvedTrack } from '../../../media/types';
-import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
+import type { MaybeResolvedPresentation, Segment } from '../../../media/types';
+import { findResolvedAudioTrack, findResolvedTextTrack, findResolvedVideoTrack } from '../../../media/utils/tracks';
 import type { BufferState, SegmentLoaderActor, SourceBufferState } from '../../actors/dom/segment-loader';
-import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
-import type { MediaTrackType } from './setup-buffer-actors';
+import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 
 // Re-export buffer state types for consumers that import them from this module.
 export type { BufferState, SourceBufferState };
@@ -67,26 +61,24 @@ export type { BufferState, SourceBufferState };
 // STATE & CONTEXT
 // ============================================================================
 
-/**
- * State shape for segment loading.
- */
-export interface SegmentLoadingState extends TrackSelectionState {
+/** State shape for segment loading. */
+export interface SegmentLoadingState {
   presentation?: MaybeResolvedPresentation;
   preload?: string;
   /** Current playback position in seconds. Defaults to 0 when undefined. */
   currentTime?: number;
-  /** True once a preload-overriding event has fired for the current source. Allows full segment loading regardless of preload setting. */
+  /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+  selectedTextTrackId?: string;
 }
 
-/**
- * Context shape for segment loading. Each per-type variant only consumes
- * its own type's loader actor; the helper is parameterized over one
- * `loaderActor` slot.
- */
+/** Context shape for segment loading. Each variant only consumes its own type's loader actor. */
 export interface SegmentLoadingContext {
   videoSegmentLoaderActor?: SegmentLoaderActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 // ============================================================================
@@ -95,8 +87,8 @@ export interface SegmentLoadingContext {
 
 type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range';
 
-type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
-type SegmentLoaderActorKey = 'videoSegmentLoaderActor' | 'audioSegmentLoaderActor';
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+type SegmentLoaderActorKey = 'videoSegmentLoaderActor' | 'audioSegmentLoaderActor' | 'textTrackSegmentLoaderActor';
 
 type SegmentLoadingStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<SegmentLoadingState['presentation']>;
@@ -105,52 +97,66 @@ type SegmentLoadingStateMap<K extends SelectedTrackKey> = {
   loadActivated: ReadonlySignal<SegmentLoadingState['loadActivated']>;
 } & { [P in K]: ReadonlySignal<SegmentLoadingState[P]> };
 
-type SegmentLoadingContextMap<L extends SegmentLoaderActorKey> = {
-  [P in L]: ReadonlySignal<SegmentLoaderActor | undefined>;
-};
+/** Shared `'load'` message shape parameterized over the resolved track type. */
+interface LoadMessage<Track> {
+  type: 'load';
+  track: Track;
+  range?: { start: number; end: number };
+}
+
+/** Structural constraint for any segment-loader-style actor. */
+interface SegmentLoaderLike<Track> {
+  send: (message: LoadMessage<Track>) => void;
+}
 
 /**
- * Specialization helper. Per-type variants (`loadVideoSegments` /
- * `loadAudioSegments`) call this from inside their own `defineBehavior`
- * setup, passing their narrowed `state` / `context` through directly and
- * supplying the per-type `selectedKey`, `loaderKey`, and `type`
- * discriminator inline.
+ * Specialization helper. Generic over `Track` (inferred from
+ * `findResolvedTrack`'s return type). The loader value type is
+ * constrained to `SegmentLoaderLike<Track>` — concrete actor types
+ * (whose `.send` accepts a wider track union) satisfy this via
+ * function-parameter contravariance.
+ *
+ * Tracks that the helper handles must have a `segments` field — used by
+ * `segmentBoundarySignal` to compute the load-anchor boundary. Each
+ * variant's resolver narrows to the right resolved-track shape.
  */
-function setupSegmentLoading<K extends SelectedTrackKey, L extends SegmentLoaderActorKey>({
+function setupSegmentLoading<
+  K extends SelectedTrackKey,
+  L extends SegmentLoaderActorKey,
+  Track extends { segments: readonly Segment[] },
+>({
   state,
   context,
-  config: { type, selectedKey, loaderKey },
+  config,
 }: {
   state: SegmentLoadingStateMap<K>;
-  context: SegmentLoadingContextMap<L>;
+  context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
   config: {
-    type: MediaTrackType;
     selectedKey: K;
     loaderKey: L;
+    findResolvedTrack: (
+      presentation: MaybeResolvedPresentation | undefined,
+      trackId: string | undefined
+    ) => Track | undefined;
   };
 }): Reactor<SegmentLoadingFsmState | 'destroying' | 'destroyed'> {
-  const selectedTrackSignal = computed<VideoTrack | AudioTrack | undefined>(() => {
-    const selection: TrackSelectionState = {
-      presentation: state.presentation.get(),
-      [selectedKey]: state[selectedKey].get(),
-    };
-    const track = getSelectedTrack(selection, type);
-    return track && isResolvedTrack(track) ? track : undefined;
-  });
+  const { selectedKey, loaderKey, findResolvedTrack } = config;
+
+  const selectedTrack = computed<Track | undefined>(() =>
+    findResolvedTrack(state.presentation.get(), state[selectedKey].get())
+  );
 
   // Segment-boundary signal — `segmentStartForTime` returns the same number
   // while `currentTime` stays inside one segment, so signal-polyfill's
-  // `Object.is` equality on this computed dedups within-segment ticks. The
-  // `'full-range'` effect tracks this signal (rather than `currentTime`
-  // directly) so it only re-fires on boundary crossings.
+  // `Object.is` equality on this computed dedups within-segment ticks.
   const segmentBoundarySignal = computed(() => {
-    const track = selectedTrackSignal.get();
+    const track = selectedTrack.get();
     if (!track) return undefined;
     return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);
   });
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
-    if (!context[loaderKey].get() || !selectedTrackSignal.get()) return 'preconditions-unmet';
+    if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
     if (state.preload.get() === 'none') return 'dormant';
     return 'metadata-only';
@@ -164,26 +170,22 @@ function setupSegmentLoading<K extends SelectedTrackKey, L extends SegmentLoader
       dormant: {},
       'metadata-only': {
         // Fires once on entry. Matches HTMLMediaElement's preload='metadata'
-        // semantics — load enough to surface metadata for the selected track
-        // at entry time. Selection changes while still in `'metadata-only'`
-        // (a pre-play edge case) are intentionally not followed: the
-        // eventual `'full-range'` entry handles whichever track is actually
-        // selected when playback starts, and the actor's `load` handler
-        // fetches a new init only when committed initTrackId disagrees.
+        // semantics — load enough to surface metadata for the entry-time
+        // selection. Each variant's loader decides what to do: v/a's actor
+        // fetches the init segment; text's actor treats no-range as a
+        // no-op. Selection changes while still in `'metadata-only'` are
+        // intentionally not followed.
         entry: () => {
-          const track = selectedTrackSignal.get()!;
+          const track = selectedTrack.get()!;
           context[loaderKey].get()!.send({ type: 'load', track });
         },
       },
       'full-range': {
-        // Re-fires on selected-track changes (`selectedTrackSignal`) and on
-        // segment-boundary crossings (`segmentBoundarySignal`). The loader
-        // actor reference is peeked — its presence is a state invariant.
-        // `currentTime` is peeked too: the boundary-dedup signal already
-        // handles re-firing policy; we just want the live value at dispatch
-        // time so the forward-buffer window anchors correctly.
+        // Re-fires on selected-track changes and on segment-boundary
+        // crossings. The loader and `currentTime` are peeked — the
+        // boundary-dedup signal already handles re-firing policy.
         effects: () => {
-          const track = selectedTrackSignal.get()!;
+          const track = selectedTrack.get()!;
           segmentBoundarySignal.get();
           const currentTime = peek(state.currentTime) ?? 0;
           peek(context[loaderKey])!.send({
@@ -201,16 +203,28 @@ function setupSegmentLoading<K extends SelectedTrackKey, L extends SegmentLoader
 }
 
 // ============================================================================
+// Per-helper-per-type configs — defaults that variants spread engine config over
+// ============================================================================
+
+const VIDEO_SEGMENT_LOADING_CONFIG = {
+  ...VIDEO_TYPE_CONFIG,
+  findResolvedTrack: findResolvedVideoTrack,
+} as const;
+
+const AUDIO_SEGMENT_LOADING_CONFIG = {
+  ...AUDIO_TYPE_CONFIG,
+  findResolvedTrack: findResolvedAudioTrack,
+} as const;
+
+const TEXT_SEGMENT_LOADING_CONFIG = {
+  ...TEXT_TYPE_CONFIG,
+  findResolvedTrack: findResolvedTextTrack,
+} as const;
+
+// ============================================================================
 // Specialized exports — one per media type
 // ============================================================================
 
-/**
- * Load video segments — reads the video `SegmentLoaderActor` published
- * by `setupVideoBufferActors` and dispatches typed `'load'` messages
- * based on preload / loadActivated / currentTime / selected track.
- * Bandwidth sampling for ABR is owned upstream by
- * `setupVideoBufferActors`.
- */
 export const loadVideoSegments = defineBehavior({
   stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedVideoTrackId'],
   contextKeys: ['videoSegmentLoaderActor'],
@@ -228,15 +242,10 @@ export const loadVideoSegments = defineBehavior({
     setupSegmentLoading({
       state,
       context,
-      config: { ...VIDEO_TYPE_CONFIG, ...config },
+      config: { ...VIDEO_SEGMENT_LOADING_CONFIG, ...config },
     }),
 });
 
-/**
- * Load audio segments — same dispatch shape as `loadVideoSegments`,
- * narrowed to audio. Reads the audio `SegmentLoaderActor` published by
- * `setupAudioBufferActors`.
- */
 export const loadAudioSegments = defineBehavior({
   stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedAudioTrackId'],
   contextKeys: ['audioSegmentLoaderActor'],
@@ -254,6 +263,27 @@ export const loadAudioSegments = defineBehavior({
     setupSegmentLoading({
       state,
       context,
-      config: { ...AUDIO_TYPE_CONFIG, ...config },
+      config: { ...AUDIO_SEGMENT_LOADING_CONFIG, ...config },
+    }),
+});
+
+export const loadTextTrackSegments = defineBehavior({
+  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedTextTrackId'],
+  contextKeys: ['textTrackSegmentLoaderActor'],
+  setup: ({
+    state,
+    context,
+    config = {},
+  }: {
+    state: SegmentLoadingStateMap<'selectedTextTrackId'>;
+    context: {
+      textTrackSegmentLoaderActor: ReadonlySignal<SegmentLoadingContext['textTrackSegmentLoaderActor']>;
+    };
+    config?: object;
+  }) =>
+    setupSegmentLoading({
+      state,
+      context,
+      config: { ...TEXT_SEGMENT_LOADING_CONFIG, ...config },
     }),
 });

@@ -1,10 +1,12 @@
 import type {
+  AudioTrack,
   MaybeResolvedPresentation,
   PartiallyResolvedTrack,
   Presentation,
   ResolvedTrack,
   TextTrack,
   TrackType,
+  VideoTrack,
 } from '../types';
 import { isResolvedTrack } from '../types';
 
@@ -81,6 +83,26 @@ export function findResolvedTextTrack(
   // `findTrack` returns the wide union; narrow via discriminant before
   // applying `isResolvedTrack`'s text-specific overload.
   if (!track || track.type !== 'text' || !isResolvedTrack(track)) return undefined;
+  return track;
+}
+
+export function findResolvedVideoTrack(
+  presentation: MaybeResolvedPresentation | undefined,
+  trackId: string | undefined
+): VideoTrack | undefined {
+  if (!presentation || !trackId) return undefined;
+  const track = findTrack(presentation, 'video', trackId);
+  if (!track || track.type !== 'video' || !isResolvedTrack(track)) return undefined;
+  return track;
+}
+
+export function findResolvedAudioTrack(
+  presentation: MaybeResolvedPresentation | undefined,
+  trackId: string | undefined
+): AudioTrack | undefined {
+  if (!presentation || !trackId) return undefined;
+  const track = findTrack(presentation, 'audio', trackId);
+  if (!track || track.type !== 'audio' || !isResolvedTrack(track)) return undefined;
   return track;
 }
 
