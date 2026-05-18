@@ -133,7 +133,7 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
-    "prepack": "node ../../site/scripts/copy-package-docs.js html"
+    "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",

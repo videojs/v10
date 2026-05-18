@@ -257,7 +257,7 @@ function checkBundledDocs() {
       warnings.push(`${pkg.name}: missing "docs" entry in "files" — bundled docs would not ship`);
     }
     const prepack = pkg.scripts?.prepack;
-    const expected = `node ../../site/scripts/copy-package-docs.js ${dir}`;
+    const expected = `node --import tsx ../../site/scripts/copy-package-docs.ts ${dir}`;
     if (prepack !== expected) {
       warnings.push(`${pkg.name}: prepack script should be \`${expected}\` (got: ${prepack ?? 'missing'})`);
     }

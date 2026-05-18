@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rewriteLinks, stripFooter, synthesizeReadme } from '../copy-package-docs.js';
+import { type Framework, rewriteLinks, stripFooter, synthesizeReadme } from '../copy-package-docs.ts';
 
 describe('stripFooter', () => {
   it('removes a page-style breadcrumb footer', () => {
@@ -107,6 +107,11 @@ describe('synthesizeReadme', () => {
   });
 
   it('throws on an unsupported framework', () => {
-    expect(() => synthesizeReadme({ framework: 'svelte', version: '1.0.0' })).toThrow();
+    expect(() =>
+      synthesizeReadme({
+        framework: 'svelte' as unknown as Framework,
+        version: '1.0.0',
+      })
+    ).toThrow();
   });
 });

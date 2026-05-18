@@ -1,11 +1,10 @@
-#!/usr/bin/env node
 /**
  * Copies the per-framework markdown documentation subtree emitted by the site
  * build into a target package's `docs/` directory, ready to be shipped in the
  * package tarball.
  *
  * Invoked from each package's `prepack` lifecycle script:
- *   "prepack": "node ../../site/scripts/copy-package-docs.js html"
+ *   "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
  *
  * Reads `site/dist/docs/framework/<framework>/` (produced by the llms-markdown
  * integration), rewrites absolute site URLs to local relative paths, strips
@@ -26,9 +25,15 @@ const WORKSPACE_ROOT = resolve(SITE_DIR, '..');
 const PACKAGE_NAMES = {
   html: '@videojs/html',
   react: '@videojs/react',
-};
+} as const;
+
+export type Framework = keyof typeof PACKAGE_NAMES;
 
 const DOCS_SITE_BASE = 'https://videojs.org';
+
+function isFramework(value: string): value is Framework {
+  return value in PACKAGE_NAMES;
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Pure transforms (exported for unit tests)
@@ -39,7 +44,7 @@ const DOCS_SITE_BASE = 'https://videojs.org';
  * and to llms.txt (looks like `---\n\n<framework> documentation: ...`).
  * Mirrors the regex the CLI uses in `packages/cli/src/utils/docs.ts`.
  */
-export function stripFooter(content) {
+export function stripFooter(content: string): string {
   return content.replace(/\n+---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
 }
 
@@ -54,7 +59,7 @@ export function stripFooter(content) {
  * - URLs outside the framework's docs subtree (e.g. the root /llms.txt,
  *   blog posts, the other framework) are left untouched.
  */
-export function rewriteLinks(content, sourceSlug, framework) {
+export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
   const frameworkPath = `/docs/framework/${framework}/`;
   // Match URLs in markdown link target position only: `](URL)`. Anchoring to
   // `](` keeps the regex from chewing through URL-shaped strings inside link
@@ -70,7 +75,7 @@ export function rewriteLinks(content, sourceSlug, framework) {
     'g'
   );
   const sourceDir = posix.dirname(sourceSlug);
-  return content.replace(pattern, (match, prefix, slug, ext) => {
+  return content.replace(pattern, (match, prefix: string, slug: string, ext: string | undefined) => {
     // Bare framework-root URLs (empty slug) don't map to a single file —
     // leave them alone rather than synthesizing a nonsense `./.md`.
     if (!slug) return match;
@@ -83,7 +88,13 @@ export function rewriteLinks(content, sourceSlug, framework) {
  * Body for the synthesized `docs/README.md` cold-start file. Short on purpose:
  * agents reflexively read README, this gets them to the structured index.
  */
-export function synthesizeReadme({ framework, version }) {
+export function synthesizeReadme({
+  framework,
+  version,
+}: {
+  framework: Framework;
+  version: string | undefined;
+}): string {
   const packageName = PACKAGE_NAMES[framework];
   if (!packageName) throw new Error(`Unknown framework: ${framework}`);
   const versionSuffix = version ? ` v${version}` : '';
@@ -103,23 +114,22 @@ export function synthesizeReadme({ framework, version }) {
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────
 
-function escapeForRegex(s) {
+function escapeForRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function toRelativePath(sourceDir, targetFile) {
+function toRelativePath(sourceDir: string, targetFile: string): string {
   const fromDir = sourceDir === '.' || sourceDir === '' ? '.' : sourceDir;
   const rel = posix.relative(fromDir, targetFile);
   return rel.startsWith('.') ? rel : `./${rel}`;
 }
 
-function isDocFile(path) {
+function isDocFile(path: string): boolean {
   return path.endsWith('.md') || path.endsWith('.txt');
 }
 
-function walk(dir) {
-  /** @type {string[]} */
-  const out = [];
+function walk(dir: string): string[] {
+  const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -131,7 +141,7 @@ function walk(dir) {
   return out;
 }
 
-function slugFor(relPath) {
+function slugFor(relPath: string): string {
   // 'concepts/overview.md' -> 'concepts/overview'
   // 'llms.txt' -> 'llms'
   return relPath.replace(/\.(md|txt)$/, '');
@@ -141,10 +151,10 @@ function slugFor(relPath) {
 // Main IO
 // ──────────────────────────────────────────────────────────────────────────
 
-function main() {
+function main(): void {
   const framework = process.argv[2];
-  if (!framework || !(framework in PACKAGE_NAMES)) {
-    console.error(`Usage: node copy-package-docs.js <html|react>`);
+  if (!framework || !isFramework(framework)) {
+    console.error(`Usage: node --import tsx copy-package-docs.ts <html|react>`);
     process.exit(1);
   }
 
