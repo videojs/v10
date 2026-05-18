@@ -15,7 +15,7 @@ You don't need to scrub URLs or caption text before passing them to the player. 
 
 ## Content Security Policy
 
-A Content Security Policy (CSP) is a list of rules your site sends to the browser. The rules say which URLs are allowed to load scripts, media, images, and so on. The browser refuses to load anything the rules don't allow, which limits the damage a malicious script could do if one got onto your page.
+A Content Security Policy (CSP) is a list of rules your site sends to the browser saying which URLs are allowed to load scripts, media, images, and so on. This limits the damage a malicious script could do if one got onto your page.
 
 You have one if your server returns a [`Content-Security-Policy`](https://developer.mozilla.org/docs/Web/HTTP/CSP) HTTP response header, or your HTML has a `<meta http-equiv="Content-Security-Policy">` tag. If you haven't set one up, skip this section. CSP is a good idea for production sites; MDN's [CSP guide](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy) walks through getting started.
 
@@ -49,7 +49,7 @@ The player uses inline styles for layout and state transitions. Add `'unsafe-inl
 
 ## `crossorigin` attribute
 
-Browsers treat requests to other domains differently than requests to your own. When the player loads a video, caption file, or poster from another domain, the browser needs to know whether to send cookies and whether your page is allowed to read the response. The [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) attribute tells the browser how to handle these requests.
+When the player loads a video, caption file, or poster from another domain, the browser needs to know whether to send cookies and whether your page is allowed to read the response. The [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) attribute tells the browser how to handle these requests.
 
 Skip this section if your media, captions, and posters are served from the same domain as your site.
 
@@ -77,7 +77,7 @@ When they live on a different domain, set `crossorigin` on the media element:
 
 ## Subresource Integrity
 
-Subresource Integrity (SRI) lets you attach a hash to a `<script>` tag. The browser computes the hash of the file it downloads and refuses to run the script if the hash doesn't match. This protects your site if a CDN you don't control serves a tampered file.
+Subresource Integrity (SRI) lets you attach a hash to a `<script>` tag. The browser refuses to run the script if the downloaded file's hash doesn't match, which protects you when a CDN you don't control serves a tampered file.
 
 Skip this section if you install the player with a package manager like npm or pnpm. They verify packages already.
 
@@ -92,6 +92,6 @@ When you install from a CDN, add an `integrity` hash to your script tag:
 ></script>
 ```
 
-The hash pins to a specific file, so it changes on every release. Pin to an exact version in the URL and copy the hash from your CDN's [integrity tool](https://www.srihash.org), or regenerate the hash as part of your release process. SRI also needs `crossorigin="anonymous"` on the script tag, because the browser only enforces the hash against responses it's allowed to read.
+The hash pins to a specific file, so it changes on every release. Pin to an exact version in the URL and copy the hash from your CDN's [integrity tool](https://www.srihash.org), or regenerate the hash as part of your release process. SRI also requires `crossorigin="anonymous"` on the script tag.
 
 </FrameworkCase>
