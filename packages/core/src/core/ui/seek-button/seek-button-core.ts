@@ -3,7 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import { createOptionalControlLabelCache } from '../resolve-optional-control-label';
 import type { ButtonState, TranslationKeyOrString } from '../types';
 
 export interface SeekButtonProps {
@@ -39,6 +39,7 @@ export class SeekButtonCore {
 
   #props = { ...SeekButtonCore.defaultProps };
   #media: MediaTimeState | null = null;
+  readonly #customLabel = createOptionalControlLabelCache<SeekButtonState>();
 
   constructor(props?: SeekButtonProps) {
     if (props) this.setProps(props);
@@ -46,17 +47,18 @@ export class SeekButtonCore {
 
   setProps(props: SeekButtonProps): void {
     this.#props = defaults(props, SeekButtonCore.defaultProps);
+    this.#customLabel.invalidate();
   }
 
   getLabel(state: SeekButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    const custom = this.#customLabel.resolve(this.#props.label, state);
     if (custom !== undefined) return custom;
 
     return state.direction === 'backward' ? 'seekBackwardSeconds' : 'seekForwardSeconds';
   }
 
   getLabelParams(state: SeekButtonState): { seconds: number } | undefined {
-    if (resolveOptionalControlLabel(this.#props.label, state) !== undefined) return undefined;
+    if (this.#customLabel.resolve(this.#props.label, state) !== undefined) return undefined;
     return { seconds: Math.abs(this.#props.seconds) };
   }
 

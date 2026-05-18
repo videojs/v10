@@ -3,7 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import { createOptionalControlLabelCache } from '../resolve-optional-control-label';
 import type { ButtonState, TranslationKeyOrString } from '../types';
 
 export interface PlaybackRateButtonProps {
@@ -30,6 +30,7 @@ export class PlaybackRateButtonCore {
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
+  readonly #customLabel = createOptionalControlLabelCache<PlaybackRateButtonState>();
 
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
@@ -37,17 +38,18 @@ export class PlaybackRateButtonCore {
 
   setProps(props: PlaybackRateButtonProps): void {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
+    this.#customLabel.invalidate();
   }
 
   getLabel(state: PlaybackRateButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    const custom = this.#customLabel.resolve(this.#props.label, state);
     if (custom !== undefined) return custom;
 
     return 'playbackRateAria';
   }
 
   getLabelParams(state: PlaybackRateButtonState): { rate: number } | undefined {
-    if (resolveOptionalControlLabel(this.#props.label, state) !== undefined) return undefined;
+    if (this.#customLabel.resolve(this.#props.label, state) !== undefined) return undefined;
     return { rate: state.rate };
   }
 

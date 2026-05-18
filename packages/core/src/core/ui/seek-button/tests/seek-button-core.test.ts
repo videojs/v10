@@ -124,6 +124,22 @@ describe('SeekButtonCore', () => {
       const core = new SeekButtonCore({ label: 'Skip' });
       expect(core.getLabelParams(createState())).toBeUndefined();
     });
+
+    it('shares one label callback invocation with getLabel for the same state', () => {
+      let calls = 0;
+      const core = new SeekButtonCore({
+        seconds: 30,
+        label: () => {
+          calls += 1;
+          return calls === 1 ? 'custom' : '';
+        },
+      });
+      const state = createState({ direction: 'forward' });
+
+      expect(core.getLabel(state)).toBe('custom');
+      expect(core.getLabelParams(state)).toBeUndefined();
+      expect(calls).toBe(1);
+    });
   });
 
   describe('getAttrs', () => {

@@ -17,3 +17,26 @@ export function resolveOptionalControlLabel<State>(
   if (label) return label;
   return undefined;
 }
+
+/** Per-instance cache so `getLabel` / `getLabelParams` share one resolution per state snapshot. */
+export function createOptionalControlLabelCache<State>(): {
+  resolve(
+    label: TranslationKeyOrString | ((state: State) => TranslationKeyOrString) | undefined,
+    state: State
+  ): TranslationKeyOrString | undefined;
+  invalidate(): void;
+} {
+  let cache: { state: State; custom: TranslationKeyOrString | undefined } | null = null;
+
+  return {
+    resolve(label, state) {
+      if (cache?.state !== state) {
+        cache = { state, custom: resolveOptionalControlLabel(label, state) };
+      }
+      return cache.custom;
+    },
+    invalidate() {
+      cache = null;
+    },
+  };
+}
