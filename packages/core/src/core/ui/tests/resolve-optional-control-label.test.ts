@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import { createOptionalControlLabelCache, resolveOptionalControlLabel } from '../resolve-optional-control-label';
 
 describe('resolveOptionalControlLabel', () => {
   const state = { x: 1 as const };
@@ -24,5 +24,30 @@ describe('resolveOptionalControlLabel', () => {
 
   it('returns undefined when callback returns empty string', () => {
     expect(resolveOptionalControlLabel(() => '', state)).toBeUndefined();
+  });
+});
+
+describe('createOptionalControlLabelCache', () => {
+  const state = { x: 1 as const };
+
+  it('reuses resolution for the same state snapshot', () => {
+    let calls = 0;
+    const cache = createOptionalControlLabelCache<typeof state>();
+    const label = () => {
+      calls += 1;
+      return calls === 1 ? 'first' : '';
+    };
+
+    expect(cache.resolve(label, state)).toBe('first');
+    expect(cache.resolve(label, state)).toBe('first');
+    expect(calls).toBe(1);
+  });
+
+  it('invalidates cached resolution', () => {
+    const cache = createOptionalControlLabelCache<typeof state>();
+
+    expect(cache.resolve('A', state)).toBe('A');
+    cache.invalidate();
+    expect(cache.resolve('B', state)).toBe('B');
   });
 });

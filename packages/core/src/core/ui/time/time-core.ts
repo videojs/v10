@@ -16,7 +16,7 @@ export interface TimeProps {
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
   label?: TranslationKeyOrString | ((state: TimeState) => TranslationKeyOrString) | undefined;
-  /** Options for {@link formatDuration} when building {@link TimeState#phrase} and screen reader text (not clock digits). */
+  /** Options for `formatDuration` when building spoken-duration copy (`phrase` state and screen readers), not digital clock text. */
   formatOptions?: TimeFormatOptions | undefined;
 }
 

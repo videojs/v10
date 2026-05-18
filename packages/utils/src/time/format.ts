@@ -131,21 +131,6 @@ export function secondsToIsoDuration(seconds: number): string {
   return duration;
 }
 
-function toDurationRecord(totalSeconds: number): Record<'hours' | 'minutes' | 'seconds', number> {
-  const sec = Math.floor(Math.abs(totalSeconds));
-  const hours = Math.floor(sec / 3600);
-  const minutes = Math.floor((sec % 3600) / 60);
-  const seconds = sec % 60;
-
-  const record = { hours: 0, minutes: 0, seconds: 0 };
-  if (hours > 0) record.hours = hours;
-  if (minutes > 0) record.minutes = minutes;
-  if (seconds > 0 || (hours === 0 && minutes === 0)) {
-    record.seconds = seconds;
-  }
-  return record;
-}
-
 /**
  * Human-readable duration using {@link Intl.DurationFormat} when available.
  *
@@ -159,11 +144,15 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
 
   const negative = seconds < 0;
   const positiveSeconds = Math.abs(seconds);
-  const { hours, minutes, seconds: sec } = toDurationRecord(positiveSeconds);
+  const totalSeconds = Math.floor(positiveSeconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secondsPart = totalSeconds % 60;
+
   const record: Partial<{ hours: number; minutes: number; seconds: number }> = {};
   if (hours > 0) record.hours = hours;
   if (minutes > 0) record.minutes = minutes;
-  if (sec > 0 || (hours === 0 && minutes === 0)) record.seconds = sec;
+  if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
   let body: string;
   type DurationFormatConstructor = new (
@@ -182,6 +171,11 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
       body = formatTimeAsPhrase(positiveSeconds);
     }
   } else {
+    body = formatTimeAsPhrase(positiveSeconds);
+  }
+
+  // Some ICU builds return an empty string for a zero-length duration; fall back to the phrase formatter.
+  if (!body.trim()) {
     body = formatTimeAsPhrase(positiveSeconds);
   }
 

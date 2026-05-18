@@ -15,7 +15,7 @@ export interface TimeSliderProps extends SliderProps {
   max?: number | undefined;
   /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
   changeThrottle?: number | undefined;
-  /** Options for {@link formatDuration} when building the slider thumb's `aria-valuetext`. */
+  /** Options for `formatDuration` when building the slider thumb `aria-valuetext`. */
   formatOptions?: TimeFormatOptions | undefined;
 }
 
@@ -83,7 +83,7 @@ export class TimeSliderCore extends SliderCore {
     const formatOptions = this.#props.formatOptions;
     const currentPhrase = formatDuration(announceValue, formatOptions);
     const durationPhrase = formatDuration(state.duration, formatOptions);
-    const valuetext = durationPhrase ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;
+    const valuetext = Number.isFinite(state.duration) ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;
 
     return {
       ...base,
