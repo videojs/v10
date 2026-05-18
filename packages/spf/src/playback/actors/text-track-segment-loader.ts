@@ -9,10 +9,17 @@ import type { TextTracksActor } from './text-tracks';
 // Message / actor types
 // =============================================================================
 
+/**
+ * Mirrors the v/a `SegmentLoaderMessage` shape. `range` carries the
+ * forward-window anchor (`range.start` is treated as the load anchor;
+ * the actor computes its own forward window internally via
+ * `getSegmentsToLoad`). When `range` is omitted (metadata mode), this
+ * actor is a no-op — text tracks have no init-segment concept.
+ */
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';
   track: TextTrack;
-  currentTime: number;
+  range?: { start: number; end: number };
 };
 
 /** Finite states of the actor. */
@@ -98,9 +105,14 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
    * Translate a load message into an ordered TextLoadTask list based on
    * committed actor state. In-flight awareness is handled separately in
    * the `loading` state's load handler.
+   *
+   * Metadata mode (no `range`) is a no-op for text — text tracks have
+   * no init-segment concept, so there's nothing to load until a range
+   * arrives via `'full-range'` dispatch.
    */
   const planTasks = (message: TextTrackSegmentLoaderMessage): TextLoadTask[] => {
-    const { track, currentTime } = message;
+    const { track, range } = message;
+    if (!range) return [];
     const trackId = track.id;
     // Peek (don't track) the snapshot: the loader's `send` is typically
     // invoked from inside the dispatcher's effect body, so a tracked
@@ -108,7 +120,12 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
     // dispatcher's dep set — every `add-cues` would re-fire the dispatcher
     // and schedule duplicate loads.
     const bufferedSegments = peek(textTracksActor.snapshot).context.segments[trackId] ?? [];
-    const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+    // `getSegmentsToLoad` uses its own internal forward-window
+    // (`DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration`); only `range.start`
+    // is consulted here as the playhead anchor. `range.end` is
+    // informational — it carries the dispatcher's intended window upper
+    // bound but doesn't override the actor's planning.
+    const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, range.start);
     return segmentsToLoad.map((segment) => ({ segment, trackId }));
   };
 

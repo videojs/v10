@@ -2,7 +2,7 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal } from '../../core/signals/primitives';
-import { segmentStartForTime } from '../../media/buffer/forward-buffer';
+import { DEFAULT_FORWARD_BUFFER_CONFIG, segmentStartForTime } from '../../media/buffer/forward-buffer';
 import type { MaybeResolvedPresentation } from '../../media/types';
 import { findResolvedTextTrack } from '../../media/utils/tracks';
 import type { TextTrackSegmentLoaderActor } from '../actors/text-track-segment-loader';
@@ -120,7 +120,14 @@ function loadTextTrackSegmentsSetup({
           // Tracked: re-fires the effect on boundary crossings.
           segmentBoundarySignal.get();
           const currentTime = peek(state.currentTime) ?? 0;
-          peek(context.textTrackSegmentLoaderActor)!.send({ type: 'load', track, currentTime });
+          peek(context.textTrackSegmentLoaderActor)!.send({
+            type: 'load',
+            track,
+            range: {
+              start: currentTime,
+              end: currentTime + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
+            },
+          });
         },
       },
     },

@@ -69,7 +69,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', []);
 
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
 
     expect(resolveVttSegment).not.toHaveBeenCalled();
 
@@ -83,7 +83,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
 
     await vi.waitFor(() => {
       expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2);
@@ -103,12 +103,12 @@ describe('TextTrackSegmentLoaderActor', () => {
     const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
     await vi.waitFor(() => expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2));
     expect(resolveVttSegment).toHaveBeenCalledTimes(2);
 
     // Repeat send — all segments already in TextTracksActor context
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
     expect(resolveVttSegment).toHaveBeenCalledTimes(2);
 
     actor.destroy();
@@ -133,7 +133,7 @@ describe('TextTrackSegmentLoaderActor', () => {
       'https://example.com/seg-2.vtt',
     ]);
 
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
 
     // Segments 0 and 2 succeeded; the failed segment is not recorded
     await vi.waitFor(() => expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2));
@@ -165,13 +165,13 @@ describe('TextTrackSegmentLoaderActor', () => {
     const track2 = makeResolvedTextTrack('track-es', ['https://example.com/seg-1.vtt']);
 
     // Start loading track1 — paused waiting for seg0
-    actor.send({ type: 'load', track: track1, currentTime: 0 });
+    actor.send({ type: 'load', track: track1, range: { start: 0, end: Infinity } });
 
     // Wait for the Task to actually start running
     await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
 
     // Switch to track2 — preempts track1
-    actor.send({ type: 'load', track: track2, currentTime: 0 });
+    actor.send({ type: 'load', track: track2, range: { start: 0, end: Infinity } });
 
     // Unblock seg0 — signal is already aborted, so the cue is discarded
     resolveSeg0([]);
@@ -210,14 +210,14 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     // First load — starts fetching seg-0 (held pending). seg-1 and seg-2
     // wait in the runner's chain behind it.
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
     await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
     expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/seg-0.vtt');
 
     // Second load with the same inputs. seg-0 is in-flight and the new
     // plan still wants it → continue path: abortPending kills the queue,
     // schedules [seg-1, seg-2] anew, but seg-0 keeps fetching.
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
 
     // Crucially: seg-0 was NOT re-fetched. Under the old `abortAll on
     // every send` shape, the in-flight seg-0 would be aborted and
@@ -269,13 +269,13 @@ describe('TextTrackSegmentLoaderActor', () => {
       'https://example.com/seg-5.vtt',
     ]);
 
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
     await vi.waitFor(() => expect(resolveVttSegment).toHaveBeenCalledTimes(1));
     expect(resolveVttSegment).toHaveBeenCalledWith('https://example.com/seg-0.vtt');
 
     // Seek — seg-0 is no longer in the forward window. Preempt:
     // abortAll the in-flight + queue, schedule the new plan from scratch.
-    actor.send({ type: 'load', track, currentTime: 40 });
+    actor.send({ type: 'load', track, range: { start: 40, end: Infinity } });
 
     // Unblock the original seg-0 fetch. Its signal is aborted, so the
     // cues are discarded.
@@ -304,7 +304,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
     actor.destroy();
-    actor.send({ type: 'load', track, currentTime: 0 });
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
