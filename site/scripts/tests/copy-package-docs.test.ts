@@ -64,6 +64,25 @@ describe('rewriteLinks', () => {
     const input = 'See the [blog](https://videojs.org/blog/post.md) for context.';
     expect(rewriteLinks(input, 'llms', 'react')).toBe(input);
   });
+
+  it('preserves the .txt extension when rewriting a link to llms.txt', () => {
+    const input = '[index](https://videojs.org/docs/framework/react/llms.txt)';
+    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe('[index](../llms.txt)');
+  });
+
+  it('leaves bare framework-root URLs alone (empty slug)', () => {
+    const input = '[Docs](https://videojs.org/docs/framework/react/)';
+    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe(input);
+  });
+
+  it('does not rewrite URLs that appear inside link text (e.g. code spans)', () => {
+    // The link text contains a URL-shaped string inside backticks; only the
+    // target inside `(...)` should be rewritten.
+    const input = '[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt)';
+    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe(
+      '[`videojs.org/docs/framework/react/llms.txt`](../llms.txt)'
+    );
+  });
 });
 
 describe('synthesizeReadme', () => {

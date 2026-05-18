@@ -56,15 +56,26 @@ export function stripFooter(content) {
  */
 export function rewriteLinks(content, sourceSlug, framework) {
   const frameworkPath = `/docs/framework/${framework}/`;
-  // Match an optional scheme+host, then the framework path, then a slug.
-  // Stop at characters that end a URL in markdown link or autolink syntax.
+  // Match URLs in markdown link target position only: `](URL)`. Anchoring to
+  // `](` keeps the regex from chewing through URL-shaped strings inside link
+  // text (e.g. inside code spans like `[\`videojs.org/.../llms.txt\`](...)`)
+  // where the surrounding characters aren't safe to overrun.
+  //
+  // Capture the trailing extension (`.md`, `.txt`, or `/`) so it can be
+  // preserved — links to the framework's `llms.txt` must stay `.txt`, not be
+  // rewritten to `.md`. URLs with no extension and trailing-slash URLs both
+  // map to the `.md` file the site emits for that slug.
   const pattern = new RegExp(
-    `(?:https?://[^\\s)\\]]+)?${escapeForRegex(frameworkPath)}([^\\s)\\]#]*?)(\\.md|/)?(?=[)\\s\\]#])`,
+    `(\\]\\()(?:https?://[^\\s)]+)?${escapeForRegex(frameworkPath)}([^\\s)#]*?)(\\.md|\\.txt|/)?(?=[)#])`,
     'g'
   );
   const sourceDir = posix.dirname(sourceSlug);
-  return content.replace(pattern, (_match, slug) => {
-    return toRelativePath(sourceDir, `${slug}.md`);
+  return content.replace(pattern, (match, prefix, slug, ext) => {
+    // Bare framework-root URLs (empty slug) don't map to a single file —
+    // leave them alone rather than synthesizing a nonsense `./.md`.
+    if (!slug) return match;
+    const targetExt = ext === '.txt' ? '.txt' : '.md';
+    return prefix + toRelativePath(sourceDir, `${slug}${targetExt}`);
   });
 }
 
