@@ -7,6 +7,7 @@ import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack }
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
 // Specialization helper
@@ -129,6 +130,28 @@ function setupTrackResolution<K extends SelectedTrackKey>({
 }
 
 // ============================================================================
+// Per-helper-per-type configs — defaults that variants spread engine config over
+// ============================================================================
+
+const VIDEO_TRACK_RESOLUTION_CONFIG = {
+  ...VIDEO_TYPE_CONFIG,
+  findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
+    findTrack(presentation, 'video', trackId),
+} as const;
+
+const AUDIO_TRACK_RESOLUTION_CONFIG = {
+  ...AUDIO_TYPE_CONFIG,
+  findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
+    findTrack(presentation, 'audio', trackId),
+} as const;
+
+const TEXT_TRACK_RESOLUTION_CONFIG = {
+  ...TEXT_TYPE_CONFIG,
+  findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
+    findTrack(presentation, 'text', trackId),
+} as const;
+
+// ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
 
@@ -140,13 +163,10 @@ function setupTrackResolution<K extends SelectedTrackKey>({
 export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedVideoTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      config: {
-        selectedKey: 'selectedVideoTrackId',
-        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'video', trackId),
-      },
+      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
 
@@ -157,13 +177,10 @@ export const resolveVideoTrack = defineBehavior({
 export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: ResolveTrackStateMap<'selectedAudioTrackId'> }) =>
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedAudioTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      config: {
-        selectedKey: 'selectedAudioTrackId',
-        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'audio', trackId),
-      },
+      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
 
@@ -174,12 +191,9 @@ export const resolveAudioTrack = defineBehavior({
 export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: ResolveTrackStateMap<'selectedTextTrackId'> }) =>
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedTextTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      config: {
-        selectedKey: 'selectedTextTrackId',
-        findTrackToResolve: (presentation, trackId) => findTrack(presentation, 'text', trackId),
-      },
+      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
