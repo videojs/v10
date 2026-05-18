@@ -131,6 +131,12 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
       to handle different sources.
     -->`;
 
+  const skinMediaComment = `    <!--
+        Media are players without UIs, handling networking
+        and display of the media. They are easily swappable
+        to handle different sources.
+      -->`;
+
   const providerComment = `<!--
   The PlayerProvider passes state between the UI components
   and Media, and makes fully custom UIs possible.
@@ -154,7 +160,7 @@ ${mediaComment}
     of UI components.
    -->
   <${skinTag}>
-${mediaComment}
+${skinMediaComment}
     <${tag} src="${src}"${playsInline}></${tag}>
   </${skinTag}>
 </${providerTag}>`;
