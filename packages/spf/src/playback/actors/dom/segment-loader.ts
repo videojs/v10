@@ -13,7 +13,13 @@ import {
   type ForwardBufferConfig,
   getSegmentsToLoad,
 } from '../../../media/buffer/forward-buffer';
-import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../../media/types';
+import {
+  type AddressableObject,
+  type AudioTrack,
+  SEGMENT_TIME_EPSILON,
+  type Segment,
+  type VideoTrack,
+} from '../../../media/types';
 import type { AppendInitMessage, AppendSegmentMessage, RemoveMessage, SourceBufferActor } from './source-buffer';
 
 // ============================================================================
@@ -325,7 +331,6 @@ export function createSegmentLoaderActor(
 
     // Case 3: Segments
     if (range) {
-      const EPSILON = 0.0001;
       const segmentsToLoad = getSegmentsToLoad(
         track.segments,
         bufferedSegments,
@@ -335,7 +340,7 @@ export function createSegmentLoaderActor(
         // Quality-aware filter: skip segments already covered by equal-or-higher-quality
         // content in the actor context. Preserves buffered high-quality content during
         // ABR downgrades; loads during upgrades and for uncovered positions.
-        const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < EPSILON);
+        const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < SEGMENT_TIME_EPSILON);
         // Partial segments are still streaming — treat as not buffered so they
         // are always re-planned (avoids relying on incomplete data).
         if (existing?.partial) return true;

@@ -2,7 +2,7 @@ import { createMachineActor, type HandlerContext, type MessageActor } from '../.
 import { SerialRunner, Task } from '../../../core/tasks/task';
 import { type AppendData, appendSegment } from '../../../media/dom/mse/append-segment';
 import { flushBuffer } from '../../../media/dom/mse/buffer-flusher';
-import type { Segment, Track } from '../../../media/types';
+import { SEGMENT_TIME_EPSILON, type Segment, type Track } from '../../../media/types';
 
 // =============================================================================
 // Types
@@ -106,10 +106,10 @@ function appendSegmentTask(
     const { meta } = message;
     // Remove any existing entry at the same start time (same "slot" in the
     // timeline), then record the new segment. Assumes time-aligned segments
-    // across playlists. The epsilon guards against floating-point drift in
-    // parsed timestamps.
-    const EPSILON = 0.0001;
-    const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
+    // across playlists. `SEGMENT_TIME_EPSILON` guards against floating-point
+    // drift in parsed timestamps (shared with the segment-loader quality
+    // filter — single source of truth).
+    const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= SEGMENT_TIME_EPSILON);
 
     // For streaming data: emit partial state before the first chunk so
     // downstream code can see the in-progress segment and treat it as
