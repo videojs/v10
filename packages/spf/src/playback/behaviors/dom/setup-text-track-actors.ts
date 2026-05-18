@@ -25,6 +25,7 @@ import { createTextTracksActor } from '../../actors/dom/text-tracks';
 import {
   createTextTrackSegmentLoaderActor,
   type TextTrackSegmentLoaderActor,
+  type TextTrackSegmentLoaderActorConfig,
   type TextTrackSegmentResolver,
 } from '../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../actors/text-tracks';
@@ -35,7 +36,7 @@ export interface TextTrackActorsContext {
   textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor | undefined;
 }
 
-export interface TextTrackActorsConfig {
+export interface TextTrackActorsConfig extends TextTrackSegmentLoaderActorConfig {
   resolveTextTrackSegment: TextTrackSegmentResolver<VTTCue>;
 }
 
@@ -57,7 +58,8 @@ function setupTextTrackActorsSetup({
     const textTracksActor = createTextTracksActor(mediaElement);
     const textTrackSegmentLoaderActor = createTextTrackSegmentLoaderActor(
       textTracksActor,
-      config.resolveTextTrackSegment
+      config.resolveTextTrackSegment,
+      { forwardBuffer: config.forwardBuffer }
     );
     context.textTracksActor.set(textTracksActor);
     context.textTrackSegmentLoaderActor.set(textTrackSegmentLoaderActor);

@@ -69,7 +69,11 @@ import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils
 import { hasCodecs } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
-import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../actors/dom/segment-loader';
+import {
+  createSegmentLoaderActor,
+  type SegmentLoaderActor,
+  type SegmentLoaderActorConfig,
+} from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 
@@ -128,7 +132,7 @@ type BufferActorsContextMap<A extends BufferActorKey, L extends SegmentLoaderAct
 function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey, L extends SegmentLoaderActorKey>({
   state,
   context,
-  config: { type, selectedKey, actorKey, loaderKey, fetch },
+  config,
 }: {
   state: BufferActorsStateMap<K>;
   context: BufferActorsContextMap<A, L>;
@@ -138,8 +142,9 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
     actorKey: A;
     loaderKey: L;
     fetch: FetchBytes;
-  };
+  } & SegmentLoaderActorConfig;
 }): Reactor<BufferActorsFsmState | 'destroying' | 'destroyed'> {
+  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer } = config;
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -165,7 +170,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const bufferActor = createSourceBufferActor(buffer);
-          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch);
+          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, { forwardBuffer, backBuffer });
 
           // Synchronous slot writes — load-bearing for the Firefox
           // `mozHasAudio` invariant (see file-level JSDoc). Both per-type

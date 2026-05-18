@@ -47,7 +47,11 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
-import { DEFAULT_FORWARD_BUFFER_CONFIG, segmentStartForTime } from '../../../media/buffer/forward-buffer';
+import {
+  DEFAULT_FORWARD_BUFFER_CONFIG,
+  type ForwardBufferConfig,
+  segmentStartForTime,
+} from '../../../media/buffer/forward-buffer';
 import type { MaybeResolvedPresentation, Segment } from '../../../media/types';
 import { findResolvedAudioTrack, findResolvedTextTrack, findResolvedVideoTrack } from '../../../media/utils/tracks';
 import type { BufferState, SegmentLoaderActor, SourceBufferState } from '../../actors/dom/segment-loader';
@@ -138,9 +142,11 @@ function setupSegmentLoading<
       presentation: MaybeResolvedPresentation | undefined,
       trackId: string | undefined
     ) => Track | undefined;
+    forwardBuffer?: Partial<ForwardBufferConfig>;
   };
 }): Reactor<SegmentLoadingFsmState | 'destroying' | 'destroyed'> {
   const { selectedKey, loaderKey, findResolvedTrack } = config;
+  const bufferDuration = config.forwardBuffer?.bufferDuration ?? DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration;
 
   const selectedTrack = computed<Track | undefined>(() =>
     findResolvedTrack(state.presentation.get(), state[selectedKey].get())
@@ -191,10 +197,7 @@ function setupSegmentLoading<
           peek(context[loaderKey])!.send({
             type: 'load',
             track,
-            range: {
-              start: currentTime,
-              end: currentTime + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
-            },
+            range: { start: currentTime, end: currentTime + bufferDuration },
           });
         },
       },

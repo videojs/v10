@@ -2,8 +2,17 @@ import { createMachineActor, type HandlerContext, type MessageActor } from '../.
 import { effect } from '../../../core/signals/effect';
 import { peek } from '../../../core/signals/primitives';
 import { SerialRunner, Task } from '../../../core/tasks/task';
-import { calculateBackBufferFlushPoint } from '../../../media/buffer/back-buffer';
-import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../../media/buffer/forward-buffer';
+import {
+  type BackBufferConfig,
+  calculateBackBufferFlushPoint,
+  DEFAULT_BACK_BUFFER_CONFIG,
+} from '../../../media/buffer/back-buffer';
+import {
+  calculateForwardFlushPoint,
+  DEFAULT_FORWARD_BUFFER_CONFIG,
+  type ForwardBufferConfig,
+  getSegmentsToLoad,
+} from '../../../media/buffer/forward-buffer';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../../media/types';
 import type { AppendInitMessage, AppendSegmentMessage, RemoveMessage, SourceBufferActor } from './source-buffer';
 
@@ -90,6 +99,16 @@ export interface SegmentLoaderActorContext {
 }
 
 export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLoaderActorContext, SegmentLoaderMessage>;
+
+/**
+ * Configuration for `createSegmentLoaderActor`. Each sub-config is
+ * spread over the corresponding `DEFAULT_*_CONFIG` so callers can
+ * override individual fields.
+ */
+export interface SegmentLoaderActorConfig {
+  forwardBuffer?: Partial<ForwardBufferConfig>;
+  backBuffer?: Partial<BackBufferConfig>;
+}
 
 // ============================================================================
 // HELPERS
@@ -230,10 +249,14 @@ function makeLoadTask(
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: FetchBytes
+  fetchBytes: FetchBytes,
+  config: SegmentLoaderActorConfig = {}
 ): SegmentLoaderActor {
   type UserState = Exclude<SegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, SegmentLoaderActorContext, () => SerialRunner>;
+
+  const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
+  const backBufferConfig: BackBufferConfig = { ...DEFAULT_BACK_BUFFER_CONFIG, ...config.backBuffer };
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     // Exclude partial segments — they are still being streamed and must not be
@@ -280,11 +303,11 @@ export function createSegmentLoaderActor(
 
     // Case 1: Removes
     if (range) {
-      const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime);
+      const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime, forwardBufferConfig);
       if (forwardFlushStart < Infinity) {
         tasks.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
       }
-      const backFlushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+      const backFlushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime, backBufferConfig);
       if (backFlushEnd > 0) {
         tasks.push({ type: 'remove', start: 0, end: backFlushEnd });
       }
@@ -303,7 +326,12 @@ export function createSegmentLoaderActor(
     // Case 3: Segments
     if (range) {
       const EPSILON = 0.0001;
-      const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime).filter((seg) => {
+      const segmentsToLoad = getSegmentsToLoad(
+        track.segments,
+        bufferedSegments,
+        currentTime,
+        forwardBufferConfig
+      ).filter((seg) => {
         // Quality-aware filter: skip segments already covered by equal-or-higher-quality
         // content in the actor context. Preserves buffered high-quality content during
         // ABR downgrades; loads during upgrades and for uncovered positions.

@@ -1,7 +1,11 @@
 import { createMachineActor, type HandlerContext, type MessageActor } from '../../core/actors/create-machine-actor';
 import { peek } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/tasks/task';
-import { getSegmentsToLoad } from '../../media/buffer/forward-buffer';
+import {
+  DEFAULT_FORWARD_BUFFER_CONFIG,
+  type ForwardBufferConfig,
+  getSegmentsToLoad,
+} from '../../media/buffer/forward-buffer';
 import type { Cue, Segment, TextTrack } from '../../media/types';
 import type { TextTracksActor } from './text-tracks';
 
@@ -57,6 +61,17 @@ export type TextTrackSegmentLoaderActor = MessageActor<
  */
 export type TextTrackSegmentResolver<C extends Cue = Cue> = (url: string) => Promise<C[]>;
 
+/**
+ * Configuration for `createTextTrackSegmentLoaderActor`. Spread over
+ * `DEFAULT_FORWARD_BUFFER_CONFIG` to override individual forward-window
+ * fields (e.g. `bufferDuration`). Text tracks don't have a back-buffer
+ * concern — cues evict by their playhead-relative window at runtime —
+ * so no `backBuffer` config field.
+ */
+export interface TextTrackSegmentLoaderActorConfig {
+  forwardBuffer?: Partial<ForwardBufferConfig>;
+}
+
 // =============================================================================
 // Implementation
 // =============================================================================
@@ -96,10 +111,13 @@ interface TextLoadTask {
  */
 export function createTextTrackSegmentLoaderActor<C extends Cue>(
   textTracksActor: TextTracksActor<C>,
-  resolveSegment: TextTrackSegmentResolver<C>
+  resolveSegment: TextTrackSegmentResolver<C>,
+  config: TextTrackSegmentLoaderActorConfig = {}
 ): TextTrackSegmentLoaderActor {
   type UserState = Exclude<TextTrackSegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, TextTrackSegmentLoaderActorContext, () => SerialRunner>;
+
+  const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
 
   /**
    * Translate a load message into an ordered TextLoadTask list based on
@@ -120,12 +138,12 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
     // dispatcher's dep set — every `add-cues` would re-fire the dispatcher
     // and schedule duplicate loads.
     const bufferedSegments = peek(textTracksActor.snapshot).context.segments[trackId] ?? [];
-    // `getSegmentsToLoad` uses its own internal forward-window
-    // (`DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration`); only `range.start`
-    // is consulted here as the playhead anchor. `range.end` is
-    // informational — it carries the dispatcher's intended window upper
-    // bound but doesn't override the actor's planning.
-    const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, range.start);
+    // `getSegmentsToLoad` uses the actor's threaded `forwardBufferConfig`
+    // to compute its forward-window; only `range.start` is consulted
+    // here as the playhead anchor. `range.end` is informational — it
+    // carries the dispatcher's intended window upper bound but doesn't
+    // override the actor's planning.
+    const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, range.start, forwardBufferConfig);
     return segmentsToLoad.map((segment) => ({ segment, trackId }));
   };
 
