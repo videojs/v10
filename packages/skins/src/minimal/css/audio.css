@@ -9,6 +9,7 @@
 @import "./components/icons.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
 /* ==========================================================================
@@ -29,7 +30,9 @@
   --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.75rem;
+  --media-tooltip-boundary-offset: 0.75rem;
   --media-popover-side-offset: 0.75rem;
+  --media-popover-boundary-offset: 0.75rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;

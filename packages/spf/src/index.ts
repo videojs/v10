@@ -20,14 +20,18 @@ export type {
   BehaviorDeps,
   Composition,
   CompositionOptions,
+  ContextSignals,
   InferBehaviorConfig,
-  InferBehaviorOwners,
+  InferBehaviorContext,
   InferBehaviorState,
   ResolveBehaviorConfig,
-  ResolveBehaviorOwners,
+  ResolveBehaviorContext,
   ResolveBehaviorState,
+  StateSignals,
 } from './core/composition/create-composition';
-export { createComposition } from './core/composition/create-composition';
+export { createComposition, defineBehavior } from './core/composition/create-composition';
+export type { ShareSignalsConfig } from './core/composition/share-signals';
+export { makeShareSignals } from './core/composition/share-signals';
 
 // =============================================================================
 // Signals
@@ -35,7 +39,7 @@ export { createComposition } from './core/composition/create-composition';
 
 export { effect } from './core/signals/effect';
 export type { Computed, ReadonlySignal, Signal, SignalOptions } from './core/signals/primitives';
-export { computed, signal, untrack, update } from './core/signals/primitives';
+export { computed, signal, snapshot, untrack, update } from './core/signals/primitives';
 
 // =============================================================================
 // Tasks

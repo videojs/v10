@@ -286,4 +286,18 @@ describe('createHotkey', () => {
 
     cleanup();
   });
+
+  it('does not fire when the event has already been handled', () => {
+    const el = setup();
+    const onActivate = vi.fn();
+
+    el.addEventListener('keydown', (event) => event.preventDefault(), { capture: true });
+    const cleanup = createHotkey(el, { keys: 'ArrowRight', onActivate });
+
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+
+    expect(onActivate).not.toHaveBeenCalled();
+
+    cleanup();
+  });
 });

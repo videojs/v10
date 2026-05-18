@@ -1,5 +1,6 @@
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import type { Signal } from '../../core/signals/primitives';
+import { type ReadonlySignal, type Signal, snapshot } from '../../core/signals/primitives';
 import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../media/types';
 import { isResolvedTrack } from '../../media/types';
 import { getSelectedTrack } from '../../media/utils/track-selection';
@@ -64,24 +65,28 @@ export function getDurationFromResolvedTracks(state: PresentationDurationState):
 /**
  * Calculate and set presentation duration from resolved tracks.
  */
-export function calculatePresentationDuration<S extends PresentationDurationState>({
+function calculatePresentationDurationSetup({
   state,
 }: {
-  state: Signal<S>;
+  state: {
+    presentation: Signal<PresentationDurationState['presentation']>;
+    selectedVideoTrackId: ReadonlySignal<PresentationDurationState['selectedVideoTrackId']>;
+    selectedAudioTrackId: ReadonlySignal<PresentationDurationState['selectedAudioTrackId']>;
+  };
 }): () => void {
   return effect(() => {
-    const currentState = state.get();
+    const currentState = snapshot(state);
     if (!shouldCalculateDuration(currentState)) return;
 
     const duration = getDurationFromResolvedTracks(currentState);
     if (duration === undefined || !Number.isFinite(duration)) return;
 
-    state.set({
-      ...currentState,
-      presentation: {
-        ...currentState.presentation!,
-        duration,
-      },
-    } as S);
+    state.presentation.set({ ...currentState.presentation!, duration });
   });
 }
+
+export const calculatePresentationDuration = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'selectedAudioTrackId'],
+  contextKeys: [],
+  setup: calculatePresentationDurationSetup,
+});

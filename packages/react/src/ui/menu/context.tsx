@@ -1,7 +1,7 @@
 'use client';
 
 import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
-import type { MenuApi } from '@videojs/core/dom';
+import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
 export interface MenuContextValue {
@@ -11,6 +11,8 @@ export interface MenuContextValue {
   stateAttrMap: StateAttrMap<MenuState>;
   contentId: string;
   anchorName: string;
+  boundary: PositioningBoundary;
+  container: MediaContainer | null;
   /** ID of the currently visible submenu, or null when at root view. */
   activeSubMenuId: string | null;
   /** Triggerer ID of the active submenu entry (for focus restoration on pop). */

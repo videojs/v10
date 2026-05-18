@@ -1,24 +1,46 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { Presentation, Segment, VideoTrack } from '../../../../media/types';
+import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   canEndStream,
-  type EndOfStreamOwners,
+  type EndOfStreamContext,
   type EndOfStreamState,
   endOfStream,
   hasLastSegmentLoaded,
   shouldEndStream,
 } from '../end-of-stream';
 
-function setupEndOfStream(initialState: EndOfStreamState, initialOwners: EndOfStreamOwners) {
+function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamState> {
+  return {
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    mediaSourceReadyState: signal<MediaSource['readyState'] | undefined>(initial.mediaSourceReadyState),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+  };
+}
+
+function makeContext(initial: EndOfStreamContext = {}): ContextSignals<EndOfStreamContext> {
+  return {
+    mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
+    mediaElement: signal<HTMLMediaElement | undefined>(initial.mediaElement),
+    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
+    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
+    videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
+    audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+  };
+}
+
+function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfStreamContext) {
   // Default mediaSourceReadyState to 'open' to mirror what setupMediaSource
   // would have written. Tests that exercise other readyState values pass it
   // explicitly.
-  const state = signal<EndOfStreamState>({ mediaSourceReadyState: 'open', ...initialState });
-  const owners = signal<EndOfStreamOwners>(initialOwners);
-  const cleanup = endOfStream({ state, owners });
-  return { state, owners, cleanup };
+  const state = makeState({ mediaSourceReadyState: 'open', ...initialState });
+  const context = makeContext(initialContext);
+  const cleanup = endOfStream.setup({ state, context });
+  return { state, context, cleanup };
 }
 
 // ============================================================================
@@ -143,10 +165,10 @@ describe('hasLastSegmentLoaded', () => {
       presentation: makePresentation(track),
     };
     // seg-3 (the last segment) is missing
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2']),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(false);
+    expect(hasLastSegmentLoaded(state, context)).toBe(false);
   });
 
   it('returns true when last segment ID is present (seek-back scenario)', () => {
@@ -156,10 +178,10 @@ describe('hasLastSegmentLoaded', () => {
       presentation: makePresentation(track),
     };
     // Last segment is in the SourceBuffer from a prior play-through.
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9']),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
+    expect(hasLastSegmentLoaded(state, context)).toBe(true);
   });
 
   it('returns true when last segment ID is in actor context', () => {
@@ -168,10 +190,10 @@ describe('hasLastSegmentLoaded', () => {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
     };
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
+    expect(hasLastSegmentLoaded(state, context)).toBe(true);
   });
 
   it('returns true after back-buffer flushing when last segment ID remains', () => {
@@ -181,10 +203,10 @@ describe('hasLastSegmentLoaded', () => {
       presentation: makePresentation(track),
     };
     // Early segments flushed, last segment still present
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
+    expect(hasLastSegmentLoaded(state, context)).toBe(true);
   });
 
   it('returns true when track has no segments', () => {
@@ -193,10 +215,10 @@ describe('hasLastSegmentLoaded', () => {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
     };
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments([]),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
+    expect(hasLastSegmentLoaded(state, context)).toBe(true);
   });
 
   it('returns false when last segment is present but marked partial', () => {
@@ -263,11 +285,11 @@ describe('hasLastSegmentLoaded', () => {
       selectedAudioTrackId: 'audio-1',
       presentation,
     };
-    const owners: EndOfStreamOwners = {
+    const context: EndOfStreamContext = {
       videoBufferActor: makeActorWithSegments(['seg-3'], 'video-1'),
       audioBufferActor: makeActorWithSegments(['audio-seg-0'], 'audio-1'),
     };
-    expect(hasLastSegmentLoaded(state, owners)).toBe(false);
+    expect(hasLastSegmentLoaded(state, context)).toBe(false);
   });
 });
 
@@ -432,7 +454,7 @@ describe('endOfStream', () => {
     });
 
     // Trigger another state change — readyState is 'ended' so must not call again
-    state.set({ ...state.get(), presentation: makePresentation(track) });
+    state.presentation.set(makePresentation(track));
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
@@ -477,7 +499,7 @@ describe('endOfStream', () => {
     // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
     (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
       (mockMs as unknown as { readyState: string }).readyState = 'ended';
-      state.set({ ...state.get(), mediaSourceReadyState: 'ended' });
+      state.mediaSourceReadyState.set('ended');
     });
 
     // First play-through: endOfStream() is called, readyState transitions to 'ended'.
@@ -488,7 +510,7 @@ describe('endOfStream', () => {
     // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec.
     // The state update drives re-evaluation.
     (mockMs as unknown as { readyState: string }).readyState = 'open';
-    state.set({ ...state.get(), mediaSourceReadyState: 'open' });
+    state.mediaSourceReadyState.set('open');
 
     // endOfStream() should be called again driven purely by the state update.
     await vi.waitFor(() => {
@@ -518,7 +540,7 @@ describe('endOfStream', () => {
     (mockMs as unknown as { readyState: string }).readyState = 'ended';
 
     // Trigger a state change — should not call endOfStream() again
-    state.set({ ...state.get(), presentation: makePresentation(track) });
+    state.presentation.set(makePresentation(track));
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);

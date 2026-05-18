@@ -15,9 +15,11 @@ For SPF primitives (signals, reactors, tasks, actors), see [fundamentals.md](./f
 `createSimpleHlsEngine` is a thin wrapper around `createComposition`. The full composition, lifted from `src/playback/engines/hls/engine.ts`:
 
 ```ts
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
+
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
-): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
+): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
   return createComposition(
     [
       syncPreloadAttribute,
@@ -57,8 +59,14 @@ export function createSimpleHlsEngine(
       syncTextTracks,
       setupTextTrackActors,
       loadTextTrackCues,
+
+      // Hands writable signal refs to the consumer's onSignalsReady callback
+      // so external code (the adapter, or any direct consumer) can drive the
+      // engine. Placed last so other behaviors' setup has run by the time the
+      // callback fires — initial state writes are visible to the consumer.
+      shareSignals,
     ],
-    { config, initialState, initialOwners }
+    { config, initialState }
   );
 }
 ```
@@ -67,15 +75,15 @@ Read top to bottom, the engine tells a story: resolve a manifest, pick tracks, s
 
 Three things are doing the work here:
 
-1. **`createComposition`** — the SPF primitive that wires the behaviors together. It owns the lifecycle and gives each behavior access to two shared reactive channels — `state` and `owners` — plus the engine's static `config`.
-2. **The behaviors** — independent functions, each declaring its slice of the state and owners shapes and its job.
-3. **The engine wrapper** — a few small helpers that adapt behaviors to the engine's specific needs (closing over media types, threading config). Nothing structural; just glue.
+1. **`createComposition`** — the SPF primitive that wires the behaviors together. It owns the lifecycle, derives the state and context signal maps from each behavior's declared `stateKeys` / `contextKeys`, and gives each behavior access to the slots it asks for plus the engine's static `config`.
+2. **The behaviors** — independent, type-specialized objects built with `defineBehavior`. Each declares which slots it reads and writes and contributes its body. No engine-side wrappers — `selectVideoTrack`, `loadAudioSegments`, etc. are imported directly from their behavior modules.
+3. **`shareSignals`** — a generic passthrough behavior that hands the composition's writable signal refs to a consumer-supplied `config.onSignalsReady` callback at setup time. The canonical way to drive the engine from outside.
 
 The rest of this doc walks each stage.
 
 ---
 
-## State, owners, and config
+## State, context, and config
 
 Every SPF composition is parameterized by three shapes:
 
@@ -97,7 +105,7 @@ export interface SimpleHlsEngineState {
   mediaSourceReadyState?: MediaSource['readyState'];
 }
 
-export interface SimpleHlsEngineOwners {
+export interface SimpleHlsEngineContext {
   mediaElement?: HTMLMediaElement;
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
@@ -108,7 +116,7 @@ export interface SimpleHlsEngineOwners {
   segmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
-export interface SimpleHlsEngineConfig {
+export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
   initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
@@ -119,13 +127,13 @@ export interface SimpleHlsEngineConfig {
 
 The split:
 
-- **State** holds reactive playback data — the manifest, selected track ids, current time, bandwidth estimate. It flows through the composition over time. Each field is a slot in the state signal that any behavior can read or write.
-- **Owners** holds **resources** — values with identity and imperative interfaces, not just data. The `<video>` element, the `MediaSource`, source buffers, the actors managing text-track lifecycles. If you'd pass the thing around by reference and call methods on it, it belongs in owners. Behaviors observe and act on resources directly; the signal makes their lifecycle (appearance, replacement, removal) reactive.
-- **Config** holds static creation-time options — thresholds, language preferences, feature flags. It doesn't change during the engine's lifetime. Behaviors read it directly, usually with a fallback.
+- **State** holds reactive playback data — the manifest, selected track ids, current time, bandwidth estimate. It flows through the composition over time. Each field is its own discrete signal that any behavior can read or (if the behavior typed the slot writable) write.
+- **Context** holds **resources** — values with identity and imperative interfaces, not just data. The `<video>` element, the `MediaSource`, source buffers, the actors managing text-track lifecycles. If you'd pass the thing around by reference and call methods on it, it belongs in context. Behaviors observe and act on resources directly; the signal makes their lifecycle (appearance, replacement, removal) reactive.
+- **Config** holds static creation-time options — thresholds, language preferences, feature flags. It doesn't change during the engine's lifetime. Behaviors read it directly, usually with a fallback. The HLS engine's config also extends `ShareSignalsConfig<S, C>` so consumers can pass `onSignalsReady` to capture writable signal refs (see Stage 10).
 
 The shapes are unions of what every behavior in the composition needs. Adding a new behavior that requires a new state field means adding it to the engine's state interface. Removing a behavior is the inverse.
 
-Each behavior receives `{ state, owners, config }` and reads or writes only the slots it cares about. Nothing else. A behavior that only reads `mediaElement` doesn't know about `bandwidthState` and can't accidentally interact with it. (The HLS engine's source aliases this argument shape as `Deps` for brevity in the wrapper helpers — it's a local convenience, not framework vocabulary.)
+Each behavior receives `{ state, context, config }` — but only the slots it declared. The body literally cannot reference slots it didn't list, because the setup-param type only includes them. A behavior that only reads `mediaElement` doesn't see `bandwidthState` and can't accidentally interact with it. **Per-slot read/write intent is part of the type:** `Signal<T>` for writable slots, `ReadonlySignal<T>` for read-only — TS rejects `.set()` on a slot typed read-only.
 
 ---
 
@@ -147,6 +155,29 @@ resolvePresentation,
 
 A pattern shows up here that recurs throughout: **behaviors gate themselves on preconditions and write their results back to state.** They don't take inputs as function arguments. They read from a known signal slot, do their work, and write to a known signal slot. The composition is wired through state, not through call ordering.
 
+Look at `selectVideoTrack`'s setup signature — the pattern in miniature:
+
+```ts
+export const selectVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  contextKeys: [],
+  setup: ({ state }: {
+    state: {
+      presentation: ReadonlySignal<TrackSelectionState['presentation']>;
+      selectedVideoTrackId: Signal<TrackSelectionState['selectedVideoTrackId']>;
+    };
+  }) =>
+    effect(() => {
+      const presentation = state.presentation.get();
+      if (!presentation || state.selectedVideoTrackId.get()) return;
+      const id = pickFirstTrackId(presentation, 'video');
+      if (id) state.selectedVideoTrackId.set(id);
+    }),
+});
+```
+
+`presentation` is `ReadonlySignal` — the body can `.get()` it but not `.set()` (TS would reject the call). `selectedVideoTrackId` is `Signal` — readable and writable. `stateKeys` is the runtime expression of the same contract: the composition uses it to derive the state signal map.
+
 ---
 
 ## Stage 2 — Track selection
@@ -159,33 +190,20 @@ selectAudioTrack,
 selectTextTrack,
 ```
 
-These are *wrappers* defined in `engine.ts` that share their names with — and close over — the imported behaviors from `playback/behaviors/select-tracks.ts`. The imported behaviors accept their own configuration parameter (initial bandwidth for video, preferred language for audio, and so on); the wrapper closes over the engine's config and threads the relevant fields into the behavior:
+Each is a separate `defineBehavior` export from `playback/behaviors/select-tracks.ts`, with narrow `stateKeys` matching exactly the slots it touches:
 
-```ts
-import { selectVideoTrack as _selectVideoTrack } from '../../behaviors/select-tracks';
+- `selectVideoTrack` declares `['presentation', 'selectedVideoTrackId']`
+- `selectAudioTrack` declares `['presentation', 'selectedAudioTrackId']`
+- `selectTextTrack` declares `['presentation', 'selectedTextTrackId']` and reads `config` for preferred-language / default-track preferences
 
-const selectVideoTrack = ({ config, ...deps }: Deps) =>
-  _selectVideoTrack(deps, {
-    type: 'video',
-    ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
-  });
-```
-
-The wrapper takes the natural name; the imported behavior gets a leading-underscore alias for local use. The composition list reads as a flat list of behaviors at the right level of abstraction — the wrappers vanish into anonymity, which is exactly right since they're just adapter glue.
-
-This is the **wrapper pattern** that recurs throughout the engine. Two kinds, both visible in the composition list:
-
-- **Media-type wrappers** (`loadVideoSegments`, `resolveVideoTrack`, …) close over a fixed `type: 'video' | 'audio' | 'text'` value. Their underlying behavior takes the type as config; the wrapper makes it concrete.
-- **Config-aware wrappers** (`selectVideoTrack`, `switchQuality`, the engine-local versions) close over the engine's config and pass relevant fields to the underlying behavior's own config parameter.
-
-The wrappers exist because the underlying behaviors are **engine-agnostic** — `_selectVideoTrack` doesn't know about `SimpleHlsEngineConfig` or that `bandwidthState` lives on engine state. It accepts a `VideoSelectionConfig` from its caller. The engine wrapper is the thin layer that says "for this engine's config, the initial bandwidth comes from `config.initialBandwidth`."
+The behaviors share a small `pickFirstTrackId` helper for the presentation traversal, but the bodies are inlined per type. No engine-side wrappers, no `config.type` discriminant carried at runtime — each export is type-honest about which signal it writes (`state.selectedVideoTrackId.set(...)` vs. `state.selectedAudioTrackId.set(...)`).
 
 The behaviors themselves are split across two locations on purpose:
 
-- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack`, `canSelectTrack`, `shouldSelectTrack`. No signals, no effects. Just functions that take a `Presentation` and a config and return an id.
+- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack`. No signals, no effects. Just functions that take a `Presentation` and a config and return an id.
 - **Orchestrations** live in `playback/behaviors/select-tracks.ts` — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack`. These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
 
-The split keeps the SPF-free CML-style helpers reusable outside SPF, while the SPF-integrated behaviors stay thin and easy to swap.
+The split keeps the framework-free helpers reusable outside SPF, while the SPF-integrated behaviors stay thin and easy to swap.
 
 ---
 
@@ -199,15 +217,20 @@ resolveAudioTrack,
 resolveTextTrack,
 ```
 
-These are media-type wrappers around the same `resolveTrack` behavior:
+Like the selection behaviors, these are per-type specialized exports from `playback/behaviors/resolve-track.ts`. They share an internal helper `setupTrackResolution<K>(state, type, selectedKey)` that takes the type literal and the selected-track key as parameters; each export binds them at module load:
 
 ```ts
-const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
+export const resolveVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
+    setupTrackResolution(state, 'video', 'selectedVideoTrackId'),
+});
 ```
 
-`resolveTrack` watches `state.presentation` and the matching `selectedXTrackId` for its type. When both are set, it finds the partially-resolved track, fetches its media playlist, parses it into segments, and writes the now-resolved track back into `state.presentation`. (The `Presentation` type allows tracks to hold either a partially-resolved or fully-resolved shape — the URL is enough to find a track; the segments are what loadSegments needs.)
+`setupTrackResolution` watches `state.presentation` and the matching `selectedXTrackId` for its type. When both are set, it finds the partially-resolved track, fetches its media playlist, parses it into segments, and writes the now-resolved track back into `state.presentation`. The state slot map is parameterized: `presentation` is `Signal<...>` (writable — the helper writes resolved tracks back to it), the selected-track key is `ReadonlySignal<...>` (the helper only reads it).
 
-Three behaviors, one shared `resolveTrack`. Each closes over its `type` so the composition list stays flat. From outside, you'd hardly know they share an implementation.
+Three behaviors, one shared helper. From outside, you'd hardly know they share an implementation.
 
 Now `state.presentation` is fully populated for the selected tracks. Everything downstream — duration, MSE, segment loading, end-of-stream — reads from there.
 
@@ -219,9 +242,11 @@ Now `state.presentation` is fully populated for the selected tracks. Everything 
 calculatePresentationDuration,
 ```
 
-`calculatePresentationDuration` reads the resolved tracks and computes the presentation's total duration (max of selected track durations). It writes the result back to `state.presentation.duration`. This is a small bookkeeping behavior — the duration is derived from data already in state — but breaking it out keeps the derivation reactive: any downstream behavior that needs to know the duration just reads `state.presentation.duration`, and re-runs when it changes.
+`calculatePresentationDuration` reads the resolved tracks and computes the presentation's total duration (max of selected track durations). It writes the result back to `state.presentation` (patching the `duration` field onto the existing presentation). This is a small bookkeeping behavior — the duration is derived from data already in state — but breaking it out keeps the derivation reactive: any downstream behavior that needs to know the duration just reads `state.presentation.duration`, and re-runs when it changes.
 
 It's separated from `resolveTrack` because the duration depends on *which* tracks are selected (the engine could change selection later, in theory, with a different duration). Keeping the derivation in its own behavior means every track-selection change automatically re-derives.
+
+This is also the simplest example of the **pipeline pattern** on `state.presentation`: multiple behaviors write the same slot, each owning a different aspect of the value. The adapter seeds `{ url }`; `resolvePresentation` parses the manifest; `resolve{Video,Audio,Text}Track` patches in per-track segments; `calculatePresentationDuration` patches in the duration. Each writer reads the current value and writes a new one with their field added — they never overwrite a field someone else owns.
 
 ---
 
@@ -237,19 +262,19 @@ setupSourceBuffers,
 
 This is where the engine first touches the media element directly. Up until now, behaviors have been operating on plain data in `state` — manifests, URLs, ids, durations. MSE is the bridge: a `MediaSource` attaches to the `<video>` element via `srcObject` (or an object URL), and `SourceBuffer`s under it accept appended segments.
 
-**`setupMediaSource`** waits for two preconditions: a `mediaElement` in owners and a `presentation.url` in state. When both arrive, it creates a `MediaSource`, attaches it to the element, and writes both back to owners (`mediaSource`) and state (`mediaSourceReadyState`). The DOM event for "MediaSource is open" is bridged onto `state.mediaSourceReadyState` via the `onMediaSourceReadyStateChange` callback primitive — once that flips to `'open'`, the `mediaSource` is published to owners so downstream behaviors can use it.
+**`setupMediaSource`** waits for two preconditions: a `mediaElement` in context and a `presentation.url` in state. When both arrive, it creates a `MediaSource`, attaches it to the element, and writes both back to context (`mediaSource`) and state (`mediaSourceReadyState`). The DOM event for "MediaSource is open" is bridged onto `state.mediaSourceReadyState` via the `onMediaSourceReadyStateChange` callback primitive — once that flips to `'open'`, the `mediaSource` is published to context so downstream behaviors can use it.
 
-The split between owners and state is deliberate. The MediaSource itself is a resource — you call `addSourceBuffer()` on it, you set its `duration` — so it lives in owners. Its readyState is data — a string that other behaviors gate decisions on — so it lives in state. The DOM events that drive readyState changes get bridged into the SPF signal graph by the small primitive in `media/dom/mse/`, keeping `setupMediaSource` clean.
+The split between context and state is deliberate. The MediaSource itself is a resource — you call `addSourceBuffer()` on it, you set its `duration` — so it lives in context. Its readyState is data — a string that other behaviors gate decisions on — so it lives in state. The DOM events that drive readyState changes get bridged into the SPF signal graph by the small primitive in `media/dom/mse/`, keeping `setupMediaSource` clean.
 
 **`updateDuration`** waits for the resolved presentation duration (from stage 4) and a MediaSource that's open with idle source buffers, then writes `mediaSource.duration = presentation.duration`. The order matters: setting duration while a SourceBuffer has `updating === true` throws `InvalidStateError`, so the behavior waits for any in-flight appends to settle before writing.
 
 This is the first place the engine has real coordination concerns: timing among multiple resources. The behavior expresses it declaratively — `effect()` re-runs when any input signal changes, and the gate function checks every precondition. There's no manual sequencing, no callbacks-on-callbacks. Each precondition becomes a signal read; the framework figures out when to fire.
 
-**`setupSourceBuffers`** does the same lifecycle dance as `setupMediaSource`, but per-track: when a video or audio track is resolved and the MediaSource is open, it calls `addSourceBuffer()` with the track's mime/codec, wraps the resulting `SourceBuffer` in a `SourceBufferActor`, and publishes both the raw buffer and the actor onto owners.
+**`setupSourceBuffers`** does the same lifecycle dance as `setupMediaSource`, but per-track: when a video or audio track is resolved and the MediaSource is open, it calls `addSourceBuffer()` with the track's mime/codec, wraps the resulting `SourceBuffer` in a `SourceBufferActor`, and publishes both the raw buffer and the actor onto context.
 
 The actor wrapping is worth pausing on. A raw `SourceBuffer` is imperative: you call `appendBuffer(data)`, you wait for the `updateend` event, you handle errors. Multiple appends can collide. An actor — a state machine that owns the buffer — gives every consumer a single point of contact. They send a message ("append this segment"); the actor serializes the work, exposes its current state via a snapshot signal, and behaves predictably even when several behaviors want to write at once.
 
-So owners ends up with both `videoBuffer` (the raw `SourceBuffer`, used by `endOfStream` to read `buffered` ranges) and `videoBufferActor` (the wrapper, used by `loadSegments` to send append messages). Same lifetime, two roles.
+So context ends up with both `videoBuffer` (the raw `SourceBuffer`, used by `endOfStream` to read `buffered` ranges) and `videoBufferActor` (the wrapper, used by `loadSegments` to send append messages). Same lifetime, two roles.
 
 ---
 
@@ -264,14 +289,16 @@ switchQuality,
 
 **`trackCurrentTime`** mirrors the media element's `currentTime` onto `state.currentTime`. Same shape as `syncPreloadAttribute` from stage 1: the DOM event becomes a signal write, and downstream behaviors gate on the reactive value rather than polling the element. `loadSegments` reads it to know how far ahead to fetch; `endOfStream` reads it to know whether the user has reached the end.
 
-**`switchQuality`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadSegments` to start fetching from the new variant. (Like the track-selection wrappers, this is the engine's local version that closes over engine config; the underlying behavior is imported as `_switchQuality`.)
+**`switchQuality`** is the ABR loop. It watches `state.bandwidthState` (a running estimate, written by `loadVideoSegments` after each successful segment fetch) and `state.selectedVideoTrackId`. When the estimate moves enough to justify a switch, it writes a different `selectedVideoTrackId`. That triggers `resolveVideoTrack` → `setupSourceBuffers` (if mime/codec changes) → `loadVideoSegments` to start fetching from the new variant.
 
 Two patterns worth pausing on:
 
-- **State is the bus.** The bandwidth estimator doesn't push to the quality switcher. The quality switcher doesn't pull from the loader. Both read `state.bandwidthState` and respond. Adding a third behavior that needs the estimate (a buffer-health probe, a telemetry stream) is the same: another reader, no rewiring.
+- **State is the bus.** The bandwidth estimator (`loadVideoSegments`) doesn't push to the quality switcher. The quality switcher doesn't pull from the loader. Both read `state.bandwidthState` and respond. Adding a third behavior that needs the estimate (a buffer-health probe, a telemetry stream) is the same: another reader, no rewiring.
 - **Selection cascades.** Changing `selectedVideoTrackId` doesn't tell anything to "re-resolve, re-buffer, re-load." It just changes the value. The behaviors downstream were already reading it; they'll re-run because `effect()` tracked their reads. Re-resolution and re-buffering happen because the framework noticed.
 
 The engine has no orchestrator. Each behavior is a small reactor plus a cleanup. The composition is the dataflow.
+
+`switchQuality` is also the third writer to `selectedVideoTrackId` — `selectVideoTrack` does the default-pick on presentation load; `switchQuality` updates it for ABR; external code (the harness's manual rendition picker) overrides. The slot has multiple legitimate writers, disambiguated today via the `abrDisabled` flag (when true, `switchQuality` short-circuits). This is the **intent + reactive default** multi-writer pattern. A cleaner factoring exists (separate `manual` + `abr` slots, derive selected as `manual ?? abr`); see the TODO at `quality-switching.ts`.
 
 ---
 
@@ -282,15 +309,17 @@ loadVideoSegments,
 loadAudioSegments,
 ```
 
-Two media-type wrappers around `loadSegments`. This is the busiest behavior — the one that actually fetches segments, samples bandwidth, and pushes data into the source buffers.
+Two type-specialized exports from `playback/behaviors/dom/load-segments.ts`. They share an internal helper `setupSegmentLoading(state, context, type, onThroughputSample?)` — the throughput-sample callback is what makes `bandwidthState` writable for `loadVideoSegments` (passes `(next) => state.bandwidthState.set(next)`) and read-only for `loadAudioSegments` (audio doesn't sample bandwidth).
+
+This is the busiest behavior — the one that actually fetches segments, samples bandwidth, and pushes data into the source buffers.
 
 `loadSegments` watches:
 - `state.presentation` — for the resolved track of its type
 - `state.selectedVideoTrackId` (or audio) — to know which track's segments to load
 - `state.currentTime` — to know how far ahead to fetch
-- `state.bandwidthState` — to keep a running estimate after each fetch
-- `owners.videoBufferActor` (or audio) — to send append messages
-- `owners.mediaSource` — to know it's safe to operate on the buffer
+- `state.bandwidthState` — to keep a running estimate after each fetch (writable for video, read-only for audio)
+- `context.videoBufferActor` (or audio) — to send append messages
+- `context.mediaSource` — to know it's safe to operate on the buffer
 
 When the preconditions are met, the behavior:
 
@@ -315,17 +344,17 @@ A single behavior, but one that has to coordinate across the rest of the pipelin
 `endOfStream` reads:
 - `state.presentation` and `state.selected{Video,Audio}TrackId` — to know which tracks' last segments to wait for
 - `state.mediaSourceReadyState` — must be `'open'` (not `'ended'` or `'closed'`)
-- `owners.mediaElement` — to check `readyState >= HAVE_METADATA` (a precondition Chrome enforces)
-- `owners.{video,audio}Buffer` — must exist for selected tracks
-- `owners.{video,audio}BufferActor` — to know if any are still updating
-- `owners.{video,audio}BufferActor.snapshot.context.segments` — to verify the last segment of each selected track has been appended
+- `context.mediaElement` — to check `readyState >= HAVE_METADATA` (a precondition Chrome enforces)
+- `context.{video,audio}Buffer` — must exist for selected tracks
+- `context.{video,audio}BufferActor` — to know if any are still updating
+- `context.{video,audio}BufferActor.snapshot.context.segments` — to verify the last segment of each selected track has been appended
 
-Every one of those reads happens inside an `effect()`. When *any* changes, the gate function reruns. When all preconditions line up, the behavior calls `mediaSource.endOfStream()`.
+Every one of those reads happens inside an `effect()`. When *any* changes, the gate function reruns. When all preconditions line up, the behavior calls `mediaSource.endOfStream()`. Notably, `endOfStream` writes nothing — every state and context slot in its setup signature is `ReadonlySignal<T>`. The body's effect on the world is a DOM property assignment (`mediaSource.duration = ...`) and a method call (`mediaSource.endOfStream()`), not a signal write.
 
 Two things this behavior makes visible about SPF compositions:
 
-- **Coordination is just reading.** No callbacks, no publish/subscribe, no event bus. The behavior reads from state and owners; the reactive graph re-runs it whenever any read changes. A composition with N behaviors and one shared state signal has N inputs to coordinate, not N² connections.
-- **Actor snapshots are signals too.** `owners.videoBufferActor?.snapshot.get()` is a regular signal read inside the effect. When the actor transitions from `'updating'` to `'idle'`, the snapshot signal fires, the effect re-runs, and `endOfStream` re-evaluates whether the gate is now passable. Actor state and engine state are the same kind of channel from a behavior's point of view.
+- **Coordination is just reading.** No callbacks, no publish/subscribe, no event bus. The behavior reads from state and context; the reactive graph re-runs it whenever any read changes. A composition with N behaviors and one shared state signal has N inputs to coordinate, not N² connections.
+- **Actor snapshots are signals too.** `context.videoBufferActor?.snapshot.get()` is a regular signal read inside the effect. When the actor transitions from `'updating'` to `'idle'`, the snapshot signal fires, the effect re-runs, and `endOfStream` re-evaluates whether the gate is now passable. Actor state and engine state are the same kind of channel from a behavior's point of view.
 
 The behavior also handles the seek-back case: if `appendBuffer` re-opens an `'ended'` MediaSource (per the MSE spec, a fresh append on an ended buffer transitions readyState back to `'open'`), `endOfStream` re-evaluates and may call `endOfStream()` again once the new last segment lands.
 
@@ -341,46 +370,58 @@ loadTextTrackCues,
 
 Text tracks are an interesting wrinkle. They don't go through MSE — VTT cues land directly on the `<track>` elements of the media element. The shape of this stage is therefore different from the MSE pipeline above: there are no source buffers, no append serialization, no end-of-stream gate. But the SPF patterns are the same.
 
-**`syncTextTracks`** mirrors the resolved text-track list onto `<track>` elements under the media element. When a text track is selected (`state.selectedTextTrackId`), the matching `<track>` element gets `mode = 'showing'`; others go to `'disabled'`. This is reactive: changing the selection in state re-runs the effect, which flips the modes.
+**`syncTextTracks`** mirrors the resolved text-track list onto `<track>` elements under the media element. When a text track is selected (`state.selectedTextTrackId`), the matching `<track>` element gets `mode = 'showing'`; others go to `'disabled'`. The behavior also writes back to `selectedTextTrackId` when the user selects a track via the browser's native UI — making it a two-way DOM sync.
 
-**`setupTextTrackActors`** is the actor-provider for text tracks, parallel to `setupSourceBuffers` for video/audio. It creates two actors — `TextTracksActor` (owns the cue list per track) and `TextTrackSegmentLoaderActor` (orchestrates per-segment fetches via the VTT resolver) — and publishes them onto owners.
+**`setupTextTrackActors`** is the actor-provider for text tracks, parallel to `setupSourceBuffers` for video/audio. It creates two actors — `TextTracksActor` (owns the cue list per track) and `TextTrackSegmentLoaderActor` (orchestrates per-segment fetches via the VTT resolver) — and publishes them onto context.
 
-In the engine, this is a wrapper that closes over the DOM-bound VTT resolver (`resolveVttSegment`):
-
-```ts
-import { setupTextTrackActors as _setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
-
-const setupTextTrackActors = ({ owners }: Deps) =>
-  _setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
-```
-
-The underlying `_setupTextTrackActors` (in `playback/behaviors/dom/`) is parser-agnostic — it accepts any `resolveTextTrackSegment` function. The DOM-specific binding (using a hidden `<video>` + `<track>` element to leverage the browser's VTT parser) happens at the engine layer. A different engine could supply a different parser without changing the behavior.
+The cue parser (`resolveTextTrackSegment`) is supplied via engine config — it defaults to the DOM-bound `resolveVttSegment` resolver, which uses an offscreen `<track>` element to leverage the browser's VTT parser. A different engine could supply a different parser (a worker-based parser, a native VTT parser if one ever ships, etc.) without changing the behavior.
 
 **`loadTextTrackCues`** is the orchestrator. It watches the resolved text track and the actors, and dispatches `load` messages to the segment loader actor whenever new segments need fetching. The actor handles per-segment fetching (and abort on track switch); the orchestrator decides *when* to ask.
 
-This is the same pattern as MSE: actor-as-resource (`setupTextTrackActors` puts it on owners), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
+This is the same pattern as MSE: actor-as-resource (`setupTextTrackActors` puts it on context), orchestrator-as-behavior (`loadTextTrackCues` decides when to send messages). Different platform, same shape.
 
 ---
 
-## Two ways to call `createComposition`
-
-A note on the engine's call to `createComposition` itself.
-
-The HLS engine uses the *explicit* form — passing `<S, O, C>` type arguments to fix the engine's shape directly:
+## Stage 10 — `shareSignals`: external write surface
 
 ```ts
-return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
-  [...behaviors],
-  { config, initialState, initialOwners }
-);
+shareSignals,
 ```
 
-The minimal/inferred form lets TypeScript intersect each behavior's deps to compute the engine's shape:
+Placed last in the composition for a reason. `shareSignals` is a generic passthrough behavior that hands the composition's writable signal refs to a consumer-supplied `config.onSignalsReady` callback at composition setup. Every other behavior has run by the time the callback fires, so initial state writes are visible to the consumer.
 
 ```ts
-const engine = createComposition([myBehavior]);
+const engine = createSimpleHlsEngine({
+  initialBandwidth: 2_000_000,
+  onSignalsReady: ({ state, context }) => {
+    // capture refs for later writes — keep the references, write through them.
+    capturedState = state;
+    capturedContext = context;
+  },
+});
 ```
 
-For engines that aggregate many wrapper-style behaviors (`(deps: Deps) => behavior(deps, {...})`) all sharing the same `Behavior<S, O, C>` type, TypeScript's distributive intersection inference can drop fields — e.g. for the HLS engine, `bandwidthState` would silently disappear from the inferred state, and `initialState: { bandwidthState: ... }` would be flagged as an unknown property. The explicit form sidesteps the inference and uses the engine's declared shapes directly.
+The captured refs are the same `Signal<T>` objects every behavior in the composition shares. Writing through them drives the engine the same way an internal behavior would.
 
-The inferred form remains the right call for small or single-behavior compositions where the per-feature state slices are the source of truth. For aggregating engines, prefer explicit.
+In `@videojs/spf/hls`, `SimpleHlsMediaMixin` is the canonical consumer. Its `attach()` / `set src` / `set preload` / `play()` methods all forward to writes on the captured refs:
+
+```ts
+attach(mediaElement: HTMLMediaElement): void {
+  this.#signals.context.mediaElement.set(mediaElement);
+}
+
+set src(value: string) {
+  // ... destroy previous engine, create new one ...
+  this.#signals.state.presentation.set({ url: value });
+}
+
+play(): Promise<void> {
+  // Signal play intent — enables loading even with preload="none"
+  this.#signals.state.playbackInitiated.set(true);
+  return this.#signals.context.mediaElement.get().play();
+}
+```
+
+`shareSignals` is generic — the same factory works for any composition, parameterized over the engine's state/context shapes. `makeShareSignals<S, C>()` returns a `Behavior<StateSignals<S>, ContextSignals<C>, ShareSignalsConfig<S, C>>`. The HLS engine instantiates it once at module load.
+
+Multi-writer slots are part of the picture here. `presentation` is written by the consumer (initial `{ url }` seed) AND by `resolvePresentation` (parsed manifest) AND by `resolve{Video,Audio,Text}Track` (per-track segments) AND by `calculatePresentationDuration` (duration). Each owns a different aspect — the pipeline pattern. `mediaElement` is written only externally — single-source, no internal writers. Per-slot read/write annotations make these patterns visible at each behavior's setup signature, not enforce a uniform "0-or-1 writer per slot" rule.

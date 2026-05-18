@@ -11,6 +11,7 @@ import {
   iconFlipped,
   iconState,
   inputFeedback,
+  menu,
   overlay,
   playbackRate,
   popup,
@@ -110,9 +111,20 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroupEnd}">
-            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
-            </media-playback-rate-button>
-            <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
+            </media-playback-rate-menu-trigger>
+            <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
+              <media-playback-rate-options class="${menu.group}">
+                <template>
+                  <media-menu-radio-item class="${menu.item}">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="${menu.indicator}">
+                      ${renderIcon('check', { class: icon })}
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-playback-rate-options>
+            </media-playback-rate-menu>
 
             <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}

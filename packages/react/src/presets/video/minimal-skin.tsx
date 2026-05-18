@@ -6,6 +6,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
@@ -29,16 +30,17 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
-import { StatusAnnouncer } from '@/ui/status-announcer/status-announcer';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
@@ -90,6 +92,23 @@ function VolumePopover(): ReactNode {
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>
+  );
+}
+
+function PlaybackRateMenuItems(): ReactNode {
+  const { options, setValue, value } = usePlaybackRateMenu();
+
+  return (
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+            <CheckIcon className="media-icon" />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
   );
 }
 
@@ -196,12 +215,12 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
-              />
-              <Tooltip.Popup className="media-tooltip" />
-            </Tooltip.Root>
+            <PlaybackRateMenu.Root side="top" align="center">
+              <PlaybackRateMenu.Trigger className="media-button--playback-rate" render={<Button />} />
+              <PlaybackRateMenu.Content className="media-popover media-menu media-menu--playback-rate">
+                <PlaybackRateMenuItems />
+              </PlaybackRateMenu.Content>
+            </PlaybackRateMenu.Root>
 
             <VolumePopover />
 

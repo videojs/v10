@@ -1,7 +1,7 @@
 'use client';
 
 import type { Media } from '@videojs/core';
-import type { MediaContainer } from '@videojs/core/dom';
+import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
@@ -15,6 +15,7 @@ export interface PlayerContextValue {
   setMedia: Dispatch<SetStateAction<Media | null>>;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
+  popupGroup?: PopupGroup;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -86,6 +87,18 @@ export function useMedia(): Media | null {
 export function useContainer(): MediaContainer | null {
   const { container } = usePlayerContext();
   return container;
+}
+
+/** Access the container element when a Player Provider is available. */
+export function useOptionalContainer(): MediaContainer | null {
+  const ctx = useContext(PlayerContext);
+  return ctx?.container ?? null;
+}
+
+/** Access the interactive popup group when a Player Provider is available. */
+export function useOptionalPopupGroup(): PopupGroup | undefined {
+  const ctx = useContext(PlayerContext);
+  return ctx?.popupGroup;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */

@@ -1,17 +1,20 @@
 'use client';
 
 import { MenuCore, MenuDataAttrs } from '@videojs/core';
-import { createMenu, createTransition, type MenuChangeDetails } from '@videojs/core/dom';
+import { createMenu, createTransition, type MenuChangeDetails, type PositioningBoundary } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-
+import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
+import { useOptionalControlsContext } from '../controls/context';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
 export interface MenuRootProps extends MenuCore.Props {
+  /** Boundary used to constrain the root menu popup size. */
+  boundary?: PositioningBoundary;
   /** Called when the menu open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: MenuChangeDetails) => void;
   /** Called after open/close animations complete. */
@@ -24,12 +27,16 @@ export function MenuRoot({
   defaultOpen = MenuCore.defaultProps.defaultOpen,
   onOpenChange: onOpenChangeProp,
   onOpenChangeComplete: onOpenChangeCompleteProp,
+  boundary = 'container',
   children,
   ...coreProps
 }: MenuRootProps): ReactNode {
   // Detect if we are nested inside a parent Menu.Content — if so, operate as
   // a submenu: no popover positioning, Trigger acts as a parent item.
   const parentMenu = useOptionalMenuContext();
+  const controls = useOptionalControlsContext();
+  const container = useOptionalContainer();
+  const popupGroup = useOptionalPopupGroup();
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
@@ -41,6 +48,8 @@ export function MenuRoot({
   const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
   const closeOnEscapeRef = useLatestRef(closeOnEscape);
   const closeOnOutsideClickRef = useLatestRef(closeOnOutsideClick);
+  const popupGroupRef = useLatestRef(popupGroup);
+  const isSubmenuRef = useLatestRef(isSubmenu);
 
   const [menu] = useState(() => {
     const instance = createMenu({
@@ -53,6 +62,7 @@ export function MenuRoot({
       },
       closeOnEscape: () => closeOnEscapeRef.current ?? MenuCore.defaultProps.closeOnEscape,
       closeOnOutsideClick: () => closeOnOutsideClickRef.current ?? MenuCore.defaultProps.closeOnOutsideClick,
+      group: () => (isSubmenuRef.current ? undefined : popupGroupRef.current),
     });
 
     if (!isControlled && defaultOpen) {
@@ -79,6 +89,12 @@ export function MenuRoot({
     }
   }, [controlledOpen, menu]);
 
+  useEffect(() => {
+    if (isSubmenu || controls?.state.visible !== false) return;
+
+    menu.close('imperative-action');
+  }, [controls?.state.visible, isSubmenu, menu]);
+
   useDestroy(menu);
 
   const input = useSnapshot(menu.input);
@@ -103,13 +119,26 @@ export function MenuRoot({
       stateAttrMap: MenuDataAttrs,
       contentId,
       anchorName,
+      boundary,
+      container,
       activeSubMenuId,
       activeSubMenuTriggerId,
       navigationDirection,
       push: menu.push,
       pop: menu.pop,
     }),
-    [core, menu, state, contentId, anchorName, activeSubMenuId, activeSubMenuTriggerId, navigationDirection]
+    [
+      core,
+      menu,
+      state,
+      contentId,
+      anchorName,
+      boundary,
+      container,
+      activeSubMenuId,
+      activeSubMenuTriggerId,
+      navigationDirection,
+    ]
   );
 
   const subMenuContextValue = useMemo(

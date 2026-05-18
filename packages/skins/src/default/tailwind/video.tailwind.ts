@@ -47,7 +47,9 @@ export const root = (isShadowDOM: boolean) =>
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
     '[--media-tooltip-side-offset:0.75rem]',
+    '[--media-tooltip-boundary-offset:0.5rem]',
     '[--media-popover-side-offset:0.5rem]',
+    '[--media-popover-boundary-offset:0.5rem]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
@@ -94,6 +96,7 @@ export const controls = cn(
   surface,
   // Position & wrapping layout (small)
   'absolute bottom-2 inset-x-2 flex-wrap',
+  'mx-auto max-w-4xl',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',
@@ -209,6 +212,7 @@ export { iconState } from '../../shared/tailwind/icon-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { menu } from './components/menu';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

@@ -1,0 +1,72 @@
+/* ==========================================================================
+   Menus
+   Note: Menus use `.media-popover` styles for positioning and transitions.
+   ========================================================================== */
+
+.media-minimal-skin .media-popover.media-menu {
+  box-sizing: border-box;
+  min-width: min(6rem, var(--media-popover-available-width, 6rem));
+  max-width: var(--media-popover-available-width, none);
+  max-height: var(--media-popover-available-height, none);
+  padding: 0.25rem;
+  overflow: auto;
+  overscroll-behavior: none;
+  background-color: var(--media-tooltip-background-color);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 1px var(--media-tooltip-border-color),
+    0 4px 6px -1px oklch(0 0 0 / 0.1),
+    0 2px 4px -2px oklch(0 0 0 / 0.1);
+  backdrop-filter: var(--media-tooltip-backdrop-filter);
+
+  &::before {
+    display: none;
+  }
+}
+
+.media-minimal-skin .media-popover.media-menu .media-menu__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.media-minimal-skin .media-popover.media-menu .media-menu__item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  border-radius: 0.5rem;
+
+  &:hover,
+  &[data-highlighted] {
+    background-color: oklch(from currentColor l c h / 0.1);
+  }
+
+  &:focus-visible {
+    outline-color: currentColor;
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled="true"] {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.media-minimal-skin .media-popover.media-menu .media-menu__indicator {
+  flex-shrink: 0;
+  margin-right: -0.25rem;
+  opacity: 0;
+}
+
+.media-minimal-skin .media-popover.media-menu .media-menu__item[aria-checked="true"] .media-menu__indicator {
+  opacity: 1;
+}

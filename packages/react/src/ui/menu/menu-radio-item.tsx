@@ -46,7 +46,7 @@ export const MenuRadioItem = forwardRef<HTMLDivElement, MenuRadioItemProps>(func
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
     if (!element || disabled) return;
-    menu.highlight(element);
+    menu.highlight(element, { focus: false });
   }, [menu, disabled]);
 
   return renderElement(

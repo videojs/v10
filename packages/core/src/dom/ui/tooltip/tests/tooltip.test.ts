@@ -57,6 +57,17 @@ describe('createTooltip', () => {
 
       expect(onOpenChange).not.toHaveBeenCalled();
     });
+
+    it('supports imperative close reason', () => {
+      const { tooltip, onOpenChange } = createTestTooltip();
+
+      tooltip.open();
+      onOpenChange.mockClear();
+
+      tooltip.close('imperative-action');
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+    });
   });
 
   describe('onOpenChangeComplete', () => {

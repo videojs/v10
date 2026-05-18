@@ -45,7 +45,7 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
@@ -59,7 +59,7 @@ function getTemplateHTML() {
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
 
-            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" class="${cn(popup.volume)}">
+            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>

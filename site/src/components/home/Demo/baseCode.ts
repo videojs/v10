@@ -20,7 +20,9 @@ export function generateReactCode(skin: Skin): string {
   const skinComponent = skin === 'default' ? 'VideoSkin' : 'MinimalVideoSkin';
   const skinCss = skin === 'default' ? 'skin' : 'minimal-skin';
 
-  return `import { createPlayer } from '@videojs/react';
+  return `'use client';
+
+import { createPlayer } from '@videojs/react';
 import { ${skinComponent}, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/${skinCss}.css';
 

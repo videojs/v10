@@ -47,7 +47,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'",
-    "size": "node scripts/measure-size.js --playback-engine",
+    "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {

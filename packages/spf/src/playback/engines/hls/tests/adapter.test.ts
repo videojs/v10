@@ -66,21 +66,21 @@ describe('SimpleHlsMediaElement', () => {
     it('synchronously updates engine presentation state when src is set', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
+      expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src changes', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
-      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v2.m3u8');
+      expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v2.m3u8');
     });
 
     it('clears engine presentation state when src is set to empty string', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
-      expect(media.engine.state.get().presentation?.url).toBeFalsy();
+      expect(media.engine.state.presentation.get()?.url).toBeFalsy();
     });
   });
 
@@ -132,7 +132,7 @@ describe('SimpleHlsMediaElement', () => {
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
-      expect(media.engine.owners.get().mediaElement).toBe(el);
+      expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('cancels pending play listener when src changes', async () => {
@@ -153,14 +153,14 @@ describe('SimpleHlsMediaElement', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
-      expect(media.engine.owners.get().mediaElement).toBe(el);
+      expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('clears mediaElement in owners when detached', () => {
       const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.detach();
-      expect(media.engine.owners.get().mediaElement).toBeUndefined();
+      expect(media.engine.context.mediaElement.get()).toBeUndefined();
     });
 
     it('updates mediaElement when re-attached to a different element', () => {
@@ -169,7 +169,7 @@ describe('SimpleHlsMediaElement', () => {
       const el2 = document.createElement('video');
       media.attach(el1);
       media.attach(el2);
-      expect(media.engine.owners.get().mediaElement).toBe(el2);
+      expect(media.engine.context.mediaElement.get()).toBe(el2);
     });
 
     it('preserves src across attach/detach cycles', () => {
@@ -184,7 +184,7 @@ describe('SimpleHlsMediaElement', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
-      expect(media.engine.state.get().presentation?.url).toBe('https://example.com/v.m3u8');
+      expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('detach does not destroy the engine', () => {
@@ -213,7 +213,7 @@ describe('SimpleHlsMediaElement', () => {
       const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
-      expect(media.engine.state.get().playbackInitiated).toBe(true);
+      expect(media.engine.state.playbackInitiated.get()).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
@@ -316,7 +316,7 @@ describe('SimpleHlsMediaElement', () => {
     it('updates engine state immediately when set', () => {
       const media = new SimpleHlsMediaElement();
       media.preload = 'none';
-      expect(media.engine.state.get().preload).toBe('none');
+      expect(media.engine.state.preload.get()).toBe('none');
     });
 
     it('setting preload to empty string resets the stored value but does not clear current engine state', () => {
@@ -325,7 +325,7 @@ describe('SimpleHlsMediaElement', () => {
       media.preload = '';
       // '' only clears #preload so the next engine recreation won't re-apply
       // an explicit value — it does not patch the current engine state.
-      expect(media.engine.state.get().preload).toBe('auto');
+      expect(media.engine.state.preload.get()).toBe('auto');
     });
 
     it('survives src reassignment — explicit preload is preserved across engine recreation', () => {
@@ -333,7 +333,7 @@ describe('SimpleHlsMediaElement', () => {
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
       expect(media.preload).toBe('none');
-      expect(media.engine.state.get().preload).toBe('none');
+      expect(media.engine.state.preload.get()).toBe('none');
     });
 
     it('explicit preload is re-applied before owners.patch on src change so syncPreloadAttribute skips inference', () => {
@@ -344,7 +344,7 @@ describe('SimpleHlsMediaElement', () => {
       media.src = 'https://example.com/v.m3u8';
       // syncPreloadAttribute fires when owners.patch re-attaches the element,
       // but since preload was already patched into the new engine's state, it skips.
-      expect(media.engine.state.get().preload).toBe('none');
+      expect(media.engine.state.preload.get()).toBe('none');
     });
   });
 

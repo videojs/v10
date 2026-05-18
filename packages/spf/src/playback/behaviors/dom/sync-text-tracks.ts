@@ -1,7 +1,8 @@
 import { listen } from '@videojs/utils/dom';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type Signal, untrack, update } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal, untrack } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../../../media/types';
 
 /**
@@ -24,9 +25,9 @@ export interface TextTrackSyncState {
 }
 
 /**
- * Owners shape for text track sync.
+ * Context shape for text track sync.
  */
-export interface TextTrackSyncOwners {
+export interface TextTrackSyncContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
@@ -76,19 +77,22 @@ function syncModes(textTracks: TextTrackList, selectedId: string | undefined): v
  *   `selectedTextTrackId`.
  *
  * @example
- * const reactor = syncTextTracks({ state, owners });
+ * const reactor = syncTextTracks.setup({ state, context });
  * // later:
  * reactor.destroy();
  */
-export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrackSyncOwners>({
+function syncTextTracksSetup({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: {
+    presentation: ReadonlySignal<TextTrackSyncState['presentation']>;
+    selectedTextTrackId: Signal<TextTrackSyncState['selectedTextTrackId']>;
+  };
+  context: { mediaElement: ReadonlySignal<TextTrackSyncContext['mediaElement']> };
 }): Reactor<'preconditions-unmet' | 'set-up' | 'destroying' | 'destroyed'> {
-  const mediaElementSignal = computed(() => owners.get().mediaElement);
-  const modelTextTracksSignal = computed(() => getModelTextTracks(state.get().presentation), {
+  const mediaElementSignal = computed(() => context.mediaElement.get());
+  const modelTextTracksSignal = computed(() => getModelTextTracks(state.presentation.get()), {
     /** @TODO Make generic and abstract away for Array<T> | undefined (CJP) */
     equals(prevTextTracks, nextTextTracks) {
       if (prevTextTracks === nextTextTracks) return true;
@@ -103,7 +107,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
       );
     },
   });
-  const selectedTextTrackIdSignal = computed(() => state.get().selectedTextTrackId);
+  const selectedTextTrackIdSignal = computed(() => state.selectedTextTrackId.get());
   const preconditionsMetSignal = computed(() => !!mediaElementSignal.get() && !!modelTextTracksSignal.get()?.length);
 
   return createMachineReactor<'preconditions-unmet' | 'set-up'>({
@@ -124,7 +128,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
             mediaElement
               .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"]')
               .forEach((trackEl) => trackEl.remove());
-            update(state, { selectedTextTrackId: undefined } as Partial<S>);
+            state.selectedTextTrackId.set(undefined);
           };
         },
 
@@ -161,7 +165,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
             const newId = showingTrack?.id;
             const currentModelId = untrack(() => selectedTextTrackIdSignal.get());
             if (newId === currentModelId) return;
-            update(state, { selectedTextTrackId: newId } as Partial<S>);
+            state.selectedTextTrackId.set(newId);
           };
 
           const unlisten = listen(mediaElement.textTracks, 'change', onChange);
@@ -175,3 +179,9 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
     },
   });
 }
+
+export const syncTextTracks = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: ['mediaElement'],
+  setup: syncTextTracksSetup,
+});

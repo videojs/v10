@@ -1,5 +1,6 @@
 import { flush } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
+import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
 
 describe('createPopover', () => {
@@ -74,6 +75,68 @@ describe('createPopover', () => {
 
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'hover' });
     });
+
+    it('supports imperative close reason', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.open();
+      onOpenChange.mockClear();
+
+      popover.close('imperative-action');
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+    });
+
+    it('ignores imperative close while already closed', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.close('imperative-action');
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('closes the previously open grouped popover when another opens', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+
+      first.popover.open();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
+
+    it('does not close popovers in a different group', () => {
+      const firstGroup = createPopupGroup();
+      const secondGroup = createPopupGroup();
+      const first = createTestPopover({ group: () => firstGroup });
+      const second = createTestPopover({ group: () => secondGroup });
+
+      first.popover.open();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('clears the grouped popover when destroyed', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+
+      first.popover.open();
+      first.popover.destroy();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
   });
 
   describe('onOpenChangeComplete', () => {
@@ -128,8 +191,8 @@ describe('createPopover', () => {
     });
 
     it('does not open on click on touch devices when openOnHover is enabled', () => {
-      const matchMedia = vi.fn((query: string) => ({
-        matches: query === '(hover: hover)' ? false : false,
+      const matchMedia = vi.fn(() => ({
+        matches: false,
       }));
       vi.stubGlobal('matchMedia', matchMedia);
 
@@ -146,8 +209,8 @@ describe('createPopover', () => {
     });
 
     it('does not open via focus on touch devices when openOnHover is enabled', () => {
-      const matchMedia = vi.fn((query: string) => ({
-        matches: query === '(hover: hover)' ? false : false,
+      const matchMedia = vi.fn(() => ({
+        matches: false,
       }));
       vi.stubGlobal('matchMedia', matchMedia);
 

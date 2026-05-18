@@ -1,5 +1,12 @@
+import type { MediaControlsState } from '@videojs/core';
+import type { AnyPlayerStore } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
+import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { playerContext } from '../../../player/context';
+import { ControlsElement } from '../../controls/controls-element';
+import { MediaElement } from '../../media-element';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuItemElement } from '../menu-item-element';
@@ -16,6 +23,53 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
+
+function defineElement(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, Base);
+  }
+}
+
+function createControlsStore(): AnyPlayerStore {
+  return createStore<unknown>()<MediaControlsState>({
+    name: 'controls',
+    state: ({ get, set }) => {
+      return {
+        userActive: true,
+        controlsVisible: true,
+        toggleControls() {
+          const visible = !(get().controlsVisible as boolean);
+
+          set({ userActive: visible, controlsVisible: visible });
+
+          return visible;
+        },
+      };
+    },
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends MediaElement {
+  store = createControlsStore();
+
+  readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#provider.setValue(this.store);
+  }
+
+  setVisible(visible: boolean): void {
+    const state = this.store.state as MediaControlsState;
+
+    if (state.controlsVisible === visible) return;
+
+    state.toggleControls();
+    flush();
+  }
+}
+
+defineElement('test-menu-player-provider', TestPlayerProviderElement);
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -209,6 +263,24 @@ describe('MenuElement', () => {
     );
   });
 
+  it('highlights pointer-entered items without moving focus', async () => {
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+
+    root.append(item);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await item.updateComplete;
+
+    const focus = vi.spyOn(item, 'focus');
+
+    item.dispatchEvent(new Event('pointerenter'));
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+  });
+
   it('closes when focus moves outside the root menu', async () => {
     const root = createElement(MenuElement);
     const item = createElement(MenuItemElement);
@@ -381,5 +453,108 @@ describe('MenuElement', () => {
 
     child.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
     expect(onRootKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops propagation for root menu keyboard navigation', async () => {
+    const wrapper = document.createElement('div');
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const onWrapperKeyDown = vi.fn();
+
+    root.open = true;
+    item.textContent = 'Auto';
+
+    wrapper.addEventListener('keydown', onWrapperKeyDown);
+    root.append(item);
+    wrapper.append(root);
+    document.body.append(wrapper);
+
+    await root.updateComplete;
+    await item.updateComplete;
+
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+
+    expect(onWrapperKeyDown).not.toHaveBeenCalled();
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+
+    const handled = root.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    );
+
+    expect(handled).toBe(false);
+    expect(onWrapperKeyDown).not.toHaveBeenCalled();
+
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+
+    expect(onWrapperKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops propagation for root trigger keyboard navigation while open', async () => {
+    const wrapper = document.createElement('div');
+    const trigger = document.createElement('button');
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const onWrapperKeyDown = vi.fn();
+
+    root.id = 'root-menu';
+    root.open = true;
+    trigger.setAttribute('commandfor', 'root-menu');
+    item.textContent = 'Auto';
+
+    wrapper.addEventListener('keydown', onWrapperKeyDown);
+    root.append(item);
+    wrapper.append(trigger, root);
+    document.body.append(wrapper);
+
+    await root.updateComplete;
+    await item.updateComplete;
+
+    const handled = trigger.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    );
+
+    expect(handled).toBe(false);
+    expect(onWrapperKeyDown).not.toHaveBeenCalled();
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+
+    expect(onWrapperKeyDown).not.toHaveBeenCalled();
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+  });
+
+  it('closes an open root menu when parent controls hide', async () => {
+    const provider = document.createElement('test-menu-player-provider') as TestPlayerProviderElement;
+    const controls = createElement(ControlsElement);
+    const trigger = document.createElement('button');
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const onOpenChange = vi.fn();
+    const focus = vi.spyOn(trigger, 'focus');
+
+    root.id = 'root-menu';
+    root.open = true;
+    trigger.setAttribute('commandfor', 'root-menu');
+    item.textContent = 'Auto';
+
+    root.addEventListener('open-change', onOpenChange);
+    root.append(item);
+    controls.append(trigger, root);
+    document.body.append(provider);
+    provider.append(controls);
+
+    await controls.updateComplete;
+    await root.updateComplete;
+    await item.updateComplete;
+
+    provider.setVisible(false);
+
+    await waitForAssertion(() => {
+      expect(root.open).toBe(false);
+    });
+
+    expect(onOpenChange).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'imperative-action' }) })
+    );
+    expect(focus).not.toHaveBeenCalled();
   });
 });
