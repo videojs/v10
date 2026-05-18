@@ -39,6 +39,8 @@ const iconEntries = Object.fromEntries(
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: 'src/index.ts',
+    'i18n/index': 'src/i18n/index.ts',
+    'i18n/locales/en': 'src/i18n/locales/en/index.ts',
     ...iconEntries,
     ...defineEntries,
     ...presetEntries,
