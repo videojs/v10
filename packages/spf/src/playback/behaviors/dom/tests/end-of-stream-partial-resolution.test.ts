@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../../../media/types';
 import { createSourceBufferActor } from '../../../actors/dom/source-buffer';
-import type { EndOfStreamOwners, EndOfStreamState } from '../end-of-stream';
+import type { EndOfStreamContext, EndOfStreamState } from '../end-of-stream';
 import { hasLastSegmentLoaded } from '../end-of-stream';
 
 // ============================================================================
@@ -106,10 +106,10 @@ describe('hasLastSegmentLoaded', () => {
         presentation: makeResolvedPresentation('v1'),
         selectedVideoTrackId: 'v1',
       };
-      const owners: EndOfStreamOwners = {
+      const context: EndOfStreamContext = {
         videoBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'v1'),
       };
-      expect(hasLastSegmentLoaded(state, owners)).toBe(true);
+      expect(hasLastSegmentLoaded(state, context)).toBe(true);
     });
 
     it('returns false when last segment ID is not in actor context', () => {
@@ -118,28 +118,23 @@ describe('hasLastSegmentLoaded', () => {
         selectedVideoTrackId: 'v1',
       };
       // only seg-1 present; seg-2 (the last segment) is missing
-      const owners: EndOfStreamOwners = {
+      const context: EndOfStreamContext = {
         videoBufferActor: makeActorWithSegments(['seg-1'], 'v1'),
       };
-      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
+      expect(hasLastSegmentLoaded(state, context)).toBe(false);
     });
   });
 
   describe('unresolved tracks — quality switch scenario', () => {
     it('returns false when selectedVideoTrackId points to an unresolved track', () => {
-      // Quality switch scenario: ABR switched selectedVideoTrackId to a new
-      // (unresolved) track. The old track's segments are still in the buffer, but
-      // since the new track is unresolved we cannot know if its end is covered.
       const state: EndOfStreamState = {
         presentation: makeUnresolvedPresentation('new-track'),
         selectedVideoTrackId: 'new-track',
       };
-      // Actor has old track's segments — but the track is unresolved so we
-      // return false before even checking the actor.
-      const owners: EndOfStreamOwners = {
+      const context: EndOfStreamContext = {
         videoBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'some-track'),
       };
-      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
+      expect(hasLastSegmentLoaded(state, context)).toBe(false);
     });
 
     it('returns false when selectedAudioTrackId points to an unresolved track', () => {
@@ -175,10 +170,10 @@ describe('hasLastSegmentLoaded', () => {
         } as unknown as Presentation,
         selectedAudioTrackId: 'audio-new',
       };
-      const owners: EndOfStreamOwners = {
+      const context: EndOfStreamContext = {
         audioBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'some-track'),
       };
-      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
+      expect(hasLastSegmentLoaded(state, context)).toBe(false);
     });
   });
 

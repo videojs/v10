@@ -20,6 +20,7 @@ export * from './ui/menu/create-menu-view-transition';
 export * from './ui/menu/menu-viewport-transition';
 export * from './ui/popover/popover';
 export * from './ui/popover/popover-positioning';
+export * from './ui/popover/popup-group';
 export * from './ui/slider';
 export * from './ui/slider-css-vars';
 export * from './ui/thumbnail';

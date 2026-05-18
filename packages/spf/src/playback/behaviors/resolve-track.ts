@@ -1,31 +1,17 @@
+import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
-import type { Signal } from '../../core/signals/primitives';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
-import type { MaybeResolvedPresentation, Presentation, ResolvedTrack, TrackType } from '../../media/types';
+import type {
+  MaybeResolvedPresentation,
+  PartiallyResolvedTrack,
+  Presentation,
+  ResolvedTrack,
+  TrackType,
+} from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { getSelectedTrack, type TrackSelectionState } from '../../media/utils/track-selection';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
-
-/**
- * State shape for track resolution.
- */
-export interface TrackResolutionState extends TrackSelectionState {
-  presentation?: MaybeResolvedPresentation;
-  selectedVideoTrackId?: string | undefined;
-  selectedAudioTrackId?: string | undefined;
-  selectedTextTrackId?: string | undefined;
-}
-
-export function canResolve<T extends TrackType>(
-  state: TrackResolutionState,
-  config: TrackResolutionConfig<T>
-): boolean {
-  const track = getSelectedTrack(state, config.type);
-  if (!track) return false;
-
-  return !isResolvedTrack(track);
-}
 
 // ============================================================================
 // Public API
@@ -53,25 +39,57 @@ export function updateTrackInPresentation<T extends ResolvedTrack>(
 }
 
 /**
- * Configuration for track resolution.
+ * Find a track of the given type and id within a presentation.
+ *
+ * Returns the matching track from the first switching set of the matching
+ * selection set, or `undefined` if either is missing. The returned track may
+ * be partially resolved (URL only) or fully resolved (with segments) — callers
+ * narrow as needed.
  */
-export interface TrackResolutionConfig<T extends TrackType = TrackType> {
-  type: T;
+function findTrack(
+  presentation: MaybeResolvedPresentation,
+  type: TrackType,
+  trackId: string
+): PartiallyResolvedTrack | ResolvedTrack | undefined {
+  return presentation.selectionSets
+    ?.find(({ type: t }) => t === type)
+    ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId);
 }
 
+// ============================================================================
+// Specialization helper
+//
+// Each `resolveXTrack` export below is a thin wrapper that binds (selectedKey,
+// findTrackToResolve) at module load. The orchestration — gate on a selection,
+// short-circuit when the track is already resolved or missing, schedule the
+// fetch+parse, and patch the resolved track back into `state.presentation` —
+// is shared.
+// ============================================================================
+
 /**
- * Resolves unresolved tracks using reactive composition.
- *
- * Reacts to state changes and schedules fetch tasks via ConcurrentRunner when
- * a selected track is unresolved. The ConcurrentRunner handles deduplication,
- * parallel execution, and cleanup.
- *
- * Generic version that works for video, audio, or text tracks based on config.
- * Type parameter T is inferred from config.type (use 'as const' for inference).
+ * State shape for track resolution. Uses `MaybeResolvedPresentation` so it
+ * matches the engine's slot type; resolution narrows internally.
  */
-export function resolveTrack<S extends TrackResolutionState, T extends TrackType>(
-  { state }: { state: Signal<S> },
-  config: TrackResolutionConfig<T>
+export interface ResolveTrackState {
+  presentation?: MaybeResolvedPresentation;
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+  selectedTextTrackId?: string;
+}
+
+type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+
+type ResolveTrackStateMap<K extends SelectedTrackKey> = {
+  presentation: Signal<ResolveTrackState['presentation']>;
+} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
+
+function setupTrackResolution<K extends SelectedTrackKey>(
+  state: ResolveTrackStateMap<K>,
+  selectedKey: K,
+  findTrackToResolve: (
+    presentation: MaybeResolvedPresentation,
+    trackId: string
+  ) => PartiallyResolvedTrack | ResolvedTrack | undefined
 ): () => void {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
@@ -79,33 +97,30 @@ export function resolveTrack<S extends TrackResolutionState, T extends TrackType
   const runner = new ConcurrentRunner();
 
   const cleanup = effect(() => {
-    const currentState = state.get();
-    if (!canResolve(currentState, config)) return;
+    const presentation = state.presentation.get();
+    const trackId = state[selectedKey].get();
+    if (!presentation || !trackId) return;
 
-    const track = getSelectedTrack(currentState, config.type);
-    if (!track) return;
-
-    const resolvedTrack = track;
+    const track = findTrackToResolve(presentation, trackId);
+    if (!track || isResolvedTrack(track)) return;
 
     runner.schedule(
       // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
       // likely eventually passed down via config or a new "definitions" argument (CJP).
       new Task(
         async (signal) => {
-          const response = await fetchResolvable(resolvedTrack, { signal });
+          const response = await fetchResolvable(track, { signal });
           const text = await getResponseText(response);
-          const mediaTrack = parseMediaPlaylist(text, resolvedTrack);
+          const mediaTrack = parseMediaPlaylist(text, track);
 
-          // IMPORTANT: Read state.get().presentation at write time, not from the
-          // captured currentState snapshot. Multiple Tasks may be running concurrently
-          // (one per track being resolved), so the snapshot is likely already stale by
-          // the time a task completes — a sibling task may have already written the
-          // presentation with its own resolved track. Reading live state ensures each
-          // task builds on top of whatever has been committed so far.
-          const latest = state.get();
-          if (!isResolvedPresentation(latest.presentation)) return;
-          const updatedPresentation = updateTrackInPresentation(latest.presentation, mediaTrack);
-          state.set({ ...latest, presentation: updatedPresentation } as S);
+          // captured snapshot above. Multiple Tasks may be running concurrently
+          // (one per track being resolved), so the snapshot is likely already stale
+          // by the time a task completes — a sibling task may have already written
+          // the presentation with its own resolved track. Reading live state ensures
+          // each task builds on top of whatever has been committed so far.
+          const latestPresentation = state.presentation.get();
+          if (!isResolvedPresentation(latestPresentation)) return;
+          state.presentation.set(updateTrackInPresentation(latestPresentation, mediaTrack));
         },
         { id: track.id }
       )
@@ -117,3 +132,47 @@ export function resolveTrack<S extends TrackResolutionState, T extends TrackType
     cleanup();
   };
 }
+
+// ============================================================================
+// Specialized exports — one per track type
+// ============================================================================
+
+/**
+ * Resolve unresolved video tracks. Schedules a fetch task whenever the
+ * selected video track is partially resolved, parses the manifest, and
+ * writes the resolved track back into `state.presentation`.
+ */
+export const resolveVideoTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedVideoTrackId'> }) =>
+    setupTrackResolution(state, 'selectedVideoTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'video', trackId)
+    ),
+});
+
+/**
+ * Resolve unresolved audio tracks. Same shape as `resolveVideoTrack`,
+ * narrowed to audio.
+ */
+export const resolveAudioTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedAudioTrackId'> }) =>
+    setupTrackResolution(state, 'selectedAudioTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'audio', trackId)
+    ),
+});
+
+/**
+ * Resolve unresolved text tracks. Same shape as `resolveVideoTrack`,
+ * narrowed to text.
+ */
+export const resolveTextTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: ({ state }: { state: ResolveTrackStateMap<'selectedTextTrackId'> }) =>
+    setupTrackResolution(state, 'selectedTextTrackId', (presentation, trackId) =>
+      findTrack(presentation, 'text', trackId)
+    ),
+});

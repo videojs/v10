@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
-import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../../media/types';
+import type {
+  MaybeResolvedPresentation,
+  PartiallyResolvedVideoTrack,
+  Presentation,
+  VideoSelectionSet,
+} from '../../../media/types';
 import {
   DEFAULT_SWITCHING_CONFIG,
   type QualitySwitchingConfig,
@@ -12,6 +18,15 @@ import {
 // ============================================================================
 // Test helpers
 // ============================================================================
+
+function makeState(initial: QualitySwitchingState = {}): StateSignals<QualitySwitchingState> {
+  return {
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
+    selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
+    abrDisabled: signal<boolean | undefined>(initial.abrDisabled),
+  };
+}
 
 const createVideoTrack = (id: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
   type: 'video',
@@ -41,25 +56,18 @@ const createPresentation = (tracks: PartiallyResolvedVideoTrack[]): Presentation
     ],
   }) as Presentation;
 
-/**
- * Creates a BandwidthState with sufficient samples for a reliable estimate.
- * fastEstimate/slowEstimate are set directly to the target bps value.
- * With totalWeight=100, the zero-factor correction is ~1.0, so getBandwidthEstimate
- * returns approximately the provided value.
- */
 const createBandwidthState = (bps: number): BandwidthState => ({
   fastEstimate: bps,
   fastTotalWeight: 100,
   slowEstimate: bps,
   slowTotalWeight: 100,
-  bytesSampled: 500_000, // Well above minTotalBytes (128 KB) — real estimate used
+  bytesSampled: 500_000,
 });
 
 // Flush two levels of microtasks: one to fire the subscriber, one to process
 // any state.patch() the subscriber itself triggers.
 const flush = () => Promise.resolve().then(() => Promise.resolve());
 
-// ABR ladder used across multiple tests
 const tracks = [
   createVideoTrack('360p', 600_000),
   createVideoTrack('720p', 2_400_000),
@@ -81,24 +89,24 @@ describe('switchQuality', () => {
 
   describe('no-op conditions', () => {
     it('does nothing without a presentation', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
 
     it('does nothing without bandwidthState', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('360p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
       cleanup();
     });
 
@@ -108,81 +116,74 @@ describe('switchQuality', () => {
         url: 'https://example.com/playlist.m3u8',
         selectionSets: [],
       };
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: emptyPresentation,
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
 
     it('does nothing when already on the optimal track', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
-        // ~3 Mbps → optimal is 720p with default safety margin
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
   });
 
   describe('initial selection', () => {
     it('selects optimal track on first bandwidth estimate when no track is selected', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(3_000_000),
-        // No selectedVideoTrackId yet
       });
 
-      const cleanup = switchQuality({ state });
-      // Initial subscriber fire is synchronous — result visible via #pending
-      // 3 Mbps → 720p fits (needs 2.4M/0.85 ≈ 2.82 Mbps), 1080p doesn't
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
   });
 
   describe('downgrade', () => {
     it('downgrades immediately when bandwidth drops below current quality threshold', async () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '720p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
-      // Bandwidth drops — 800 Kbps can only fit 360p (needs 600K/0.85 ≈ 706 Kbps)
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(800_000) });
+      state.bandwidthState.set(createBandwidthState(800_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('360p');
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       cleanup();
     });
 
     it('does not apply upgrade interval to downgrades', async () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(6_000_000),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
-      // First fire (synchronous): upgrade 360p → 1080p since 6 Mbps fits
-      expect(state.get().selectedVideoTrackId).toBe('1080p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
-      // Immediately drop bandwidth (no time passes) — should still downgrade
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(700_000) });
+      state.bandwidthState.set(createBandwidthState(700_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('360p');
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       cleanup();
     });
@@ -190,66 +191,59 @@ describe('switchQuality', () => {
 
   describe('upgrade', () => {
     it('upgrades after bandwidth improves and minUpgradeInterval has passed', async () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(800_000),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
-      expect(state.get().selectedVideoTrackId).toBe('360p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
-      // Bandwidth improves but not enough time has passed since creation
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(3_000_000) });
+      state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('360p'); // blocked
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
-      // Advance time past the upgrade interval
       vi.advanceTimersByTime(DEFAULT_SWITCHING_CONFIG.minUpgradeInterval + 1);
 
-      // Trigger another state change to re-evaluate
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(3_000_000) });
+      state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       cleanup();
     });
 
     it('upgrades immediately on first switch (no prior upgrade)', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
-      // Initial fire is synchronous — upgrade happens in the subscribe callback
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
 
     it('blocks second upgrade until interval passes', async () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
-      // First upgrade: 360p → 720p (initial synchronous fire, no cooldown)
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
-      // Bandwidth jumps to 6 Mbps shortly after — 1080p desired but blocked
       vi.advanceTimersByTime(1000);
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(6_000_000) });
+      state.bandwidthState.set(createBandwidthState(6_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('720p'); // blocked
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
-      // After interval, upgrade proceeds
       vi.advanceTimersByTime(DEFAULT_SWITCHING_CONFIG.minUpgradeInterval + 1);
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(6_000_000) });
+      state.bandwidthState.set(createBandwidthState(6_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('1080p');
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
       cleanup();
     });
@@ -257,84 +251,76 @@ describe('switchQuality', () => {
 
   describe('configuration', () => {
     it('uses custom safetyMargin', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
-        // With safetyMargin=1.0, requiredBandwidth == trackBandwidth (no headroom)
-        // 3 Mbps: 720p (2.4M) fits, 1080p (4.8M) does not
         bandwidthState: createBandwidthState(3_000_000),
         selectedVideoTrackId: '360p',
       });
 
       const config: QualitySwitchingConfig = { safetyMargin: 1.0 };
-      const cleanup = switchQuality({ state }, config);
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const cleanup = switchQuality.setup({ state, config });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
 
     it('uses custom minUpgradeInterval', async () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(800_000),
         selectedVideoTrackId: '360p',
       });
 
       const config: QualitySwitchingConfig = { minUpgradeInterval: 2000 };
-      const cleanup = switchQuality({ state }, config);
+      const cleanup = switchQuality.setup({ state, config });
 
-      // Bandwidth improves — blocked by interval
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(3_000_000) });
+      state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('360p'); // blocked
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
-      // Advance only 2000ms (custom interval)
       vi.advanceTimersByTime(2001);
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(3_000_000) });
+      state.bandwidthState.set(createBandwidthState(3_000_000));
       await flush();
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
 
       cleanup();
     });
 
-    it('uses defaultBandwidth when estimate is not yet reliable (insufficient samples)', () => {
+    it('uses initialBandwidth when estimate is not yet reliable (insufficient samples)', () => {
       const unreliableState: BandwidthState = {
         fastEstimate: 0,
         fastTotalWeight: 0,
         slowEstimate: 0,
         slowTotalWeight: 0,
-        bytesSampled: 0, // No samples → hasGoodEstimate is false
+        bytesSampled: 0,
       };
 
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: unreliableState,
         selectedVideoTrackId: '360p',
       });
 
-      // With defaultBandwidth=5 Mbps: 720p (needs 2.4M/0.85 ≈ 2.82M) fits,
-      // 1080p (needs 4.8M/0.85 ≈ 5.65M) does not → selects 720p
-      const config: QualitySwitchingConfig = { defaultBandwidth: 5_000_000 };
-      const cleanup = switchQuality({ state }, config);
-      expect(state.get().selectedVideoTrackId).toBe('720p');
+      const config: QualitySwitchingConfig = { initialBandwidth: 5_000_000 };
+      const cleanup = switchQuality.setup({ state, config });
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
       cleanup();
     });
   });
 
   describe('cleanup', () => {
     it('stops reacting after cleanup', () => {
-      const state = signal<QualitySwitchingState>({
+      const state = makeState({
         presentation: createPresentation(tracks),
         bandwidthState: createBandwidthState(800_000),
         selectedVideoTrackId: '360p',
       });
 
-      const cleanup = switchQuality({ state });
+      const cleanup = switchQuality.setup({ state });
       cleanup();
 
-      // After cleanup, bandwidth changes should not trigger switches
       vi.advanceTimersByTime(DEFAULT_SWITCHING_CONFIG.minUpgradeInterval + 1);
-      state.set({ ...state.get(), bandwidthState: createBandwidthState(6_000_000) });
-      // No await needed — no subscriber fires after cleanup
-      expect(state.get().selectedVideoTrackId).toBe('360p');
+      state.bandwidthState.set(createBandwidthState(6_000_000));
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
     });
   });
 });

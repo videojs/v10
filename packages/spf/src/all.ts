@@ -91,7 +91,7 @@ export { fetchResolvable, getResponseText } from './network/fetch';
 
 export type { PresentationState } from './playback/behaviors/resolve-presentation';
 export { canResolve, resolvePresentation, shouldResolve } from './playback/behaviors/resolve-presentation';
-export type { PlatformOwners } from './playback/behaviors/sync-preload-attribute';
+export type { PlatformContext } from './playback/behaviors/sync-preload-attribute';
 export { syncPreloadAttribute } from './playback/behaviors/sync-preload-attribute';
 
 // =============================================================================

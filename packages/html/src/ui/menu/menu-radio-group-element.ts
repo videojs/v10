@@ -6,7 +6,7 @@ import { MediaElement } from '../media-element';
 import { menuContext, menuRadioGroupContext } from './context';
 
 export class MenuRadioGroupElement extends MediaElement {
-  static readonly tagName = 'media-menu-radio-group';
+  static readonly tagName: string = 'media-menu-radio-group';
 
   static override properties = {
     value: { type: String },

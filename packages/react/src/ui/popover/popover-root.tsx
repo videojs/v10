@@ -1,17 +1,26 @@
 'use client';
 
 import { type PopoverProps as CorePopoverProps, PopoverCore, PopoverDataAttrs } from '@videojs/core';
-import { createPopover, createTransition, type PopoverChangeDetails } from '@videojs/core/dom';
+import {
+  createPopover,
+  createTransition,
+  type PopoverChangeDetails,
+  type PositioningBoundary,
+} from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-
+import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
+import { useOptionalControlsContext } from '../controls/context';
 import { PopoverContextProvider } from './context';
 
 export interface PopoverRootProps extends CorePopoverProps {
+  /** Boundary used to constrain the popup size. */
+  boundary?: PositioningBoundary;
   /** Called when the popover open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: PopoverChangeDetails) => void;
   /** Called after open/close animations complete. */
@@ -27,13 +36,17 @@ export function PopoverRoot({
   openOnHover = PopoverCore.defaultProps.openOnHover,
   delay = PopoverCore.defaultProps.delay,
   closeDelay = PopoverCore.defaultProps.closeDelay,
+  boundary = 'container',
   children,
   ...coreProps
 }: PopoverRootProps): ReactNode {
+  const container = useOptionalContainer();
+  const popupGroup = useOptionalPopupGroup();
+  const controls = useOptionalControlsContext();
   const [core] = useState(() => new PopoverCore(coreProps));
   core.setProps(coreProps);
 
-  const isControlled = controlledOpen !== undefined;
+  const isControlled = !isUndefined(controlledOpen);
 
   // Keep refs that always point to the latest values so the
   // createPopover closure never reads stale props.
@@ -44,6 +57,7 @@ export function PopoverRoot({
   const openOnHoverRef = useLatestRef(openOnHover);
   const delayRef = useLatestRef(delay);
   const closeDelayRef = useLatestRef(closeDelay);
+  const popupGroupRef = useLatestRef(popupGroup);
 
   const [popover] = useState(() => {
     const instance = createPopover({
@@ -59,6 +73,7 @@ export function PopoverRoot({
       openOnHover: () => openOnHoverRef.current,
       delay: () => delayRef.current,
       closeDelay: () => closeDelayRef.current,
+      group: () => popupGroupRef.current,
     });
 
     // Apply defaultOpen on creation (uncontrolled only)
@@ -74,7 +89,7 @@ export function PopoverRoot({
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {
-    if (controlledOpen === undefined) return;
+    if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = popover.input.current;
     if (controlledOpen === inputOpen) return;
@@ -86,6 +101,13 @@ export function PopoverRoot({
     }
   }, [controlledOpen, popover]);
 
+  useEffect(() => {
+    if (isUndefined(controls?.state.visible)) return;
+    if (controls.state.visible) return;
+
+    popover.close('imperative-action');
+  }, [controls?.state.visible, popover]);
+
   useDestroy(popover);
 
   const input = useSnapshot(popover.input);
@@ -93,7 +115,9 @@ export function PopoverRoot({
   const state = core.getState();
 
   return (
-    <PopoverContextProvider value={{ core, popover, state, stateAttrMap: PopoverDataAttrs, anchorName, popupId }}>
+    <PopoverContextProvider
+      value={{ core, popover, state, stateAttrMap: PopoverDataAttrs, anchorName, popupId, boundary, container }}
+    >
       {children}
     </PopoverContextProvider>
   );

@@ -1,4 +1,3 @@
-import { playbackRate } from '@videojs/skins/default/tailwind/audio.tailwind';
 import {
   button,
   buttonGroup,
@@ -8,6 +7,8 @@ import {
   iconContainer,
   iconFlipped,
   iconState,
+  menu,
+  playbackRate,
   popup,
   root,
   seek,
@@ -17,6 +18,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  CheckIcon,
   PauseIcon,
   PlayIcon,
   RestartIcon,
@@ -27,9 +29,10 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
@@ -103,7 +106,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.volume)}>
         <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
@@ -114,6 +117,23 @@ function VolumePopover(): ReactNode {
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>
+  );
+}
+
+function PlaybackRateMenuItems(): ReactNode {
+  const { options, setValue, value } = usePlaybackRateMenu();
+
+  return (
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
+            <CheckIcon className={icon} />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
   );
 }
 
@@ -143,7 +163,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <PlayButton className={iconState.play.button} render={<Button />}>
@@ -156,7 +176,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
 
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={-SEEK_TIME} render={<Button />}>
@@ -170,7 +190,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
               <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={SEEK_TIME} render={<Button />}>
@@ -202,10 +222,12 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
           </div>
 
           <div className={buttonGroup}>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-            </Tooltip.Root>
+            <PlaybackRateMenu.Root side="top" align="center" boundary="viewport">
+              <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
+              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
+                <PlaybackRateMenuItems />
+              </PlaybackRateMenu.Content>
+            </PlaybackRateMenu.Root>
 
             <VolumePopover />
           </div>

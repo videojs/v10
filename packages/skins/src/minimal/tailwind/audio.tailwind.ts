@@ -23,7 +23,9 @@ export const root = cn(
   '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-tooltip-text-color:currentColor]',
   '[--media-tooltip-side-offset:0.75rem]',
+  '[--media-tooltip-boundary-offset:0.75rem]',
   '[--media-popover-side-offset:0.75rem]',
+  '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -93,6 +95,8 @@ export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { menu } from './components/menu';
+export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { slider } from './components/slider';
 export { time } from './components/time';

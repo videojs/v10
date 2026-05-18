@@ -1,6 +1,7 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { isMenuNavigationKey, type UIKeyboardEvent } from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
@@ -12,6 +13,31 @@ import { useMenuContext, useSubMenuContext } from './context';
 export interface MenuTriggerProps extends UIComponentProps<'button', MenuState> {
   /** Disables the trigger. Only meaningful when used as a submenu trigger inside a parent menu. */
   disabled?: boolean;
+}
+
+function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLElement>): UIKeyboardEvent {
+  return {
+    get defaultPrevented() {
+      return event.defaultPrevented;
+    },
+    key: event.key,
+    shiftKey: event.shiftKey,
+    ctrlKey: event.ctrlKey,
+    altKey: event.altKey,
+    metaKey: event.metaKey,
+    target: event.target instanceof Node ? event.target : event.currentTarget,
+    currentTarget: event.currentTarget,
+    preventDefault: () => event.preventDefault(),
+    stopPropagation: () => event.stopPropagation(),
+  };
+}
+
+function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLElement>): void {
+  const keyboardEvent = toUIKeyboardEvent(event);
+
+  if (event.key !== 'Escape' && isMenuNavigationKey(keyboardEvent) && !event.defaultPrevented) {
+    event.preventDefault();
+  }
 }
 
 /**
@@ -72,7 +98,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
     if (!element || disabled || !parentMenuApi) return;
-    parentMenuApi.highlight(element);
+    parentMenuApi.highlight(element, { focus: false });
   }, [disabled, parentMenuApi]);
 
   // Root trigger mode — standard button that toggles the menu.
@@ -104,6 +130,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
             'aria-disabled': disabled ? true : undefined,
             'data-has-submenu': '',
             onClick: handleSubMenuClick,
+            onKeyDownCapture: preventMenuKeyDefault,
             onKeyDown: handleSubMenuKeyDown,
             onPointerEnter: handlePointerEnter,
           },
@@ -120,7 +147,12 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
       state,
       stateAttrMap,
       ref: [forwardedRef as React.Ref<HTMLButtonElement>, triggerRef],
-      props: [{ type: 'button' as const, ...core.getTriggerAttrs(state, contentId) }, menu.triggerProps, elementProps],
+      props: [
+        { type: 'button' as const, ...core.getTriggerAttrs(state, contentId) },
+        state.open ? { onKeyDownCapture: preventMenuKeyDefault } : undefined,
+        menu.triggerProps,
+        elementProps,
+      ],
     }
   );
 });

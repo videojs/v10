@@ -6,6 +6,7 @@ import {
   getManualPositionStyle,
   getPopoverCSSVars,
   getPopupPositionRect,
+  getPositioningCSSVars,
   type ManualOffsets,
   resolveOffsets,
 } from '../popover-positioning';
@@ -155,6 +156,61 @@ describe('getPopoverCSSVars', () => {
   });
 });
 
+describe('getPositioningCSSVars', () => {
+  const boundary = makeDOMRect(0, 0, 300, 200);
+
+  it('computes available size for center-aligned top and bottom popups', () => {
+    const trigger = makeDOMRect(250, 150, 40, 20);
+    const vars = getPositioningCSSVars(
+      trigger,
+      boundary,
+      { side: 'bottom', align: 'center' },
+      { sideOffset: 8, alignOffset: 0 }
+    );
+
+    expect(vars[PopoverCSSVars.availableHeight]).toBe('22px');
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('60px');
+  });
+
+  it('applies align offset to start-aligned cross-axis size', () => {
+    const trigger = makeDOMRect(250, 150, 40, 20);
+    const vars = getPositioningCSSVars(
+      trigger,
+      boundary,
+      { side: 'bottom', align: 'start' },
+      { sideOffset: 0, alignOffset: 10 }
+    );
+
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('40px');
+  });
+
+  it('computes available size for center-aligned left and right popups', () => {
+    const trigger = makeDOMRect(120, 160, 40, 20);
+    const vars = getPositioningCSSVars(
+      trigger,
+      boundary,
+      { side: 'right', align: 'center' },
+      { sideOffset: 12, alignOffset: 0 }
+    );
+
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('128px');
+    expect(vars[PopoverCSSVars.availableHeight]).toBe('60px');
+  });
+
+  it('subtracts boundary offset from side-axis and cross-axis sizes', () => {
+    const trigger = makeDOMRect(250, 150, 40, 20);
+    const vars = getPositioningCSSVars(
+      trigger,
+      boundary,
+      { side: 'bottom', align: 'center' },
+      { sideOffset: 8, alignOffset: 0, boundaryOffset: 10 }
+    );
+
+    expect(vars[PopoverCSSVars.availableHeight]).toBe('12px');
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('40px');
+  });
+});
+
 describe('getAnchorNameStyle', () => {
   it('returns empty object when anchor positioning is not supported', () => {
     const style = getAnchorNameStyle('my-anchor');
@@ -194,12 +250,13 @@ describe('resolveOffsets', () => {
           getPropertyValue(name: string) {
             if (name === PopoverCSSVars.sideOffset) return '0.5rem';
             if (name === PopoverCSSVars.alignOffset) return '1em';
+            if (name === PopoverCSSVars.boundaryOffset) return '2px';
             return '';
           },
         }) as CSSStyleDeclaration
     );
 
-    expect(resolveOffsets(el)).toEqual({ sideOffset: 8, alignOffset: 14 });
+    expect(resolveOffsets(el)).toEqual({ sideOffset: 8, alignOffset: 14, boundaryOffset: 2 });
 
     getComputedStyleSpy.mockRestore();
   });

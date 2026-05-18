@@ -8,6 +8,7 @@
   overflow: visible;
   color: inherit;
   border: 0;
+  filter: blur(0px);
   transition-timing-function: var(--media-popup-transition-timing-function);
   transition-duration: var(--media-popup-transition-duration);
   transition-property: scale, opacity, filter;
@@ -16,7 +17,7 @@
   &[data-ending-style] {
     opacity: 0;
     filter: blur(8px);
-    scale: 0.5;
+    scale: 0.85;
   }
 
   &[data-instant] {

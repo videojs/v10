@@ -1,10 +1,10 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
-import { update } from '../../../core/signals/primitives';
 import {
   createSimpleHlsEngine,
   type SimpleHlsEngineConfig,
-  type SimpleHlsEngineOwners,
+  type SimpleHlsEngineContext,
+  type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
 } from './engine';
 
@@ -19,7 +19,7 @@ export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
 };
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
-  readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineOwners>;
+  readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -46,8 +46,9 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
-    #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineOwners>;
+    #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
+    #signals!: SimpleHlsEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -58,10 +59,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
-      this.#engine = createSimpleHlsEngine(config);
+      this.#engine = this.#createEngine();
     }
 
-    get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
+    get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return this.#engine;
     }
 
@@ -71,12 +72,12 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
 
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
-      update(this.#engine.owners, { mediaElement });
+      this.#signals.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
-      update(this.#engine.owners, { mediaElement: undefined });
+      this.#signals.context.mediaElement.set(undefined);
       super.detach?.();
     }
 
@@ -96,7 +97,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     set preload(value: '' | 'none' | 'metadata' | 'auto') {
       this.#preload = value;
       if (value) {
-        update(this.#engine.state, { preload: value });
+        this.#signals.state.preload.set(value);
       }
       // value = '' clears #preload (so the next engine recreation won't re-apply
       // an explicit value) but does not patch current state — the existing preload
@@ -110,28 +111,28 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // -------------------------------------------------------------------------
 
     get src(): string {
-      return this.#engine.state.get().presentation?.url ?? '';
+      return this.#signals.state.presentation.get()?.url ?? '';
     }
 
     set src(value: string) {
-      const prevMediaElement = this.#engine.owners.get().mediaElement;
+      const prevMediaElement = this.#signals.context.mediaElement.get();
 
       this.#cancelPendingPlay();
       this.#engine.destroy();
-      this.#engine = createSimpleHlsEngine(this.#config);
+      this.#engine = this.#createEngine();
 
-      // Apply explicit preload before setting owners so syncPreloadAttribute skips
+      // Apply explicit preload before setting context so syncPreloadAttribute skips
       // element inference and the explicit value is preserved across src changes.
       if (this.#preload) {
-        update(this.#engine.state, { preload: this.#preload });
+        this.#signals.state.preload.set(this.#preload);
       }
 
       if (prevMediaElement) {
-        update(this.#engine.owners, { mediaElement: prevMediaElement });
+        this.#signals.context.mediaElement.set(prevMediaElement);
       }
 
       if (value) {
-        update(this.#engine.state, { presentation: { url: value } });
+        this.#signals.state.presentation.set({ url: value });
       }
     }
 
@@ -141,13 +142,13 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // -------------------------------------------------------------------------
 
     play(): Promise<void> {
-      const { mediaElement } = this.#engine.owners.get();
+      const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
         return Promise.reject(new Error('SimpleHlsMediaElement: no media element attached'));
       }
 
       // Signal play intent — enables loading even with preload="none"
-      update(this.#engine.state, { playbackInitiated: true });
+      this.#signals.state.playbackInitiated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE
@@ -171,9 +172,18 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
+    #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+      return createSimpleHlsEngine({
+        ...this.#config,
+        onSignalsReady: (signals) => {
+          this.#signals = signals;
+        },
+      });
+    }
+
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
-      const { mediaElement } = this.#engine.owners.get();
+      const mediaElement = this.#signals.context.mediaElement.get();
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }

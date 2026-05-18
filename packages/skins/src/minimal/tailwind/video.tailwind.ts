@@ -40,7 +40,9 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
     '[--media-tooltip-text-color:currentColor]',
     '[--media-tooltip-side-offset:0.5rem]',
+    '[--media-tooltip-boundary-offset:0.5rem]',
     '[--media-popover-side-offset:1.5rem]',
+    '[--media-popover-boundary-offset:0.5rem]',
     'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -48,7 +50,7 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    '@2xl/media-root:*:[--media-popover-side-offset:0rem]',
+    '@2xl/media-root:*:[--media-popover-side-offset:0.5rem]',
     'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
     'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
@@ -88,6 +90,7 @@ export const controls = cn(
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
   'p-1 gap-x-2 flex-wrap rounded-xl',
+  'mx-auto max-w-4xl',
   'text-white z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',
@@ -101,7 +104,8 @@ export const controls = cn(
   'motion-safe:not-data-visible:translate-y-full',
   'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2'
+  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2',
+  '@2xl/media-root:*:[--media-popover-side-offset:0rem]'
 );
 
 /* ==========================================================================
@@ -193,6 +197,7 @@ export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { inputFeedback } from './components/input-feedback';
+export { menu } from './components/menu';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

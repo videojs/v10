@@ -17,7 +17,7 @@
 import { existsSync, symlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const root = resolve(import.meta.dirname, '..');
+const root = resolve(import.meta.dirname, '../..');
 
 const aliases = [
   { target: '.claude', path: '.opencode', type: 'junction' },

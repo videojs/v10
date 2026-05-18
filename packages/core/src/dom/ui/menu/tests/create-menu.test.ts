@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
+import { createPopupGroup } from '../../popover/popup-group';
 import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
@@ -111,6 +112,20 @@ describe('createMenu', () => {
       expect(onOpenChange).not.toHaveBeenCalled();
     });
 
+    it('closes the previously open grouped menu when another opens', () => {
+      const group = createPopupGroup();
+      const first = createTestMenu({ group: () => group });
+      const second = createTestMenu({ group: () => group });
+
+      first.menu.open();
+      first.onOpenChange.mockClear();
+
+      second.menu.open();
+
+      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
+
     it('highlights the first DOM item when items register after opening', () => {
       vi.useFakeTimers();
 
@@ -125,6 +140,66 @@ describe('createMenu', () => {
       vi.runAllTimers();
 
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      vi.useRealTimers();
+    });
+
+    it('highlights the checked item when opening', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      b.setAttribute('aria-checked', 'true');
+
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.open();
+
+      vi.runAllTimers();
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('highlights the checked item when items register after opening', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      b.setAttribute('aria-checked', 'true');
+
+      menu.open();
+      menu.registerItem(a);
+      menu.registerItem(b);
+
+      vi.runAllTimers();
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('highlights the selected item when opening', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      b.setAttribute('aria-selected', 'true');
+
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.open();
+
+      vi.runAllTimers();
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
 
       vi.useRealTimers();
     });
@@ -227,6 +302,84 @@ describe('createMenu', () => {
       menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
 
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
+    });
+
+    it('handles navigation keys while the open trigger has focus', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Auto');
+      menu.registerItem(element);
+      menu.open();
+
+      const event = makeKeyEvent('ArrowDown');
+      menu.triggerProps.onKeyDown(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(element.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
+    });
+
+    it('swallows left and right keys while the menu is open', () => {
+      const { menu } = createTestMenu();
+      menu.open();
+
+      const event = makeKeyEvent('ArrowRight');
+      menu.triggerProps.onKeyDown(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+    });
+
+    it('lets Escape bubble while the menu is open', () => {
+      const { menu } = createTestMenu();
+      menu.open();
+
+      const event = makeKeyEvent('Escape');
+      menu.triggerProps.onKeyDown(event);
+
+      expect(event.stopPropagation).not.toHaveBeenCalled();
+    });
+
+    it('lets navigation keys bubble while the menu is closed', () => {
+      const { menu } = createTestMenu();
+
+      const event = makeKeyEvent('ArrowRight');
+      menu.triggerProps.onKeyDown(event);
+
+      expect(event.stopPropagation).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus after imperative close', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.open();
+      menu.close('imperative-action');
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus when another grouped popup opens', async () => {
+      const group = createPopupGroup();
+      const first = createTestMenu({ group: () => group });
+      const second = createTestMenu({ group: () => group });
+      const trigger = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      first.menu.setTriggerElement(trigger);
+      first.menu.open();
+      second.menu.open();
+
+      await vi.waitFor(() => {
+        expect(first.menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
     });
   });
 
@@ -377,6 +530,18 @@ describe('createMenu', () => {
       menu.highlightFirstItem({ preventScroll: true });
 
       expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
+
+    it('can highlight an item without moving focus', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      const focus = vi.spyOn(element, 'focus');
+      menu.registerItem(element);
+
+      menu.highlight(element, { focus: false });
+
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(focus).not.toHaveBeenCalled();
     });
   });
 

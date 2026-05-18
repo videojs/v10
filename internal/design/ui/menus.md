@@ -244,6 +244,7 @@ Button that navigates back to the parent view. Placed at the top of a submenu `C
 **ARIA (automatic):** `aria-label` from `label` prop.
 
 **Behavior:**
+
 - Click pops the navigation stack.
 - `ArrowLeft` anywhere in the submenu also pops (handled by Content).
 - After pop, focus returns to the `Trigger` that navigated forward.
@@ -503,12 +504,7 @@ media-menu {
 }
 
 /* Menu open/close — fade + slight scale */
-@starting-style {
-  media-menu[data-open] {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-}
+media-menu[data-starting-style],
 media-menu[data-ending-style] {
   opacity: 0;
   transform: scale(0.97);

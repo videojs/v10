@@ -13,6 +13,7 @@
 @import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "./components/captions.css";
 @import "./components/input-feedback.css";
 @import "../../shared/css/video/icon-state.css";
@@ -39,7 +40,9 @@
   --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.5rem;
+  --media-tooltip-boundary-offset: 0.5rem;
   --media-popover-side-offset: 1.5rem;
+  --media-popover-boundary-offset: 0.5rem;
   overflow: clip;
   background: oklch(0 0 0);
 
@@ -60,7 +63,7 @@
 
   @container media-root (width > 42rem) {
     & > * {
-      --media-popover-side-offset: 0rem;
+      --media-popover-side-offset: 0.5rem;
     }
   }
 
@@ -159,7 +162,9 @@
   z-index: 10;
   flex-wrap: wrap;
   column-gap: 0.5rem;
+  max-width: 56rem;
   padding: 0.25rem;
+  margin-inline: auto;
   color: oklch(1 0 0);
   border-radius: 0.75rem;
   transition-timing-function: var(--media-controls-transition-timing-function);
@@ -245,6 +250,12 @@
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
     background: var(--media-controls-background-color);
+  }
+
+  @container media-root (width > 42rem) {
+    & > * {
+      --media-popover-side-offset: 0rem;
+    }
   }
 }
 

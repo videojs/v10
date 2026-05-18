@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { KeyboardEventHandler } from 'react';
+import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ControlsContextProvider } from '../../controls/context';
 import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
@@ -62,6 +63,28 @@ function SubmenuKeyboardFixture() {
             </MenuContent>
           </MenuRoot>
           <MenuItem data-testid="root-item">Copy link</MenuItem>
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function SubmenuPreventDefaultFixture({
+  onSubmenuKeyDown,
+}: {
+  onSubmenuKeyDown: KeyboardEventHandler<HTMLDivElement>;
+}) {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="root-content">
+        <MenuView data-testid="root-view">
+          <MenuRoot>
+            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="submenu-content" onKeyDown={onSubmenuKeyDown}>
+              <MenuItem data-testid="submenu-item">Auto</MenuItem>
+            </MenuContent>
+          </MenuRoot>
         </MenuView>
       </MenuContent>
     </MenuRoot>
@@ -165,6 +188,43 @@ function ItemOrderFixture() {
         <MenuItem data-testid="third-item">Copy link</MenuItem>
       </MenuContent>
     </MenuRoot>
+  );
+}
+
+function RootPropagationFixture({ onContainerKeyDown }: { onContainerKeyDown: KeyboardEventHandler<HTMLDivElement> }) {
+  return (
+    <div data-testid="container" onKeyDown={onContainerKeyDown} role="application">
+      <MenuRoot defaultOpen>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">
+          <MenuItem data-testid="item">Auto</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+    </div>
+  );
+}
+
+function ControlsHiddenFixture({
+  visible,
+  onOpenChange,
+}: {
+  visible: boolean;
+  onOpenChange: NonNullable<MenuRoot.Props['onOpenChange']>;
+}) {
+  return (
+    <ControlsContextProvider
+      value={{
+        state: { visible, userActive: visible },
+        stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
+      }}
+    >
+      <MenuRoot defaultOpen onOpenChange={onOpenChange}>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">
+          <MenuItem data-testid="item">Auto</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+    </ControlsContextProvider>
   );
 }
 
@@ -364,6 +424,38 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-content').hasAttribute('data-open')).toBe(true);
   });
 
+  it('returns to the parent view when ArrowLeft is pressed in a submenu', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+    });
+  });
+
+  it('honors preventDefault from submenu key handlers', async () => {
+    const onSubmenuKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLDivElement>) => event.preventDefault());
+
+    render(<SubmenuPreventDefaultFixture onSubmenuKeyDown={onSubmenuKeyDown} />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    });
+
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
+
+    expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+  });
+
   it('allows Escape from an inactive sibling submenu view to close the root menu', async () => {
     const onRootOpenChange = vi.fn();
 
@@ -412,6 +504,63 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('third-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
+  it('stops propagation for root menu keyboard navigation', () => {
+    const onContainerKeyDown = vi.fn();
+
+    render(<RootPropagationFixture onContainerKeyDown={onContainerKeyDown} />);
+
+    fireEvent.keyDown(screen.getByTestId('content'), { key: 'ArrowDown' });
+
+    expect(onContainerKeyDown).not.toHaveBeenCalled();
+    expect(screen.getByTestId('item').hasAttribute('data-highlighted')).toBe(true);
+
+    fireEvent.keyDown(screen.getByTestId('content'), { key: 'Tab' });
+
+    expect(onContainerKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops propagation for root trigger keyboard navigation while open', () => {
+    const onContainerKeyDown = vi.fn();
+
+    render(<RootPropagationFixture onContainerKeyDown={onContainerKeyDown} />);
+
+    fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'ArrowRight' });
+
+    expect(onContainerKeyDown).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'ArrowDown' });
+
+    expect(onContainerKeyDown).not.toHaveBeenCalled();
+    expect(screen.getByTestId('item').hasAttribute('data-highlighted')).toBe(true);
+  });
+
+  it('prevents default before native player hotkeys receive menu keys', () => {
+    const defaultPreventedValues: boolean[] = [];
+    const onContainerKeyDown = vi.fn((event: KeyboardEvent) => {
+      defaultPreventedValues.push(event.defaultPrevented);
+    });
+
+    render(<RootPropagationFixture onContainerKeyDown={vi.fn()} />);
+
+    screen.getByTestId('container').addEventListener('keydown', onContainerKeyDown);
+    fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByTestId('content'), { key: 'ArrowLeft' });
+
+    expect(defaultPreventedValues).toEqual([true, true]);
+  });
+
+  it('closes an open root menu when parent controls become hidden', async () => {
+    const onOpenChange = vi.fn();
+    const { rerender } = render(<ControlsHiddenFixture visible onOpenChange={onOpenChange} />);
+
+    onOpenChange.mockClear();
+    rerender(<ControlsHiddenFixture visible={false} onOpenChange={onOpenChange} />);
+
+    await waitFor(() => {
+      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'imperative-action' }));
+    });
+  });
+
   it('keeps the menu open when a checkbox item is toggled', () => {
     const onCheckedChange = vi.fn();
     const onRootOpenChange = vi.fn();
@@ -424,6 +573,26 @@ describe('MenuContent', () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true);
     expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
     expect(screen.queryByTestId('content')).not.toBeNull();
+  });
+
+  it('highlights pointer-entered items without moving focus', () => {
+    render(
+      <MenuRoot defaultOpen>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent>
+          <MenuItem data-testid="first-item">Auto</MenuItem>
+          <MenuItem data-testid="second-item">1080p</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+    );
+
+    const secondItem = screen.getByTestId('second-item');
+    const focus = vi.spyOn(secondItem, 'focus');
+
+    fireEvent.pointerEnter(secondItem);
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(secondItem.hasAttribute('data-highlighted')).toBe(true);
   });
 
   it('closes when focus moves outside the root menu', async () => {

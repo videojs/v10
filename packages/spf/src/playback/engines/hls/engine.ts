@@ -1,34 +1,35 @@
-import { type Composition, createComposition } from '../../../core/composition/create-composition';
-import type { Signal } from '../../../core/signals/primitives';
+import {
+  type Composition,
+  type ContextSignals,
+  createComposition,
+  type StateSignals,
+} from '../../../core/composition/create-composition';
+import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BandwidthState } from '../../../media/abr/bandwidth-estimator';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
-import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
+import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
-import { loadSegments } from '../../behaviors/dom/load-segments';
+import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupSourceBuffers } from '../../behaviors/dom/setup-sourcebuffer';
-import { setupTextTrackActors as _setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackPlaybackInitiated } from '../../behaviors/dom/track-playback-initiated';
 import { updateDuration } from '../../behaviors/dom/update-duration';
 import { loadTextTrackCues } from '../../behaviors/load-text-track-cues';
-import { switchQuality as _switchQuality } from '../../behaviors/quality-switching';
+import { switchQuality } from '../../behaviors/quality-switching';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
-import { resolveTrack } from '../../behaviors/resolve-track';
-import {
-  selectAudioTrack as _selectAudioTrack,
-  selectTextTrack as _selectTextTrack,
-  selectVideoTrack as _selectVideoTrack,
-} from '../../behaviors/select-tracks';
+import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
+import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../behaviors/select-tracks';
 import { syncPreloadAttribute } from '../../behaviors/sync-preload-attribute';
 
 // ============================================================================
-// HLS Engine State & Owners
+// HLS Engine State & Context
 // ============================================================================
 
 /**
@@ -56,11 +57,11 @@ export interface SimpleHlsEngineState {
 }
 
 /**
- * Owners shape for the HLS playback engine.
+ * Context shape for the HLS playback engine.
  *
  * Platform objects and actor references managed by HLS behaviors.
  */
-export interface SimpleHlsEngineOwners {
+export interface SimpleHlsEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
@@ -72,81 +73,46 @@ export interface SimpleHlsEngineOwners {
 }
 
 /**
+ * The composition signal refs handed to `onSignalsReady` callers — the
+ * canonical way to drive the engine externally (writes) or observe its
+ * state (reads) without touching `composition.state` / `composition.context`
+ * directly.
+ */
+export type SimpleHlsEngineSignals = {
+  state: StateSignals<SimpleHlsEngineState>;
+  context: ContextSignals<SimpleHlsEngineContext>;
+};
+
+/**
  * Configuration for the HLS playback engine.
  *
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface SimpleHlsEngineConfig {
+export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
   initialBandwidth?: number;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
   enableDefaultTrack?: boolean;
+  /**
+   * Resolver that turns a text-track segment fetch into VTT cues.
+   * Defaults to the DOM-bound `resolveVttSegment` resolver, which uses an
+   * offscreen `<track>` element to parse WebVTT.
+   */
+  resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
 }
-
-/** Shorthand for the deps shape used by HLS engine behaviors. */
-type Deps = {
-  state: Signal<SimpleHlsEngineState>;
-  owners: Signal<SimpleHlsEngineOwners>;
-  config: SimpleHlsEngineConfig;
-};
-
-// ============================================================================
-// Thin media-type wrappers
-//
-// Behaviors parameterized by media type get thin wrappers that close over
-// the type value, so the engine composition reads as a flat list of
-// behaviors without inline config.
-// ============================================================================
-
-const loadVideoSegments = (deps: Deps) => loadSegments(deps, { type: 'video' });
-const loadAudioSegments = (deps: Deps) => loadSegments(deps, { type: 'audio' });
-
-const resolveVideoTrack = (deps: Deps) => resolveTrack(deps, { type: 'video' as const });
-const resolveAudioTrack = (deps: Deps) => resolveTrack(deps, { type: 'audio' as const });
-const resolveTextTrack = (deps: Deps) => resolveTrack(deps, { type: 'text' as const });
-
-const setupTextTrackActors = ({ owners }: Deps) =>
-  _setupTextTrackActors({ owners, config: { resolveTextTrackSegment: resolveVttSegment } });
-
-// ============================================================================
-// Config-aware behavior wrappers
-//
-// Behaviors that read from engine config get wrappers that thread the
-// relevant config fields into the behavior's own config parameter.
-// ============================================================================
-
-const selectVideoTrack = ({ config, ...deps }: Deps) =>
-  _selectVideoTrack(deps, {
-    type: 'video',
-    ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
-  });
-
-const selectAudioTrack = ({ config, ...deps }: Deps) =>
-  _selectAudioTrack(deps, {
-    type: 'audio',
-    ...(config.preferredAudioLanguage !== undefined && {
-      preferredAudioLanguage: config.preferredAudioLanguage,
-    }),
-  });
-
-const selectTextTrack = ({ config, ...deps }: Deps) =>
-  _selectTextTrack(deps, {
-    type: 'text',
-    ...(config.preferredSubtitleLanguage !== undefined && {
-      preferredSubtitleLanguage: config.preferredSubtitleLanguage,
-    }),
-    ...(config.includeForcedTracks !== undefined && { includeForcedTracks: config.includeForcedTracks }),
-    ...(config.enableDefaultTrack !== undefined && { enableDefaultTrack: config.enableDefaultTrack }),
-  });
-
-const switchQuality = ({ config, ...deps }: Deps) =>
-  _switchQuality(deps, config.initialBandwidth !== undefined ? { defaultBandwidth: config.initialBandwidth } : {});
 
 // ============================================================================
 // HLS Playback Engine
 // ============================================================================
+
+/**
+ * Generic `shareSignals` instantiated against the HLS engine's full state
+ * and context — captures composition signal refs into the consumer's
+ * `onSignalsReady` callback at setup time.
+ */
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
 
 /**
  * Create an HLS playback engine.
@@ -157,13 +123,17 @@ const switchQuality = ({ config, ...deps }: Deps) =>
  *
  * @example
  * ```ts
+ * let signals: SimpleHlsEngineSignals;
  * const engine = createSimpleHlsEngine({
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
+ *   onSignalsReady: (refs) => {
+ *     signals = refs;
+ *   },
  * });
  *
- * engine.owners.set({ ...engine.owners.get(), mediaElement: videoEl });
- * engine.state.set({ ...engine.state.get(), presentation: { url: 'https://example.com/stream.m3u8' } });
+ * signals.context.mediaElement.set(videoEl);
+ * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  *
  * videoEl.play();
  *
@@ -172,8 +142,13 @@ const switchQuality = ({ config, ...deps }: Deps) =>
  */
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
-): Composition<SimpleHlsEngineState, SimpleHlsEngineOwners> {
-  return createComposition<SimpleHlsEngineState, SimpleHlsEngineOwners, SimpleHlsEngineConfig>(
+): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  const finalConfig = {
+    ...config,
+    resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+  };
+
+  return createComposition(
     [
       syncPreloadAttribute,
       trackPlaybackInitiated,
@@ -212,9 +187,18 @@ export function createSimpleHlsEngine(
       syncTextTracks,
       setupTextTrackActors,
       loadTextTrackCues,
+
+      // Behavior whose sole purpose is to use a callback to allow for signal writing from the outside (e.g. an adapter)
+      // NOTE: While not required, adding at the end since behaviors are setup in order, so this increases the likelihood
+      // that initial signal setup will have occurred before shareSignals' callback is invoked. (CJP)
+      shareSignals,
     ],
     {
-      config,
+      config: finalConfig,
+      // Seed bandwidthState so switchQuality fires on initial subscribe
+      // with the `initialBandwidth` fallback rather than waiting for the
+      // first chunk. The empty sample buffer means `getBandwidthEstimate`
+      // returns the configured initial bandwidth until real samples land.
       initialState: {
         bandwidthState: {
           fastEstimate: 0,
@@ -224,7 +208,6 @@ export function createSimpleHlsEngine(
           bytesSampled: 0,
         },
       },
-      initialOwners: {},
     }
   );
 }

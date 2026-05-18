@@ -1,5 +1,6 @@
+import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type Signal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, snapshot } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
@@ -11,7 +12,7 @@ export interface EndOfStreamState extends TrackSelectionState {
   mediaSourceReadyState?: MediaSource['readyState'];
 }
 
-export interface EndOfStreamOwners {
+export interface EndOfStreamContext {
   mediaSource?: MediaSource;
   mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
@@ -74,7 +75,7 @@ function isLastSegmentAppended(segments: readonly { id: string }[], actor: Sourc
  * Handles video-only, audio-only, and video+audio scenarios.
  * A track with no segments (e.g. unresolved) is considered not ready.
  */
-export function hasLastSegmentLoaded(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
+export function hasLastSegmentLoaded(state: EndOfStreamState, context: EndOfStreamContext): boolean {
   const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
   const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
 
@@ -86,11 +87,11 @@ export function hasLastSegmentLoaded(state: EndOfStreamState, owners: EndOfStrea
   if (audioTrack && !isResolvedTrack(audioTrack)) return false;
 
   if (videoTrack && isResolvedTrack(videoTrack)) {
-    if (!isLastSegmentAppended(videoTrack.segments, owners.videoBufferActor)) return false;
+    if (!isLastSegmentAppended(videoTrack.segments, context.videoBufferActor)) return false;
   }
 
   if (audioTrack && isResolvedTrack(audioTrack)) {
-    if (!isLastSegmentAppended(audioTrack.segments, owners.audioBufferActor)) return false;
+    if (!isLastSegmentAppended(audioTrack.segments, context.audioBufferActor)) return false;
   }
 
   return true;
@@ -99,17 +100,17 @@ export function hasLastSegmentLoaded(state: EndOfStreamState, owners: EndOfStrea
 /**
  * Check if we can call endOfStream.
  */
-export function canEndStream(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
-  return !!(owners.mediaSource && state.presentation);
+export function canEndStream(state: EndOfStreamState, context: EndOfStreamContext): boolean {
+  return !!(context.mediaSource && state.presentation);
 }
 
 /**
  * Check if we should call endOfStream.
  */
-export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
-  if (!canEndStream(state, owners)) return false;
+export function shouldEndStream(state: EndOfStreamState, context: EndOfStreamContext): boolean {
+  if (!canEndStream(state, context)) return false;
 
-  const { mediaElement } = owners;
+  const { mediaElement } = context;
 
   // MediaSource must be open — read from state.mediaSourceReadyState so the
   // computed re-evaluates when readyState changes (e.g. 'ended' → 'open' on seek-back).
@@ -127,17 +128,17 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   const hasVideoTrack = !!state.selectedVideoTrackId;
   const hasAudioTrack = !!state.selectedAudioTrackId;
 
-  if (hasVideoTrack && !owners.videoBuffer) return false;
-  if (hasAudioTrack && !owners.audioBuffer) return false;
+  if (hasVideoTrack && !context.videoBuffer) return false;
+  if (hasAudioTrack && !context.audioBuffer) return false;
 
   // SourceBufferActors must be idle — setting duration while a SourceBuffer is
   // updating throws InvalidStateError. The actor subscriber in endOfStream() will
   // re-evaluate when each actor transitions back to idle.
-  if (owners.videoBufferActor?.snapshot.get().value === 'updating') return false;
-  if (owners.audioBufferActor?.snapshot.get().value === 'updating') return false;
+  if (context.videoBufferActor?.snapshot.get().value === 'updating') return false;
+  if (context.audioBufferActor?.snapshot.get().value === 'updating') return false;
 
   // Last segment must be appended for each selected track
-  if (!hasLastSegmentLoaded(state, owners)) return false;
+  if (!hasLastSegmentLoaded(state, context)) return false;
 
   // currentTime must have reached the last segment. Guards against re-ending
   // the stream when a back-buffer remove() re-opens the MediaSource while the
@@ -166,8 +167,8 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
  * Uses actor state rather than raw SourceBuffer.updating so the wait is
  * aligned with the same abstraction that owns all buffer operations.
  */
-function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
-  const updatingActors = [owners.videoBufferActor, owners.audioBufferActor].filter(
+function waitForSourceBuffersReady(context: EndOfStreamContext): Promise<void> {
+  const updatingActors = [context.videoBufferActor, context.audioBufferActor].filter(
     (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().value === 'updating'
   );
 
@@ -203,9 +204,9 @@ function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
  * Used to set the final duration from actual container timestamps rather
  * than playlist metadata, which handles both shorter and longer cases.
  */
-function getMaxBufferedEnd(owners: EndOfStreamOwners): number {
+function getMaxBufferedEnd(context: EndOfStreamContext): number {
   let max = 0;
-  for (const buf of [owners.videoBuffer, owners.audioBuffer]) {
+  for (const buf of [context.videoBuffer, context.audioBuffer]) {
     if (buf && buf.buffered.length > 0) {
       const end = buf.buffered.end(buf.buffered.length - 1);
       if (end > max) max = end;
@@ -219,10 +220,10 @@ function getMaxBufferedEnd(owners: EndOfStreamOwners): number {
  * Sets the final duration from actual buffered end time, then calls endOfStream().
  */
 const endOfStreamTask = async (
-  { currentOwners }: { currentOwners: EndOfStreamOwners },
+  { currentContext }: { currentContext: EndOfStreamContext },
   _context: object
 ): Promise<void> => {
-  const { mediaSource } = currentOwners;
+  const { mediaSource } = currentContext;
 
   // Double-check MediaSource isn't already ended (in case of race)
   if (mediaSource!.readyState === 'ended') {
@@ -231,7 +232,7 @@ const endOfStreamTask = async (
 
   // Wait for any in-progress SourceBuffer operations to finish before calling
   // endOfStream() — the MSE spec forbids it while any buffer has updating === true.
-  await waitForSourceBuffersReady(currentOwners);
+  await waitForSourceBuffersReady(currentContext);
 
   // Re-check after the async wait
   if (mediaSource!.readyState !== 'open') return;
@@ -241,7 +242,7 @@ const endOfStreamTask = async (
   // handles both shorter (common with CMAF) and longer actual media durations.
   // Per MSE spec, endOfStream() will only *increase* duration if needed, so
   // setting it here first ensures the value from the buffer wins in all cases.
-  const bufferedEnd = getMaxBufferedEnd(currentOwners);
+  const bufferedEnd = getMaxBufferedEnd(currentContext);
   if (bufferedEnd > 0) {
     mediaSource!.duration = bufferedEnd;
   }
@@ -261,39 +262,64 @@ const endOfStreamTask = async (
  * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
  * and MediaSource.duration updates.
  */
-export function endOfStream<S extends EndOfStreamState, O extends EndOfStreamOwners>({
+function endOfStreamSetup({
   state,
-  owners,
+  context,
 }: {
-  state: Signal<S>;
-  owners: Signal<O>;
+  state: {
+    presentation: ReadonlySignal<EndOfStreamState['presentation']>;
+    selectedVideoTrackId: ReadonlySignal<EndOfStreamState['selectedVideoTrackId']>;
+    selectedAudioTrackId: ReadonlySignal<EndOfStreamState['selectedAudioTrackId']>;
+    selectedTextTrackId: ReadonlySignal<EndOfStreamState['selectedTextTrackId']>;
+    mediaSourceReadyState: ReadonlySignal<EndOfStreamState['mediaSourceReadyState']>;
+  };
+  context: {
+    mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']>;
+    mediaElement: ReadonlySignal<EndOfStreamContext['mediaElement']>;
+    videoBuffer: ReadonlySignal<EndOfStreamContext['videoBuffer']>;
+    audioBuffer: ReadonlySignal<EndOfStreamContext['audioBuffer']>;
+    videoBufferActor: ReadonlySignal<EndOfStreamContext['videoBufferActor']>;
+    audioBufferActor: ReadonlySignal<EndOfStreamContext['audioBufferActor']>;
+  };
 }): () => void {
-  // Derived condition. Transitively tracks through owners into each actor's
-  // snapshot signal — when owners changes and points to a new actor, this computed
+  // Derived condition. Transitively tracks through context into each actor's
+  // snapshot signal — when context changes and points to a new actor, this computed
   // re-tracks to the new actor's signal on next evaluation.
   // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
   // reads are automatically tracked by the Signal.Computed dependency graph.
-  const shouldEnd = computed(() => shouldEndStream(state.get(), owners.get()));
+  const shouldEnd = computed(() => shouldEndStream(snapshot(state), snapshot(context)));
 
   let hasEnded = false;
 
   const cleanupEffect = effect(() => {
     if (!shouldEnd.get()) return;
-    const currentOwners = owners.get();
+    const currentContext = snapshot(context);
     if (hasEnded) {
       // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
       // readyState is 'ended' automatically transitions it back to 'open'.
       // This happens on seek-back after end-of-stream — allow endOfStream()
       // to be called again once the last segment is reloaded.
-      if (state.get().mediaSourceReadyState !== 'open') return;
+      if (state.mediaSourceReadyState.get() !== 'open') return;
       hasEnded = false;
     }
 
     // Set flag before awaiting to close the re-entry window between
     // endOfStream() being called and the async task completing.
     hasEnded = true;
-    endOfStreamTask({ currentOwners }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
+    endOfStreamTask({ currentContext }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
   });
 
   return cleanupEffect;
 }
+
+export const endOfStream = defineBehavior({
+  stateKeys: [
+    'presentation',
+    'selectedVideoTrackId',
+    'selectedAudioTrackId',
+    'selectedTextTrackId',
+    'mediaSourceReadyState',
+  ],
+  contextKeys: ['mediaSource', 'mediaElement', 'videoBuffer', 'audioBuffer', 'videoBufferActor', 'audioBufferActor'],
+  setup: endOfStreamSetup,
+});

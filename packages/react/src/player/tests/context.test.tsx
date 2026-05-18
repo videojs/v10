@@ -11,6 +11,7 @@ import {
   useContainerAttach,
   useMedia,
   useMediaAttach,
+  useOptionalContainer,
   useOptionalPlayer,
   usePlayer,
   usePlayerContext,
@@ -113,6 +114,24 @@ describe('useContainerAttach', () => {
     });
 
     expect(result.current).toBe(setContainer);
+  });
+});
+
+describe('useOptionalContainer', () => {
+  it('returns null outside Provider', () => {
+    const { result } = renderHook(() => useOptionalContainer());
+    expect(result.current).toBeNull();
+  });
+
+  it('returns container inside Provider', () => {
+    const container = document.createElement('div');
+    const value = createContextValue({ container });
+
+    const { result } = renderHook(() => useOptionalContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(container);
   });
 });
 

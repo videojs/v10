@@ -63,7 +63,7 @@ export class MenuRadioItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentMenuCtx = this.#menuCtx.value;
-            if (!this.disabled) currentMenuCtx?.menu.highlight(this);
+            if (!this.disabled) currentMenuCtx?.menu.highlight(this, { focus: false });
           },
         },
         { signal: this.#disconnect.signal }
