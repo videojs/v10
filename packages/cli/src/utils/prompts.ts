@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
@@ -69,6 +69,7 @@ export interface PartialInstallFlags {
   sourceUrl?: string;
   media?: Renderer;
   installMethod?: InstallMethod;
+  embedMethod?: EmbedMethod;
 }
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
@@ -158,6 +159,22 @@ export async function promptInstallOptions(
       return value;
     })());
 
+  const embedMethod: EmbedMethod =
+    useCase === 'background-video'
+      ? 'packaged'
+      : (flags.embedMethod ??
+        (await (async () => {
+          const value = await p.select<EmbedMethod>({
+            message: 'Embed method',
+            options: [
+              { value: 'packaged' as const, label: 'Packaged (pre-built skin)' },
+              { value: 'ejected' as const, label: 'Ejected (copy skin source into your project)' },
+            ],
+          });
+          if (p.isCancel(value)) process.exit(0);
+          return value;
+        })()));
+
   return {
     framework,
     useCase,
@@ -165,5 +182,6 @@ export async function promptInstallOptions(
     renderer: media,
     sourceUrl,
     installMethod,
+    embedMethod,
   };
 }
