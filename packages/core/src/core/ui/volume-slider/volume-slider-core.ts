@@ -1,8 +1,10 @@
 import { defaults } from '@videojs/utils/object';
+import { formatVolumePercent } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaVolumeState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
+import type { TranslationKeyOrString } from '../types';
 
 export interface VolumeSliderProps extends SliderProps {
   /** Step increment for wheel scrolling. */
@@ -23,7 +25,7 @@ export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, '
 export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,
-    label: 'Volume',
+    label: '',
     wheelStep: 5,
   };
 
@@ -67,13 +69,14 @@ export class VolumeSliderCore extends SliderCore {
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Volume';
+  override getLabel(state: SliderState): TranslationKeyOrString {
+    return super.getLabel(state) || 'volume';
   }
 
   override getAttrs(state: VolumeSliderState) {
     const base = super.getAttrs(state);
-    const valuetext = `${Math.round(state.value)} percent${state.muted ? ', muted' : ''}`;
+    const pct = formatVolumePercent(state.value / 100);
+    const valuetext = state.muted ? `${pct}, muted` : pct;
 
     return {
       ...base,

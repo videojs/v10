@@ -4,6 +4,7 @@ import type {
   InferMediaState,
   MediaButtonComponent,
   StateAttrMap,
+  TranslationKeyOrString,
 } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -68,7 +69,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   }
 
   /** Returns the button's current label derived from media state. */
-  getLabel(): string | undefined {
+  getLabel(): TranslationKeyOrString | undefined {
     return this.core.state.current.label || undefined;
   }
 

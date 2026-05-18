@@ -5,6 +5,7 @@ import {
   TooltipCSSVars,
   TooltipDataAttrs,
   type TooltipInput,
+  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   applyElementProps,
@@ -34,7 +35,7 @@ import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
 
 type TriggerElement = HTMLElement & {
-  getLabel(): string | undefined;
+  getLabel(): TranslationKeyOrString | undefined;
   $state: State<ButtonState>;
 };
 

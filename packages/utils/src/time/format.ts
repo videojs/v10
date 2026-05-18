@@ -1,5 +1,17 @@
 import { isNumber } from '../predicate/predicate';
 
+/** Translates the “remaining” suffix for negative durations passed to {@link formatDuration}. */
+export type TimeTranslate = (key: 'remaining') => string;
+
+export type TimeFormatOptions = {
+  /** BCP 47 tag(s) for {@link Intl.DurationFormat} (and percent formatting where applicable). */
+  locale?: string | string[];
+  /** Called only when `seconds` is negative; should return the localized word for “remaining” (no leading space). */
+  translate?: TimeTranslate;
+  /** Passed to `Intl.DurationFormat`; defaults to `"long"`. */
+  style?: 'long' | 'short' | 'narrow' | 'digital';
+};
+
 const UNIT_LABELS = [
   { singular: 'hour', plural: 'hours' },
   { singular: 'minute', plural: 'minutes' },
@@ -117,4 +129,75 @@ export function secondsToIsoDuration(seconds: number): string {
   if (s > 0 || duration === 'PT') duration += `${s}S`;
 
   return duration;
+}
+
+function toDurationRecord(totalSeconds: number): Record<'hours' | 'minutes' | 'seconds', number> {
+  const sec = Math.floor(Math.abs(totalSeconds));
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor((sec % 3600) / 60);
+  const seconds = sec % 60;
+
+  const record = { hours: 0, minutes: 0, seconds: 0 };
+  if (hours > 0) record.hours = hours;
+  if (minutes > 0) record.minutes = minutes;
+  if (seconds > 0 || (hours === 0 && minutes === 0)) {
+    record.seconds = seconds;
+  }
+  return record;
+}
+
+/**
+ * Human-readable duration using {@link Intl.DurationFormat} when available.
+ *
+ * Negative `seconds` denote remaining time: the absolute value is formatted, then a suffix is appended.
+ * Use `translate` to localize that suffix; otherwise the English word `remaining` is used.
+ */
+export function formatDuration(seconds: number, options?: TimeFormatOptions): string {
+  if (!isValidTime(seconds)) {
+    return '';
+  }
+
+  const negative = seconds < 0;
+  const positiveSeconds = Math.abs(seconds);
+  const { hours, minutes, seconds: sec } = toDurationRecord(positiveSeconds);
+  const record: Partial<{ hours: number; minutes: number; seconds: number }> = {};
+  if (hours > 0) record.hours = hours;
+  if (minutes > 0) record.minutes = minutes;
+  if (sec > 0 || (hours === 0 && minutes === 0)) record.seconds = sec;
+
+  let body: string;
+  type DurationFormatConstructor = new (
+    locales?: string | string[],
+    options?: { style?: TimeFormatOptions['style'] }
+  ) => { format: (duration: object) => string };
+
+  const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
+
+  if (DurationFormat) {
+    try {
+      body = new DurationFormat(options?.locale, {
+        style: options?.style ?? 'long',
+      }).format(record);
+    } catch {
+      body = formatTimeAsPhrase(positiveSeconds);
+    }
+  } else {
+    body = formatTimeAsPhrase(positiveSeconds);
+  }
+
+  if (negative) {
+    const suffix = options?.translate?.('remaining') ?? 'remaining';
+    return `${body} ${suffix}`;
+  }
+
+  return body;
+}
+
+/** Format a volume fraction (0–1) with {@link Intl.NumberFormat} `style: "percent"`. */
+export function formatVolumePercent(fraction: number, locale?: string | string[]): string {
+  if (!isNumber(fraction) || !Number.isFinite(fraction)) {
+    return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(0);
+  }
+  const clamped = Math.min(1, Math.max(0, fraction));
+  return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(clamped);
 }

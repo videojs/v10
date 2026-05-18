@@ -1,9 +1,10 @@
 import { defaults } from '@videojs/utils/object';
-import { formatTimeAsPhrase } from '@videojs/utils/time';
+import { formatDuration, type TimeFormatOptions } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
+import type { TranslationKeyOrString } from '../types';
 
 export interface TimeSliderProps extends SliderProps {
   /** @internal Derived from `currentTime` — not user-settable. */
@@ -14,6 +15,8 @@ export interface TimeSliderProps extends SliderProps {
   max?: number | undefined;
   /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
   changeThrottle?: number | undefined;
+  /** Options for {@link formatDuration} when building the slider thumb's `aria-valuetext`. */
+  formatOptions?: TimeFormatOptions | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -23,13 +26,13 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 
 /** Time-domain slider: maps media time/buffer state to slider state. */
 export class TimeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
+  static override readonly defaultProps: NonNullableObject<Omit<TimeSliderProps, 'formatOptions'>> = {
     ...SliderCore.defaultProps,
-    label: 'Seek',
+    label: '',
     changeThrottle: 100,
   };
 
-  #props = { ...TimeSliderCore.defaultProps };
+  #props: TimeSliderProps = { ...TimeSliderCore.defaultProps };
   #media: (MediaTimeState & MediaBufferState) | null = null;
 
   constructor(props?: TimeSliderProps) {
@@ -68,8 +71,8 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Seek';
+  override getLabel(state: SliderState): TranslationKeyOrString {
+    return super.getLabel(state) || 'seek';
   }
 
   override getAttrs(state: TimeSliderState) {
@@ -77,8 +80,9 @@ export class TimeSliderCore extends SliderCore {
 
     // During drag, announce the pointer position the user would seek to.
     const announceValue = state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
-    const currentPhrase = formatTimeAsPhrase(announceValue);
-    const durationPhrase = formatTimeAsPhrase(state.duration);
+    const formatOptions = this.#props.formatOptions;
+    const currentPhrase = formatDuration(announceValue, formatOptions);
+    const durationPhrase = formatDuration(state.duration, formatOptions);
     const valuetext = durationPhrase ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;
 
     return {

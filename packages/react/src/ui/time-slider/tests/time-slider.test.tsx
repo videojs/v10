@@ -178,7 +178,7 @@ describe('TimeSlider compound', () => {
 
     const thumb = container.querySelector('[data-testid="thumb"]');
     expect(thumb?.getAttribute('role')).toBe('slider');
-    expect(thumb?.getAttribute('aria-label')).toBe('Seek');
+    expect(thumb?.getAttribute('aria-label')).toBe('seek');
   });
 
   it('SliderValue displays formatted time', () => {

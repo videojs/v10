@@ -57,6 +57,12 @@ export type TranslationParams = {
   mediaErrorCustom: never;
 };
 
+/**
+ * Either a known translation id from {@link TranslationParams}, or any other string the platform may
+ * use as copy (custom overlay key, literal text, etc.).
+ */
+export type TranslationKeyOrString = keyof TranslationParams | (string & {});
+
 /** Placeholder shape for each key that accepts `t(key, params)`. Omitting a key here is a type error when defining strings. */
 type ParametricTranslations = {
   seekForwardSeconds: Contains<'{seconds}'>;
