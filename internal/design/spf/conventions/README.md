@@ -33,12 +33,12 @@ Started small. Grow only when the assessment surfaces a recurring decision that 
 | --- | ------------------- |
 | [behaviors.md](behaviors.md) | When to define a Behavior; behavior shape; helper vs behavior split; per-type specialization; file placement; source-reset handling. |
 | [signals.md](signals.md) | When to use `Signal<T>` (writable) vs `ReadonlySignal<T>` (read-only); when to seed via `initialState`/`initialContext`; when to use `shareSignals`; multi-writer slots; `peek` and `equalsById` helpers. |
-| [reactors.md](reactors.md) | When to reach for `createMachineReactor`; the `deriveState` + `monitor` convention; the entry-returns-state-exit-cleanup idiom; source-identity states for source-driven work. |
+| [reactors.md](reactors.md) | When to reach for `createMachineReactor`; the `deriveState` + `monitor` convention; the entry-returns-state-exit-cleanup idiom; source-identity states; policy modes as states. |
+| [actors.md](actors.md) | When to reach for an Actor; the three actor shapes (`MessageActor` / `TransitionActor` / `CallbackActor`); when one actor vs two (mechanism + policy split); the per-type setup-actor cluster-ownership convention. |
 
 Planned but not yet written (drafted as the assessment or backlog surfaces a need):
 
 - `tasks.md` — when to use Tasks + TaskRunners/Schedulers.
-- `actors.md` — when to define an Actor.
 - `config.md` — when to bake an assumption in vs push it to config (the **A — Reusability** vs **D/E** decision).
 - `helpers.md` — extract a helper vs introduce a behavior factory.
 

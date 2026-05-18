@@ -196,7 +196,96 @@ The `'presentation-unresolved'` ↔ `'presentation-resolved'` transitions encode
 
 Source-change cancellation binds to the state machine **structurally** — there's no closure-state tracking "what was the prior source id." See `setupTrackResolution` in `packages/spf/src/playback/behaviors/resolve-track.ts` for the canonical worked example. See also `behaviors.md` → Source-reset handling for the broader concern.
 
-## State-name convention: name by world-fact, not by behavior-action
+## Policy modes as states (replace hand-rolled input-tuple dedup)
+
+Pattern for dispatcher reactors that send messages to a downstream consumer (actor, runner, side-effecting sink) under a small set of discrete *policy modes* — modes that change *what* the dispatcher sends, or *whether* it sends anything at all, on top of finer-grained signal-driven refinements within each mode.
+
+The sniff: a single `effect()` reads N signals, packs them into a `currentInputs` tuple, compares against a closure-held `prevInputs`, and branches on the current values to decide whether to fire and which message shape to send. The equality function inevitably grows nested `if (mode === X) { ... } else if (...)` clauses — that's the hand-rolled state machine asking to become a real one.
+
+Each policy mode becomes a reactor state. State transitions handle mode flips; tracked signal reads inside `effects:` handle within-mode refinements; signal-polyfill's `Object.is` dedup on a `computed` handles within-mode noise that shouldn't re-fire (e.g., `currentTime` ticks that don't cross a meaningful boundary).
+
+### Canonical worked example: `loadTextTrackSegments`
+
+Three policy modes for text-track segment fetching: `'preconditions-unmet'` (no loader actor / no resolved track), `'dormant'` (`!loadActivated && preload !== 'auto'`), `'full-range'` (`loadActivated || preload === 'auto'`).
+
+```ts
+const derivedStateSignal = computed<LoadTextTrackSegmentsState>(() => {
+  if (!context.textTrackSegmentLoaderActor.get() || !selectedTrackSignal.get()) {
+    return 'preconditions-unmet';
+  }
+  return state.loadActivated.get() || state.preload.get() === 'auto'
+    ? 'full-range'
+    : 'dormant';
+});
+
+// `segmentStartForTime` returns the same number while `currentTime` stays
+// inside one segment, so signal-polyfill's `Object.is` equality on this
+// computed dedups within-segment ticks. The `'full-range'` effect tracks
+// this signal (rather than `currentTime` directly) so it only re-fires on
+// boundary crossings.
+const segmentBoundarySignal = computed(() => {
+  const track = selectedTrackSignal.get();
+  if (!track) return undefined;
+  return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);
+});
+
+return createMachineReactor<LoadTextTrackSegmentsState>({
+  initial: 'preconditions-unmet',
+  monitor: () => derivedStateSignal.get(),
+  states: {
+    'preconditions-unmet': {},
+    dormant: {},
+    'full-range': {
+      effects: () => {
+        const track = selectedTrackSignal.get()!;
+        segmentBoundarySignal.get();          // tracked: boundary crossings
+        const currentTime = peek(state.currentTime) ?? 0;
+        peek(context.textTrackSegmentLoaderActor)!.send({ type: 'load', track, currentTime });
+      },
+    },
+  },
+});
+```
+
+What the encoding accomplishes:
+
+| Concern | Old (hand-rolled) | New (state-encoded) |
+| ------- | ----------------- | ------------------- |
+| Mode flip (`preload`, `loadActivated`) fires once | `prevInputs.preload !== cur.preload \|\| ...` branch in equality fn | State transition; new state's `entry`/`effects` fires once on entry |
+| Within-mode track change re-fires | tracked read inside the flat effect; equality compares `track.id` | tracked `selectedTrackSignal.get()` inside the state's `effects:` re-fires |
+| Within-mode boundary crossing re-fires; tick noise doesn't | tracked `currentTime.get()` + `segmentStartForTime(prev, cur)` in equality fn | `segmentBoundarySignal` (a `computed` over `segmentStartForTime(currentTime, segments)`) — signal-polyfill's `Object.is` dedups the unchanged boundary value |
+| Dormant means "don't fire" | early-return inside the effect after the equality check passes | `'dormant'` state has no `effects:` — nothing fires structurally |
+| Message shape varies by mode | branching `if (fullMode) loader.send({range, ...}) else loader.send({...})` inside the effect | each state's `effects:` constructs its own message |
+
+The `prevInputs` closure variable, the custom equality function, and the "did the inputs actually change in a way worth firing for?" branching all dissolve. What remains is per-state effects that read exactly the signals their mode cares about.
+
+### When this pattern applies
+
+The pattern fits when *all* of these hold:
+
+- The dispatcher has a small, fixed set of *discrete* policy modes (typically 2–4) — `'dormant'` / `'metadata-only'` / `'full-range'` are mode names; a continuous `playbackRate` value is not.
+- The modes differ in either *what* gets sent (different message shapes) or *whether* anything gets sent at all — not just numeric tuning of the same operation.
+- The mode-flipping inputs are a strict subset of the within-mode inputs; the rest are within-mode refinements that should re-fire the effect *within* the active mode, not change which mode is active.
+- Within-mode noise that shouldn't re-fire (e.g., sub-segment `currentTime` ticks) can be dedup'd via a `computed` whose output is `Object.is`-stable across the noise.
+
+The fourth point is load-bearing — without computed-dedup over the noisy input, you'd be back to per-state hand-rolled dedup, and the pattern wins nothing over the flat effect. The `segmentStartForTime(currentTime, segments)` computed is the canonical shape: a pure projection from a noisy continuous input to a discrete identity that only changes at meaningful boundaries.
+
+### v/a's near-future variant: 4 states with `'metadata-only'`
+
+The video/audio segment-loading variant adds a fourth state `'metadata-only'` between `'dormant'` and `'full-range'`:
+
+```text
+'preconditions-unmet' — no upstream actor OR no resolved track
+'dormant'             — preload === 'none' && !loadActivated
+'metadata-only'       — !loadActivated && preload === 'metadata' (init-segment only, no range)
+'full-range'          — loadActivated || preload === 'auto'
+```
+
+The shape is the same; the per-state `effects:` construct different message shapes (`'metadata-only'` sends `{type: 'load', track}` with no `range`; `'full-range'` sends `{type: 'load', track, range}`). Text skips `'metadata-only'` because VTT has no init-segment concept — the manifest already exposes per-cue duration / language.
+
+### Anti-pattern: encoding modes as flags inside one state
+
+The half-fix is keeping a single positive state (`'has-loader'`) and writing per-mode branching inside its `effects:` body — same as the flat effect, just gated. That misses the entire structural win: state-exit doesn't run between mode flips, so per-mode `entry`/`exit` cleanup is unavailable; transitions don't fire `effects` re-init at mode boundaries, so the equality fn comes back to dedup intra-mode noise that should be a state-transition. If the modes are real, encode them as states.
 
 State names describe *facts about the world that the reactor is responding to*, not *what this behavior does in that state*. The behavior's work lives in the file-level JSDoc and the `entry`/`effects` body — it doesn't need to be in the state name.
 
