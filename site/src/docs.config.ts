@@ -54,6 +54,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/player-provider' },
       { slug: 'reference/player-container' },
       // sorted alphabetically
+      { slug: 'reference/airplay-button' },
       { slug: 'reference/buffering-indicator' },
       { slug: 'reference/captions-button' },
       { slug: 'reference/controls' },
