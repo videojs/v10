@@ -9,7 +9,13 @@ import {
   type Translations,
   type Translator,
 } from '@videojs/core/i18n';
-import { isUndefined } from '@videojs/utils/predicate';
+import {
+  effectiveLocale,
+  localeFromDomLang,
+  mergeLocaleOverlays,
+  nearestLang,
+  subscribeAmbientLang,
+} from '@videojs/utils/dom';
 import {
   type Context,
   createContext,
@@ -31,88 +37,8 @@ async function noopBuiltinPack(tag: string): Promise<Partial<Translations> | und
   return undefined;
 }
 
-async function mergeBuiltinOverlays(
-  locale: string,
-  load: (tag: string) => Promise<Partial<Translations> | undefined>
-): Promise<Partial<Translations>> {
-  const chain = localeLookupChain(locale);
-  const layers = await Promise.all(chain.map((tag) => load(tag)));
-  const merged: Partial<Translations> = {};
-  for (let i = chain.length - 1; i >= 0; i--) {
-    const layer = layers[i];
-    if (layer) {
-      Object.assign(merged, layer);
-    }
-  }
-  return merged;
-}
-
-/**
- * Subscribes to DOM updates that can change {@link nearestLang}: any `lang` attribute edit,
- * or subtree structural changes under `<html>` (which can move nodes between labeled ancestors).
- */
-function subscribeAmbientLang(onStoreChange: () => void): () => void {
-  if (typeof document === 'undefined') {
-    return () => {};
-  }
-  let disconnected = false;
-  let queued = false;
-  const flush = (): void => {
-    queued = false;
-    if (disconnected) {
-      return;
-    }
-    onStoreChange();
-  };
-  const schedule = (): void => {
-    if (!queued) {
-      queued = true;
-      queueMicrotask(flush);
-    }
-  };
-  const root = document.documentElement;
-  const observer = new MutationObserver(schedule);
-  observer.observe(root, {
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['lang'],
-    childList: true,
-  });
-  return () => {
-    disconnected = true;
-    observer.disconnect();
-    queued = false;
-  };
-}
-
-/** First non-empty `lang` on `start` or an ancestor (HTML language inheritance). */
-function nearestLang(start: Element | null): string | undefined {
-  if (!start || typeof document === 'undefined') {
-    return undefined;
-  }
-  let node: Element | null = start;
-  while (node) {
-    const trimmed = node.getAttribute('lang')?.trim();
-    if (trimmed) {
-      return trimmed;
-    }
-    node = node.parentElement;
-  }
-  return undefined;
-}
-
 function ambientLangServerSnapshot(): string | undefined {
   return undefined;
-}
-
-function effectiveLocale(localeProp: Locale | undefined, ambientLang: string | undefined): Locale {
-  if (!isUndefined(localeProp) && String(localeProp).trim() !== '') {
-    return localeProp;
-  }
-  if (!isUndefined(ambientLang) && ambientLang.trim() !== '') {
-    return ambientLang;
-  }
-  return 'en';
 }
 
 export interface CreateI18nOptions {
@@ -180,12 +106,12 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       subscribeAmbientLang,
       () => {
         const langRoot = langRootRef?.current ?? (typeof document !== 'undefined' ? document.documentElement : null);
-        return nearestLang(langRoot);
+        return localeFromDomLang(nearestLang(langRoot));
       },
       ambientLangServerSnapshot
     );
 
-    const resolvedLocale = useMemo(() => effectiveLocale(localeProp, ambientLang), [localeProp, ambientLang]);
+    const resolvedLocale = useMemo(() => effectiveLocale(localeProp, ambientLang) as Locale, [localeProp, ambientLang]);
 
     useEffect(() => {
       onActiveLocaleChange?.(resolvedLocale);
@@ -204,7 +130,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     useEffect(() => {
       let cancelled = false;
       void (async () => {
-        const mergedLazy = await mergeBuiltinOverlays(resolvedLocale, loadBuiltin);
+        const mergedLazy = await mergeLocaleOverlays(resolvedLocale, loadBuiltin, localeLookupChain);
         if (!cancelled) {
           setLazyLayer(mergedLazy);
         }

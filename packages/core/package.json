@@ -39,10 +39,10 @@
       "development": "./dist/dev/i18n.js",
       "default": "./dist/default/i18n.js"
     },
-    "./i18n/locales/en": {
-      "types": "./dist/dev/i18n/locales/en.d.ts",
-      "development": "./dist/dev/i18n/locales/en.js",
-      "default": "./dist/default/i18n/locales/en.js"
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "main": "dist/default/index.js",
