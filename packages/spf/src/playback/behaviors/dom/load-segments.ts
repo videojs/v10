@@ -57,6 +57,7 @@ import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../..
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import type { BufferState, SegmentLoaderActor, SourceBufferState } from '../../actors/dom/segment-loader';
+import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 import type { MediaTrackType } from './setup-buffer-actors';
 
 // Re-export buffer state types for consumers that import them from this module.
@@ -216,20 +217,18 @@ export const loadVideoSegments = defineBehavior({
   setup: ({
     state,
     context,
+    config = {},
   }: {
     state: SegmentLoadingStateMap<'selectedVideoTrackId'>;
     context: {
       videoSegmentLoaderActor: ReadonlySignal<SegmentLoadingContext['videoSegmentLoaderActor']>;
     };
+    config?: object;
   }) =>
     setupSegmentLoading({
       state,
       context,
-      config: {
-        type: 'video',
-        selectedKey: 'selectedVideoTrackId',
-        loaderKey: 'videoSegmentLoaderActor',
-      },
+      config: { ...VIDEO_TYPE_CONFIG, ...config },
     }),
 });
 
@@ -244,19 +243,17 @@ export const loadAudioSegments = defineBehavior({
   setup: ({
     state,
     context,
+    config = {},
   }: {
     state: SegmentLoadingStateMap<'selectedAudioTrackId'>;
     context: {
       audioSegmentLoaderActor: ReadonlySignal<SegmentLoadingContext['audioSegmentLoaderActor']>;
     };
+    config?: object;
   }) =>
     setupSegmentLoading({
       state,
       context,
-      config: {
-        type: 'audio',
-        selectedKey: 'selectedAudioTrackId',
-        loaderKey: 'audioSegmentLoaderActor',
-      },
+      config: { ...AUDIO_TYPE_CONFIG, ...config },
     }),
 });

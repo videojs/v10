@@ -71,6 +71,7 @@ import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
 import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
+import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 
 /**
  * Media track type for MSE buffer setup.
@@ -209,11 +210,13 @@ export const setupVideoBufferActors = defineBehavior({
   setup: ({
     state,
     context,
+    config = {},
   }: {
     state: BufferActorsStateMap<'selectedVideoTrackId'> & {
       bandwidthState: Signal<BufferActorsState['bandwidthState']>;
     };
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
+    config?: object;
   }) => {
     // Bandwidth-sampling fetch. The factory accumulates EWMA state
     // internally; the callback bridges samples to engine state for ABR.
@@ -233,13 +236,7 @@ export const setupVideoBufferActors = defineBehavior({
     return setupBufferActors({
       state,
       context,
-      config: {
-        type: 'video',
-        selectedKey: 'selectedVideoTrackId',
-        actorKey: 'videoBufferActor',
-        loaderKey: 'videoSegmentLoaderActor',
-        fetch: trackedFetch,
-      },
+      config: { ...VIDEO_TYPE_CONFIG, fetch: trackedFetch, ...config },
     });
   },
 });
@@ -258,19 +255,15 @@ export const setupAudioBufferActors = defineBehavior({
   setup: ({
     state,
     context,
+    config = {},
   }: {
     state: BufferActorsStateMap<'selectedAudioTrackId'>;
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
+    config?: object;
   }) =>
     setupBufferActors({
       state,
       context,
-      config: {
-        type: 'audio',
-        selectedKey: 'selectedAudioTrackId',
-        actorKey: 'audioBufferActor',
-        loaderKey: 'audioSegmentLoaderActor',
-        fetch: fetchStream,
-      },
+      config: { ...AUDIO_TYPE_CONFIG, fetch: fetchStream, ...config },
     }),
 });
