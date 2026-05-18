@@ -1,31 +1,59 @@
 /**
  * **Per-type segment loading dispatch.** Per available track type (video /
  * audio), reads the per-type `SegmentLoaderActor` from context and sends
- * typed `'load'` messages whenever a meaningful loading condition
- * changes (selected track, current time crossing a segment boundary,
- * preload, load activation).
+ * typed `'load'` messages whenever a meaningful loading condition changes
+ * (selected track, current time crossing a segment boundary).
  *
  * Loader-actor lifecycle is owned upstream by `setupVideoBufferActors` /
  * `setupAudioBufferActors`, which create the loader alongside the
  * `SourceBufferActor` and publish both to context. This behavior is
  * pure-consumer: it reads `context.xSegmentLoaderActor` and dispatches.
  *
- * # Lifecycle
+ * # Load modes as reactor states
  *
- * Modeled as a `createMachineReactor` with `'no-loader'` ↔ `'has-loader'`
- * gated on upstream loader-actor presence. Within `'has-loader'`, a
- * single dispatcher effect tracks `loadingInputs` and the upstream
- * loader signal; `prevInputs` dedup is reset on loader identity change
- * so a fresh loader gets an unguarded first dispatch.
+ * Four states encode the load-gating policy directly, replacing the prior
+ * `loadingInputsEq` + `prevInputs` hand-rolled discriminator over a flat
+ * dispatcher effect:
+ *
+ * - `'preconditions-unmet'` — no loader actor in context, or the selected
+ *   track hasn't resolved to a track with segments.
+ * - `'dormant'` — `preload === 'none' && !loadActivated`. Nothing fires;
+ *   media + init are gated behind explicit activation.
+ * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`.
+ *   Covers `preload === 'metadata'` and the undefined-preload default. Fires
+ *   an init-segment-only `load` message (no `range`) **once on entry**;
+ *   selection changes while still in this state are intentionally not
+ *   followed. Matches HTMLMediaElement's `preload='metadata'` semantics
+ *   (surface enough info to populate metadata for the entry-time selection)
+ *   and avoids wasted init fetches when the user reselects a track three
+ *   times before pressing play. The eventual `'full-range'` entry handles
+ *   whichever track is actually selected at playback start.
+ * - `'full-range'` — `loadActivated || preload === 'auto'`. Effect re-fires
+ *   on selected-track change and on segment-boundary crossing (a `computed`
+ *   over `segmentStartForTime(currentTime, segments)` dedups within-segment
+ *   `currentTime` ticks via signal-polyfill's default `Object.is` equality).
+ *
+ * Mode flips (`preload` changes, `loadActivated` true↔false) drive state
+ * transitions; within-mode refinements (track change, time tick) are tracked
+ * inside the active state's `effects:`. The `prevInputs` closure variable
+ * and `loadingInputsEq` equality function dissolve.
+ *
+ * # Source-reset
+ *
+ * Loader-actor identity changes are observed via `'preconditions-unmet'`
+ * transitions (the setup-actor behavior nulls the slot on state exit, the
+ * reactor's `monitor` returns `'preconditions-unmet'`, and re-entry to a
+ * positive state on the next loader fires a fresh dispatch). No closure
+ * state, no defensive identity guard.
  *
  * Reads `xSegmentLoaderActor` from `setupXBufferActors`.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
 import { DEFAULT_FORWARD_BUFFER_CONFIG, segmentStartForTime } from '../../../media/buffer/forward-buffer';
-import type { MaybeResolvedPresentation, ResolvedTrack } from '../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import type { BufferState, SegmentLoaderActor, SourceBufferState } from '../../actors/dom/segment-loader';
@@ -61,76 +89,10 @@ export interface SegmentLoadingContext {
 }
 
 // ============================================================================
-// LOADING INPUTS — selector + dedup
-// ============================================================================
-
-type LoadingInputs = {
-  loadActivated: boolean | undefined;
-  preload: string | undefined;
-  currentTime: number | undefined;
-  /** @TODO cleanup type precision via inference+generics */
-  track: ReturnType<typeof getSelectedTrack>;
-  segmentsCanLoad: boolean;
-};
-
-function selectLoadingInputs(
-  [segmentsCanLoad, state]: [boolean, SegmentLoadingState],
-  type: MediaTrackType
-): LoadingInputs {
-  const { loadActivated, preload, currentTime } = state;
-  const track = getSelectedTrack(state, type);
-  return {
-    loadActivated,
-    preload,
-    currentTime,
-    track,
-    segmentsCanLoad,
-  };
-}
-
-/**
- * Returns true when the inputs are equal (no meaningful change — don't fire).
- *
- * Condition hierarchy:
- *
- *   !loadActivated
- *     preload === 'none'           → dormant; never fire
- *     preload changes              → fire
- *
- *   !loadActivated → loadActivated
- *     preload !== 'auto'           → fire (message shape changes)
- *     preload === 'auto'           → fall through to segment compare
- *                                    (suppress if same position — was
- *                                    already full-range mode)
- *
- *   loadActivated
- *     track.id changes             → fire
- *     segmentStart(currentTime)    → fire on segment-boundary crossing
- */
-function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
-  if (!curState.segmentsCanLoad) return true;
-  if (!curState.loadActivated) {
-    if (curState.preload === 'none') return true;
-    return curState.preload === prevState.preload;
-  }
-  if (!prevState.loadActivated && curState.loadActivated) {
-    if (prevState.preload !== 'auto') return false;
-  }
-
-  if (!curState.track || !isResolvedTrack(curState.track)) return true;
-  if (prevState.track?.id !== curState.track.id && isResolvedTrack(curState.track)) return false;
-
-  return (
-    segmentStartForTime(prevState.currentTime, (curState.track as ResolvedTrack).segments) ===
-    segmentStartForTime(curState.currentTime, (curState.track as ResolvedTrack).segments)
-  );
-}
-
-// ============================================================================
 // REACTOR
 // ============================================================================
 
-type SegmentLoadingFsmState = 'no-loader' | 'has-loader';
+type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range';
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type SegmentLoaderActorKey = 'videoSegmentLoaderActor' | 'audioSegmentLoaderActor';
@@ -166,80 +128,71 @@ function setupSegmentLoading<K extends SelectedTrackKey, L extends SegmentLoader
     loaderKey: L;
   };
 }): Reactor<SegmentLoadingFsmState | 'destroying' | 'destroyed'> {
-  // Dedup state across dispatcher re-fires. Reset on loader identity
-  // change (defensive — within-state identity change shouldn't occur
-  // given `setupXBufferActors`'s state-exit/re-entry cycle separates
-  // slot transitions, but the closure flag guards against it).
-  let prevInputs: LoadingInputs | undefined;
-  let lastLoader: SegmentLoaderActor | undefined;
-
-  const segmentsCanLoad = computed(() => {
+  const selectedTrackSignal = computed<VideoTrack | AudioTrack | undefined>(() => {
     const selection: TrackSelectionState = {
       presentation: state.presentation.get(),
       [selectedKey]: state[selectedKey].get(),
     };
     const track = getSelectedTrack(selection, type);
-    return !!track && isResolvedTrack(track) && !!context[loaderKey].get();
+    return track && isResolvedTrack(track) ? track : undefined;
   });
 
-  const loadingInputs = computed(() => {
-    const snapshot: SegmentLoadingState = {
-      presentation: state.presentation.get(),
-      preload: state.preload.get(),
-      currentTime: state.currentTime.get(),
-      loadActivated: state.loadActivated.get(),
-      [selectedKey]: state[selectedKey].get(),
-    };
-    return selectLoadingInputs([segmentsCanLoad.get(), snapshot], type);
+  // Segment-boundary signal — `segmentStartForTime` returns the same number
+  // while `currentTime` stays inside one segment, so signal-polyfill's
+  // `Object.is` equality on this computed dedups within-segment ticks. The
+  // `'full-range'` effect tracks this signal (rather than `currentTime`
+  // directly) so it only re-fires on boundary crossings.
+  const segmentBoundarySignal = computed(() => {
+    const track = selectedTrackSignal.get();
+    if (!track) return undefined;
+    return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);
   });
 
-  const derivedStateSignal = computed<SegmentLoadingFsmState>(() =>
-    context[loaderKey].get() ? 'has-loader' : 'no-loader'
-  );
+  const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
+    if (!context[loaderKey].get() || !selectedTrackSignal.get()) return 'preconditions-unmet';
+    if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
+    if (state.preload.get() === 'none') return 'dormant';
+    return 'metadata-only';
+  });
 
   return createMachineReactor<SegmentLoadingFsmState>({
-    initial: 'no-loader',
+    initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
-      'no-loader': {},
-
-      'has-loader': {
+      'preconditions-unmet': {},
+      dormant: {},
+      'metadata-only': {
+        // Fires once on entry. Matches HTMLMediaElement's preload='metadata'
+        // semantics — load enough to surface metadata for the selected track
+        // at entry time. Selection changes while still in `'metadata-only'`
+        // (a pre-play edge case) are intentionally not followed: the
+        // eventual `'full-range'` entry handles whichever track is actually
+        // selected when playback starts, and the actor's `load` handler
+        // fetches a new init only when committed initTrackId disagrees.
+        entry: () => {
+          const track = selectedTrackSignal.get()!;
+          context[loaderKey].get()!.send({ type: 'load', track });
+        },
+      },
+      'full-range': {
+        // Re-fires on selected-track changes (`selectedTrackSignal`) and on
+        // segment-boundary crossings (`segmentBoundarySignal`). The loader
+        // actor reference is peeked — its presence is a state invariant.
+        // `currentTime` is peeked too: the boundary-dedup signal already
+        // handles re-firing policy; we just want the live value at dispatch
+        // time so the forward-buffer window anchors correctly.
         effects: () => {
-          const loader = context[loaderKey].get();
-          if (!loader) return;
-          // Reset dedup on loader identity change. State-exit/re-entry
-          // through `'no-loader'` is the typical path (slot flips
-          // undefined → new value via setupXBufferActors's state
-          // machine), but the closure guard handles the same-runPending
-          // case defensively.
-          if (loader !== lastLoader) {
-            prevInputs = undefined;
-            lastLoader = loader;
-          }
-          const inputs = loadingInputs.get();
-          if (prevInputs !== undefined && loadingInputsEq(prevInputs, inputs)) return;
-
-          const { preload, loadActivated, currentTime, track, segmentsCanLoad: canLoad } = inputs;
-          if (!canLoad) return;
-
-          prevInputs = inputs;
-
-          const fullMode = preload === 'auto' || !!loadActivated;
-          if (!fullMode) {
-            // Metadata mode: init only, no range.
-            /** @ts-expect-error */
-            loader.send({ type: 'load', track });
-          } else {
-            loader.send({
-              type: 'load',
-              /** @ts-expect-error */
-              track,
-              range: {
-                start: currentTime as number,
-                end: (currentTime as number) + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
-              },
-            });
-          }
+          const track = selectedTrackSignal.get()!;
+          segmentBoundarySignal.get();
+          const currentTime = peek(state.currentTime) ?? 0;
+          peek(context[loaderKey])!.send({
+            type: 'load',
+            track,
+            range: {
+              start: currentTime,
+              end: currentTime + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
+            },
+          });
         },
       },
     },

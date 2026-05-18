@@ -1,5 +1,6 @@
 import { createMachineActor, type HandlerContext, type MessageActor } from '../../../core/actors/create-machine-actor';
 import { effect } from '../../../core/signals/effect';
+import { peek } from '../../../core/signals/primitives';
 import { SerialRunner, Task } from '../../../core/tasks/task';
 import { calculateBackBufferFlushPoint } from '../../../media/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../../media/buffer/forward-buffer';
@@ -237,9 +238,15 @@ export function createSegmentLoaderActor(
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     // Exclude partial segments — they are still being streamed and must not be
     // treated as fully buffered for load planning or buffer window calculations.
+    //
+    // `peek` defensively: `load` handlers run synchronously inside `send()`,
+    // which is called from inside the dispatcher reactor's `effects:` body.
+    // A tracked `.snapshot.get()` here would leak the source-buffer-actor's
+    // snapshot into the dispatcher's dep set, causing the dispatcher to re-
+    // fire on every SourceBufferActor state change. Mirrors the fix applied
+    // to the text-track loader in `b3f44efe`.
     const bufferedIds = new Set(
-      sourceBufferActor.snapshot
-        .get()
+      peek(sourceBufferActor.snapshot)
         .context.segments.filter((s) => !s.partial)
         .map((s) => s.id)
     );
@@ -263,7 +270,10 @@ export function createSegmentLoaderActor(
    */
   const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
     const { track, range } = message;
-    const actorCtx = sourceBufferActor.snapshot.get().context;
+    // `peek` for the same reason as `getBufferedSegments` above — avoid
+    // leaking the SourceBufferActor snapshot into the calling dispatcher's
+    // tracking scope.
+    const actorCtx = peek(sourceBufferActor.snapshot).context;
     const bufferedSegments = getBufferedSegments(track.segments);
     const currentTime = range?.start ?? 0;
     const tasks: LoadTask[] = [];

@@ -1175,3 +1175,224 @@ describe('loadSegments bandwidth tracking', () => {
     cleanup();
   });
 });
+
+// ---------------------------------------------------------------------------
+// load-mode FSM transitions — dormant / metadata-only / full-range
+// ---------------------------------------------------------------------------
+
+describe('loadSegments load-mode FSM', () => {
+  function makePresentation(segments: Segment[]) {
+    return {
+      id: 'p1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      duration: segments.reduce((acc, s) => acc + s.duration, 0),
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+        },
+      ],
+    };
+  }
+
+  it("dormant — preload='none' && !loadActivated: no init or media fetches", async () => {
+    const segments = [makeSegment('s1', 0, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { cleanup } = setupLoadSegments(
+      { preload: 'none', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
+      actor,
+      'video'
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+
+    cleanup();
+  });
+
+  it("transitions dormant → metadata-only when preload flips 'none' → 'metadata'", async () => {
+    const segments = [makeSegment('s1', 0, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { state, cleanup } = setupLoadSegments(
+      { preload: 'none', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
+      actor,
+      'video'
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
+
+    state.preload.set('metadata');
+
+    await vi.waitFor(() => {
+      expect(fetchedUrls).toContain('http://example.com/init.mp4');
+    });
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+
+    cleanup();
+  });
+
+  it("transitions dormant → full-range when loadActivated flips true (preload='none')", async () => {
+    const segments = [makeSegment('s1', 0, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { state, cleanup } = setupLoadSegments(
+      { preload: 'none', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentation(segments) },
+      actor,
+      'video'
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
+
+    state.loadActivated.set(true);
+
+    await vi.waitFor(() => {
+      expect(fetchedUrls).toContain('http://example.com/init.mp4');
+      expect(fetchedUrls).toContain('http://example.com/s1.m4s');
+    });
+
+    cleanup();
+  });
+
+  it('metadata-only — selection change within state does not re-dispatch (entry, not effects)', async () => {
+    // Two video tracks. Start with track-1 + preload='metadata'; the entry
+    // body fires once and fetches track-1's init. Switching selection to
+    // track-2 while still in `'metadata-only'` (pre-play edge case) is
+    // intentionally not followed — track-2's init must not fetch. The
+    // eventual `'full-range'` entry would handle whichever track is
+    // selected at playback start.
+    const segments1 = [makeSegment('s1', 0, 10)];
+    const segments2 = [makeSegment('t1', 0, 10)];
+
+    const track1 = makeResolvedVideoTrack(segments1);
+    const track2 = {
+      ...makeResolvedVideoTrack(segments2),
+      id: 'track-2',
+      url: 'http://example.com/track-2.m3u8',
+      initialization: { url: 'http://example.com/init-2.mp4' },
+    };
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { state, cleanup } = setupLoadSegments(
+      {
+        preload: 'metadata',
+        selectedVideoTrackId: 'track-1',
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 10,
+          selectionSets: [
+            { id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track1, track2] }] },
+          ],
+        },
+      },
+      actor,
+      'video'
+    );
+
+    await vi.waitFor(() => {
+      expect(fetchedUrls).toContain('http://example.com/init.mp4');
+    });
+
+    state.selectedVideoTrackId.set('track-2');
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(fetchedUrls).not.toContain('http://example.com/init-2.mp4');
+    // No segment fetches either — we're still in `'metadata-only'`.
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+    expect(fetchedUrls).not.toContain('http://example.com/t1.m4s');
+
+    cleanup();
+  });
+
+  it('does not re-dispatch on currentTime ticks within the same segment', async () => {
+    // 5 segments of 10s — full-range with `loadActivated` true. After initial
+    // dispatch fetches the buffer window, ticking currentTime within segment 0
+    // (boundary stays at 0) should not produce new fetches.
+    const segments = [
+      makeSegment('s1', 0, 10),
+      makeSegment('s2', 10, 10),
+      makeSegment('s3', 20, 10),
+      makeSegment('s4', 30, 10),
+      makeSegment('s5', 40, 10),
+    ];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { state, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        loadActivated: true,
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      actor,
+      'video'
+    );
+
+    await vi.waitFor(() => {
+      expect(fetchedUrls).toContain('http://example.com/init.mp4');
+      expect(fetchedUrls).toContain('http://example.com/s1.m4s');
+    });
+
+    const callsAfterInitial = fetchedUrls.length;
+
+    // Tick within segment 0 — boundary stays at 0; the boundary-dedup
+    // computed (`segmentStartForTime` on the same segment) returns the
+    // same value, so signal-polyfill's `Object.is` equality suppresses
+    // dispatch re-fire.
+    state.currentTime.set(2);
+    state.currentTime.set(5);
+    state.currentTime.set(8);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(fetchedUrls.length).toBe(callsAfterInitial);
+
+    cleanup();
+  });
+});
