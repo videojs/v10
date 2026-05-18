@@ -1,4 +1,4 @@
-import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
+import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs, type TranslationKeyOrString } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -51,7 +51,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
   }
 
   /** Returns the trigger's current label derived from media state. */
-  getLabel(): string | undefined {
+  getLabel(): TranslationKeyOrString | undefined {
     return this.#core.state.current.label || undefined;
   }
 

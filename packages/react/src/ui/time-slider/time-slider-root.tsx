@@ -32,6 +32,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       orientation,
       disabled,
       thumbAlignment,
+      formatOptions,
       onDragStart,
       onDragEnd,
       ...elementProps
@@ -41,7 +42,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const buffer = usePlayer(selectBuffer);
 
     const [core] = useState(() => new TimeSliderCore());
-    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment });
+    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment, changeThrottle, formatOptions });
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);

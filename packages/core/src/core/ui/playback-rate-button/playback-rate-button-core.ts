@@ -1,14 +1,14 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
-import type { ButtonState } from '../types';
+import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import type { ButtonState, TranslationKeyOrString } from '../types';
 
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
+  label?: TranslationKeyOrString | ((state: PlaybackRateButtonState) => TranslationKeyOrString) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -39,17 +39,16 @@ export class PlaybackRateButtonCore {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
   }
 
-  getLabel(state: PlaybackRateButtonState): string {
-    const { label } = this.#props;
+  getLabel(state: PlaybackRateButtonState): TranslationKeyOrString {
+    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    if (custom !== undefined) return custom;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
+    return 'playbackRateAria';
+  }
 
-    return `Playback rate ${state.rate}`;
+  getLabelParams(state: PlaybackRateButtonState): { rate: number } | undefined {
+    if (resolveOptionalControlLabel(this.#props.label, state) !== undefined) return undefined;
+    return { rate: state.rate };
   }
 
   getAttrs(state: PlaybackRateButtonState) {

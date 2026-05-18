@@ -25,12 +25,12 @@ export const Value = forwardRef(function Value(
   componentProps: ValueProps,
   forwardedRef: ForwardedRef<HTMLTimeElement>
 ) {
-  const { render, className, style, type, negativeSign, label, ...elementProps } = componentProps;
+  const { render, className, style, type, negativeSign, label, formatOptions, ...elementProps } = componentProps;
 
   const time = usePlayer(selectTime);
 
   const [core] = useState(() => new TimeCore());
-  core.setProps({ type, negativeSign, label });
+  core.setProps({ type, negativeSign, label, formatOptions });
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');

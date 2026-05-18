@@ -1,4 +1,9 @@
-import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
+import {
+  LiveButtonCore,
+  LiveButtonDataAttrs,
+  type LiveButtonMediaState,
+  type TranslationKeyOrString,
+} from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -78,7 +83,7 @@ export class LiveButtonElement extends MediaElement {
   }
 
   /** Returns the button's current label derived from media state. */
-  getLabel(): string | undefined {
+  getLabel(): TranslationKeyOrString | undefined {
     return this.core.state.current.label || undefined;
   }
 
