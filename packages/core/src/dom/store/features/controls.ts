@@ -76,15 +76,22 @@ export const controlsFeature = definePlayerFeature({
 
     // Touch tap-to-toggle
     let pointerDownTime = 0;
-    let lastTouchUpAt = 0;
+    let lastTouchAt = 0;
 
-    function onPointerDown() {
+    function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
+      // Track touch start as well as touch end: the container's own pointerup
+      // listener calls this.focus() before our pointerup handler runs, firing
+      // focusin synchronously. If we only recorded the timestamp on pointerup,
+      // the focusin guard below would see lastTouchAt=0 and not block.
+      if (event.pointerType === 'touch') {
+        lastTouchAt = pointerDownTime;
+      }
     }
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch') {
-        lastTouchUpAt = Date.now();
+        lastTouchAt = Date.now();
       }
 
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
@@ -139,7 +146,20 @@ export const controlsFeature = definePlayerFeature({
     listen(container, 'pointerdown', onPointerDown, { signal });
     listen(container, 'pointerup', onPointerUp, { signal });
     listen(container, 'keyup', setActive, { signal });
-    listen(container, 'focusin', setActive, { signal });
+    listen(
+      container,
+      'focusin',
+      () => {
+        // Ignore focusin caused by the container's own pointerup focus grab
+        // after a touch tap. The tap recognizer defers its toggle by 200 ms
+        // (doubletap window) and reads live state; if focusin flipped
+        // controlsVisible to true before the deferred callback fires, the
+        // toggle inverts to hide instead of show (Android flash).
+        if (lastTouchAt > 0 && Date.now() - lastTouchAt < 500) return;
+        setActive();
+      },
+      { signal }
+    );
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.
     // https://w3c.github.io/pointerevents/#dfn-pointerup
     listen(
@@ -147,7 +167,7 @@ export const controlsFeature = definePlayerFeature({
       'mouseleave',
       () => {
         // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
-        if (lastTouchUpAt > 0 && Date.now() - lastTouchUpAt < 500) return;
+        if (lastTouchAt > 0 && Date.now() - lastTouchAt < 500) return;
         setInactive();
       },
       { signal }
