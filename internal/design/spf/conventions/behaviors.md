@@ -642,6 +642,80 @@ Two failure modes combined:
 
 **Cross-helper consistency:** when adding a new sibling helper in an area that already has setup-shape helpers, match the existing shape. If you encounter a Shape A helper in older code, the conversion to Shape B is mechanical — bring it across when you next touch the area.
 
+#### Per-helper-per-type config constants + engine spread
+
+**Rule: hoist per-type defaults into named constants; variants spread engine config over them.** Each per-type variant in a per-type-shared-helper module references a per-helper-per-type config constant — a spread of the shared `*_TYPE_CONFIG` from `track-types.ts` plus the helper-specific per-type closures (resolver, picker, dispatch function). The variant's `setup` accepts an optional `config?` parameter and spreads it over the constant; engines override fields by passing them through `config`.
+
+```ts
+// Per-helper-per-type defaults, defined once next to the helper.
+const VIDEO_SEGMENT_LOADING_CONFIG = {
+  ...VIDEO_TYPE_CONFIG,                    // selectedKey, actorKey, loaderKey, type
+  findResolvedTrack: findResolvedVideoTrack,
+} as const;
+
+// Variant: spread defaults, then spread engine config (engines override).
+export const loadVideoSegments = defineBehavior({
+  stateKeys: [...],
+  contextKeys: [...],
+  setup: ({ state, context, config = {} }: { /* ... */; config?: object }) =>
+    setupSegmentLoading({
+      state, context,
+      config: { ...VIDEO_SEGMENT_LOADING_CONFIG, ...config },
+    }),
+});
+```
+
+Why:
+
+- **Single source of truth per type per helper.** Per-type identity (slot keys, per-type closures) lives in one place — variants reference it, tests can reuse it, engines can introspect it. No drift between variant body / tests / wiring.
+- **Engine-configurable from day one.** Engines layer composition-supplied overrides (a custom segment resolver, an alternative picker, a non-default fetch) on top of the defaults without forking the variant. The spread pattern means today's "no overrides" doesn't cost anything; the override surface is already there when needed.
+- **Future facets flow through.** Adding a new field to the shared `*_TYPE_CONFIG` propagates automatically into every helper's per-type constant. Helpers that don't consume the extra field ignore it under structural typing.
+
+Canonical examples: `load-segments.ts` (`VIDEO_SEGMENT_LOADING_CONFIG` / `AUDIO_SEGMENT_LOADING_CONFIG` / `TEXT_SEGMENT_LOADING_CONFIG`), `setup-buffer-actors.ts` (variants spread `VIDEO_TYPE_CONFIG` / `AUDIO_TYPE_CONFIG` directly + their own per-helper additions), `resolve-track.ts` (`VIDEO_TRACK_RESOLUTION_CONFIG` etc.), `select-tracks.ts` (`VIDEO_TRACK_SELECTION_CONFIG` etc.).
+
+The `config?: object` type on the variant's setup is intentionally loose — engines pass whatever fits, and helper-side constraints catch invalid combinations. Tighter typing (e.g. `Partial<typeof VIDEO_SEGMENT_LOADING_CONFIG>`) is fine when the engine config schema is fully nailed down; the loose type is the right default while overrides are accumulating.
+
+#### Inferred-Track generic for typed-message-send helpers
+
+A refinement that applies *only* when the helper dispatches typed messages to a per-variant typed actor (different actor types per variant; different track types per actor's message). For helpers that don't have this dispatch pattern, plain typed-key generics (`<K extends SelectedTrackKey>`) are sufficient.
+
+**Rule: when the helper's `loader.send(...)` would require widening or casting at the boundary, add an inferred `Track` generic constrained by `SegmentLoaderLike<Track>`-style structural typing on the loader signal.** TS infers `Track` from the variant's `findResolvedTrack` (or equivalent) return type; the structural constraint on the loader signal validates that the variant's loader actor accepts the inferred track type via function-parameter contravariance. No widening of actor message types is needed; no casts inside the helper.
+
+```ts
+interface LoadMessage<Track> {
+  type: 'load';
+  track: Track;
+  range?: { start: number; end: number };
+}
+
+interface SegmentLoaderLike<Track> {
+  send: (msg: LoadMessage<Track>) => void;
+}
+
+function setupSegmentLoading<
+  K extends SelectedTrackKey,
+  L extends SegmentLoaderActorKey,
+  Track extends { segments: readonly Segment[] },
+>({ state, context, config }: {
+  state: SegmentLoadingStateMap<K>;
+  context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
+  config: { selectedKey: K; loaderKey: L; findResolvedTrack: (...) => Track | undefined };
+}): Reactor<...> {
+  // ...
+  context[loaderKey].get()!.send({ type: 'load', track: selectedTrack.get()!, range });
+}
+```
+
+How inference resolves at each variant call:
+
+- `findResolvedTrack: findResolvedVideoTrack` (returns `VideoTrack | undefined`) → TS infers `Track = VideoTrack`
+- `context.videoSegmentLoaderActor`'s `.send` accepts `{track: VideoTrack | AudioTrack, ...}` — assignable to the slot expecting `(msg: {track: VideoTrack, ...}) => void` via function-parameter contravariance (a function accepting wider input is assignable to a slot expecting narrower input). ✓
+- For text: `findResolvedTextTrack` → `Track = TextTrack`; loader's `.send` accepts exactly `{track: TextTrack, ...}`. ✓
+
+Apply this refinement only when there's an actual contravariance gap to dissolve. Worked example: `setupSegmentLoading` in `load-segments.ts` dispatches across `SegmentLoaderActor` (for v/a) and `TextTrackSegmentLoaderActor` (for text) without casts or widened actor message types — the per-variant Track inference + structural-typing constraint does the binding work.
+
+For helpers that don't dispatch typed messages — `setupTrackResolution`, `setupTrackSelection`, `setupBufferActors` — the extra `Track` generic is dead weight. Stick with plain typed-key generics there.
+
 ### Behavior factory
 
 A function that *returns* a Behavior, parameterized by the type/keys/config the caller cares about. The product is a Behavior; the factory captures the parameterization. `makeShareSignals<S, C>()` is the canonical example.
@@ -671,7 +745,7 @@ The decision pivots on *what's shared*, *what's parameterized*, and *whether you
 | Behavior shape shared, but slot intent or set of touched keys varies per type | Per-type structure | **Per-type specialization** (separate exports), often combined with a setup-shape helper or factory |
 | Same problem solved twice in two unrelated places | (none — coincidence) | Leave as two |
 
-The "abstracted helpers should look like Behaviors" goal is satisfiable through either the setup-shape helper or the behavior factory pattern. Pick by which trade-off you want: setup-shape preserves per-export `defineBehavior` (and its exhaustiveness check) at the cost of slightly verbose call sites; factory hides `defineBehavior` for lighter call sites at the cost of an extra wrapping layer. The follow-up on `select-tracks` and `load-segments` is to apply this distinction case by case (per `54707e59`, `resolve-track` adopted the setup-shape helper form).
+The "abstracted helpers should look like Behaviors" goal is satisfiable through either the setup-shape helper or the behavior factory pattern. Pick by which trade-off you want: setup-shape preserves per-export `defineBehavior` (and its exhaustiveness check) at the cost of slightly verbose call sites; factory hides `defineBehavior` for lighter call sites at the cost of an extra wrapping layer. All current per-type-shared helpers in the playback layer (`setupTrackResolution`, `setupTrackSelection`, `setupQualitySwitching`, `setupSegmentLoading`, `setupBufferActors`) use the setup-shape helper form.
 
 ## File placement
 
