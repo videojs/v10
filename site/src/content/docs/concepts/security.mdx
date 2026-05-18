@@ -1,0 +1,61 @@
+---
+title: Security
+description: How to configure Content Security Policy, CORS, and Subresource Integrity for your video player
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Video.js does not interpolate source URLs into HTML, does not render caption cues with `innerHTML`, and ships no `eval` or `Function` constructor use. The browser does the rendering. This page covers the controls you set yourself when deploying the player.
+
+## Content Security Policy
+
+If your application sets a [Content Security Policy](https://developer.mozilla.org/docs/Web/HTTP/CSP), allow the sources the player loads. CSP is sent as an HTTP response header by your server or hosting platform — see [MDN's CSP guide](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy) for where to set it in common setups.
+
+| Directive | What to allow |
+| --- | --- |
+| `media-src` | Your media origins, plus `blob:` for HLS playback |
+| `img-src` | Origins for posters and thumbnail tracks |
+| `connect-src` | Origins for HLS manifests, segments, and caption files |
+| `worker-src` | `blob:` if you load `hls.js` variants |
+| `style-src` | `'unsafe-inline'`, or a nonce or hash — see [Inline styles](#inline-styles) |
+
+A reasonable starting point:
+
+```http
+Content-Security-Policy:
+  default-src 'self';
+  img-src 'self' https: data:;
+  media-src 'self' https: blob:;
+  connect-src 'self' https:;
+  worker-src 'self' blob:;
+  style-src 'self' 'unsafe-inline';
+```
+
+Replace the origins to match where your media, posters, and captions are hosted.
+
+### Inline styles
+
+The player applies inline styles for layout and state transitions. Allowing them needs `'unsafe-inline'` in `style-src`, or a [nonce or hash](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/style-src) if your build setup can generate them. A nonce is the narrowest practical option — generate one per request and apply it to both the response header and the player's served styles.
+
+## `crossorigin` attribute
+
+Set [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) on the player when you load media, captions, or posters from a different origin. Use `anonymous` for the common case — the browser issues a CORS request without cookies, which is what HLS manifests, WebVTT captions, and SRI-protected scripts all expect. Use `use-credentials` only when the cross-origin request must include cookies or auth headers, for example with cookie-signed segment URLs.
+
+<FrameworkCase frameworks={["html"]}>
+
+## Subresource Integrity
+
+When you install the player from a CDN, set a [Subresource Integrity](https://developer.mozilla.org/docs/Web/Security/Subresource_Integrity) hash on your script tag so the browser refuses to execute a modified file:
+
+```html
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@videojs/html@10.0.0/cdn/video.js"
+  integrity="sha384-..."
+  crossorigin="anonymous"
+></script>
+```
+
+SRI requires `crossorigin="anonymous"` and pins to a specific file, so the hash changes on every release. Pin to an exact version in the URL and copy the hash from your CDN's integrity tool, or regenerate the hash as part of your release process.
+
+</FrameworkCase>
