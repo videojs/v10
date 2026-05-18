@@ -137,7 +137,7 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
   It does not have layout by default (display:contents)
  -->`;
 
-  if (skin === 'none') {
+  if (skin === 'none' && useCase !== 'background-video') {
     return `${providerComment}
 <${providerTag}>
 ${mediaComment}
@@ -145,7 +145,7 @@ ${mediaComment}
 </${providerTag}>`;
   }
 
-  const skinTag = getSkinTag(useCase, skin);
+  const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
   return `${providerComment}
 <${providerTag}>
   <!--
