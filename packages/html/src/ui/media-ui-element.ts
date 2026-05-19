@@ -1,10 +1,10 @@
 import type { InferComponentState, InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
+import { resolveControlAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
-import { isString } from '@videojs/utils/predicate';
+import { isFunction } from '@videojs/utils/predicate';
 
 import { I18nController } from '../i18n/instance';
-import { translateAriaLabelAttrs } from '../i18n/translate-control-label';
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
@@ -33,13 +33,8 @@ export abstract class MediaUIElement<Core extends MediaUIComponent> extends Medi
 
     this.core.setMedia(media);
     const state = this.core.getState();
-    const attrs = this.core.getAttrs?.(state);
-    if (attrs) {
-      const ariaLabel = 'aria-label' in attrs ? attrs['aria-label'] : undefined;
-      applyElementProps(
-        this,
-        isString(ariaLabel) && ariaLabel ? translateAriaLabelAttrs(this.#i18n.value, attrs, ariaLabel) : attrs
-      );
+    if (isFunction(this.core.getAttrs)) {
+      applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.core, state));
     }
     applyStateDataAttrs(this, state, this.stateAttrMap);
   }
