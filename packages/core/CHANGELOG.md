@@ -1,5 +1,30 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24) (2026-05-19)
+
+
+### Features
+
+* **core:** menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/issues/1503)) ([e3c1b28](https://github.com/videojs/v10/commit/e3c1b280325493909ef1da193855832b8c51fb48))
+* **packages:** add live button component ([#1473](https://github.com/videojs/v10/issues/1473)) ([e37d5df](https://github.com/videojs/v10/commit/e37d5df87352088a9287bd46b14759965c154b76))
+* **packages:** add playback rate menu ([#1527](https://github.com/videojs/v10/issues/1527)) ([ad831d2](https://github.com/videojs/v10/commit/ad831d25f00187929e6eed93770422fa7003071c))
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+* **spf:** HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/issues/1512)) ([0cfd3bb](https://github.com/videojs/v10/commit/0cfd3bb395332b19cf85e9dc7eb08f656bec3e2b))
+
+
+### Bug Fixes
+
+* **core:** resolve cast button ssr hydration mismatch ([#1518](https://github.com/videojs/v10/issues/1518)) ([ff7d901](https://github.com/videojs/v10/commit/ff7d901bc40a0e12c9140ecb40764ad8de2eab9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.24
+    * @videojs/store bumped to 10.0.0-beta.24
+    * @videojs/utils bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23) (2026-04-27)
 
 

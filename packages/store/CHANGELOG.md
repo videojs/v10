@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.23...@videojs/store@10.0.0-beta.24) (2026-05-19)
+
+
+### Features
+
+* **packages:** add playback rate menu ([#1527](https://github.com/videojs/v10/issues/1527)) ([ad831d2](https://github.com/videojs/v10/commit/ad831d25f00187929e6eed93770422fa7003071c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.24
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.24
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.22...@videojs/store@10.0.0-beta.23) (2026-04-27)
 
 

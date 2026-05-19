@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.23...@videojs/spf@10.0.0-beta.24) (2026-05-19)
+
+
+### Features
+
+* **spf:** HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/issues/1512)) ([0cfd3bb](https://github.com/videojs/v10/commit/0cfd3bb395332b19cf85e9dc7eb08f656bec3e2b))
+
+
+### Bug Fixes
+
+* **spf:** conventions, per-type specialization, config threading ([#1537](https://github.com/videojs/v10/issues/1537)) ([c112b62](https://github.com/videojs/v10/commit/c112b6248bbe779916b858494bd881289c156810))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.24
+
 ## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.22...@videojs/spf@10.0.0-beta.23) (2026-04-27)
 
 
