@@ -1,0 +1,54 @@
+---
+title: MuxAudio
+frameworkTitle:
+  html: mux-audio
+description: Audio element for Mux-hosted HLS streams
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos — commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* import BasicUsageDemoReact from "@/components/docs/demos/mux-audio/react/css/BasicUsage"; */}
+{/* import basicUsageReactTsx from "@/components/docs/demos/mux-audio/react/css/BasicUsage.tsx?raw"; */}
+{/* import basicUsageReactCss from "@/components/docs/demos/mux-audio/react/css/BasicUsage.css?raw"; */}
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/mux-audio/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/mux-audio/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/mux-audio/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/mux-audio/html/css/BasicUsage.ts?raw";
+
+Audio element for playing Mux-hosted HLS streams. Built on top of hls.js with Mux-specific optimizations.
+
+## Examples
+
+### Basic Usage
+
+{/* React demo commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* <FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase> */}
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="MuxAudio" />

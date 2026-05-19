@@ -1079,7 +1079,7 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers media elements from define/media/ files', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['ComplexVideo', 'ExtendingVideo', 'SimpleVideo']);
+      expect(names).toEqual(['ComplexVideo', 'ExtendingVideo', 'MixinVideo', 'SimpleVideo']);
     });
 
     it('excludes container (re-export, not inline class declaration)', () => {
@@ -1093,7 +1093,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(4);
     });
   });
 
@@ -1158,7 +1158,7 @@ describe('Media element pipeline (end-to-end)', () => {
       const ref = findElement('SimpleVideo')!.reference;
       // Events are extracted from VideoEvents in types.ts, which extends
       // all capability event interfaces including TextTrackListEvents
-      expect(ref.events).toEqual([
+      expect(ref.events.native).toEqual([
         'play',
         'playing',
         'waiting',
@@ -1183,6 +1183,8 @@ describe('Media element pipeline (end-to-end)', () => {
         'changetrack',
         'trackmodechange',
       ]);
+      // SimpleHost dispatches no events of its own.
+      expect(ref.events.elementSpecific).toEqual([]);
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
@@ -1325,18 +1327,98 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Event extraction from capability contracts', () => {
     it('video elements include text track events from VideoEvents', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.events).toContain('addtrack');
-      expect(ref.events).toContain('removetrack');
-      expect(ref.events).toContain('changetrack');
-      expect(ref.events).toContain('trackmodechange');
+      expect(ref.events.native).toContain('addtrack');
+      expect(ref.events.native).toContain('removetrack');
+      expect(ref.events.native).toContain('changetrack');
+      expect(ref.events.native).toContain('trackmodechange');
     });
 
-    it('all video elements share the same event list', () => {
-      const simple = findElement('SimpleVideo')!.reference.events;
-      const complex = findElement('ComplexVideo')!.reference.events;
-      const extending = findElement('ExtendingVideo')!.reference.events;
+    it('all video elements share the same native event list', () => {
+      const simple = findElement('SimpleVideo')!.reference.events.native;
+      const complex = findElement('ComplexVideo')!.reference.events.native;
+      const extending = findElement('ExtendingVideo')!.reference.events.native;
       expect(complex).toEqual(simple);
       expect(extending).toEqual(simple);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // MIXIN MEDIA ELEMENT: MixinVideo
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // A media element whose host extends a chain of mixins
+  // (`MixinBVolumeMixin(MixinAFooMixin(MixinBaseHost))` — mirrors
+  // `MuxDataMediaMixin(GoogleCastMixin(HlsMedia))`). The builder must walk
+  // the call-expression extends, follow each mixin to its source file, and
+  // collect getters/setters from each mixin's inner class.
+  //
+  // Also exercises:
+  //   - overridesNative tagging for properties whose name matches an
+  //     HTMLMediaElement member (volume)
+  //   - Description fallback through the chain (src has JSDoc on the base,
+  //     overridden without JSDoc by MixinB)
+  //   - Element-specific event extraction via this.dispatchEvent(new Event(...))
+  //     in mixin code (foochange dispatched by MixinAFooMixin)
+
+  describe('MixinVideo (mixin chain)', () => {
+    it('extracts the tag name', () => {
+      const ref = findElement('MixinVideo')!.reference;
+      expect(ref.tagName).toBe('mixin-video');
+    });
+
+    it('walks function-declaration mixin (Shape A)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.foo).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'Mixin A documentation.',
+      });
+    });
+
+    it('walks const-arrow mixin (Shape B)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.volume).toBeDefined();
+      expect(props.volume.type).toBe('number');
+      expect(props.volume.readonly).toBe(false);
+    });
+
+    it('includes leaf-class own properties', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.bar).toMatchObject({
+        type: 'number',
+        readonly: false,
+        description: 'Leaf class own property.',
+      });
+    });
+
+    it('marks volume as overridesNative (HTMLMediaElement member)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.volume.overridesNative).toBe(true);
+    });
+
+    it('does not mark non-native properties as overridesNative', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.foo.overridesNative).toBeUndefined();
+      expect(props.bar.overridesNative).toBeUndefined();
+    });
+
+    it('inherits parent description when child override has no JSDoc', () => {
+      // src has JSDoc on MixinBaseHost; MixinB overrides without JSDoc.
+      // The description should fall through from the base.
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.src.description).toBe('Source URL of the media.');
+    });
+
+    it('extracts element-specific events from mixin dispatchEvent calls', () => {
+      const ref = findElement('MixinVideo')!.reference;
+      expect(ref.events.elementSpecific).toContain('foochange');
+    });
+
+    it('separates native events from element-specific events', () => {
+      const ref = findElement('MixinVideo')!.reference;
+      expect(ref.events.native).toContain('play');
+      expect(ref.events.native).not.toContain('foochange');
+      expect(ref.events.elementSpecific).not.toContain('play');
     });
   });
 });

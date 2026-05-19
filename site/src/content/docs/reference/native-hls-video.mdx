@@ -1,0 +1,54 @@
+---
+title: NativeHlsVideo
+frameworkTitle:
+  html: native-hls-video
+description: HLS video element using the browser's built-in HLS support
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos — commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* import BasicUsageDemoReact from "@/components/docs/demos/native-hls-video/react/css/BasicUsage"; */}
+{/* import basicUsageReactTsx from "@/components/docs/demos/native-hls-video/react/css/BasicUsage.tsx?raw"; */}
+{/* import basicUsageReactCss from "@/components/docs/demos/native-hls-video/react/css/BasicUsage.css?raw"; */}
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/native-hls-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/native-hls-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/native-hls-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/native-hls-video/html/css/BasicUsage.ts?raw";
+
+HLS video element that relies on the browser's native HLS support. Works on Safari and other browsers with built-in HLS playback. For cross-browser HLS support, use [HlsVideo](/docs/framework/html/reference/hls-video/) instead.
+
+## Examples
+
+### Basic Usage
+
+{/* React demo commented out until #1343 (SSR-breaking media imports) is fixed */}
+{/* <FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase> */}
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="NativeHlsVideo" />

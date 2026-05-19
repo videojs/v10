@@ -1,0 +1,69 @@
+---
+/**
+ * Renders the host properties table for media element API reference.
+ *
+ * Host properties are getter/setter pairs exposed by the media element's host
+ * class. They differ from standard HTML attributes — they're accessed via JS
+ * properties on the element instance.
+ */
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { HostPropertyDef } from '@/types/media-reference';
+import DetailRow from './DetailRow.astro';
+
+interface Props {
+  hostProperties: Record<string, HostPropertyDef>;
+  componentName: string;
+}
+
+const { hostProperties, componentName } = Astro.props;
+
+const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompare(b));
+---
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Property</Th>
+      <Th>Type</Th>
+      <Th>Default</Th>
+      <Th>Details</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      entries.map(([name, def]) => {
+        const id = `${componentName}-${name}`;
+        const readonlyNote = def.readonly ? "Read-only." : undefined;
+        const description =
+          [readonlyNote, def.description].filter(Boolean).join(" ") ||
+          undefined;
+
+        return (
+          <DetailRow
+            id={id}
+            name={name}
+            type={def.type}
+            description={description}
+            colspan={4}
+          >
+            <Td class="align-top">
+              <MarkdownCode>{name}</MarkdownCode>
+            </Td>
+            <Td class="align-top">
+              <MarkdownCode>{def.type}</MarkdownCode>
+            </Td>
+            <Td class="align-top">
+              <MarkdownCode>—</MarkdownCode>
+            </Td>
+          </DetailRow>
+        );
+      })
+    }
+  </Tbody>
+</Table>

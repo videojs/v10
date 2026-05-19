@@ -581,6 +581,7 @@ export interface HostPropertyDef {
   type: string;
   description?: string;
   readonly: boolean;
+  overridesNative?: boolean;
 }
 
 export interface MediaElementReference {
@@ -588,7 +589,10 @@ export interface MediaElementReference {
   tagName: string;
   hostProperties: Record<string, HostPropertyDef>;
   nativeAttributes: string[];
-  events: string[];
+  events: {
+    native: string[];
+    elementSpecific: string[];
+  };
   cssCustomProperties: Record<string, { description: string }>;
   slots: string[];
 }
