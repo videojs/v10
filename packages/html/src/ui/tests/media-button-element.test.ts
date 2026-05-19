@@ -5,7 +5,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { MediaI18nProviderElement } from '../../i18n/define-elements';
+import { MediaI18nProviderElement } from '../../i18n';
 import { playerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PlayButtonElement } from '../play-button/play-button-element';

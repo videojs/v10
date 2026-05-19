@@ -1,7 +1,7 @@
 import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { MediaI18nProviderElement } from '../../../i18n/define-elements';
+import { MediaI18nProviderElement } from '../../../i18n';
 import { AlertDialogCloseElement } from '../../alert-dialog/alert-dialog-close-element';
 import { AlertDialogDescriptionElement } from '../../alert-dialog/alert-dialog-description-element';
 import { AlertDialogTitleElement } from '../../alert-dialog/alert-dialog-title-element';
