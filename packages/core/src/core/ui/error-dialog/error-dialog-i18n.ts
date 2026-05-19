@@ -47,7 +47,7 @@ export function getErrorDialogDismissLabel(): TranslationKeyOrString {
  * custom messages, otherwise the generic fallback key.
  */
 export function resolveErrorDialogDescription(
-  error: Pick<MediaError, 'code' | 'message' | 'context'> | null | undefined,
+  error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,
   cachedMessage: string | null | undefined
 ): TranslationKeyOrString {
   if (error) {
