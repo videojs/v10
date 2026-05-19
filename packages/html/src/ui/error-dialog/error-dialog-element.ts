@@ -1,4 +1,12 @@
-import { AlertDialogDataAttrs, type AlertDialogInput, ErrorDialogCore } from '@videojs/core';
+import {
+  AlertDialogDataAttrs,
+  type AlertDialogInput,
+  ErrorDialogCore,
+  getErrorDialogDismissLabel,
+  getErrorDialogTitleLabel,
+  type MediaError,
+  resolveErrorDialogDescription,
+} from '@videojs/core';
 import {
   type AlertDialogApi,
   applyElementProps,
@@ -11,12 +19,12 @@ import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 
+import { I18nController } from '../../i18n/instance';
+import { translateControlLabel } from '../../i18n/translate-control-label';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { alertDialogContext } from '../alert-dialog/context';
 import { MediaElement } from '../media-element';
-
-const FALLBACK_MESSAGE = 'An error occurred. Please try again.';
 
 let idCounter = 0;
 
@@ -28,6 +36,7 @@ export class ErrorDialogElement extends MediaElement {
   readonly #titleId = `vjs-error-dialog-title-${idCounter++}`;
   readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
   readonly #errorState = new PlayerController(this, playerContext, selectError);
+  readonly #i18n = new I18nController(this);
 
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
@@ -80,11 +89,7 @@ export class ErrorDialogElement extends MediaElement {
       this.#lastErrorMessage = message || null;
     }
 
-    // Set description text before opening so content is ready for the transition.
-    const desc = this.querySelector('media-alert-dialog-description');
-    if (desc) {
-      desc.textContent = this.#lastErrorMessage ?? FALLBACK_MESSAGE;
-    }
+    this.#syncDialogCopy(errorState?.error ?? null);
 
     if (hasError && !isOpen) {
       this.#dialog.open();
@@ -109,5 +114,24 @@ export class ErrorDialogElement extends MediaElement {
       stateAttrMap: AlertDialogDataAttrs,
       close: () => this.#dialog?.close(),
     });
+  }
+
+  #syncDialogCopy(error: MediaError | null): void {
+    const t = this.#i18n.value;
+    const title = this.querySelector('media-alert-dialog-title');
+    if (title) {
+      title.textContent = translateControlLabel(t, getErrorDialogTitleLabel());
+    }
+
+    const desc = this.querySelector('media-alert-dialog-description');
+    if (desc) {
+      const description = resolveErrorDialogDescription(error, this.#lastErrorMessage);
+      desc.textContent = translateControlLabel(t, description);
+    }
+
+    const close = this.querySelector('media-alert-dialog-close');
+    if (close) {
+      close.textContent = translateControlLabel(t, getErrorDialogDismissLabel());
+    }
   }
 }

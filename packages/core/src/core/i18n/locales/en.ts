@@ -52,4 +52,7 @@ export const englishTranslations = {
     'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
   mediaErrorEncrypted: 'The media is encrypted and there are no keys to decrypt it.',
   mediaErrorCustom: '',
+  errorDialogTitle: 'Something went wrong.',
+  errorDialogDismiss: 'OK',
+  mediaErrorFallback: 'An error occurred. Please try again.',
 } as const satisfies Translations;

@@ -1,21 +1,25 @@
 'use client';
 
 import type { AlertDialogCore } from '@videojs/core';
-import { forwardRef } from 'react';
+import { resolveErrorDialogDescription } from '@videojs/core';
+import { forwardRef, type ReactNode } from 'react';
 
+import { useTranslator } from '../../i18n';
+import { translateControlLabel } from '../../i18n/translate-control-label';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useAlertDialogContext } from '../alert-dialog/context';
 import { useErrorDialogContext } from './context';
 
-const FALLBACK_MESSAGE = 'An error occurred. Please try again.';
-
 export interface ErrorDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
 export const ErrorDialogDescription = forwardRef<HTMLParagraphElement, ErrorDialogDescriptionProps>(
   function ErrorDialogDescription({ render, className, style, children, ...elementProps }, forwardedRef) {
+    const t = useTranslator();
     const { state, stateAttrMap } = useAlertDialogContext();
     const { lastError } = useErrorDialogContext();
+    const description = resolveErrorDialogDescription(lastError, lastError?.message ?? null);
+    const content: ReactNode = children ?? translateControlLabel(t, description);
 
     return renderElement(
       'p',
@@ -24,10 +28,7 @@ export const ErrorDialogDescription = forwardRef<HTMLParagraphElement, ErrorDial
         state,
         stateAttrMap,
         ref: forwardedRef,
-        props: [
-          { id: state.descriptionId, children: children ?? lastError?.message ?? FALLBACK_MESSAGE },
-          elementProps,
-        ],
+        props: [{ id: state.descriptionId, children: content }, elementProps],
       }
     );
   }

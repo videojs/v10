@@ -135,11 +135,11 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
               <ErrorDialog.Description className="media-error__description" />
             </div>
             <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+              <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>
