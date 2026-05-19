@@ -142,7 +142,8 @@ describe('VolumeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('volume');
-      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.75));
+      expect(attrs['aria-valuetext']).toBe('volumeSliderValueText');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.75) });
       expect(attrs.role).toBe('slider');
     });
 
@@ -153,7 +154,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(`${formatVolumePercent(0.5)}, muted`);
+      expect(attrs['aria-valuetext']).toBe('volumeSliderValueTextMuted');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.5) });
     });
 
     it('rounds value in valuetext', () => {
@@ -163,7 +165,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.333));
+      expect(attrs['aria-valuetext']).toBe('volumeSliderValueText');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.333) });
     });
 
     it('uses custom label', () => {
@@ -183,7 +186,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(`${formatVolumePercent(0)}, muted`);
+      expect(attrs['aria-valuetext']).toBe('volumeSliderValueTextMuted');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0) });
     });
   });
 

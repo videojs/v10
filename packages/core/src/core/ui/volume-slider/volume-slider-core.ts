@@ -73,14 +73,20 @@ export class VolumeSliderCore extends SliderCore {
     return super.getLabel(state) || 'volume';
   }
 
+  getValueText(state: VolumeSliderState): TranslationKeyOrString {
+    return state.muted ? 'volumeSliderValueTextMuted' : 'volumeSliderValueText';
+  }
+
+  getValueTextParams(state: VolumeSliderState): { percent: string } {
+    return { percent: formatVolumePercent(state.value / 100) };
+  }
+
   override getAttrs(state: VolumeSliderState) {
     const base = super.getAttrs(state);
-    const pct = formatVolumePercent(state.value / 100);
-    const valuetext = state.muted ? `${pct}, muted` : pct;
 
     return {
       ...base,
-      'aria-valuetext': valuetext,
+      'aria-valuetext': this.getValueText(state),
     };
   }
 }

@@ -158,7 +158,11 @@ describe('TimeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('seek');
-      expect(attrs['aria-valuetext']).toBe(`${formatDuration(90)} of ${formatDuration(300)}`);
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(90),
+        duration: formatDuration(300),
+      });
       expect(attrs.role).toBe('slider');
     });
 
@@ -179,7 +183,11 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(`${formatDuration(0)} of ${formatDuration(0)}`);
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(0),
+        duration: formatDuration(0),
+      });
     });
 
     it('announces drag position in valuetext during drag', () => {
@@ -189,9 +197,12 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      // pointerPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
       expect(attrs['aria-valuenow']).toBe(150);
-      expect(attrs['aria-valuetext']).toBe(`${formatDuration(150)} of ${formatDuration(300)}`);
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(150),
+        duration: formatDuration(300),
+      });
     });
   });
 

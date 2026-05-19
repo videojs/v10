@@ -75,20 +75,34 @@ export class TimeSliderCore extends SliderCore {
     return super.getLabel(state) || 'seek';
   }
 
+  #announceValue(state: TimeSliderState): number {
+    return state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
+  }
+
+  getValueText(state: TimeSliderState): TranslationKeyOrString {
+    return Number.isFinite(state.duration) ? 'timeSliderValueTextRange' : 'timeSliderValueTextCurrent';
+  }
+
+  getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {
+    const formatOptions = this.#props.formatOptions;
+    const current = formatDuration(this.#announceValue(state), formatOptions);
+    if (!Number.isFinite(state.duration)) {
+      return { current };
+    }
+    return {
+      current,
+      duration: formatDuration(state.duration, formatOptions),
+    };
+  }
+
   override getAttrs(state: TimeSliderState) {
     const base = super.getAttrs(state);
-
-    // During drag, announce the pointer position the user would seek to.
-    const announceValue = state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
-    const formatOptions = this.#props.formatOptions;
-    const currentPhrase = formatDuration(announceValue, formatOptions);
-    const durationPhrase = formatDuration(state.duration, formatOptions);
-    const valuetext = Number.isFinite(state.duration) ? `${currentPhrase} of ${durationPhrase}` : currentPhrase;
+    const announceValue = this.#announceValue(state);
 
     return {
       ...base,
       'aria-valuenow': announceValue,
-      'aria-valuetext': valuetext,
+      'aria-valuetext': this.getValueText(state),
     };
   }
 }
