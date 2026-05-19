@@ -1,7 +1,13 @@
-import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs, type TranslationKeyOrString } from '@videojs/core';
+import {
+  PlaybackRateMenuCore,
+  PlaybackRateMenuDataAttrs,
+  resolveControlAttrs,
+  type TranslationKeyOrString,
+} from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -22,6 +28,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
 
   readonly #core = new PlaybackRateMenuCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
+  readonly #i18n = new I18nController(this);
 
   #disconnect: AbortController | null = null;
 
@@ -68,7 +75,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
     applyElementProps(this, {
       role: 'button',
       tabIndex: 0,
-      ...this.#core.getAttrs(state),
+      ...resolveControlAttrs(this.#i18n.value, this.#core, state),
     });
     applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
   }

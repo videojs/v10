@@ -7,5 +7,6 @@ export {
   registerI18n,
   resetI18nRegistryForTesting,
 } from './registry';
+export { resolveTranslationPhrase } from './resolve-translation-phrase';
 export { createTranslator } from './translator';
 export type * from './types';

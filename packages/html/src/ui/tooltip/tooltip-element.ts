@@ -240,7 +240,11 @@ export class TooltipElement extends MediaElement {
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    this.textContent = triggerEl.getLabel() ?? '';
+    const resolved =
+      'getResolvedLabel' in triggerEl && typeof triggerEl.getResolvedLabel === 'function'
+        ? triggerEl.getResolvedLabel()
+        : triggerEl.getLabel();
+    this.textContent = resolved ?? '';
   }
 
   #cleanupTrigger(): void {
