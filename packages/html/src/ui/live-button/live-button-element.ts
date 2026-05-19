@@ -2,6 +2,8 @@ import {
   LiveButtonCore,
   LiveButtonDataAttrs,
   type LiveButtonMediaState,
+  resolveControlAttrs,
+  resolveControlLabel,
   type TranslationKeyOrString,
 } from '@videojs/core';
 import {
@@ -16,6 +18,7 @@ import {
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -44,6 +47,7 @@ export class LiveButtonElement extends MediaElement {
   protected readonly live = new PlayerController(this, playerContext, selectLive);
   protected readonly time = new PlayerController(this, playerContext, selectTime);
   protected readonly buffer = new PlayerController(this, playerContext, selectBuffer);
+  readonly #i18n = new I18nController(this);
 
   get $state(): State<LiveButtonCore.State> {
     return this.core.state;
@@ -87,6 +91,14 @@ export class LiveButtonElement extends MediaElement {
     return this.core.state.current.label || undefined;
   }
 
+  /** Resolved label for tooltips and other display surfaces. */
+  getResolvedLabel(): string | undefined {
+    const media = this.#getMedia();
+    if (!media) return undefined;
+    const state = this.core.getState();
+    return resolveControlLabel(this.#i18n.value, this.core, state);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.core.setProps(this);
@@ -100,7 +112,7 @@ export class LiveButtonElement extends MediaElement {
 
     this.core.setMedia(media);
     const state = this.core.getState();
-    applyElementProps(this, this.core.getAttrs(state));
+    applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.core, state));
     applyStateDataAttrs(this, state, LiveButtonDataAttrs);
   }
 

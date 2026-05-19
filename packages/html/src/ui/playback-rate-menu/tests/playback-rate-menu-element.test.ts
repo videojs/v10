@@ -215,7 +215,7 @@ describe('PlaybackRateMenuTriggerElement', () => {
     await trigger.updateComplete;
 
     expect(trigger.getAttribute('role')).toBe('button');
-    expect(trigger.getAttribute('aria-label')).toBe('playbackRateAria');
+    expect(trigger.getAttribute('aria-label')).toBe('Playback rate 2');
     expect(trigger.getAttribute('data-rate')).toBe('2');
   });
 
