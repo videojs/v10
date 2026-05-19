@@ -1,4 +1,5 @@
-export { englishTranslations } from './locales/en';
+export { BUILT_IN_LOCALES } from './built-in-locales';
+export { default as translations } from './locales/en';
 export {
   getI18nTranslations,
   hasRegisteredI18n,

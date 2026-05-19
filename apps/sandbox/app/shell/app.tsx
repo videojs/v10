@@ -1,4 +1,5 @@
 import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/sandbox-locales';
 import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import {
@@ -34,6 +35,12 @@ function readParams() {
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
     preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    locale: (() => {
+      const value = params.get('locale');
+      return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
+        ? (value as SandboxLocaleTag)
+        : DEFAULT_SANDBOX_LOCALE;
+    })(),
   };
 }
 
@@ -48,7 +55,9 @@ export function App() {
   const [muted, setMuted] = useState(initial.muted);
   const [loop, setLoop] = useState(initial.loop);
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
+  const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const showLocalePicker = preset === 'video' && platform !== 'cdn';
 
   const pagePath = getPagePath(platform, preset);
 
@@ -64,9 +73,10 @@ export function App() {
       muted: muted ? '1' : '0',
       loop: loop ? '1' : '0',
       preload,
+      locale,
     });
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload]);
+  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, locale]);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
@@ -91,6 +101,11 @@ export function App() {
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'preload-change', preload }, '*');
   }, [preload]);
+
+  useEffect(() => {
+    if (!showLocalePicker) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: 'locale-change', locale }, '*');
+  }, [locale, showLocalePicker]);
 
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
@@ -146,6 +161,9 @@ export function App() {
         onLoopChange={setLoop}
         preload={preload}
         onPreloadChange={setPreload}
+        locale={locale}
+        onLocaleChange={setLocale}
+        showLocalePicker={showLocalePicker}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
@@ -168,6 +186,7 @@ export function App() {
         muted={muted}
         loop={loop}
         preload={preload}
+        locale={locale}
       />
     </div>
   );

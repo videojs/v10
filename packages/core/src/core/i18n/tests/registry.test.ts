@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { englishTranslations } from '../locales/en';
+import english from '../locales/en';
 import {
   getI18nTranslations,
   hasRegisteredI18n,
@@ -26,7 +26,7 @@ describe('i18n registry', () => {
   it('inherits from English for keys missing in the locale', () => {
     registerI18n('es', { play: 'Ir' });
     const es = getI18nTranslations('es');
-    expect(es.mute).toBe(englishTranslations.mute);
+    expect(es.mute).toBe(english.mute);
   });
 
   it('resolves es-419-u-nu-latn to the es layer before English', () => {
@@ -57,7 +57,7 @@ describe('i18n registry', () => {
     expect(merged.replay).toBe('HK');
     expect(merged.pause).toBe('Hant');
     expect(merged.play).toBe('ZH');
-    expect(merged.mute).toBe(englishTranslations.mute);
+    expect(merged.mute).toBe(english.mute);
   });
 
   it('truncates en-GB-scotland toward en-GB then en', () => {

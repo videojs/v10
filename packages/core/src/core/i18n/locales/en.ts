@@ -1,7 +1,7 @@
 import type { Translations } from '../types';
 
 /** Default English layer — registered when `@videojs/core/i18n/registry` (or this package entry) is loaded. */
-export const englishTranslations = {
+export default {
   play: 'Play',
   pause: 'Pause',
   replay: 'Replay',

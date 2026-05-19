@@ -1,7 +1,9 @@
+import type { BUILT_IN_LOCALES } from './built-in-locales';
+
 /** Matches strings that include the literal substring `needle` (for example a `{param}` token). */
 export type Contains<Needle extends string> = `${string}${Needle}${string}`;
 
-export type BuiltInLocale = 'ar' | 'de' | 'es' | 'fr' | 'it' | 'ja' | 'ko' | 'nl' | 'pl' | 'pt' | 'ru' | 'tr' | 'zh';
+export type BuiltInLocale = (typeof BUILT_IN_LOCALES)[number];
 
 /** BCP 47 language tag; built-ins are narrowed for autocomplete. */
 export type Locale = BuiltInLocale | (string & {});

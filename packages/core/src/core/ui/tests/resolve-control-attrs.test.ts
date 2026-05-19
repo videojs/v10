@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createTranslator, englishTranslations } from '../../i18n';
+import { createTranslator, translations as english } from '../../i18n';
 import { resolveControlAttrs } from '../resolve-control-attrs';
 
 describe('resolveControlAttrs', () => {
-  const translator = createTranslator(englishTranslations, 'en');
+  const translator = createTranslator(english, 'en');
 
   it('resolves aria-label and aria-valuetext with params', () => {
     const core = {

@@ -1,3 +1,4 @@
+import type { SandboxLocaleTag } from '@app/shared/i18n/sandbox-locales';
 import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Preset, Skin, Styling } from '@app/types';
@@ -13,10 +14,11 @@ type PreviewProps = {
   muted: boolean;
   loop: boolean;
   preload: PreloadValue;
+  locale: SandboxLocaleTag;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload },
+  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale },
   ref
 ) {
   const buildUrl = (base: string) => {
@@ -29,6 +31,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       muted: muted ? '1' : '0',
       loop: loop ? '1' : '0',
       preload,
+      locale,
     });
     return `${base}?${params}`;
   };
