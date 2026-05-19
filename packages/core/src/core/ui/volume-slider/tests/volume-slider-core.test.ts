@@ -163,7 +163,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.33));
+      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.333));
     });
 
     it('uses custom label', () => {
