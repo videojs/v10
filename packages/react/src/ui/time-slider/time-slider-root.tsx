@@ -1,10 +1,11 @@
 'use client';
 
-import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useState } from 'react';
 
+import { useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -40,6 +41,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
 
     const time = usePlayer(selectTime);
     const buffer = usePlayer(selectBuffer);
+    const translator = useTranslator();
 
     const [core] = useState(() => new TimeSliderCore());
     core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment, changeThrottle, formatOptions });
@@ -97,7 +99,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           thumbRef,
           thumbProps,
           stateAttrMap: TimeSliderDataAttrs,
-          getAttrs: (sliderState) => core.getAttrs(sliderState as TimeSliderCore.State),
+          getAttrs: (sliderState) => resolveControlAttrs(translator, core, sliderState as TimeSliderCore.State),
           formatValue: (value) => formatTime(value, duration),
         }}
       >

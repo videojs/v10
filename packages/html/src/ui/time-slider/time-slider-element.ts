@@ -1,4 +1,4 @@
-import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -14,6 +14,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { formatTime } from '@videojs/utils/time';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -44,6 +45,7 @@ export class TimeSliderElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
+  readonly #i18n = new I18nController(this);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -133,7 +135,7 @@ export class TimeSliderElement extends MediaElement {
       state,
       stateAttrMap: TimeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: this.#core.getAttrs(state),
+      thumbAttrs: resolveControlAttrs(this.#i18n.value, this.#core, state),
       thumbProps: this.#slider.thumbProps,
       formatValue: (value) => formatTime(value, state.duration),
     });
