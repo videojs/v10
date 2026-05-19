@@ -50,4 +50,11 @@ describe('createOptionalControlLabelCache', () => {
     cache.invalidate();
     expect(cache.resolve('B', state)).toBe('B');
   });
+
+  it('re-resolves when label changes for the same state snapshot', () => {
+    const cache = createOptionalControlLabelCache<typeof state>();
+
+    expect(cache.resolve('A', state)).toBe('A');
+    expect(cache.resolve('B', state)).toBe('B');
+  });
 });

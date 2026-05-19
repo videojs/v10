@@ -26,12 +26,16 @@ export function createOptionalControlLabelCache<State>(): {
   ): TranslationKeyOrString | undefined;
   invalidate(): void;
 } {
-  let cache: { state: State; custom: TranslationKeyOrString | undefined } | null = null;
+  let cache: {
+    state: State;
+    label: TranslationKeyOrString | ((state: State) => TranslationKeyOrString) | undefined;
+    custom: TranslationKeyOrString | undefined;
+  } | null = null;
 
   return {
     resolve(label, state) {
-      if (cache?.state !== state) {
-        cache = { state, custom: resolveOptionalControlLabel(label, state) };
+      if (cache?.state !== state || cache.label !== label) {
+        cache = { state, label, custom: resolveOptionalControlLabel(label, state) };
       }
       return cache.custom;
     },
