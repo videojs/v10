@@ -48,7 +48,7 @@ export function getErrorDialogDismissLabel(): TranslationKeyOrString {
  */
 export function resolveErrorDialogDescription(
   error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,
-  cachedMessage: string | null | undefined
+  cachedMessage?: string | null
 ): TranslationKeyOrString {
   if (error) {
     const key = getMediaErrorTranslationKey(error.code);

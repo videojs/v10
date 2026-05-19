@@ -15,12 +15,11 @@ import {
   createTransition,
   selectError,
 } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
-
 import { I18nController } from '../../i18n/instance';
-import { translateControlLabel } from '../../i18n/translate-control-label';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { alertDialogContext } from '../alert-dialog/context';
@@ -120,18 +119,18 @@ export class ErrorDialogElement extends MediaElement {
     const t = this.#i18n.value;
     const title = this.querySelector('media-alert-dialog-title');
     if (title) {
-      title.textContent = translateControlLabel(t, getErrorDialogTitleLabel());
+      title.textContent = resolveTranslationPhrase(t, getErrorDialogTitleLabel());
     }
 
     const desc = this.querySelector('media-alert-dialog-description');
     if (desc) {
       const description = resolveErrorDialogDescription(error, this.#lastErrorMessage);
-      desc.textContent = translateControlLabel(t, description);
+      desc.textContent = resolveTranslationPhrase(t, description);
     }
 
     const close = this.querySelector('media-alert-dialog-close');
     if (close) {
-      close.textContent = translateControlLabel(t, getErrorDialogDismissLabel());
+      close.textContent = resolveTranslationPhrase(t, getErrorDialogDismissLabel());
     }
   }
 }
