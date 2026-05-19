@@ -138,6 +138,11 @@ describe('formatDuration', () => {
     expect(formatDuration(NaN)).toBe('');
     expect(formatDuration(Infinity)).toBe('');
   });
+
+  it('falls back to formatTimeAsPhrase when locale is invalid', () => {
+    const phrase = formatTimeAsPhrase(90);
+    expect(formatDuration(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toBe(phrase);
+  });
 });
 
 describe('formatVolumePercent', () => {
@@ -154,6 +159,10 @@ describe('formatVolumePercent', () => {
   it('handles invalid fraction', () => {
     expect(formatVolumePercent(Number.NaN)).toMatch(/0/);
     expect(formatVolumePercent(Number.NaN)).toMatch(/%/);
+  });
+
+  it('falls back when locale is invalid', () => {
+    expect(formatVolumePercent(0.75, 'not-a-invalid-bcp47-tag!!!')).toBe('75%');
   });
 });
 

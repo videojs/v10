@@ -33,14 +33,23 @@ function localeCacheKey(locale?: string | string[]): string {
   return Array.isArray(locale) ? locale.join('\0') : locale;
 }
 
-function getPercentFormatter(locale?: string | string[]): Intl.NumberFormat {
+function getPercentFormatter(locale?: string | string[]): Intl.NumberFormat | undefined {
   const key = localeCacheKey(locale);
   let formatter = percentFormatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
-    percentFormatters.set(key, formatter);
+    try {
+      formatter = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
+      percentFormatters.set(key, formatter);
+    } catch {
+      return undefined;
+    }
   }
   return formatter;
+}
+
+function formatVolumePercentFallback(fraction: number): string {
+  const percent = Math.round(Math.min(1, Math.max(0, fraction)) * 100);
+  return `${percent}%`;
 }
 
 function getDurationFormatter(
@@ -52,8 +61,12 @@ function getDurationFormatter(
   const key = `${localeCacheKey(locale)}\0${style}`;
   let formatter = durationFormatters.get(key);
   if (!formatter) {
-    formatter = new DurationFormat(locale, { style });
-    durationFormatters.set(key, formatter);
+    try {
+      formatter = new DurationFormat(locale, { style });
+      durationFormatters.set(key, formatter);
+    } catch {
+      return undefined;
+    }
   }
   return formatter;
 }
@@ -195,15 +208,14 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
   if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
   let body: string;
-  const durationFormatter = getDurationFormatter(options?.locale, options?.style ?? 'long');
-
-  if (durationFormatter) {
-    try {
+  try {
+    const durationFormatter = getDurationFormatter(options?.locale, options?.style ?? 'long');
+    if (durationFormatter) {
       body = durationFormatter.format(record);
-    } catch {
+    } else {
       body = formatTimeAsPhrase(positiveSeconds);
     }
-  } else {
+  } catch {
     body = formatTimeAsPhrase(positiveSeconds);
   }
 
@@ -222,10 +234,16 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
 
 /** Format a volume fraction (0–1) with {@link Intl.NumberFormat} `style: "percent"`. */
 export function formatVolumePercent(fraction: number, locale?: string | string[]): string {
-  const formatter = getPercentFormatter(locale);
-  if (!isNumber(fraction) || !Number.isFinite(fraction)) {
-    return formatter.format(0);
+  const value = !isNumber(fraction) || !Number.isFinite(fraction) ? 0 : Math.min(1, Math.max(0, fraction));
+
+  try {
+    const formatter = getPercentFormatter(locale) ?? getPercentFormatter(undefined);
+    if (formatter) {
+      return formatter.format(value);
+    }
+  } catch {
+    // fall through to simple percent string
   }
-  const clamped = Math.min(1, Math.max(0, fraction));
-  return formatter.format(clamped);
+
+  return formatVolumePercentFallback(value);
 }
