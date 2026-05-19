@@ -1,7 +1,8 @@
-import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
+import { resolveControlAttrs, TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -21,6 +22,7 @@ export class TimeElement extends MediaElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
+  readonly #i18n = new I18nController(this);
 
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');
@@ -59,7 +61,7 @@ export class TimeElement extends MediaElement {
     this.#signSpan.textContent = state.negative ? this.negativeSign : '';
     this.#textNode.textContent = state.text;
 
-    applyElementProps(this, this.#core.getAttrs(state));
+    applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.#core, state));
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
 }
