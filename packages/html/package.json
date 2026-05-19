@@ -14,7 +14,6 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
     "./dist/*/define/**/*.js",
-    "./dist/*/i18n/define-elements.js",
     "./dist/*/icons/element/**/*.js",
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
