@@ -5,6 +5,7 @@ import {
   TooltipCSSVars,
   TooltipDataAttrs,
   type TooltipInput,
+  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   applyElementProps,
@@ -29,19 +30,19 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 
-import { I18nController } from '../../i18n/instance';
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
 
-type TriggerElement = HTMLElement &
-  LabelTrigger & {
-    $state: State<ButtonState>;
-  };
+type TriggerElement = HTMLElement & {
+  getLabel(): TranslationKeyOrString | undefined;
+  getResolvedLabel?(): string | undefined;
+  $state: State<ButtonState>;
+};
 
 function isLabelTrigger(el: HTMLElement): el is TriggerElement {
-  return '$state' in el && 'getLabel' in el;
+  return '$state' in el;
 }
 
 export class TooltipElement extends MediaElement {
@@ -70,7 +71,6 @@ export class TooltipElement extends MediaElement {
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
-  readonly #i18n = new I18nController(this);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
@@ -242,9 +242,7 @@ export class TooltipElement extends MediaElement {
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    const resolved = isFunction(triggerEl.getResolvedLabel)
-      ? triggerEl.getResolvedLabel()
-      : triggerEl.getLabel();
+    const resolved = isFunction(triggerEl.getResolvedLabel) ? triggerEl.getResolvedLabel() : triggerEl.getLabel();
     this.textContent = resolved ?? '';
   }
 
