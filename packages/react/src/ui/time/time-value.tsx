@@ -1,10 +1,11 @@
 'use client';
 
-import { TimeCore, TimeDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
+import { useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -28,6 +29,7 @@ export const Value = forwardRef(function Value(
   const { render, className, style, type, negativeSign, label, formatOptions, ...elementProps } = componentProps;
 
   const time = usePlayer(selectTime);
+  const translator = useTranslator();
 
   const [core] = useState(() => new TimeCore());
   core.setProps({ type, negativeSign, label, formatOptions });
@@ -60,7 +62,7 @@ export const Value = forwardRef(function Value(
         {
           dateTime: state.datetime,
           children: content,
-          ...core.getAttrs(state),
+          ...resolveControlAttrs(translator, core, state),
         },
         elementProps,
       ],

@@ -163,7 +163,7 @@ describe('PlaybackRateMenuElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
-    expect(menu.getAttribute('aria-label')).toBe('playbackRateAria');
+    expect(menu.getAttribute('aria-label')).toBe('Playback rate 1.25');
     expect(menu.getAttribute('data-rate')).toBe('1.25');
   });
 
