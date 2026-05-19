@@ -1,8 +1,10 @@
 import '@app/styles.css';
+import { ensureSandboxLocale } from '@app/shared/i18n/sandbox-locales';
 import { VideoProvider } from '@app/shared/react/providers';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
+import { useLocale } from '@app/shared/react/use-locale';
 import { useLoop } from '@app/shared/react/use-loop';
 import { useMuted } from '@app/shared/react/use-muted';
 import { usePoster } from '@app/shared/react/use-poster';
@@ -14,7 +16,7 @@ import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { I18nProvider } from '@videojs/react/i18n';
 import { Video } from '@videojs/react/video';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 function readStyling(): Styling {
@@ -31,10 +33,21 @@ function App() {
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
+  const locale = useLocale();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    ensureSandboxLocale(locale);
+    setReady(true);
+  }, [locale]);
+
+  if (!ready) {
+    return null;
+  }
 
   return (
     <VideoProvider>
-      <I18nProvider>
+      <I18nProvider locale={locale}>
         <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <Video
             src={SOURCES[source].url}

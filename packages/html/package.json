@@ -130,6 +130,11 @@
       "development": "./dist/dev/i18n/locales/*.js",
       "default": "./dist/default/i18n/locales/*.js"
     },
+    "./i18n/all": {
+      "types": "./dist/dev/i18n/all.d.ts",
+      "development": "./dist/dev/i18n/all.js",
+      "default": "./dist/default/i18n/all.js"
+    },
     "./*.css": "./dist/default/define/*.css",
     "./*": {
       "types": "./dist/dev/define/*.d.ts",

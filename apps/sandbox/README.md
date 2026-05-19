@@ -22,7 +22,7 @@ Three directories participate:
 - **`templates/`** — The source of truth for each sandbox. One subdirectory per entry point, each containing its own `index.html` and `main.ts` / `main.tsx`. Checked into git.
 - **`src/`** — Your working copy where you freely edit, experiment, and break things. Fully gitignored (`src/*`).
 
-On `pnpm dev:sandbox`, `scripts/setup.ts` mirrors every file from `templates/` into `src/` that doesn't already exist there. Existing files in `src/` are never overwritten, so your local changes persist across restarts.
+On `pnpm dev:sandbox`, `scripts/setup.ts` mirrors new files from `templates/` into `src/` and overwrites `src/` files that differ from `templates/`. Edits made only in `src/` are replaced on the next dev start — use `sync` to copy them into `templates/` first.
 
 Vite discovers sandbox entries by scanning `src/*` for subdirectories that contain an `index.html` — no manual registration is needed.
 
