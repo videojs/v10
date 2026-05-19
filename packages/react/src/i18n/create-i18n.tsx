@@ -59,6 +59,19 @@ export interface I18nProviderProps {
    * omitted—for example a ref to your player shell `HTMLElement`.
    */
   langRootRef?: RefObject<Element | null>;
+  /**
+   * Per-locale string overrides merged on top of the global registry and any lazy built-in
+   * packs for {@link locale}. Use registry keys such as `play`, `pause`, and `replay`—the same
+   * keys returned by core control `getLabel`—not visible button text. Applies to translated
+   * `aria-label` values and tooltip copy for skin controls wired through `useTranslator`.
+   *
+   * @example
+   * ```tsx
+   * <I18nProvider locale="ja" translations={{ play: '再生', pause: '一時停止' }}>
+   *   <VideoSkin />
+   * </I18nProvider>
+   * ```
+   */
   translations?: Partial<Translations>;
   children: ReactNode;
   /** Fires when the resolved locale changes (caption selection hooks may use this later). */

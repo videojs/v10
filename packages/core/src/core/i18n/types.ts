@@ -53,6 +53,9 @@ export type TranslationParams = {
   mediaErrorSrcNotSupported: never;
   mediaErrorEncrypted: never;
   mediaErrorCustom: never;
+  errorDialogTitle: never;
+  errorDialogDismiss: never;
+  mediaErrorFallback: never;
 };
 
 /**

@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { translations } from '@app/shared/i18n/sandbox-translations';
 import { VideoProvider } from '@app/shared/react/providers';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
@@ -12,6 +13,7 @@ import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
+import { I18nProvider } from '@videojs/react/i18n';
 import { Video } from '@videojs/react/video';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -33,19 +35,21 @@ function App() {
 
   return (
     <VideoProvider>
-      <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
-        <Video
-          src={SOURCES[source].url}
-          autoPlay={autoplay}
-          muted={muted}
-          loop={loop}
-          preload={preload}
-          playsInline
-          crossOrigin="anonymous"
-        >
-          <Storyboard src={storyboard} />
-        </Video>
-      </VideoSkinComponent>
+      <I18nProvider locale="ja" translations={translations.ja}>
+        <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
+          <Video
+            src={SOURCES[source].url}
+            autoPlay={autoplay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            playsInline
+            crossOrigin="anonymous"
+          >
+            <Storyboard src={storyboard} />
+          </Video>
+        </VideoSkinComponent>
+      </I18nProvider>
     </VideoProvider>
   );
 }

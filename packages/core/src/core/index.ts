@@ -12,6 +12,7 @@ export * from './ui/controls/controls-core';
 export * from './ui/controls/controls-data-attrs';
 export * from './ui/error-dialog/error-dialog-core';
 export * from './ui/error-dialog/error-dialog-data-attrs';
+export * from './ui/error-dialog/error-dialog-i18n';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
 export * from './ui/input-feedback/indicator-lifecycle';
