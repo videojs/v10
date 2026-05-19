@@ -3,6 +3,7 @@ import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import '../../define/i18n';
 import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 import { selectCaptionsByLocale } from '../select-captions-by-locale';
@@ -92,6 +93,31 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'fr';
     await vi.waitFor(() => {
       expect(text.textContent).toBe('BuiltinFr');
+    });
+  });
+
+  it('discards stale builtin load when provider lang is set right after insert', async () => {
+    const { ProviderMixin, TextMixin } = createI18n({
+      loadBuiltinLocale: async (tag) => {
+        if (tag === 'en') return { play: 'BuiltinEn' };
+        if (tag === 'de') return { play: 'BuiltinDe' };
+        return undefined;
+      },
+    });
+    class DriftProvider extends ProviderMixin(ReactiveElement) {}
+    class DriftText extends TextMixin(ReactiveElement) {}
+    customElements.define('i18n-drift-p', DriftProvider);
+    customElements.define('i18n-drift-t', DriftText);
+
+    document.documentElement.lang = 'en';
+    const provider = new DriftProvider();
+    const text = new DriftText();
+    text.setAttribute('key', 'play');
+    provider.appendChild(text);
+    document.body.appendChild(provider);
+    provider.setAttribute('lang', 'de');
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('BuiltinDe');
     });
   });
 

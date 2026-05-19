@@ -113,6 +113,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       #lazySeq = 0;
       /** Tracks locale used for `#lazyLayer`; ambient `lang` can change without the `lang` property. */
       #resolvedLocaleForLazy: Locale | undefined;
+      /** Locale snapshot when the current `#lazySeq` async load was started (see `willUpdate` drift guard). */
+      #lazyResetStartedForLocale: Locale | undefined;
 
       readonly #storeConsumer = new ContextConsumer(this, {
         context: playerContext,
@@ -137,6 +139,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         this.#lazySeq += 1;
         this.#lazyLayer = {};
         this.#resolvedLocaleForLazy = undefined;
+        this.#lazyResetStartedForLocale = undefined;
       }
 
       protected override willUpdate(changed: PropertyValues): void {
@@ -145,7 +148,9 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         if (this.#resolvedLocaleForLazy !== locale) {
           const hadLocale = this.#resolvedLocaleForLazy !== undefined;
           this.#resolvedLocaleForLazy = locale;
-          if (hadLocale && this.hasUpdated) {
+          const localeDriftedBeforeFirstPaint =
+            !hadLocale && this.#lazyResetStartedForLocale !== undefined && locale !== this.#lazyResetStartedForLocale;
+          if ((hadLocale && this.hasUpdated) || localeDriftedBeforeFirstPaint) {
             this.#resetLazyAndLoad();
           }
         }
@@ -158,12 +163,13 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       }
 
       #resetLazyAndLoad(): void {
+        const localeSnapshot = resolveProviderLocale(this);
+        this.#lazyResetStartedForLocale = localeSnapshot;
         this.#lazySeq += 1;
         const seq = this.#lazySeq;
         this.#lazyLayer = {};
-        const locale = resolveProviderLocale(this);
         void (async () => {
-          const merged = await mergeLocaleOverlays(locale, loadBuiltin, localeLookupChain);
+          const merged = await mergeLocaleOverlays(localeSnapshot, loadBuiltin, localeLookupChain);
           if (seq !== this.#lazySeq) return;
           this.#lazyLayer = merged;
           this.requestUpdate();
