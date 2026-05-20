@@ -44,7 +44,12 @@ export class TimeElement extends MediaElement {
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      type: this.type,
+      negativeSign: this.negativeSign,
+      label: this.label,
+      formatOptions: { locale: this.#i18n.locale },
+    });
   }
 
   protected override update(changed: PropertyValues): void {
