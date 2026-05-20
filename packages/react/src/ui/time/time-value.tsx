@@ -12,7 +12,16 @@ import { renderElement } from '../../utils/use-render';
 /** Props for the Time.Value component. */
 export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State>, 'children'>, TimeCore.Props {}
 
-/** Displays a formatted time value (current, duration, or remaining). */
+/**
+ * Displays a formatted time value (current, duration, or remaining).
+ *
+ * @example
+ * ```tsx
+ * <Time.Value />
+ * <Time.Value type="duration" />
+ * <Time.Value type="remaining" negativeSign="−" />
+ * ```
+ */
 export const Value = forwardRef(function Value(
   componentProps: ValueProps,
   forwardedRef: ForwardedRef<HTMLTimeElement>

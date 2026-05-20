@@ -57,7 +57,9 @@ function VolumePopover(): ReactNode {
 
 /**
  * Minimal live audio player skin. Mirrors `<MinimalAudioSkin>` but omits the
- * time slider and the current / duration time displays.
+ * time slider and the current / duration / remaining time displays. A flexible
+ * spacer stretches between the play and volume controls so they sit at opposite
+ * edges of the control bar.
  *
  * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
  * and `<LiveButton>` instead of using this preset.

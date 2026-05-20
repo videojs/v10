@@ -26,6 +26,21 @@ export interface UseButtonReturnValue {
 /**
  * Headless button behavior — keyboard activation, disabled handling, and a getter for props.
  *
+ * @example
+ * ```tsx
+ * const { getButtonProps, buttonRef } = useButton({
+ *   displayName: 'PlayButton',
+ *   onActivate: () => togglePlayback(),
+ *   isDisabled: () => disabled,
+ * });
+ *
+ * return useRender('button', componentProps, {
+ *   state,
+ *   ref: [forwardedRef, buttonRef],
+ *   props: [elementProps, getButtonProps],
+ * });
+ * ```
+ *
  * @param params - Button configuration with activation handler and disabled check.
  */
 export function useButton(params: UseButtonParameters): UseButtonReturnValue {

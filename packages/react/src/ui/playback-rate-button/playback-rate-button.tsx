@@ -11,7 +11,22 @@ export interface PlaybackRateButtonProps
   extends UIComponentProps<'button', PlaybackRateButtonCore.State>,
     PlaybackRateButtonCore.Props {}
 
-/** A button that cycles through the configured playback rates. */
+/**
+ * A button that cycles through the configured playback rates.
+ *
+ * @example
+ * ```tsx
+ * <PlaybackRateButton />
+ *
+ * <PlaybackRateButton
+ *   render={(props, state) => (
+ *     <button {...props}>
+ *       {state.rate}&times;
+ *     </button>
+ *   )}
+ * />
+ * ```
+ */
 export const PlaybackRateButton = createMediaButton<PlaybackRateButtonCore, PlaybackRateButtonProps>({
   displayName: 'PlaybackRateButton',
   core: PlaybackRateButtonCore,

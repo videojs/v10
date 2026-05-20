@@ -15,7 +15,14 @@ export interface PartContextValue<State extends object> {
 /**
  * Abstract base for compound-part elements that mirror a parent's state into `data-*` attributes.
  *
- * Subclasses declare a `consumer` whose `value` carries `{ state, stateAttrMap }`.
+ * Subclasses only need to declare the `consumer` property:
+ *
+ * ```ts
+ * export class SliderTrackElement extends ContextPartElement<SliderState> {
+ *   static readonly tagName = 'media-slider-track';
+ *   protected readonly consumer = new ContextConsumer(this, { context: sliderContext, subscribe: true });
+ * }
+ * ```
  */
 export abstract class ContextPartElement<State extends object> extends MediaElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };

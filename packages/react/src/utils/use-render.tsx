@@ -69,6 +69,14 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
  * @param element - Default intrinsic tag to render when no `render` override is provided.
  * @param componentProps - Standard UI props (`className`, `style`, `render`).
  * @param params - Render parameters including state, refs, prop objects, and state attribute map.
+ * @example
+ * ```tsx
+ * return renderElement('button', componentProps, {
+ *   state,
+ *   ref: [forwardedRef, buttonRef],
+ *   props: [{ type: 'button' }, elementProps, getButtonProps],
+ * });
+ * ```
  */
 export function renderElement<
   State extends object,

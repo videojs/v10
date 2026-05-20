@@ -15,6 +15,23 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  * Without a selector, `value` returns the store directly and does not subscribe to state changes.
  * With a selector, `value` returns the selected slice and the host re-renders when it changes
  * (compared with `shallowEqual`).
+ *
+ * @example
+ * ```ts
+ * // Store access (no subscription)
+ * class Controls extends MediaElement {
+ *   #player = new PlayerController(this, playerContext);
+ *
+ *   handleClick() {
+ *     this.#player.value.setVolume(0.5);
+ *   }
+ * }
+ *
+ * // Selector-based subscription
+ * class PlayButton extends MediaElement {
+ *   #playback = new PlayerController(this, playerContext, selectPlayback);
+ * }
+ * ```
  */
 export class PlayerController<Store extends PlayerStore, Result = Store> implements ReactiveController {
   readonly #host: PlayerControllerHost;

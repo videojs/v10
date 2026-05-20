@@ -15,7 +15,18 @@ export interface GroupProps extends UIComponentProps<'span', GroupState> {
   children?: ReactNode | undefined;
 }
 
-/** Container for composed time displays. Renders a `<span>` element. */
+/**
+ * Container for composed time displays. Renders a `<span>` element.
+ *
+ * @example
+ * ```tsx
+ * <Time.Group>
+ *   <Time.Value type="current" />
+ *   <Time.Separator />
+ *   <Time.Value type="duration" />
+ * </Time.Group>
+ * ```
+ */
 export const Group = forwardRef(function Group(
   componentProps: GroupProps,
   forwardedRef: ForwardedRef<HTMLSpanElement>

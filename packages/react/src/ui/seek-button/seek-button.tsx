@@ -9,7 +9,23 @@ import { createMediaButton } from '../create-media-button';
 /** Props for the SeekButton component. */
 export interface SeekButtonProps extends UIComponentProps<'button', SeekButtonCore.State>, SeekButtonCore.Props {}
 
-/** A button that seeks forward or backward by a configurable number of seconds. */
+/**
+ * A button that seeks forward or backward by a configurable number of seconds.
+ *
+ * @example
+ * ```tsx
+ * <SeekButton seconds={-10} />
+ *
+ * <SeekButton
+ *   seconds={30}
+ *   render={(props, state) => (
+ *     <button {...props}>
+ *       {state.direction === 'backward' ? <RewindIcon /> : <FastForwardIcon />}
+ *     </button>
+ *   )}
+ * />
+ * ```
+ */
 export const SeekButton = createMediaButton<SeekButtonCore, SeekButtonProps>({
   displayName: 'SeekButton',
   core: SeekButtonCore,

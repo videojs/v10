@@ -95,6 +95,14 @@ function mergeOne<T extends ElementType>(
  *
  * @public
  * @param propSets - Props objects to merge from left to right.
+ * @example
+ * ```ts
+ * const merged = mergeProps(
+ *   { onClick: ourHandler, className: 'base' },
+ *   { onClick: theirHandler, className: 'custom' }
+ * );
+ * // { onClick: chainedHandler, className: 'custom base' }
+ * ```
  */
 export function mergeProps<T extends ElementType>(...propSets: (Props<T> | undefined)[]): Props<T> {
   let merged: Record<string, unknown> = {};

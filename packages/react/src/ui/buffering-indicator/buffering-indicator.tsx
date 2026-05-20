@@ -19,6 +19,19 @@ export interface BufferingIndicatorProps
  * Displays a buffering indicator when media is waiting for data.
  *
  * Visibility is delayed (default 500ms) to avoid flashing on quick buffers.
+ *
+ * @example
+ * ```tsx
+ * <BufferingIndicator />
+ *
+ * <BufferingIndicator delay={1000} />
+ *
+ * <BufferingIndicator
+ *   render={(props, state) => (
+ *     <div {...props}>{state.visible && <Spinner />}</div>
+ *   )}
+ * />
+ * ```
  */
 export const BufferingIndicator = forwardRef(function BufferingIndicator(
   componentProps: BufferingIndicatorProps,

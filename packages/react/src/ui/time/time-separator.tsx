@@ -15,7 +15,15 @@ export interface SeparatorProps extends UIComponentProps<'span', SeparatorState>
   children?: ReactNode | undefined;
 }
 
-/** Divider between time values. Hidden from screen readers. */
+/**
+ * Divider between time values. Hidden from screen readers.
+ *
+ * @example
+ * ```tsx
+ * <Time.Separator />
+ * <Time.Separator> of </Time.Separator>
+ * ```
+ */
 export const Separator = forwardRef(function Separator(
   componentProps: SeparatorProps,
   forwardedRef: ForwardedRef<HTMLSpanElement>

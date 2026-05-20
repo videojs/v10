@@ -39,6 +39,15 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  * Parse a key pattern string into one or more bindings.
  *
  * @param pattern - Pattern string (e.g. `'>'`, `'0-9'`, `'Shift+Tab'`).
+ *
+ * @example
+ * ```ts
+ * parseHotkeyPattern('>');
+ * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
+ *
+ * parseHotkeyPattern('0-9');
+ * // 10 bindings, one per digit
+ * ```
  */
 export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   // Range expansion: "0-9" → individual digit bindings.
@@ -127,10 +136,22 @@ export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
 }
 
 /**
- * Register a hotkey binding on a target element. Returns a cleanup function that removes the binding.
+ * Register a hotkey binding on a target element.
+ *
+ * @example
+ * ```ts
+ * const cleanup = createHotkey(container, {
+ *   keys: 'k',
+ *   onActivate: () => store.paused ? store.play() : store.pause(),
+ * });
+ *
+ * // Later: remove the binding
+ * cleanup();
+ * ```
  *
  * @param target - Element to attach keyboard listeners to.
  * @param options - Hotkey configuration.
+ * @returns A cleanup function that removes the binding.
  */
 export function createHotkey(target: HTMLElement, options: HotkeyOptions): () => void {
   const coordinator = getHotkeyCoordinator(target);

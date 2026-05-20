@@ -88,7 +88,9 @@ function VolumePopover(): ReactNode {
 
 /**
  * Minimal live video player skin. Mirrors `<MinimalVideoSkin>` but omits the
- * time slider and the duration / current-time displays.
+ * time slider and the duration / current-time displays. A flexible spacer
+ * stretches between the start and end button groups so they sit at opposite
+ * edges of the control bar.
  *
  * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
  * and `<LiveButton>` instead of using this preset.
