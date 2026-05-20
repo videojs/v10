@@ -18,7 +18,8 @@ export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElem
 ) => Class & PlayerConsumerConstructor<Store>;
 
 /**
- * Build a mixin that consumes player context and registers itself as the container with the provider.
+ * Create a mixin that consumes player context and registers itself as the
+ * container element with the provider via `containerContext`.
  *
  * @param config - Container configuration with player and container contexts.
  */

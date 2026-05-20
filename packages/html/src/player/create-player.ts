@@ -39,11 +39,7 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
 }
 
 /**
- * Build a typed player factory — store, mixins, and controller — wired to a feature set.
- *
- * Use the returned `ProviderMixin` on the player shell element to own the store and broadcast
- * context to descendants. Use `ContainerMixin` on the container element to register itself. Use
- * `PlayerController` inside descendant elements to read state.
+ * Creates a player factory with typed store, mixins, and controller.
  *
  * @example
  * ```ts
@@ -66,25 +62,22 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *
  * @label Video
  * @param config - Player configuration with features.
- * @see https://videojs.org/docs/framework/html/reference/html-create-player
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
- * Build a typed audio player factory wired to `audioFeatures`.
+ * Creates a player factory for audio media.
  *
  * @label Audio
  * @param config - Player configuration with features.
- * @see https://videojs.org/docs/framework/html/reference/html-create-player
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
- * Build a typed player factory for a custom feature set.
+ * Creates a player factory with custom features.
  *
  * @label Generic
  * @param config - Player configuration with features.
- * @see https://videojs.org/docs/framework/html/reference/html-create-player
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

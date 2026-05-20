@@ -59,16 +59,16 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
 }
 
 /**
- * Render a UI primitive element with merged props, composed refs, and a `render` override.
+ * Render a UI component element.
  *
- * Resolves state-dependent `className` / `style`, merges state-derived data
- * attributes with caller props, composes refs, and dispatches between the
- * default tag, a `render` element, and a `render` function.
+ * Handles:
+ * - Default tag rendering
+ * - Render prop (element or function)
+ * - Props merging (event handlers chained, className concatenated, style merged)
+ * - Ref composition
+ * - className/style as functions of state
  *
  * @public
- * @param element - Default intrinsic tag to render when no `render` override is provided.
- * @param componentProps - Standard UI props (`className`, `style`, `render`).
- * @param params - Render parameters including state, refs, prop objects, and state attribute map.
  * @example
  * ```tsx
  * return renderElement('button', componentProps, {

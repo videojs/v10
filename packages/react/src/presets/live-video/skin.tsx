@@ -87,15 +87,10 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Default live video player skin. Mirrors `<VideoSkin>` but omits the time
- * slider and the duration / current-time displays. A flexible spacer stretches
- * between the start and end button groups so they sit at opposite edges of
- * the control bar.
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<LiveButton>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
+ * Default video skin configured for live playback. Mirrors {@link VideoSkin}
+ * but omits the time slider and the duration / current-time displays. A
+ * flexible spacer stretches between the start and end button groups so they
+ * sit at opposite edges of the control bar.
  */
 export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;

@@ -56,7 +56,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
     this.#disconnect = null;
   }
 
-  /** Current label derived from media state. */
+  /** Returns the trigger's current label derived from media state. */
   getLabel(): string | undefined {
     return this.#core.state.current.label || undefined;
   }

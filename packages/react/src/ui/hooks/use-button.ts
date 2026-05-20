@@ -24,7 +24,7 @@ export interface UseButtonReturnValue {
 }
 
 /**
- * Headless button behavior — keyboard activation, disabled handling, and a getter for props.
+ * Hook for button behavior with keyboard and pointer interaction.
  *
  * @example
  * ```tsx

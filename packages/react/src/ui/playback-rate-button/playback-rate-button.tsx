@@ -12,7 +12,7 @@ export interface PlaybackRateButtonProps
     PlaybackRateButtonCore.Props {}
 
 /**
- * A button that cycles through the configured playback rates.
+ * A button that cycles through playback rates.
  *
  * @example
  * ```tsx

@@ -68,7 +68,7 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
 }
 
 /**
- * Access the player store when available, returning `undefined` outside a Player Provider.
+ * Access player state when available, but return `undefined` outside Provider.
  *
  * This is useful for components that can operate without player context
  * (e.g. they accept fully explicit props as a fallback).
@@ -76,12 +76,7 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
  * @label Without Selector
  */
 export function useOptionalPlayer(): UnknownStore | undefined;
-/**
- * Select a value from the player store when available, returning `undefined` outside a Player Provider.
- *
- * @label With Selector
- * @param selector - Derives a value from the player store state.
- */
+/** @label With Selector */
 export function useOptionalPlayer<R>(selector: (state: UnknownState) => R): R | undefined;
 export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   const ctx = useContext(PlayerContext);

@@ -23,9 +23,8 @@ function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefin
 }
 
 /**
- * Compose multiple refs into a single callback ref that fans the node out to each.
+ * Compose multiple refs into a single callback ref.
  *
- * @param refs - Refs (callback or object) to forward the node to.
  * @example
  * ```tsx
  * const composedRef = composeRefs(ref1, ref2, ref3);
@@ -56,9 +55,10 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
 }
 
 /**
- * Hook that composes multiple refs into a single memoized callback ref.
+ * Hook that composes multiple refs into a single callback ref.
  *
- * @param refs - Refs (callback or object) to forward the node to.
+ * Memoized for stable reference.
+ *
  * @example
  * ```tsx
  * const composedRef = useComposedRefs(forwardedRef, localRef);

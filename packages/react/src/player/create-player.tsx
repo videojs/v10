@@ -54,38 +54,26 @@ export type UsePlayerHook<Store extends PlayerStore> = {
 };
 
 /**
- * Create a video player instance with a typed store, `Provider`, `Container`, and hooks.
- *
- * Pair with a media component (such as `<Video>` or `<HlsVideo>`) inside the
- * returned `Container` to attach the underlying media element to the player.
+ * Create a player instance with typed store, Provider component, Container, and hooks.
  *
  * @label Video
  * @param config - Player configuration with features and optional display name.
- * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
- * Create an audio player instance with a typed store, `Provider`, `Container`, and hooks.
- *
- * Pair with an audio media component (such as `<Audio>` or `<MuxAudio>`) inside
- * the returned `Container` to attach the underlying media element to the player.
+ * Create a player for audio media.
  *
  * @label Audio
  * @param config - Player configuration with features and optional display name.
- * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
- * Create a player instance from a custom feature set, typed to that exact composition.
- *
- * Use this overload when assembling features that don't match the prebuilt
- * `VideoFeatures` or `AudioFeatures` shapes.
+ * Create a player with custom features.
  *
  * @label Generic
  * @param config - Player configuration with features and optional display name.
- * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

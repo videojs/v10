@@ -6,7 +6,7 @@ import type { ContainerContextConsumer } from '../../player/context';
 import { containerContext } from '../../player/context';
 import type { PlayerControllerHost } from '../../player/player-controller';
 
-/** Reactive controller that resolves an `aria-keyshortcuts` string for a registered hotkey action. */
+/** Provides `aria-keyshortcuts` for a given hotkey action name. */
 export class AriaKeyShortcutsController implements ReactiveController {
   #action: string;
   #container: ContainerContextConsumer;

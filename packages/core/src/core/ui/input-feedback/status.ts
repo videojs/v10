@@ -363,14 +363,7 @@ function volumePredictionToStatusDetails(
   };
 }
 
-/**
- * Labels/value/level for volume actions — single source shared with `VolumeIndicatorCore`.
- *
- * @param event - The input action event.
- * @param snapshot - Current media state snapshot.
- * @param labels - Label strings (defaults to English).
- * @param cachedPrediction - Optional precomputed prediction to avoid re-evaluating.
- */
+/** Labels/value/level for volume actions — single source shared with `VolumeIndicatorCore`. */
 export function deriveVolumeStatus(
   event: InputActionEvent,
   snapshot: MediaSnapshot,

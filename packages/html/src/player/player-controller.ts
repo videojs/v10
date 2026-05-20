@@ -10,11 +10,10 @@ import type { PlayerContext } from './context';
 export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
- * Reactive controller that resolves the player store from context and optionally subscribes via a selector.
+ * Reactive controller for accessing player store state.
  *
- * Without a selector, `value` returns the store directly and does not subscribe to state changes.
- * With a selector, `value` returns the selected slice and the host re-renders when it changes
- * (compared with `shallowEqual`).
+ * Without selector: Returns the store, does NOT subscribe to changes.
+ * With selector: Returns selected state, subscribes with shallowEqual comparison.
  *
  * @example
  * ```ts

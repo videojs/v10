@@ -19,7 +19,7 @@ export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
 >;
 
 /**
- * Default player context instance — descendants consume it to access the player store.
+ * The default player context instance for consuming the player store in controllers.
  *
  * @public
  */

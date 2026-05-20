@@ -16,10 +16,12 @@ import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
 /**
- * Custom element shell for the `<media-live-button>` tag — seeks to the live edge and reflects DVR/live state.
+ * `<media-live-button>` — selects from `live`, `time`, and `buffer` features
+ * and composes them into the `LiveButtonMediaState` consumed by
+ * `LiveButtonCore`.
  *
- * Composes `live`, `time`, and `buffer` feature slices into the state consumed by `LiveButtonCore`.
- * Doesn't extend `MediaButtonElement` because that base couples a button to a single feature selector.
+ * Doesn't extend `MediaButtonElement` because that base couples a button to
+ * a single feature selector; the LiveButton needs three.
  */
 export class LiveButtonElement extends MediaElement {
   /** Custom element tag name. */
@@ -79,7 +81,7 @@ export class LiveButtonElement extends MediaElement {
     this.#disconnect = null;
   }
 
-  /** Current label derived from media state. */
+  /** Returns the button's current label derived from media state. */
   getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }

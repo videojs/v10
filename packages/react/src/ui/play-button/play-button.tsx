@@ -10,7 +10,7 @@ import { createMediaButton } from '../create-media-button';
 export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCore.State>, PlayButtonCore.Props {}
 
 /**
- * A button that toggles playback between play and pause.
+ * A button that toggles playback.
  *
  * @example
  * ```tsx

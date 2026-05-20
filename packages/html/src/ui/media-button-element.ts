@@ -13,7 +13,7 @@ import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
 
-/** Abstract base for media-control buttons. Wires core button behavior, state-driven data attributes, and hotkey reflection. */
+/** Abstract base for HTML custom elements that render a media-control button. */
 export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
@@ -70,7 +70,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.#disconnect = null;
   }
 
-  /** Current label derived from media state. */
+  /** Returns the button's current label derived from media state. */
   getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }

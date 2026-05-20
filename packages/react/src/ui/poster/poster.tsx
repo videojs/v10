@@ -13,7 +13,7 @@ import { renderElement } from '../../utils/use-render';
 export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
 /**
- * Displays the video poster image before playback starts and hides it once playback begins.
+ * Displays the video poster image. Shows before playback starts, hides after.
  *
  * @example
  * ```tsx

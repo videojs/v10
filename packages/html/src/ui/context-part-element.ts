@@ -4,7 +4,7 @@ import type { PropertyValues } from '@videojs/element';
 
 import { MediaElement } from './media-element';
 
-/** Shape compound context values expose so part elements can render `data-*` attributes. */
+/** Shape that compound context values must satisfy for parts to consume. */
 export interface PartContextValue<State extends object> {
   /** Parent compound state propagated to descendant parts. */
   state: State;
@@ -13,7 +13,8 @@ export interface PartContextValue<State extends object> {
 }
 
 /**
- * Abstract base for compound-part elements that mirror a parent's state into `data-*` attributes.
+ * Abstract base for compound-component part elements that consume a parent
+ * context and apply data attributes from `ctx.state` + `ctx.stateAttrMap`.
  *
  * Subclasses only need to declare the `consumer` property:
  *

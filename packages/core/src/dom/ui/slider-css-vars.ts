@@ -33,12 +33,7 @@ export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, str
 /** Overflow strategy for a slider preview element. */
 export type SliderPreviewOverflow = 'clamp' | 'visible';
 
-/**
- * Compute structural positioning styles for a slider preview element.
- *
- * @param width - Preview element width in pixels.
- * @param overflow - Whether to clamp inside the track or allow overflow.
- */
+/** Compute structural positioning styles for a slider preview element. */
 export function getSliderPreviewStyle(width: number, overflow: SliderPreviewOverflow) {
   const halfWidth = width / 2;
 

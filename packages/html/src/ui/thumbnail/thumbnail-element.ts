@@ -69,7 +69,10 @@ export class ThumbnailElement extends MediaElement {
     shadow.appendChild(this.#img);
   }
 
-  /** Thumbnail images supplied directly, bypassing automatic `<track>` detection. Takes priority over the text-track path. */
+  /**
+   * Set thumbnail images directly, bypassing the automatic `<track>` detection.
+   * When set, this takes priority over the text track path.
+   */
   get thumbnails(): ThumbnailImage[] | undefined {
     return this.#externalThumbnails;
   }

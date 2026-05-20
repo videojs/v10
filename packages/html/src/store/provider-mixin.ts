@@ -29,12 +29,15 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
 ) => Class & PlayerProviderConstructor<Store>;
 
 /**
- * Build a mixin that provides player context to descendants and owns the `store.attach()` lifecycle.
+ * Create a mixin that provides player context to descendant elements and
+ * owns the `store.attach()` lifecycle.
  *
- * Media and container elements register themselves through media/container contexts that carry both
- * the current value and a setter. Once a media element is registered, the provider calls
- * `store.attach({ media, container })`. As a fallback for plain `<video>`/`<audio>` that cannot
- * consume context, the provider queries its subtree after a microtask.
+ * Media and container elements register themselves via media/container
+ * contexts that carry both the current value and a setter. When a media
+ * element is available, the provider calls `store.attach({ media, container })`.
+ *
+ * As a fallback for plain `<video>`/`<audio>` that can't consume context,
+ * the provider queries its subtree after a microtask.
  *
  * @param config - Provider configuration with contexts and store factory.
  */
