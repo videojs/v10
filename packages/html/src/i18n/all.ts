@@ -107,3 +107,8 @@ export const all = {
   pt: pt,
   zh: zh,
 } as const satisfies Record<string, Partial<Translations>>;
+
+export type LocaleTag = keyof typeof all;
+
+/** BCP 47 tags for every pack in {@link all}. */
+export const localeTags = Object.keys(all) as LocaleTag[];

@@ -1,14 +1,12 @@
-import { BUILT_IN_LOCALES, registerI18n } from '@videojs/html/i18n';
-import { all } from '@videojs/html/i18n/all';
+import { registerI18n } from '@videojs/html/i18n';
+import { all, type LocaleTag, localeTags } from '@videojs/html/i18n/all';
 
-/** Locales available in the sandbox language picker (includes v8 aliases). */
-export const SANDBOX_LOCALE_TAGS = ['en', ...BUILT_IN_LOCALES, 'pt', 'zh'] as const;
+export type SandboxLocaleTag = LocaleTag;
 
-export type SandboxLocaleTag = (typeof SANDBOX_LOCALE_TAGS)[number];
+/** Locales available in the sandbox language picker. */
+export const SANDBOX_LOCALE_TAGS = localeTags;
 
 export const DEFAULT_SANDBOX_LOCALE: SandboxLocaleTag = 'en';
-
-type LoadedLocalePackTag = keyof typeof all;
 
 let activeLocale: SandboxLocaleTag | null = null;
 
@@ -23,7 +21,7 @@ export function ensureSandboxLocale(tag: SandboxLocaleTag): void {
     return;
   }
 
-  const translations = all[tag as LoadedLocalePackTag];
+  const translations = all[tag];
   if (!translations) {
     throw new Error(`Unknown sandbox locale: ${tag}`);
   }
