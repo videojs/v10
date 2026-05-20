@@ -2,6 +2,9 @@
 // (e.g. deploy preview URLs), this is stable for canonical URLs and other
 // references that must always point to production.
 export const PRODUCTION_URL = new URL('https://videojs.org');
+// Pre-release docs host (branch deploy of `main`). Keep references centralized
+// here so the hostname can move without touching components.
+export const PRERELEASE_URL = new URL('https://main.videojs.org');
 export const SITE_TITLE = 'Video.js';
 export const SEO_SUFFIX = 'Open Source Video Player';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
@@ -10,8 +13,13 @@ export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
 export const MUX_URL = 'https://www.mux.com?utm_source=videojs&utm_campaign=vjs10';
 export const MUX_SUPPORT_URL = 'https://www.mux.com/sales-contact?form=sales&utm_source=videojs&utm_campaign=vjs10';
 export const THEME_KEY = 'vjs-site-theme';
-export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
+export const LEGACY_BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
+export const PRERELEASE_BANNER_DISMISS_KEY = 'vjs-prerelease-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
+
+export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
+  return siteUrl?.origin === PRERELEASE_URL.origin;
+}
 
 /**
  * Video source for demos and examples throughout the site,

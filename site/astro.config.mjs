@@ -33,7 +33,7 @@ import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 // Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
 // the correct site URL:
 //   - production (site/v10 branch)  → https://videojs.org
-//   - branch-deploy (main branch)   → https://next.videojs.org
+//   - branch-deploy (main branch)   → https://main.videojs.org
 //   - deploy-preview (PR branches)  → DEPLOY_PRIME_URL (Netlify subdomain)
 //
 // For URLs that must always point to production regardless of deploy context
@@ -42,7 +42,7 @@ const SITE_URL =
   process.env.CONTEXT === 'production'
     ? 'https://videojs.org'
     : process.env.BRANCH === 'main'
-      ? 'https://next.videojs.org'
+      ? 'https://main.videojs.org'
       : process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
 
 // https://astro.build/config
