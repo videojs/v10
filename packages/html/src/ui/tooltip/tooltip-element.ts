@@ -30,6 +30,7 @@ import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 
+import { I18nController } from '../../i18n/instance';
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
@@ -71,6 +72,7 @@ export class TooltipElement extends MediaElement {
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
+  readonly #i18n = new I18nController(this);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
@@ -165,6 +167,10 @@ export class TooltipElement extends MediaElement {
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
+
+    if (this.#currentTrigger && isLabelTrigger(this.#currentTrigger)) {
+      this.#syncContent(this.#currentTrigger);
+    }
 
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
