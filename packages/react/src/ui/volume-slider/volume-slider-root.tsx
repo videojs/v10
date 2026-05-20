@@ -49,7 +49,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const locale = useLocale();
 
     const [core] = useState(() => new VolumeSliderCore());
-    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment, formatLocale: locale });
+    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
+    core.setFormatLocale(locale);
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
