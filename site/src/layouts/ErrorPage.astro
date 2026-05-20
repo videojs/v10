@@ -1,7 +1,7 @@
 ---
 import DialNav from '@/components/DialNav';
 import Footer from '@/components/Footer.astro';
-import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import { MUX_URL } from '@/consts';
 import Base from '@/layouts/Base.astro';
@@ -54,5 +54,5 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
     </main>
   </div>
   <Footer />
-  <FooterEasterEgg />
+  <FooterEasterEgg client:idle />
 </Base>

@@ -2,7 +2,7 @@
 
 import type { ImageMetadata } from 'astro';
 import Footer from '@/components/Footer.astro';
-import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import Base from './Base.astro';
 
@@ -32,5 +32,5 @@ const { title, description, canonical, image, twitterImage } = Astro.props;
     </main>
     <Footer class="mt-auto" />
   </div>
-  <FooterEasterEgg />
+  <FooterEasterEgg client:idle />
 </Base>

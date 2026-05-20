@@ -6,7 +6,7 @@ import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.ast
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
-import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
@@ -77,7 +77,7 @@ const docsSidebarId = 'docs-sidebar';
         <slot />
       </div>
       <Footer class="mt-auto" />
-      <FooterEasterEgg variant="short" class="md:col-start-2" />
+      <FooterEasterEgg client:idle variant="short" className="md:col-start-2" />
     </div>
   </div>
 </Base>
