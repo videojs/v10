@@ -150,6 +150,11 @@ function getTemplateHTML() {
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
               </media-cast-button>
               <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.airplay.button)}">
+                ${renderIcon('airplay-enter', { class: cn(icon, iconState.airplay.enter) })}
+                ${renderIcon('airplay-exit', { class: cn(icon, iconState.airplay.exit) })}
+              </media-airplay-button>
+              <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
                 ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
                 ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}

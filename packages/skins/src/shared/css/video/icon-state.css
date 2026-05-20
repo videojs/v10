@@ -20,6 +20,8 @@
 .media-button--pip .media-icon--pip-exit,
 .media-button--cast .media-icon--cast-enter,
 .media-button--cast .media-icon--cast-exit,
+.media-button--airplay .media-icon--airplay-enter,
+.media-button--airplay .media-icon--airplay-exit,
 .media-button--captions .media-icon--captions-off,
 .media-button--captions .media-icon--captions-on {
   display: none;
@@ -52,10 +54,25 @@
 .media-button--cast:not([data-cast-state="connected"]) .media-icon--cast-enter,
 /* Cast: connected → exit */
 .media-button--cast[data-cast-state="connected"] .media-icon--cast-exit,
+/* Airplay: not connected → enter */
+.media-button--airplay:not([data-airplay-state="connected"]) .media-icon--airplay-enter,
+/* Airplay: connected → exit */
+.media-button--airplay[data-airplay-state="connected"] .media-icon--airplay-exit,
 /* Captions: not active → captions off */
 .media-button--captions:not([data-active]) .media-icon--captions-off,
 /* Captions: active → captions on */
 .media-button--captions[data-active] .media-icon--captions-on {
   display: block;
   opacity: 1;
+}
+
+/* --- Pause keyframe animations on inactive icons --- */
+
+/* The airplay-exit SVG defines its keyframes against CSS variables (mirroring
+   the spinner pattern). When the AirPlay session isn't active the SVG is
+   still in the DOM — just `display: none` — so its animations would keep
+   running. Set the variables to `none` to short-circuit the keyframes. */
+.media-button--airplay:not([data-airplay-state="connected"]) {
+  --media-icon--airplay__fill-animation: none;
+  --media-icon--airplay__triangle-animation: none;
 }

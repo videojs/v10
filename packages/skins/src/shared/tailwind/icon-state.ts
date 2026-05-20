@@ -39,4 +39,18 @@ export const iconState = {
       'hidden opacity-0 group-not-data-[cast-state=connected]:block group-not-data-[cast-state=connected]:opacity-100',
     exit: 'hidden opacity-0 group-data-[cast-state=connected]:block group-data-[cast-state=connected]:opacity-100',
   },
+  airplay: {
+    // `group` enables the icon-state variants below. The two CSS-variable
+    // overrides mirror the spinner pattern: the airplay-exit SVG stays in
+    // the DOM while inactive, so we short-circuit its keyframes by setting
+    // the animation variables to `none` whenever airplay isn't connected.
+    button: [
+      'group',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__fill-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__triangle-animation:none]',
+    ].join(' '),
+    enter:
+      'hidden opacity-0 group-not-data-[airplay-state=connected]:block group-not-data-[airplay-state=connected]:opacity-100',
+    exit: 'hidden opacity-0 group-data-[airplay-state=connected]:block group-data-[airplay-state=connected]:opacity-100',
+  },
 };

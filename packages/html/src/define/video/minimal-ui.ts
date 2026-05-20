@@ -1,7 +1,9 @@
 // Registers the video player, container, and all video UI custom elements
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
+
 import { MediaContainerElement } from '../../media/container-element';
+import { AirplayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
@@ -48,6 +50,7 @@ defineTime();
 defineMenu();
 
 // Standalone elements.
+safeDefine(AirplayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);

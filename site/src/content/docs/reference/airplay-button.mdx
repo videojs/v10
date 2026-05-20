@@ -1,0 +1,127 @@
+---
+title: AirplayButton
+frameworkTitle:
+  html: media-airplay-button
+description: Accessible AirPlay toggle button that opens the WebKit playback target picker and reflects session state
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/airplay-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/airplay-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/airplay-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/airplay-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/airplay-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/airplay-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<AirplayButton />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-airplay-button></media-airplay-button>
+```
+</FrameworkCase>
+
+## Behavior
+
+Opens the WebKit AirPlay playback target picker and reflects session state. AirPlay is a WebKit-only feature, so the button reports `availability: "unsupported"` outside Safari (macOS and iOS). On supported platforms availability flips to `"available"` once Safari discovers at least one AirPlay receiver on the local network, and `"unavailable"` otherwise.
+
+The toggle is a no-op unless `availability` is `"available"` — clicking the button while `"unsupported"` or `"unavailable"` will not open the picker. Style the button accordingly (see [Styling](#styling) below) so its appearance matches its actual behavior.
+
+The component consumes the unified <DocsLink slug="reference/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
+
+WebKit does not expose a `"connecting"` intermediate state — `airplayState` flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. When connected, the picker itself acts as the disconnect UI.
+
+## Styling
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-airplay-state` | `"disconnected"` \| `"connecting"` \| `"connected"` | Current AirPlay session state |
+| `data-availability` | `"available"` \| `"unavailable"` \| `"unsupported"` | Whether AirPlay is reachable on the current platform |
+
+Use `data-airplay-state` to swap icons or labels based on the session state:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+/* AirPlay active */
+media-airplay-button[data-airplay-state="connected"] {
+  color: var(--accent);
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` element. Add a `className` and use it as the selector:
+
+```css
+/* AirPlay active */
+.airplay-button[data-airplay-state="connected"] {
+  color: var(--accent);
+}
+```
+</FrameworkCase>
+
+Consider hiding the button on platforms where AirPlay isn't supported:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-airplay-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.airplay-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when disconnected, "Stop AirPlay" when connected. (The component also supports a `"Connecting"` label, but WebKit AirPlay never emits a `connecting` state, so that label is unreachable in practice.) Override with the `label` prop — either a string or a function that receives the current state. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="AirplayButton" />
