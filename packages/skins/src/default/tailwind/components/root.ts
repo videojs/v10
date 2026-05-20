@@ -6,6 +6,7 @@ export const root = cn(
   // Layout & containment
   'block relative isolate h-full w-full @container/media-root',
   // Appearance
+  'overflow-clip',
   'rounded-(--media-border-radius,2rem)',
   'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] leading-normal subpixel-antialiased',
   '*:text-xs @3xl/media-root:*:text-sm',
