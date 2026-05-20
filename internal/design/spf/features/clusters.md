@@ -1,0 +1,257 @@
+---
+status: draft
+date: 2026-05-20
+---
+
+# Feature Clusters & Cross-Cluster Patterns
+
+Heuristics for grouping SPF features by the areas of state and behavior they touch. Used by the `extend-feature` skill (and, later, the intake/scoping skill) to identify related features, point the skill at the right reference material, and surface cross-cutting impacts when a new feature lands.
+
+## How the skill uses this doc
+
+When a feature is being documented or extended, two questions recur:
+
+1. **What other features does this likely interact with?** Cluster membership is the first-order answer.
+2. **What cross-cutting concerns does this likely involve?** Cross-cluster patterns are the second-order answer.
+
+The skill consults this doc at multiple steps:
+
+- **Source gathering** — trigger signals identify likely clusters from the user's invocation, expanding the related-context net.
+- **Code grounding** — clusters point Explore at the right files.
+- **Cross-cutting concern checks** — clusters and patterns drive which checks fire (e.g., buffer-touching → MSE codec-change check; new state-slot writer → multi-writer characterization).
+- **Relationships** — clusters' existing + anticipated docs become the seed set for `Related features`.
+- **Cross-doc cascade** — clusters identify which other docs are candidates for narrow update once the new feature lands.
+
+## How this doc grows
+
+Both clusters and patterns are extract-from-real-work — no speculative additions. Triggers for updating:
+
+- A new feature surfaces a signal not covered → extend an existing cluster or file a new one.
+- A pattern recurs across two or more clusters → add to Cross-cluster patterns.
+- Cluster membership of a feature changes (anticipated → documented) → update the cluster's docs list.
+
+Bracketed entries (e.g. `[track-registry-primitive]`) are forward refs to features that don't yet have docs.
+
+## Notation
+
+Existing features cite their file: `subtitles`, `video-abr`, `multi-language-audio`. Anticipated / candidate features are bracketed: `[mse-mms-pipeline]`, `[audio-abr]`. Notion-cluster cross-references (e.g., "Notion cluster C") point at the SPF Epics Working Doc taxonomy.
+
+---
+
+## Clusters
+
+### Track & variant registry
+
+The selection model — which audio / video / text tracks are available, which is active, who can change the selection.
+
+**Signals.** Track selection, switching, filtering, sorting; per-type tracks; state slots named `selected{Audio,Video,Text}TrackId`; behaviors named `select*Track`, `switch*Quality`, `sync*Tracks`; multi-writer track-id slots; manifest renditions with `LANGUAGE` / `NAME` / `DEFAULT` / `AUTOSELECT` / `FORCED` / `CHANNELS` attributes; `userVideoTrackSelection` and similar constraint slots.
+
+**Docs.** `subtitles`, `video-abr`, `multi-language-audio`, `[track-registry-primitive]`, `[audio-abr]`, `[5.1-surround-selection]`, `[hevc-variant-selection]`, `[single-video-track-default-selection]`.
+
+**Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`); the `selected*TrackId` slot family.
+
+**Maps to Notion cluster C** ("Track & variant registry").
+
+**Common cross-cluster touchpoints.** Multi-writer state slots (text + proposed audio); constraint + filter (video-abr's `userVideoTrackSelection`); per-type specialization (resolve / load / setup are per-type today).
+
+---
+
+### Selection policy
+
+Modes, caps, and overrides layered on top of the registry. Where the engine's selection logic is constrained or biased by something other than bandwidth or default-selection logic.
+
+**Signals.** Quality caps (max-height, max-bitrate, max-FPS, screen-size); modes (audio-only, video-only); user overrides via constraint slots; "respect Mux billing" / "respect device capabilities" framing; viewport adaptation.
+
+**Docs.** `[rendition-selection-caps]`, `[1080p-resolution-cap]`, `[screen-size-resolution-cap]`, `[audio-only-composition]`, `[video-only-composition]`, `[multi-signal-abr]`. `video-abr`'s `userVideoTrackSelection` is a partial precedent.
+
+**Foundational primitives.** Constraint slots that filter the candidate set before selection runs.
+
+**Maps to Notion cluster E** ("Selection policy layer").
+
+**Common cross-cluster touchpoints.** Capability probing (caps gate on device support); track & variant registry (policy filters the registry's candidate set); composition variants (audio-only is a subtract-down composition).
+
+---
+
+### Presentation modeling
+
+Fetching, parsing, and modeling HLS / HAS media — the data structures the rest of the engine consumes.
+
+**Signals.** Manifest fetching, multivariant playlist parsing, media playlist parsing, presentation modeling; `parseMultivariantPlaylist`, `parseMediaPlaylist`; state slot `presentation` (resolved vs unresolved); `presentation-resolved` state-machine transitions; `PartiallyResolvedTextTrack`-style modeling shapes; HLS attribute extraction.
+
+**Docs.** `[hls-multivariant-parsing]`, `[media-playlist-resolution]`, `[hls-vod-presentation-modeling]`.
+
+**Foundational primitives.** `Presentation` data shape; `resolvePresentation` behavior + the per-track `resolve*Track` family that patches resolved tracks back into `presentation`.
+
+**Common cross-cluster touchpoints.** Track & variant registry (parser surfaces tracks the registry exposes); manifest reload loop (live presentations re-resolve over time); capability probing (parsed CODECS used for capability filtering).
+
+---
+
+### MSE / Buffer management
+
+`MediaSource` lifecycle, `SourceBuffer` setup, append, flush, and end-of-stream coordination. The boundary between SPF and the browser's media pipeline.
+
+**Signals.** `setupMediaSource`, `setupVideoBufferActors`, `setupAudioBufferActors`, `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`, `loadAudioSegments`; SourceBuffer setup / append / remove / `changeType()`; per-type buffer setup; `SourceBufferActor` and `SegmentLoaderActor`; ManagedMediaSource (MMS) vs MediaSource (MSE) distinction; codec-bound mimeType ("video/mp4; codecs=..."); A+V SourceBuffer separation per CMAF; forward-buffer / back-buffer management; buffer flush mechanics.
+
+**Docs.** `[mse-mms-pipeline]`, `[per-track-segment-loading]`, `[buffer-flushing]`. `subtitles`'s `loadTextTrackSegments` runs the same preload-aware loading FSM but does not touch MSE buffers. `video-abr`'s same-SourceBuffer-different-bitrate-segments pattern is the precedent for in-track switching.
+
+**Foundational primitives.** Per-type `SourceBufferActor` + `SegmentLoaderActor` pair; `createTrackedFetch` (segment fetch with bandwidth sampling baked in); the preload-aware load FSM (`'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'`).
+
+**Common cross-cluster touchpoints.** Track & variant registry (selection drives which buffer gets fed); gating (preload + DRM both gate buffer setup and append); time normalization (segment-boundary crossing drives load timing); per-type specialization (one buffer per type, paired actors).
+
+**Key check.** For any feature that touches buffer behavior, identify whether the codec changes. Same codec → flush + replan, no setup re-entry. Codec change → `changeType()` or buffer recreation, routes to a codec-change feature (5.1 surround, HEVC).
+
+---
+
+### Time normalization
+
+The mapping between media timeline, playlist position, and `<video>` element time. Where things go wrong when content has non-trivial timing (PTS offsets, edit lists, discontinuities, pseudo-ended states).
+
+**Signals.** `currentTime` tracking; PTS / DTS offsets; seekable range; edit lists; instant clipping; non-zero PTS; pseudo-ended detection; buffer-stall recovery; segment-boundary math; timeline mapping.
+
+**Docs.** `[time-tracking]`, `[edit-list-compensation]`, `[non-zero-pts-support]`, `[pseudo-ended-detection]`, `[buffer-stall-recovery]`, `[instant-clip-support]`.
+
+**Foundational primitives.** A playlist-position-to-media-time mapping primitive (likely emerges from the first feature that genuinely needs it — non-zero PTS or edit lists).
+
+**Maps to Notion cluster B** ("Time / PTS normalization").
+
+**Common cross-cluster touchpoints.** MSE/buffer management (time mapping affects what's appendable where); manifest reload loop (live presentations' time mapping evolves).
+
+---
+
+### Manifest reload loop
+
+The polling cycle for live and DVR content — reloading the media playlist, tracking sliding windows, pacing reloads against target duration.
+
+**Signals.** Live / DVR / event-stream content; `#EXT-X-ENDLIST`; sliding window; target-duration pacing; LL-HLS blocking reload, delta playlists, preload hints; reload miss-counter; partial segments.
+
+**Docs.** `[live-stream-support]`, `[ll-hls-support]`, `[dvr-event-stream-support]`, `[live-stream-termination-detection]`.
+
+**Foundational primitives.** A reload-loop scheduler (the sliding-window + target-duration pacing core); presentation re-resolution flow on each reload.
+
+**Maps to Notion cluster A** ("Manifest reload loop").
+
+**Common cross-cluster touchpoints.** Presentation modeling (re-resolution drives parser usage); time normalization (live timeline mapping); selection resilience (alternate URIs may rotate during reloads).
+
+---
+
+### Capability probing
+
+Asking the browser what it can play before committing to a codec, container, or key system.
+
+**Signals.** `canPlayType`, `MediaSource.isTypeSupported`, `requestMediaKeySystemAccess`; codec filtering; container support gating; key-system probing; HEVC support detection; channel-count probing; HDR support.
+
+**Docs.** `[codec-capability-filtering]`, `[multivariant-codecs-filtering]`, `[key-system-capability-probing]`, `[container-support]`. `[hevc-variant-selection]` and `[5.1-surround-selection]` straddle this and the track-registry cluster.
+
+**Foundational primitives.** A capability-probe utility wrapping the various browser APIs uniformly. None today.
+
+**Maps to Notion cluster D** ("Capability probing primitive").
+
+**Common cross-cluster touchpoints.** Track & variant registry (probing filters the candidate set before selection); selection policy (caps depend on capability data); DRM (key-system probing is shared with selection-time capability checks).
+
+---
+
+### Selection resilience
+
+Fallback and recovery when the selected URI / rendition fails. Where multi-CDN, content steering, and retry/backoff policy live.
+
+**Signals.** Alternate URIs; HLS spec-extension URIs; CDN rotation; retry / backoff; content steering protocol; `?redundant_streams=true`-style query params.
+
+**Docs.** `[multi-cdn-failover]`, `[content-steering]`, `[selection-retry-backoff]`.
+
+**Foundational primitives.** An alternate-URI rotation primitive; a backoff policy primitive. Neither exists yet.
+
+**Maps to Notion cluster G** ("Selection resilience").
+
+**Common cross-cluster touchpoints.** Presentation modeling (alternate URIs are part of parsed presentation); manifest reload loop (failover during reload); track & variant registry (per-rendition fallback).
+
+---
+
+### Encrypted media (DRM)
+
+Key system handling for protected content — EME, license fetch, key-rotation, security levels.
+
+**Signals.** EME, `MediaKeys`, `requestMediaKeySystemAccess`, key system identifiers (Widevine / PlayReady / FairPlay / FairPlay-AirPlay); `#EXT-X-KEY` in playlists; license server URLs; security level constraints; encrypted-event handling on the SourceBuffer.
+
+**Docs.** `[drm-support]` (Notion-tracked under videojs/v10#1411), `[drm-security-levels]`, `[fairplay-airplay-workaround]`. `[key-system-capability-probing]` straddles this and capability probing.
+
+**Foundational primitives.** EME + license-handling base, under issue #1411.
+
+**Maps to Notion cluster F** ("DRM").
+
+**Common cross-cluster touchpoints.** Gating (DRM gates MSE setup, append, playback); capability probing (key-system support is probed before commit); MSE/buffer (encrypted events flow through buffer-append path).
+
+---
+
+## Cross-cluster patterns
+
+Patterns that recur across clusters. Not clusters themselves — they're the shapes features take when they interact with each other.
+
+### Gating / prerequisite chains
+
+A feature delays, blocks, or conditionally proceeds with another feature's work until a prerequisite resolves.
+
+**Signals.** "delay X until Y," "block setup until Z," "wait for K before append," `loadActivated`-style gate slots; FSM states named `'preconditions-unmet'`; `effect()` early-returns on missing context; `await keySystemReady` before MSE setup.
+
+**Where it shows up.** Preload + load triggers gate manifest resolution and segment loading. DRM key-system readiness gates MSE setup + buffer append. Selection slots must resolve before `resolve*Track` fetches. Forward-buffer / current-time crossing gates segment-load dispatch.
+
+**Skill action when this pattern is suspected.** Identify (a) what's gated, (b) the prerequisite signal, (c) where the gate lives (separate behavior, conditional inside a behavior, FSM state). New gating features should follow existing gate-shape conventions (FSM precondition state with `monitor`-driven exit) rather than ad-hoc early returns.
+
+---
+
+### Multi-writer state slots
+
+Two or more behaviors write to the same state slot from different decision domains.
+
+**Signals.** A `selected*TrackId` or similar slot named on more than one behavior's writer list; a "default + user-action" pattern; orthogonal-by-design coordination.
+
+**Where it shows up.** `selectedTextTrackId` (default-on-load via `selectTextTrack` + DOM user-action via `syncTextTracks`). Proposed `selectedAudioTrackId` for multi-language audio (default + programmatic write).
+
+**Skill action when this pattern is suspected.** Characterize the existing writer(s) and the proposed writer along three axes: (1) decision domain (config vs DOM vs intent vs derived), (2) trigger (one-shot transition vs ongoing reactive), (3) cost (cheap write vs side-effect-heavy write — e.g., audio writes trigger flush + re-resolve + replan). If the proposed writer doesn't share decision domain or cost with the existing pattern, the multi-writer convention may not transfer cleanly.
+
+---
+
+### Constraint + filter
+
+A state slot that *narrows the candidate set* a selection behavior operates over, distinct from writing the selection directly.
+
+**Signals.** `userVideoTrackSelection`-style slots; "ABR short-circuits when only one candidate remains"; filter-then-select dispatcher shape.
+
+**Where it shows up.** `userVideoTrackSelection` for video ABR (consumer narrows candidates, ABR picks within the narrowed set).
+
+**Skill action when this pattern is suspected.** Distinguish from multi-writer slots — constraint + filter has *one writer on the selection slot* and *separate filter slots* the writer reads. This is the pattern for "user overrides" / "caps" / "modes" — anywhere a third party wants to bias a selection without taking over writing it.
+
+---
+
+### Per-type specialization
+
+Parallel behaviors for video / audio / text with a shared `setup*` helper or `make*` factory.
+
+**Signals.** Behavior names ending in `Video` / `Audio` / `Text`; helpers named `setup*`, factories named `make*`; parameterization by typed key (`selectedKey: 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId'`); sibling iteration in engine composition.
+
+**Where it shows up.** `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` (shared `setupTrackResolution`). `loadVideoSegments` / `loadAudioSegments` / `loadTextTrackSegments`. `setupVideoBufferActors` / `setupAudioBufferActors`.
+
+**Skill action when this pattern is suspected.** When adding a new per-track-type capability, default to the per-type-split shape with a shared `setup*` helper unless a cross-type constraint forbids it. The split-vs-merge decision belongs in `/refactor-behavior` → `/split-behavior` if the feature surfaces during refactor work; for new features, follow precedent. See `conventions/behaviors.md` "Per-type specialization."
+
+---
+
+### Sampling-baked-into-loading
+
+A side-effecting fetch (or segment-load) wrapper produces signals another feature consumes, without a dedicated sampling behavior.
+
+**Signals.** Fetch wrappers that emit per-chunk samples (`createTrackedFetch` → `bandwidthState`); state slots populated by a behavior whose nominal purpose is something else (segment loading writes `bandwidthState`); "sampling is structurally co-located with loading, not a separate behavior."
+
+**Where it shows up.** Video ABR's bandwidth signal is written by `setupVideoBufferActors`'s `createTrackedFetch`, not by an ABR-specific behavior. Audio segment loading uses plain `fetchStream` today — a one-line change to use `createTrackedFetch` would unlock audio ABR.
+
+**Skill action when this pattern is suspected.** When designing a feature that needs ongoing observation of an existing flow (network throughput, segment timing, append duration), prefer baking the sample emission into the existing flow's wrapper over adding a parallel monitoring behavior. Note in the feature doc which behavior is the sample producer (it's not always obvious).
+
+---
+
+## Where this doc fits
+
+Read alongside:
+
+- `internal/design/spf/features/README.md` *(not yet written)* — registry index
+- `internal/design/spf/conventions/behaviors.md` — when to define a behavior; per-type specialization details
+- `internal/design/spf/conventions/signals.md` — multi-writer slot conventions
+- `internal/design/spf/conventions/config.md` — when a tunable becomes config vs hardcoded
+- Notion: SPF Epics Working Document — broader feature inventory + cluster taxonomy (A–G)
