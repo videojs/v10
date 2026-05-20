@@ -5,6 +5,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
+import { baseConfig } from '../../build/tsdown.ts';
 
 type BuildMode = 'dev' | 'prod';
 
@@ -72,6 +73,7 @@ for (const mode of buildModes) {
   const entryMap = Object.fromEntries(entries.map(({ src, name }) => [isProd ? name : `${name}.dev`, src]));
 
   configs.push({
+    ...baseConfig,
     entry: entryMap,
     platform: 'browser',
     format: 'es',

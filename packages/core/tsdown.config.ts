@@ -1,12 +1,10 @@
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
 
-type BuildMode = 'dev' | 'default';
-
-const buildModes: BuildMode[] = ['dev', 'default'];
-
-const createConfig = (mode: BuildMode): UserConfig => ({
+const createConfig = (mode: PackageBuildMode): UserConfig => ({
+  ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
@@ -17,24 +15,10 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     'dom/media/native-hls/index': './src/dom/media/native-hls/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
   },
-  platform: 'neutral',
-  format: 'es',
-  sourcemap: true,
-  clean: true,
-  hash: false,
-  unbundle: true,
-  outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
     __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
-  dts:
-    mode === 'dev'
-      ? {
-          tsgo: true,
-          tsconfig: 'tsconfig.dts.json',
-        }
-      : false,
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));
