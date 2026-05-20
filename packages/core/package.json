@@ -38,6 +38,11 @@
       "types": "./dist/dev/i18n.d.ts",
       "development": "./dist/dev/i18n.js",
       "default": "./dist/default/i18n.js"
+    },
+    "./i18n/locales/en": {
+      "types": "./dist/dev/i18n/locales/en.d.ts",
+      "development": "./dist/dev/i18n/locales/en.js",
+      "default": "./dist/default/i18n/locales/en.js"
     }
   },
   "main": "dist/default/index.js",
