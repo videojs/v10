@@ -38,6 +38,68 @@ Existing features cite their file: `subtitles`, `video-abr`, `multi-language-aud
 
 ---
 
+## Feature classification axes
+
+Orthogonal to cluster membership, features can be classified along axes that surface during scoping. These distinctions are extracted from the SPF Epics Working Document (Notion) and recur during planning and doc work. They're useful both for new feature docs (knowing what category an item is) and for existing ones (locating where the feature sits on each axis when surfacing what's not implemented).
+
+### Media-src vs Player vs Borderline
+
+The primary cut for unimplemented work.
+
+| Category | Definition | Examples |
+|---|---|---|
+| **Media-src feature** | Required to support a media-src permutation. Without it, the source either doesn't play or doesn't play correctly. "Correctness" means the engine handles the *presence* of the permutation type — playing one audio track of a multi-language source isn't supporting multi-language audio | `live-stream-support`, `[ll-hls-support]`, `[non-zero-pts-support]`, `multi-language-audio`, `[hevc-variant-selection]`, `[drm-support]` |
+| **Player feature** | Additive functionality not tied to making any source work. Player chooses to do it | `[1080p-resolution-cap]` (Mux billing), `[screen-size-resolution-cap]`, `[audio-only-composition]` (mode-override case) |
+| **Borderline** | Accounts for technically valid but suboptimally-formed-or-delivered content (*content compensation*) or for response errors that emerge from playback behavior (*response-error handling*). The source plays; the work makes it play better in specific quirky cases | `[pseudo-ended-detection]`, `[edit-list-compensation]`, `[viewer-rate-limiting-audit]`, `[buffer-stall-recovery]` |
+
+### Naive vs Full implementation depth
+
+Within a single feature; both depths are valid implementations. Used to scope inside a feature doc, not to split features.
+
+| Example | Naive | Full |
+|---|---|---|
+| `[viewer-rate-limiting-audit]` | Generic 4xx retry/backoff (≈ what hls.js does today) | Response-aware: detect VRLT signature, adjust request pacing |
+| `[pseudo-ended-detection]` | Don't detect — source mostly plays, just stalls near end on Safari | Heuristic detection of pseudo-ended state; fire `ended` correctly |
+| `[playback-token-expiry]` | Treat 4xx as fatal (≈ hls.js) | Mux-aware refresh / recovery hooks |
+
+A feature doc may describe phases that span depth: a partial implementation at one depth still counts as work toward the feature.
+
+### "Can play" vs actual support
+
+For some features, the difference between "source plays" and "feature supported" is *not* a matter of implementation depth — it's the difference between unrelated correctness happening to hold and the feature actually being supported.
+
+| Example | "Can play" (not partial credit) | Actual support |
+|---|---|---|
+| `multi-language-audio` | Source plays via the default audio track | Tracks recognized, exposed via API, selectable |
+| `subtitles` (already supported) | Source plays without subtitles displaying | Tracks parsed, exposed, displayable |
+
+The "can play" state does *not* count as partial credit toward the feature.
+
+### Tier 1 (spec-compliant baseline) vs Tier 2 (custom behavior)
+
+Especially applicable within the selection cluster but useful as a general lens. Tier 1 is generally a prerequisite for Tier 2 and easier to verify.
+
+| Item | Tier 1: Spec-compliant | Tier 2: Custom behavior |
+|---|---|---|
+| `multi-language-audio` | Recognize tracks; honor `DEFAULT` / `AUTOSELECT` | Programmatic select + persistence API |
+| `[5.1-surround-selection]` | Select 5.1 if supported; fallback otherwise | Force-stereo override |
+| `[multi-cdn-failover]` | Parse spec-extension alternate URIs | Rotation policy, backoff strategy |
+| `[hevc-variant-selection]` | Select HEVC if supported; fallback | Force-AVC override |
+
+### Composition vs Policy vs middle pattern
+
+A feature's *implementation shape* falls along a spectrum:
+
+| Mechanism | Definition | Where it lives | Examples |
+|---|---|---|---|
+| **Policy** | Pure config / function variation consumed by an existing behavior. No new behaviors | Inside an existing behavior | `[1080p-resolution-cap]` (potentially — a `selectQuality` config) |
+| **Middle pattern** | A new state-producing behavior monitors an external signal and updates state; existing consumer behaviors update to respect that state. Heavier than pure policy but lighter than composition | New behavior + targeted edits to consumers | `[screen-size-resolution-cap]` (`ResizeObserver` monitor → cap state → switching behavior); `[multi-cdn-failover]` (CDN-tracking → selection state → switching/selection); `[pseudo-ended-detection]` (buffer-state monitor → ended signal → ended behavior); `[edit-list-compensation]` (`initPTS` detection → offset state → append behavior) |
+| **Composition** | A different composed engine. Alternative compositions add or subtract behaviors to handle different *modes*. Ideally accomplished by subtraction only — no new behaviors | At the Adapter level, on initial conditions | `[audio-only-composition]`, `[video-only-composition]` |
+
+Composition is bounded to **modes** — currently audio-only and video-only. Most "feels like composition" items actually fit the middle pattern.
+
+---
+
 ## Clusters
 
 ### Engine lifecycle
@@ -140,7 +202,7 @@ The polling cycle for live and DVR content — reloading the media playlist, tra
 
 **Signals.** Live / DVR / event-stream content; `#EXT-X-ENDLIST`; sliding window; target-duration pacing; LL-HLS blocking reload, delta playlists, preload hints; reload miss-counter; partial segments.
 
-**Docs.** `[live-stream-support]`, `[ll-hls-support]`, `[dvr-event-stream-support]`, `[live-stream-termination-detection]`.
+**Docs.** `live-stream-support`, `[ll-hls-support]`, `[dvr-event-stream-support]`, `[live-stream-termination-detection]`.
 
 **Foundational primitives.** A reload-loop scheduler (the sliding-window + target-duration pacing core); presentation re-resolution flow on each reload.
 
