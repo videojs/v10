@@ -577,6 +577,8 @@ Tailwind variants share the body of their non-Tailwind sibling and add a one-lin
 
 **No `// TODO: describe` placeholders.** If you can't describe an export, ask in the PR or open a follow-up — don't ship a TODO comment.
 
+**Preserve existing authored content.** Voice A is the standard for *new* JSDoc on previously-undocumented exports — it isn't a license to delete or shrink existing prose, `@example` blocks, or `@returns` descriptions that an author wrote thoughtfully. Only edit existing JSDoc when it's factually wrong, stale, or genuinely contradicts the rule (e.g., `@param` that only restates the TS signature). When in doubt, keep what's there.
+
 ## Design Documents
 
 | Location              | Purpose                                                    |
