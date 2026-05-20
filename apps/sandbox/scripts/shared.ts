@@ -84,22 +84,6 @@ export function templatesPath(change: Change): string {
   return path.join(TEMPLATES, change.relativePath, change.name);
 }
 
-/** Overwrites src files that differ from or are missing relative to templates. */
-export async function syncTemplatesToSrc(): Promise<string[]> {
-  const synced: string[] = [];
-
-  for (const change of getChanges()) {
-    if (change.state !== 'right' && change.state !== 'distinct') continue;
-
-    const destination = srcPath(change);
-    await fs.ensureDir(path.dirname(destination));
-    await fs.copy(templatesPath(change), destination, { overwrite: true });
-    synced.push(destination);
-  }
-
-  return synced;
-}
-
 export async function mirrorTemplatesToSrc(): Promise<string[]> {
   const created: string[] = [];
 
