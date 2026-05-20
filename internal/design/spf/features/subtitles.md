@@ -101,6 +101,7 @@ References to other features in the registry. Bracketed entries are candidate fe
 ## See also
 
 - [text-track-architecture.md](../text-track-architecture.md) — architectural deep-dive (Actor/Reactor patterns, state machines, friction, open questions)
+- [presentation-modeling.md](../presentation-modeling.md) — architectural deep-dive on the format-neutral data shape and parser interface that surfaces subtitle renditions (the `parsePresentation` contract this feature's recognition phase relies on)
 - [conventions/behaviors.md](../conventions/behaviors.md) — when to define a behavior; behavior shape
 - [conventions/actors.md](../conventions/actors.md) — actor shapes and conventions
 - [packages/spf/docs/hls-engine.md](../../../../packages/spf/docs/hls-engine.md) — full HLS engine composition walkthrough

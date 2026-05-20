@@ -102,6 +102,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 
 ## See also
 
+- [presentation-modeling.md](../presentation-modeling.md) — architectural deep-dive on the format-neutral data shape; ABR consumes resolved video tracks surfaced by the parser interface this layer defines.
 - [preload-modes.md](./preload-modes.md) — gates this feature indirectly via `resolvePresentation`; ABR can't fire until the presentation is resolved, and resolution is gated by the preload-modes contract.
 - [mse-mms-pipeline.md](./mse-mms-pipeline.md) — where `setupVideoBufferActors` lives and where `createTrackedFetch` is wired into segment-loader construction; bandwidth sampling is structurally co-located with MSE buffer setup, ABR selection is the separate consumer documented here.
 - [conventions/behaviors.md](../conventions/behaviors.md) — when to define a behavior; behavior shape
