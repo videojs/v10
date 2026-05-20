@@ -94,7 +94,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 ## Related features
 
 - **single-video-track-default-selection** *(not yet documented)* — `selectVideoTrack` behavior, alternative to `switchVideoQuality` for non-ABR engine variants.
-- **per-track-segment-loading** *(not yet documented)* — `bandwidthState` is written by `setupVideoBufferActors` via `createTrackedFetch`. Sampling is structurally co-located with segment loading, not ABR.
+- **buffer-management** — `bandwidthState` is written by `setupVideoBufferActors` via `createTrackedFetch`; samples land on `buffer-management`'s fetch path (`fetchBytes` inside `SegmentLoaderActor`). Sampling is structurally co-located with segment loading, not ABR.
 - **bandwidth-estimation** *(coarse, not yet documented)* — dual-EWMA accumulator is a reusable primitive in `network/`. Could be promoted to its own feature doc when audio ABR or other consumers arrive.
 - **audio-abr** *(coarse, not yet documented, candidate)* — sampling exists; needs `createTrackedFetch` wired into `setupAudioBufferActors` plus an `switchAudioQuality` behavior parallel to `switchVideoQuality`.
 - **rendition-selection-caps** *(coarse, not yet documented, candidate)* — 1080p cap (Mux billing), screen-size cap, max-bitrate cap. All filter the candidate set before `selectQuality` runs.

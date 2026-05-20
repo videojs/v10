@@ -176,12 +176,12 @@ point of having a single config knob.
   load-mode FSM as audio/video (`'dormant' / 'metadata-only' / 'full-range'`).
 - **multi-language-audio** *(coarse)* — would inherit the same gating
   shape for any new audio behaviors.
-- **per-track-segment-loading** *(not yet documented, candidate)* —
-  the per-type load-mode FSM is the canonical *consumer* of this
-  feature. Documenting it would surface the full state matrix of
-  `(preload, loadActivated)` → FSM state.
-- **buffer-management** *(not yet documented, candidate)* — forward-
-  buffer + back-buffer plans build on top of the gates this feature
+- **buffer-management** — the canonical *consumer* of this feature's
+  gate state. The 4-state load-mode FSM (`'preconditions-unmet'` /
+  `'dormant'` / `'metadata-only'` / `'full-range'`) lives in
+  `loadVideoSegments` / `loadAudioSegments` / `loadTextTrackSegments`
+  and maps directly to `(preload, loadActivated)`. Forward-buffer +
+  back-buffer plans also build on top of the gates this feature
   produces.
 
 ## See also

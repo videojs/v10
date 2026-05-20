@@ -136,8 +136,8 @@ context-published resources, with no tuning knobs of their own.
 `preferManaged: true` is hardcoded in `setupMediaSource`. Related
 engine config (`forwardBuffer`, `backBuffer`, `bandwidth`, `quality`)
 flows through `setupVideoBufferActors`'s SegmentLoaderActor construction
-but belongs to `[per-track-segment-loading]` and `video-abr`
-respectively.
+but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
+`video-abr` (`bandwidth` / `quality`) respectively.
 
 ## Verification
 
@@ -190,9 +190,10 @@ respectively.
   switch" is the canonical consumer of the future `[buffer-flushing]`
   feature that would compose on top of this one's `remove` message
   surface.
-- **per-track-segment-loading** *(not yet documented)* — sibling feature
-  for the per-type load-FSM and segment planning that runs *on top of*
-  the buffers + actors this feature stands up.
+- **buffer-management** — sibling feature for the per-type load-FSM
+  and segment planning that runs *on top of* the buffers + actors this
+  feature stands up. Sends `append-init` / `append-segment` / `remove`
+  / `cancel` messages to the `SourceBufferActor` documented here.
 - **buffer-flushing** *(not yet documented, candidate)* — orchestrator
   on top of the `SourceBufferActor` `remove` message + `flushBuffer`
   primitive surfaced here. Driven by `multi-language-audio` Tier 2 first.
