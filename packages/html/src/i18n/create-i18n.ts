@@ -150,7 +150,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
           this.#resolvedLocaleForLazy = locale;
           const localeDriftedBeforeFirstPaint =
             !hadLocale && this.#lazyResetStartedForLocale !== undefined && locale !== this.#lazyResetStartedForLocale;
-          if ((hadLocale && this.hasUpdated) || localeDriftedBeforeFirstPaint) {
+          if (hadLocale || localeDriftedBeforeFirstPaint) {
             this.#resetLazyAndLoad();
           }
         }

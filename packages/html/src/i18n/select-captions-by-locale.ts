@@ -23,7 +23,7 @@ export function selectCaptionsByLocale(store: AnyPlayerStore | undefined, locale
   for (const tag of chain) {
     picked = candidates.find((t) => {
       const lang = normalizeLangTag(t.language ?? '');
-      return lang === tag || lang.startsWith(`${tag}-`) || tag.startsWith(`${lang}-`);
+      return lang === tag || lang.startsWith(`${tag}-`);
     });
     if (picked) break;
   }
