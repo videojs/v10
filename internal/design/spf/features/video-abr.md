@@ -99,6 +99,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 - **audio-abr** *(coarse, not yet documented, candidate)* — sampling exists; needs `createTrackedFetch` wired into `setupAudioBufferActors` plus an `switchAudioQuality` behavior parallel to `switchVideoQuality`.
 - **rendition-selection-caps** *(coarse, not yet documented, candidate)* — 1080p cap (Mux billing), screen-size cap, max-bitrate cap. All filter the candidate set before `selectQuality` runs.
 - **multi-signal-abr** *(coarse, not yet documented, candidate)* — CPU/thermal throttling, network type, battery state as additional ABR inputs.
+- **capability-probing** *(candidate)* — narrows the candidate set ABR operates over. `selectQuality` doesn't change shape; just sees a filtered candidate set with browser-unsupported renditions already excluded.
 
 ## See also
 

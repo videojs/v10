@@ -66,6 +66,7 @@ Things this feature probably forces decisions on, not just additions:
 - **audio-abr** *(coarse, not yet documented, candidate)* — built on top of multi-language audio's rendition surfacing.
 - **5.1-surround-selection** *(coarse, not yet documented, candidate)* — capability-gated extension.
 - **audio-only-composition** *(coarse, not yet documented, candidate)* — engine variant; orthogonal but composition-relevant.
+- **capability-probing** *(candidate)* — Tier 2 mid-stream codec switching (e.g., stereo AAC → 5.1 AC-3) depends on `changeType()` capability probing surfaced by that feature.
 
 ## See also
 

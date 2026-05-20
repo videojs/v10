@@ -218,7 +218,7 @@ Asking the browser what it can play before committing to a codec, container, or 
 
 **Signals.** `canPlayType`, `MediaSource.isTypeSupported`, `requestMediaKeySystemAccess`; codec filtering; container support gating; key-system probing; HEVC support detection; channel-count probing; HDR support.
 
-**Docs.** `[codec-capability-filtering]`, `[multivariant-codecs-filtering]`, `[key-system-capability-probing]`, `[container-support]`. `[hevc-variant-selection]` and `[5.1-surround-selection]` straddle this and the track-registry cluster.
+**Docs.** `capability-probing` (covers codec / container filtering, multivariant CODECS filtering, key-system probing, `changeType()` probing, error surfacing; `[container-support]` may fold in or stay separate). `[hevc-variant-selection]` and `[5.1-surround-selection]` straddle this and the track-registry cluster as consumers.
 
 **Foundational primitives.** A capability-probe utility wrapping the various browser APIs uniformly. None today.
 
@@ -250,7 +250,7 @@ Key system handling for protected content — EME, license fetch, key-rotation, 
 
 **Signals.** EME, `MediaKeys`, `requestMediaKeySystemAccess`, key system identifiers (Widevine / PlayReady / FairPlay / FairPlay-AirPlay); `#EXT-X-KEY` in playlists; license server URLs; security level constraints; encrypted-event handling on the SourceBuffer.
 
-**Docs.** `[drm-support]` (Notion-tracked under videojs/v10#1411), `[drm-security-levels]`, `[fairplay-airplay-workaround]`. `[key-system-capability-probing]` straddles this and capability probing.
+**Docs.** `[drm-support]` (Notion-tracked under videojs/v10#1411), `[drm-security-levels]`, `[fairplay-airplay-workaround]`. Key-system capability probing is owned by `capability-probing` (cluster D); this cluster owns EME setup, license handling, and key delivery downstream of probing's verdict.
 
 **Foundational primitives.** EME + license-handling base, under issue #1411.
 
