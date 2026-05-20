@@ -115,7 +115,7 @@ describe('FooterEasterEgg', () => {
     fireUserInput();
     act(() => getBottomObserver()?.fire(true));
     act(() => {
-      vi.advanceTimersByTime(200);
+      vi.advanceTimersByTime(1000);
     });
 
     expect(getWrapper(container)).toHaveClass('block');
@@ -126,7 +126,7 @@ describe('FooterEasterEgg', () => {
     const { container } = render(<FooterEasterEgg />);
     act(() => getBottomObserver()?.fire(true));
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(1000);
     });
     expect(getWrapper(container)).not.toHaveClass('block');
   });

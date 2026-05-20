@@ -3,12 +3,12 @@ import debounce from 'just-debounce-it';
 import { useEffect, useRef, useState } from 'react';
 import ColorBars, { type ColorBarsVariant } from './ColorBars';
 
-const ARM_DWELL_MS = 200;
-const RETREAT_DWELL_MS = 300;
+const ARM_DWELL_MS = 350;
+const RETREAT_DWELL_MS = 500;
 const RETREAT_BUFFER_PX = 16;
-const SPRING_STIFFNESS = 300;
-const SPRING_DAMPING = 22;
-const SPRING_MASS = 1;
+const SPRING_STIFFNESS = 100;
+const SPRING_DAMPING = 18;
+const SPRING_MASS = 1.5;
 
 export interface FooterEasterEggProps {
   variant?: ColorBarsVariant;
