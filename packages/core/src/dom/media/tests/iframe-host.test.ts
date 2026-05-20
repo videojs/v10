@@ -366,6 +366,13 @@ describe('IframeMediaHost', () => {
       expect(host.callIsMountedTrack(track)).toBe(false);
     });
 
+    it('resetTextTracks replaces the synthetic video so old tracks do not persist into the next load', () => {
+      const host = new TestHost();
+      const videoBefore = host.exposedSyntheticVideo;
+      host.callResetTextTracks();
+      expect(host.exposedSyntheticVideo).not.toBe(videoBefore);
+    });
+
     it('startTextTrackAbort returns an AbortController and aborts previous one', () => {
       const host = new TestHost();
       const first = host.callStartTextTrackAbort();

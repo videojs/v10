@@ -288,6 +288,10 @@ export abstract class IframeMediaHost<Engine>
       track.mode = 'disabled';
     }
     this.#mountedTracks = [];
+    // Replace the synthetic video element so old tracks don't persist into the
+    // next load. HTMLVideoElement.textTracks has no removeTrack() API, so the
+    // only way to clear the list is to start with a fresh element.
+    this.#textTracksVideo = null;
   }
 
   protected startTextTrackAbort(): AbortController {

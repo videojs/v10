@@ -4,6 +4,7 @@
 
 .media-default-skin ::slotted(video),
 .media-default-skin ::slotted(vimeo-video),
+.media-default-skin ::slotted(youtube-video),
 .media-default-skin video,
 .media-default-skin .media-vimeo,
 .media-default-skin .media-youtube {
@@ -15,6 +16,7 @@
 }
 .media-default-skin ::slotted(video),
 .media-default-skin ::slotted(vimeo-video),
+.media-default-skin ::slotted(youtube-video),
 .media-default-skin .media-vimeo,
 .media-default-skin .media-youtube {
   overflow: hidden;
@@ -26,6 +28,7 @@
 
 .media-default-skin:fullscreen ::slotted(video),
 .media-default-skin:fullscreen ::slotted(vimeo-video),
+.media-default-skin:fullscreen ::slotted(youtube-video),
 .media-default-skin:fullscreen video,
 .media-default-skin:fullscreen .media-vimeo,
 .media-default-skin:fullscreen .media-youtube {

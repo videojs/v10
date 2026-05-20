@@ -29,6 +29,7 @@ type NavbarProps = {
   isMuxVideo: boolean;
   isMuxAudio: boolean;
   isVimeoVideo: boolean;
+  isYoutubeVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -82,6 +83,7 @@ export function Navbar({
   isMuxVideo,
   isMuxAudio,
   isVimeoVideo,
+  isYoutubeVideo,
   platforms,
   stylings,
   presets,

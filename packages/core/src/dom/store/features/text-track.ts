@@ -40,6 +40,7 @@ export const textTrackFeature = definePlayerFeature({
     if (!isMediaTextTrackCapable(media)) return;
 
     let trackCleanup: AbortController | null = null;
+    let trackListCleanup: AbortController | null = null;
 
     const sync = () => {
       trackCleanup?.abort();
@@ -97,16 +98,41 @@ export const textTrackFeature = definePlayerFeature({
       set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
     };
 
+    // Subscribe to addtrack / removetrack / change on the current textTracks
+    // object. Called once at attach and again on each loadstart because iframe
+    // providers (Vimeo, YouTube) replace the underlying TextTrackList when the
+    // src changes — the previous reference becomes stale.
+    const subscribeTrackList = () => {
+      trackListCleanup?.abort();
+      trackListCleanup = new AbortController();
+      const textTracks = media.textTracks;
+      if (textTracks instanceof EventTarget) {
+        listen(textTracks, 'addtrack', sync, { signal: trackListCleanup.signal });
+        listen(textTracks, 'removetrack', sync, { signal: trackListCleanup.signal });
+        listen(textTracks, 'change', sync, { signal: trackListCleanup.signal });
+      }
+    };
+
     sync();
+    subscribeTrackList();
 
-    const textTracks = media.textTracks;
-    if (textTracks instanceof EventTarget) {
-      listen(textTracks, 'addtrack', sync, { signal });
-      listen(textTracks, 'removetrack', sync, { signal });
-      listen(textTracks, 'change', sync, { signal });
-    }
-    listen(media, 'loadstart', sync, { signal });
+    listen(
+      media,
+      'loadstart',
+      () => {
+        subscribeTrackList();
+        sync();
+      },
+      { signal }
+    );
 
-    signal.addEventListener('abort', () => trackCleanup?.abort(), { once: true });
+    signal.addEventListener(
+      'abort',
+      () => {
+        trackListCleanup?.abort();
+        trackCleanup?.abort();
+      },
+      { once: true }
+    );
   },
 });

@@ -1,3 +1,4 @@
+import type { VimeoTextTrack } from '@vimeo/player';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Captured Player constructor call args and instance per test.
@@ -26,7 +27,7 @@ function makeMockPlayer() {
     setQuality: vi.fn(() => Promise.resolve(null)),
     requestPictureInPicture: vi.fn(() => Promise.resolve()),
     exitPictureInPicture: vi.fn(() => Promise.resolve()),
-    getTextTracks: vi.fn(() => Promise.resolve([])),
+    getTextTracks: vi.fn((): Promise<VimeoTextTrack[]> => Promise.resolve([])),
     enableTextTrack: vi.fn(() => Promise.resolve({})),
     disableTextTrack: vi.fn(() => Promise.resolve({})),
     getVolume: vi.fn(() => Promise.resolve(1)),
@@ -752,6 +753,26 @@ describe('VimeoMedia', () => {
       media.attach(container);
 
       expect((capturedOptions as { muted: boolean }).muted).toBe(true);
+    });
+  });
+
+  describe('text tracks', () => {
+    it('textTracks is a fresh list after src change so old tracks do not persist', async () => {
+      mockPlayerInstance.getTextTracks.mockResolvedValueOnce([
+        { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+      ]);
+      const { media } = setup('111');
+
+      // Let getTextTracks resolve and add the track to the synthetic video.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      const firstTrackList = media.textTracks;
+
+      // Changing src must reset the synthetic video element via resetTextTracks().
+      media.src = '222';
+
+      // textTracks now points to a fresh element — the old list is gone.
+      expect(media.textTracks).not.toBe(firstTrackList);
     });
   });
 
