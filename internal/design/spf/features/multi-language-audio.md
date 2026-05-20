@@ -60,7 +60,7 @@ Things this feature probably forces decisions on, not just additions:
 - **subtitles** — direct template for the selection-picker shape; multi-writer state slot pattern.
 - **video-abr** — `userVideoTrackSelection` constraint pattern; precedent for consumer-driven track override coexisting with engine-driven selection.
 - **mse-mms-pipeline** — owns the audio `SourceBufferActor` and the `remove` / `flushBuffer` primitives that mid-stream language switching builds on; the lifecycle stays put (same-codec, no recreation), and this feature adds the flush orchestration on top.
-- **per-track-segment-loading** *(not yet documented)* — audio segment loading uses the same gate shape as video and text; switching may push on this.
+- **buffer-management** — audio segment loading uses the same gate shape as video and text; mid-stream switching will push on the planner's track-switch handling (no flush today; same-codec dedup is the current strategy).
 - **track-registry-primitive** *(coarse, not yet documented)* — multi-language audio is likely the second forcing data point. First is text-track multi-writer; this is audio multi-writer with mid-stream switching as an added complication.
 - **audio-abr** *(coarse, not yet documented, candidate)* — built on top of multi-language audio's rendition surfacing.
 - **5.1-surround-selection** *(coarse, not yet documented, candidate)* — capability-gated extension.
