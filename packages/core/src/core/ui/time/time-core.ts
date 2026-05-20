@@ -57,12 +57,10 @@ export class TimeCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: TimeProps): void {
     this.#props = defaults(props, TimeCore.defaultProps);
   }
 
-  /** Bind the core to a media time state source. */
   setMedia(media: MediaTimeState): void {
     this.#media = media;
   }
@@ -119,7 +117,6 @@ export class TimeCore {
     return DEFAULT_LABELS[this.#props.type];
   }
 
-  /** Compute ARIA attributes for the time display element. */
   getAttrs(state: TimeState) {
     return {
       'aria-label': this.getLabel(state),
@@ -127,7 +124,6 @@ export class TimeCore {
     };
   }
 
-  /** Recompute and return the current state. */
   getState(): TimeState {
     const seconds = this.#getSeconds();
     return {

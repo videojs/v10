@@ -55,7 +55,6 @@ export class PlaybackRateMenuCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: PlaybackRateMenuProps): void {
     this.#props = defaults(props, PlaybackRateMenuCore.defaultProps);
   }
@@ -84,7 +83,6 @@ export class PlaybackRateMenuCore {
     return String(rate);
   }
 
-  /** Compute ARIA attributes for the menu trigger. */
   getAttrs(state: PlaybackRateMenuState) {
     return {
       'aria-label': this.getLabel(state),
@@ -92,12 +90,10 @@ export class PlaybackRateMenuCore {
     };
   }
 
-  /** Bind the core to a media playback rate state source. */
   setMedia(media: MediaPlaybackRateState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): PlaybackRateMenuState {
     const media = this.#media!;
 

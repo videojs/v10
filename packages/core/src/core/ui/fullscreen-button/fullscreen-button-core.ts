@@ -43,7 +43,6 @@ export class FullscreenButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: FullscreenButtonProps): void {
     this.#props = defaults(props, FullscreenButtonCore.defaultProps);
   }
@@ -62,7 +61,6 @@ export class FullscreenButtonCore {
     return state.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: FullscreenButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -70,12 +68,10 @@ export class FullscreenButtonCore {
     };
   }
 
-  /** Bind the core to a media fullscreen state source. */
   setMedia(media: MediaFullscreenState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): FullscreenButtonState {
     const media = this.#media!;
     this.state.patch({ fullscreen: media.fullscreen, availability: media.fullscreenAvailability });

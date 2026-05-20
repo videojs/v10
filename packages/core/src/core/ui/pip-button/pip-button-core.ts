@@ -43,7 +43,6 @@ export class PiPButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: PiPButtonProps): void {
     this.#props = defaults(props, PiPButtonCore.defaultProps);
   }
@@ -62,7 +61,6 @@ export class PiPButtonCore {
     return state.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: PiPButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -70,12 +68,10 @@ export class PiPButtonCore {
     };
   }
 
-  /** Bind the core to a media picture-in-picture state source. */
   setMedia(media: MediaPictureInPictureState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): PiPButtonState {
     const media = this.#media!;
     this.state.patch({ pip: media.pip, availability: media.pipAvailability });

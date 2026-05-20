@@ -67,7 +67,6 @@ export class MenuCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: MenuProps): void {
     this.#props = defaults(props, MenuCore.defaultProps);
   }
@@ -77,7 +76,6 @@ export class MenuCore {
     this.#input = input;
   }
 
-  /** Recompute and return the current state. */
   getState(): MenuState {
     const input = this.#input!;
     const isSubmenu = this.#props.isSubmenu;

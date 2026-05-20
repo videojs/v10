@@ -39,17 +39,14 @@ export class VolumeSliderCore extends SliderCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   override setProps(props: VolumeSliderProps): void {
     super.setProps(defaults(props, VolumeSliderCore.defaultProps));
   }
 
-  /** Bind the core to a media volume state source. */
   setMedia(media: MediaVolumeState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): VolumeSliderState {
     const media = this.#media!;
     const { volume, muted } = media;

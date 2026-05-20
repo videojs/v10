@@ -83,7 +83,6 @@ export class LiveButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: LiveButtonProps): void {
     this.#props = defaults(props, LiveButtonCore.defaultProps);
   }
@@ -103,7 +102,6 @@ export class LiveButtonCore {
     return 'Seek to live edge';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: LiveButtonState) {
     const inactive = this.#props.disabled || state.liveEdge;
     return {
@@ -112,12 +110,10 @@ export class LiveButtonCore {
     };
   }
 
-  /** Bind the core to a media state source covering time, buffer, and live. */
   setMedia(media: LiveButtonMediaState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): LiveButtonState {
     const media = this.#media!;
     const live = isLiveMedia(media);

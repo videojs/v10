@@ -29,7 +29,6 @@ export class BufferingIndicatorCore {
   #props = { ...BufferingIndicatorCore.defaultProps };
   #timer: ReturnType<typeof setTimeout> | null = null;
 
-  /** Update props on the core. */
   setProps(props: BufferingIndicatorProps): void {
     this.#props = defaults(props, BufferingIndicatorCore.defaultProps);
   }

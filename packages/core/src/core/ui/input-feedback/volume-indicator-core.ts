@@ -12,7 +12,6 @@ import {
   predictVolumeActionOutcome,
 } from './status';
 
-/** Props for the volume indicator core. */
 export interface VolumeIndicatorProps extends IndicatorCoreProps {}
 
 /** Reactive state surfaced by the volume indicator core. */
@@ -56,7 +55,6 @@ export class VolumeIndicatorCore {
     () => getIndicatorCloseDelay(this.#props)
   );
 
-  /** Update props on the core. */
   setProps(props: VolumeIndicatorProps): void {
     this.#props = props;
   }

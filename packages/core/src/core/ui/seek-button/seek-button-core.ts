@@ -51,7 +51,6 @@ export class SeekButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: SeekButtonProps): void {
     this.#props = defaults(props, SeekButtonCore.defaultProps);
   }
@@ -71,7 +70,6 @@ export class SeekButtonCore {
     return state.direction === 'backward' ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: SeekButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -79,12 +77,10 @@ export class SeekButtonCore {
     };
   }
 
-  /** Bind the core to a media time state source. */
   setMedia(media: MediaTimeState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): SeekButtonState {
     const media = this.#media!;
     const direction: SeekButtonDirection = this.#props.seconds < 0 ? 'backward' : 'forward';

@@ -82,7 +82,6 @@ export class PopoverCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: PopoverProps): void {
     this.#props = defaults(props, PopoverCore.defaultProps);
   }
@@ -94,7 +93,6 @@ export class PopoverCore {
     this.#input = input;
   }
 
-  /** Recompute and return the current state. */
   getState(): PopoverState {
     const input = this.#input!;
     return {

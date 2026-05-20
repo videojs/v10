@@ -151,7 +151,6 @@ export class ThumbnailCore {
     };
   }
 
-  /** Compute ARIA attributes for the thumbnail container. */
   getAttrs(_state: ThumbnailState) {
     return {
       role: 'img' as const,

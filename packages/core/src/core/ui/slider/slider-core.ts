@@ -103,7 +103,6 @@ export class SliderCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: SliderProps): void {
     this.#props = defaults(props, SliderCore.defaultProps);
   }
@@ -145,7 +144,6 @@ export class SliderCore {
     return '';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: SliderState) {
     return {
       role: 'slider',

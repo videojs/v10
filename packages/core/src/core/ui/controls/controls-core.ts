@@ -12,7 +12,6 @@ export interface ControlsState {
 export class ControlsCore {
   #media: MediaControlsState | null = null;
 
-  /** Bind the core to a media controls state source. */
   setMedia(media: MediaControlsState): void {
     this.#media = media;
   }

@@ -46,7 +46,6 @@ export class CastButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: CastButtonProps): void {
     this.#props = defaults(props, CastButtonCore.defaultProps);
   }
@@ -67,7 +66,6 @@ export class CastButtonCore {
     return 'Start casting';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: CastButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -75,12 +73,10 @@ export class CastButtonCore {
     };
   }
 
-  /** Bind the core to a media remote playback state source. */
   setMedia(media: MediaRemotePlaybackState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): CastButtonState {
     const media = this.#media!;
     const castSupported = !!(globalThis as any).chrome;

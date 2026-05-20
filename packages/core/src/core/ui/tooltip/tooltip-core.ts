@@ -61,7 +61,6 @@ export class TooltipCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: TooltipProps): void {
     this.#props = defaults(props, TooltipCore.defaultProps);
   }
@@ -73,7 +72,6 @@ export class TooltipCore {
     this.#input = input;
   }
 
-  /** Recompute and return the current state. */
   getState(): TooltipState {
     const input = this.#input!;
     return {

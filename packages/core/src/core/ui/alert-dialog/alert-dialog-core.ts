@@ -56,7 +56,6 @@ export class AlertDialogCore {
     this.#descriptionId = id;
   }
 
-  /** Recompute and return the current state. */
   getState(): AlertDialogState {
     const input = this.#input!;
     return {
@@ -68,7 +67,6 @@ export class AlertDialogCore {
     };
   }
 
-  /** Compute ARIA attributes for the dialog container. */
   getAttrs(state: AlertDialogState) {
     return {
       role: 'alertdialog' as const,

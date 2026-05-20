@@ -41,18 +41,15 @@ export class TimeSliderCore extends SliderCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   override setProps(props: TimeSliderProps): void {
     this.#props = defaults(props, TimeSliderCore.defaultProps);
     super.setProps({ ...props, min: 0 });
   }
 
-  /** Bind the core to a media time and buffer state source. */
   setMedia(media: MediaTimeState & MediaBufferState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): TimeSliderState {
     const media = this.#media!;
     const { duration, currentTime, seeking, buffered } = media;

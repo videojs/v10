@@ -33,7 +33,6 @@ export class StatusAnnouncerCore {
     () => getIndicatorCloseDelay(this.#props)
   );
 
-  /** Update props on the core. */
   setProps(props: StatusAnnouncerProps): void {
     this.#props = props;
   }

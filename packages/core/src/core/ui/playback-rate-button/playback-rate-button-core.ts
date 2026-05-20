@@ -42,7 +42,6 @@ export class PlaybackRateButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: PlaybackRateButtonProps): void {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
   }
@@ -61,7 +60,6 @@ export class PlaybackRateButtonCore {
     return `Playback rate ${state.rate}`;
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: PlaybackRateButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -69,12 +67,10 @@ export class PlaybackRateButtonCore {
     };
   }
 
-  /** Bind the core to a media playback rate state source. */
   setMedia(media: MediaPlaybackRateState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
     this.state.patch({ rate: media.playbackRate });

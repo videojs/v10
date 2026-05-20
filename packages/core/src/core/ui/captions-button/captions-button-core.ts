@@ -43,7 +43,6 @@ export class CaptionsButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: CaptionsButtonProps): void {
     this.#props = defaults(props, CaptionsButtonCore.defaultProps);
   }
@@ -62,7 +61,6 @@ export class CaptionsButtonCore {
     return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: CaptionsButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -70,12 +68,10 @@ export class CaptionsButtonCore {
     };
   }
 
-  /** Bind the core to a media text track state source. */
   setMedia(media: MediaTextTrackState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): CaptionsButtonState {
     const media = this.#media!;
     const availability: CaptionsButtonState['availability'] = media.textTrackList.some(

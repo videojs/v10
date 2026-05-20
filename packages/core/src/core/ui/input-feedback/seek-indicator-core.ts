@@ -11,7 +11,6 @@ import {
   type MediaSnapshot,
 } from './status';
 
-/** Props for the seek indicator core. */
 export interface SeekIndicatorProps extends IndicatorCoreProps {}
 
 /** Reactive state surfaced by the seek indicator core. */
@@ -61,7 +60,6 @@ export class SeekIndicatorCore {
     () => getIndicatorCloseDelay(this.#props)
   );
 
-  /** Update props on the core. */
   setProps(props: SeekIndicatorProps): void {
     this.#props = props;
   }

@@ -52,7 +52,6 @@ export class MuteButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: MuteButtonProps): void {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
@@ -71,7 +70,6 @@ export class MuteButtonCore {
     return state.muted ? 'Unmute' : 'Mute';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: MuteButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -79,12 +77,10 @@ export class MuteButtonCore {
     };
   }
 
-  /** Bind the core to a media volume state source. */
   setMedia(media: MediaVolumeState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): MuteButtonState {
     const media = this.#media!;
     this.state.patch({ muted: media.muted || media.volume === 0, volumeLevel: getVolumeLevel(media) });

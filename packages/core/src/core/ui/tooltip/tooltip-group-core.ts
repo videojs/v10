@@ -29,7 +29,6 @@ export class TooltipGroupCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: TooltipGroupProps): void {
     this.#props = defaults(props, TooltipGroupCore.defaultProps);
   }

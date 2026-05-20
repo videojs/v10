@@ -10,12 +10,10 @@ export interface PosterState {
 export class PosterCore {
   #media: MediaPlaybackState | null = null;
 
-  /** Bind the core to a media playback state source. */
   setMedia(media: MediaPlaybackState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): PosterState {
     const media = this.#media!;
     return {

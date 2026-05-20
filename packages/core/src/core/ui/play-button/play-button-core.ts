@@ -41,7 +41,6 @@ export class PlayButtonCore {
     if (props) this.setProps(props);
   }
 
-  /** Update props on the core. */
   setProps(props: PlayButtonProps): void {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
   }
@@ -61,7 +60,6 @@ export class PlayButtonCore {
     return state.paused ? 'Play' : 'Pause';
   }
 
-  /** Compute ARIA attributes from state. */
   getAttrs(state: PlayButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -69,12 +67,10 @@ export class PlayButtonCore {
     };
   }
 
-  /** Bind the core to a media playback state source. */
   setMedia(media: MediaPlaybackState): void {
     this.#media = media;
   }
 
-  /** Recompute and return the current state. */
   getState(): PlayButtonState {
     const media = this.#media!;
 
