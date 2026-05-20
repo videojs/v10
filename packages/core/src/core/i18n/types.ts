@@ -32,6 +32,7 @@ export type TranslationParams = {
   timeCurrent: never;
   timeDuration: never;
   timeRemaining: never;
+  remainingTimeSuffix: never;
   playbackRateAria: { rate: number | string };
   playbackRateMultiplier: { rate: number | string };
   timeSliderValueTextRange: { current: string; duration: string };

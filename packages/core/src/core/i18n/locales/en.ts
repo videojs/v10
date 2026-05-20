@@ -26,6 +26,7 @@ export default {
   timeCurrent: 'Current time',
   timeDuration: 'Duration',
   timeRemaining: 'Remaining',
+  remainingTimeSuffix: 'remaining',
   playbackRateAria: 'Playback rate {rate}',
   playbackRateMultiplier: '{rate}×',
   timeSliderValueTextRange: '{current} of {duration}',
