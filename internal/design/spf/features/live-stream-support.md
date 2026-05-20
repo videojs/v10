@@ -8,10 +8,11 @@ definition: technical
 
 The engine's foundation for playing **live** HLS sources: periodic
 media-playlist refetch, sliding-window segment tracking, target-duration
-pacing, and `Infinity` duration semantics. Distinct from sibling
-capabilities for low-latency live (LL-HLS), DVR / event streams, and
-live-termination detection — those are extensions on top of this
-foundation, tracked as separate candidate features.
+pacing, `Infinity` duration semantics, and termination detection
+(transitioning out of live mode when the stream ends). Distinct from
+sibling capabilities for low-latency live (LL-HLS) and DVR / event
+streams — those are extensions on top of this foundation, tracked as
+separate candidate features.
 
 A **Media-src feature** in the framing from
 [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes):
@@ -26,15 +27,15 @@ without it, live HLS sources don't play correctly.
   no implementation. Source material: [SPF Epics Working Doc — Live
   Stream Support (epic #2)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   (cluster A foundation, eng size L, validation M).
-- **Foundational** for the manifest-reload-loop cluster — `[ll-hls-support]`,
-  `[dvr-event-stream-support]`, and `[live-stream-termination-detection]`
-  all build on this feature.
+- **Foundational** for the manifest-reload-loop cluster —
+  `[ll-hls-support]` and `[dvr-event-stream-support]` build on this
+  feature.
 
 ## Phases of complexity
 
 Capability slices for the foundational live-stream-support feature.
-Each phase below is part of "live works at all"; richer live variants
-(LL-HLS, DVR, termination detection) sit in sibling features.
+Each phase below is part of "live works (and terminates) at all";
+richer live variants (LL-HLS, DVR) sit in sibling features.
 
 | Phase | What | Notes |
 |---|---|---|
@@ -42,8 +43,10 @@ Each phase below is part of "live works at all"; richer live variants
 | Sliding-window segment tracking | Engine handles segments dropping off the start of the playlist as the window slides forward. Already-buffered segments past the window are still playable; un-fetched segments past the window are no longer fetchable | Affects the segment-loader's planning + back-buffer policy |
 | Live duration semantics | `presentation.duration = Infinity` flows through `config.resolveDuration` (already pluggable). Downstream `updateMediaSourceDuration` propagates to `mediaSource.duration = Infinity` per MSE spec for live | The pluggable `resolveDuration` hook from `mse-mms-pipeline` is the surface; no new state slot needed |
 | Live edge tracking | Engine tracks the latest segment available in the current playlist snapshot. Distinct from `currentTime` (the playhead); the gap between them is the buffer + the user's distance from live edge | Likely a derived signal (computed) rather than a new state slot |
-| Reload jitter / backoff | Pacing variations under server delays or slow networks. Naive: poll on target-duration; full: jitter to avoid thundering herd, backoff on consecutive identical-playlist responses | Naive depth matches what hls.js does; full depth adds Mux-specific tuning |
+| Reload jitter / backoff | Pacing variations under server delays or slow networks. Naive: poll on target-duration; full: jitter to avoid thundering herd, backoff on consecutive identical-playlist responses | Naive depth matches what hls.js does; full depth adds vendor-specific tuning |
 | Per-type reload coordination | Audio / video / text media playlists each reload independently. Today the per-type `resolveXTrack` family is one-shot; live requires extending or replacing it with a reloading variant | Open question: extend in place, add a sibling `reloadXTrack` behavior, or compose differently |
+| Termination detection (manifest signal) | Recognize when the reload loop should stop. **Naive**: `#EXT-X-ENDLIST` recognition only (assumes spec-compliant servers). Today's parser matches the literal `#EXT-X-ENDLIST` line but doesn't surface the value to the track output — the parser-side fix is part of this phase. **Full**: ENDLIST + unchanged-playlist miss-counter as a fallback for servers that stop updating without emitting `ENDLIST` | Naive vs Full depth per [clusters.md § Feature classification axes](./clusters.md#naive-vs-full-implementation-depth) |
+| Terminated state transition | Engine flips out of live mode for the affected track. Reload loop stops scheduling that track's playlist. The track's segment list stops mutating, which makes the existing `endOfStream` gate naturally reachable (last segment now exists permanently). Per-type independence: audio / video can terminate at different times | The state transition is the only new orchestration; `endOfStream` doesn't need new code, just the playlist to stabilize |
 
 ## What's in scope vs out of scope
 
@@ -52,6 +55,7 @@ Each phase below is part of "live works at all"; richer live variants
 - Standard sliding-window behavior (segments roll off the start)
 - `Infinity` duration semantics through MSE
 - Naive reload pacing (target-duration interval; no jitter)
+- `#EXT-X-ENDLIST` recognition + unchanged-playlist miss-counter fallback for termination detection
 
 **Out of scope (separate Media-src candidate features):**
 - **`[ll-hls-support]`** — blocking reload, partial segments, delta
@@ -60,9 +64,6 @@ Each phase below is part of "live works at all"; richer live variants
 - **`[dvr-event-stream-support]`** — DVR / event streams: growing
   playlist (non-sliding); user can seek backwards through history.
   Extension of this feature with different windowing semantics.
-- **`[live-stream-termination-detection]`** — `#EXT-X-ENDLIST` + unchanged-
-  playlist miss-counter fallback. Detects "live stream just ended" and
-  transitions the engine out of live mode.
 
 **Out of scope (related but separate concerns):**
 - **`[non-zero-pts-support]`** — live streams' PTS advances continuously
@@ -72,7 +73,8 @@ Each phase below is part of "live works at all"; richer live variants
 - **`[buffer-stall-recovery]`** — affects live more than VoD due to
   ingest variability, but is a separate borderline feature.
 - **`[viewer-rate-limiting-audit]`** — reload-loop pacing must respect
-  Mux VRLT; the audit itself is a separate borderline feature.
+  server-side rate limiting; the audit itself is a separate borderline
+  feature.
 
 ## Likely cross-cutting impact
 
@@ -104,12 +106,24 @@ Things this feature probably forces decisions on, not just additions:
   segment. Tools like "seek to live edge" or "is at live edge" would
   consume this derived signal. Doesn't necessarily need its own state
   slot.
-- **End-of-stream handling** — `endOfStream` today fires when last
-  segments are appended + currentTime reaches. For live, `endOfStream`
-  must *not* fire until `[live-stream-termination-detection]` flips
-  the source from live to terminated. The current behavior gates on
-  `presentation.duration` being finite (Infinity won't pass the EOS
-  gate the way it's written today — needs review).
+- **End-of-stream handling** — `endOfStream` today gates on
+  `isLastSegmentAppended` + `currentTime >= lastSegStart`, *not* on
+  `presentation.duration` finiteness. For live, the gate naturally
+  doesn't fire because the playlist keeps growing — no segment is
+  permanently "the last." Once termination commits via this feature's
+  termination-detection phases, the last segment stabilizes and the
+  gate becomes reachable for normal reasons. **Subtlety:** there's a
+  possible race if reload pacing lags playhead consumption — the
+  current last segment could meet the gate before the next reload
+  appends a new one, firing `endOfStream` spuriously. Whether this
+  happens in practice depends on reload pacing relative to
+  forward-buffer depth.
+- **Parser-side ENDLIST surfacing** — `parseMediaPlaylist` currently
+  recognizes `#EXT-X-ENDLIST` (skips the line) but doesn't extract the
+  value. The `MediaPlaylistInfo.endList: boolean` type field exists
+  but is orphaned (the parser returns a `Track`, not
+  `MediaPlaylistInfo`). The termination-detection phases need the
+  parser to surface the value to the track output.
 
 ## Open questions
 
@@ -137,6 +151,19 @@ Things this feature probably forces decisions on, not just additions:
   shape as live; the difference is windowing semantics (no slide-off).
   Whether DVR is its own feature or a phase of `live-stream-support`
   is a sub-question of the cluster's epic-decomposition.
+- **Miss-counter threshold.** Heuristic feature — how many identical-
+  manifest reloads constitute termination? hls.js uses some count;
+  SPF needs its own choice. Threshold affects false-positive vs
+  false-negative rate.
+- **Per-type termination semantics.** When audio terminates before
+  video, what's the engine's consumer-facing surface? "Live until all
+  tracks terminate" or "terminated when any track terminates"? Likely
+  the former, but worth confirming the precedent. Aligns with the
+  per-type reload-coordination question above.
+- **`endOfStream` race under live reload pacing.** Could the gate fire
+  spuriously between reloads on a heavily-buffered live source?
+  Likely not in practice (reload pace beats consumption pace) but
+  worth verifying.
 
 ## Related features
 
@@ -145,17 +172,14 @@ Things this feature probably forces decisions on, not just additions:
   segments, delta playlists, preload hints. Largest live-related gap.
 - **`[dvr-event-stream-support]`** *(candidate)* — different
   windowing semantics on top of the same reload loop.
-- **`[live-stream-termination-detection]`** *(candidate)* —
-  `#EXT-X-ENDLIST` + miss-counter; detects live → terminated.
-  Required to fire `endOfStream` correctly for sources that end mid-
-  session.
 - **`[non-zero-pts-support]`** *(candidate, cluster B)* — live PTS
   starts far from zero. Live without non-zero PTS handling means
   `currentTime` is wrong. Cluster B foundation that live consumes.
 - **mse-mms-pipeline** — `Infinity` duration via `config.resolveDuration`
   is already supported there; live writes the value, MSE pipeline
-  propagates it. `endOfStream` gate logic needs review for live
-  (today gates on finite duration).
+  propagates it. The `endOfStream` gate uses segment + currentTime,
+  not duration finiteness; it naturally doesn't fire for live (growing
+  playlist) and becomes reachable once termination commits.
 - **buffer-management** — sliding-window segment tracking interacts
   with back-buffer eviction. The planner's currentTime-driven plan
   shape applies; the playlist itself mutating mid-flight is new.
