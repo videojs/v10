@@ -5,7 +5,7 @@ import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } fr
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
-import { useTranslator } from '../../i18n';
+import { useLocale, useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -46,9 +46,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
 
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
+    const locale = useLocale();
 
     const [core] = useState(() => new VolumeSliderCore());
-    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
+    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment, formatLocale: locale });
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
