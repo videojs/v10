@@ -49,7 +49,7 @@ The primary cut for unimplemented work.
 | Category | Definition | Examples |
 |---|---|---|
 | **Media-src feature** | Required to support a media-src permutation. Without it, the source either doesn't play or doesn't play correctly. "Correctness" means the engine handles the *presence* of the permutation type — playing one audio track of a multi-language source isn't supporting multi-language audio | `live-stream-support`, `[ll-hls-support]`, `[non-zero-pts-support]`, `multi-language-audio`, `[hevc-variant-selection]`, `[drm-support]` |
-| **Player feature** | Additive functionality not tied to making any source work. Player chooses to do it | `[1080p-resolution-cap]` (Mux billing), `[screen-size-resolution-cap]`, `[audio-only-composition]` (mode-override case) |
+| **Player feature** | Additive functionality not tied to making any source work. Player chooses to do it | `[1080p-resolution-cap]` (billing-driven), `[screen-size-resolution-cap]`, `[audio-only-composition]` (mode-override case) |
 | **Borderline** | Accounts for technically valid but suboptimally-formed-or-delivered content (*content compensation*) or for response errors that emerge from playback behavior (*response-error handling*). The source plays; the work makes it play better in specific quirky cases | `[pseudo-ended-detection]`, `[edit-list-compensation]`, `[viewer-rate-limiting-audit]`, `[buffer-stall-recovery]` |
 
 ### Naive vs Full implementation depth
@@ -60,7 +60,7 @@ Within a single feature; both depths are valid implementations. Used to scope in
 |---|---|---|
 | `[viewer-rate-limiting-audit]` | Generic 4xx retry/backoff (≈ what hls.js does today) | Response-aware: detect VRLT signature, adjust request pacing |
 | `[pseudo-ended-detection]` | Don't detect — source mostly plays, just stalls near end on Safari | Heuristic detection of pseudo-ended state; fire `ended` correctly |
-| `[playback-token-expiry]` | Treat 4xx as fatal (≈ hls.js) | Mux-aware refresh / recovery hooks |
+| `[playback-token-expiry]` | Treat 4xx as fatal (≈ hls.js) | Provider-aware refresh / recovery hooks |
 
 A feature doc may describe phases that span depth: a partial implementation at one depth still counts as work toward the feature.
 
@@ -138,7 +138,7 @@ The selection model — which audio / video / text tracks are available, which i
 
 Modes, caps, and overrides layered on top of the registry. Where the engine's selection logic is constrained or biased by something other than bandwidth or default-selection logic.
 
-**Signals.** Quality caps (max-height, max-bitrate, max-FPS, screen-size); modes (audio-only, video-only); user overrides via constraint slots; "respect Mux billing" / "respect device capabilities" framing; viewport adaptation.
+**Signals.** Quality caps (max-height, max-bitrate, max-FPS, screen-size); modes (audio-only, video-only); user overrides via constraint slots; "respect billing constraints" / "respect device capabilities" framing; viewport adaptation.
 
 **Docs.** `[rendition-selection-caps]`, `[1080p-resolution-cap]`, `[screen-size-resolution-cap]`, `[audio-only-composition]`, `[video-only-composition]`, `[multi-signal-abr]`. `video-abr`'s `userVideoTrackSelection` is a partial precedent.
 
@@ -202,7 +202,7 @@ The polling cycle for live and DVR content — reloading the media playlist, tra
 
 **Signals.** Live / DVR / event-stream content; `#EXT-X-ENDLIST`; sliding window; target-duration pacing; LL-HLS blocking reload, delta playlists, preload hints; reload miss-counter; partial segments.
 
-**Docs.** `live-stream-support`, `[ll-hls-support]`, `[dvr-event-stream-support]`, `[live-stream-termination-detection]`.
+**Docs.** `live-stream-support` (includes termination detection), `[ll-hls-support]`, `[dvr-event-stream-support]`.
 
 **Foundational primitives.** A reload-loop scheduler (the sliding-window + target-duration pacing core); presentation re-resolution flow on each reload.
 
