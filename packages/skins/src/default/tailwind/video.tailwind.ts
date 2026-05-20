@@ -1,5 +1,4 @@
 import { cn } from '@videojs/utils/style';
-import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
@@ -173,15 +172,6 @@ export const popup = {
 };
 
 /* ==========================================================================
-   Buffering (with video surface)
-   ========================================================================== */
-
-export const bufferingIndicator = {
-  ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
-};
-
-/* ==========================================================================
    Error (with video surface)
    ========================================================================== */
 
@@ -209,6 +199,7 @@ export const inputFeedback = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';

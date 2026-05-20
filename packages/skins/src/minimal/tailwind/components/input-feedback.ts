@@ -107,7 +107,9 @@ export const inputFeedback = {
       'group/input-indicator',
       // Default placement — center column for status bubbles and undirected seeks
       'col-start-2 row-start-1',
-      'flex flex-col items-center justify-center p-4',
+      'grid place-content-center text-center p-4',
+      'data-direction:gap-1',
+      '@2xl/media-root:data-direction:p-6',
       'transition-opacity duration-250 ease-out',
       'data-starting-style:opacity-0',
       'data-ending-style:opacity-0',
@@ -115,7 +117,6 @@ export const inputFeedback = {
       'data-starting-style:ease-in',
       'data-ending-style:duration-200',
       'data-ending-style:ease-in',
-      '@2xl/media-root:p-8',
       'not-data-direction:[transition-property:opacity,scale]',
       'not-data-direction:duration-600',
       'not-data-direction:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',
@@ -132,8 +133,10 @@ export const inputFeedback = {
       'data-[direction=backward]:col-start-1 data-[direction=backward]:justify-self-start',
       'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end'
     ),
-    icon: 'hidden w-9 h-9',
+    icon: 'hidden size-[calc(var(--media-icon-size)*2)]',
     shownSeek: cn(
+      // Avoid two arbitrary `size-*` utilities on one element (order-dependent); mirror CSS `[data-direction] .media-icon--seek` specificity.
+      'group-data-direction/input-indicator:size-[calc(var(--media-icon-size)*1.5)]',
       'group-data-direction/input-indicator:block',
       'group-data-[direction=backward]/input-indicator:-scale-x-100',
       // Slide animation (keyframes registered in companion CSS)

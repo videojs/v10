@@ -149,9 +149,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
+            <SpinnerIcon className={icon} />
           </div>
         )}
       />

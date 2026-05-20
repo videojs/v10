@@ -101,7 +101,9 @@ export const inputFeedback = {
       'group/input-indicator',
       // Default placement — center column for status bubbles and undirected seeks
       'col-start-2 row-start-1',
-      'flex flex-col items-center justify-center p-4',
+      'grid place-content-center text-center p-4',
+      'data-direction:gap-1',
+      '@2xl/media-root:data-direction:p-6',
       'transition-opacity duration-250 ease-out',
       'data-starting-style:opacity-0',
       'data-ending-style:opacity-0',
@@ -109,7 +111,7 @@ export const inputFeedback = {
       'data-starting-style:ease-in',
       'data-ending-style:duration-200',
       'data-ending-style:ease-in',
-      '@2xl/media-root:p-8',
+      'not-data-direction:bg-black/35 not-data-direction:rounded-full not-data-direction:backdrop-blur-sm',
       'not-data-direction:[transition-property:opacity,scale]',
       'not-data-direction:duration-600',
       'not-data-direction:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',
@@ -127,7 +129,7 @@ export const inputFeedback = {
       'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end'
     ),
     // Icons in the bubble
-    icon: 'hidden w-9 h-9',
+    icon: 'hidden size-[calc(var(--media-icon-size)*1.5)]',
     // seek icon: shown for seekStep + seekToPercent; flipped for backward; slides in on active
     shownSeek: cn(
       'group-data-direction/input-indicator:block',
@@ -144,6 +146,7 @@ export const inputFeedback = {
     ),
     shownPlay: cn(
       'group-data-[status=play]/input-indicator:block',
+      'group-data-[status=play]/input-indicator:translate-x-px',
       'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=play]/input-indicator:animate-media-pop-in'
     ),
     time: 'tabular-nums',
