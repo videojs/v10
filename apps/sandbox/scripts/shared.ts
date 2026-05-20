@@ -18,6 +18,8 @@ export interface Change {
 }
 
 export function getChanges(): Change[] {
+  // `src/` is gitignored and generated from `templates/` on setup/build.
+  fs.ensureDirSync(SRC);
   const res: Result = compareSync(SRC, TEMPLATES, { compareContent: true });
 
   return (res.diffSet ?? [])

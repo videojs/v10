@@ -1,13 +1,14 @@
 import '@app/styles.css';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
-import { translations } from '@app/shared/i18n/sandbox-translations';
-import { registerI18n } from '@videojs/core/i18n';
+import { ensureSandboxLocale, type SandboxLocaleTag } from '@app/shared/i18n/sandbox-locales';
 import '@videojs/html/i18n';
 import '@videojs/html/video/player';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import {
+  getInitialLocale,
   onAutoplayChange,
+  onLocaleChange,
   onLoopChange,
   onMutedChange,
   onPreloadChange,
@@ -18,12 +19,23 @@ import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-registerI18n('ja', translations.ja);
-
 const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
+let locale = getInitialLocale();
+
+function updateProviderLang(tag: SandboxLocaleTag): void {
+  document.querySelector('media-i18n-provider')?.setAttribute('lang', tag);
+}
+
+function applyLocale(next: SandboxLocaleTag): void {
+  locale = next;
+  ensureSandboxLocale(locale);
+  updateProviderLang(locale);
+}
 
 async function render() {
+  ensureSandboxLocale(locale);
+
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
   if (!tag) return;
 
@@ -32,16 +44,16 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player>
-      <media-i18n-provider lang="ja">
+    <media-i18n-provider lang="${locale}">
+      <video-player>
         <${tag} class="aspect-video max-w-4xl mx-auto">
           <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
             ${renderStoryboard(storyboard)}
           </video>
           ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
         </${tag}>
-      </media-i18n-provider>
-    </video-player>
+      </video-player>
+    </media-i18n-provider>
   `;
 }
 
@@ -74,5 +86,15 @@ onLoopChange((loop) => {
 
 onPreloadChange((preload) => {
   state.preload = preload;
+  render();
+});
+
+onLocaleChange((next) => {
+  const provider = document.querySelector('media-i18n-provider');
+  if (provider) {
+    applyLocale(next);
+    return;
+  }
+  locale = next;
   render();
 });

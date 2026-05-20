@@ -57,7 +57,7 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo' 'src/core/i18n/**/*.d.ts' 'src/core/i18n/**/*.d.ts.map'"
   },
   "dependencies": {
     "@videojs/spf": "workspace:*",

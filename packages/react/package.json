@@ -100,9 +100,14 @@
       "default": "./dist/default/i18n/index.js"
     },
     "./i18n/locales/*": {
-      "types": "./dist/dev/i18n/locales/*/index.d.ts",
-      "development": "./dist/dev/i18n/locales/*/index.js",
-      "default": "./dist/default/i18n/locales/*/index.js"
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
+    },
+    "./i18n/all": {
+      "types": "./dist/dev/i18n/all.d.ts",
+      "development": "./dist/dev/i18n/all.js",
+      "default": "./dist/default/i18n/all.js"
     }
   },
   "scripts": {
@@ -111,7 +116,7 @@
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist docs types '*.tsbuildinfo'",
+    "clean": "rimraf --glob dist docs types '*.tsbuildinfo' 'src/i18n/**/*.d.ts' 'src/i18n/**/*.d.ts.map'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts react"
   },
   "peerDependencies": {

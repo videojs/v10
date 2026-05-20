@@ -1,4 +1,5 @@
 import type { SKINS } from '@app/constants';
+import { SANDBOX_LOCALE_OPTIONS, type SandboxLocaleTag } from '@app/shared/i18n/sandbox-locales';
 import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Platform, Preset, Skin, Styling } from '@app/types';
@@ -23,6 +24,9 @@ type NavbarProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  locale: SandboxLocaleTag;
+  onLocaleChange: (value: SandboxLocaleTag) => void;
+  showLocalePicker: boolean;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
@@ -73,6 +77,9 @@ export function Navbar({
   onLoopChange,
   preload,
   onPreloadChange,
+  locale,
+  onLocaleChange,
+  showLocalePicker,
   availableSources,
   isBackgroundVideo,
   isSimpleHlsVideo,
@@ -150,6 +157,9 @@ export function Navbar({
           onLoopChange={onLoopChange}
           preload={preload}
           onPreloadChange={onPreloadChange}
+          locale={locale}
+          onLocaleChange={onLocaleChange}
+          showLocalePicker={showLocalePicker}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -186,6 +196,9 @@ type SettingsMenuProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  locale: SandboxLocaleTag;
+  onLocaleChange: (value: SandboxLocaleTag) => void;
+  showLocalePicker: boolean;
 };
 
 function SettingsMenu({
@@ -197,6 +210,9 @@ function SettingsMenu({
   onLoopChange,
   preload,
   onPreloadChange,
+  locale,
+  onLocaleChange,
+  showLocalePicker,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -205,6 +221,7 @@ function SettingsMenu({
   const mutedId = useId();
   const loopId = useId();
   const preloadId = useId();
+  const localeId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -261,8 +278,17 @@ function SettingsMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5"
+          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5 max-h-[min(24rem,70vh)] overflow-y-auto"
         >
+          {showLocalePicker && (
+            <SelectItem
+              id={localeId}
+              label="Language"
+              value={locale}
+              onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
+              options={SANDBOX_LOCALE_OPTIONS}
+            />
+          )}
           <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
           <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
           <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
