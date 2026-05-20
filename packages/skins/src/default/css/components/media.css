@@ -4,8 +4,10 @@
 
 .media-default-skin ::slotted(video),
 .media-default-skin ::slotted(vimeo-video),
+.media-default-skin ::slotted(youtube-video),
 .media-default-skin video,
-.media-default-skin .media-vimeo {
+.media-default-skin .media-vimeo,
+.media-default-skin .media-youtube {
   display: block;
   width: 100%;
   height: 100%;
@@ -14,7 +16,9 @@
 }
 .media-default-skin ::slotted(video),
 .media-default-skin ::slotted(vimeo-video),
-.media-default-skin .media-vimeo {
+.media-default-skin ::slotted(youtube-video),
+.media-default-skin .media-vimeo,
+.media-default-skin .media-youtube {
   overflow: hidden;
   border-radius: var(--media-video-border-radius);
 }
@@ -24,7 +28,9 @@
 
 .media-default-skin:fullscreen ::slotted(video),
 .media-default-skin:fullscreen ::slotted(vimeo-video),
+.media-default-skin:fullscreen ::slotted(youtube-video),
 .media-default-skin:fullscreen video,
-.media-default-skin:fullscreen .media-vimeo {
+.media-default-skin:fullscreen .media-vimeo,
+.media-default-skin:fullscreen .media-youtube {
   object-fit: contain;
 }

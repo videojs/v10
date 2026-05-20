@@ -33,6 +33,11 @@ export const root = (isShadowDOM: boolean) =>
       '[&_.media-vimeo]:block [&_.media-vimeo]:w-full [&_.media-vimeo]:h-full [&_.media-vimeo]:overflow-hidden [&_.media-vimeo]:rounded-(--media-video-border-radius)':
         !isShadowDOM,
     },
+    // YouTube embed element
+    {
+      '[&_.media-youtube]:block [&_.media-youtube]:w-full [&_.media-youtube]:h-full [&_.media-youtube]:overflow-hidden [&_.media-youtube]:rounded-(--media-video-border-radius)':
+        !isShadowDOM,
+    },
     '[--media-video-border-radius:var(--media-border-radius,0.75rem)]',
     '[--media-controls-background-color:transparent]',
     '[--media-controls-transition-duration:100ms]',

@@ -29,6 +29,7 @@ type NavbarProps = {
   isMuxVideo: boolean;
   isMuxAudio: boolean;
   isVimeoVideo: boolean;
+  isYoutubeVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -52,6 +53,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'simple-hls-video': 'Simple HLS Video',
   'dash-video': 'DASH Video',
   'vimeo-video': 'Vimeo Video',
+  'youtube-video': 'Youtube Video',
   audio: 'Audio',
   'background-video': 'Background Video',
 };
@@ -81,6 +83,7 @@ export function Navbar({
   isMuxVideo,
   isMuxAudio,
   isVimeoVideo,
+  isYoutubeVideo,
   platforms,
   stylings,
   presets,
