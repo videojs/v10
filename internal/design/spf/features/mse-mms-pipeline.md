@@ -214,6 +214,10 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
 
 ## See also
 
+- [presentation-modeling.md](../presentation-modeling.md) — architectural
+  deep-dive on the format-neutral data shape and per-track resolution
+  layer; setup behaviors here gate on `isResolvedPresentation` from
+  that layer
 - [text-track-architecture.md](../text-track-architecture.md) — peer
   architectural deep-dive (different domain, same SPF shape)
 - [packages/spf/docs/hls-engine.md](../../../../packages/spf/docs/hls-engine.md)

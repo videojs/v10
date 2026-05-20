@@ -248,6 +248,10 @@ snapshot between operations rather than awaiting `send()` directly.
 
 ## See also
 
+- [presentation-modeling.md](../presentation-modeling.md) — architectural
+  deep-dive on the format-neutral data shape and per-track resolution;
+  this feature consumes resolved per-track segments surfaced by that
+  layer
 - [text-track-architecture.md](../text-track-architecture.md) — peer
   architectural deep-dive (text-track-loader internals; same SPF
   shape as v/a)

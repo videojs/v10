@@ -207,6 +207,11 @@ semantics — every replaced source runs through the same parser.
 
 ## See also
 
+- [presentation-modeling.md](../presentation-modeling.md) —
+  architectural deep-dive on the format-neutral data shape, parser
+  interface, and per-track resolution layer. The multi-writer
+  `state.presentation` pipeline this feature characterizes is anchored
+  in that doc's data model
 - [clusters.md § Engine lifecycle](./clusters.md#engine-lifecycle) —
   cross-cutting concerns around engine instantiation, source loading,
   and per-source identity resets (this feature + `preload-modes`)

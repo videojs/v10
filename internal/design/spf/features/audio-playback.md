@@ -213,6 +213,10 @@ Consumers wanting language-aware selection today must override
 
 ## See also
 
+- [presentation-modeling.md](../presentation-modeling.md) —
+  architectural deep-dive on the format-neutral data shape and parser
+  interface that surfaces audio renditions (the `parsePresentation`
+  contract this feature's recognition phase relies on)
 - [multi-language-audio.md](./multi-language-audio.md) — future
   extension on top of this feature
 - [clusters.md § Track & variant registry](./clusters.md#track--variant-registry)

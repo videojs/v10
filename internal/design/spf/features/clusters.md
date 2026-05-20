@@ -267,6 +267,8 @@ A side-effecting fetch (or segment-load) wrapper produces signals another featur
 Read alongside:
 
 - `internal/design/spf/features/README.md` *(not yet written)* — registry index
+- `internal/design/spf/presentation-modeling.md` — architectural deep-dive for the format-neutral data shape, parser interface, and per-track resolution layer that every feature consumes
+- `internal/design/spf/text-track-architecture.md` — peer architectural deep-dive for the text-track implementation
 - `internal/design/spf/conventions/behaviors.md` — when to define a behavior; per-type specialization details
 - `internal/design/spf/conventions/signals.md` — multi-writer slot conventions
 - `internal/design/spf/conventions/config.md` — when a tunable becomes config vs hardcoded
