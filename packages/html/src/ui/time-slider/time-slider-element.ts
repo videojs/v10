@@ -107,7 +107,16 @@ export class TimeSliderElement extends MediaElement {
 
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      label: this.label,
+      changeThrottle: this.changeThrottle,
+      step: this.step,
+      largeStep: this.largeStep,
+      orientation: this.orientation,
+      disabled: this.disabled,
+      thumbAlignment: this.thumbAlignment,
+      formatOptions: { locale: this.#i18n.locale },
+    });
   }
 
   protected override update(_changed: PropertyValues): void {

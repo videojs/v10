@@ -5,7 +5,7 @@ import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectTime } fro
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useState } from 'react';
 
-import { useTranslator } from '../../i18n';
+import { useLocale, useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -42,9 +42,19 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const time = usePlayer(selectTime);
     const buffer = usePlayer(selectBuffer);
     const translator = useTranslator();
+    const locale = useLocale();
 
     const [core] = useState(() => new TimeSliderCore());
-    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment, changeThrottle, formatOptions });
+    core.setProps({
+      label,
+      step,
+      largeStep,
+      orientation,
+      disabled,
+      thumbAlignment,
+      changeThrottle,
+      formatOptions: { ...formatOptions, locale: formatOptions?.locale ?? locale },
+    });
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);

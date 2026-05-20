@@ -111,7 +111,16 @@ export class VolumeSliderElement extends MediaElement {
 
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      label: this.label,
+      step: this.step,
+      largeStep: this.largeStep,
+      wheelStep: this.wheelStep,
+      orientation: this.orientation,
+      disabled: this.disabled,
+      thumbAlignment: this.thumbAlignment,
+      formatLocale: this.#i18n.locale,
+    });
   }
 
   protected override update(_changed: PropertyValues): void {
