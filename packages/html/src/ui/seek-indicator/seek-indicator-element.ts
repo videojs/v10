@@ -5,7 +5,7 @@ import type { PropertyDeclarationMap } from '@videojs/element';
 import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
-/** Custom element shell for the `<media-seek-indicator>` tag — transient overlay shown while the user scrubs the timeline. */
+/** Custom element shell for the `<media-seek-indicator>` tag — transient overlay shown when seek-step input actions fire (keyboard, gesture). */
 export class SeekIndicatorElement extends InputIndicatorElement<SeekIndicatorCore.State> {
   /** Custom element tag name. */
   static readonly tagName = 'media-seek-indicator';
@@ -14,7 +14,7 @@ export class SeekIndicatorElement extends InputIndicatorElement<SeekIndicatorCor
     closeDelay: { type: Number, attribute: 'close-delay' },
   } satisfies PropertyDeclarationMap<'closeDelay'>;
 
-  /** Milliseconds the indicator stays visible after the user stops scrubbing. */
+  /** Milliseconds the indicator stays visible after the last seek action. */
   closeDelay: number | undefined;
 
   readonly #core = new SeekIndicatorCore();

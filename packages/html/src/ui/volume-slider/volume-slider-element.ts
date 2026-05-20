@@ -35,11 +35,11 @@ export class VolumeSliderElement extends MediaElement {
 
   /** Accessible label announced for the slider. */
   label = VolumeSliderCore.defaultProps.label;
-  /** Volume step (0–1 range) for arrow-key changes. */
+  /** Volume step (percent of 0–100 range) for arrow-key changes. */
   step = VolumeSliderCore.defaultProps.step;
-  /** Volume step (0–1 range) for Page Up/Down or Shift+arrow changes. */
+  /** Volume step (percent of 0–100 range) for Page Up/Down or Shift+arrow changes. */
   largeStep = VolumeSliderCore.defaultProps.largeStep;
-  /** Volume step (0–1 range) per wheel tick. */
+  /** Volume step (percent of 0–100 range) per wheel tick. */
   wheelStep = VolumeSliderCore.defaultProps.wheelStep;
   /** Layout direction — `horizontal` or `vertical`. */
   orientation = VolumeSliderCore.defaultProps.orientation;

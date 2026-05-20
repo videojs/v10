@@ -30,7 +30,7 @@ export interface StatusIndicatorState extends IndicatorLifecycleState {
     : never;
   /** Human-readable label for the current status, or null when idle. */
   label: string | null;
-  /** Optional value string (e.g. a playback rate or volume percent). */
+  /** Optional value string (e.g. a volume percent). */
   value: string | null;
 }
 

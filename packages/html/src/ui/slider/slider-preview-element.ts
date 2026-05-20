@@ -16,7 +16,7 @@ export class SliderPreviewElement extends MediaElement {
     overflow: { type: String },
   } satisfies PropertyDeclarationMap<'overflow'>;
 
-  /** How the preview behaves near track edges — `clamp` (default), `allow`, or `hide`. */
+  /** How the preview behaves near track edges — `clamp` (default) or `visible`. */
   overflow: SliderPreviewOverflow = 'clamp';
 
   readonly #ctx = new ContextConsumer(this, {
