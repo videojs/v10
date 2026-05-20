@@ -183,6 +183,10 @@ point of having a single config knob.
   and maps directly to `(preload, loadActivated)`. Forward-buffer +
   back-buffer plans also build on top of the gates this feature
   produces.
+- **source-replacement** — the per-source `loadActivated` reset is one
+  piece of the broader source-replacement cleanup cascade. New
+  behaviors that join the engine and gate on resolved presentation must
+  honor that cascade or in-place source replacement breaks silently.
 
 ## See also
 

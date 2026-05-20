@@ -222,6 +222,10 @@ snapshot between operations rather than awaiting `send()` directly.
 
 - **preload-modes** — produces the gate state this feature consumes.
   The 4-state load FSM maps directly to `(preload, loadActivated)`.
+- **source-replacement** — segment-loader actors and in-flight fetches
+  tear down via the same resolved/unresolved cascade that drives source
+  replacement. New buffer-management behaviors that gate on resolved
+  presentation must honor the cleanup contract.
 - **mse-mms-pipeline** — owns the `SourceBufferActor` this feature's
   operations land on, plus the loader-actor lifecycle
   (`setupVideoBufferActors` etc.). The fetch path
