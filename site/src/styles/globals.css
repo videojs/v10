@@ -193,7 +193,8 @@
   }
 }
 @custom-variant dark (&:where(.dark, .dark *));
-@custom-variant banner-dismissed (&:where(.banner-dismissed, .banner-dismissed *));
+@custom-variant legacy-banner-dismissed (&:where(.legacy-banner-dismissed, .legacy-banner-dismissed *));
+@custom-variant prerelease-banner-dismissed (&:where(.prerelease-banner-dismissed, .prerelease-banner-dismissed *));
 
 @layer base {
   .list-decimal .list-decimal {

@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/astro';
 // (e.g. a broken PR) out of Sentry — we only want live request failures.
 const isLambdaRuntime = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-// Alert for production (videojs.org) and branch-deploy (next.videojs.org) only.
+// Alert for production (videojs.org) and branch-deploy (main.videojs.org) only.
 // Deploy-preview errors are the PR author's to triage before merge.
 const context = import.meta.env.CONTEXT;
 const isAlertingContext = context === 'production' || context === 'branch-deploy';
