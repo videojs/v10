@@ -1,5 +1,6 @@
 import { resolveControlAttrs, TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { I18nController } from '../../i18n/instance';
@@ -48,7 +49,11 @@ export class TimeElement extends MediaElement {
       type: this.type,
       negativeSign: this.negativeSign,
       label: this.label,
-      formatOptions: { locale: this.#i18n.locale },
+      formatOptions: {
+        locale: this.#i18n.locale,
+        translate: (key) =>
+          key === 'remaining' ? resolveTranslationPhrase(this.#i18n.value, 'remainingTimeSuffix') : 'remaining',
+      },
     });
   }
 

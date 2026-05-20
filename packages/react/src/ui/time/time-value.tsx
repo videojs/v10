@@ -2,6 +2,7 @@
 
 import { resolveControlAttrs, TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
@@ -37,7 +38,13 @@ export const Value = forwardRef(function Value(
     type,
     negativeSign,
     label,
-    formatOptions: { ...formatOptions, locale: formatOptions?.locale ?? locale },
+    formatOptions: {
+      ...formatOptions,
+      locale: formatOptions?.locale ?? locale,
+      translate:
+        formatOptions?.translate ??
+        ((key) => (key === 'remaining' ? resolveTranslationPhrase(translator, 'remainingTimeSuffix') : 'remaining')),
+    },
   });
 
   if (!time) {
