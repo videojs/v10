@@ -143,13 +143,13 @@ The first three entries are the lead-in:
 
 ```ts
 syncPreload,
-trackPlaybackInitiated,
+trackLoadTriggers,
 resolvePresentation,
 ```
 
 **`syncPreload`** bidirectionally syncs `state.preload` and the media element's `preload` property — DOM-side values feed state on attach or source change, and state-side values propagate back to the element. A configurable default (`'metadata'`) backfills when neither side has supplied a value. This makes the preload mode reactive — anything downstream that wants to react to preload changes (for example, "should we eagerly fetch the manifest?") can subscribe to a signal instead of polling the DOM.
 
-**`trackPlaybackInitiated`** sets `state.playbackInitiated` to `true` once the user has tried to play (the element is no longer paused). It's a small reactor that watches the media element's `play`/`pause` events. Why it matters: behaviors that should only run after the user interacts (or after autoplay fires) can gate on `state.playbackInitiated`.
+**`trackLoadTriggers`** sets `state.loadActivated` to `true` once a load-overriding event has fired for the current source — DOM `play` or `seeking`, or immediately on entry if the element is already in such a state (covering autoplay, native controls, or direct-DOM `play()` paths). The slot is sticky-true within a source identity (a URL or `mediaElement` change resets it). Why it matters: combined with `state.preload`, this is the engine's loading-semantics contract — behaviors that should defer work under `preload="none"` can gate on `!isBlockingPreload(preload) || loadActivated`, mirroring native `HTMLMediaElement` behavior. The adapter's `play()` co-writes `loadActivated = true` to signal programmatic intent. See [`features/preload-modes.md`](../../../internal/design/spf/features/preload-modes.md) for the full feature surface.
 
 **`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentation` and, when it sees an unresolved value (`{ url }` with no `id`), fetches the multivariant playlist, parses it, and writes the resolved `Presentation` back to the same slot. The lifecycle lives in one slot: a caller writes `{ url }`, the resolver replaces it with a fully populated `Presentation`. Behaviors that only need the URL read `presentation.url`; behaviors that need resolved fields use `isResolvedPresentation` (or check for `selectionSets`) to narrow.
 

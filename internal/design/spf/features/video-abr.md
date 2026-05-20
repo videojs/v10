@@ -102,6 +102,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 
 ## See also
 
+- [preload-modes.md](./preload-modes.md) — gates this feature indirectly via `resolvePresentation`; ABR can't fire until the presentation is resolved, and resolution is gated by the preload-modes contract.
 - [mse-mms-pipeline.md](./mse-mms-pipeline.md) — where `setupVideoBufferActors` lives and where `createTrackedFetch` is wired into segment-loader construction; bandwidth sampling is structurally co-located with MSE buffer setup, ABR selection is the separate consumer documented here.
 - [conventions/behaviors.md](../conventions/behaviors.md) — when to define a behavior; behavior shape
 - [conventions/signals.md](../conventions/signals.md) — multi-writer slot conventions (relevant for `selectedVideoTrackId` write coordination if audio ABR follows the same pattern)
