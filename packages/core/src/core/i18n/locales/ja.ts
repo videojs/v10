@@ -25,7 +25,7 @@ export default {
   timeCurrent: '現在の時間',
   timeDuration: '長さ',
   timeRemaining: '残りの時間',
-  playbackRateAria: '再生レート',
+  playbackRateAria: '再生レート {rate}',
   timeSliderValueTextRange: '{duration}の{current}',
   volumeSliderValueTextMuted: '{percent}、ミュート',
   indicatorMuted: 'ミュート',

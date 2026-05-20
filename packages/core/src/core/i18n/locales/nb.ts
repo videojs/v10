@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Aktuell tid',
   timeDuration: 'Varighet',
   timeRemaining: 'Gjenstående tid',
-  playbackRateAria: 'Avspillingshastighet',
+  playbackRateAria: 'Avspillingshastighet {rate}',
   timeSliderValueTextRange: '{current} av {duration}',
   volumeSliderValueTextMuted: '{percent}, dempet',
   indicatorMuted: 'Dempet',

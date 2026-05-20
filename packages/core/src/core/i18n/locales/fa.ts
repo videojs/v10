@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'زمان فعلی',
   timeDuration: 'مدت',
   timeRemaining: 'زمان باقی‌مانده',
-  playbackRateAria: 'سرعت پخش',
+  playbackRateAria: 'سرعت پخش {rate}',
   timeSliderValueTextRange: '{current} از {duration}',
   volumeSliderValueTextMuted: '{percent}, بی‌صدا',
   indicatorMuted: 'بی‌صدا',

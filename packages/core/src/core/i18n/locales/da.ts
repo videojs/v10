@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Aktuel tid',
   timeDuration: 'Varighed',
   timeRemaining: 'Resterende tid',
-  playbackRateAria: 'Afspilningsrate',
+  playbackRateAria: 'Afspilningsrate {rate}',
   timeSliderValueTextRange: '{current} af {duration}',
   volumeSliderValueTextMuted: '{percent}, lydløs',
   indicatorMuted: 'Lydløs',

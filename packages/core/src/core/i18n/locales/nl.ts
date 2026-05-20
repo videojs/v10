@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Huidige tijd',
   timeDuration: 'Tijdsduur',
   timeRemaining: 'Resterende tijd',
-  playbackRateAria: 'Afspeelsnelheid',
+  playbackRateAria: 'Afspeelsnelheid {rate}',
   timeSliderValueTextRange: '{current} van {duration}',
   volumeSliderValueTextMuted: '{percent}, gedempt',
   indicatorMuted: 'Gedempt',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Aktuálny čas',
   timeDuration: 'Čas trvania',
   timeRemaining: 'Zostávajúci čas',
-  playbackRateAria: 'Rýchlosť prehrávania',
+  playbackRateAria: 'Rýchlosť prehrávania {rate}',
   timeSliderValueTextRange: '{current} z {duration}',
   volumeSliderValueTextMuted: '{percent}, stlmené',
   indicatorMuted: 'Stlmené',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Süre',
   timeDuration: 'Toplam Süre',
   timeRemaining: 'Kalan Süre',
-  playbackRateAria: 'Oynatma Hızı',
+  playbackRateAria: 'Oynatma Hızı {rate}',
   timeSliderValueTextRange: '{current} / {duration}',
   volumeSliderValueTextMuted: '{percent}, sessiz',
   indicatorMuted: 'Sessiz',

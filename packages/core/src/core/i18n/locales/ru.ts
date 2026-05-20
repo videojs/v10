@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Текущее время',
   timeDuration: 'Продолжительность',
   timeRemaining: 'Оставшееся время',
-  playbackRateAria: 'Скорость воспроизведения',
+  playbackRateAria: 'Скорость воспроизведения {rate}',
   timeSliderValueTextRange: '{current} из {duration}',
   volumeSliderValueTextMuted: '{percent}, без звука',
   indicatorMuted: 'Без звука',

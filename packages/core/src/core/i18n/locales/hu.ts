@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Aktuális időpont',
   timeDuration: 'Hossz',
   timeRemaining: 'Hátralévő idő',
-  playbackRateAria: 'Lejátszási sebesség',
+  playbackRateAria: 'Lejátszási sebesség {rate}',
   timeSliderValueTextRange: '{current} / {duration}',
   volumeSliderValueTextMuted: '{percent}, némítva',
   indicatorMuted: 'Némítva',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Esošais laiks',
   timeDuration: 'Ilgums',
   timeRemaining: 'Atlikušais laiks',
-  playbackRateAria: 'Atskaņošanas ātrums',
+  playbackRateAria: 'Atskaņošanas ātrums {rate}',
   timeSliderValueTextRange: '{current} no {duration}',
   volumeSliderValueTextMuted: '{percent}, izslēgts',
   indicatorMuted: 'Skaņa izslēgta',

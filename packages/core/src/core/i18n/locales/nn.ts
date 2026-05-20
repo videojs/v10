@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Aktuell tid',
   timeDuration: 'Varigheit',
   timeRemaining: 'Tid attende',
-  playbackRateAria: 'Avspelingshastigheit',
+  playbackRateAria: 'Avspelingshastigheit {rate}',
   timeSliderValueTextRange: '{current} av {duration}',
   volumeSliderValueTextMuted: '{percent}, dempa',
   indicatorMuted: 'Dempa',

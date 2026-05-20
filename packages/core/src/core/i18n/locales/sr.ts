@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Trenutno vreme',
   timeDuration: 'Vreme trajanja',
   timeRemaining: 'Preostalo vreme',
-  playbackRateAria: 'Stopa reprodukcije',
+  playbackRateAria: 'Stopa reprodukcije {rate}',
   timeSliderValueTextRange: '{current} od {duration}',
   volumeSliderValueTextMuted: '{percent}, utišano',
   indicatorMuted: 'Utišano',

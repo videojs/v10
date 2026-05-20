@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Praegune aeg',
   timeDuration: 'Kestus',
   timeRemaining: 'Järelejäänud aeg',
-  playbackRateAria: 'Taasesituse kiirus',
+  playbackRateAria: 'Taasesituse kiirus {rate}',
   timeSliderValueTextRange: '{current} / {duration}',
   volumeSliderValueTextMuted: '{percent}, vaigistatud',
   indicatorMuted: 'Vaigistatud',

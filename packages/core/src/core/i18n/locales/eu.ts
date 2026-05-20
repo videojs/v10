@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Uneko denbora',
   timeDuration: 'Iraupena',
   timeRemaining: 'Gelditzen den denbora',
-  playbackRateAria: 'Abiadura',
+  playbackRateAria: 'Abiadura {rate}',
   timeSliderValueTextRange: '{current} / {duration}',
   volumeSliderValueTextMuted: '{percent}, isilarazia',
   indicatorMuted: 'Isilarazia',

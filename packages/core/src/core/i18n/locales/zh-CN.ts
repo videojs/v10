@@ -25,7 +25,7 @@ export default {
   timeCurrent: '当前时间',
   timeDuration: '时长',
   timeRemaining: '剩余时间',
-  playbackRateAria: '播放速度',
+  playbackRateAria: '播放速度 {rate}',
   timeSliderValueTextRange: '{current}，总时长 {duration}',
   volumeSliderValueTextMuted: '{percent}，已静音',
   indicatorMuted: '已静音',

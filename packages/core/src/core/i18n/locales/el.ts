@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Τρέχων χρόνος',
   timeDuration: 'Συνολικός χρόνος',
   timeRemaining: 'Υπολοιπόμενος χρόνος',
-  playbackRateAria: 'Ρυθμός αναπαραγωγής',
+  playbackRateAria: 'Ρυθμός αναπαραγωγής {rate}',
   timeSliderValueTextRange: '{current} από {duration}',
   volumeSliderValueTextMuted: '{percent}, σε σίγαση',
   indicatorMuted: 'Σε σίγαση',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Поточний час',
   timeDuration: 'Тривалість',
   timeRemaining: 'Час, що залишився',
-  playbackRateAria: 'Швидкість відтворення',
+  playbackRateAria: 'Швидкість відтворення {rate}',
   timeSliderValueTextRange: '{current} з {duration}',
   volumeSliderValueTextMuted: '{percent}, вимкнено',
   indicatorMuted: 'Вимкнено',
