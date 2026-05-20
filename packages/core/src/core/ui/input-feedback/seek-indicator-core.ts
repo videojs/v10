@@ -23,7 +23,7 @@ export interface SeekIndicatorState extends IndicatorLifecycleState {
   seekTotal: number;
   /** Display string for the current burst total (e.g. `"30s"`), or null when not a seek-step burst. */
   value: string | null;
-  /** Formatted current playback time at the start of the burst. */
+  /** Formatted current playback time at the latest seek event. */
   currentTime: string;
 }
 

@@ -61,7 +61,7 @@ export class PopoverElement extends MediaElement {
   delay = PopoverCore.defaultProps.delay;
   /** Milliseconds to wait before closing once hover ends. */
   closeDelay = PopoverCore.defaultProps.closeDelay;
-  /** Element the popover is constrained to when computing position. */
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new PopoverCore();

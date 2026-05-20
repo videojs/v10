@@ -19,7 +19,7 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
   mediaContext: MediaContext;
   /** Context that propagates the registered container element to descendants. */
   containerContext: ContainerContext;
-  /** Factory called once per provider element to create its store instance. */
+  /** Factory called per provider element to create its store. */
   factory: () => Store;
 }
 

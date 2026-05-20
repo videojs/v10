@@ -14,7 +14,7 @@ export interface SeekIndicatorRootProps
   extends UIComponentProps<'div', SeekIndicatorCore.State>,
     SeekIndicatorCore.Props {}
 
-/** Visible feedback for seek input (keyboard, gesture). Renders only while a seek is in flight. */
+/** Visible feedback for seek input (keyboard, gesture). Mounts when a seek burst starts and unmounts after the close transition. */
 export const SeekIndicatorRoot = forwardRef(function SeekIndicatorRoot(
   componentProps: SeekIndicatorRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

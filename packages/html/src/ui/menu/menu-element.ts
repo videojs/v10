@@ -64,7 +64,7 @@ export class MenuElement extends MediaElement {
   closeOnEscape = MenuCore.defaultProps.closeOnEscape;
   /** Close the menu when the user clicks outside it. */
   closeOnOutsideClick = MenuCore.defaultProps.closeOnOutsideClick;
-  /** Element the menu is constrained to when computing position. */
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new MenuCore();

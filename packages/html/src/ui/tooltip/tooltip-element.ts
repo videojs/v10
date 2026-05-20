@@ -75,7 +75,7 @@ export class TooltipElement extends MediaElement {
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   /** Disables the tooltip when true. */
   disabled = TooltipCore.defaultProps.disabled;
-  /** Element the tooltip is constrained to when computing position. */
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
