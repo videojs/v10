@@ -17,6 +17,7 @@ interface ParsedFlags {
   media?: string;
   'source-url'?: string;
   'install-method'?: string;
+  'embed-method'?: string;
 }
 
 function printVersionHeader(): void {
@@ -98,6 +99,15 @@ function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialIns
     partial.installMethod = validateInstallMethod(flags['install-method'], framework);
   }
 
+  if (flags['embed-method'] !== undefined) {
+    const v = flags['embed-method'];
+    if (v !== 'packaged' && v !== 'ejected') {
+      console.error(`Invalid embed method: "${v}". Must be "packaged" or "ejected".`);
+      process.exit(1);
+    }
+    partial.embedMethod = v;
+  }
+
   return partial;
 }
 
@@ -109,7 +119,8 @@ Installation flags (for docs how-to/installation):
   --skin <default|minimal>
   --source-url <url>
   --media <html5-video|html5-audio|hls|background-video>
-  --install-method <cdn|npm|pnpm|yarn|bun>`;
+  --install-method <cdn|npm|pnpm|yarn|bun>
+  --embed-method <packaged|ejected>`;
 
 export async function handleDocs(flags: ParsedFlags, positionals: string[]): Promise<void> {
   if (flags.help) {
@@ -154,12 +165,14 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
   // Installation page: generate code and replace markers
   if (slug === 'how-to/installation') {
     const partial = buildPartialFlags(flags, framework);
+    const isBackgroundVideo = partial.preset === 'background-video';
     const needsPrompting =
       !partial.preset ||
       (!partial.skin && !partial.rawSkin) ||
       partial.sourceUrl === undefined ||
       !partial.media ||
-      !partial.installMethod;
+      !partial.installMethod ||
+      (!isBackgroundVideo && partial.embedMethod === undefined);
 
     if (needsPrompting) {
       p.intro('Video.js Installation');
