@@ -6,7 +6,6 @@ import { forwardRef } from 'react';
 import { Thumbnail, type ThumbnailProps } from '../thumbnail/thumbnail';
 import { useSliderContext } from './context';
 
-/** Props for the Slider.Thumbnail component. */
 export interface SliderThumbnailProps extends Omit<ThumbnailProps, 'time'> {}
 
 /** Thumbnail that tracks the slider's pointer position, derived from `pointerValue`. */

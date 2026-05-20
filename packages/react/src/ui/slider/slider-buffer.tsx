@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useSliderContext } from './context';
 
-/** Props for the Slider.Buffer component. */
 export interface SliderBufferProps extends UIComponentProps<'div', SliderState> {}
 
 /** Displays the buffered range on the slider track. */

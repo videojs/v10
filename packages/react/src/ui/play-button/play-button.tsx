@@ -6,7 +6,6 @@ import { selectPlayback } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
-/** Props for the PlayButton component. */
 export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCore.State>, PlayButtonCore.Props {}
 
 /**

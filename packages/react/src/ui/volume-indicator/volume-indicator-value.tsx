@@ -8,7 +8,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useVolumeIndicatorContext } from './context';
 
-/** Props for the VolumeIndicator.Value component. */
 export interface VolumeIndicatorValueProps extends UIComponentProps<'span', VolumeIndicatorCore.State> {}
 
 /** Displays the current volume value formatted for display. */

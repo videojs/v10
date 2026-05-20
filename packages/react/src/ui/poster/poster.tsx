@@ -9,7 +9,6 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
-/** Props for the Poster component. */
 export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
 /**

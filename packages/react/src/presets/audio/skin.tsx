@@ -28,7 +28,6 @@ import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
 
-/** Props for the AudioSkin component. */
 export type AudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {

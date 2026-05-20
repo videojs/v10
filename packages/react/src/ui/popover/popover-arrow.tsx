@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { usePopoverContext } from './context';
 
-/** Props for the Popover.Arrow component. */
 export interface PopoverArrowProps extends UIComponentProps<'div', PopoverState> {}
 
 /** Decorative arrow pointing from the popup toward the trigger. Hidden from assistive technology. */

@@ -7,7 +7,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
-/** Props for the Menu.Label component. */
 export interface MenuLabelProps extends UIComponentProps<'div', MenuState> {}
 
 /** Non-interactive label for a group of items. Renders a `<div>`. */

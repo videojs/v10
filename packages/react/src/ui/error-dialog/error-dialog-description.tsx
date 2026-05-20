@@ -10,7 +10,6 @@ import { useErrorDialogContext } from './context';
 
 const FALLBACK_MESSAGE = 'An error occurred. Please try again.';
 
-/** Props for the ErrorDialog.Description component. */
 export interface ErrorDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
 /** Description that defaults to the latest error message and falls back to a generic prompt. */

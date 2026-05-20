@@ -6,7 +6,6 @@ import { selectTime } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
-/** Props for the SeekButton component. */
 export interface SeekButtonProps extends UIComponentProps<'button', SeekButtonCore.State>, SeekButtonCore.Props {}
 
 /**

@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useSliderContext } from './context';
 
-/** Props for the Slider.Track component. */
 export interface SliderTrackProps extends UIComponentProps<'div', SliderState> {}
 
 /** Contains the slider's visual track and interactive hit zone. */

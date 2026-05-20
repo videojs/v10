@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useTooltipContext } from './context';
 
-/** Props for the Tooltip.Arrow component. */
 export interface TooltipArrowProps extends UIComponentProps<'div', TooltipState> {}
 
 /** Decorative arrow pointing from the tooltip toward the trigger. Hidden from assistive technology. */

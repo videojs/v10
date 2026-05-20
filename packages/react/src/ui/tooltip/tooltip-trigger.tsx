@@ -8,7 +8,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useTooltipContext } from './context';
 
-/** Props for the Tooltip.Trigger component. */
 export interface TooltipTriggerProps extends UIComponentProps<'button', TooltipState> {}
 
 /** Element that triggers the tooltip on hover and focus. Renders a `<button>` element. */

@@ -1,7 +1,6 @@
 import { cn } from '@videojs/utils/style';
 import type { BaseSkinProps } from '../types';
 
-/** Props for the BackgroundVideoSkin component. */
 export type BackgroundVideoSkinProps = BaseSkinProps;
 
 /**

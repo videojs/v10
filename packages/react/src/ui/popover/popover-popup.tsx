@@ -18,7 +18,6 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { usePopoverContext } from './context';
 
-/** Props for the Popover.Popup component. */
 export interface PopoverPopupProps extends UIComponentProps<'div', PopoverState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };

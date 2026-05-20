@@ -10,7 +10,6 @@ import { renderElement } from '../../utils/use-render';
 import { MenuTrigger } from '../menu/menu-trigger';
 import { usePlaybackRateMenuContext } from './context';
 
-/** Props for the PlaybackRateMenu.Trigger component. */
 export interface PlaybackRateMenuTriggerProps extends UIComponentProps<'button', PlaybackRateMenuCore.State> {}
 
 function hasChildren(children: ReactNode): boolean {

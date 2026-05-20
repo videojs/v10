@@ -8,7 +8,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
-/** Props for the Menu.View component. */
 export interface MenuViewProps extends UIComponentProps<'div', MenuState> {}
 
 /** Root menu view inside the menu viewport. */

@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useSliderContext } from './context';
 
-/** Props for the Slider.Fill component. */
 export interface SliderFillProps extends UIComponentProps<'div', SliderState> {}
 
 /** Displays the filled portion from start to the current value. */

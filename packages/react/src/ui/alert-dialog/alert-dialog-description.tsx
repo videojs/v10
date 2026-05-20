@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useAlertDialogContext } from './context';
 
-/** Props for the AlertDialog.Description component. */
 export interface AlertDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
 /** Accessible description for the dialog, wired to the popup's `aria-describedby`. */

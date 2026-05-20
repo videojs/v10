@@ -12,7 +12,6 @@ import { useOptionalTooltipContext } from '../tooltip/context';
 
 const DISPLAY_NAME = 'LiveButton';
 
-/** Props for the LiveButton component. */
 export interface LiveButtonProps extends UIComponentProps<'button', LiveButtonCore.State>, LiveButtonCore.Props {}
 
 /**

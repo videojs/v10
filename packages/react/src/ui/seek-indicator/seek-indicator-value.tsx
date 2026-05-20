@@ -8,7 +8,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSeekIndicatorContext } from './context';
 
-/** Props for the SeekIndicator.Value component. */
 export interface SeekIndicatorValueProps extends UIComponentProps<'div', SeekIndicatorCore.State> {}
 
 /** Displays the formatted seek delta (e.g. "+10s"). */

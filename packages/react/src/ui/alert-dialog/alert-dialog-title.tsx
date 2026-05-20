@@ -6,7 +6,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
 import { useAlertDialogContext } from './context';
 
-/** Props for the AlertDialog.Title component. */
 export interface AlertDialogTitleProps extends UIComponentProps<'h2', AlertDialogCore.State> {}
 
 /** Accessible title for the dialog, wired to the popup's `aria-labelledby`. */

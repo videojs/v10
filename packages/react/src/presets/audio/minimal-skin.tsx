@@ -26,7 +26,6 @@ import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 
-/** Props for the MinimalAudioSkin component. */
 export type MinimalAudioSkinProps = BaseSkinProps;
 
 const SEEK_TIME = 10;
