@@ -38,11 +38,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/Ba
 
 ## Behavior
 
-Opens the WebKit AirPlay playback target picker and reflects session state. AirPlay is a WebKit-only feature, so the button reports `availability: "unsupported"` outside Safari (macOS and iOS) — when unsupported, the toggle does nothing. On supported platforms availability flips to `"available"` once Safari discovers at least one AirPlay receiver on the local network, and `"unavailable"` otherwise.
+Opens the WebKit AirPlay playback target picker and reflects session state. AirPlay is a WebKit-only feature, so the button reports `availability: "unsupported"` outside Safari (macOS and iOS). On supported platforms availability flips to `"available"` once Safari discovers at least one AirPlay receiver on the local network, and `"unavailable"` otherwise.
+
+The toggle is a no-op unless `availability` is `"available"` — clicking the button while `"unsupported"` or `"unavailable"` will not open the picker. Style the button accordingly (see [Styling](#styling) below) so its appearance matches its actual behavior.
 
 The component consumes the unified <DocsLink slug="reference/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
 
-Note that WebKit does not expose a `"connecting"` intermediate state — `airplayState` flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. The picker itself acts as the disconnect UI, so the toggle always opens it regardless of current state.
+WebKit does not expose a `"connecting"` intermediate state — `airplayState` flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. When connected, the picker itself acts as the disconnect UI.
 
 ## Styling
 
@@ -93,7 +95,7 @@ media-airplay-button[data-availability="unsupported"] {
 
 ## Accessibility
 
-Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when disconnected, "Stop AirPlay" when connected, "Connecting" while transitioning. Override with the `label` prop — either a string or a function that receives the current state. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when disconnected, "Stop AirPlay" when connected. (The component also supports a `"Connecting"` label, but WebKit AirPlay never emits a `connecting` state, so that label is unreachable in practice.) Override with the `label` prop — either a string or a function that receives the current state. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
 
 ## Examples
 

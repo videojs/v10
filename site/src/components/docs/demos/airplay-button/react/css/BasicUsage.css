@@ -20,7 +20,8 @@
   backdrop-filter: blur(10px);
 }
 
-/* AirPlay not supported on this platform — render as disabled. */
+/* Inactive states: the toggle is a no-op unless availability is "available". */
+.media-airplay-button[data-availability="unavailable"],
 .media-airplay-button[data-availability="unsupported"] {
   cursor: not-allowed;
   opacity: 0.5;
