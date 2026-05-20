@@ -112,6 +112,14 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
+/**
+ * Default video player skin with a complete media UI.
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<TimeSlider>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 

@@ -119,9 +119,21 @@ function getTemplateHTML() {
   `;
 }
 
+/**
+ * Default audio player skin web component with a complete audio UI.
+ *
+ * To customize, build from primitive elements like `<media-controls>`,
+ * `<media-play-button>`, and `<media-time-slider>` instead of using
+ * this preset.
+ *
+ * @see https://videojs.org/docs/framework/html/concepts/skins
+ */
 export class AudioSkinElement extends SkinElement {
+  /** Custom element tag name. */
   static readonly tagName = 'audio-skin';
+  /** Shadow DOM stylesheet shared across all instances. */
   static styles = createShadowStyle(styles);
+  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

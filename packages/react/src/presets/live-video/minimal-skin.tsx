@@ -91,6 +91,8 @@ function VolumePopover(): ReactNode {
  * duration / remaining time displays. A flexible spacer stretches between
  * the start and end button groups so they sit at opposite edges of the
  * control bar.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;

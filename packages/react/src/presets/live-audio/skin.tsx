@@ -59,6 +59,8 @@ function VolumePopover(): ReactNode {
  * but omits the time slider and the current / duration time displays. A
  * flexible spacer stretches between the play and volume controls so they
  * sit at opposite edges of the control bar.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
