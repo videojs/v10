@@ -210,6 +210,9 @@ Consumers wanting language-aware selection today must override
   channels-aware codec-change selection.
 - **audio-only-composition** *(not yet documented, candidate)* —
   engine variant optimized for audio-only sources.
+- **capability-probing** *(candidate)* — narrows the audio candidate
+  set selection runs over; unsupported codecs filtered upstream of
+  the `selectAudioTrack` picker.
 
 ## See also
 

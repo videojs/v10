@@ -180,6 +180,11 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
   rides `resolvePresentation`'s resolved/unresolved transitions, which
   only flip to resolved once the preload gate (`preload !== 'none'` or
   `loadActivated`) is open.
+- **capability-probing** *(candidate)* — owns the upstream codec
+  filtering that would prevent `createSourceBuffer`'s late-failure
+  throw from firing in practice. Today's `isCodecSupported` helper is
+  the seed primitive; capability-probing wraps it into a uniform
+  surface and adds multivariant-level filtering before selection.
 - **source-replacement** — the resolved/unresolved lifecycle
   `setupMediaSource` rides is the canonical mechanism for in-place
   source replacement. Detach-on-state-exit is what makes URL changes

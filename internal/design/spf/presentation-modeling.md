@@ -528,6 +528,10 @@ file format-specific architectural docs as siblings to this one
   the multi-writer `state.presentation` pipeline + the
   `isResolvedPresentation` cleanup contract every consumer rides.
   Required reading for the lifecycle picture.
+- [features/capability-probing.md](./features/capability-probing.md) —
+  post-parse consumer of the data shape this doc defines. Filters
+  `presentation.selectionSets` to drop browser-unsupported renditions
+  before selection runs. Parser stays format-neutral.
 - [features/clusters.md § Presentation modeling](./features/clusters.md#presentation-modeling)
   — the cluster description for this layer
 - [features/audio-playback.md](./features/audio-playback.md),
