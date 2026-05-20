@@ -83,4 +83,40 @@ describe('TooltipElement', () => {
 
     expect(tooltip.textContent).toBe('Reproducir');
   });
+
+  it('updates tooltip text when provider locale changes', async () => {
+    registerI18n('es', { play: 'Reproducir' });
+    registerI18n('fr', { play: 'Lire' });
+
+    ensureDefined(TestPlayerProviderElement);
+    ensureDefined(PlayButtonElement);
+    ensureDefined(TooltipElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+
+    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    button.setAttribute('commandfor', 'tip');
+
+    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    tooltip.id = 'tip';
+    tooltip.setAttribute('open', '');
+
+    document.body.append(player);
+    player.append(provider);
+    provider.append(button, tooltip);
+
+    await button.updateComplete;
+    await tooltip.updateComplete;
+    expect(tooltip.textContent).toBe('Reproducir');
+
+    provider.setAttribute('lang', 'fr');
+    await provider.updateComplete;
+    await button.updateComplete;
+    await tooltip.updateComplete;
+
+    expect(tooltip.textContent).toBe('Lire');
+  });
 });
