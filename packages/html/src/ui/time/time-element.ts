@@ -6,7 +6,9 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
+/** Custom element shell for the `<media-time>` tag — formatted media time (current, duration, or remaining). */
 export class TimeElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-time';
 
   static override properties = {
@@ -15,8 +17,11 @@ export class TimeElement extends MediaElement {
     label: { type: String },
   } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
 
+  /** Which time to display — `current`, `duration`, or `remaining`. */
   type: TimeType = TimeCore.defaultProps.type;
+  /** Character prefixed when the time is negative (e.g., remaining time). */
   negativeSign = TimeCore.defaultProps.negativeSign;
+  /** Accessible label override for the time element. */
   label = TimeCore.defaultProps.label;
 
   readonly #core = new TimeCore();

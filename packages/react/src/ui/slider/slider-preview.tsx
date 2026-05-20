@@ -10,6 +10,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSliderContext } from './context';
 
+/** Props for the Slider.Preview component. */
 export interface SliderPreviewProps extends UIComponentProps<'div', SliderState> {
   /** How the preview handles the slider boundaries. `'clamp'` keeps the preview within bounds, `'visible'` allows it to extend beyond the edges. */
   overflow?: SliderPreviewOverflow | undefined;

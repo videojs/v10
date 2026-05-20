@@ -9,10 +9,12 @@ import { renderElement } from '../../utils/use-render';
 import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';
 import { StatusIndicatorProvider } from './context';
 
+/** Props for the StatusIndicator.Root component. */
 export interface StatusIndicatorRootProps
   extends UIComponentProps<'div', StatusIndicatorCore.State>,
     StatusIndicatorCore.Props {}
 
+/** Visible status feedback for a configured set of input actions (e.g. fullscreen, captions). */
 export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
   componentProps: StatusIndicatorRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

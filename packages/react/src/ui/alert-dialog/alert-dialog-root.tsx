@@ -11,14 +11,17 @@ import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { AlertDialogContextProvider } from './context';
 
+/** Props for the AlertDialog.Root component. */
 export interface AlertDialogRootProps extends AlertDialogProps {
   /** Called when the open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean) => void;
   /** Called after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** AlertDialog compound parts to render under shared dialog context. */
   children?: ReactNode;
 }
 
+/** Provides dialog state and lifecycle to nested AlertDialog parts. */
 export function AlertDialogRoot({
   open: controlledOpen,
   defaultOpen = AlertDialogCore.defaultProps.defaultOpen,

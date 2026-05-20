@@ -10,6 +10,7 @@ import { useVolumeIndicatorContext } from './context';
 
 export interface VolumeIndicatorValueProps extends UIComponentProps<'span', VolumeIndicatorCore.State> {}
 
+/** Displays the current volume value formatted for display. */
 export const VolumeIndicatorValue = forwardRef(function VolumeIndicatorValue(
   componentProps: VolumeIndicatorValueProps,
   forwardedRef: ForwardedRef<HTMLSpanElement>

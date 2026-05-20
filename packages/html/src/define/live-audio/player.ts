@@ -8,7 +8,9 @@ const { ProviderMixin } = createPlayer({
   features: liveAudioFeatures,
 });
 
+/** Custom element shell for the `<live-audio-player>` tag — provides the player context and store. */
 export class LiveAudioPlayerElement extends ProviderMixin(MediaElement) {
+  /** Custom element tag name. */
   static readonly tagName = 'live-audio-player';
 }
 

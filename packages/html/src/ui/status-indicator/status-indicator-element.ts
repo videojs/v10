@@ -10,7 +10,9 @@ import type { PropertyDeclarationMap } from '@videojs/element';
 import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
+/** Custom element shell for the `<media-status-indicator>` tag — transient on-screen badge for input actions like mute or fullscreen toggle. */
 export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicatorCore.State> {
+  /** Custom element tag name. */
   static readonly tagName = 'media-status-indicator';
 
   static override properties = {
@@ -18,7 +20,9 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
     closeDelay: { type: Number, attribute: 'close-delay' },
   } satisfies PropertyDeclarationMap<'actions' | 'closeDelay'>;
 
+  /** Whitespace- or comma-separated list of input actions this indicator responds to. */
   actions: string | undefined;
+  /** Milliseconds the indicator stays visible after the action fires. */
   closeDelay: number | undefined;
 
   readonly #core = new StatusIndicatorCore();

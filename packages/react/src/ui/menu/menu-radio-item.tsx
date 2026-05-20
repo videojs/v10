@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext, useMenuRadioGroupContext, useSubMenuContext } from './context';
 
+/** Props for the Menu.RadioItem component. */
 export interface MenuRadioItemProps extends UIComponentProps<'div', MenuState> {
   /** The value this item represents. */
   value: string;

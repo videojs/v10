@@ -9,12 +9,15 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** Props for the MuxVideo component. */
 export interface MuxVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof MuxMediaProps>,
     Partial<MuxMediaProps> {
+  /** Content rendered inside the underlying `<video>` element (such as `<track>` children). */
   children?: ReactNode;
 }
 
+/** Renders a `<video>` element backed by the Mux media engine and attaches it to the player. */
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
   const media = useMediaInstance(MuxVideoMedia);
   const attachRef = useAttachMedia(media);

@@ -20,7 +20,9 @@ const FALLBACK_MESSAGE = 'An error occurred. Please try again.';
 
 let idCounter = 0;
 
+/** Custom element shell for the `<media-error-dialog>` tag — auto-opens when the player reports an error and shows its message. */
 export class ErrorDialogElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-error-dialog';
 
   readonly #core = new ErrorDialogCore();

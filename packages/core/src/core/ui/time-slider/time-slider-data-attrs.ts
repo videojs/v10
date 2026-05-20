@@ -2,6 +2,7 @@ import { SliderDataAttrs } from '../slider/slider-data-attrs';
 import type { StateAttrMap } from '../types';
 import type { TimeSliderState } from './time-slider-core';
 
+/** Data attributes the time slider reflects from {@link TimeSliderState}. */
 export const TimeSliderDataAttrs = {
   ...SliderDataAttrs,
   /** Present when a seek operation is in progress. */

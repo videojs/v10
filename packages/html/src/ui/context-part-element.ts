@@ -6,7 +6,9 @@ import { MediaElement } from './media-element';
 
 /** Shape that compound context values must satisfy for parts to consume. */
 export interface PartContextValue<State extends object> {
+  /** Parent compound state propagated to descendant parts. */
   state: State;
+  /** Maps state keys to `data-*` attribute names. */
   stateAttrMap: StateAttrMap<State>;
 }
 

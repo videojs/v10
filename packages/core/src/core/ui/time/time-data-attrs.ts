@@ -1,6 +1,7 @@
 import type { StateAttrMap } from '../types';
 import type { TimeState } from './time-core';
 
+/** Data attributes the time display reflects from {@link TimeState}. */
 export const TimeDataAttrs = {
   /** The type of time being displayed. */
   type: 'data-type',

@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSubMenuContext } from './context';
 
+/** Props for the Menu.Back component. */
 export interface MenuBackProps extends UIComponentProps<'button', MenuState> {
   /** Accessible label for the back button. */
   label?: string;

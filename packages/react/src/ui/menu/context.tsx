@@ -4,14 +4,23 @@ import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
 import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
+/** Internal state shared between Menu compound parts. */
 export interface MenuContextValue {
+  /** Core state machine for the menu. */
   core: MenuCore;
+  /** Imperative menu handle returned by `createMenu`. */
   menu: MenuApi;
+  /** Snapshot of the current menu state for rendered parts. */
   state: MenuState;
+  /** Mapping of state fields to `data-*` attributes for styling. */
   stateAttrMap: StateAttrMap<MenuState>;
+  /** Stable ID for the menu content element. */
   contentId: string;
+  /** CSS anchor name used to position the menu against its trigger. */
   anchorName: string;
+  /** Boundary used to constrain the menu's popup size. */
   boundary: PositioningBoundary;
+  /** Surrounding player container, or `null` when used outside a player. */
   container: MediaContainer | null;
   /** ID of the currently visible submenu, or null when at root view. */
   activeSubMenuId: string | null;
@@ -29,12 +38,14 @@ const MenuContext = createContext<MenuContextValue | null>(null);
 
 export const MenuContextProvider = MenuContext.Provider;
 
+/** Read the surrounding Menu context. Throws when used outside a `Menu.Root`. */
 export function useMenuContext(): MenuContextValue {
   const ctx = useContext(MenuContext);
   if (!ctx) throw new Error('Menu compound components must be used within a Menu.Root');
   return ctx;
 }
 
+/** Read the surrounding Menu context if present, returning `null` outside a `Menu.Root`. */
 export function useOptionalMenuContext(): MenuContextValue | null {
   return useContext(MenuContext);
 }

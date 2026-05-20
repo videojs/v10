@@ -5,6 +5,7 @@ import type { PopoverAlign, PopoverSide } from '../popover/popover-core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
+/** Props for the tooltip core. */
 export interface TooltipProps {
   /** Which side of the trigger the tooltip appears on. */
   side?: PopoverSide | undefined;
@@ -24,8 +25,10 @@ export interface TooltipProps {
   disabled?: boolean | undefined;
 }
 
+/** Raw transition state pushed into the tooltip core. */
 export interface TooltipInput extends TransitionState {}
 
+/** Reactive state surfaced by the tooltip core. */
 export interface TooltipState extends TransitionFlags {
   /** Whether the tooltip is currently visible. */
   open: boolean;
@@ -37,7 +40,9 @@ export interface TooltipState extends TransitionFlags {
   align: PopoverAlign;
 }
 
+/** Behavior core for the tooltip — derives open state and ARIA wiring. */
 export class TooltipCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<TooltipProps> = {
     side: 'top',
     align: 'center',
@@ -51,6 +56,7 @@ export class TooltipCore {
 
   #props = { ...TooltipCore.defaultProps };
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: TooltipProps) {
     if (props) this.setProps(props);
   }
@@ -61,6 +67,7 @@ export class TooltipCore {
 
   #input: TooltipInput | null = null;
 
+  /** Push transition input from the surrounding transition controller. */
   setInput(input: TooltipInput): void {
     this.#input = input;
   }
@@ -76,6 +83,7 @@ export class TooltipCore {
     };
   }
 
+  /** Compute popover and role attributes for the tooltip popup. */
   getPopupAttrs(_state: TooltipState) {
     return {
       popover: 'manual' as const,
@@ -85,7 +93,10 @@ export class TooltipCore {
 }
 
 export namespace TooltipCore {
+  /** Alias for {@link TooltipProps}. */
   export type Props = TooltipProps;
+  /** Alias for {@link TooltipState}. */
   export type State = TooltipState;
+  /** Alias for {@link TooltipInput}. */
   export type Input = TooltipInput;
 }

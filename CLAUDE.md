@@ -494,31 +494,90 @@ export function onEvent<K extends keyof HTMLElementEventMap>(...): Promise<...>;
 
 **One example per function** — Consolidate into a single representative example.
 
-**No JSDoc for self-documenting code** — Skip JSDoc when names are clear:
+**No JSDoc for self-documenting internal code** — For symbols that are *not* part of a published-package public API (see [JSDoc on Published Exports](#jsdoc-on-published-exports)), skip JSDoc when names are clear:
 
 ```ts
 // No JSDoc needed
-export function supportsIdleCallback(): boolean { ... }
+function supportsIdleCallback(): boolean { ... }
 get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
-
-// Bad - comment restates the obvious
-/** Media element contract. */
-export interface Media extends HTMLMediaElement {}
-
-/** Feature capability availability. */
-export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
-
-// Good - no comment needed
-export interface Media extends HTMLMediaElement {}
-export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 ```
 
-**API reference exports are different** — Exports that feed the api-docs-builder (`use*` hooks, `*Controller` classes, `create*` factories, selectors, and `@public`-annotated exports) need richer JSDoc for the generated reference pages. See the `api-reference` skill → `references/util-conventions.md` for the full rules. Key differences from above:
+Published-package public-API exports follow the stronger rule in the next section.
 
-- `@param name - description` is required (the builder extracts these into parameter tables).
-- Multi-overload functions get per-overload JSDoc with `@label` tags (not a single JSDoc block).
-- `@public` opts in exports that don't match naming conventions.
+### JSDoc on Published Exports
+
+Every public-API export in a published package carries JSDoc that survives into the shipped `.d.ts`. The same comment feeds three downstream channels: the api-docs-builder's reference pages, IDE hover-docs, and AI coding agents that read `.d.ts` directly.
+
+**Public-API export** — any symbol reachable through a `package.json` `"exports"` entry. Includes the main barrel and every subpath leaf. Internal helpers (not behind an `"exports"` entry) follow [Minimal JSDoc](#minimal-jsdoc).
+
+**What gets JSDoc:**
+
+- Every exported function, class, interface, type, and const — one-sentence summary. Skip the summary on **leaf wrapper types** that extend a base and add no fields of their own (e.g. `interface FooProps extends BarProps {}`, `type FooSkinProps = BaseSkinProps`) — there's nothing to say beyond the base's JSDoc.
+- Every field a leaf `*Props` / `*Config` / `*Options` / `*State` interface or type *adds*. Inherited fields keep their JSDoc on the base; don't re-document unless the leaf narrows or specializes the field's meaning.
+- Every public (non-`#`, non-`@internal`) member on an exported class — methods, properties, constructor. Skip JSDoc on **uniform plumbing methods on `*Core` classes** (`setProps`, `getState`, `getAttrs`, `setMedia`) — they're predictable across every core and the method name carries the meaning. Behavior methods (`toggle`, `cycle`, `seek`, etc.) still get JSDoc.
+- Every overload of a public function — see overload rules below.
+
+**Voice** — one sentence per summary. Declarative, active, present tense. Lead with semantic meaning, not type information; the type signature is already the doc for shape. Skip filler ("In order to", "simply", "basically"). Aligns with [`writing-style.md`](.claude/skills/docs/references/writing-style.md).
+
+```ts
+// ✅ Good — says what the type doesn't
+/** Image displayed before playback. URL or render prop. */
+poster?: string | RenderProp<Poster.State>;
+
+// ❌ Restates the type
+/** A string or render prop for the poster. */
+poster?: string | RenderProp<Poster.State>;
+```
+
+```ts
+// ✅ Good — leaf gets a summary; inherited fields stay at the base
+/** Props for the PlayButton component. */
+export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCore.State>, PlayButtonCore.Props {}
+
+// ❌ Re-documenting fields that already live on UIComponentProps / PlayButtonCore.Props
+export interface PlayButtonProps extends UIComponentProps<...>, PlayButtonCore.Props {
+  /** Class name. */
+  className?: ...;
+}
+```
+
+**Monolithic surfaces** — skins and player factories carry richer prose plus a single `@see` link to an existing concept guide or reference page. No `@example` blocks (they drift with the source and triple the JSDoc volume).
+
+```ts
+// ✅ Good — Ring 3 (skin)
+/**
+ * Default video player skin with a complete media UI.
+ *
+ * To customize, build from primitives like <Controls.Root>, <PlayButton>,
+ * and <TimeSlider> instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
+export function VideoSkin(props: VideoSkinProps): ReactNode;
+```
+
+The `@see` target must already exist. Don't commit the docs team to new pages — link to what's published.
+
+Today's monolithic set:
+
+| Surface | `@see` |
+| --- | --- |
+| All skin variants (React + HTML, including Tailwind siblings) | `concepts/skins` (per framework) |
+| React `createPlayer` | `reference/create-player` |
+| HTML `createPlayer` | `reference/html-create-player` |
+
+Tailwind variants share the body of their non-Tailwind sibling and add a one-liner noting the variant.
+
+**API reference details (functions and overloads):**
+
+- `@param name - description` is required for parameters of exported functions — the api-docs-builder extracts these into parameter tables.
+- Multi-overload functions get per-overload JSDoc with `@label` tags. See `.claude/skills/api-reference/references/util-conventions.md`.
+- `@public` opts in exports that don't match the api-docs-builder's naming conventions (`use*`, `*Controller`, `create*`, `select*`).
+
+**No `// TODO: describe` placeholders.** If you can't describe an export, ask in the PR or open a follow-up — don't ship a TODO comment.
+
+**Preserve existing authored content.** Voice A is the standard for *new* JSDoc on previously-undocumented exports — it isn't a license to delete or shrink existing prose, `@example` blocks, or `@returns` descriptions that an author wrote thoughtfully. Only edit existing JSDoc when it's factually wrong, stale, or genuinely contradicts the rule (e.g., `@param` that only restates the TS signature). When in doubt, keep what's there.
 
 ## Design Documents
 

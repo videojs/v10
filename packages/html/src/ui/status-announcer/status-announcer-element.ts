@@ -7,13 +7,16 @@ import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
+/** Custom element shell for the `<media-status-announcer>` tag — ARIA live region that announces player input actions to screen readers. */
 export class StatusAnnouncerElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-status-announcer';
 
   static override properties = {
     closeDelay: { type: Number, attribute: 'close-delay' },
   } satisfies PropertyDeclarationMap<'closeDelay'>;
 
+  /** Milliseconds the announced label stays in the live region before being cleared. */
   closeDelay: number | undefined;
 
   readonly #core = new StatusAnnouncerCore();

@@ -4,6 +4,7 @@ import type { MediaErrorState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaErrorCapable } from '../../media/predicate';
 
+/** Player feature exposing the current media error and a dismiss action. */
 export const errorFeature = definePlayerFeature({
   name: 'error',
   state: ({ set }): MediaErrorState => ({

@@ -42,7 +42,9 @@ function isLabelTrigger(el: HTMLElement): el is TriggerElement {
   return '$state' in el;
 }
 
+/** Custom element shell for the `<media-tooltip>` tag — anchored tooltip that auto-discovers a labeled trigger via `commandfor`. */
 export class TooltipElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-tooltip';
 
   static override properties = {
@@ -57,14 +59,23 @@ export class TooltipElement extends MediaElement {
     boundary: { type: String },
   } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary'>;
 
+  /** Controlled open state. */
   open = TooltipCore.defaultProps.open;
+  /** Initial open state for uncontrolled usage. */
   defaultOpen = TooltipCore.defaultProps.defaultOpen;
+  /** Side of the trigger to anchor the tooltip to. */
   side = TooltipCore.defaultProps.side;
+  /** Alignment of the tooltip relative to its trigger along the anchor side. */
   align = TooltipCore.defaultProps.align;
+  /** Milliseconds to wait before opening on hover/focus. */
   delay = TooltipCore.defaultProps.delay;
+  /** Milliseconds to wait before closing once hover/focus ends. */
   closeDelay = TooltipCore.defaultProps.closeDelay;
+  /** When true, hovering the tooltip itself does not keep it open. */
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
+  /** Disables the tooltip when true. */
   disabled = TooltipCore.defaultProps.disabled;
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
@@ -134,6 +145,7 @@ export class TooltipElement extends MediaElement {
     this.#disconnect = null;
   }
 
+  /** Dismiss the tooltip. Optional `reason` is forwarded to listeners on the `open-change` event. */
   close(reason: TooltipOpenChangeReason = 'imperative-action'): void {
     this.#tooltip?.close(reason);
   }

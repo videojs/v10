@@ -4,6 +4,7 @@ import type { MediaSourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaSourceCapable } from '../../media/predicate';
 
+/** Player feature exposing the current source, readiness, and a load action. */
 export const sourceFeature = definePlayerFeature({
   name: 'source',
   state: ({ target, signals }): MediaSourceState => ({

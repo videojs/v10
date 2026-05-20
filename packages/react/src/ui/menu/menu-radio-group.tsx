@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { MenuRadioGroupContextProvider, useMenuContext } from './context';
 
+/** Props for the Menu.RadioGroup component. */
 export interface MenuRadioGroupProps extends UIComponentProps<'div', MenuState> {
   /** The currently selected value. */
   value: string;

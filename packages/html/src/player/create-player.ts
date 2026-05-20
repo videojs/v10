@@ -14,10 +14,13 @@ import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin
 import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
 
+/** Configuration accepted by `createPlayer`. */
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
+  /** Feature set that determines the store's shape and behavior. */
   features: Features;
 }
 
+/** Bundle returned by `createPlayer` — a store factory, context, controller, and provider/container mixins. */
 export interface CreatePlayerResult<Store extends PlayerStore> {
   /** Context for consuming player in controllers. */
   context: PlayerContext<Store>;

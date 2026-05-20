@@ -5,7 +5,9 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaButtonElement } from '../media-button-element';
 
+/** Custom element shell for the `<media-captions-button>` tag — toggles subtitles/captions visibility on the media. */
 export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore> {
+  /** Custom element tag name. */
   static readonly tagName = 'media-captions-button';
 
   protected readonly core = new CaptionsButtonCore();

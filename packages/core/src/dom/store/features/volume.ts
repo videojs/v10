@@ -7,6 +7,7 @@ import { isMediaVolumeCapable } from '../../media/predicate';
 /** Volume to restore when unmuting at zero. */
 const UNMUTE_VOLUME = 0.25;
 
+/** Player feature exposing volume, mute, and the set/toggle actions. */
 export const volumeFeature = definePlayerFeature({
   name: 'volume',
   state: ({ target }): MediaVolumeState => ({

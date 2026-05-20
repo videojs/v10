@@ -6,7 +6,9 @@ import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
+/** Custom element shell for the `<media-hotkey>` tag — declarative keyboard shortcut bound to a player action. */
 export class HotkeyElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-hotkey';
 
   static override properties: PropertyDeclarationMap = {
@@ -17,10 +19,15 @@ export class HotkeyElement extends MediaElement {
     target: { type: String },
   };
 
+  /** Key combination(s) that trigger the hotkey (e.g., `"Space"`, `"k"`, `"0-9"`). */
   keys = '';
+  /** Player action name to invoke when the shortcut fires. */
   action: HotkeyActionName | (string & {}) = '';
+  /** Optional numeric argument passed to the action (e.g., seconds for `seekStep`). */
   value: number | undefined = undefined;
+  /** Disables the hotkey when true. */
   disabled = false;
+  /** Where the listener attaches — the player container (default) or the document. */
   target: 'player' | 'document' = 'player';
 
   readonly #player = new PlayerController(this, playerContext);

@@ -2,13 +2,19 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { MediaError } from '../../../core/media/media-error';
 
+/** Minimal host contract consumed by the native-HLS mixins. */
 export interface NativeMediaHost extends EventTarget {
+  /** Currently attached render target, or `null`. */
   readonly target: EventTarget | null;
+  /** Attach to a render target. */
   attach?(target: EventTarget): void;
+  /** Detach from the current render target. */
   detach?(): void;
+  /** Tear down the host. */
   destroy?(): void;
 }
 
+/** Mixin that exposes native `<video>` errors as a normalized `MediaError`. */
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
     #disconnect: AbortController | null = null;

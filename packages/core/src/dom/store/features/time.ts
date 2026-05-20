@@ -5,6 +5,7 @@ import { definePlayerFeature } from '../../feature';
 import { hasMetadata, isMediaBufferCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 import { signalKeys } from '../signal-keys';
 
+/** Player feature exposing current time, duration, seek state, and a seek action. */
 export const timeFeature = definePlayerFeature({
   name: 'time',
   state: ({ target, signals, set }): MediaTimeState => ({

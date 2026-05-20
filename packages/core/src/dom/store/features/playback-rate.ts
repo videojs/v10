@@ -6,6 +6,7 @@ import { isMediaPlaybackRateCapable } from '../../media/predicate';
 
 const DEFAULT_RATES: readonly number[] = [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2];
 
+/** Player feature exposing playback rate state and a setter. */
 export const playbackRateFeature = definePlayerFeature({
   name: 'playbackRate',
   state: ({ target }): MediaPlaybackRateState => ({

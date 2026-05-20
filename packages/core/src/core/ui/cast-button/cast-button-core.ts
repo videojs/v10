@@ -7,6 +7,7 @@ import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '..
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
 
+/** Props for the cast button core. */
 export interface CastButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: CastButtonState) => string) | undefined;
@@ -14,17 +15,23 @@ export interface CastButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the cast button core. */
 export interface CastButtonState extends ButtonState {
+  /** Current connection state to the remote playback receiver. */
   castState: RemotePlaybackConnectionState;
+  /** Whether a cast receiver is available, or unsupported on this platform. */
   availability: MediaFeatureAvailability;
 }
 
+/** Behavior core for the cast button — surfaces remote playback state and toggles casting. */
 export class CastButtonCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<CastButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
     availability: 'unsupported',
@@ -34,6 +41,7 @@ export class CastButtonCore {
   #props = { ...CastButtonCore.defaultProps };
   #media: MediaRemotePlaybackState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: CastButtonProps) {
     if (props) this.setProps(props);
   }
@@ -42,6 +50,7 @@ export class CastButtonCore {
     this.#props = defaults(props, CastButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: CastButtonState): string {
     const { label } = this.#props;
 
@@ -81,6 +90,7 @@ export class CastButtonCore {
     return this.state.current;
   }
 
+  /** Start or stop casting depending on current connection state (no-op when disabled or unavailable). */
   async toggle(media: MediaRemotePlaybackState): Promise<void> {
     if (this.#props.disabled) return;
     if (media.remotePlaybackAvailability !== 'available') return;
@@ -94,6 +104,8 @@ export class CastButtonCore {
 }
 
 export namespace CastButtonCore {
+  /** Alias for {@link CastButtonProps}. */
   export type Props = CastButtonProps;
+  /** Alias for {@link CastButtonState}. */
   export type State = CastButtonState;
 }

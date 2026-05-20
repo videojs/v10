@@ -2,11 +2,17 @@ import { createState, type State } from '@videojs/store';
 import { noop } from '@videojs/utils/function';
 import type { TransitionState } from '../../core/ui/transition';
 
+/** Imperative handle returned by {@link createTransition}. */
 export interface TransitionApi {
+  /** Reactive transition state for downstream cores. */
   state: State<TransitionState>;
+  /** Start the open transition; resolves once the open animation has been kicked off. */
   open(): Promise<void>;
+  /** Start the close transition on `el`; resolves once close animations settle. */
   close(el: HTMLElement | null): Promise<void>;
+  /** Cancel a pending transition without firing additional patches. */
   cancel(): void;
+  /** Tear down the transition controller. */
   destroy(): void;
 }
 

@@ -9,12 +9,15 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** Props for the HlsVideo component. */
 export interface HlsVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps>,
     Partial<HlsMediaProps> {
+  /** Content rendered inside the underlying `<video>` element (such as `<track>` children). */
   children?: ReactNode;
 }
 
+/** Renders a `<video>` element backed by the HLS engine and attaches it to the player. */
 export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(function HlsVideo({ children, ...props }, ref) {
   const media = useMediaInstance(HlsMedia);
   const attachRef = useAttachMedia(media);

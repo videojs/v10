@@ -39,6 +39,7 @@ export interface SliderInput {
   focused: boolean;
 }
 
+/** Reactive state surfaced by the slider core. */
 export interface SliderState {
   /** Current slider value in the min–max range. */
   value: number;
@@ -62,6 +63,7 @@ export interface SliderState {
 
 /** Base slider logic: value mapping, ARIA attrs, and step calculations. */
 export class SliderCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<SliderProps> = {
     label: '',
     step: 1,
@@ -74,6 +76,7 @@ export class SliderCore {
     max: 100,
   };
 
+  /** Default pointer/drag input snapshot used when no input has been pushed. */
   static readonly defaultInput: SliderInput = {
     pointerPercent: 0,
     dragPercent: 0,
@@ -85,14 +88,17 @@ export class SliderCore {
   #props = { ...SliderCore.defaultProps };
   #input: SliderInput = { ...SliderCore.defaultInput };
 
+  /** Current resolved props (defaults merged in). */
   get props(): Readonly<NonNullableObject<SliderProps>> {
     return this.#props;
   }
 
+  /** Current pointer/drag input snapshot. */
   get input(): Readonly<SliderInput> {
     return this.#input;
   }
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: SliderProps) {
     if (props) this.setProps(props);
   }
@@ -101,10 +107,12 @@ export class SliderCore {
     this.#props = defaults(props, SliderCore.defaultProps);
   }
 
+  /** Replace the current pointer/drag input snapshot. */
   setInput(input: SliderInput): void {
     this.#input = input;
   }
 
+  /** Build the public slider state from the given value and current input. */
   getSliderState(value: number): SliderState {
     const { orientation, disabled, thumbAlignment } = this.#props;
     const { pointerPercent, dragging, pointing, focused } = this.#input;
@@ -122,6 +130,7 @@ export class SliderCore {
     };
   }
 
+  /** Resolve the slider's ARIA label from props and state. */
   getLabel(state: SliderState): string {
     const { label } = this.#props;
 
@@ -149,6 +158,7 @@ export class SliderCore {
     };
   }
 
+  /** Convert a track percentage to a stepped, clamped value. */
   valueFromPercent(percent: number): number {
     const { min, max, step } = this.#props;
     const raw = min + (percent / 100) * (max - min);
@@ -161,6 +171,7 @@ export class SliderCore {
     return clamp(min + (percent / 100) * (max - min), min, max);
   }
 
+  /** Convert a value back to its track percentage. */
   percentFromValue(value: number): number {
     const { min, max } = this.#props;
     if (max === min) return 0;
@@ -181,6 +192,7 @@ export class SliderCore {
     return range > 0 ? (largeStep / range) * 100 : 0;
   }
 
+  /** Adjust a raw track percent so the thumb stays inside the track when `thumbAlignment === 'edge'`. */
   adjustPercentForAlignment(rawPercent: number, thumbSize: number, trackSize: number): number {
     if (this.#props.thumbAlignment === 'center' || trackSize === 0) {
       return rawPercent;
@@ -194,7 +206,10 @@ export class SliderCore {
 }
 
 export namespace SliderCore {
+  /** Alias for {@link SliderProps}. */
   export type Props = SliderProps;
+  /** Alias for {@link SliderState}. */
   export type State = SliderState;
+  /** Alias for {@link SliderInput}. */
   export type Input = SliderInput;
 }

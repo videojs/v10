@@ -16,6 +16,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
+/** Options for the `useSlider` hook. */
 export interface UseSliderOptions<State extends SliderState = SliderState>
   extends Pick<
     SliderOptions,
@@ -28,8 +29,11 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
     | 'onDragStart'
     | 'onDragEnd'
   > {
+  /** Project raw slider input into the rendered state shape consumed by the slider parts. */
   computeState: (input: SliderInput) => State;
+  /** Slider orientation. Defaults to `'horizontal'`. */
   orientation?: 'horizontal' | 'vertical' | undefined;
+  /** Disables interaction without unmounting. */
   disabled?: boolean | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Called for fill and pointer percents. */
   adjustPercent?: ((rawPercent: number, thumbSize: number, trackSize: number) => number) | undefined;
@@ -37,13 +41,21 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
   getCSSVars: (state: State) => Record<string, string>;
 }
 
+/** Return shape of the `useSlider` hook. */
 export interface UseSliderReturnValue<State extends SliderState = SliderState> {
+  /** Derived slider state for rendering. */
   state: State;
+  /** CSS variables that position the fill, thumb, and pointer markers. */
   cssVars: Record<string, string>;
+  /** Ref callback to attach to the slider root element. */
   rootRef: React.RefCallback<HTMLElement>;
+  /** Ref callback to attach to the slider thumb element. */
   thumbRef: React.RefCallback<HTMLElement>;
+  /** Pointer-event props for the slider root. */
   rootProps: SliderRootProps;
+  /** Style hints applied to the slider root (e.g. `touch-action`). */
   rootStyle: SliderRootStyle;
+  /** Keyboard, focus, and ARIA props for the slider thumb. */
   thumbProps: SliderThumbProps;
 }
 

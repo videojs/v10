@@ -19,6 +19,7 @@ import { useOptionalControlsContext } from '../controls/context';
 import { TooltipContextProvider } from './context';
 import { useTooltipGroup } from './group-context';
 
+/** Props for the Tooltip.Root component. */
 export interface TooltipRootProps extends CoreTooltipProps {
   /** Boundary used to constrain the popup size. */
   boundary?: PositioningBoundary;
@@ -26,9 +27,11 @@ export interface TooltipRootProps extends CoreTooltipProps {
   onOpenChange?: (open: boolean, details: TooltipChangeDetails) => void;
   /** Called after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Tooltip compound parts to render under shared tooltip context. */
   children?: ReactNode;
 }
 
+/** Provides tooltip state, hover/focus tracking, and group timing to nested Tooltip parts. */
 export function TooltipRoot({
   open: controlledOpen,
   defaultOpen = TooltipCore.defaultProps.defaultOpen,

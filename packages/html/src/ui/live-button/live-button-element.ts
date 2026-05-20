@@ -24,6 +24,7 @@ import { MediaElement } from '../media-element';
  * a single feature selector; the LiveButton needs three.
  */
 export class LiveButtonElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-live-button';
 
   static override properties: PropertyDeclarationMap = {
@@ -31,7 +32,9 @@ export class LiveButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
+  /** Disables button interaction when true. */
   disabled = false;
+  /** Accessible label override; falls back to a state-derived label. */
   label = '';
 
   protected readonly core = new LiveButtonCore();
@@ -40,6 +43,7 @@ export class LiveButtonElement extends MediaElement {
   protected readonly time = new PlayerController(this, playerContext, selectTime);
   protected readonly buffer = new PlayerController(this, playerContext, selectBuffer);
 
+  /** Reactive store for the underlying button state. */
   get $state(): State<LiveButtonCore.State> {
     return this.core.state;
   }

@@ -6,7 +6,9 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuElement } from '../menu/menu-element';
 
+/** Custom element shell for the `<media-playback-rate-menu>` tag — anchored menu of selectable playback rates. */
 export class PlaybackRateMenuElement extends MenuElement {
+  /** Custom element tag name. */
   static override readonly tagName = 'media-playback-rate-menu';
 
   static override properties = {
@@ -25,9 +27,13 @@ export class PlaybackRateMenuElement extends MenuElement {
     | 'disabled'
   >;
 
+  /** Accessible label override for the trigger button. */
   label = '';
+  /** Disables menu interaction when true. */
   disabled = false;
+  /** Default alignment overridden to center against the trigger. */
   override align: MenuElement['align'] = 'center';
+  /** Formats a playback rate value for display (e.g., `1` → `"1×"`). */
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
 
   readonly #core = new PlaybackRateMenuCore();
@@ -58,5 +64,6 @@ export class PlaybackRateMenuElement extends MenuElement {
 }
 
 export namespace PlaybackRateMenuElement {
+  /** Reactive state shape exposed by the playback-rate menu. */
   export type State = PlaybackRateMenuCore.State;
 }

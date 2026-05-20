@@ -11,13 +11,19 @@ import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProvider, PlayerProviderConstructor } from './types';
 
+/** Configuration accepted by `createProviderMixin`. */
 export interface ProviderMixinConfig<Store extends PlayerStore> {
+  /** Context the mixin broadcasts the player store on. */
   playerContext: PlayerContext<Store>;
+  /** Context that propagates the registered media element to descendants. */
   mediaContext: MediaContext;
+  /** Context that propagates the registered container element to descendants. */
   containerContext: ContainerContext;
+  /** Factory called per provider element to create its store. */
   factory: () => Store;
 }
 
+/** Mixin that turns a `MediaElement` subclass into a player-context provider that owns the store lifecycle. */
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;

@@ -6,8 +6,10 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaVolumeState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Coarse volume bucket used to pick a mute-button icon. */
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
+/** Props for the mute button core. */
 export interface MuteButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: MuteButtonState) => string) | undefined;
@@ -15,6 +17,7 @@ export interface MuteButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the mute button core. */
 export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, ButtonState {
   /**
    * Derived volume level:
@@ -26,12 +29,15 @@ export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, Button
   volumeLevel: VolumeLevel;
 }
 
+/** Behavior core for the mute button — derives volume level and toggles mute. */
 export class MuteButtonCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<MuteButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<MuteButtonState>({
     muted: false,
     volumeLevel: 'off',
@@ -41,6 +47,7 @@ export class MuteButtonCore {
   #props = { ...MuteButtonCore.defaultProps };
   #media: MediaVolumeState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: MuteButtonProps) {
     if (props) this.setProps(props);
   }
@@ -49,6 +56,7 @@ export class MuteButtonCore {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: MuteButtonState): string {
     const { label } = this.#props;
 
@@ -81,6 +89,7 @@ export class MuteButtonCore {
     return this.state.current;
   }
 
+  /** Toggle the muted state of the media (no-op when disabled). */
   toggle(media: MediaVolumeState): void {
     if (this.#props.disabled) return;
     media.toggleMuted();
@@ -88,7 +97,9 @@ export class MuteButtonCore {
 }
 
 export namespace MuteButtonCore {
+  /** Alias for {@link MuteButtonProps}. */
   export type Props = MuteButtonProps;
+  /** Alias for {@link MuteButtonState}. */
   export type State = MuteButtonState;
 }
 

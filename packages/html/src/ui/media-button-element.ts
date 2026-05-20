@@ -20,7 +20,9 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     disabled: { type: Boolean },
   };
 
+  /** Disables button interaction when true. */
   disabled = false;
+  /** Accessible label override; falls back to a state-derived label. */
   label = '';
 
   protected abstract readonly core: Core;
@@ -32,6 +34,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */
   protected readonly hotkeyAction: string | undefined = undefined;
 
+  /** Reactive store for the underlying button state. */
   get $state(): State<ButtonState> {
     return this.core.state;
   }

@@ -8,7 +8,9 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useControlsContext } from './context';
 
+/** Props for the Controls.Group component. */
 export interface ControlsGroupProps extends UIComponentProps<'div', ControlsCore.State> {
+  /** Controls to render inside the group. */
   children?: ReactNode | undefined;
 }
 

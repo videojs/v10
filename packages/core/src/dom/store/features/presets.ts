@@ -19,6 +19,7 @@ import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
 
+/** Feature preset for a video-on-demand player. */
 export const videoFeatures: VideoFeatures = [
   playbackFeature,
   playbackRateFeature,
@@ -34,6 +35,7 @@ export const videoFeatures: VideoFeatures = [
   errorFeature,
 ];
 
+/** Feature preset for an audio-on-demand player. */
 export const audioFeatures: AudioFeatures = [
   playbackFeature,
   playbackRateFeature,
@@ -45,6 +47,7 @@ export const audioFeatures: AudioFeatures = [
 ];
 
 // TODO: Add background video features (e.g., playback, source, buffer)
+/** Feature preset for a background (autoplay, muted, no UI) video player. */
 export const backgroundFeatures: BackgroundFeatures = [];
 
 /**

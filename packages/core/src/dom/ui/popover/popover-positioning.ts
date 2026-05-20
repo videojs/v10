@@ -4,28 +4,43 @@ import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover
 import { type PopoverCSSVarKey, PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { createDOMRect } from '../../utils/layout';
 
+/** Side and alignment options for positioning a popover relative to its trigger. */
 export interface PositioningOptions {
+  /** Side of the trigger to anchor to. */
   side: PopoverSide;
+  /** Alignment along the trigger's edge. */
   align: PopoverAlign;
 }
 
+/** Numeric offsets resolved from CSS custom properties for manual positioning. */
 export interface ManualOffsets {
+  /** Distance between popup and trigger along the side axis. */
   sideOffset: number;
+  /** Distance between popup and trigger along the alignment axis. */
   alignOffset: number;
+  /** Minimum distance from the boundary edge. */
   boundaryOffset?: number;
 }
 
 /** CSS custom property names for anchor-based positioning. */
 export interface PositioningCSSVars {
+  /** Side-offset variable name. */
   sideOffset: string;
+  /** Align-offset variable name. */
   alignOffset: string;
+  /** Boundary-offset variable name. */
   boundaryOffset: string;
+  /** Anchor width variable name. */
   anchorWidth: string;
+  /** Anchor height variable name. */
   anchorHeight: string;
+  /** Available-width variable name. */
   availableWidth: string;
+  /** Available-height variable name. */
   availableHeight: string;
 }
 
+/** Subset of inline style properties used for popover/tooltip positioning. */
 export interface PopoverPositionStyle {
   [key: string]: string | undefined;
   positionAnchor?: string;

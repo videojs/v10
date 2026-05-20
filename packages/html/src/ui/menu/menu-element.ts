@@ -35,7 +35,9 @@ import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
 
+/** Custom element shell for the `<media-menu>` tag — anchored, keyboard-navigable popover menu with submenu support. */
 export class MenuElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName: string = 'media-menu';
 
   static override properties = {
@@ -50,12 +52,19 @@ export class MenuElement extends MediaElement {
     'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick' | 'boundary'
   >;
 
+  /** Controlled open state. Set to `true` to show the menu, `false` to dismiss it. */
   open = MenuCore.defaultProps.open;
+  /** Initial open state for uncontrolled usage. */
   defaultOpen = MenuCore.defaultProps.defaultOpen;
+  /** Side of the trigger to anchor the menu to. */
   side = MenuCore.defaultProps.side;
+  /** Alignment of the menu relative to its trigger along the anchor side. */
   align = MenuCore.defaultProps.align;
+  /** Close the menu when Escape is pressed. */
   closeOnEscape = MenuCore.defaultProps.closeOnEscape;
+  /** Close the menu when the user clicks outside it. */
   closeOnOutsideClick = MenuCore.defaultProps.closeOnOutsideClick;
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new MenuCore();
@@ -153,6 +162,7 @@ export class MenuElement extends MediaElement {
     this.#menuViewTransition.destroy();
   }
 
+  /** Dismiss the menu. Optional `reason` is forwarded to listeners on the `open-change` event. */
   close(reason: MenuOpenChangeReason = 'imperative-action'): void {
     this.#menu?.close(reason);
   }

@@ -5,13 +5,16 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
 
+/** Custom element shell for the `<media-slider-value>` tag — text display of a slider's current or pointer value. */
 export class SliderValueElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-slider-value';
 
   static override properties = {
     type: { type: String },
   } satisfies PropertyDeclarationMap<'type'>;
 
+  /** Which value to display — the committed `current` value or the live `pointer` position during hover/drag. */
   type: 'current' | 'pointer' = 'current';
 
   readonly #ctx = new ContextConsumer(this, {

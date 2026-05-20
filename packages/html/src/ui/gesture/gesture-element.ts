@@ -13,7 +13,9 @@ import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
+/** Custom element shell for the `<media-gesture>` tag — declarative tap and double-tap gestures on the player container. */
 export class GestureElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-gesture';
 
   static override properties: PropertyDeclarationMap = {
@@ -25,11 +27,17 @@ export class GestureElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
+  /** Gesture kind — `tap` or `doubletap`. */
   type: 'tap' | 'doubletap' | (string & {}) = '';
+  /** Player action name to invoke when the gesture fires. */
   action: GestureActionName | (string & {}) = '';
+  /** Optional numeric argument passed to the action (e.g., seconds for `seekStep`). */
   value: number | undefined = undefined;
+  /** Restricts the gesture to a specific pointer type (mouse, touch, pen). */
   pointer: GesturePointerType | undefined = undefined;
+  /** Restricts the gesture to a region of the container (left, center, right). */
   region: GestureRegion | undefined = undefined;
+  /** Disables the gesture when true. */
   disabled = false;
 
   readonly #player = new PlayerController(this, playerContext);

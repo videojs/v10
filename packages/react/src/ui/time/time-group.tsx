@@ -9,6 +9,7 @@ import { renderElement } from '../../utils/use-render';
 // Empty state for Group (no dynamic state)
 type GroupState = Record<string, never>;
 
+/** Props for the Time.Group component. */
 export interface GroupProps extends UIComponentProps<'span', GroupState> {
   /** Time value components to render inside the group. */
   children?: ReactNode | undefined;

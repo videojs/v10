@@ -21,22 +21,33 @@ import { useEffect, useState } from 'react';
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
+/** Configuration passed to `createPlayer`. */
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
+  /** Composed feature set that determines the player store's shape and behavior. */
   features: Features;
+  /** Optional display name applied to the generated `Provider` for React DevTools. */
   displayName?: string;
 }
 
+/** Props for the `Provider` component returned by `createPlayer`. */
 export interface ProviderProps {
+  /** Content rendered inside the player provider. */
   children: ReactNode;
 }
 
+/** Components and hooks returned by `createPlayer`, typed to the configured feature set. */
 export interface CreatePlayerResult<Store extends PlayerStore> {
+  /** Wraps children with a typed Player Provider that owns the store and media lifecycle. */
   Provider: FC<ProviderProps>;
+  /** Root container component bound to the player provider. */
   Container: typeof Container;
+  /** Hook that returns the typed store, or a selected slice via a selector. */
   usePlayer: UsePlayerHook<Store>;
+  /** Hook that returns the attached media element, or `null` before attachment. */
   useMedia: () => Media | null;
 }
 
+/** Typed `usePlayer` hook with optional selector. */
 export type UsePlayerHook<Store extends PlayerStore> = {
   (): Store;
   <R>(selector: (state: InferStoreState<Store>) => R): R;

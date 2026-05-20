@@ -1,3 +1,4 @@
+/** CSS custom property names for tooltip positioning. */
 export const TooltipCSSVars = {
   /** Distance between the popup and the trigger along the side axis. */
   sideOffset: '--media-tooltip-side-offset',
@@ -15,4 +16,5 @@ export const TooltipCSSVars = {
   availableHeight: '--media-tooltip-available-height',
 } as const;
 
+/** Union of CSS custom property names defined by {@link TooltipCSSVars}. */
 export type TooltipCSSVarKey = (typeof TooltipCSSVars)[keyof typeof TooltipCSSVars];

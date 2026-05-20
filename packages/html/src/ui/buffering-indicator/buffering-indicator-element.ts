@@ -6,13 +6,16 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
+/** Custom element shell for the `<media-buffering-indicator>` tag — shows when media stalls waiting on data. */
 export class BufferingIndicatorElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-buffering-indicator';
 
   static override properties = {
     delay: { type: Number },
   } satisfies PropertyDeclarationMap<keyof BufferingIndicatorCore.Props>;
 
+  /** Milliseconds to wait before showing the indicator after buffering begins. */
   delay = BufferingIndicatorCore.defaultProps.delay;
 
   readonly #core = new BufferingIndicatorCore();

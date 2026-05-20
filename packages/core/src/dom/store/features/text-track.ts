@@ -5,6 +5,7 @@ import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
 
+/** Player feature exposing text-track state and a subtitle toggle action. */
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
   state: ({ target }): MediaTextTrackState => ({

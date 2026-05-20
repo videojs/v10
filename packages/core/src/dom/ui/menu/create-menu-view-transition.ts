@@ -4,42 +4,68 @@ import { forceLayout } from '../../utils/layout';
 
 import type { NavigationState } from './create-menu';
 
+/** Lifecycle phase of a menu view (page) inside a paged menu transition. */
 export type MenuViewTransitionPhase = 'hidden' | 'entering' | 'active' | 'exiting';
 
+/** Navigation direction tracked by the view transition. */
 export type MenuViewTransitionDirection = NavigationState['direction'];
 
+/** Coarse activity state derived from {@link MenuViewTransitionPhase}. */
 export type MenuViewState = 'active' | 'inactive';
 
+/** Reactive state surfaced by the menu view transition controller. */
 export interface MenuViewTransitionState {
+  /** Current lifecycle phase. */
   phase: MenuViewTransitionPhase;
+  /** Direction the navigation is moving. */
   direction: MenuViewTransitionDirection;
+  /** ID of the trigger that opened this view, used for focus restoration. */
   triggerId: string | null;
 }
 
+/** Inputs for {@link MenuViewTransitionApi.sync}. */
 export interface MenuViewTransitionSyncOptions {
+  /** Whether this view should be active. */
   active: boolean;
+  /** Direction to animate. */
   direction: MenuViewTransitionDirection;
+  /** ID of the trigger that opened the view (used for back-focus). */
   triggerId?: string | null;
 }
 
+/** Concrete data attributes the controller writes onto the view element. */
 export interface MenuViewTransitionAttrs extends TransitionStyleAttrs {
+  /** Always empty — marks the element as a menu view. */
   'data-menu-view': '';
+  /** Coarse activity state. */
   'data-menu-view-state': MenuViewState;
+  /** Navigation direction. */
   'data-direction': MenuViewTransitionDirection;
+  /** Present when the view is mounted. */
   'data-open'?: '' | undefined;
+  /** Whether the element should be `hidden`. */
   hidden: boolean;
 }
 
+/** Options for {@link createMenuViewTransition}. */
 export interface MenuViewTransitionOptions {
+  /** Focus the first interactive item inside the view after it activates. */
   focusFirstItem?: (element: HTMLElement) => void;
+  /** Restore focus to the trigger element after a back navigation. */
   restoreFocus?: (triggerId: string | null) => void;
+  /** Wait for the view's CSS animations to settle before tearing down. */
   waitForAnimations?: (element: HTMLElement) => Promise<void>;
 }
 
+/** Imperative handle returned by {@link createMenuViewTransition}. */
 export interface MenuViewTransitionApi {
+  /** Reactive view transition state. */
   input: State<MenuViewTransitionState>;
+  /** Register the DOM element backing this view. */
   setElement: (element: HTMLElement | null) => void;
+  /** Drive the next transition based on the desired active state. */
   sync: (options: MenuViewTransitionSyncOptions) => void;
+  /** Tear down the controller. */
   destroy: () => void;
 }
 
@@ -67,6 +93,11 @@ function getMenuViewState(phase: MenuViewTransitionPhase): MenuViewState {
   return phase === 'entering' || phase === 'active' ? 'active' : 'inactive';
 }
 
+/**
+ * Project menu view transition state to the attributes the renderer applies to the view element.
+ *
+ * @param state - Current view transition state.
+ */
 export function getMenuViewTransitionAttrs(state: MenuViewTransitionState): MenuViewTransitionAttrs {
   return {
     'data-menu-view': '',
@@ -81,6 +112,11 @@ export function getMenuViewTransitionAttrs(state: MenuViewTransitionState): Menu
   };
 }
 
+/**
+ * Build a per-view transition controller for a paged menu.
+ *
+ * @param options - Focus restoration and animation hooks.
+ */
 export function createMenuViewTransition(options: MenuViewTransitionOptions = {}): MenuViewTransitionApi {
   const input = createState<MenuViewTransitionState>(DEFAULT_MENU_VIEW_TRANSITION_STATE);
   const waitForAnimations = options.waitForAnimations ?? waitForElementAnimations;

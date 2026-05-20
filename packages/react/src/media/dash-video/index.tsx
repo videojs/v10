@@ -9,12 +9,15 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** Props for the DashVideo component. */
 export interface DashVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>,
     Partial<DashMediaProps> {
+  /** Content rendered inside the underlying `<video>` element (such as `<track>` children). */
   children?: ReactNode;
 }
 
+/** Renders a `<video>` element backed by the DASH engine and attaches it to the player. */
 export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
   const media = useMediaInstance(DashMedia);
   const attachRef = useAttachMedia(media);

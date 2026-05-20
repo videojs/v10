@@ -6,7 +6,9 @@ import { MediaElement } from '../ui/media-element';
 
 const ContainerMixin = createContainerMixin({ playerContext, containerContext });
 
+/** Custom element shell for the `<media-container>` tag — registers as the player's container and routes focus for hotkeys. */
 export class MediaContainerElement extends ContainerMixin(MediaElement) {
+  /** Custom element tag name. */
   static readonly tagName = 'media-container';
 
   #disconnect: AbortController | null = null;

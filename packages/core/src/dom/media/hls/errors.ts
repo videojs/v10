@@ -12,6 +12,7 @@ const hlsErrorTypeToCode: Record<string, number> = {
   [Hls.ErrorTypes.OTHER_ERROR]: MediaError.MEDIA_ERR_CUSTOM,
 };
 
+/** Mixin that exposes hls.js fatal errors as a normalized `MediaError`. */
 export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaErrors extends BaseClass {
     #disconnect: AbortController | null = null;

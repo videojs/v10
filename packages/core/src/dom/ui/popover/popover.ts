@@ -6,6 +6,7 @@ import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
 import type { PopupGroup } from './popup-group';
 
+/** Reason an open/close transition was triggered on a popover. */
 export type PopoverOpenChangeReason =
   | 'click'
   | 'hover'
@@ -16,52 +17,91 @@ export type PopoverOpenChangeReason =
   | 'imperative-action'
   | 'group-open';
 
+/** Details accompanying a popover open/close change. */
 export interface PopoverChangeDetails {
+  /** Why the change happened. */
   reason: PopoverOpenChangeReason;
+  /** Originating DOM event, when applicable. */
   event?: Event;
 }
 
+/** Options for {@link createPopover}. */
 export interface PopoverOptions {
+  /** Transition controller driving open/close animations. */
   transition: TransitionApi;
+  /** Called when the popover's open state changes. */
   onOpenChange: (open: boolean, details: PopoverChangeDetails) => void;
   /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Predicate returning whether Escape should close the popover. */
   closeOnEscape: () => boolean;
+  /** Predicate returning whether outside clicks should close the popover. */
   closeOnOutsideClick: () => boolean;
+  /** Predicate returning whether to open on hover. */
   openOnHover?: () => boolean;
+  /** Hover open delay in ms. */
   delay?: () => number;
+  /** Hover close delay in ms. */
   closeDelay?: () => number;
+  /** Optional shared popup group for at-most-one-open behavior. */
   group?: () => PopupGroup | undefined;
 }
 
+/** Event-handler bundle for the popover trigger element. */
 export interface PopoverTriggerProps {
+  /** Toggle the popover on click. */
   onClick: (event: UIEvent) => void;
+  /** Hover-open handler. */
   onPointerEnter: (event: UIPointerEvent) => void;
+  /** Hover-close handler. */
   onPointerLeave: (event: UIPointerEvent) => void;
+  /** Focus-open handler. */
   onFocusIn: (event: UIFocusEvent) => void;
+  /** Focus-close handler. */
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
+/** Event-handler bundle for the popover popup element. */
 export interface PopoverPopupProps {
+  /** Cancels any pending hover-close when the pointer enters the popup. */
   onPointerEnter: (event: UIPointerEvent) => void;
+  /** Schedules a hover-close when the pointer leaves the popup. */
   onPointerLeave: (event: UIPointerEvent) => void;
+  /** Tracks pointer captures inside the popup to avoid spurious closes. */
   onGotPointerCapture: (event: UIPointerEvent) => void;
+  /** Mirrors `onGotPointerCapture` for capture release. */
   onLostPointerCapture: (event: UIPointerEvent) => void;
+  /** Close on focus leaving both trigger and popup subtrees. */
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
+/** Imperative handle returned by {@link createPopover}. */
 export interface PopoverApi {
+  /** Reactive transition state for downstream cores. */
   input: State<PopoverInput>;
+  /** Props for the trigger element. */
   triggerProps: PopoverTriggerProps;
+  /** Props for the popup element. */
   popupProps: PopoverPopupProps;
+  /** Currently registered trigger element, if any. */
   readonly triggerElement: HTMLElement | null;
+  /** Register the trigger element. */
   setTriggerElement: (el: HTMLElement | null) => void;
+  /** Register the popup element. */
   setPopupElement: (el: HTMLElement | null) => void;
+  /** Open the popover. */
   open: (reason?: PopoverOpenChangeReason) => void;
+  /** Close the popover. */
   close: (reason?: PopoverOpenChangeReason) => void;
+  /** Tear down the popover controller. */
   destroy: () => void;
 }
 
+/**
+ * Build a popover controller — toggle, hover/focus open, outside-click dismiss, and group membership.
+ *
+ * @param options - Popover configuration.
+ */
 export function createPopover(options: PopoverOptions): PopoverApi {
   const { onOpenChange, closeOnOutsideClick } = options;
 

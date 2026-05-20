@@ -12,18 +12,25 @@ import {
   type MediaSnapshot,
 } from './status';
 
+/** Props for the status indicator core. */
 export interface StatusIndicatorProps extends IndicatorCoreProps {
+  /** Input actions this indicator should respond to. Omit to handle all. */
   actions?: readonly InputAction[] | undefined;
+  /** Override the default label strings used in status text. */
   labels?: Partial<InputIndicatorLabels> | undefined;
 }
 
+/** Reactive state surfaced by the status indicator core. */
 export interface StatusIndicatorState extends IndicatorLifecycleState {
+  /** Status key for the last action handled, or null when idle. */
   status: ReturnType<typeof deriveStatus> extends infer Details
     ? Details extends { status: infer Status }
       ? Status | null
       : never
     : never;
+  /** Human-readable label for the current status, or null when idle. */
   label: string | null;
+  /** Optional value string (e.g. a volume percent). */
   value: string | null;
 }
 
@@ -37,7 +44,9 @@ const INITIAL_STATE: StatusIndicatorState = {
   transitionEnding: false,
 };
 
+/** Behavior core for the generic status indicator — surfaces label and value for handled actions. */
 export class StatusIndicatorCore {
+  /** Reactive state container. */
   readonly state = createState<StatusIndicatorState>({ ...INITIAL_STATE });
 
   #props: StatusIndicatorProps = {};
@@ -50,14 +59,17 @@ export class StatusIndicatorCore {
     this.#props = props;
   }
 
+  /** Cancel any pending close timer. */
   destroy(): void {
     this.#close.destroy();
   }
 
+  /** Close the indicator immediately. */
   close(): void {
     this.#close.close();
   }
 
+  /** Process an input-action event; returns `true` if the indicator handled it. */
   processEvent(event: InputActionEvent, snapshot: MediaSnapshot): boolean {
     if (!isInputActionIncluded(event.action, this.#props.actions)) return false;
 
@@ -80,6 +92,8 @@ export class StatusIndicatorCore {
 }
 
 export namespace StatusIndicatorCore {
+  /** Alias for {@link StatusIndicatorProps}. */
   export type Props = StatusIndicatorProps;
+  /** Alias for {@link StatusIndicatorState}. */
   export type State = StatusIndicatorState;
 }

@@ -5,7 +5,9 @@ import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { menuContext, menuRadioGroupContext } from './context';
 
+/** Custom element shell for the `<media-menu-radio-group>` tag — exclusive-select group of `<media-menu-radio-item>` children. */
 export class MenuRadioGroupElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName: string = 'media-menu-radio-group';
 
   static override properties = {
@@ -13,7 +15,9 @@ export class MenuRadioGroupElement extends MediaElement {
     label: { type: String },
   } satisfies PropertyDeclarationMap<'value' | 'label'>;
 
+  /** Currently selected radio value. */
   value = '';
+  /** Accessible label announced for the group. */
   label: string | undefined = undefined;
 
   readonly #menuCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });

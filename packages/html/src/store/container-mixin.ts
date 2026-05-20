@@ -4,11 +4,15 @@ import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, PlayerContext } from '../player/context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
 
+/** Configuration accepted by `createContainerMixin`. */
 export interface ContainerMixinConfig<Store extends PlayerStore> {
+  /** Context the mixin reads the player store from. */
   playerContext: PlayerContext<Store>;
+  /** Context the mixin registers itself with as the container element. */
   containerContext: ContainerContext;
 }
 
+/** Mixin that turns a `MediaElement` subclass into a player-context consumer + container registrant. */
 export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerConsumerConstructor<Store>;

@@ -5,6 +5,7 @@ import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/type
 import { definePlayerFeature } from '../../feature';
 import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '../../media/predicate';
 
+/** Player feature exposing the current stream type (`on-demand`, `live`, `unknown`). */
 export const streamTypeFeature = definePlayerFeature({
   name: 'streamType',
   state: (): MediaStreamTypeState => ({

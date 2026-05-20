@@ -8,6 +8,7 @@ import type { MediaTimeState } from '../../media/state';
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
 
+/** Props for the time display core. */
 export interface TimeProps {
   /** Which time value to display. */
   type?: TimeType | undefined;
@@ -17,6 +18,7 @@ export interface TimeProps {
   label?: string | ((state: TimeState) => string) | undefined;
 }
 
+/** Reactive state surfaced by the time display core. */
 export interface TimeState {
   /** Time display type. */
   type: TimeType;
@@ -38,7 +40,9 @@ const DEFAULT_LABELS: Record<TimeType, string> = {
   remaining: 'Remaining',
 };
 
+/** Behavior core for the time display — formats current, duration, or remaining time. */
 export class TimeCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
     negativeSign: '-',
@@ -48,6 +52,7 @@ export class TimeCore {
   #props = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: TimeProps) {
     if (props) this.setProps(props);
   }
@@ -98,6 +103,7 @@ export class TimeCore {
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
+  /** Resolve the time display's ARIA label from props and state. */
   getLabel(state: TimeState): string {
     const { label } = this.#props;
 
@@ -132,6 +138,8 @@ export class TimeCore {
 }
 
 export namespace TimeCore {
+  /** Alias for {@link TimeProps}. */
   export type Props = TimeProps;
+  /** Alias for {@link TimeState}. */
   export type State = TimeState;
 }

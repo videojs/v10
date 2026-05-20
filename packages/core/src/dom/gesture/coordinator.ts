@@ -12,6 +12,7 @@ import { resolveRegion } from './region';
 
 const TAP_THRESHOLD = 250;
 
+/** Per-target gesture coordinator — owns pointer listeners and dispatches matched bindings. */
 export class GestureCoordinator {
   #target: HTMLElement;
   #bindings: GestureBinding[] = [];
@@ -19,19 +20,23 @@ export class GestureCoordinator {
   #disconnect: AbortController | null = null;
   #subscribers = new Set<(event: GestureActivateEvent) => void>();
 
+  /** @param target - Element to attach pointer listeners to. */
   constructor(target: HTMLElement) {
     this.#target = target;
   }
 
+  /** Currently registered bindings. */
   get bindings(): readonly GestureBinding[] {
     return this.#bindings;
   }
 
+  /** Subscribe to gesture activations; returns an unsubscribe function. */
   subscribe(callback: (event: GestureActivateEvent) => void): () => void {
     this.#subscribers.add(callback);
     return () => this.#subscribers.delete(callback);
   }
 
+  /** Register a binding; returns a remove function. */
   add(binding: GestureBinding): () => void {
     const wrapped: GestureBinding = {
       ...binding,
@@ -138,6 +143,7 @@ export function findGestureCoordinator(target: HTMLElement): GestureCoordinator 
   return coordinators.get(target);
 }
 
+/** Return the gesture coordinator for `target`, creating one on first access. */
 export function getGestureCoordinator(target: HTMLElement): GestureCoordinator {
   let coordinator = coordinators.get(target);
   if (!coordinator) {

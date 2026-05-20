@@ -5,13 +5,16 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { alertDialogContext } from './context';
 
+/** Custom element shell for the `<media-alert-dialog-close>` tag — button that closes the alert dialog. */
 export class AlertDialogCloseElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-alert-dialog-close';
 
   static override properties = {
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<'disabled'>;
 
+  /** Disables button interaction when true. */
   disabled = false;
 
   readonly #ctx = new ContextConsumer(this, { context: alertDialogContext, subscribe: true });

@@ -10,6 +10,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
+/** Props for the BufferingIndicator component. */
 export interface BufferingIndicatorProps
   extends UIComponentProps<'div', BufferingIndicatorCore.State>,
     BufferingIndicatorCore.Props {}

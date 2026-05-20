@@ -22,7 +22,9 @@ import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover 
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
+/** Custom element shell for the `<media-popover>` tag — anchored popover with hover, focus, and command-based triggers. */
 export class PopoverElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-popover';
 
   static override properties = {
@@ -39,16 +41,27 @@ export class PopoverElement extends MediaElement {
     boundary: { type: String },
   } satisfies PropertyDeclarationMap<keyof PopoverCore.Props | 'boundary'>;
 
+  /** Controlled open state. */
   open = PopoverCore.defaultProps.open;
+  /** Initial open state for uncontrolled usage. */
   defaultOpen = PopoverCore.defaultProps.defaultOpen;
+  /** Side of the trigger to anchor the popover to. */
   side = PopoverCore.defaultProps.side;
+  /** Alignment of the popover relative to its trigger along the anchor side. */
   align = PopoverCore.defaultProps.align;
+  /** Render the popover as a modal — blocks interaction outside it. */
   modal: PopoverProps['modal'] = PopoverCore.defaultProps.modal;
+  /** Close the popover when Escape is pressed. */
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
+  /** Close the popover when the user clicks outside it. */
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
+  /** Open the popover on pointer hover over the trigger. */
   openOnHover = PopoverCore.defaultProps.openOnHover;
+  /** Milliseconds to wait before opening on hover. */
   delay = PopoverCore.defaultProps.delay;
+  /** Milliseconds to wait before closing once hover ends. */
   closeDelay = PopoverCore.defaultProps.closeDelay;
+  /** Region positioning is clamped within. */
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new PopoverCore();
@@ -122,6 +135,7 @@ export class PopoverElement extends MediaElement {
     super.destroyCallback();
   }
 
+  /** Dismiss the popover. Optional `reason` is forwarded to listeners on the `open-change` event. */
   close(reason: PopoverOpenChangeReason = 'imperative-action'): void {
     this.#popover?.close(reason);
   }

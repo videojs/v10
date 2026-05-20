@@ -10,6 +10,7 @@ import { useSeekIndicatorContext } from './context';
 
 export interface SeekIndicatorValueProps extends UIComponentProps<'div', SeekIndicatorCore.State> {}
 
+/** Displays the accumulated seek-step burst (e.g. `"10s"`), falling back to the current playback time. */
 export const SeekIndicatorValue = forwardRef(function SeekIndicatorValue(
   componentProps: SeekIndicatorValueProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

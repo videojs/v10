@@ -8,6 +8,7 @@ import { HlsJsMediaPreloadMixin } from './preload';
 import { HlsJsMediaStreamTypeMixin } from './stream-type';
 import { HlsJsMediaTextTracksMixin } from './text-tracks';
 
+/** Default hls.js config merged with user-provided overrides. */
 export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
   renderTextTracksNatively: false,
@@ -57,6 +58,7 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
   }
 }
 
+/** Media adapter wrapping hls.js for MSE-backed HLS playback. */
 export class HlsJsMedia extends HlsJsMediaPreloadMixin(
   HlsJsMediaLiveMixin(
     HlsJsMediaStreamTypeMixin(

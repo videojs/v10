@@ -10,13 +10,16 @@ import type { PropertyDeclarationMap } from '@videojs/element';
 import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
+/** Custom element shell for the `<media-volume-indicator>` tag — transient overlay showing the current volume level during adjustments. */
 export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicatorCore.State> {
+  /** Custom element tag name. */
   static readonly tagName = 'media-volume-indicator';
 
   static override properties = {
     closeDelay: { type: Number, attribute: 'close-delay' },
   } satisfies PropertyDeclarationMap<'closeDelay'>;
 
+  /** Milliseconds the indicator stays visible after the volume change. */
   closeDelay: number | undefined;
 
   readonly #core = new VolumeIndicatorCore();

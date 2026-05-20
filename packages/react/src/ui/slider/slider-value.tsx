@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSliderContext } from './context';
 
+/** Props for the Slider.Value component. */
 export interface SliderValueProps extends UIComponentProps<'output', SliderState> {
   /** Which slider value to display: the current position or the pointer position. */
   type?: 'current' | 'pointer' | undefined;

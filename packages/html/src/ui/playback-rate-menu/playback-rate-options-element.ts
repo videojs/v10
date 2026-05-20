@@ -8,7 +8,9 @@ import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
 
+/** Custom element shell for the `<media-playback-rate-options>` tag — auto-populated radio group of playback rate items. */
 export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
+  /** Custom element tag name. */
   static override readonly tagName = 'media-playback-rate-options';
 
   static override properties = {
@@ -16,7 +18,9 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
+  /** Disables all rate items when true. */
   disabled = false;
+  /** Formats a playback rate value for display (e.g., `1` → `"1×"`). */
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
 
   readonly #core = new PlaybackRateMenuCore();
@@ -143,5 +147,6 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 }
 
 export namespace PlaybackRateOptionsElement {
+  /** Reactive state shape exposed by the playback-rate options group. */
   export type State = PlaybackRateMenuCore.State;
 }

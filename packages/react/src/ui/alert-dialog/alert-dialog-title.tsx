@@ -8,6 +8,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogTitleProps extends UIComponentProps<'h2', AlertDialogCore.State> {}
 
+/** Accessible title for the dialog, wired to the popup's `aria-labelledby`. */
 export const AlertDialogTitle = createContextPart<AlertDialogTitleProps, AlertDialogCore.State>({
   displayName: 'AlertDialogTitle',
   tag: 'h2',

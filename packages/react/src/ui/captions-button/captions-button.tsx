@@ -6,6 +6,7 @@ import { selectTextTrack } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the CaptionsButton component. */
 export interface CaptionsButtonProps
   extends UIComponentProps<'button', CaptionsButtonCore.State>,
     CaptionsButtonCore.Props {}

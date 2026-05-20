@@ -19,7 +19,9 @@ import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
 
+/** Custom element shell for the `<media-time-slider>` tag — scrubber bound to the media's current time and seek action. */
 export class TimeSliderElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-time-slider';
 
   static override properties = {
@@ -32,12 +34,19 @@ export class TimeSliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
+  /** Accessible label announced for the scrubber. */
   label = TimeSliderCore.defaultProps.label;
+  /** Throttle interval (ms) for seek calls while dragging. */
   changeThrottle = TimeSliderCore.defaultProps.changeThrottle;
+  /** Seek step (seconds) for arrow-key changes. */
   step = TimeSliderCore.defaultProps.step;
+  /** Seek step (seconds) for Page Up/Down or Shift+arrow changes. */
   largeStep = TimeSliderCore.defaultProps.largeStep;
+  /** Layout direction — `horizontal` or `vertical`. */
   orientation = TimeSliderCore.defaultProps.orientation;
+  /** Disables scrubbing when true. */
   disabled = TimeSliderCore.defaultProps.disabled;
+  /** How the thumb aligns relative to the track edges. */
   thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new TimeSliderCore();

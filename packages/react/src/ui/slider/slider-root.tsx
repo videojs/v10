@@ -10,13 +10,19 @@ import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from './context';
 
+/** Props for the Slider.Root component. */
 export interface SliderRootProps extends UIComponentProps<'div', SliderCore.State>, SliderCore.Props {
+  /** Called continuously while the value changes (e.g. during drag or keyboard input). */
   onValueChange?: ((value: number) => void) | undefined;
+  /** Called once the user commits a value (pointer up, blur, or keyboard release). */
   onValueCommit?: ((value: number) => void) | undefined;
+  /** Called when a drag interaction starts. */
   onDragStart?: (() => void) | undefined;
+  /** Called when a drag interaction ends. */
   onDragEnd?: (() => void) | undefined;
 }
 
+/** Generic slider root that owns slider state and exposes shared context to nested parts. */
 export const SliderRoot = forwardRef(function SliderRoot(
   componentProps: SliderRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

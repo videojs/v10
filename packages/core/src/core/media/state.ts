@@ -1,5 +1,6 @@
 import type { MediaFeatureAvailability, MediaStreamType } from './types';
 
+/** Reactive playback state and play/pause actions exposed to UI cores. */
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -39,6 +40,7 @@ export interface MediaPlaybackState {
   togglePaused(): boolean;
 }
 
+/** Volume, mute, and audio capability state exposed to UI cores. */
 export interface MediaVolumeState {
   /**
    * Volume level from 0 (silent) to 1 (max).
@@ -72,6 +74,7 @@ export interface MediaVolumeState {
   toggleMuted(): boolean;
 }
 
+/** Current time, duration, and seek action exposed to UI cores. */
 export interface MediaTimeState {
   /**
    * Current playback position in seconds.
@@ -99,6 +102,7 @@ export interface MediaTimeState {
   seek(time: number): Promise<number>;
 }
 
+/** Current source, readiness, and load action exposed to UI cores. */
 export interface MediaSourceState {
   /**
    * Current media source URL (null if none).
@@ -122,6 +126,7 @@ export interface MediaSourceState {
   loadSource(src: string): string;
 }
 
+/** Stream delivery type exposed to UI cores. */
 export interface MediaStreamTypeState {
   /**
    * Current stream delivery type.
@@ -135,6 +140,7 @@ export interface MediaStreamTypeState {
   streamType: MediaStreamType;
 }
 
+/** Live-stream timing information exposed to UI cores. */
 export interface MediaLiveState {
   /**
    * Presentation time marking the start of the Live Edge Window.
@@ -154,6 +160,7 @@ export interface MediaLiveState {
   targetLiveWindow: number;
 }
 
+/** Buffered and seekable time ranges exposed to UI cores. */
 export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.
@@ -169,6 +176,7 @@ export interface MediaBufferState {
   seekable: [number, number][];
 }
 
+/** Fullscreen state and request/exit actions exposed to UI cores. */
 export interface MediaFullscreenState {
   /**
    * Whether fullscreen mode is currently active.
@@ -198,6 +206,7 @@ export interface MediaFullscreenState {
   toggleFullscreen(): Promise<void>;
 }
 
+/** Controls visibility and user-activity state exposed to UI cores. */
 export interface MediaControlsState {
   /** Whether the user has recently interacted with the player. */
   userActive: boolean;
@@ -207,6 +216,7 @@ export interface MediaControlsState {
   toggleControls(): boolean;
 }
 
+/** Playback rate state and setter exposed to UI cores. */
 export interface MediaPlaybackRateState {
   /**
    * Available playback rates.
@@ -234,8 +244,11 @@ export interface MediaPlaybackRateState {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/VTTCue
  */
 export interface MediaTextCue {
+  /** Cue start time in seconds. */
   startTime: number;
+  /** Cue end time in seconds. */
   endTime: number;
+  /** Cue text payload. */
   text: string;
 }
 
@@ -259,12 +272,17 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
+  /** Track kind (e.g. `subtitles`, `captions`). */
   kind: Kind;
+  /** Human-readable label. */
   label: string;
+  /** BCP 47 language tag. */
   language: string;
+  /** Current display mode. */
   mode: TextTrackMode;
 }
 
+/** Text track state, cues for chapters/thumbnails, and subtitle action exposed to UI cores. */
 export interface MediaTextTrackState {
   /** Cues from the first `kind="chapters"` track. */
   chaptersCues: MediaTextCue[];
@@ -280,6 +298,7 @@ export interface MediaTextTrackState {
   toggleSubtitles(forceShow?: boolean): boolean;
 }
 
+/** Normalized media error shape exposed to UI cores. */
 export interface MediaError {
   /**
    * The error code (mirrors MediaError.code constants).
@@ -295,6 +314,7 @@ export interface MediaError {
   message: string;
 }
 
+/** Current media error and dismiss action exposed to UI cores. */
 export interface MediaErrorState {
   /**
    * The current media error, or null if none.
@@ -306,8 +326,10 @@ export interface MediaErrorState {
   dismissError(): void;
 }
 
+/** Remote playback receiver connection state. */
 export type RemotePlaybackConnectionState = 'disconnected' | 'connecting' | 'connected';
 
+/** Remote playback (cast) state and toggle action exposed to UI cores. */
 export interface MediaRemotePlaybackState {
   /**
    * Current remote playback connection state.
@@ -325,6 +347,7 @@ export interface MediaRemotePlaybackState {
   toggleRemotePlayback(): Promise<void>;
 }
 
+/** Picture-in-picture state and request/exit actions exposed to UI cores. */
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.

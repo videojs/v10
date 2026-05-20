@@ -1,6 +1,7 @@
 import type { StateAttrMap } from '../types';
 import type { PlaybackRateMenuState } from './playback-rate-menu-core';
 
+/** Data attributes the playback rate menu reflects from {@link PlaybackRateMenuState}. */
 export const PlaybackRateMenuDataAttrs = {
   /** Current playback rate. */
   rate: 'data-rate',

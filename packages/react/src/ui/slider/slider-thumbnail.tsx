@@ -8,6 +8,7 @@ import { useSliderContext } from './context';
 
 export interface SliderThumbnailProps extends Omit<ThumbnailProps, 'time'> {}
 
+/** Thumbnail that tracks the slider's pointer position, derived from `pointerValue`. */
 export const SliderThumbnail = forwardRef<HTMLDivElement, SliderThumbnailProps>(
   function SliderThumbnail(componentProps, forwardedRef) {
     const { pointerValue } = useSliderContext();

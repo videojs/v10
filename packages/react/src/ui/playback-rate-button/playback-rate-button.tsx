@@ -6,6 +6,7 @@ import { selectPlaybackRate } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the PlaybackRateButton component. */
 export interface PlaybackRateButtonProps
   extends UIComponentProps<'button', PlaybackRateButtonCore.State>,
     PlaybackRateButtonCore.Props {}

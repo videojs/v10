@@ -15,16 +15,25 @@ export function isRenderProp(value: unknown): value is RenderProp<unknown> {
 
 type IntrinsicTagName = keyof React.JSX.IntrinsicElements;
 
+/** Standard component props consumed by `renderElement` — also re-exposed as `renderElement.ComponentProps`. */
 export interface UseRenderComponentProps<State> {
+  /** Class name or function returning class name from state. */
   className?: string | ((state: State) => string | undefined) | undefined;
+  /** Style or function returning style from state. */
   style?: CSSProperties | ((state: State) => CSSProperties | undefined) | undefined;
+  /** Render prop that overrides the default element. */
   render?: RenderProp<State> | undefined;
 }
 
+/** Render-time parameters consumed by `renderElement` — also re-exposed as `renderElement.Parameters`. */
 export interface UseRenderParameters<State, RenderedElementType extends Element> {
+  /** Current component state. Passed to `render` props and resolved className/style functions. */
   state: State;
+  /** Ref(s) to attach to the rendered element. */
   ref?: Ref<RenderedElementType> | Ref<RenderedElementType>[] | undefined;
+  /** Prop object(s) to merge with the rendered element's attributes. */
   props?: object | object[] | undefined;
+  /** Mapping of state fields to `data-*` attributes for styling. */
   stateAttrMap?: StateAttrMap<State> | undefined;
 }
 

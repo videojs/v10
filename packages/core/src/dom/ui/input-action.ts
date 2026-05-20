@@ -13,12 +13,20 @@ import {
   selectVolume,
 } from '../store/selectors';
 
+/** Activation event from either the gesture or hotkey coordinator. */
 export type CoordinatorEvent = GestureActivateEvent | HotkeyActivateEvent;
 
+/** Minimal store shape consumed by {@link getMediaSnapshot}. */
 export interface MediaSnapshotStore {
+  /** Current store state. */
   readonly state: object;
 }
 
+/**
+ * Normalize a coordinator event into the canonical {@link InputActionEvent} shape.
+ *
+ * @param event - Gesture or hotkey activation event.
+ */
 export function toInputActionEvent(event: CoordinatorEvent): InputActionEvent {
   return {
     action: event.action,
@@ -28,6 +36,11 @@ export function toInputActionEvent(event: CoordinatorEvent): InputActionEvent {
   };
 }
 
+/**
+ * Capture a {@link MediaSnapshot} of paused/volume/muted/etc. from the player store.
+ *
+ * @param store - Player store, or `undefined` for an empty snapshot.
+ */
 export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSnapshot {
   if (!store) return {};
 
@@ -46,6 +59,12 @@ export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSn
   };
 }
 
+/**
+ * Subscribe to gesture and hotkey activations on a container and forward them as {@link InputActionEvent}s.
+ *
+ * @param container - Player container element.
+ * @param callback - Called for every input-action event.
+ */
 export function subscribeToInputActions(
   container: HTMLElement,
   callback: (event: InputActionEvent) => void
@@ -62,6 +81,7 @@ export function subscribeToInputActions(
 
 const indicatorVisibilityCoordinators = new WeakMap<HTMLElement, IndicatorVisibilityCoordinator>();
 
+/** Return the shared indicator visibility coordinator for `container`, creating one on first access. */
 export function getIndicatorVisibilityCoordinator(container: HTMLElement): IndicatorVisibilityCoordinator {
   let coordinator = indicatorVisibilityCoordinators.get(container);
   if (!coordinator) {

@@ -11,6 +11,7 @@ import {
 } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
+/** Player feature exposing picture-in-picture state and request/exit actions. */
 export const pipFeature = definePlayerFeature({
   name: 'pip',
   state: ({ target }): MediaPictureInPictureState => ({

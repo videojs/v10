@@ -5,7 +5,9 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
 
+/** Custom element shell for the `<media-slider-thumb>` tag — focusable knob that the user drags or moves with the keyboard. */
 export class SliderThumbElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-slider-thumb';
 
   readonly #ctx = new ContextConsumer(this, {

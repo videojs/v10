@@ -8,6 +8,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
+/** Accessible description for the dialog, wired to the popup's `aria-describedby`. */
 export const AlertDialogDescription = createContextPart<AlertDialogDescriptionProps, AlertDialogCore.State>({
   displayName: 'AlertDialogDescription',
   tag: 'p',

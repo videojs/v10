@@ -13,6 +13,7 @@ export class TapRecognizer implements GestureRecognizer {
   #lastTapTime = 0;
   #tapTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Process a quick pointer-up and dispatch tap or doubletap bindings. */
   handleUp(matches: GestureMatchResult, event: PointerEvent): void {
     const hasDoubletap = matches.resolve('doubletap').length > 0;
 
@@ -52,6 +53,7 @@ export class TapRecognizer implements GestureRecognizer {
     }
   }
 
+  /** Cancel pending taps and reset internal state. */
   reset(): void {
     this.#clearTimer();
     this.#lastTapTime = 0;

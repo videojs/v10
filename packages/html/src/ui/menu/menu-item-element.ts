@@ -5,7 +5,9 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { menuContext } from './context';
 
+/** Custom element shell for the `<media-menu-item>` tag — selectable menu entry; optionally opens a submenu. */
 export class MenuItemElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-menu-item';
 
   static override properties = {
@@ -13,6 +15,7 @@ export class MenuItemElement extends MediaElement {
     commandfor: { type: String },
   } satisfies PropertyDeclarationMap<'disabled' | 'commandfor'>;
 
+  /** Disables item interaction when true. */
   disabled = false;
   /** ID of a nested `<media-menu>` to open when this item is activated. */
   commandfor: string | undefined = undefined;
