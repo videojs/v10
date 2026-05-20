@@ -7,6 +7,7 @@ import type {
   ThumbnailResizeResult,
 } from './types';
 
+/** Props for the thumbnail core. */
 export interface ThumbnailProps {
   /** Time in seconds to display the thumbnail for. */
   time?: number | undefined;
@@ -18,6 +19,7 @@ export interface ThumbnailProps {
   fetchPriority?: ThumbnailFetchPriority | undefined;
 }
 
+/** Reactive state surfaced by the thumbnail core. */
 export interface ThumbnailState {
   /** The thumbnail image is loading. */
   loading: boolean;
@@ -27,7 +29,9 @@ export interface ThumbnailState {
   hidden: boolean;
 }
 
+/** Behavior core for the thumbnail — picks the active tile and computes sprite-sheet geometry. */
 export class ThumbnailCore {
+  /** Find the thumbnail covering the given time using binary search. */
   findActiveThumbnail(thumbnails: ThumbnailImage[], time: number): ThumbnailImage | undefined {
     if (thumbnails.length === 0) return undefined;
 
@@ -138,6 +142,7 @@ export class ThumbnailCore {
     };
   }
 
+  /** Build the public thumbnail state from load status and the active tile. */
   getState(loading: boolean, error: boolean, thumbnail: ThumbnailImage | undefined): ThumbnailState {
     return {
       loading,
@@ -146,6 +151,7 @@ export class ThumbnailCore {
     };
   }
 
+  /** Compute ARIA attributes for the thumbnail container. */
   getAttrs(_state: ThumbnailState) {
     return {
       role: 'img' as const,
@@ -155,6 +161,8 @@ export class ThumbnailCore {
 }
 
 export namespace ThumbnailCore {
+  /** Alias for {@link ThumbnailProps}. */
   export type Props = ThumbnailProps;
+  /** Alias for {@link ThumbnailState}. */
   export type State = ThumbnailState;
 }

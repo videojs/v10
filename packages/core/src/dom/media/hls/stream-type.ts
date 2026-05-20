@@ -4,6 +4,7 @@ import Hls from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import type { HlsEngineHost } from './types';
 
+/** Mixin that derives `streamType` from hls.js manifest metadata and fires `streamtypechange`. */
 export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaStreamType extends (BaseClass as Constructor<HlsEngineHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;

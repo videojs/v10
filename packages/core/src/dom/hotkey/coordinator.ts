@@ -4,10 +4,15 @@ import { toAriaKeyShortcut } from './aria';
 import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
 
+/** Event delivered to hotkey subscribers when a binding activates. */
 export interface HotkeyActivateEvent {
+  /** Always `'hotkey'`. */
   source: 'hotkey';
+  /** Resolved action name. */
   action?: string | undefined;
+  /** Resolved numeric argument. */
   value?: number | undefined;
+  /** Underlying keyboard event. */
   event: KeyboardEvent;
 }
 
@@ -18,6 +23,7 @@ interface HotkeyBinding {
   id: number;
 }
 
+/** Per-target hotkey coordinator — owns keyboard listeners and dispatches matched bindings. */
 export class HotkeyCoordinator {
   #target: HTMLElement;
   #bindings: HotkeyBinding[] = [];
@@ -29,15 +35,18 @@ export class HotkeyCoordinator {
   #subscribers = new Set<(event: HotkeyActivateEvent) => void>();
   #destroyed = false;
 
+  /** @param target - Element to attach keyboard listeners to. */
   constructor(target: HTMLElement) {
     this.#target = target;
   }
 
+  /** Subscribe to hotkey activations; returns an unsubscribe function. */
   subscribe(callback: (event: HotkeyActivateEvent) => void): () => void {
     this.#subscribers.add(callback);
     return () => this.#subscribers.delete(callback);
   }
 
+  /** Register a binding; returns a remove function. */
   add(options: HotkeyOptions): () => void {
     const parsed = parseHotkeyPattern(options.keys);
     const binding: HotkeyBinding = { parsed, options, id: this.#nextId++ };
@@ -72,12 +81,14 @@ export class HotkeyCoordinator {
     };
   }
 
+  /** Format the keys bound to `action` as an `aria-keyshortcuts` value, or `undefined` when none. */
   getAriaKeys(action: string): string | undefined {
     const bindings = this.#ariaRegistry.get(action);
     if (!bindings?.length) return undefined;
     return toAriaKeyShortcut(bindings);
   }
 
+  /** Tear down listeners and drop all bindings. */
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;

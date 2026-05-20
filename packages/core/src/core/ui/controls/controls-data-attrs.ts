@@ -1,6 +1,7 @@
 import type { StateAttrMap } from '../types';
 import type { ControlsState } from './controls-core';
 
+/** Data attributes the controls layer reflects from {@link ControlsState}. */
 export const ControlsDataAttrs = {
   /** Present when controls are visible. */
   visible: 'data-visible',

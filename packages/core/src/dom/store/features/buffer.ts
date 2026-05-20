@@ -4,6 +4,7 @@ import type { MediaBufferState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaBufferCapable } from '../../media/predicate';
 
+/** Player feature exposing buffered and seekable time ranges. */
 export const bufferFeature = definePlayerFeature({
   name: 'buffer',
   state: (): MediaBufferState => ({

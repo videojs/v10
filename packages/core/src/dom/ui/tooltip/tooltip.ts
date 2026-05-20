@@ -11,34 +11,55 @@ import {
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
 
+/** Reason a tooltip open/close transition was triggered. */
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
 
+/** Details accompanying a tooltip open/close change. */
 export interface TooltipChangeDetails {
+  /** Why the change happened. */
   reason: TooltipOpenChangeReason;
+  /** Originating DOM event, when applicable. */
   event?: Event;
 }
 
+/** Options for {@link createTooltip}. */
 export interface TooltipOptions {
+  /** Transition controller driving open/close animations. */
   transition: TransitionApi;
+  /** Called when the tooltip's open state changes. */
   onOpenChange: (open: boolean, details: TooltipChangeDetails) => void;
+  /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Hover open delay in ms. */
   delay?: () => number;
+  /** Hover close delay in ms. */
   closeDelay?: () => number;
+  /** Whether hovering the popup itself does not keep it open. */
   disableHoverablePopup?: () => boolean;
+  /** Whether the tooltip is currently disabled. */
   disabled?: () => boolean;
+  /** Shared tooltip group for "warm" zero-delay opens. */
   group?: () => TooltipGroupCore | undefined;
 }
 
+/** Event-handler bundle for the tooltip trigger element. */
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
+  /** Pointer-down handler that suppresses spurious focus-opens during tap. */
   onPointerDown: (event: UIPointerEvent) => void;
 }
 
+/** Event-handler bundle for the tooltip popup element. */
 export interface TooltipPopupProps extends PopoverPopupProps {}
 
+/** Imperative handle returned by {@link createTooltip}. */
 export interface TooltipApi extends Omit<PopoverApi, 'triggerProps' | 'popupProps' | 'open' | 'close'> {
+  /** Props for the trigger element. */
   triggerProps: TooltipTriggerProps;
+  /** Props for the popup element. */
   popupProps: TooltipPopupProps;
+  /** Open the tooltip. */
   open: () => void;
+  /** Close the tooltip. */
   close: (reason?: TooltipOpenChangeReason) => void;
 }
 
@@ -51,6 +72,11 @@ const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReaso
   'imperative-action': 'imperative-action',
 };
 
+/**
+ * Build a tooltip controller — hover/focus open with delay coordination across a group.
+ *
+ * @param options - Tooltip configuration.
+ */
 export function createTooltip(options: TooltipOptions): TooltipApi {
   const popoverOpts: PopoverOptions = {
     transition: options.transition,

@@ -18,27 +18,36 @@ import type { Media } from '../../core/media/types';
 
 export type { Media };
 
+/** Top-level container element that hosts the media and UI. */
 export interface MediaContainer extends HTMLElement {}
 
+/** The pair of media element and container that features operate against. */
 export interface PlayerTarget {
+  /** Media element backing the player. */
   media: Media;
+  /** Container element, or `null` when not yet attached. */
   container: MediaContainer | null;
 }
 
 export type { MediaFeatureAvailability } from '../../core/media/types';
 
+/** A single feature slice operating against a {@link PlayerTarget}. */
 export type PlayerFeature<State> = Slice<PlayerTarget, State>;
 
+/** Any feature slice for a {@link PlayerTarget}. */
 export type AnyPlayerFeature = AnySlice<PlayerTarget>;
 
+/** Player store composed from a tuple of {@link PlayerFeature}s. */
 export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<PlayerTarget, UnionSliceState<Features>>;
 
+/** Player store of any shape. */
 export type AnyPlayerStore = Store<PlayerTarget, object>;
 
 // ----------------------------------------
 // Feature Presets
 // ----------------------------------------
 
+/** Feature preset for a video player. */
 export type VideoFeatures = [
   PlayerFeature<MediaPlaybackState>,
   PlayerFeature<MediaPlaybackRateState>,
@@ -54,6 +63,7 @@ export type VideoFeatures = [
   PlayerFeature<MediaErrorState>,
 ];
 
+/** Feature preset for an audio player. */
 export type AudioFeatures = [
   PlayerFeature<MediaPlaybackState>,
   PlayerFeature<MediaPlaybackRateState>,
@@ -65,6 +75,7 @@ export type AudioFeatures = [
 ];
 
 // TODO: Define background video features (e.g., playback, source, buffer)
+/** Feature preset for a background (autoplay, muted, no UI) video player. Currently empty. */
 export type BackgroundFeatures = [];
 
 /**
@@ -104,12 +115,17 @@ export type LiveAudioFeatures = [
   PlayerFeature<MediaLiveState>,
 ];
 
+/** Store for a video player composed from {@link VideoFeatures}. */
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
+/** Store for an audio player composed from {@link AudioFeatures}. */
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
 
+/** Store for a background player composed from {@link BackgroundFeatures}. */
 export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;
 
+/** Store for a live video player composed from {@link LiveVideoFeatures}. */
 export type LiveVideoPlayerStore = PlayerStore<LiveVideoFeatures>;
 
+/** Store for a live audio player composed from {@link LiveAudioFeatures}. */
 export type LiveAudioPlayerStore = PlayerStore<LiveAudioFeatures>;

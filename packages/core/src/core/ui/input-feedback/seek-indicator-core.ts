@@ -11,13 +11,20 @@ import {
   type MediaSnapshot,
 } from './status';
 
+/** Props for the seek indicator core. */
 export interface SeekIndicatorProps extends IndicatorCoreProps {}
 
+/** Reactive state surfaced by the seek indicator core. */
 export interface SeekIndicatorState extends IndicatorLifecycleState {
+  /** Direction of the latest seek, or null when no seek is active. */
   direction: IndicatorDirection | null;
+  /** Number of consecutive same-direction seek-step actions in the current burst. */
   count: number;
+  /** Total seek offset accumulated during the current burst, in seconds. */
   seekTotal: number;
+  /** Display string for the current burst total (e.g. `"30s"`), or null when not a seek-step burst. */
   value: string | null;
+  /** Formatted current playback time at the start of the burst. */
   currentTime: string;
 }
 
@@ -33,7 +40,9 @@ const INITIAL_STATE: SeekIndicatorState = {
   transitionEnding: false,
 };
 
+/** Behavior core for the seek feedback indicator — accumulates seek-step bursts. */
 export class SeekIndicatorCore {
+  /** Reactive state container. */
   readonly state = createState<SeekIndicatorState>({ ...INITIAL_STATE });
 
   #props: SeekIndicatorProps = {};
@@ -52,18 +61,22 @@ export class SeekIndicatorCore {
     () => getIndicatorCloseDelay(this.#props)
   );
 
+  /** Update props on the core. */
   setProps(props: SeekIndicatorProps): void {
     this.#props = props;
   }
 
+  /** Cancel any pending close timer. */
   destroy(): void {
     this.#close.destroy();
   }
 
+  /** Close the indicator immediately and reset accumulated burst state. */
   close(): void {
     this.#close.close();
   }
 
+  /** Process an input-action event; returns `true` if the indicator handled it. */
   processEvent(event: InputActionEvent, snapshot: MediaSnapshot): boolean {
     if (!isSeekIndicatorAction(event.action)) return false;
 
@@ -107,6 +120,8 @@ export class SeekIndicatorCore {
 }
 
 export namespace SeekIndicatorCore {
+  /** Alias for {@link SeekIndicatorProps}. */
   export type Props = SeekIndicatorProps;
+  /** Alias for {@link SeekIndicatorState}. */
   export type State = SeekIndicatorState;
 }

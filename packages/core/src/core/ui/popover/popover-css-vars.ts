@@ -1,3 +1,4 @@
+/** CSS custom property names for popover positioning. */
 export const PopoverCSSVars = {
   /** Distance between the popup and the trigger along the side axis. */
   sideOffset: '--media-popover-side-offset',
@@ -15,4 +16,5 @@ export const PopoverCSSVars = {
   availableHeight: '--media-popover-available-height',
 } as const;
 
+/** Union of CSS custom property names defined by {@link PopoverCSSVars}. */
 export type PopoverCSSVarKey = (typeof PopoverCSSVars)[keyof typeof PopoverCSSVars];

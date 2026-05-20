@@ -6,6 +6,7 @@ import { isMediaRemotePlaybackCapable } from '../../media/predicate';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
+/** Player feature exposing remote playback (cast) state and a toggle action. */
 export const remotePlaybackFeature = definePlayerFeature({
   name: 'remotePlayback',
   state: ({ target }): MediaRemotePlaybackState => ({

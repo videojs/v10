@@ -2,6 +2,7 @@ import { TransitionDataAttrs } from '../transition';
 import type { StateAttrMap } from '../types';
 import type { PopoverState } from './popover-core';
 
+/** Data attributes the popover reflects from {@link PopoverState}. */
 export const PopoverDataAttrs = {
   /** Present when the popover is open. */
   open: 'data-open',

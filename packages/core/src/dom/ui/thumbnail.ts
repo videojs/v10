@@ -2,23 +2,41 @@ import { listen } from '@videojs/utils/dom';
 import { ThumbnailCore } from '../../core/ui/thumbnail/thumbnail-core';
 import type { ThumbnailConstraints } from '../../core/ui/thumbnail/types';
 
+/** Options for {@link createThumbnail}. */
 export interface CreateThumbnailOptions {
+  /** Accessor for the thumbnail container element. */
   getContainer: () => HTMLElement | null;
+  /** Accessor for the inner image element. */
   getImg: () => HTMLImageElement | null;
+  /** Called whenever loading, error, or natural-size state changes. */
   onStateChange: () => void;
 }
 
+/** Imperative handle returned by {@link createThumbnail}. */
 export interface ThumbnailApi {
+  /** Whether the image is currently loading. */
   readonly loading: boolean;
+  /** Whether the image failed to load. */
   readonly error: boolean;
+  /** Natural width of the loaded image, or `0` when not loaded. */
   readonly naturalWidth: number;
+  /** Natural height of the loaded image, or `0` when not loaded. */
   readonly naturalHeight: number;
+  /** Read box constraints from the container's computed style. */
   readConstraints(): ThumbnailConstraints;
+  /** Push a new image URL into the controller. */
   updateSrc(url: string | undefined): void;
+  /** Bind image listeners and synchronize state with already-loaded images. */
   connect(): void;
+  /** Tear down listeners and observers. */
   destroy(): void;
 }
 
+/**
+ * Build a thumbnail DOM controller that tracks load state and container size.
+ *
+ * @param options - Element accessors and a change callback.
+ */
 export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   const { getContainer, getImg, onStateChange } = options;
   const core = new ThumbnailCore();

@@ -6,4 +6,5 @@
  */
 export const POPUP_HOST_ATTR = 'data-popup';
 
+/** CSS selector matching elements that carry {@link POPUP_HOST_ATTR}. */
 export const POPUP_HOST_SELECTOR = `[${POPUP_HOST_ATTR}]`;

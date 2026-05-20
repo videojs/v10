@@ -6,6 +6,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaPlaybackState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Props for the play button core. */
 export interface PlayButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlayButtonState) => string) | undefined;
@@ -13,14 +14,18 @@ export interface PlayButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the play button core. */
 export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'>, ButtonState {}
 
+/** Behavior core for the play button — derives label and toggles playback. */
 export class PlayButtonCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<PlayButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<PlayButtonState>({
     paused: true,
     ended: false,
@@ -31,14 +36,17 @@ export class PlayButtonCore {
   #props = { ...PlayButtonCore.defaultProps };
   #media: MediaPlaybackState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: PlayButtonProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: PlayButtonProps): void {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: PlayButtonState): string {
     const { label } = this.#props;
 
@@ -53,6 +61,7 @@ export class PlayButtonCore {
     return state.paused ? 'Play' : 'Pause';
   }
 
+  /** Compute ARIA attributes from state. */
   getAttrs(state: PlayButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -60,10 +69,12 @@ export class PlayButtonCore {
     };
   }
 
+  /** Bind the core to a media playback state source. */
   setMedia(media: MediaPlaybackState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): PlayButtonState {
     const media = this.#media!;
 
@@ -73,6 +84,7 @@ export class PlayButtonCore {
     return this.state.current;
   }
 
+  /** Play when paused or ended, pause otherwise (no-op when disabled). */
   async toggle(media: MediaPlaybackState): Promise<void> {
     if (this.#props.disabled) return;
 
@@ -85,6 +97,8 @@ export class PlayButtonCore {
 }
 
 export namespace PlayButtonCore {
+  /** Alias for {@link PlayButtonProps}. */
   export type Props = PlayButtonProps;
+  /** Alias for {@link PlayButtonState}. */
   export type State = PlayButtonState;
 }

@@ -2,6 +2,7 @@ import type { Constructor } from '@videojs/utils/types';
 import type { NativeMediaHost } from './errors';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
+/** Mixin that fetches and parses the HLS playlist to derive live-edge timing for native HLS playback. */
 export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
   // through a JS API, so we fetch the m3u8 ourselves and parse the relevant

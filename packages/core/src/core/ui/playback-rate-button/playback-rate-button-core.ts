@@ -6,6 +6,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaPlaybackRateState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Props for the playback rate button core. */
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
@@ -13,16 +14,21 @@ export interface PlaybackRateButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the playback rate button core. */
 export interface PlaybackRateButtonState extends ButtonState {
+  /** Current playback rate multiplier (1 = normal). */
   rate: number;
 }
 
+/** Behavior core for the playback rate button — cycles through the allowed playback rates. */
 export class PlaybackRateButtonCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<PlaybackRateButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<PlaybackRateButtonState>({
     rate: 1,
     label: '',
@@ -31,14 +37,17 @@ export class PlaybackRateButtonCore {
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: PlaybackRateButtonProps): void {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: PlaybackRateButtonState): string {
     const { label } = this.#props;
 
@@ -52,6 +61,7 @@ export class PlaybackRateButtonCore {
     return `Playback rate ${state.rate}`;
   }
 
+  /** Compute ARIA attributes from state. */
   getAttrs(state: PlaybackRateButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -59,10 +69,12 @@ export class PlaybackRateButtonCore {
     };
   }
 
+  /** Bind the core to a media playback rate state source. */
   setMedia(media: MediaPlaybackRateState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
     this.state.patch({ rate: media.playbackRate });
@@ -71,6 +83,7 @@ export class PlaybackRateButtonCore {
     return this.state.current;
   }
 
+  /** Advance to the next allowed playback rate, wrapping at the end (no-op when disabled). */
   cycle(media: MediaPlaybackRateState): void {
     if (this.#props.disabled) return;
 
@@ -88,6 +101,8 @@ export class PlaybackRateButtonCore {
 }
 
 export namespace PlaybackRateButtonCore {
+  /** Alias for {@link PlaybackRateButtonProps}. */
   export type Props = PlaybackRateButtonProps;
+  /** Alias for {@link PlaybackRateButtonState}. */
   export type State = PlaybackRateButtonState;
 }

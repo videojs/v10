@@ -5,17 +5,27 @@ import { Hls, type HlsMedia } from '../hls';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
+/** Props that configure Mux Data analytics integration. */
 export interface MuxDataMediaProps {
+  /** Mux Data SDK instance; pass to use a vendored build. */
   MuxDataSdk: MuxDataSdk | undefined;
+  /** Override the beacon collection domain. */
   beaconCollectionDomain: string | undefined;
+  /** Disable Mux Data cookies. */
   disableCookies: boolean;
+  /** Mux environment key. */
   envKey: string | undefined;
+  /** Reported player software name. */
   playerSoftwareName: string | undefined;
+  /** Reported player software version. */
   playerSoftwareVersion: string | undefined;
+  /** Initialization timestamp reported to Mux Data. */
   playerInitTime: number | undefined;
+  /** Additional view metadata. */
   metadata: MuxDataOptions['data'] | undefined;
 }
 
+/** Defaults for {@link MuxDataMediaProps}. */
 export const muxDataMediaDefaultProps: MuxDataMediaProps = {
   MuxDataSdk: undefined,
   beaconCollectionDomain: undefined,
@@ -29,13 +39,19 @@ export const muxDataMediaDefaultProps: MuxDataMediaProps = {
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
+/** Host contract consumed by the Mux Data mixin. */
 export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
+  /** Engine debug flag. */
   readonly debug: boolean;
+  /** Attach to a render target. */
   attach(target: HTMLMediaElement): void;
+  /** Detach from the current target. */
   detach(): void;
+  /** Trigger the engine load lifecycle. */
   load(): void;
 }
 
+/** Mixin that wires Mux Data analytics into a media adapter. */
 export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (BaseClass) => {
   class MuxDataMedia extends BaseClass {
     #MuxDataSdk: MuxDataSdk | undefined = Mux;
@@ -190,23 +206,41 @@ export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (Ba
   return MuxDataMedia as any;
 };
 
+/** Subset of Mux Video props used to derive a `video_id`. */
 export type MuxVideoIdProps = {
+  /** Source URL. */
   src: string;
+  /** Optional metadata, which may override the derived ID. */
   metadata?: Record<string, any>;
 };
 
+/**
+ * Derive the Mux Data `video_id` for a source, preferring explicit metadata, then the Mux playback ID.
+ *
+ * @param props - Source URL and optional metadata.
+ */
 export function toVideoId(props: MuxVideoIdProps): string | undefined {
   if (props.metadata?.video_id) return props.metadata.video_id;
   if (!isMuxVideoSrc(props)) return props.src;
   return toPlaybackIdFromSrc(props.src) ?? props.src;
 }
 
+/**
+ * Extract the Mux playback ID from a `stream.mux.com` URL, or `undefined` when not a Mux URL.
+ *
+ * @param src - Source URL.
+ */
 export function toPlaybackIdFromSrc(src: string): string | undefined {
   if (!src || !src.startsWith('https://stream.')) return undefined;
   const [playbackId] = new URL(src).pathname.slice(1).split(/\.m3u8|\//);
   return playbackId || undefined;
 }
 
+/**
+ * Whether the source URL points at a Mux Video host (`*.mux.com`).
+ *
+ * @param props - Object with a `src` URL string.
+ */
 export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
   if (typeof src !== 'string') return false;
   const base = window?.location.href;

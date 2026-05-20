@@ -2,16 +2,23 @@ import { TransitionDataAttrs } from '../../../core/ui/transition';
 import { forceLayout } from '../../utils/layout';
 import type { MenuViewTransitionState } from './create-menu-view-transition';
 
+/** Options for menu viewport size transitions. */
 export interface MenuViewportTransitionOptions {
+  /** Lower bound for viewport width measurement (px). */
   minWidth?: number;
 }
 
+/** Data attributes the renderer puts on the menu viewport element. */
 export interface MenuViewportAttrs {
+  /** Always empty — marks the element as the menu viewport. */
   'data-menu-viewport': '';
 }
 
+/** Data attributes the renderer puts on the menu root-view element. */
 export interface MenuRootViewAttrs {
+  /** Always empty — marks the element as the root view. */
   'data-menu-root-view': '';
+  /** Always empty — also marks it as a menu view. */
   'data-menu-view': '';
 }
 
@@ -60,12 +67,14 @@ const MENU_VIEW_MEASURE_STYLE_PROPERTIES = [
 
 const viewportTransitionStates = new WeakMap<HTMLElement, MenuViewportTransitionState>();
 
+/** Build the attribute object the renderer applies to the menu viewport element. */
 export function getMenuViewportAttrs(): MenuViewportAttrs {
   return {
     'data-menu-viewport': '',
   };
 }
 
+/** Build the attribute object the renderer applies to the menu root-view element. */
 export function getMenuRootViewAttrs(): MenuRootViewAttrs {
   return {
     'data-menu-root-view': '',
@@ -87,6 +96,11 @@ function getViewportTransitionState(content: HTMLElement): MenuViewportTransitio
   return state;
 }
 
+/**
+ * Resolve the menu viewport element inside `content`, falling back to `content` when none.
+ *
+ * @param content - The menu content element.
+ */
 export function getMenuViewportElement(content: HTMLElement | null): HTMLElement | null {
   if (!content) return null;
 
@@ -255,6 +269,13 @@ function startExitingMenuView(
   setViewportSize(content, toSize);
 }
 
+/**
+ * Re-activate the menu root view when no submenu is currently active.
+ *
+ * @param content - The menu content element.
+ * @param hasActiveChildView - Whether a child view is currently active.
+ * @param options - Viewport size options.
+ */
 export function syncMenuViewRoot(
   content: HTMLElement | null,
   hasActiveChildView: boolean,
@@ -273,6 +294,14 @@ export function syncMenuViewRoot(
   setViewportSize(content, size);
 }
 
+/**
+ * Drive the viewport size and view-state attributes for a single view's transition phase.
+ *
+ * @param content - The menu content element.
+ * @param view - The view element being transitioned.
+ * @param viewState - Current transition state for `view`.
+ * @param options - Viewport size options.
+ */
 export function syncMenuViewTransition(
   content: HTMLElement | null,
   view: HTMLElement | null,

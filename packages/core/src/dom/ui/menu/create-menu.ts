@@ -7,10 +7,13 @@ import type { PositioningOptions } from '../popover/popover-positioning';
 import type { PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
+/** Reason an open/close transition was triggered. */
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
+/** Details accompanying a menu open/close change. */
 export type MenuChangeDetails = PopoverChangeDetails;
 
+/** Single entry in the submenu navigation stack. */
 export interface NavigationEntry {
   /** ID of the nested menu (submenu) that was pushed. */
   menuId: string;
@@ -18,6 +21,7 @@ export interface NavigationEntry {
   triggerId: string;
 }
 
+/** Navigation stack and direction for animated submenu transitions. */
 export interface NavigationState {
   /** Stack of active submenus (last = current). */
   stack: NavigationEntry[];
@@ -25,34 +29,49 @@ export interface NavigationState {
   direction: 'forward' | 'back';
 }
 
+/** Options for {@link createMenu}. */
 export interface MenuOptions {
+  /** Transition controller driving open/close animations. */
   transition: TransitionApi;
+  /** Called when the menu's open state changes. */
   onOpenChange: (open: boolean, details: MenuChangeDetails) => void;
   /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Predicate returning whether Escape should close the menu. */
   closeOnEscape: () => boolean;
+  /** Predicate returning whether outside clicks should close the menu. */
   closeOnOutsideClick: () => boolean;
   /** Called when the highlighted item changes. */
   onHighlightChange?: (element: HTMLElement | null) => void;
+  /** Optional shared popup group for at-most-one-open behavior. */
   group?: () => PopupGroup | undefined;
 }
 
+/** Event-handler bundle for the menu trigger. */
 export interface MenuTriggerProps {
   /** Called when the trigger is clicked. Uses the DOM `UIEvent` type to match the Popover API. */
   onClick: (event: UIEvent) => void;
+  /** Forwards navigation keys to the content while the menu is open. */
   onKeyDown: (event: UIKeyboardEvent) => void;
 }
 
+/** Event-handler bundle for the menu content element. */
 export interface MenuContentProps {
+  /** WAI-ARIA menu key map plus type-ahead. */
   onKeyDown: (event: UIKeyboardEvent) => void;
+  /** Focus-out handler that closes the menu on focus leave. */
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
+/** Options for {@link MenuApi.highlight}. */
 export interface MenuHighlightOptions {
+  /** Whether to also move DOM focus to the item (default `true`). */
   focus?: boolean;
+  /** Pass `preventScroll: true` to the underlying `focus()` call. */
   preventScroll?: boolean;
 }
 
+/** Whether a keyboard event is a menu navigation key (arrows, Home/End, Enter, etc.). */
 export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   const { key } = event;
 
@@ -70,12 +89,19 @@ export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   );
 }
 
+/**
+ * Build {@link PositioningOptions} for the root menu popover from its `side`/`align` state.
+ *
+ * @param side - Side of the trigger to anchor to.
+ * @param align - Alignment along the trigger's edge.
+ */
 export function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
   if (!side || !align) return null;
 
   return { side, align };
 }
 
+/** Imperative handle returned by {@link createMenu}. */
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
@@ -101,11 +127,20 @@ export interface MenuApi {
   push: (menuId: string, triggerId: string) => void;
   /** Pop the current submenu from the navigation stack. */
   pop: () => void;
+  /** Open the menu. */
   open: (reason?: MenuOpenChangeReason) => void;
+  /** Close the menu. */
   close: (reason?: MenuOpenChangeReason) => void;
+  /** Tear down the menu controller. */
   destroy: () => void;
 }
 
+/**
+ * Close `menu` or pop one level off `parentMenu` to complete an item selection.
+ *
+ * @param menu - The currently active menu.
+ * @param parentMenu - Parent menu when `menu` is a submenu.
+ */
 export function completeMenuItemSelection(menu: MenuApi, parentMenu: MenuApi | null = null): void {
   if (parentMenu) {
     parentMenu.pop();
@@ -114,6 +149,11 @@ export function completeMenuItemSelection(menu: MenuApi, parentMenu: MenuApi | n
   }
 }
 
+/**
+ * Build a menu controller — popover, item registry, type-ahead, and submenu navigation.
+ *
+ * @param options - Menu configuration.
+ */
 export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.

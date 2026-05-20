@@ -10,6 +10,7 @@ import {
   selectVolume,
 } from '../store/selectors';
 
+/** Built-in hotkey action names. */
 export type HotkeyActionName =
   | 'togglePaused'
   | 'toggleMuted'
@@ -22,15 +23,20 @@ export type HotkeyActionName =
   | 'speedDown'
   | 'seekToPercent';
 
+/** Context passed to a hotkey action resolver. */
 export interface HotkeyActionContext {
+  /** Player store backing the hotkey. */
   store: AnyPlayerStore;
+  /** Optional numeric argument supplied by the binding. */
   value?: number | undefined;
   /** The matched key character (used by `seekToPercent` to derive digit). */
   key: string;
 }
 
+/** Function that applies a hotkey action to the player store. */
 export type HotkeyActionResolver = (context: HotkeyActionContext) => void;
 
+/** Whether `action` is a toggle-style hotkey (e.g. `togglePaused`). */
 export function isHotkeyToggleAction(action: string): boolean {
   return action.startsWith('toggle');
 }
@@ -88,6 +94,11 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   },
 };
 
+/**
+ * Resolve a hotkey action by name to a function that applies it to the store.
+ *
+ * @param name - Action name; built-in or custom.
+ */
 export function resolveHotkeyAction(name: string): HotkeyActionResolver | undefined {
   const resolver = HOTKEY_ACTIONS[name as HotkeyActionName];
 

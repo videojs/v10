@@ -97,6 +97,12 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTML
   readonly observedAttributes: string[];
 };
 
+/**
+ * Wrap a `MediaHost`-shaped class as a custom element with property/attribute forwarding.
+ *
+ * @param tag - Native element tag to render inside the shadow root.
+ * @param MediaHost - Media host class whose instance properties get reflected onto the element.
+ */
 export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
   MediaHost: T

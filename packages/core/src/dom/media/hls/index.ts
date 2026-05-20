@@ -6,36 +6,52 @@ import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
 
+/** Allowed `preload` attribute values. */
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 export { Hls };
 
+/** Playback engine choice (`mse` for hls.js, `native` for the browser). */
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
+/** MIME type of the source. */
 export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+/** Stream delivery type. */
 export type StreamType = MediaStreamType;
 
+/** Constants for {@link PlaybackType} values. */
 export const PlaybackTypes = {
   MSE: 'mse',
   NATIVE: 'native',
 };
 
+/** Constants for {@link SourceType} MIME values. */
 export const SourceTypes = {
   M3U8: 'application/vnd.apple.mpegurl',
   MP4: 'video/mp4',
 };
 
+/** Re-export of {@link MediaStreamTypes} for HLS consumers. */
 export const StreamTypes = MediaStreamTypes;
 
+/** Configuration props for {@link HlsMedia}. */
 export interface HlsMediaProps {
+  /** Source URL. */
   src: string;
+  /** Explicit source MIME type; inferred from extension when omitted. */
   type: SourceType | undefined;
+  /** Preferred playback engine. */
   preferPlayback: PlaybackType | undefined;
+  /** hls.js config object. */
   config: Record<string, any>;
+  /** Enable hls.js debug logging. */
   debug: boolean;
+  /** Preload behavior. */
   preload: PreloadType;
+  /** Initial stream type before the engine confirms it. */
   streamType: StreamType;
 }
 
+/** Defaults for {@link HlsMediaProps}. */
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
   type: undefined,
@@ -46,6 +62,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
+/** Media adapter that loads HLS via hls.js (MSE) or falls back to native HLS. */
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = hlsMediaDefaultProps.src;
@@ -59,14 +76,17 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
 
+  /** Current playback engine instance (hls.js when MSE-backed, `null` otherwise). */
   get engine() {
     return this.#delegate?.engine ?? null;
   }
 
+  /** Current delegate's media error, or `null`. */
   get error() {
     return this.#delegate?.error ?? null;
   }
 
+  /** Source URL. Assignment triggers a reload. */
   get src() {
     return this.#src;
   }
@@ -96,6 +116,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
+  /** hls.js config object. Assignment triggers a reload. */
   get config() {
     return this.#config;
   }
@@ -105,6 +126,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
+  /** hls.js debug flag. Assignment triggers a reload. */
   get debug() {
     return this.#debug;
   }
@@ -164,21 +186,25 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
+  /** Attach the active delegate to a `<video>` element. */
   attach(target: HTMLVideoElement) {
     super.attach(target);
     this.#delegate?.attach(target);
   }
 
+  /** Detach from the current `<video>` element. */
   detach() {
     this.#delegate?.detach();
     super.detach();
   }
 
+  /** Detach and destroy the active delegate. */
   destroy() {
     this.detach();
     this.#engineDestroy();
   }
 
+  /** Re-evaluate engine selection and load the current source. */
   load() {
     this.#loadRequested = null;
 

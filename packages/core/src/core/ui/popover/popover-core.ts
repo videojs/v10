@@ -4,10 +4,13 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
+/** Side of the trigger a popover anchors to. */
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
+/** Alignment of the popover along the trigger's anchor edge. */
 export type PopoverAlign = 'start' | 'center' | 'end';
 
+/** Props for the popover core. */
 export interface PopoverProps {
   /** Which side of the trigger the popup appears on. */
   side?: PopoverSide | undefined;
@@ -42,15 +45,23 @@ export interface PopoverProps {
  */
 export interface PopoverInput extends TransitionState {}
 
+/** Reactive state surfaced by the popover core. */
 export interface PopoverState extends TransitionFlags {
+  /** Whether the popover is currently open. */
   open: boolean;
+  /** Current transition status of the popover's open/close animation. */
   status: TransitionStatus;
+  /** Side of the trigger the popup appears on. */
   side: PopoverSide;
+  /** Alignment along the trigger's edge. */
   align: PopoverAlign;
+  /** Modality of the popup. */
   modal: boolean | 'trap-focus';
 }
 
+/** Behavior core for the popover — derives open state and ARIA attributes. */
 export class PopoverCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<PopoverProps> = {
     side: 'top',
     align: 'center',
@@ -66,20 +77,24 @@ export class PopoverCore {
 
   #props = { ...PopoverCore.defaultProps };
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: PopoverProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: PopoverProps): void {
     this.#props = defaults(props, PopoverCore.defaultProps);
   }
 
   #input: PopoverInput | null = null;
 
+  /** Push transition input from the surrounding transition controller. */
   setInput(input: PopoverInput): void {
     this.#input = input;
   }
 
+  /** Recompute and return the current state. */
   getState(): PopoverState {
     const input = this.#input!;
     return {
@@ -92,6 +107,7 @@ export class PopoverCore {
     };
   }
 
+  /** Compute ARIA attributes for the popover trigger. */
   getTriggerAttrs(state: PopoverState, popupId?: string) {
     return {
       'aria-expanded': state.open ? 'true' : 'false',
@@ -100,6 +116,7 @@ export class PopoverCore {
     };
   }
 
+  /** Compute ARIA and popover attributes for the popup element. */
   getPopupAttrs(state: PopoverState) {
     return {
       popover: 'manual' as const,
@@ -110,7 +127,10 @@ export class PopoverCore {
 }
 
 export namespace PopoverCore {
+  /** Alias for {@link PopoverProps}. */
   export type Props = PopoverProps;
+  /** Alias for {@link PopoverState}. */
   export type State = PopoverState;
+  /** Alias for {@link PopoverInput}. */
   export type Input = PopoverInput;
 }

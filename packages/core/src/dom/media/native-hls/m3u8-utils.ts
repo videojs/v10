@@ -9,6 +9,7 @@
 // - https://github.com/muxinc/elements/blob/main/packages/playback-core/src/index.ts
 // - https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12
 
+/** Subset of HLS playlist metadata used to derive live timing. */
 export interface StreamInfo {
   /**
    * Offset representing the seekable range size for live content.

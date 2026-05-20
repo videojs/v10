@@ -6,6 +6,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaPlaybackRateState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Props for the playback rate menu core. */
 export interface PlaybackRateMenuProps {
   /** Custom label for the menu trigger. */
   label?: string | ((state: PlaybackRateMenuState) => string) | undefined;
@@ -15,9 +16,13 @@ export interface PlaybackRateMenuProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the playback rate menu core. */
 export interface PlaybackRateMenuState extends ButtonState {
+  /** Current playback rate multiplier (1 = normal). */
   rate: number;
+  /** Allowed playback rates to expose as menu items. */
   rates: readonly number[];
+  /** Whether selection is currently disabled. */
   disabled: boolean;
 }
 
@@ -25,13 +30,16 @@ function formatPlaybackRate(rate: number): string {
   return `${rate}×`;
 }
 
+/** Behavior core for the playback rate menu — surfaces the rates list and applies selection. */
 export class PlaybackRateMenuCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<PlaybackRateMenuProps> = {
     label: '',
     formatRate: formatPlaybackRate,
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<PlaybackRateMenuState>({
     rate: 1,
     rates: [],
@@ -42,14 +50,17 @@ export class PlaybackRateMenuCore {
   #props = { ...PlaybackRateMenuCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: PlaybackRateMenuProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: PlaybackRateMenuProps): void {
     this.#props = defaults(props, PlaybackRateMenuCore.defaultProps);
   }
 
+  /** Resolve the menu trigger's ARIA label from props and state. */
   getLabel(state: PlaybackRateMenuState): string {
     const { label } = this.#props;
 
@@ -63,14 +74,17 @@ export class PlaybackRateMenuCore {
     return `Playback rate ${state.rate}`;
   }
 
+  /** Format a single playback rate for display as a menu item. */
   getRateLabel(rate: number): string {
     return this.#props.formatRate(rate);
   }
 
+  /** Serialize a rate to the string value used to identify the menu item. */
   getRateValue(rate: number): string {
     return String(rate);
   }
 
+  /** Compute ARIA attributes for the menu trigger. */
   getAttrs(state: PlaybackRateMenuState) {
     return {
       'aria-label': this.getLabel(state),
@@ -78,10 +92,12 @@ export class PlaybackRateMenuCore {
     };
   }
 
+  /** Bind the core to a media playback rate state source. */
   setMedia(media: MediaPlaybackRateState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): PlaybackRateMenuState {
     const media = this.#media!;
 
@@ -95,6 +111,7 @@ export class PlaybackRateMenuCore {
     return this.state.current;
   }
 
+  /** Apply a rate from the allowed list (no-op when disabled or unsupported). */
   select(media: MediaPlaybackRateState, rate: number): void {
     if (this.#props.disabled) return;
     if (!media.playbackRates.includes(rate)) return;
@@ -102,6 +119,7 @@ export class PlaybackRateMenuCore {
     media.setPlaybackRate(rate);
   }
 
+  /** Apply a rate by its string menu-item value. */
   selectValue(media: MediaPlaybackRateState, value: string): void {
     const rate = media.playbackRates.find((candidate) => this.getRateValue(candidate) === value);
     if (isUndefined(rate)) return;
@@ -111,6 +129,8 @@ export class PlaybackRateMenuCore {
 }
 
 export namespace PlaybackRateMenuCore {
+  /** Alias for {@link PlaybackRateMenuProps}. */
   export type Props = PlaybackRateMenuProps;
+  /** Alias for {@link PlaybackRateMenuState}. */
   export type State = PlaybackRateMenuState;
 }

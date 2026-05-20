@@ -6,6 +6,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaFullscreenState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Props for the fullscreen button core. */
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: FullscreenButtonState) => string) | undefined;
@@ -13,17 +14,21 @@ export interface FullscreenButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** Reactive state surfaced by the fullscreen button core. */
 export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'>, ButtonState {
   /** Whether fullscreen can be requested on this platform. */
   availability: MediaFullscreenState['fullscreenAvailability'];
 }
 
+/** Behavior core for the fullscreen button — derives label and toggles fullscreen. */
 export class FullscreenButtonCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<FullscreenButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<FullscreenButtonState>({
     fullscreen: false,
     availability: 'available',
@@ -33,14 +38,17 @@ export class FullscreenButtonCore {
   #props = { ...FullscreenButtonCore.defaultProps };
   #media: MediaFullscreenState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: FullscreenButtonProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: FullscreenButtonProps): void {
     this.#props = defaults(props, FullscreenButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: FullscreenButtonState): string {
     const { label } = this.#props;
 
@@ -54,6 +62,7 @@ export class FullscreenButtonCore {
     return state.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
+  /** Compute ARIA attributes from state. */
   getAttrs(state: FullscreenButtonState) {
     return {
       'aria-label': this.getLabel(state),
@@ -61,10 +70,12 @@ export class FullscreenButtonCore {
     };
   }
 
+  /** Bind the core to a media fullscreen state source. */
   setMedia(media: MediaFullscreenState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): FullscreenButtonState {
     const media = this.#media!;
     this.state.patch({ fullscreen: media.fullscreen, availability: media.fullscreenAvailability });
@@ -73,6 +84,7 @@ export class FullscreenButtonCore {
     return this.state.current;
   }
 
+  /** Enter or exit fullscreen depending on current state (no-op when disabled or unavailable). */
   async toggle(media: MediaFullscreenState): Promise<void> {
     if (this.#props.disabled) return;
     if (media.fullscreenAvailability !== 'available') return;
@@ -90,6 +102,8 @@ export class FullscreenButtonCore {
 }
 
 export namespace FullscreenButtonCore {
+  /** Alias for {@link FullscreenButtonProps}. */
   export type Props = FullscreenButtonProps;
+  /** Alias for {@link FullscreenButtonState}. */
   export type State = FullscreenButtonState;
 }

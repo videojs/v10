@@ -4,6 +4,7 @@ import type { MediaPlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '../../media/predicate';
 
+/** Player feature exposing playback state (paused, ended, started, waiting) and play/pause actions. */
 export const playbackFeature = definePlayerFeature({
   name: 'playback',
   state: ({ target }): MediaPlaybackState => ({

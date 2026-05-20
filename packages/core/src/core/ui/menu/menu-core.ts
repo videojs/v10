@@ -6,6 +6,7 @@ import { getTransitionFlags } from '../transition';
 
 export type { PopoverAlign, PopoverSide };
 
+/** Props for the menu core. */
 export interface MenuProps {
   /** Which side of the trigger the menu appears on. Root menus only. */
   side?: PopoverSide | undefined;
@@ -26,10 +27,15 @@ export interface MenuProps {
 /** Raw transition state provided by `createTransition`. */
 export interface MenuInput extends TransitionState {}
 
+/** Reactive state surfaced by the menu core. */
 export interface MenuState extends TransitionFlags {
+  /** Whether the menu is currently open. */
   open: boolean;
+  /** Current transition status of the menu's open/close animation. */
   status: TransitionStatus;
+  /** Side of the trigger the menu appears on; `undefined` for submenus. */
   side: PopoverSide | undefined;
+  /** Alignment along the trigger's edge; `undefined` for submenus. */
   align: PopoverAlign | undefined;
   /** Whether this menu is nested inside another menu's content. */
   isSubmenu: boolean;
@@ -37,6 +43,7 @@ export interface MenuState extends TransitionFlags {
 
 /** Base menu logic: ARIA attributes and open/close state computation. */
 export class MenuCore {
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<MenuProps> = {
     side: 'bottom',
     align: 'start',
@@ -50,22 +57,27 @@ export class MenuCore {
   #props = { ...MenuCore.defaultProps };
   #input: MenuInput | null = null;
 
+  /** Current resolved props (defaults merged in). */
   get props(): Readonly<NonNullableObject<MenuProps>> {
     return this.#props;
   }
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: MenuProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: MenuProps): void {
     this.#props = defaults(props, MenuCore.defaultProps);
   }
 
+  /** Push transition input from the surrounding transition controller. */
   setInput(input: MenuInput): void {
     this.#input = input;
   }
 
+  /** Recompute and return the current state. */
   getState(): MenuState {
     const input = this.#input!;
     const isSubmenu = this.#props.isSubmenu;
@@ -80,6 +92,7 @@ export class MenuCore {
     };
   }
 
+  /** Compute ARIA attributes for the menu trigger button. */
   getTriggerAttrs(state: MenuState, contentId?: string) {
     return {
       'aria-haspopup': 'menu' as const,
@@ -88,6 +101,7 @@ export class MenuCore {
     };
   }
 
+  /** Compute ARIA and popover attributes for the menu content panel. */
   getContentAttrs(state: MenuState) {
     return {
       role: 'menu' as const,
@@ -100,7 +114,10 @@ export class MenuCore {
 }
 
 export namespace MenuCore {
+  /** Alias for {@link MenuProps}. */
   export type Props = MenuProps;
+  /** Alias for {@link MenuState}. */
   export type State = MenuState;
+  /** Alias for {@link MenuInput}. */
   export type Input = MenuInput;
 }

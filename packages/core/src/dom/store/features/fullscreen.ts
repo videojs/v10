@@ -6,6 +6,7 @@ import { exitFullscreen, isFullscreen, isFullscreenEnabled, requestFullscreen } 
 import { exitPictureInPicture, isPictureInPicture } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
+/** Player feature exposing fullscreen state and request/exit actions. */
 export const fullscreenFeature = definePlayerFeature({
   name: 'fullscreen',
   state: ({ target }): MediaFullscreenState => ({

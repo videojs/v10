@@ -2,9 +2,12 @@ import { isMacOS } from '@videojs/utils/dom';
 
 import { HotkeyCoordinator } from './coordinator';
 
+/** Hotkey modifier name. */
 export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';
 
+/** Parsed representation of a single hotkey binding. */
 export interface ParsedHotkeyBinding {
+  /** Active modifier keys. */
   modifiers: Set<HotkeyModifierKey>;
   /** Lowercased key for matching. */
   key: string;
@@ -12,13 +15,17 @@ export interface ParsedHotkeyBinding {
   originalKey: string;
 }
 
+/** Options accepted by {@link createHotkey}. */
 export interface HotkeyOptions {
+  /** Key pattern (e.g. `'k'`, `'Shift+>'`, `'0-9'`). */
   keys: string;
+  /** Callback invoked when the hotkey matches. */
   onActivate: (event: KeyboardEvent, key: string) => void;
   /** Where to listen — `'player'` (container) or `'document'`. */
   target?: 'player' | 'document' | undefined;
   /** Whether `event.repeat` should fire the callback. */
   repeatable?: boolean | undefined;
+  /** Whether the binding is currently disabled. */
   disabled?: boolean | undefined;
   /** Action name for the ARIA registry and subscriber events. */
   action?: string | undefined;
@@ -31,14 +38,7 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
 /**
  * Parse a key pattern string into one or more bindings.
  *
- * @example
- * ```ts
- * parseHotkeyPattern('>');
- * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
- *
- * parseHotkeyPattern('0-9');
- * // 10 bindings, one per digit
- * ```
+ * @param pattern - Pattern string (e.g. `'>'`, `'0-9'`, `'Shift+Tab'`).
  */
 export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   // Range expansion: "0-9" → individual digit bindings.
@@ -127,20 +127,10 @@ export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
 }
 
 /**
- * Register a hotkey binding on a target element.
+ * Register a hotkey binding on a target element. Returns a cleanup function that removes the binding.
  *
- * @example
- * ```ts
- * const cleanup = createHotkey(container, {
- *   keys: 'k',
- *   onActivate: () => store.paused ? store.play() : store.pause(),
- * });
- *
- * // Later: remove the binding
- * cleanup();
- * ```
- *
- * @returns A cleanup function that removes the binding.
+ * @param target - Element to attach keyboard listeners to.
+ * @param options - Hotkey configuration.
  */
 export function createHotkey(target: HTMLElement, options: HotkeyOptions): () => void {
   const coordinator = getHotkeyCoordinator(target);

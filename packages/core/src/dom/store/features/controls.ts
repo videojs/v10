@@ -10,6 +10,7 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 
+/** Player feature exposing controls visibility derived from playback and user activity. */
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
   state: ({ get, set }): MediaControlsState => ({

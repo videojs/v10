@@ -6,6 +6,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaBufferState, MediaLiveState, MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
 
+/** Props for the live button core. */
 export interface LiveButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: LiveButtonState) => string) | undefined;
@@ -36,6 +37,7 @@ export type LiveButtonMediaState = Pick<MediaTimeState, 'currentTime' | 'seek'> 
   Pick<MediaBufferState, 'seekable'> &
   MediaLiveState;
 
+/** Reactive state surfaced by the live button core. */
 export interface LiveButtonState extends ButtonState {
   /** Whether the stream is live (or DVR). */
   live: boolean;
@@ -60,11 +62,13 @@ export class LiveButtonCore {
    */
   static defaultText = 'Live';
 
+  /** Default values applied when a prop is omitted. */
   static readonly defaultProps: NonNullableObject<LiveButtonProps> = {
     label: '',
     disabled: false,
   };
 
+  /** Reactive state container. */
   readonly state = createState<LiveButtonState>({
     live: false,
     liveEdge: false,
@@ -74,14 +78,17 @@ export class LiveButtonCore {
   #props = { ...LiveButtonCore.defaultProps };
   #media: LiveButtonMediaState | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: LiveButtonProps) {
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   setProps(props: LiveButtonProps): void {
     this.#props = defaults(props, LiveButtonCore.defaultProps);
   }
 
+  /** Resolve the button's ARIA label from props and state. */
   getLabel(state: LiveButtonState): string {
     const { label } = this.#props;
 
@@ -96,6 +103,7 @@ export class LiveButtonCore {
     return 'Seek to live edge';
   }
 
+  /** Compute ARIA attributes from state. */
   getAttrs(state: LiveButtonState) {
     const inactive = this.#props.disabled || state.liveEdge;
     return {
@@ -104,10 +112,12 @@ export class LiveButtonCore {
     };
   }
 
+  /** Bind the core to a media state source covering time, buffer, and live. */
   setMedia(media: LiveButtonMediaState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): LiveButtonState {
     const media = this.#media!;
     const live = isLiveMedia(media);
@@ -145,8 +155,11 @@ export class LiveButtonCore {
 }
 
 export namespace LiveButtonCore {
+  /** Alias for {@link LiveButtonProps}. */
   export type Props = LiveButtonProps;
+  /** Alias for {@link LiveButtonState}. */
   export type State = LiveButtonState;
+  /** Alias for {@link LiveButtonMediaState}. */
   export type MediaState = LiveButtonMediaState;
 }
 

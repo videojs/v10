@@ -4,6 +4,7 @@ import Hls from 'hls.js';
 import { MediaStreamTypes } from '../../../core/media/types';
 import type { HlsEngineHost, HlsPlaylistTypes } from './types';
 
+/** Mixin that exposes `liveEdgeStart` and `targetLiveWindow` derived from hls.js levels. */
 export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
     #targetLiveWindow = Number.NaN;

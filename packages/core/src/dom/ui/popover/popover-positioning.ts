@@ -4,28 +4,43 @@ import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover
 import { type PopoverCSSVarKey, PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { createDOMRect } from '../../utils/layout';
 
+/** Side and alignment options for positioning a popover relative to its trigger. */
 export interface PositioningOptions {
+  /** Side of the trigger to anchor to. */
   side: PopoverSide;
+  /** Alignment along the trigger's edge. */
   align: PopoverAlign;
 }
 
+/** Numeric offsets resolved from CSS custom properties for manual positioning. */
 export interface ManualOffsets {
+  /** Distance between popup and trigger along the side axis. */
   sideOffset: number;
+  /** Distance between popup and trigger along the alignment axis. */
   alignOffset: number;
+  /** Minimum distance from the boundary edge. */
   boundaryOffset?: number;
 }
 
 /** CSS custom property names for anchor-based positioning. */
 export interface PositioningCSSVars {
+  /** Side-offset variable name. */
   sideOffset: string;
+  /** Align-offset variable name. */
   alignOffset: string;
+  /** Boundary-offset variable name. */
   boundaryOffset: string;
+  /** Anchor width variable name. */
   anchorWidth: string;
+  /** Anchor height variable name. */
   anchorHeight: string;
+  /** Available-width variable name. */
   availableWidth: string;
+  /** Available-height variable name. */
   availableHeight: string;
 }
 
+/** Subset of inline style properties used for popover/tooltip positioning. */
 export interface PopoverPositionStyle {
   [key: string]: string | undefined;
   positionAnchor?: string;
@@ -86,6 +101,17 @@ function getCrossAxisAvailable(
  * custom properties — compatible with both React's `style` prop and
  * `applyStyles()` from `@videojs/utils/dom`.
  */
+/**
+ * Get positioning styles for the popup element.
+ *
+ * @param anchorName - Anchor name to register on the trigger.
+ * @param opts - Side and alignment.
+ * @param triggerRect - Trigger bounding rect (used by the JS fallback).
+ * @param popupRect - Popup bounding rect (used by the JS fallback).
+ * @param boundaryRect - Boundary bounding rect (used to compute available space).
+ * @param offsets - Resolved manual offsets in pixels.
+ * @param cssVars - CSS variable name map (popover or tooltip).
+ */
 export function getAnchorPositionStyle(
   anchorName: string,
   opts: PositioningOptions,
@@ -119,7 +145,11 @@ export function getAnchorPositionStyle(
   return {};
 }
 
-/** Generate style to set on the trigger for CSS Anchor Positioning. */
+/**
+ * Generate style to set on the trigger for CSS Anchor Positioning.
+ *
+ * @param anchorName - Anchor name to register on the trigger.
+ */
 export function getAnchorNameStyle(anchorName: string) {
   if (!supportsAnchorPositioning()) return {};
   return { anchorName: `--${anchorName}` };
@@ -188,6 +218,18 @@ function getAnchorPositionCSS(
  *
  * Accepts a `cssVars` map so the same logic works for both popover
  * (`--media-popover-*`) and tooltip (`--media-tooltip-*`) namespaces.
+ */
+/**
+ * Compute CSS variables for sizing constraints relative to the anchor/boundary.
+ *
+ * Accepts a `cssVars` map so the same logic works for both popover
+ * (`--media-popover-*`) and tooltip (`--media-tooltip-*`) namespaces.
+ *
+ * @param triggerRect - Trigger bounding rect.
+ * @param boundaryRect - Boundary bounding rect.
+ * @param opts - Side and alignment.
+ * @param offsets - Resolved manual offsets in pixels.
+ * @param cssVars - CSS variable name map.
  */
 export function getPositioningCSSVars(
   triggerRect: DOMRect,
@@ -276,6 +318,16 @@ export function getPopoverCSSVars(
  * Offsets are resolved by the caller from CSS custom properties via
  * `getComputedStyle()` and passed as `offsets`.
  */
+/**
+ * Compute manual positioning when CSS Anchor Positioning is not supported.
+ *
+ * Returns inline `top`/`left` styles in **viewport coordinates** for use with `position: fixed`.
+ *
+ * @param triggerRect - Trigger bounding rect.
+ * @param popupRect - Popup bounding rect.
+ * @param opts - Side and alignment.
+ * @param offsets - Resolved manual offsets in pixels.
+ */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
   popupRect: DOMRect,
@@ -328,6 +380,12 @@ export function getManualPositionStyle(
  * Read positioning offset CSS custom properties from the
  * popup element's computed style, returning numeric pixel values.
  */
+/**
+ * Read positioning offset CSS custom properties from the popup element's computed style.
+ *
+ * @param el - Popup element to read from.
+ * @param cssVars - CSS variable name map.
+ */
 export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): ManualOffsets {
   const computed = getComputedStyle(el);
   return {
@@ -343,6 +401,11 @@ export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = Popove
  * `getBoundingClientRect()` includes active transforms, which causes the
  * fallback position to drift while opening/closing animations scale the popup.
  * Using `offsetWidth`/`offsetHeight` preserves the untransformed size.
+ */
+/**
+ * Measure the popup's layout box for positioning, preserving the untransformed size.
+ *
+ * @param el - Popup element to measure.
  */
 export function getPopupPositionRect(el: HTMLElement): DOMRect {
   const rect = el.getBoundingClientRect();

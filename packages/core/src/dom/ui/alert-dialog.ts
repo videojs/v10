@@ -5,6 +5,7 @@ import type { AlertDialogInput } from '../../core/ui/alert-dialog/alert-dialog-c
 import { createDismissLayer } from './dismiss-layer';
 import type { TransitionApi } from './transition';
 
+/** Options for {@link createAlertDialog}. */
 export interface AlertDialogOptions {
   /** Transition API for animated open/close. */
   transition: TransitionApi;
@@ -16,6 +17,7 @@ export interface AlertDialogOptions {
   closeOnEscape?: () => boolean;
 }
 
+/** Imperative handle returned by {@link createAlertDialog}. */
 export interface AlertDialogApi {
   /** Reactive transition state that platforms subscribe to for rendering. */
   input: State<AlertDialogInput>;
@@ -29,6 +31,11 @@ export interface AlertDialogApi {
   destroy(): void;
 }
 
+/**
+ * Create an alert dialog controller with focus management and dismiss handling.
+ *
+ * @param options - Configuration including the open/close transition.
+ */
 export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
   const { onOpenChange } = options;
 

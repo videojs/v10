@@ -7,6 +7,7 @@ import { getDefaultCastOptions, loadCastFramework, requiresCastFramework } from 
 
 export type { GoogleCastMediaElement } from './types';
 
+/** Mixin that adds Google Cast (Chromecast) remote playback support to a media adapter. */
 export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
   superclass: Base
 ): MixinReturn<Base, GoogleCastMedia> => {

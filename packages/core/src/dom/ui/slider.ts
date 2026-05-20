@@ -6,6 +6,7 @@ import type { SliderInput, SliderState } from '../../core/ui/slider/slider-core'
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 
+/** Options for {@link createSlider}. */
 export interface SliderOptions {
   /** Element reference for getBoundingClientRect() and pointer capture. */
   getElement: () => HTMLElement;
@@ -43,29 +44,47 @@ export interface SliderOptions {
   onResize?: (() => void) | undefined;
 }
 
+/** Event-handler bundle to spread onto the slider root element. */
 export interface SliderRootProps {
+  /** Pointer-down handler — starts a drag. */
   onPointerDown: (event: UIPointerEvent) => void;
+  /** Pointer-move handler — updates drag value or hover preview. */
   onPointerMove: (event: UIPointerEvent) => void;
+  /** Pointer-up handler — commits the value on release. */
   onPointerUp: (event: UIPointerEvent) => void;
+  /** Pointer-leave handler — clears hover preview. */
   onPointerLeave: (event: UIPointerEvent) => void;
+  /** Lost-pointer-capture handler — ends the drag cleanly. */
   onLostPointerCapture: () => void;
 }
 
+/** Inline style object to spread onto the slider root element. */
 export interface SliderRootStyle extends Record<string, string> {
+  /** `touch-action` CSS value (always `'none'`). */
   touchAction: string;
+  /** `user-select` CSS value (always `'none'`). */
   userSelect: string;
 }
 
+/** Event-handler bundle to spread onto the slider thumb element. */
 export interface SliderThumbProps {
+  /** Key-down handler implementing the WAI-ARIA slider key map. */
   onKeyDown: (event: UIKeyboardEvent) => void;
+  /** Focus handler — sets the `focused` input flag. */
   onFocus: () => void;
+  /** Blur handler — clears the `focused` input flag. */
   onBlur: () => void;
 }
 
+/** Imperative handle returned by {@link createSlider}. */
 export interface SliderApi {
+  /** Reactive pointer/drag input state for downstream cores. */
   input: State<SliderInput>;
+  /** Props for the root element. */
   rootProps: SliderRootProps;
+  /** Inline style for the root element. */
   rootStyle: SliderRootStyle;
+  /** Props for the thumb element. */
   thumbProps: SliderThumbProps;
   /**
    * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
@@ -73,9 +92,15 @@ export interface SliderApi {
    * `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
    */
   adjustForAlignment: <S extends SliderState>(state: S) => S;
+  /** Tear down listeners and observers. */
   destroy: () => void;
 }
 
+/**
+ * Build a slider DOM controller — pointer capture, keyboard stepping, and reactive input state.
+ *
+ * @param options - Element accessors and value callbacks.
+ */
 export function createSlider(options: SliderOptions): SliderApi {
   const input = createState<SliderInput>({
     pointerPercent: 0,

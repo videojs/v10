@@ -5,6 +5,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
+/** Props for the time slider core. */
 export interface TimeSliderProps extends SliderProps {
   /** @internal Derived from `currentTime` — not user-settable. */
   value?: number | undefined;
@@ -16,6 +17,7 @@ export interface TimeSliderProps extends SliderProps {
   changeThrottle?: number | undefined;
 }
 
+/** Reactive state surfaced by the time slider core. */
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
   /** Buffered amount as a percentage of duration (0–100). */
   bufferPercent: number;
@@ -23,6 +25,7 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 
 /** Time-domain slider: maps media time/buffer state to slider state. */
 export class TimeSliderCore extends SliderCore {
+  /** Default values applied when a prop is omitted. */
   static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     ...SliderCore.defaultProps,
     label: 'Seek',
@@ -32,20 +35,24 @@ export class TimeSliderCore extends SliderCore {
   #props = { ...TimeSliderCore.defaultProps };
   #media: (MediaTimeState & MediaBufferState) | null = null;
 
+  /** @param props - Initial props (merged with defaults). */
   constructor(props?: TimeSliderProps) {
     super();
     if (props) this.setProps(props);
   }
 
+  /** Update props on the core. */
   override setProps(props: TimeSliderProps): void {
     this.#props = defaults(props, TimeSliderCore.defaultProps);
     super.setProps({ ...props, min: 0 });
   }
 
+  /** Bind the core to a media time and buffer state source. */
   setMedia(media: MediaTimeState & MediaBufferState): void {
     this.#media = media;
   }
 
+  /** Recompute and return the current state. */
   getState(): TimeSliderState {
     const media = this.#media!;
     const { duration, currentTime, seeking, buffered } = media;
@@ -68,10 +75,12 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
+  /** Resolve the slider's ARIA label, defaulting to "Seek". */
   override getLabel(state: SliderState): string {
     return super.getLabel(state) || 'Seek';
   }
 
+  /** Compute ARIA attributes including a spoken `aria-valuetext` of the seek target. */
   override getAttrs(state: TimeSliderState) {
     const base = super.getAttrs(state);
 
@@ -90,6 +99,8 @@ export class TimeSliderCore extends SliderCore {
 }
 
 export namespace TimeSliderCore {
+  /** Alias for {@link TimeSliderProps}. */
   export type Props = TimeSliderProps;
+  /** Alias for {@link TimeSliderState}. */
   export type State = TimeSliderState;
 }
