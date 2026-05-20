@@ -10,7 +10,7 @@ Recognize multiple audio renditions from a multivariant HLS playlist, expose the
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. Foundation behaviors exist (`selectAudioTrack`, `resolveAudioTrack`, `setupAudioBufferActors`, `loadAudioSegments`) but assume a single audio playlist throughout the source's lifetime.
+- **Composition:** not implemented in `createSimpleHlsEngine`. Today's [`audio-playback`](./audio-playback.md) feature is the single-rendition baseline; this feature extends it with multi-rendition recognition, programmatic selection, and mid-stream switching. The foundation behaviors (`selectAudioTrack`, `resolveAudioTrack`, `setupAudioBufferActors`, `loadAudioSegments`) all exist and ship as part of `audio-playback`, but assume a single audio playlist throughout the source's lifetime.
 - **Definition depth:** coarse — scope and relations identified; implementation approach not yet sketched.
 
 ## Phases of complexity
@@ -57,6 +57,7 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Related features
 
+- **audio-playback** — the single-rendition baseline this feature extends. Recognition + default selection at source load already exist there; this feature adds the multi-rendition + switching layer on top.
 - **subtitles** — direct template for the selection-picker shape; multi-writer state slot pattern.
 - **video-abr** — `userVideoTrackSelection` constraint pattern; precedent for consumer-driven track override coexisting with engine-driven selection.
 - **mse-mms-pipeline** — owns the audio `SourceBufferActor` and the `remove` / `flushBuffer` primitives that mid-stream language switching builds on; the lifecycle stays put (same-codec, no recreation), and this feature adds the flush orchestration on top.

@@ -62,7 +62,7 @@ The selection model — which audio / video / text tracks are available, which i
 
 **Signals.** Track selection, switching, filtering, sorting; per-type tracks; state slots named `selected{Audio,Video,Text}TrackId`; behaviors named `select*Track`, `switch*Quality`, `sync*Tracks`; multi-writer track-id slots; manifest renditions with `LANGUAGE` / `NAME` / `DEFAULT` / `AUTOSELECT` / `FORCED` / `CHANNELS` attributes; `userVideoTrackSelection` and similar constraint slots.
 
-**Docs.** `subtitles`, `video-abr`, `multi-language-audio`, `[track-registry-primitive]`, `[audio-abr]`, `[5.1-surround-selection]`, `[hevc-variant-selection]`, `[single-video-track-default-selection]`.
+**Docs.** `subtitles`, `video-abr`, `audio-playback`, `multi-language-audio`, `[track-registry-primitive]`, `[audio-abr]`, `[5.1-surround-selection]`, `[hevc-variant-selection]`, `[single-video-track-default-selection]`.
 
 **Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`); the `selected*TrackId` slot family.
 
