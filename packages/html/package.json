@@ -14,6 +14,7 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
     "./dist/*/define/**/*.js",
+    "./dist/*/define/i18n.js",
     "./dist/*/icons/element/**/*.js",
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
@@ -118,6 +119,16 @@
       "types": "./cdn/*.dev.d.ts",
       "development": "./cdn/*.dev.js",
       "default": "./cdn/*.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./dist/dev/i18n/index.js",
+      "default": "./dist/default/i18n/index.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     },
     "./*.css": "./dist/default/define/*.css",
     "./*": {
