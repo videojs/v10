@@ -11,12 +11,12 @@ test.describe('Captions', () => {
     await player.waitForMediaReady();
   });
 
-  test('captions button shows unavailable without subtitle tracks', async ({ page }) => {
+  test('captions control shows unavailable without subtitle tracks', async ({ page }) => {
     const captionsBtn = page.locator(SELECTORS.captionsButton).first();
     await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
   });
 
-  test('captions button becomes available when subtitle track is added', async ({ page }) => {
+  test('captions control becomes available when subtitle track is added', async ({ page }) => {
     const captionsBtn = page.locator(SELECTORS.captionsButton).first();
 
     // Initially unavailable
@@ -35,7 +35,7 @@ test.describe('Captions', () => {
       video.appendChild(track);
     });
 
-    // Button should switch to available
+    // Control should switch to available
     await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'available', {
       timeout: 5_000,
     });

@@ -197,6 +197,56 @@ describe('textTrackFeature', () => {
       expect(store.state.toggleSubtitles()).toBe(false);
     });
 
+    it('selectTextTrack() shows one caption/subtitle track and disables the others', () => {
+      const video = createVideo();
+      const metadataTrack = createMockTrack('metadata', 'hidden');
+      const subtitlesTrack = createMockTrack('subtitles');
+      const captionsTrack = createMockTrack('captions', 'showing');
+      mockTextTracks(video, [metadataTrack, subtitlesTrack, captionsTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      const selected = store.state.selectTextTrack(1);
+
+      expect(selected).toBe(true);
+      expect(metadataTrack.mode).toBe('hidden');
+      expect(subtitlesTrack.mode).toBe('showing');
+      expect(captionsTrack.mode).toBe('disabled');
+    });
+
+    it('selectTextTrack() disables captions/subtitles when selecting off', () => {
+      const video = createVideo();
+      const subtitlesTrack = createMockTrack('subtitles', 'showing');
+      const captionsTrack = createMockTrack('captions', 'showing');
+      mockTextTracks(video, [subtitlesTrack, captionsTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      const selected = store.state.selectTextTrack(null);
+
+      expect(selected).toBe(false);
+      expect(subtitlesTrack.mode).toBe('disabled');
+      expect(captionsTrack.mode).toBe('disabled');
+    });
+
+    it('selectTextTrack() returns false for non-caption tracks', () => {
+      const video = createVideo();
+      const metadataTrack = createMockTrack('metadata', 'hidden');
+      const subtitlesTrack = createMockTrack('subtitles');
+      mockTextTracks(video, [metadataTrack, subtitlesTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      const selected = store.state.selectTextTrack(0);
+
+      expect(selected).toBe(false);
+      expect(metadataTrack.mode).toBe('hidden');
+      expect(subtitlesTrack.mode).toBe('disabled');
+    });
+
     it('stops updating after destroy', () => {
       const video = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);
