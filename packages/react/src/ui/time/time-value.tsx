@@ -5,7 +5,7 @@ import { logMissingFeature, selectTime } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
-import { useTranslator } from '../../i18n';
+import { useLocale, useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -30,9 +30,15 @@ export const Value = forwardRef(function Value(
 
   const time = usePlayer(selectTime);
   const translator = useTranslator();
+  const locale = useLocale();
 
   const [core] = useState(() => new TimeCore());
-  core.setProps({ type, negativeSign, label, formatOptions });
+  core.setProps({
+    type,
+    negativeSign,
+    label,
+    formatOptions: { ...formatOptions, locale: formatOptions?.locale ?? locale },
+  });
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');
