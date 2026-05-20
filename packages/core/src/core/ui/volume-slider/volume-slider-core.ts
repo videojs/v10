@@ -9,8 +9,6 @@ import type { TranslationKeyOrString } from '../types';
 export interface VolumeSliderProps extends SliderProps {
   /** Step increment for wheel scrolling. */
   wheelStep?: number | undefined;
-  /** BCP 47 tag(s) for {@link formatVolumePercent} in `aria-valuetext`. */
-  formatLocale?: string | string[] | undefined;
   /** @internal Derived from `volume` (0–100) — not user-settable. */
   value?: number | undefined;
   /** @internal Always 0 — not user-settable. */
@@ -32,6 +30,7 @@ export class VolumeSliderCore extends SliderCore {
   };
 
   #media: MediaVolumeState | null = null;
+  #formatLocale: string | string[] | undefined;
 
   constructor(props?: VolumeSliderProps) {
     super();
@@ -44,6 +43,11 @@ export class VolumeSliderCore extends SliderCore {
 
   setMedia(media: MediaVolumeState): void {
     this.#media = media;
+  }
+
+  /** @internal Platform adapters set the active i18n locale for `aria-valuetext` percent formatting. */
+  setFormatLocale(locale: string | string[] | undefined): void {
+    this.#formatLocale = locale;
   }
 
   getState(): VolumeSliderState {
@@ -80,8 +84,7 @@ export class VolumeSliderCore extends SliderCore {
   }
 
   getValueTextParams(state: VolumeSliderState): { percent: string } {
-    const props = this.props as NonNullableObject<VolumeSliderProps>;
-    return { percent: formatVolumePercent(state.value / 100, props.formatLocale) };
+    return { percent: formatVolumePercent(state.value / 100, this.#formatLocale) };
   }
 
   override getAttrs(state: VolumeSliderState) {
