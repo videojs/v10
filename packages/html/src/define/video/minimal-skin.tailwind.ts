@@ -238,8 +238,7 @@ function getTemplateHTML() {
  * Tailwind-styled variant of `<video-minimal-skin>` — pared-down video player skin.
  *
  * Same template as `<video-minimal-skin>` but with Tailwind utility classes instead of a bundled
- * stylesheet. To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-time-slider>`.
+ * stylesheet. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

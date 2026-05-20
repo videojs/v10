@@ -78,8 +78,7 @@ function getTemplateHTML() {
  * Tailwind-styled variant of `<live-audio-minimal-skin>` — pared-down live audio player skin.
  *
  * Same template as `<live-audio-minimal-skin>` but with Tailwind utility classes instead of a
- * bundled stylesheet. To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-live-button>`.
+ * bundled stylesheet. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

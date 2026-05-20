@@ -6,8 +6,7 @@ export type BackgroundVideoSkinProps = BaseSkinProps;
 /**
  * Ambient background video skin with no user controls.
  *
- * To customize, render `<BackgroundVideo>` directly inside your own wrapper
- * instead of using this preset.
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/react/concepts/skins
  */

@@ -148,9 +148,7 @@ function getTemplateHTML() {
 /**
  * Pared-down live video player skin web component with a minimal media UI and a Live button.
  *
- * Smaller than `<live-video-skin>` — drops menus and tooltips. To customize beyond this preset,
- * build from primitive elements like `<media-controls>`, `<media-play-button>`, and
- * `<media-live-button>`.
+ * Smaller than `<live-video-skin>` — drops menus and tooltips. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

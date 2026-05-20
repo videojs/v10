@@ -214,9 +214,7 @@ function getTemplateHTML() {
 /**
  * Pared-down video player skin web component with a minimal media UI.
  *
- * Smaller than `<video-skin>` — drops menus, tooltips, and the volume popover.
- * To customize beyond this preset, build from primitive elements like
- * `<media-controls>`, `<media-play-button>`, and `<media-time-slider>`.
+ * Smaller than `<video-skin>` — drops menus, tooltips, and the volume popover. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

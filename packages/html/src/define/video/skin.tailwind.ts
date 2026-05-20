@@ -232,8 +232,7 @@ function getTemplateHTML() {
  * Tailwind-styled variant of `<video-skin>` — default video player skin with a complete media UI.
  *
  * Same template as `<video-skin>` but with Tailwind utility classes instead of a bundled
- * stylesheet, so consumers can theme via Tailwind tokens. To customize, build from primitive
- * elements like `<media-controls>`, `<media-play-button>`, and `<media-time-slider>`.
+ * stylesheet, so consumers can theme via Tailwind tokens. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

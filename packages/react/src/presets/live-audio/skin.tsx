@@ -60,6 +60,8 @@ function VolumePopover(): ReactNode {
  * flexible spacer stretches between the play and volume controls so they
  * sit at opposite edges of the control bar.
  *
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
+ *
  * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {

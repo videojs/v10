@@ -528,6 +528,8 @@ Skins — preset components that compose primitives into a complete player exper
 /**
  * Default video player skin with a complete media UI.
  *
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
+ *
  * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function VideoSkin(props: VideoSkinProps): ReactNode;

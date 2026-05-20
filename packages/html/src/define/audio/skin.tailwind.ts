@@ -124,8 +124,7 @@ function getTemplateHTML() {
  * Tailwind-styled variant of `<audio-skin>` — default audio player skin with a complete audio UI.
  *
  * Same template as `<audio-skin>` but with Tailwind utility classes instead of a bundled
- * stylesheet, so consumers can theme via Tailwind tokens. To customize, build from primitive
- * elements like `<media-controls>`, `<media-play-button>`, and `<media-time-slider>`.
+ * stylesheet, so consumers can theme via Tailwind tokens. To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */

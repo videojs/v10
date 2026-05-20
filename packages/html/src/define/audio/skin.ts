@@ -122,9 +122,7 @@ function getTemplateHTML() {
 /**
  * Default audio player skin web component with a complete audio UI.
  *
- * To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-time-slider>` instead of using
- * this preset.
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
  *
  * @see https://videojs.org/docs/framework/html/concepts/skins
  */
