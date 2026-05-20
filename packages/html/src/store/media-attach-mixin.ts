@@ -4,14 +4,14 @@ import type { CustomElement } from '@videojs/utils/dom';
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 import { type MediaContext, mediaContext } from '../player/context';
 
+/** Mixin that wires an `HTMLElement` subclass to register itself with the provider via media context. */
 export type MediaAttachMixin = <Class extends AnyConstructor<HTMLElement>>(BaseClass: Class) => Class;
 
 /**
- * Create a mixin that consumes `mediaContext` and registers the
- * element as the media with the provider.
+ * Build a mixin that consumes `mediaContext` and registers the element with its provider.
  *
- * Uses the raw context-request protocol so it works with any
- * `HTMLElement` subclass — no `ReactiveControllerHost` required.
+ * Uses the raw context-request protocol so it works with any `HTMLElement` subclass — no
+ * `ReactiveControllerHost` required.
  *
  * @param context - The media context to consume.
  */
@@ -57,4 +57,5 @@ export function createMediaAttachMixin(context: MediaContext): MediaAttachMixin 
   };
 }
 
+/** Default media-attach mixin bound to the canonical `mediaContext`. */
 export const MediaAttachMixin = createMediaAttachMixin(mediaContext);

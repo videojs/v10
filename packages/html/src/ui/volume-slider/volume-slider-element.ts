@@ -18,7 +18,9 @@ import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
 
+/** Custom element shell for the `<media-volume-slider>` tag — slider bound to the media's volume with wheel-step and keyboard support. */
 export class VolumeSliderElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-volume-slider';
 
   static override properties = {
@@ -31,12 +33,19 @@ export class VolumeSliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<Exclude<keyof VolumeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
+  /** Accessible label announced for the slider. */
   label = VolumeSliderCore.defaultProps.label;
+  /** Volume step (0–1 range) for arrow-key changes. */
   step = VolumeSliderCore.defaultProps.step;
+  /** Volume step (0–1 range) for Page Up/Down or Shift+arrow changes. */
   largeStep = VolumeSliderCore.defaultProps.largeStep;
+  /** Volume step (0–1 range) per wheel tick. */
   wheelStep = VolumeSliderCore.defaultProps.wheelStep;
+  /** Layout direction — `horizontal` or `vertical`. */
   orientation = VolumeSliderCore.defaultProps.orientation;
+  /** Disables slider interaction when true. */
   disabled = VolumeSliderCore.defaultProps.disabled;
+  /** How the thumb aligns relative to the track edges. */
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new VolumeSliderCore();

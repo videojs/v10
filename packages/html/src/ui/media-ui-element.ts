@@ -5,7 +5,7 @@ import type { PropertyValues } from '@videojs/element';
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
-/** Abstract base for HTML custom elements that display media state with data attributes. */
+/** Abstract base for media UI elements that reflect a core component's state as `data-*` attributes. */
 export abstract class MediaUIElement<Core extends MediaUIComponent> extends MediaElement {
   protected abstract readonly core: Core;
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;

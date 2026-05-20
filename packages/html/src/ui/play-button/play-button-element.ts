@@ -5,7 +5,9 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaButtonElement } from '../media-button-element';
 
+/** Custom element shell for the `<media-play-button>` tag — toggles between playing and paused states. */
 export class PlayButtonElement extends MediaButtonElement<PlayButtonCore> {
+  /** Custom element tag name. */
   static readonly tagName = 'media-play-button';
 
   protected readonly core = new PlayButtonCore();

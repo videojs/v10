@@ -107,9 +107,21 @@ function getTemplateHTML() {
   `;
 }
 
+/**
+ * Pared-down audio player skin web component with a minimal audio UI.
+ *
+ * Smaller than `<audio-skin>` — drops menus and tooltips. To customize beyond
+ * this preset, build from primitive elements like `<media-controls>`,
+ * `<media-play-button>`, and `<media-time-slider>`.
+ *
+ * @see https://videojs.org/docs/framework/html/concepts/skins
+ */
 export class MinimalAudioSkinElement extends SkinElement {
+  /** Custom element tag name. */
   static readonly tagName = 'audio-minimal-skin';
+  /** Shadow DOM stylesheet shared across all instances. */
   static styles = createShadowStyle(styles);
+  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

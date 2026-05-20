@@ -11,27 +11,30 @@ import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProvider, PlayerProviderConstructor } from './types';
 
+/** Configuration accepted by `createProviderMixin`. */
 export interface ProviderMixinConfig<Store extends PlayerStore> {
+  /** Context the mixin broadcasts the player store on. */
   playerContext: PlayerContext<Store>;
+  /** Context that propagates the registered media element to descendants. */
   mediaContext: MediaContext;
+  /** Context that propagates the registered container element to descendants. */
   containerContext: ContainerContext;
+  /** Factory called once per provider element to create its store instance. */
   factory: () => Store;
 }
 
+/** Mixin that turns a `MediaElement` subclass into a player-context provider that owns the store lifecycle. */
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;
 
 /**
- * Create a mixin that provides player context to descendant elements and
- * owns the `store.attach()` lifecycle.
+ * Build a mixin that provides player context to descendants and owns the `store.attach()` lifecycle.
  *
- * Media and container elements register themselves via media/container
- * contexts that carry both the current value and a setter. When a media
- * element is available, the provider calls `store.attach({ media, container })`.
- *
- * As a fallback for plain `<video>`/`<audio>` that can't consume context,
- * the provider queries its subtree after a microtask.
+ * Media and container elements register themselves through media/container contexts that carry both
+ * the current value and a setter. Once a media element is registered, the provider calls
+ * `store.attach({ media, container })`. As a fallback for plain `<video>`/`<audio>` that cannot
+ * consume context, the provider queries its subtree after a microtask.
  *
  * @param config - Provider configuration with contexts and store factory.
  */

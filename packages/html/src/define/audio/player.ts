@@ -8,7 +8,9 @@ const { ProviderMixin } = createPlayer({
   features: audioFeatures,
 });
 
+/** Custom element shell for the `<audio-player>` tag — provides the player context and store. */
 export class AudioPlayerElement extends ProviderMixin(MediaElement) {
+  /** Custom element tag name. */
   static readonly tagName = 'audio-player';
 }
 

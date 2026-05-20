@@ -5,13 +5,16 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { menuContext } from './context';
 
+/** Custom element shell for the `<media-menu-back>` tag — submenu back button that pops to the parent menu view. */
 export class MenuBackElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-menu-back';
 
   static override properties = {
     label: { type: String },
   } satisfies PropertyDeclarationMap<'label'>;
 
+  /** Accessible label for the back button. */
   label = 'Back';
 
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });

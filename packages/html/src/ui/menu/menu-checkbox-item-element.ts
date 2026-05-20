@@ -5,7 +5,9 @@ import { ContextConsumer } from '@videojs/element/context';
 import { MediaElement } from '../media-element';
 import { menuContext } from './context';
 
+/** Custom element shell for the `<media-menu-checkbox-item>` tag — toggleable menu item with checked/unchecked state. */
 export class MenuCheckboxItemElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-menu-checkbox-item';
 
   static override properties = {
@@ -13,7 +15,9 @@ export class MenuCheckboxItemElement extends MediaElement {
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<'checked' | 'disabled'>;
 
+  /** Controlled checked state. */
   checked = false;
+  /** Disables item interaction when true. */
   disabled = false;
 
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });

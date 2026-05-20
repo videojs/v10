@@ -13,14 +13,16 @@ import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
 
-/** Abstract base for HTML custom elements that render a media-control button. */
+/** Abstract base for media-control buttons. Wires core button behavior, state-driven data attributes, and hotkey reflection. */
 export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
     disabled: { type: Boolean },
   };
 
+  /** Disables button interaction when true. */
   disabled = false;
+  /** Accessible label override; falls back to a state-derived label. */
   label = '';
 
   protected abstract readonly core: Core;
@@ -32,6 +34,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */
   protected readonly hotkeyAction: string | undefined = undefined;
 
+  /** Reactive store for the underlying button state. */
   get $state(): State<ButtonState> {
     return this.core.state;
   }
@@ -67,7 +70,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.#disconnect = null;
   }
 
-  /** Returns the button's current label derived from media state. */
+  /** Current label derived from media state. */
   getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }

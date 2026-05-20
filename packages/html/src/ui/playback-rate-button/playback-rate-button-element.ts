@@ -5,7 +5,9 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaButtonElement } from '../media-button-element';
 
+/** Custom element shell for the `<media-playback-rate-button>` tag — cycles through the configured playback rate values. */
 export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateButtonCore> {
+  /** Custom element tag name. */
   static readonly tagName = 'media-playback-rate-button';
 
   protected readonly core = new PlaybackRateButtonCore();

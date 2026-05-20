@@ -15,13 +15,16 @@ import { alertDialogContext } from './context';
 
 let idCounter = 0;
 
+/** Custom element shell for the `<media-alert-dialog>` tag — modal alert dialog with title, description, and close button. */
 export class AlertDialogElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-alert-dialog';
 
   static override properties = {
     open: { type: Boolean },
   } satisfies PropertyDeclarationMap<'open'>;
 
+  /** Controlled open state. Set to `true` to show the dialog, `false` to dismiss it. */
   open = false;
 
   readonly #core = new AlertDialogCore();

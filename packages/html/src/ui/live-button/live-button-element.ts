@@ -16,14 +16,13 @@ import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
 /**
- * `<media-live-button>` — selects from `live`, `time`, and `buffer` features
- * and composes them into the `LiveButtonMediaState` consumed by
- * `LiveButtonCore`.
+ * Custom element shell for the `<media-live-button>` tag — seeks to the live edge and reflects DVR/live state.
  *
- * Doesn't extend `MediaButtonElement` because that base couples a button to
- * a single feature selector; the LiveButton needs three.
+ * Composes `live`, `time`, and `buffer` feature slices into the state consumed by `LiveButtonCore`.
+ * Doesn't extend `MediaButtonElement` because that base couples a button to a single feature selector.
  */
 export class LiveButtonElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-live-button';
 
   static override properties: PropertyDeclarationMap = {
@@ -31,7 +30,9 @@ export class LiveButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
+  /** Disables button interaction when true. */
   disabled = false;
+  /** Accessible label override; falls back to a state-derived label. */
   label = '';
 
   protected readonly core = new LiveButtonCore();
@@ -40,6 +41,7 @@ export class LiveButtonElement extends MediaElement {
   protected readonly time = new PlayerController(this, playerContext, selectTime);
   protected readonly buffer = new PlayerController(this, playerContext, selectBuffer);
 
+  /** Reactive store for the underlying button state. */
   get $state(): State<LiveButtonCore.State> {
     return this.core.state;
   }
@@ -77,7 +79,7 @@ export class LiveButtonElement extends MediaElement {
     this.#disconnect = null;
   }
 
-  /** Returns the button's current label derived from media state. */
+  /** Current label derived from media state. */
   getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }

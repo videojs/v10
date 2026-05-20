@@ -13,7 +13,9 @@ import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
 
+/** Custom element shell for the `<media-slider>` tag — generic accessible slider used to build time, volume, and other sliders. */
 export class SliderElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-slider';
 
   static override properties = {
@@ -28,14 +30,23 @@ export class SliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<keyof SliderCore.Props>;
 
+  /** Accessible label announced for the slider. */
   label = SliderCore.defaultProps.label;
+  /** Current value in domain units. */
   value = SliderCore.defaultProps.value;
+  /** Minimum allowed value. */
   min = SliderCore.defaultProps.min;
+  /** Maximum allowed value. */
   max = SliderCore.defaultProps.max;
+  /** Increment for arrow-key changes. */
   step = SliderCore.defaultProps.step;
+  /** Increment for Page Up/Down or Shift+arrow changes. */
   largeStep = SliderCore.defaultProps.largeStep;
+  /** Layout direction — `horizontal` or `vertical`. */
   orientation = SliderCore.defaultProps.orientation;
+  /** Disables slider interaction when true. */
   disabled = SliderCore.defaultProps.disabled;
+  /** How the thumb aligns relative to the track edges (`center` keeps half the thumb outside; `edge` clamps it inside). */
   thumbAlignment = SliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new SliderCore();

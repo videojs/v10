@@ -125,8 +125,19 @@ function getTemplateHTML() {
   `;
 }
 
+/**
+ * Tailwind-styled variant of `<audio-minimal-skin>` — pared-down audio player skin.
+ *
+ * Same template as `<audio-minimal-skin>` but with Tailwind utility classes instead of a bundled
+ * stylesheet. To customize, build from primitive elements like `<media-controls>`,
+ * `<media-play-button>`, and `<media-time-slider>`.
+ *
+ * @see https://videojs.org/docs/framework/html/concepts/skins
+ */
 export class MinimalAudioSkinTailwindElement extends SkinElement {
+  /** Custom element tag name. */
   static readonly tagName = 'audio-minimal-skin-tailwind';
+  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

@@ -8,7 +8,9 @@ const { ProviderMixin } = createPlayer({
   features: videoFeatures,
 });
 
+/** Custom element shell for the `<video-player>` tag — provides the player context and store. */
 export class VideoPlayerElement extends ProviderMixin(MediaElement) {
+  /** Custom element tag name. */
   static readonly tagName = 'video-player';
 }
 

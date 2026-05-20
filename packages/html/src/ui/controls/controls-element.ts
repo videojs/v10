@@ -9,7 +9,9 @@ import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { controlsContext } from './context';
 
+/** Custom element shell for the `<media-controls>` tag — auto-hiding container that holds the player's control bar. */
 export class ControlsElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-controls';
 
   readonly #core = new ControlsCore();

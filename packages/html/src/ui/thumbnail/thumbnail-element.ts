@@ -23,7 +23,9 @@ img {
   display: block;
 }`;
 
+/** Custom element shell for the `<media-thumbnail>` tag — sprite-based thumbnail sourced from a WebVTT track or explicit data. */
 export class ThumbnailElement extends MediaElement {
+  /** Custom element tag name. */
   static readonly tagName = 'media-thumbnail';
 
   static override properties = {
@@ -33,9 +35,13 @@ export class ThumbnailElement extends MediaElement {
     fetchPriority: { type: String, attribute: 'fetchpriority' },
   } satisfies PropertyDeclarationMap<keyof ThumbnailCore.Props>;
 
+  /** Media time (seconds) to look up in the thumbnail track. */
   time = 0;
+  /** `crossorigin` attribute forwarded to the underlying `<img>`. */
   crossOrigin: ThumbnailCore.Props['crossOrigin'];
+  /** `loading` attribute forwarded to the underlying `<img>`. */
   loading: ThumbnailCore.Props['loading'];
+  /** `fetchpriority` attribute forwarded to the underlying `<img>`. */
   fetchPriority: ThumbnailCore.Props['fetchPriority'];
 
   readonly #core = new ThumbnailCore();
@@ -63,10 +69,7 @@ export class ThumbnailElement extends MediaElement {
     shadow.appendChild(this.#img);
   }
 
-  /**
-   * Set thumbnail images directly, bypassing the automatic `<track>` detection.
-   * When set, this takes priority over the text track path.
-   */
+  /** Thumbnail images supplied directly, bypassing automatic `<track>` detection. Takes priority over the text-track path. */
   get thumbnails(): ThumbnailImage[] | undefined {
     return this.#externalThumbnails;
   }
