@@ -102,6 +102,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 
 ## See also
 
+- [mse-mms-pipeline.md](./mse-mms-pipeline.md) — where `setupVideoBufferActors` lives and where `createTrackedFetch` is wired into segment-loader construction; bandwidth sampling is structurally co-located with MSE buffer setup, ABR selection is the separate consumer documented here.
 - [conventions/behaviors.md](../conventions/behaviors.md) — when to define a behavior; behavior shape
 - [conventions/signals.md](../conventions/signals.md) — multi-writer slot conventions (relevant for `selectedVideoTrackId` write coordination if audio ABR follows the same pattern)
 - [packages/spf/docs/hls-engine.md](../../../../packages/spf/docs/hls-engine.md) — full HLS engine composition walkthrough
