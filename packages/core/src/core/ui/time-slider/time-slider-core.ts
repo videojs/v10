@@ -80,7 +80,7 @@ export class TimeSliderCore extends SliderCore {
   }
 
   getValueText(state: TimeSliderState): TranslationKeyOrString {
-    return Number.isFinite(state.duration) ? 'timeSliderValueTextRange' : 'timeSliderValueTextCurrent';
+    return Number.isFinite(state.duration) ? 'timeSliderValueTextRange' : this.getValueTextParams(state).current;
   }
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {

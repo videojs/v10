@@ -36,10 +36,7 @@ export type TranslationParams = {
   timeRemaining: never;
   remainingTimeSuffix: never;
   playbackRateAria: { rate: number | string };
-  playbackRateMultiplier: { rate: number | string };
   timeSliderValueTextRange: { current: string; duration: string };
-  timeSliderValueTextCurrent: { current: string };
-  volumeSliderValueText: { percent: number | string };
   volumeSliderValueTextMuted: { percent: number | string };
   indicatorMuted: never;
   indicatorVolume: never;
@@ -74,10 +71,7 @@ type ParametricTranslations = {
   seekForwardSeconds: Contains<'{seconds}'>;
   seekBackwardSeconds: Contains<'{seconds}'>;
   playbackRateAria: Contains<'{rate}'>;
-  playbackRateMultiplier: Contains<'{rate}'>;
   timeSliderValueTextRange: Contains<'{current}'> & Contains<'{duration}'>;
-  timeSliderValueTextCurrent: Contains<'{current}'>;
-  volumeSliderValueText: Contains<'{percent}'>;
   volumeSliderValueTextMuted: Contains<'{percent}'>;
   indicatorVolumeWithValue: Contains<'{value}'>;
 };

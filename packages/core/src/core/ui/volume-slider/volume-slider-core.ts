@@ -80,7 +80,7 @@ export class VolumeSliderCore extends SliderCore {
   }
 
   getValueText(state: VolumeSliderState): TranslationKeyOrString {
-    return state.muted ? 'volumeSliderValueTextMuted' : 'volumeSliderValueText';
+    return state.muted ? 'volumeSliderValueTextMuted' : this.getValueTextParams(state).percent;
   }
 
   getValueTextParams(state: VolumeSliderState): { percent: string } {
