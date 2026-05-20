@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Tempo',
   timeDuration: 'Duração',
   timeRemaining: 'Tempo Restante',
-  playbackRateAria: 'Velocidade',
+  playbackRateAria: 'Velocidade {rate}',
   timeSliderValueTextRange: '{current} de {duration}',
   volumeSliderValueTextMuted: '{percent}, silenciado',
   indicatorMuted: 'Silenciado',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Durada passada',
   timeDuration: 'Durada',
   timeRemaining: 'Temps restant',
-  playbackRateAria: 'Velocitat de lectura',
+  playbackRateAria: 'Velocitat de lectura {rate}',
   timeSliderValueTextRange: '{current} sus {duration}',
   volumeSliderValueTextMuted: '{percent}, silenciat',
   indicatorMuted: 'Silenciat',

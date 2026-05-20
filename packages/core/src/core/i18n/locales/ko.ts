@@ -25,7 +25,7 @@ export default {
   timeCurrent: '현재 시간',
   timeDuration: '지정 기간',
   timeRemaining: '남은 시간',
-  playbackRateAria: '재생 속도',
+  playbackRateAria: '재생 속도 {rate}',
   timeSliderValueTextRange: '{duration} 중 {current}',
   volumeSliderValueTextMuted: '{percent}, 음소거',
   indicatorMuted: '음소거',

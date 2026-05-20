@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'हालको समय',
   timeDuration: 'अवधि',
   timeRemaining: 'बाँकी समय',
-  playbackRateAria: 'प्लेब्याक दर',
+  playbackRateAria: 'प्लेब्याक दर {rate}',
   timeSliderValueTextRange: '{duration} मध्ये {current}',
   volumeSliderValueTextMuted: '{percent}, म्यूट',
   indicatorMuted: 'म्यूट',

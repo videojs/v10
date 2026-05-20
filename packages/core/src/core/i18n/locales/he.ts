@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'זמן נוכחי',
   timeDuration: 'זמן כולל',
   timeRemaining: 'זמן נותר',
-  playbackRateAria: 'קצב ניגון',
+  playbackRateAria: 'קצב ניגון {rate}',
   timeSliderValueTextRange: '{current} מתוך {duration}',
   volumeSliderValueTextMuted: '{percent}, מושתק',
   indicatorMuted: 'מושתק',

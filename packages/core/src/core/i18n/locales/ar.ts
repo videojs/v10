@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'الوقت الحالي',
   timeDuration: 'المدة',
   timeRemaining: 'الوقت المتبقي',
-  playbackRateAria: 'سرعة التشغيل',
+  playbackRateAria: 'سرعة التشغيل {rate}',
   timeSliderValueTextRange: '{current} من {duration}',
   volumeSliderValueTextMuted: '{percent}، مكتوم',
   indicatorMuted: 'صامت',

@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'ప్రస్తుత సమయం',
   timeDuration: 'వ్యవధి',
   timeRemaining: 'మిగిలిన సమయం',
-  playbackRateAria: 'ప్లేబ్యాక్ రేట్',
+  playbackRateAria: 'ప్లేబ్యాక్ రేట్ {rate}',
   timeSliderValueTextRange: '{current} యొక్క {duration}',
   volumeSliderValueTextMuted: '{percent}, మ్యూట్ చేయబడింది',
   indicatorMuted: 'మ్యూట్ చేయబడింది',

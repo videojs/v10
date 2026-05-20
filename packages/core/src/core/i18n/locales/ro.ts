@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Ora curentă',
   timeDuration: 'Durată',
   timeRemaining: 'Timp rămas',
-  playbackRateAria: 'Rată de redare',
+  playbackRateAria: 'Rată de redare {rate}',
   timeSliderValueTextRange: '{current} din {duration}',
   volumeSliderValueTextMuted: '{percent}, mut',
   indicatorMuted: 'Mut',

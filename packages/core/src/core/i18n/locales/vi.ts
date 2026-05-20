@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Thời gian hiện tại',
   timeDuration: 'Độ dài',
   timeRemaining: 'Thời gian còn lại',
-  playbackRateAria: 'Tỉ lệ phát lại',
+  playbackRateAria: 'Tỉ lệ phát lại {rate}',
   timeSliderValueTextRange: '{current} của {duration}',
   volumeSliderValueTextMuted: '{percent}, đã tắt tiếng',
   indicatorMuted: 'Đã tắt tiếng',

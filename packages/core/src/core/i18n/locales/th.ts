@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'เวลาปัจจุบัน',
   timeDuration: 'ระยะเวลา',
   timeRemaining: 'เวลาที่เหลือ',
-  playbackRateAria: 'อัตราการเล่น',
+  playbackRateAria: 'อัตราการเล่น {rate}',
   timeSliderValueTextRange: '{current} ของ {duration}',
   volumeSliderValueTextMuted: '{percent}, ปิดเสียง',
   indicatorMuted: 'ปิดเสียงแล้ว',

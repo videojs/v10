@@ -25,7 +25,7 @@ export default {
   timeCurrent: 'Tämänhetkinen aika',
   timeDuration: 'Kokonaiskesto',
   timeRemaining: 'Jäljellä oleva aika',
-  playbackRateAria: 'Toistonopeus',
+  playbackRateAria: 'Toistonopeus {rate}',
   timeSliderValueTextRange: '{current} / {duration}',
   volumeSliderValueTextMuted: '{percent}, mykistetty',
   indicatorMuted: 'Mykistetty',
