@@ -503,7 +503,7 @@ get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
 ```
 
-Published-package public-API exports follow the stronger rule in the next section — every public export carries a summary, even when the name reads as obvious.
+Published-package public-API exports follow the stronger rule in the next section.
 
 ### JSDoc on Published Exports
 
@@ -513,9 +513,9 @@ Every public-API export in a published package carries JSDoc that survives into 
 
 **What gets JSDoc:**
 
-- Every exported function, class, interface, type, and const — one-sentence summary.
+- Every exported function, class, interface, type, and const — one-sentence summary. Skip the summary on **leaf wrapper types** that extend a base and add no fields of their own (e.g. `interface FooProps extends BarProps {}`, `type FooSkinProps = BaseSkinProps`) — there's nothing to say beyond the base's JSDoc.
 - Every field a leaf `*Props` / `*Config` / `*Options` / `*State` interface or type *adds*. Inherited fields keep their JSDoc on the base; don't re-document unless the leaf narrows or specializes the field's meaning.
-- Every public (non-`#`, non-`@internal`) member on an exported class — methods, properties, constructor.
+- Every public (non-`#`, non-`@internal`) member on an exported class — methods, properties, constructor. Skip JSDoc on **uniform plumbing methods on `*Core` classes** (`setProps`, `getState`, `getAttrs`, `setMedia`) — they're predictable across every core and the method name carries the meaning. Behavior methods (`toggle`, `cycle`, `seek`, etc.) still get JSDoc.
 - Every overload of a public function — see overload rules below.
 
 **Voice** — one sentence per summary. Declarative, active, present tense. Lead with semantic meaning, not type information; the type signature is already the doc for shape. Skip filler ("In order to", "simply", "basically"). Aligns with [`writing-style.md`](.claude/skills/docs/references/writing-style.md).
