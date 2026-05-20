@@ -13,10 +13,13 @@ import { useSafeId } from '../../utils/use-safe-id';
 import { AlertDialogContextProvider } from '../alert-dialog/context';
 import { ErrorDialogContextProvider } from './context';
 
+/** Props for the ErrorDialog.Root component. */
 export interface ErrorDialogRootProps {
+  /** ErrorDialog compound parts to render under shared dialog context. */
   children?: ReactNode;
 }
 
+/** Opens an alert dialog whenever the player surfaces a media error and dismisses it on close. */
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const [core] = useState(() => new ErrorDialogCore());
   const errorState = usePlayer(selectError);

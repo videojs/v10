@@ -12,6 +12,7 @@ import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
+/** Props for the Menu.Root component. */
 export interface MenuRootProps extends MenuCore.Props {
   /** Boundary used to constrain the root menu popup size. */
   boundary?: PositioningBoundary;
@@ -19,9 +20,11 @@ export interface MenuRootProps extends MenuCore.Props {
   onOpenChange?: (open: boolean, details: MenuChangeDetails) => void;
   /** Called after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Menu compound parts to render under shared menu context. */
   children?: ReactNode;
 }
 
+/** Provides menu state and navigation context to nested Menu parts. Nests automatically as a submenu when placed inside a parent Menu. */
 export function MenuRoot({
   open: controlledOpen,
   defaultOpen = MenuCore.defaultProps.defaultOpen,

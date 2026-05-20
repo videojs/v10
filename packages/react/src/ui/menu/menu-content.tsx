@@ -30,6 +30,7 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext, useSubMenuContext } from './context';
 
+/** Props for the Menu.Content component. */
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };

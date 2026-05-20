@@ -9,10 +9,13 @@ import { usePlayer } from '../../player/context';
 import { MenuRoot, type MenuRootProps } from '../menu/menu-root';
 import { PlaybackRateMenuProvider } from './context';
 
+/** Props for the PlaybackRateMenu.Root component. */
 export interface PlaybackRateMenuRootProps extends Omit<MenuRootProps, 'children'>, PlaybackRateMenuCore.Props {
+  /** PlaybackRateMenu compound parts to render under shared menu context. */
   children?: ReactNode;
 }
 
+/** Menu root pre-wired to the player's playback rate feature. */
 export function PlaybackRateMenuRoot({
   label,
   formatRate,

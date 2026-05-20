@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
+/** Props for the Menu.ItemIndicator component. */
 export interface MenuItemIndicatorProps extends UIComponentProps<'span', MenuState> {
   /** Whether the indicator is currently shown. Typically bound to the parent item's checked state. */
   checked?: boolean;

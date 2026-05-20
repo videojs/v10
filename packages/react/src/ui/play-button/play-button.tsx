@@ -6,24 +6,10 @@ import { selectPlayback } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the PlayButton component. */
 export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCore.State>, PlayButtonCore.Props {}
 
-/**
- * A button that toggles playback.
- *
- * @example
- * ```tsx
- * <PlayButton />
- *
- * <PlayButton
- *   render={(props, state) => (
- *     <button {...props}>
- *       {state.paused ? <PlayIcon /> : <PauseIcon />}
- *     </button>
- *   )}
- * />
- * ```
- */
+/** A button that toggles playback between play and pause. */
 export const PlayButton = createMediaButton<PlayButtonCore, PlayButtonProps>({
   displayName: 'PlayButton',
   core: PlayButtonCore,

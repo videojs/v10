@@ -6,26 +6,12 @@ import { selectPlaybackRate } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the PlaybackRateButton component. */
 export interface PlaybackRateButtonProps
   extends UIComponentProps<'button', PlaybackRateButtonCore.State>,
     PlaybackRateButtonCore.Props {}
 
-/**
- * A button that cycles through playback rates.
- *
- * @example
- * ```tsx
- * <PlaybackRateButton />
- *
- * <PlaybackRateButton
- *   render={(props, state) => (
- *     <button {...props}>
- *       {state.rate}&times;
- *     </button>
- *   )}
- * />
- * ```
- */
+/** A button that cycles through the configured playback rates. */
 export const PlaybackRateButton = createMediaButton<PlaybackRateButtonCore, PlaybackRateButtonProps>({
   displayName: 'PlaybackRateButton',
   core: PlaybackRateButtonCore,

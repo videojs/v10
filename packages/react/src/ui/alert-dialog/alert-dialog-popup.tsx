@@ -8,8 +8,10 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useAlertDialogContext } from './context';
 
+/** Props for the AlertDialog.Popup component. */
 export interface AlertDialogPopupProps extends UIComponentProps<'div', AlertDialogCore.State> {}
 
+/** Modal surface that hosts the dialog content. Renders only while the dialog is open. */
 export const AlertDialogPopup = forwardRef<HTMLDivElement, AlertDialogPopupProps>(function AlertDialogPopup(
   { render, className, style, ...elementProps },
   forwardedRef

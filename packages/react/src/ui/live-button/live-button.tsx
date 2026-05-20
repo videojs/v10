@@ -12,25 +12,16 @@ import { useOptionalTooltipContext } from '../tooltip/context';
 
 const DISPLAY_NAME = 'LiveButton';
 
+/** Props for the LiveButton component. */
 export interface LiveButtonProps extends UIComponentProps<'button', LiveButtonCore.State>, LiveButtonCore.Props {}
 
 /**
- * A button that indicates live status and seeks to the live edge when
- * pressed. Exposes `data-live` while the stream is live (or DVR) and
- * `data-live-edge` while playing at the live edge so skins can style a
- * red-dot ↔ grey-dot treatment.
+ * Indicates live status and seeks to the live edge when activated.
  *
- * Selects from `live`, `time`, and `buffer` features and composes them
- * itself rather than going through `createMediaButton`, since the LiveButton
- * needs three feature slices to detect the live edge and seek.
- *
- * Falls back to `LiveButtonCore.defaultText` (`'Live'` by default) when no
- * children are provided. Override the static field globally for i18n.
- *
- * @example
- * ```tsx
- * <LiveButton />
- * ```
+ * Exposes `data-live` while the stream is live (or DVR) and `data-live-edge`
+ * while playing at the live edge so skins can style a red-dot ↔ grey-dot
+ * treatment. Falls back to `LiveButtonCore.defaultText` (`'Live'` by default)
+ * when no children are provided — override the static field globally for i18n.
  *
  * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
  */

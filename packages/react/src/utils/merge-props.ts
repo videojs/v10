@@ -86,22 +86,15 @@ function mergeOne<T extends ElementType>(
 }
 
 /**
- * Merge multiple props objects.
+ * Merge multiple React props objects with predictable conflict rules.
  *
- * - Event handlers (on*): chained - external first, ours second
- * - className: concatenated
- * - style: merged objects (external wins conflicts)
- * - other: last one wins
+ * - Event handlers (`on*`) chain in argument order; earlier handlers run first.
+ * - `className` values concatenate.
+ * - `style` objects merge; later wins on key conflicts.
+ * - All other keys: last argument wins.
  *
  * @public
- * @example
- * ```ts
- * const merged = mergeProps(
- *   { onClick: ourHandler, className: 'base' },
- *   { onClick: theirHandler, className: 'custom' }
- * );
- * // { onClick: chainedHandler, className: 'custom base' }
- * ```
+ * @param propSets - Props objects to merge from left to right.
  */
 export function mergeProps<T extends ElementType>(...propSets: (Props<T> | undefined)[]): Props<T> {
   let merged: Record<string, unknown> = {};

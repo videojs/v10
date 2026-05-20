@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { usePopoverContext } from './context';
 
+/** Props for the Popover.Trigger component. */
 export interface PopoverTriggerProps extends UIComponentProps<'button', PopoverState> {}
 
 /** Button that toggles the popover visibility. Renders a `<button>` element. */

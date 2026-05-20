@@ -44,6 +44,7 @@ import type { BaseVideoSkinProps } from '../types';
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
+/** Props for the LiveVideoSkin component. */
 export type LiveVideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -86,10 +87,13 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Default video skin configured for live playback. Mirrors {@link VideoSkin}
- * but omits the time slider and the duration / current-time displays. A
- * flexible spacer stretches between the start and end button groups so they
- * sit at opposite edges of the control bar.
+ * Default live video player skin. Mirrors `<VideoSkin>` but omits the time
+ * slider and the duration / current-time displays.
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<LiveButton>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;

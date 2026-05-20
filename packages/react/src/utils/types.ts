@@ -12,12 +12,11 @@ export type RenderFunction<Props, State> = (props: Props, state: State) => React
 export type RenderProp<State> = ReactElement | RenderFunction<HTMLProps, State>;
 
 /**
- * Standard props for UI components.
+ * Standard props for headless UI components — adds state-aware `className`, `style`, and `render`.
  *
- * Provides consistent API across all UI components:
- * - `className` as string or function of state
- * - `style` as object or function of state
- * - `render` prop for element customization
+ * Provides a consistent shape across every UI primitive: `className` and
+ * `style` can be plain values or functions of state, and `render` swaps the
+ * rendered element while preserving merged props and refs.
  */
 export type UIComponentProps<TagName extends keyof React.JSX.IntrinsicElements, State> = Omit<
   React.JSX.IntrinsicElements[TagName],

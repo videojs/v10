@@ -10,12 +10,14 @@ import { renderElement } from '../../utils/use-render';
 import { MenuTrigger } from '../menu/menu-trigger';
 import { usePlaybackRateMenuContext } from './context';
 
+/** Props for the PlaybackRateMenu.Trigger component. */
 export interface PlaybackRateMenuTriggerProps extends UIComponentProps<'button', PlaybackRateMenuCore.State> {}
 
 function hasChildren(children: ReactNode): boolean {
   return !isUndefined(children) && !isNull(children) && children !== false;
 }
 
+/** Button that opens the playback rate menu and displays the current rate by default. */
 export const PlaybackRateMenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, PlaybackRateMenuTriggerProps>(
   function PlaybackRateMenuTrigger({ render, className, style, children, disabled, ...elementProps }, forwardedRef) {
     const { core, state } = usePlaybackRateMenuContext();

@@ -54,6 +54,7 @@ const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
+/** Props for the MinimalVideoSkin component. */
 export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -112,6 +113,14 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
+/**
+ * Minimal video player skin with a stripped-back media UI.
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<TimeSlider>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 

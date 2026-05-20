@@ -14,11 +14,15 @@ import { SliderProvider } from '../slider/context';
 
 const noopSeek = (): Promise<number> => Promise.resolve(0);
 
+/** Props for the TimeSlider.Root component. */
 export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State>, TimeSliderCore.Props {
+  /** Called when a drag interaction starts. */
   onDragStart?: (() => void) | undefined;
+  /** Called when a drag interaction ends. */
   onDragEnd?: (() => void) | undefined;
 }
 
+/** Slider root bound to playback time. Reads `time` and `buffer` features and seeks on commit. */
 export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
   function TimeSliderRoot(componentProps, forwardedRef) {
     const {

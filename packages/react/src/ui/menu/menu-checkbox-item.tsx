@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
+/** Props for the Menu.CheckboxItem component. */
 export interface MenuCheckboxItemProps extends UIComponentProps<'div', MenuState> {
   /** Whether the item is currently checked. */
   checked: boolean;

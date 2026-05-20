@@ -6,6 +6,7 @@ import { selectRemotePlayback } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the CastButton component. */
 export interface CastButtonProps extends UIComponentProps<'button', CastButtonCore.State>, CastButtonCore.Props {}
 
 /** A button that toggles casting to a remote device. */

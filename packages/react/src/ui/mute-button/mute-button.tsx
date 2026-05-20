@@ -6,6 +6,7 @@ import { selectVolume } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the MuteButton component. */
 export interface MuteButtonProps extends UIComponentProps<'button', MuteButtonCore.State>, MuteButtonCore.Props {}
 
 /** A button that toggles mute state. */

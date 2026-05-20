@@ -5,6 +5,11 @@ import { useMemo } from 'react';
 
 import { useContainer } from '../../player/context';
 
+/**
+ * Resolve the registered hotkeys for an action into an `aria-keyshortcuts` value.
+ *
+ * @param action - Hotkey action name to look up.
+ */
 export function useAriaKeyShortcuts(action: string | undefined): string | undefined {
   const container = useContainer();
   return useMemo(() => {

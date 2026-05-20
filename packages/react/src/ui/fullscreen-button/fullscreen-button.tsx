@@ -6,6 +6,7 @@ import { selectFullscreen } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the FullscreenButton component. */
 export interface FullscreenButtonProps
   extends UIComponentProps<'button', FullscreenButtonCore.State>,
     FullscreenButtonCore.Props {}

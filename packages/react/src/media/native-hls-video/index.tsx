@@ -9,12 +9,15 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** Props for the NativeHlsVideo component. */
 export interface NativeHlsVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof NativeHlsMediaProps>,
     Partial<NativeHlsMediaProps> {
+  /** Content rendered inside the underlying `<video>` element (such as `<track>` children). */
   children?: ReactNode;
 }
 
+/** Renders a `<video>` element that plays HLS through native browser support (Safari). */
 export const NativeHlsVideo = forwardRef<HTMLVideoElement, NativeHlsVideoProps>(function NativeHlsVideo(
   { children, ...props },
   ref

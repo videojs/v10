@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
+/** Props for the Menu.Group component. */
 export interface MenuGroupProps extends UIComponentProps<'div', MenuState> {
   /** Accessible label for the group. */
   label?: string;

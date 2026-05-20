@@ -9,12 +9,19 @@ import { createContext, forwardRef, useContext, useEffect, useRef } from 'react'
 
 import { useComposedRefs } from '../utils/use-composed-refs';
 
+/** Shared player state and setters made available through a Player Provider. */
 export interface PlayerContextValue {
+  /** Reactive player store created by `createPlayer`. */
   store: UnknownStore;
+  /** Attached media element, or `null` before mount. */
   media: Media | null;
+  /** Setter that connects a media element to the player. */
   setMedia: Dispatch<SetStateAction<Media | null>>;
+  /** Attached container element, or `null` before mount. */
   container: MediaContainer | null;
+  /** Setter that connects a container element to the player. */
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
+  /** Shared coordinator for popups (menus, popovers) within the player. */
   popupGroup?: PopupGroup;
 }
 
@@ -61,14 +68,17 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
 }
 
 /**
- * Access player state when available, but return `undefined` outside Provider.
+ * Access the player store when available, returning `undefined` outside a Player Provider.
  *
- * This is useful for components that can operate without player context
- * (e.g. they accept fully explicit props as a fallback).
+ * @label Without Selector
  */
-/** @label Without Selector */
 export function useOptionalPlayer(): UnknownStore | undefined;
-/** @label With Selector */
+/**
+ * Select a value from the player store when available, returning `undefined` outside a Player Provider.
+ *
+ * @label With Selector
+ * @param selector - Derives a value from the player store state.
+ */
 export function useOptionalPlayer<R>(selector: (state: UnknownState) => R): R | undefined;
 export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   const ctx = useContext(PlayerContext);
@@ -113,10 +123,13 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   return ctx?.setContainer;
 }
 
+/** Props for the Container component. */
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
+  /** Content rendered inside the container. */
   children?: ReactNode;
 }
 
+/** Root element that hosts player UI, keyboard focus, and gesture handling. */
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container(
   { children, tabIndex = 0, ...props },
   ref

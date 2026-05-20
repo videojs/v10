@@ -8,8 +8,10 @@ import { renderElement } from '../../utils/use-render';
 import { MenuContent } from '../menu/menu-content';
 import { usePlaybackRateMenuContext } from './context';
 
+/** Props for the PlaybackRateMenu.Content component. */
 export interface PlaybackRateMenuContentProps extends UIComponentProps<'div', PlaybackRateMenuCore.State> {}
 
+/** Menu content positioned against the playback-rate trigger and styled with rate-aware state attributes. */
 export const PlaybackRateMenuContent = forwardRef<HTMLDivElement, PlaybackRateMenuContentProps>(
   function PlaybackRateMenuContent({ render, className, style, children, ...elementProps }, forwardedRef) {
     const { state } = usePlaybackRateMenuContext();

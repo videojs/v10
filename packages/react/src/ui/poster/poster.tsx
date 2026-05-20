@@ -9,22 +9,10 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
+/** Props for the Poster component. */
 export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
-/**
- * Displays the video poster image. Shows before playback starts, hides after.
- *
- * @example
- * ```tsx
- * <Poster src="poster.jpg" alt="Video description" />
- *
- * <Poster
- *   src="poster.jpg"
- *   alt="Video description"
- *   className={(state) => state.visible ? 'visible' : 'hidden'}
- * />
- * ```
- */
+/** Displays the video poster image before playback starts and hides it once playback begins. */
 export const Poster = forwardRef(function Poster(
   componentProps: PosterProps,
   forwardedRef: ForwardedRef<HTMLImageElement>

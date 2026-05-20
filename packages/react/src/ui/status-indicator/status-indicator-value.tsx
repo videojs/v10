@@ -8,8 +8,10 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useStatusIndicatorContext } from './context';
 
+/** Props for the StatusIndicator.Value component. */
 export interface StatusIndicatorValueProps extends UIComponentProps<'span', StatusIndicatorCore.State> {}
 
+/** Displays the current status indicator value (e.g. label or numeric reading). */
 export const StatusIndicatorValue = forwardRef(function StatusIndicatorValue(
   componentProps: StatusIndicatorValueProps,
   forwardedRef: ForwardedRef<HTMLSpanElement>

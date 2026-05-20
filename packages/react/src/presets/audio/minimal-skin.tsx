@@ -26,6 +26,7 @@ import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 
+/** Props for the MinimalAudioSkin component. */
 export type MinimalAudioSkinProps = BaseSkinProps;
 
 const SEEK_TIME = 10;
@@ -86,6 +87,14 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
+/**
+ * Minimal audio player skin with a stripped-back media UI.
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<TimeSlider>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
 export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 

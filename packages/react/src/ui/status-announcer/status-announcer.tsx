@@ -9,10 +9,12 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 import { useInputActionSubscription } from '../input-indicators/use-input-action-subscription';
 
+/** Props for the StatusAnnouncer component. */
 export interface StatusAnnouncerProps
   extends UIComponentProps<'div', StatusAnnouncerCore.State>,
     StatusAnnouncerCore.Props {}
 
+/** Politely announces input actions (play/pause, volume, captions, etc.) to assistive technology. */
 export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   componentProps: StatusAnnouncerProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

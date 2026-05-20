@@ -13,6 +13,7 @@ import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 
+/** Props for the MinimalLiveAudioSkin component. */
 export type MinimalLiveAudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -55,11 +56,13 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Minimal audio skin configured for live playback. Mirrors
- * {@link MinimalAudioSkin} but omits the time slider and the current /
- * duration / remaining time displays. A flexible spacer stretches between
- * the play and volume controls so they sit at opposite edges of the
- * control bar.
+ * Minimal live audio player skin. Mirrors `<MinimalAudioSkin>` but omits the
+ * time slider and the current / duration time displays.
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<LiveButton>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
  */
 export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;

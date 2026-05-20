@@ -21,48 +21,71 @@ import { useEffect, useState } from 'react';
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
+/** Configuration passed to `createPlayer`. */
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
+  /** Composed feature set that determines the player store's shape and behavior. */
   features: Features;
+  /** Optional display name applied to the generated `Provider` for React DevTools. */
   displayName?: string;
 }
 
+/** Props for the `Provider` component returned by `createPlayer`. */
 export interface ProviderProps {
+  /** Content rendered inside the player provider. */
   children: ReactNode;
 }
 
+/** Components and hooks returned by `createPlayer`, typed to the configured feature set. */
 export interface CreatePlayerResult<Store extends PlayerStore> {
+  /** Wraps children with a typed Player Provider that owns the store and media lifecycle. */
   Provider: FC<ProviderProps>;
+  /** Root container component bound to the player provider. */
   Container: typeof Container;
+  /** Hook that returns the typed store, or a selected slice via a selector. */
   usePlayer: UsePlayerHook<Store>;
+  /** Hook that returns the attached media element, or `null` before attachment. */
   useMedia: () => Media | null;
 }
 
+/** Typed `usePlayer` hook with optional selector. */
 export type UsePlayerHook<Store extends PlayerStore> = {
   (): Store;
   <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
 
 /**
- * Create a player instance with typed store, Provider component, Container, and hooks.
+ * Create a video player instance with a typed store, `Provider`, `Container`, and hooks.
+ *
+ * Pair with a media component (such as `<Video>` or `<HlsVideo>`) inside the
+ * returned `Container` to attach the underlying media element to the player.
  *
  * @label Video
  * @param config - Player configuration with features and optional display name.
+ * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
- * Create a player for audio media.
+ * Create an audio player instance with a typed store, `Provider`, `Container`, and hooks.
+ *
+ * Pair with an audio media component (such as `<Audio>` or `<MuxAudio>`) inside
+ * the returned `Container` to attach the underlying media element to the player.
  *
  * @label Audio
  * @param config - Player configuration with features and optional display name.
+ * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
- * Create a player with custom features.
+ * Create a player instance from a custom feature set, typed to that exact composition.
+ *
+ * Use this overload when assembling features that don't match the prebuilt
+ * `VideoFeatures` or `AudioFeatures` shapes.
  *
  * @label Generic
  * @param config - Player configuration with features and optional display name.
+ * @see https://videojs.org/docs/framework/react/reference/create-player
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

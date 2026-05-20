@@ -19,6 +19,7 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useTooltipContext } from './context';
 
+/** Props for the Tooltip.Popup component. */
 export interface TooltipPopupProps extends UIComponentProps<'div', TooltipState> {}
 
 const POPUP_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };

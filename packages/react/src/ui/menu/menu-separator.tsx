@@ -7,6 +7,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext } from './context';
 
+/** Props for the Menu.Separator component. */
 export interface MenuSeparatorProps extends UIComponentProps<'div', MenuState> {}
 
 /** Visual divider between groups of items. Renders a `<div>` with `role="separator"`. */

@@ -20,11 +20,15 @@ const noopVolume = {
   toggleMuted: () => false,
 };
 
+/** Props for the VolumeSlider.Root component. */
 export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State>, VolumeSliderCore.Props {
+  /** Called when a drag interaction starts. */
   onDragStart?: (() => void) | undefined;
+  /** Called when a drag interaction ends. */
   onDragEnd?: (() => void) | undefined;
 }
 
+/** Slider root bound to volume. Reads the `volume` feature and supports wheel and keyboard input. */
 export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps>(
   function VolumeSliderRoot(componentProps, forwardedRef) {
     const {

@@ -9,8 +9,10 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useVolumeIndicatorContext } from './context';
 
+/** Props for the VolumeIndicator.Fill component. */
 export interface VolumeIndicatorFillProps extends UIComponentProps<'div', VolumeIndicatorCore.State> {}
 
+/** Visual fill that tracks the current volume level via a CSS variable. */
 export const VolumeIndicatorFill = forwardRef(function VolumeIndicatorFill(
   componentProps: VolumeIndicatorFillProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

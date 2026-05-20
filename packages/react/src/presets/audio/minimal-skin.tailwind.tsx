@@ -139,6 +139,14 @@ function PlaybackRateMenuItems(): ReactNode {
 
 /* ------------------------------------------ Skin ------------------------------------------- */
 
+/**
+ * Minimal audio player skin (Tailwind-styled variant of `<MinimalAudioSkin>`).
+ *
+ * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
+ * and `<TimeSlider>` instead of using this preset.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
 export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 

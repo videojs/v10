@@ -16,11 +16,13 @@ import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
+/** Props for the Thumbnail component. */
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
   /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
   thumbnails?: ThumbnailImage[] | undefined;
 }
 
+/** Renders a frame from a WebVTT thumbnail track or a supplied image list at the given playback time. */
 export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thumbnail(componentProps, forwardedRef) {
   const {
     render,

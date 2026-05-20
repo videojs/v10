@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useMenuContext, useSubMenuContext } from './context';
 
+/** Props for the Menu.Item component. */
 export interface MenuItemProps extends UIComponentProps<'div', MenuState> {
   /** Called when the item is selected. */
   onSelect?: () => void;

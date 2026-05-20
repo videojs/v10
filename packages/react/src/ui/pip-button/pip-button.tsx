@@ -6,6 +6,7 @@ import { selectPiP } from '@videojs/core/dom';
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
+/** Props for the PiPButton component. */
 export interface PiPButtonProps extends UIComponentProps<'button', PiPButtonCore.State>, PiPButtonCore.Props {}
 
 /** A button that toggles picture-in-picture. */

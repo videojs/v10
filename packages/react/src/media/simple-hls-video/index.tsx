@@ -10,12 +10,15 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** Props for the SimpleHlsVideo component. */
 export interface SimpleHlsVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof SimpleHlsMediaProps>,
     Partial<SimpleHlsMediaProps> {
+  /** Content rendered inside the underlying `<video>` element (such as `<track>` children). */
   children?: ReactNode;
 }
 
+/** Renders a `<video>` element backed by the SPF-based simple HLS engine. */
 export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(function SimpleHlsVideo(
   { children, ...props },
   ref

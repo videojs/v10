@@ -9,10 +9,12 @@ import { renderElement } from '../../utils/use-render';
 import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';
 import { SeekIndicatorProvider } from './context';
 
+/** Props for the SeekIndicator.Root component. */
 export interface SeekIndicatorRootProps
   extends UIComponentProps<'div', SeekIndicatorCore.State>,
     SeekIndicatorCore.Props {}
 
+/** Visible feedback for seek input (keyboard, gesture). Renders only while a seek is in flight. */
 export const SeekIndicatorRoot = forwardRef(function SeekIndicatorRoot(
   componentProps: SeekIndicatorRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

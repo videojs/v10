@@ -18,6 +18,7 @@ import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { PopoverContextProvider } from './context';
 
+/** Props for the Popover.Root component. */
 export interface PopoverRootProps extends CorePopoverProps {
   /** Boundary used to constrain the popup size. */
   boundary?: PositioningBoundary;
@@ -25,9 +26,11 @@ export interface PopoverRootProps extends CorePopoverProps {
   onOpenChange?: (open: boolean, details: PopoverChangeDetails) => void;
   /** Called after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
+  /** Popover compound parts to render under shared popover context. */
   children?: ReactNode;
 }
 
+/** Provides popover state, positioning, and dismiss behavior to nested Popover parts. */
 export function PopoverRoot({
   open: controlledOpen,
   defaultOpen = PopoverCore.defaultProps.defaultOpen,

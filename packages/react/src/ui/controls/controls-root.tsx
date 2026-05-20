@@ -10,7 +10,9 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { ControlsContextProvider } from './context';
 
+/** Props for the Controls.Root component. */
 export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.State> {
+  /** Controls content rendered when the controls feature is active. */
   children?: ReactNode | undefined;
 }
 

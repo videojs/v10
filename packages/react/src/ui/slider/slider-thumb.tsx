@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSliderContext } from './context';
 
+/** Props for the Slider.Thumb component. */
 export interface SliderThumbProps extends UIComponentProps<'div', SliderState> {}
 
 /** Draggable handle for setting the slider value. Receives focus and handles keyboard interaction. */

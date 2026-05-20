@@ -10,6 +10,7 @@ import { renderElement } from '../../utils/use-render';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useMenuContext, useSubMenuContext } from './context';
 
+/** Props for the Menu.Trigger component. */
 export interface MenuTriggerProps extends UIComponentProps<'button', MenuState> {
   /** Disables the trigger. Only meaningful when used as a submenu trigger inside a parent menu. */
   disabled?: boolean;

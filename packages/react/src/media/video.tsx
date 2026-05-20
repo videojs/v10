@@ -6,8 +6,10 @@ import { forwardRef } from 'react';
 import { useMediaAttach } from '../player/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
+/** Props for the Video component. */
 export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
 
+/** Renders a `<video>` element and attaches it to the surrounding Player Provider. */
 export const Video = forwardRef<HTMLVideoElement, VideoProps>(function Video({ children, ...props }, ref) {
   const setMedia = useMediaAttach();
   const composedRef = useComposedRefs(ref, setMedia);
