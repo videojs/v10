@@ -930,9 +930,14 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(ref.html.mediaElement).toBeUndefined();
     });
 
-    it('detects React skins', () => {
+    it('detects React skins with CSS imports', () => {
       const skins = findPreset('video')!.reference.react.skins;
-      expect(skins).toEqual(expect.arrayContaining([{ name: 'VideoSkin' }, { name: 'MinimalVideoSkin' }]));
+      expect(skins).toEqual(
+        expect.arrayContaining([
+          { name: 'VideoSkin', cssImport: '@videojs/react/video/skin.css' },
+          { name: 'MinimalVideoSkin', cssImport: '@videojs/react/video/minimal-skin.css' },
+        ])
+      );
     });
 
     it('excludes React tailwind skins', () => {
@@ -971,9 +976,9 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(ref.html.mediaElement).toBeUndefined();
     });
 
-    it('detects single React skin', () => {
+    it('detects single React skin with CSS import', () => {
       const skins = findPreset('audio')!.reference.react.skins;
-      expect(skins).toEqual([{ name: 'AudioSkin' }]);
+      expect(skins).toEqual([{ name: 'AudioSkin', cssImport: '@videojs/react/audio/skin.css' }]);
     });
 
     it('detects React media element', () => {
@@ -1012,7 +1017,7 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skinNames).not.toContain('BackgroundVideoPlayerElement');
     });
 
-    it('detects React skin', () => {
+    it('detects React skin without CSS import when no CSS file exists', () => {
       const skins = findPreset('background')!.reference.react.skins;
       expect(skins).toEqual([{ name: 'BackgroundVideoSkin' }]);
     });
