@@ -80,14 +80,14 @@ describe('MuteButtonCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns Mute when unmuted', () => {
+    it('returns mute when unmuted', () => {
       const core = new MuteButtonCore();
-      expect(core.getLabel(createState({ muted: false }))).toBe('Mute');
+      expect(core.getLabel(createState({ muted: false }))).toBe('mute');
     });
 
-    it('returns Unmute when muted', () => {
+    it('returns unmute when muted', () => {
       const core = new MuteButtonCore();
-      expect(core.getLabel(createState({ muted: true }))).toBe('Unmute');
+      expect(core.getLabel(createState({ muted: true }))).toBe('unmute');
     });
 
     it('returns custom string label', () => {
@@ -107,7 +107,7 @@ describe('MuteButtonCore', () => {
     it('returns aria-label', () => {
       const core = new MuteButtonCore();
       const attrs = core.getAttrs(createState({ muted: false }));
-      expect(attrs['aria-label']).toBe('Mute');
+      expect(attrs['aria-label']).toBe('mute');
     });
 
     it('sets aria-disabled when disabled', () => {

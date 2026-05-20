@@ -46,6 +46,8 @@ export * from './ui/popover/popover-data-attrs';
 export * from './ui/popover/popup-host-attr';
 export * from './ui/poster/poster-core';
 export * from './ui/poster/poster-data-attrs';
+export * from './ui/resolve-control-attrs';
+export * from './ui/resolve-optional-control-label';
 export * from './ui/seek-button/seek-button-core';
 export * from './ui/seek-button/seek-button-data-attrs';
 export * from './ui/slider/slider-core';

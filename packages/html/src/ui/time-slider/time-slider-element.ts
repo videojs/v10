@@ -1,4 +1,4 @@
-import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -14,6 +14,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { formatTime } from '@videojs/utils/time';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -30,7 +31,7 @@ export class TimeSliderElement extends MediaElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
+  } satisfies PropertyDeclarationMap<keyof Omit<TimeSliderCore.Props, 'value' | 'min' | 'max' | 'formatOptions'>>;
 
   label = TimeSliderCore.defaultProps.label;
   changeThrottle = TimeSliderCore.defaultProps.changeThrottle;
@@ -44,6 +45,7 @@ export class TimeSliderElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
+  readonly #i18n = new I18nController(this);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -105,7 +107,16 @@ export class TimeSliderElement extends MediaElement {
 
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      label: this.label,
+      changeThrottle: this.changeThrottle,
+      step: this.step,
+      largeStep: this.largeStep,
+      orientation: this.orientation,
+      disabled: this.disabled,
+      thumbAlignment: this.thumbAlignment,
+      formatOptions: { locale: this.#i18n.locale },
+    });
   }
 
   protected override update(_changed: PropertyValues): void {
@@ -133,7 +144,7 @@ export class TimeSliderElement extends MediaElement {
       state,
       stateAttrMap: TimeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: this.#core.getAttrs(state),
+      thumbAttrs: resolveControlAttrs(this.#i18n.value, this.#core, state),
       thumbProps: this.#slider.thumbProps,
       formatValue: (value) => formatTime(value, state.duration),
     });

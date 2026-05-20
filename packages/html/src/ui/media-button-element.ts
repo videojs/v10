@@ -4,11 +4,14 @@ import type {
   InferMediaState,
   MediaButtonComponent,
   StateAttrMap,
+  TranslationKeyOrString,
 } from '@videojs/core';
+import { resolveControlAttrs, resolveControlLabel } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
+import { I18nController } from '../i18n/instance';
 import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
@@ -38,6 +41,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
   #disconnect: AbortController | null = null;
   #hotkeyRegistry: AriaKeyShortcutsController | null = null;
+  readonly #i18n = new I18nController(this);
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -68,8 +72,16 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   }
 
   /** Returns the button's current label derived from media state. */
-  getLabel(): string | undefined {
+  getLabel(): TranslationKeyOrString | undefined {
     return this.core.state.current.label || undefined;
+  }
+
+  /** Resolved label for tooltips and other display surfaces. */
+  getResolvedLabel(): string | undefined {
+    const media = this.mediaState.value;
+    if (!media) return undefined;
+    const state = this.core.getState();
+    return resolveControlLabel(this.#i18n.value, this.core, state);
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -87,7 +99,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.core.setMedia(media);
     const state = this.core.getState();
     applyElementProps(this, {
-      ...this.core.getAttrs?.(state),
+      ...resolveControlAttrs(this.#i18n.value, this.core, state),
       'aria-keyshortcuts': this.#hotkeyRegistry?.value,
     });
     applyStateDataAttrs(this, state, this.stateAttrMap);

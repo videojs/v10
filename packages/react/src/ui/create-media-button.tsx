@@ -1,11 +1,13 @@
 'use client';
 
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
+import { resolveControlAttrs, resolveControlLabel } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
+import { useTranslator } from '../i18n';
 import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
@@ -51,6 +53,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const tooltipCtx = useOptionalTooltipContext();
     const feature = usePlayer(selector);
     const shortcuts = useAriaKeyShortcuts(hotkeyAction);
+    const translator = useTranslator();
 
     const [core] = useState(() => new CoreClass());
     core.setProps(coreProps);
@@ -66,7 +69,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? core.getLabel(state) : undefined;
+    const label = state ? resolveControlLabel(translator, core, state) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
@@ -80,7 +83,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return null;
     }
 
-    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcuts };
+    const attrs = { ...resolveControlAttrs(translator, core, state), 'aria-keyshortcuts': shortcuts };
 
     return renderElement(
       'button',

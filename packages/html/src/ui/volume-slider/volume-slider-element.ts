@@ -1,4 +1,4 @@
-import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -13,6 +13,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -42,6 +43,7 @@ export class VolumeSliderElement extends MediaElement {
   readonly #core = new VolumeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
+  readonly #i18n = new I18nController(this);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -110,6 +112,7 @@ export class VolumeSliderElement extends MediaElement {
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
     this.#core.setProps(this);
+    this.#core.setFormatLocale(this.#i18n.locale);
   }
 
   protected override update(_changed: PropertyValues): void {
@@ -135,7 +138,7 @@ export class VolumeSliderElement extends MediaElement {
       state,
       stateAttrMap: VolumeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: this.#core.getAttrs(state),
+      thumbAttrs: resolveControlAttrs(this.#i18n.value, this.#core, state),
       thumbProps: this.#slider.thumbProps,
       formatValue: (value) => `${Math.round(value)}%`,
     });

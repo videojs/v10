@@ -1,7 +1,9 @@
-import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
+import { resolveControlAttrs, TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -13,7 +15,7 @@ export class TimeElement extends MediaElement {
     type: { type: String },
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
-  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
+  } satisfies PropertyDeclarationMap<keyof Omit<TimeCore.Props, 'formatOptions'>>;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;
@@ -21,6 +23,7 @@ export class TimeElement extends MediaElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
+  readonly #i18n = new I18nController(this);
 
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');
@@ -42,7 +45,16 @@ export class TimeElement extends MediaElement {
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      type: this.type,
+      negativeSign: this.negativeSign,
+      label: this.label,
+      formatOptions: {
+        locale: this.#i18n.locale,
+        translate: (key) =>
+          key === 'remaining' ? resolveTranslationPhrase(this.#i18n.value, 'remainingTimeSuffix') : 'remaining',
+      },
+    });
   }
 
   protected override update(changed: PropertyValues): void {
@@ -59,7 +71,7 @@ export class TimeElement extends MediaElement {
     this.#signSpan.textContent = state.negative ? this.negativeSign : '';
     this.#textNode.textContent = state.text;
 
-    applyElementProps(this, this.#core.getAttrs(state));
+    applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.#core, state));
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
 }

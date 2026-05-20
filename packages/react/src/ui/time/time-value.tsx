@@ -1,10 +1,12 @@
 'use client';
 
-import { TimeCore, TimeDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
+import { useLocale, useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -25,12 +27,25 @@ export const Value = forwardRef(function Value(
   componentProps: ValueProps,
   forwardedRef: ForwardedRef<HTMLTimeElement>
 ) {
-  const { render, className, style, type, negativeSign, label, ...elementProps } = componentProps;
+  const { render, className, style, type, negativeSign, label, formatOptions, ...elementProps } = componentProps;
 
   const time = usePlayer(selectTime);
+  const translator = useTranslator();
+  const locale = useLocale();
 
   const [core] = useState(() => new TimeCore());
-  core.setProps({ type, negativeSign, label });
+  core.setProps({
+    type,
+    negativeSign,
+    label,
+    formatOptions: {
+      ...formatOptions,
+      locale: formatOptions?.locale ?? locale,
+      translate:
+        formatOptions?.translate ??
+        ((key) => (key === 'remaining' ? resolveTranslationPhrase(translator, 'remainingTimeSuffix') : 'remaining')),
+    },
+  });
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');
@@ -60,7 +75,7 @@ export const Value = forwardRef(function Value(
         {
           dateTime: state.datetime,
           children: content,
-          ...core.getAttrs(state),
+          ...resolveControlAttrs(translator, core, state),
         },
         elementProps,
       ],

@@ -1,7 +1,8 @@
-import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
+import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs, resolveControlAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuElement } from '../menu/menu-element';
@@ -32,6 +33,7 @@ export class PlaybackRateMenuElement extends MenuElement {
 
   readonly #core = new PlaybackRateMenuCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
+  readonly #i18n = new I18nController(this);
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -52,7 +54,7 @@ export class PlaybackRateMenuElement extends MenuElement {
     this.#core.setMedia(media);
     const state = this.#core.getState();
 
-    applyElementProps(this, this.#core.getAttrs(state));
+    applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.#core, state));
     applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
   }
 }

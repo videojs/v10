@@ -5,6 +5,7 @@ import {
   TooltipCSSVars,
   TooltipDataAttrs,
   type TooltipInput,
+  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   applyElementProps,
@@ -34,7 +35,7 @@ import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
 
 type TriggerElement = HTMLElement & {
-  getLabel(): string | undefined;
+  getLabel(): TranslationKeyOrString | undefined;
   $state: State<ButtonState>;
 };
 
@@ -239,7 +240,11 @@ export class TooltipElement extends MediaElement {
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    this.textContent = triggerEl.getLabel() ?? '';
+    const resolved =
+      'getResolvedLabel' in triggerEl && typeof triggerEl.getResolvedLabel === 'function'
+        ? triggerEl.getResolvedLabel()
+        : triggerEl.getLabel();
+    this.textContent = resolved ?? '';
   }
 
   #cleanupTrigger(): void {

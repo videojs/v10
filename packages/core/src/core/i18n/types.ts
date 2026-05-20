@@ -32,6 +32,7 @@ export type TranslationParams = {
   timeCurrent: never;
   timeDuration: never;
   timeRemaining: never;
+  remainingTimeSuffix: never;
   playbackRateAria: { rate: number | string };
   playbackRateMultiplier: { rate: number | string };
   timeSliderValueTextRange: { current: string; duration: string };
@@ -56,6 +57,12 @@ export type TranslationParams = {
   mediaErrorEncrypted: never;
   mediaErrorCustom: never;
 };
+
+/**
+ * Either a known translation id from {@link TranslationParams}, or any other string the platform may
+ * use as copy (custom overlay key, literal text, etc.).
+ */
+export type TranslationKeyOrString = keyof TranslationParams | (string & {});
 
 /** Placeholder shape for each key that accepts `t(key, params)`. Omitting a key here is a type error when defining strings. */
 type ParametricTranslations = {
