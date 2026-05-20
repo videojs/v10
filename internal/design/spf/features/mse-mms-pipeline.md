@@ -176,6 +176,10 @@ respectively.
 
 ## Related features
 
+- **preload-modes** — gates this feature indirectly. `setupMediaSource`
+  rides `resolvePresentation`'s resolved/unresolved transitions, which
+  only flip to resolved once the preload gate (`preload !== 'none'` or
+  `loadActivated`) is open.
 - **subtitles** — text tracks share the per-type segment-loading FSM
   but do **not** touch MSE (no SourceBuffer for text); cleanly separated
   by `media/dom/mse/` not appearing in the text path.

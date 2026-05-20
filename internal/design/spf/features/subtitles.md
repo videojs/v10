@@ -91,6 +91,7 @@ Extension boundaries — each could become its own feature doc or a phase extens
 
 References to other features in the registry. Bracketed entries are candidate features that don't yet have their own doc — they're tracked here so the registry surfaces them when work begins.
 
+- **preload-modes** — `loadTextTrackSegments` reads the same `(preload, loadActivated)` gate state as the audio/video segment loaders; the load-mode FSM rows are direct consumers of the preload-modes contract.
 - **per-track-segment-loading** — text tracks share the per-type segment-loading pattern with video/audio. The `'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'` FSM is implemented per-type today; a shared abstraction may emerge.
 - **hls-multivariant-parsing** *(not yet documented)* — subtitle rendition extraction is one slice of manifest parsing.
 - **track-registry-primitive** *(coarse, not yet documented)* — `selectedTextTrackId` is currently the only multi-writer track-id slot. A generalized track-registry primitive likely emerges when multi-language audio is added.
