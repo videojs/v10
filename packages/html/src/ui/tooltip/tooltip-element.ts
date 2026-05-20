@@ -23,12 +23,15 @@ import {
   type TooltipChangeDetails,
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { isFunction } from '@videojs/utils/predicate';
 
+import { I18nController } from '../../i18n/instance';
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
@@ -36,6 +39,7 @@ import { tooltipGroupContext } from './context';
 
 type TriggerElement = HTMLElement & {
   getLabel(): TranslationKeyOrString | undefined;
+  getResolvedLabel?(): string | undefined;
   $state: State<ButtonState>;
 };
 
@@ -69,6 +73,7 @@ export class TooltipElement extends MediaElement {
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
+  readonly #i18n = new I18nController(this);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
@@ -164,6 +169,10 @@ export class TooltipElement extends MediaElement {
     const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
 
+    if (this.#currentTrigger && isLabelTrigger(this.#currentTrigger)) {
+      this.#syncContent(this.#currentTrigger);
+    }
+
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
     this.#core.setInput(input);
@@ -240,10 +249,12 @@ export class TooltipElement extends MediaElement {
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    const resolved =
-      'getResolvedLabel' in triggerEl && typeof triggerEl.getResolvedLabel === 'function'
-        ? triggerEl.getResolvedLabel()
-        : triggerEl.getLabel();
+    const label = triggerEl.getLabel();
+    const resolved = isFunction(triggerEl.getResolvedLabel)
+      ? triggerEl.getResolvedLabel()
+      : label
+        ? resolveTranslationPhrase(this.#i18n.value, label)
+        : undefined;
     this.textContent = resolved ?? '';
   }
 
