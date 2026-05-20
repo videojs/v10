@@ -180,6 +180,10 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
   rides `resolvePresentation`'s resolved/unresolved transitions, which
   only flip to resolved once the preload gate (`preload !== 'none'` or
   `loadActivated`) is open.
+- **source-replacement** — the resolved/unresolved lifecycle
+  `setupMediaSource` rides is the canonical mechanism for in-place
+  source replacement. Detach-on-state-exit is what makes URL changes
+  work without recreating the engine.
 - **subtitles** — text tracks share the per-type segment-loading FSM
   but do **not** touch MSE (no SourceBuffer for text); cleanly separated
   by `media/dom/mse/` not appearing in the text path.

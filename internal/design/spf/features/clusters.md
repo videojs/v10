@@ -40,6 +40,22 @@ Existing features cite their file: `subtitles`, `video-abr`, `multi-language-aud
 
 ## Clusters
 
+### Engine lifecycle
+
+Engine instantiation, source loading lifecycle, and per-source identity resets. The cross-cutting concerns that bracket everything else — preload semantics gate when work begins, source resolution drives the resolved/unresolved cascade that every downstream behavior rides.
+
+**Signals.** `state.presentation` lifecycle (unresolved `{ url }` ↔ resolved `Presentation`); `state.preload` + `state.loadActivated` as the loading gate; `resolvePresentation`'s 4-state FSM (`'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'`); `isResolvedPresentation` predicate; "ride resolver's resolved/unresolved lifecycle" pattern; `AbortController`-bound-to-state-exit cleanup; per-source-identity resets (`loadActivated`, `selected*TrackId`); cross-source preservation (`bandwidthState` for ABR resume).
+
+**Docs.** `preload-modes`, `source-replacement`, `[engine-adapter-integration]`.
+
+**Foundational primitives.** `state.presentation` as the source-identity slot; resolved/unresolved routing in `resolvePresentation` as the cleanup-cascade driver; the per-presentation-gated behavior cleanup contract (state-exit detaches DOM / destroys actors / aborts in-flight fetches); `shareSignals` for the external write surface.
+
+**Common cross-cluster touchpoints.** Every other cluster. Track & variant registry, MSE / Buffer management, and Presentation modeling all gate on resolved presentation; their setup behaviors tear down via the resolved/unresolved cascade. Time normalization survives across resets (`currentTime` DOM-side mirror via `trackCurrentTime`). Manifest reload loop is presentation re-resolution under live conditions — a special case of the same cascade.
+
+**Key check.** New behaviors that gate on `isResolvedPresentation` MUST honor the state-exit cleanup contract: detach DOM resources / destroy actors / clear context slots / abort in-flight fetches on state exit. The in-place source-replacement validation test (`engine.test.ts` → "cleanly replaces source in place via state.presentation overwrite") pins this contract against regression.
+
+---
+
 ### Track & variant registry
 
 The selection model — which audio / video / text tracks are available, which is active, who can change the selection.
