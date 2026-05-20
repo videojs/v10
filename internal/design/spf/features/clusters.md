@@ -46,7 +46,7 @@ Engine instantiation, source loading lifecycle, and per-source identity resets. 
 
 **Signals.** `state.presentation` lifecycle (unresolved `{ url }` ↔ resolved `Presentation`); `state.preload` + `state.loadActivated` as the loading gate; `resolvePresentation`'s 4-state FSM (`'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'`); `isResolvedPresentation` predicate; "ride resolver's resolved/unresolved lifecycle" pattern; `AbortController`-bound-to-state-exit cleanup; per-source-identity resets (`loadActivated`, `selected*TrackId`); cross-source preservation (`bandwidthState` for ABR resume).
 
-**Docs.** `preload-modes`, `source-replacement`, `[engine-adapter-integration]`.
+**Docs.** `preload-modes`, `source-replacement`, `engine-adapter-integration`.
 
 **Foundational primitives.** `state.presentation` as the source-identity slot; resolved/unresolved routing in `resolvePresentation` as the cleanup-cascade driver; the per-presentation-gated behavior cleanup contract (state-exit detaches DOM / destroys actors / aborts in-flight fetches); `shareSignals` for the external write surface.
 
