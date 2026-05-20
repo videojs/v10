@@ -70,9 +70,19 @@ function getTemplateHTML() {
   `;
 }
 
+/**
+ * Default live audio player skin web component with a complete audio UI and a Live button.
+ *
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
+ *
+ * @see https://videojs.org/docs/framework/html/concepts/skins
+ */
 export class LiveAudioSkinElement extends SkinElement {
+  /** Custom element tag name. */
   static readonly tagName = 'live-audio-skin';
+  /** Shadow DOM stylesheet shared across all instances. */
   static styles = createShadowStyle(styles);
+  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

@@ -520,6 +520,23 @@ export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 - Multi-overload functions get per-overload JSDoc with `@label` tags (not a single JSDoc block).
 - `@public` opts in exports that don't match naming conventions.
 
+### Skin JSDoc
+
+Skins — preset components that compose primitives into a complete player experience — carry an `@see` link in their JSDoc that points to the published skins guide. The URL ships discoverability into the `.d.ts` so IDE hover-docs, generated reference pages, and AI coding agents surface the guide alongside the symbol.
+
+```ts
+/**
+ * Default video player skin with a complete media UI.
+ *
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
+export function VideoSkin(props: VideoSkinProps): ReactNode;
+```
+
+The `@see` target must already exist. Tailwind variants share the body of their non-Tailwind sibling and add a one-liner noting the variant.
+
 ## Design Documents
 
 | Location              | Purpose                                                    |

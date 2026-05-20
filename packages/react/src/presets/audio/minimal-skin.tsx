@@ -86,6 +86,13 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
+/**
+ * Minimal audio player skin with a stripped-back media UI.
+ *
+ * To customize, eject this skin and build from primitives. Read more about eject in the docs.
+ *
+ * @see https://videojs.org/docs/framework/react/concepts/skins
+ */
 export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
