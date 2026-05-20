@@ -158,19 +158,8 @@ function getTemplateHTML() {
   `;
 }
 
-/**
- * Tailwind-styled variant of `<live-video-skin>` — default live video player skin with a Live button.
- *
- * Same template as `<live-video-skin>` but with Tailwind utility classes instead of a bundled
- * stylesheet. To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-live-button>`.
- *
- * @see https://videojs.org/docs/framework/html/concepts/skins
- */
 export class LiveVideoSkinTailwindElement extends SkinElement {
-  /** Custom element tag name. */
   static readonly tagName = 'live-video-skin-tailwind';
-  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

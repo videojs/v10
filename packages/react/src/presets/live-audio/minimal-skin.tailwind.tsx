@@ -95,14 +95,6 @@ function VolumePopover(): ReactNode {
   );
 }
 
-/**
- * Minimal live audio player skin (Tailwind-styled variant of `<MinimalLiveAudioSkin>`).
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<LiveButton>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
- */
 export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 

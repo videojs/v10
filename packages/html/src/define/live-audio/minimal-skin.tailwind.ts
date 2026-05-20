@@ -74,19 +74,8 @@ function getTemplateHTML() {
   `;
 }
 
-/**
- * Tailwind-styled variant of `<live-audio-minimal-skin>` — pared-down live audio player skin.
- *
- * Same template as `<live-audio-minimal-skin>` but with Tailwind utility classes instead of a
- * bundled stylesheet. To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-live-button>`.
- *
- * @see https://videojs.org/docs/framework/html/concepts/skins
- */
 export class MinimalLiveAudioSkinTailwindElement extends SkinElement {
-  /** Custom element tag name. */
   static readonly tagName = 'live-audio-minimal-skin-tailwind';
-  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

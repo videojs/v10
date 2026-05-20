@@ -173,14 +173,6 @@ function PlaybackRateMenuItems(): ReactNode {
 
 /* ------------------------------------------ Skin ------------------------------------------- */
 
-/**
- * Minimal video player skin (Tailwind-styled variant of `<MinimalVideoSkin>`).
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<TimeSlider>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
- */
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 

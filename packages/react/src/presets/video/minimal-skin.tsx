@@ -112,14 +112,6 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
-/**
- * Minimal video player skin with a stripped-back media UI.
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<TimeSlider>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
- */
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 

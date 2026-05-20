@@ -86,14 +86,6 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
-/**
- * Default audio player skin with a complete media UI.
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<TimeSlider>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
- */
 export function AudioSkin(props: AudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 

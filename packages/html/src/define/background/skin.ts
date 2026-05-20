@@ -15,20 +15,9 @@ function getTemplateHTML(_attrs: Record<string, string>) {
   `;
 }
 
-/**
- * Background video skin web component — a minimal container with no user-facing UI.
- *
- * Used to render ambient/looping video. To customize, place a `<background-video>` (or any
- * `Media` element) inside `<background-video-player>` directly instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/html/concepts/skins
- */
 export class BackgroundVideoSkinElement extends ReactiveElement {
-  /** Custom element tag name. */
   static readonly tagName = 'background-video-skin';
-  /** Shadow DOM options applied during construction. */
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
-  /** Builds the shadow DOM HTML from the host's attributes. */
   static getTemplateHTML = getTemplateHTML;
 
   constructor() {

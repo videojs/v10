@@ -146,21 +146,9 @@ function getTemplateHTML() {
   `;
 }
 
-/**
- * Default live video player skin web component with a complete media UI and a Live button.
- *
- * To customize, build from primitive elements like `<media-controls>`,
- * `<media-play-button>`, and `<media-live-button>` instead of using
- * this preset.
- *
- * @see https://videojs.org/docs/framework/html/concepts/skins
- */
 export class LiveVideoSkinElement extends SkinElement {
-  /** Custom element tag name. */
   static readonly tagName = 'live-video-skin';
-  /** Shadow DOM stylesheet shared across all instances. */
   static styles = createShadowStyle(styles);
-  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

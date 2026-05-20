@@ -131,14 +131,6 @@ function VolumePopover(): ReactNode {
   );
 }
 
-/**
- * Default live video player skin (Tailwind-styled variant of `<LiveVideoSkin>`).
- *
- * To customize, build from primitives like `<Controls.Root>`, `<PlayButton>`,
- * and `<LiveButton>` instead of using this preset.
- *
- * @see https://videojs.org/docs/framework/react/concepts/skins
- */
 export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 

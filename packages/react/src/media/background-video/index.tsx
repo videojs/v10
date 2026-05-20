@@ -8,7 +8,6 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 
 export interface BackgroundVideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
 
-/** Renders a muted, autoplaying, looping `<video>` element for ambient background use. */
 export const BackgroundVideo = forwardRef<HTMLVideoElement, BackgroundVideoProps>(function BackgroundVideo(
   { children, ...props },
   ref

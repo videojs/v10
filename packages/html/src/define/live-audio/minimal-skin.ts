@@ -63,21 +63,9 @@ function getTemplateHTML() {
   `;
 }
 
-/**
- * Pared-down live audio player skin web component with a minimal audio UI and a Live button.
- *
- * Smaller than `<live-audio-skin>` — drops menus and tooltips. To customize beyond this preset,
- * build from primitive elements like `<media-controls>`, `<media-play-button>`, and
- * `<media-live-button>`.
- *
- * @see https://videojs.org/docs/framework/html/concepts/skins
- */
 export class MinimalLiveAudioSkinElement extends SkinElement {
-  /** Custom element tag name. */
   static readonly tagName = 'live-audio-minimal-skin';
-  /** Shadow DOM stylesheet shared across all instances. */
   static styles = createShadowStyle(styles);
-  /** Shadow DOM template cloned into each instance. */
   static template = createTemplate(getTemplateHTML());
 }
 

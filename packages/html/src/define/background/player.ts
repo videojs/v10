@@ -8,9 +8,7 @@ const { ProviderMixin } = createPlayer({
   features: backgroundFeatures,
 });
 
-/** Custom element shell for the `<background-video-player>` tag — provides the player context and store. */
 export class BackgroundVideoPlayerElement extends ProviderMixin(MediaElement) {
-  /** Custom element tag name. */
   static readonly tagName = 'background-video-player';
 }
 
