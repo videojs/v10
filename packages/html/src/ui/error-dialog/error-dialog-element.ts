@@ -39,7 +39,7 @@ export class ErrorDialogElement extends MediaElement {
 
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
-  #lastErrorMessage: string | null = null;
+  #lastError: MediaError | null = null;
 
   constructor() {
     super();
@@ -84,11 +84,15 @@ export class ErrorDialogElement extends MediaElement {
     const { active: isOpen } = this.#dialog.input.current;
 
     if (errorState?.error) {
-      const message = errorState.error.message?.trim();
-      this.#lastErrorMessage = message || null;
+      this.#lastError = errorState.error;
     }
 
-    this.#syncDialogCopy(errorState?.error ?? null);
+    const errorForCopy = errorState?.error ?? (isOpen ? this.#lastError : null);
+    this.#syncDialogCopy(errorForCopy);
+
+    if (!hasError && !isOpen) {
+      this.#lastError = null;
+    }
 
     if (hasError && !isOpen) {
       this.#dialog.open();
@@ -124,7 +128,7 @@ export class ErrorDialogElement extends MediaElement {
 
     const desc = this.querySelector('media-alert-dialog-description');
     if (desc) {
-      const description = resolveErrorDialogDescription(error, this.#lastErrorMessage);
+      const description = resolveErrorDialogDescription(error);
       desc.textContent = resolveTranslationPhrase(t, description);
     }
 
