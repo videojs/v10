@@ -14,10 +14,15 @@ function normalizeLocaleTag(tag: string): string {
   return tag.trim().replaceAll('_', '-').toLowerCase();
 }
 
-/** Strip unicode locale extension sequences (`-u-…`). */
+/** Strip unicode locale extension sequences (`-u-…`) before any private-use `-x-` block. */
 function stripUnicodeExtensions(tag: string): string {
-  const idx = tag.indexOf('-u-');
-  return idx === -1 ? tag : tag.slice(0, idx);
+  const xIdx = tag.indexOf('-x-');
+  const beforePrivateUse = xIdx === -1 ? tag : tag.slice(0, xIdx);
+  const uIdx = beforePrivateUse.indexOf('-u-');
+  if (uIdx === -1) {
+    return tag;
+  }
+  return tag.slice(0, uIdx) + (xIdx === -1 ? '' : tag.slice(xIdx));
 }
 
 /** Registry map key: normalized tag with unicode extensions removed (same base as {@link localeLookupChain}). */

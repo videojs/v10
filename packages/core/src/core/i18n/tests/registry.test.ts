@@ -41,6 +41,13 @@ describe('i18n registry', () => {
     expect(getI18nTranslations('es-u-nu-latn').play).toBe('Latin-numerals ES');
   });
 
+  it('does not strip -u- subtags inside a private-use extension', () => {
+    registerI18n('en-x-u-k0', { play: 'Private U' });
+    registerI18n('en-x-u-k1', { play: 'Private U2' });
+    expect(getI18nTranslations('en-x-u-k0').play).toBe('Private U');
+    expect(getI18nTranslations('en-x-u-k1').play).toBe('Private U2');
+  });
+
   it('walks zh-Hant-HK → zh-Hant → zh → en', () => {
     expect(localeLookupChain('zh-Hant-HK')).toEqual(['zh-hant-hk', 'zh-hant', 'zh', 'en']);
     registerI18n('zh', { play: 'ZH' });
