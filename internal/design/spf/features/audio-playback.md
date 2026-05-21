@@ -219,6 +219,13 @@ Consumers wanting language-aware selection today must override
   set selection runs over; unsupported codecs filtered upstream of
   the `selectAudioTrack` picker.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Phase 1 baseline constituent. The audio-only
+  delivery variant composes this feature's rendition selection,
+  media playlist resolution, and segment loading as-is.
+
 ## See also
 
 - [presentation-modeling.md](../presentation-modeling.md) —

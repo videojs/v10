@@ -226,6 +226,14 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
 - **drm-support** *(not yet documented, candidate, issue #1411)* —
   key-system readiness would gate MSE setup + append per `clusters.md`.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Phase 1 baseline constituent. Used as-is —
+  `MediaSource` + `endOfStream` gate compose unchanged across
+  variants per the uniform-across-tracks discipline (`endOfStream`
+  reads `mediaSource.sourceBuffers` aggregately).
+
 ## See also
 
 - [presentation-modeling.md](../presentation-modeling.md) — architectural

@@ -68,6 +68,10 @@ Things this feature probably forces decisions on, not just additions:
 - **audio-only-composition** *(coarse, not yet documented, candidate)* — engine variant; orthogonal but composition-relevant.
 - **capability-probing** *(candidate)* — Tier 2 mid-stream codec switching (e.g., stereo AAC → 5.1 AC-3) depends on `changeType()` capability probing surfaced by that feature.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)** *(coarse)* — Phase 2 constituent. When multi-language-audio is implemented, the audio-only delivery variant composes it for language selection within the audio-only variant (e.g., a podcast mode for a multi-language source). Used as-is.
+
 ## See also
 
 - `internal/design/spf/features/subtitles.md` — closest analog for the recognition + selection shape

@@ -196,6 +196,15 @@ each `set src`).
   writes through. The adapter doesn't expose these features' surfaces
   directly; consumers read engine state via the captured signal refs.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Phase 1 baseline constituent with an alternative
+  adapter shape. The variant ships an independent
+  `SimpleAudioOnlyHlsMediaElement`-style adapter parallel to
+  `SimpleHlsMediaElement`; the `shareSignals` mechanism + mixin
+  pattern compose unchanged. The consumer-facing API differs.
+
 ## See also
 
 - [clusters.md § Engine lifecycle](./clusters.md#engine-lifecycle)

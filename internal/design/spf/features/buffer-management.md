@@ -260,6 +260,14 @@ snapshot between operations rather than awaiting `send()` directly.
   *(candidates)* — cross-codec switches need a `changeType()`
   extension beyond today's same-codec planning.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Phase 1 baseline constituent (used as-is);
+  Phase 3 surfaces alternative-default-config candidates
+  (shorter `forwardBuffer.bufferDuration` for audio-only) and a
+  Path-B candidate (audio-only-tuned buffer-management behavior).
+
 ## See also
 
 - [presentation-modeling.md](../presentation-modeling.md) — architectural

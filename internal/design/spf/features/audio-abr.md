@@ -262,6 +262,13 @@ Things this feature probably forces decisions on, not just additions:
   Audio-ABR is the second consumer; promoting `BandwidthState` to
   its own feature doc may become worthwhile.
 
+## Use cases that compose this feature
+
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Phase 2 constituent. When audio-abr is
+  implemented, the audio-only delivery variant composes it for
+  multi-bitrate audio support. Used as-is.
+
 ## See also
 
 - [video-abr.md](./video-abr.md) — structural template; the

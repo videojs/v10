@@ -166,13 +166,14 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Use cases that compose this feature
 
-- **`[audio-only-mode-override]`** *(forward-ref; not yet
-  documented)* — Case-2 sibling use case that composes this
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
+  *(coarse)* — Case-2 sibling use case that composes this
   feature's engine-variant shape to deliver audio-only from
   mixed-manifest sources. Source-shape correctness (this
-  feature) vs delivery-mode choice (the use case). See
-  [`../use-cases/README.md`](../use-cases/README.md) for the
-  doc-type.
+  feature) vs delivery-mode choice (the use case). The two
+  likely share an engine factory; differ in variant-decision
+  source (source-shape detection here, adapter-upfront for the
+  use case).
 
 ## See also
 
