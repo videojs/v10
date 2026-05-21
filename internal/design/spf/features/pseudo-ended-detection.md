@@ -176,10 +176,10 @@ Things this feature probably forces decisions on, not just additions:
 - **[edit-list-compensation](./edit-list-compensation.md)** —
   sister Borderline feature; edit-list offsets affect the
   perceived duration boundary.
-- **`[buffer-stall-recovery]`** *(candidate, this session)* —
-  sister Borderline feature; both detect "playback not
-  progressing." Coordination needed via composition order +
-  near-boundary discriminator.
+- **[buffer-stall-recovery](./buffer-stall-recovery.md)** — sister
+  Borderline feature; both detect "playback not progressing."
+  Coordination needed via composition order + near-boundary
+  discriminator.
 - **[live-stream-support](./live-stream-support.md)** — out of
   scope (live has Infinity duration); this feature composes into
   VOD variants only.

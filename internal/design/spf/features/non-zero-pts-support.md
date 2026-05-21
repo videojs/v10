@@ -275,8 +275,9 @@ Things this feature probably forces decisions on, not just additions:
 - **Cluster B Borderline content compensation sub-cluster:**
   [pseudo-ended-detection](./pseudo-ended-detection.md),
   [edit-list-compensation](./edit-list-compensation.md),
-  `[buffer-stall-recovery]` — all build on this feature's time-
-  mapping primitive but address different content-defect concerns.
+  [buffer-stall-recovery](./buffer-stall-recovery.md) — all build on
+  this feature's time-mapping primitive but address different
+  content-defect concerns.
   See [clusters.md § Time normalization](./clusters.md#time-normalization)'s
   sub-cluster note.
 
