@@ -183,8 +183,8 @@ Things this feature probably forces decisions on, not just additions:
   Borderline; edit-list offsets affect the perceived duration
   boundary that pseudo-ended-detection checks against. Cross-
   reference in its Open questions.
-- **`[buffer-stall-recovery]`** *(candidate, this session)* —
-  sister Borderline; orthogonal mechanism.
+- **[buffer-stall-recovery](./buffer-stall-recovery.md)** — sister
+  Borderline; orthogonal mechanism.
 - **`[discontinuity-handling]`** *(deferred candidate)* — mid-source
   edit-list changes would be that feature's territory.
 - **[mse-mms-pipeline](./mse-mms-pipeline.md)** — segment append
