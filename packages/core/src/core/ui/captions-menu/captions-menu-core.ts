@@ -86,7 +86,8 @@ export class CaptionsMenuCore {
     }
 
     const selectedTrack = this.getSelectedTrack(state);
-    return `${this.getMenuSectionLabel()} ${selectedTrack ? this.getTrackLabel(selectedTrack) : this.getOffLabel()}`;
+    const value = selectedTrack ? this.getTrackLabel(selectedTrack) : this.getOffLabel();
+    return `${this.getMenuSectionLabel()}, ${value}`;
   }
 
   getMenuSectionLabel(): string {

@@ -80,8 +80,8 @@ describe('CaptionsMenu', () => {
 
     const trigger = screen.getByTestId('trigger');
 
-    expect(trigger.textContent).toBe('Captions CC');
-    expect(trigger.getAttribute('aria-label')).toBe('Captions CC');
+    expect(trigger.textContent).toBe('Captions, CC');
+    expect(trigger.getAttribute('aria-label')).toBe('Captions, CC');
     expect(trigger.getAttribute('data-active')).toBe('');
     expect(trigger.getAttribute('data-availability')).toBe('available');
   });
@@ -136,7 +136,7 @@ describe('CaptionsMenu', () => {
       formatTrack: (track) => `${track.language.toUpperCase()} ${track.kind}`,
     });
 
-    expect(screen.getByTestId('trigger').textContent).toBe('Captions EN captions');
+    expect(screen.getByTestId('trigger').textContent).toBe('Captions, EN captions');
     expect(screen.getByRole('menuitemradio', { name: 'EN captions' }).getAttribute('aria-checked')).toBe('true');
   });
 

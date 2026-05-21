@@ -196,7 +196,7 @@ describe('CaptionsMenuElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true']);
     });
-    expect(menu.getAttribute('aria-label')).toBe('Captions CC');
+    expect(menu.getAttribute('aria-label')).toBe('Captions, CC');
     expect(menu.getAttribute('data-active')).toBe('');
     expect(menu.getAttribute('data-availability')).toBe('available');
   });
@@ -311,7 +311,7 @@ describe('CaptionsMenuTriggerElement', () => {
     await trigger.updateComplete;
 
     expect(trigger.getAttribute('role')).toBe('button');
-    expect(trigger.getAttribute('aria-label')).toBe('Captions CC');
+    expect(trigger.getAttribute('aria-label')).toBe('Captions, CC');
     expect(trigger.getAttribute('data-active')).toBe('');
     expect(trigger.getAttribute('data-availability')).toBe('available');
   });

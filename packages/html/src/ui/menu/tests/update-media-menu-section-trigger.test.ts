@@ -36,7 +36,7 @@ describe('updateMediaMenuSectionTrigger', () => {
       host,
       state: { disabled: false },
       submenuTrigger,
-      getCoreAttrs: () => ({ 'aria-label': 'Captions Off', 'aria-disabled': undefined }),
+      getCoreAttrs: () => ({ 'aria-label': 'Captions, Off', 'aria-disabled': undefined }),
       submenuRegistrationActive: (subPresent) => subPresent,
       syncVisibleLabel: vi.fn(),
       getMenuSectionLabel: () => 'Captions',
@@ -46,7 +46,7 @@ describe('updateMediaMenuSectionTrigger', () => {
     expect(syncRegistration).toHaveBeenCalledWith(false);
 
     expect(host.getAttribute('role')).toBe('button');
-    expect(host.getAttribute('aria-label')).toBe('Captions Off');
+    expect(host.getAttribute('aria-label')).toBe('Captions, Off');
     expect(host.tabIndex).toBe(0);
   });
 
@@ -60,7 +60,7 @@ describe('updateMediaMenuSectionTrigger', () => {
       host,
       state,
       submenuTrigger,
-      getCoreAttrs: () => ({ 'aria-label': 'Captions Auto', 'aria-disabled': undefined }),
+      getCoreAttrs: () => ({ 'aria-label': 'Captions, Auto', 'aria-disabled': undefined }),
       submenuRegistrationActive: (subPresent) => subPresent && state.availability === 'available',
       submenuOpenExtras: (s) => ({ hidden: s.availability !== 'available' }),
       syncVisibleLabel: vi.fn(),
@@ -69,7 +69,7 @@ describe('updateMediaMenuSectionTrigger', () => {
 
     expect(syncRegistration).toHaveBeenCalledWith(true);
     expect(host.getAttribute('role')).toBe('menuitem');
-    expect(host.getAttribute('aria-label')).toBe('Captions Auto');
+    expect(host.getAttribute('aria-label')).toBe('Captions, Auto');
     expect(host.hidden).toBe(false);
   });
 
@@ -83,7 +83,7 @@ describe('updateMediaMenuSectionTrigger', () => {
       host,
       state,
       submenuTrigger,
-      getCoreAttrs: () => ({ 'aria-label': 'Captions Off', 'aria-disabled': undefined }),
+      getCoreAttrs: () => ({ 'aria-label': 'Captions, Off', 'aria-disabled': undefined }),
       submenuRegistrationActive: (subPresent) => subPresent && state.availability === 'available',
       submenuOpenExtras: (s) => ({ hidden: s.availability !== 'available' }),
       syncVisibleLabel: vi.fn(),

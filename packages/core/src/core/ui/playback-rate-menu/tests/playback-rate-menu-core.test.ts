@@ -47,7 +47,7 @@ describe('PlaybackRateMenuCore', () => {
   describe('getLabel', () => {
     it('returns default label with rate', () => {
       const core = new PlaybackRateMenuCore();
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate 1.5');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate, 1.5×');
     });
 
     it('returns custom string label', () => {
@@ -86,7 +86,7 @@ describe('PlaybackRateMenuCore', () => {
 
     it('prefixes the default trigger label with the radio group label', () => {
       const core = new PlaybackRateMenuCore({ radioGroupLabel: 'Rate' });
-      expect(core.getLabel(createState({ rate: 2 }))).toBe('Rate 2');
+      expect(core.getLabel(createState({ rate: 2 }))).toBe('Rate, 2×');
     });
   });
 
@@ -109,7 +109,7 @@ describe('PlaybackRateMenuCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateMenuCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toBe('Playback rate 1.5');
+      expect(attrs['aria-label']).toBe('Playback rate, 1.5×');
     });
 
     it('sets aria-disabled when disabled', () => {

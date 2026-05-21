@@ -55,7 +55,7 @@ describe('PlaybackRateMenu', () => {
     const trigger = screen.getByTestId('trigger');
 
     expect(trigger.textContent).toBe('1.5×');
-    expect(trigger.getAttribute('aria-label')).toBe('Playback rate 1.5');
+    expect(trigger.getAttribute('aria-label')).toBe('Playback rate, 1.5×');
     expect(trigger.getAttribute('data-rate')).toBe('1.5');
     expect(trigger.hasAttribute('data-inline-rate-label')).toBe(true);
   });

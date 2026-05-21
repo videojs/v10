@@ -70,7 +70,7 @@ export class PlaybackRateMenuCore {
       return label;
     }
 
-    return `${this.getRadioGroupLabel()} ${state.rate}`;
+    return `${this.getRadioGroupLabel()}, ${this.getRateLabel(state.rate)}`;
   }
 
   getMenuSectionLabel(): string {
