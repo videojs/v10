@@ -58,18 +58,21 @@ variant, and edge cases.
 - Confirming + extending the existing audio-only test coverage in
   `engine.test.ts`
 
-**Out of scope (separate concerns — the "use case composition"
-doc-type):**
-- **Audio-only mode override** *(Player feature, "use case
-  composition" type — not yet formalized)* — subtract-down
-  composition that produces audio-only delivery *even from mixed-
-  manifest sources* (sources with both audio and video). This is
-  the Case-2 Player feature per Notion's "Composition cases per
-  mode" framing. Different concern: this feature handles audio-
-  only-as-source-shape; the override case is audio-only-as-
-  delivery-choice. Falls under the yet-to-be-formalized "use case
-  composition" doc-type (parallel concepts include background-video
-  playback, audio-podcast mode, etc.).
+**Out of scope (separate concerns — use-case compositions, see
+[`../use-cases/README.md`](../use-cases/README.md)):**
+- **Audio-only mode override** *(Player feature; tracked as a
+  use-case composition: `[audio-only-mode-override]`)* —
+  composition variant that produces audio-only delivery *even
+  from mixed-manifest sources* (sources with both audio and
+  video). This is the Case-2 Player feature per Notion's
+  "Composition cases per mode" framing. Different concern: this
+  feature handles audio-only-as-source-shape; the override case
+  is audio-only-as-delivery-choice. Documented as a use-case
+  composition per [`../use-cases/README.md`](../use-cases/README.md);
+  audio-only-composition (this feature) is the Case-1 sibling
+  and a likely constituent feature. Parallel use-case
+  candidates include background-looping-video, audio-podcast
+  mode, etc.
 - **Dynamic audio-only switching** *(Case 3, deprioritized per
   Notion)* — same engine, config/state-driven dynamic switching
   between Case 1 and Case 2. Notion epic #4c: "May not build."
@@ -161,6 +164,16 @@ Things this feature probably forces decisions on, not just additions:
 - **`[live-stream-support]`** *(not implemented)* — live + audio-
   only (radio streams) is a composition intersection.
 
+## Use cases that compose this feature
+
+- **`[audio-only-mode-override]`** *(forward-ref; not yet
+  documented)* — Case-2 sibling use case that composes this
+  feature's engine-variant shape to deliver audio-only from
+  mixed-manifest sources. Source-shape correctness (this
+  feature) vs delivery-mode choice (the use case). See
+  [`../use-cases/README.md`](../use-cases/README.md) for the
+  doc-type.
+
 ## See also
 
 - [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes)
@@ -169,9 +182,13 @@ Things this feature probably forces decisions on, not just additions:
 - [audio-playback.md](./audio-playback.md) — baseline audio
   handling
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
-  — source material; epic #4a (Basic Audio-only); epic #4b (Audio-
-  only Mode Override) is the Case-2 sister concern under the
-  yet-to-be-formalized "use case composition" doc-type
+  — source material; epic #4a (Basic Audio-only); epic #4b
+  (Audio-only Mode Override) is the Case-2 sister concern,
+  tracked as the `[audio-only-mode-override]` use-case
+  composition (see [`../use-cases/README.md`](../use-cases/README.md))
+- [`../use-cases/README.md`](../use-cases/README.md) — use-case-
+  composition doc-type; this feature is a likely constituent
+  of `audio-only-mode-override`
 - [conventions/behaviors.md](../conventions/behaviors.md) —
   composition-variant discipline (live vs VoD pattern extends to
   audio-only vs A+V)

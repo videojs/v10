@@ -92,9 +92,9 @@ A feature's *implementation shape* falls along a spectrum:
 |---|---|---|---|
 | **Policy** | Pure config / function variation consumed by an existing behavior. No new behaviors | Inside an existing behavior | *(no documented examples yet — shape: a height cap consumed by a `selectQuality` config)* |
 | **Middle pattern** | A new state-producing behavior monitors an external signal and updates state; existing consumer behaviors update to respect that state. Heavier than pure policy but lighter than composition | New behavior + targeted edits to consumers | *(no documented examples yet — shapes: `ResizeObserver` → cap state → switching; CDN-tracking → selection state → failover; buffer-state monitor → ended signal; `initPTS` detection → offset state → append)* |
-| **Composition** | A different composed engine. Alternative compositions add or subtract behaviors to handle different *modes*. Ideally accomplished by subtraction only — no new behaviors | At the Adapter level, on initial conditions | *(no documented examples yet — composition variants for audio-only / video-only modes)* |
+| **Composition** | A different composed engine. Alternative compositions assemble a variant via one or more composition mechanisms (subtract / add / alternative-implementation / alternative-default-configuration), in any combination, to handle different *modes* or *delivery scenarios*. See [`use-cases/README.md`](../use-cases/README.md) for the full doc-type, mechanism taxonomy, and decomposition rubric | At the Adapter level, on initial conditions | *(no instance docs yet; candidates in [`use-cases/README.md`](../use-cases/README.md) Index — `audio-only-mode-override`, `video-only-mode-override`, `background-looping-video`)* |
 
-Composition is bounded to **modes** — currently audio-only and video-only. Most "feels like composition" items actually fit the middle pattern.
+Composition is bounded to **modes** and **delivery scenarios** — see [`use-cases/README.md`](../use-cases/README.md) for the doc-type that captures composition variants. Most "feels like composition" items actually fit the middle pattern.
 
 ---
 

@@ -61,17 +61,27 @@ structure on the inverse axis.
 - Test fixture coverage parallel to `engine.test.ts` "handles audio-
   only stream"
 
-**Out of scope (separate concerns — the "use case composition"
-doc-type):**
-- **Video-only mode override** *(Player feature, "use case
-  composition" type — not yet formalized)* — subtract-down
-  composition that produces video-only delivery *even from mixed-
-  manifest sources*. Notion epic NEW-B; explicitly cross-referenced
-  with [mux-background-video #873](https://github.com/videojs/v10/issues/873)
-  ("Drives background-looping engine; placement in this issue set
-  vs under #873: open"). Falls under the yet-to-be-formalized
-  "use case composition" doc-type alongside background-video / PiP
-  / shorts-player / audio-podcast concerns.
+**Out of scope (separate concerns — use-case compositions, see
+[`../use-cases/README.md`](../use-cases/README.md)):**
+- **Video-only mode override** *(Player feature; tracked as a
+  use-case composition: `[video-only-mode-override]`)* —
+  composition variant that produces video-only delivery *even
+  from mixed-manifest sources*. Notion epic NEW-B. Case-2
+  sibling of this feature on the inverse axis: this feature
+  handles video-only-as-source-shape; the override case is
+  video-only-as-delivery-choice. Documented as a use-case
+  composition per [`../use-cases/README.md`](../use-cases/README.md);
+  this feature is a likely constituent.
+- **Background-looping video** *(Player feature; tracked as a
+  use-case composition: `[background-looping-video]`)* — Mux's
+  `mux-background-video` product scenario: loop + autoplay-muted
+  + GPU/thermal-aware caps + likely silent-video delivery.
+  **Distinct from `video-only-mode-override`** despite shared Mux
+  consumer context; both may share constituent features (this
+  feature; buffer-management loop-around fetching when documented)
+  but address different delivery scenarios. See
+  [mux-background-video #873](https://github.com/videojs/v10/issues/873)
+  and [`../use-cases/README.md`](../use-cases/README.md).
 - **Dynamic video-only switching** *(Case 3, deprioritized per
   Notion)* — config/state-driven dynamic switching between video-
   only and mixed playback. Notion deprioritizes Case 3 generally.
@@ -105,15 +115,15 @@ Things this feature probably forces decisions on, not just additions:
   from-parser. Resolves jointly.
 - **Background-video product intersection.** mux-background-video
   ([#873](https://github.com/videojs/v10/issues/873)) is the
-  canonical use-case-composition consumer. This feature provides
-  the Media-src baseline (engine plays a video-only source); the
-  use-case-composition concern (background-video product) is the
-  Case-2 sister yet-to-be-formalized. The boundary: this feature
-  handles "the source is video-only"; the use-case-composition
-  handles "deliver video-only even from mixed sources." Mux's
-  current product use case (background-video) intersects with
-  both — sometimes the source is genuinely video-only, sometimes
-  the consumer wants video-only delivery from a mixed source.
+  `[background-looping-video]` use-case composition (see
+  [`../use-cases/README.md`](../use-cases/README.md)). This feature
+  is a likely constituent: background-looping-video composes
+  video-only-composition's baseline plus loop-related behaviors,
+  autoplay-muted defaults, and GPU/thermal-aware caps. **Distinct
+  from `[video-only-mode-override]`** (which subtracts audio from
+  mixed-manifest sources to deliver video-only). Background-
+  looping-video may compose either or both depending on the
+  consumer's source shape.
 - **Autoplay-muted considerations.** Video-only sources are
   typically muted (no audio to play). Browser autoplay policies
   often allow muted-autoplay; this feature's engine variant could
@@ -168,6 +178,24 @@ Things this feature probably forces decisions on, not just additions:
 - **`[live-stream-support]`** *(not implemented)* — live video-
   only (silent live feeds) is a composition intersection.
 
+## Use cases that compose this feature
+
+- **`[video-only-mode-override]`** *(forward-ref; not yet
+  documented)* — Case-2 sibling use case that composes this
+  feature's engine-variant shape to deliver video-only from
+  mixed-manifest sources. Source-shape correctness (this
+  feature) vs delivery-mode choice (the use case). Notion
+  NEW-B.
+- **`[background-looping-video]`** *(forward-ref; not yet
+  documented)* — Mux's background-video product scenario.
+  Likely composes this feature plus loop-related buffer
+  behavior; distinct from video-only-mode-override despite
+  shared Mux consumer context. See [mux-background-video
+  #873](https://github.com/videojs/v10/issues/873).
+
+See [`../use-cases/README.md`](../use-cases/README.md) for the
+use-case-composition doc-type.
+
 ## See also
 
 - [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes)
@@ -177,11 +205,16 @@ Things this feature probably forces decisions on, not just additions:
   parallel sibling doc
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   — source material; epic NEW-A (Basic Video-only); epic NEW-B
-  (Video-only Composition) is the Case-2 sister concern under the
-  yet-to-be-formalized "use case composition" doc-type
+  (Video-only Composition) is the Case-2 sister concern, tracked
+  as the `[video-only-mode-override]` use-case composition (see
+  [`../use-cases/README.md`](../use-cases/README.md))
+- [`../use-cases/README.md`](../use-cases/README.md) — use-case-
+  composition doc-type; this feature is a likely constituent of
+  `video-only-mode-override` and `background-looping-video`
 - [GitHub #873 (mux-background-video)](https://github.com/videojs/v10/issues/873)
-  — Mux's video-only use case driving the Case-2 use-case-
-  composition concern
+  — Mux's background-video product scenario; tracked as the
+  `[background-looping-video]` use-case composition, distinct
+  from `video-only-mode-override`
 - [`mux-background-video` repo](https://github.com/muxinc/mux-background-video)
   — prior-art reference for video-only delivery + background-loop
   product concerns
