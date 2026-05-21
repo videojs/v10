@@ -234,9 +234,9 @@ Fallback and recovery when network requests or the selected URI / rendition fail
 
 **Signals.** Alternate URIs; HLS spec-extension URIs; CDN rotation; retry / backoff; content steering protocol; `?redundant_streams=true`-style query params; VRLT (Viewer Rate Limiting Token) response handling; playback-token-expiry; circuit-breaker per host.
 
-**Docs.** `network-resilience` (foundation — retry/backoff, error classification, VRLT, token-expiry, customer hooks), `multi-cdn-failover` (alternate-URI rotation built on network-resilience).
+**Docs.** `network-resilience` (foundation — retry/backoff, error classification, VRLT, token-expiry, customer hooks), `multi-cdn-failover` (alternate-URI rotation built on network-resilience), `content-steering` (HLS content-steering protocol; pathway-priority composes with multi-cdn-failover's rotation).
 
-**Foundational primitives.** A retry/backoff policy + circuit-breaker primitive (lives in `network-resilience`). An alternate-URI rotation primitive (lives in `multi-cdn-failover`; consumed by `[content-steering]` candidate when it lands).
+**Foundational primitives.** A retry/backoff policy + circuit-breaker primitive (lives in `network-resilience`). An alternate-URI rotation primitive (lives in `multi-cdn-failover`; consumed by `content-steering`'s pathway-priority bias).
 
 **Maps to Notion cluster G** ("Selection resilience").
 

@@ -9,7 +9,7 @@ definition: coarse
 Defensive engine logic for HTTP retry/backoff, error-class-specific
 response handling, and pluggable customer policies. The cluster G
 foundation that consumer features ([multi-cdn-failover](./multi-cdn-failover.md),
-[content-steering](#) — sister cluster G features) build on, and
+[content-steering](./content-steering.md) — sister cluster G features) build on, and
 the home for borderline response-error handling that today's `hls.js`-
 parity behavior (treat 4xx as fatal, naive 5xx retry) doesn't cover.
 
@@ -75,7 +75,7 @@ feature's primitives):**
 - **[multi-cdn-failover](./multi-cdn-failover.md)** — alternate-URI
   rotation on retry-exhaustion. Consumes this feature's retry +
   circuit-breaker state. Adds the URI-rotation policy on top.
-- **`[content-steering]`** *(candidate, this session)* — HLS content-
+- **[content-steering](./content-steering.md)** — HLS content-
   steering protocol (server-side host-pool advertisement, client-side
   host selection). Consumes this feature's retry machinery for
   steering-pathway-specific retries.
@@ -194,7 +194,7 @@ Things this feature probably forces decisions on, not just additions:
 - **[multi-cdn-failover](./multi-cdn-failover.md)** — consumer.
   Sits on top of this feature's retry/breaker primitives; adds
   alternate-URI rotation policy.
-- **`[content-steering]`** *(candidate, this session)* — consumer.
+- **[content-steering](./content-steering.md)** — consumer.
   HLS content-steering protocol; uses this feature's retry primitives
   for steering-pathway-specific retries.
 - **[video-abr](./video-abr.md)** / **[audio-abr](./audio-abr.md)** —
