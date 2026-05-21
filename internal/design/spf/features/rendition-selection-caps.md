@@ -37,28 +37,33 @@ other consumer-side reasons.
 
 ## Phases of complexity
 
-Motivation phases. Each phase is a different signal source feeding
-the same constraint+filter mechanism — a per-cap state slot read by
-`selectQuality` as a filter on the candidate set before selection.
+Phases. The first four are motivation slices — different signal
+sources (config / `ResizeObserver`) feeding the same constraint+filter
+mechanism (a per-cap state slot read by `selectQuality` as a filter on
+the candidate set before selection). The fifth is meta-policy on top:
+it modifies how the combination of caps resolves, not a cap of its
+own.
 
 | Phase | What | Mechanism |
 |---|---|---|
-| Billing-driven max-height cap | Config-driven `maxHeight` (e.g., 1080) excludes higher-resolution variants from the candidate set. Drives the Mux billing use case (cap delivery at 1080p+ for tier-pricing alignment) | **Policy** — config field consumed by `selectQuality`'s filter step; no new behavior |
-| Viewport-driven height cap | Cap the candidate set to renditions that fit the player element's rendered dimensions. Avoids serving higher-resolution variants the viewer can't perceive | **Middle pattern** — `ResizeObserver` monitor writes cap state on player-element size changes; `selectQuality` reads. New behavior |
+| Billing-driven max-height cap | Config-driven `maxHeight` (e.g., 1080) excludes higher-resolution variants from the candidate set. Drives the Mux billing use case (cap delivery at 1080p+ for tier-pricing alignment) | **Policy** — config field consumed by `selectQuality`'s filter step; no new behavior. Matching axis is configurable: height (default, simpler) or total pixels (e.g., for exact alignment with resolution-based pricing tiers — `1080p = 2,073,600 pixels` ensures anamorphic / non-standard-aspect variants are matched correctly) |
+| Viewport-driven height cap | Cap the candidate set to renditions that fit the player element's rendered dimensions. Avoids serving higher-resolution variants the viewer can't perceive | **Middle pattern** — `ResizeObserver` monitor writes cap state on player-element size changes; `selectQuality` reads. New behavior. Pairs with the cap-floor phase below — the floor counters this phase's tendency to over-aggressively downgrade on small players |
 | Max-bitrate cap | Config-driven `maxBitrate` excludes variants above the threshold. Useful for bandwidth-constrained delivery contexts (mobile, billing) | **Policy** — same shape as max-height cap |
 | Max-FPS cap | Config-driven `maxFps` excludes high-frame-rate variants. Less common motivation but mentioned in [video-abr.md](./video-abr.md)'s "What's not implemented" | **Policy** — same shape |
+| Cap floor (minimum effective cap) | Counter-pressure to other caps: when the combination of upper-bound caps (viewport, max-bitrate, etc.) would narrow the effective candidate set below a configured floor (e.g., 720p), the floor wins — the effective cap is `max(otherCaps, floor)`. Motivation: viewport-driven caps over-aggressively downgrade quality on small players; the floor prevents perceptual quality from dropping too far when the player is small | **Meta-policy** — not a cap of its own. New constraint slot (e.g., `videoMinMaxHeight`) read by `selectQuality`'s filter step alongside the other cap slots; combination takes the `max` over the other caps' effective bounds. Mux Player's [`MinCapLevelController.minMaxResolution = 720`](https://github.com/muxinc/elements/blob/main/packages/playback-core/src/min-cap-level-controller.ts) is the reference implementation |
 
-The four phases share a single mechanism: a constraint slot + filter
-step before `selectQuality` consumes the candidates. They differ in
-signal source (one-shot config vs reactive `ResizeObserver`) and
-constraint axis (height / bitrate / FPS). The umbrella feature is
-"caps as a class"; per-phase implementation is small (S / S-M per the
-Epics doc).
+The first four phases share a single mechanism: a constraint slot +
+filter step before `selectQuality` consumes the candidates. They
+differ in signal source (one-shot config vs reactive `ResizeObserver`)
+and constraint axis (height / bitrate / FPS). The cap-floor phase is
+meta-policy on top — it modifies how the combination of caps resolves,
+not a cap of its own. Per-phase implementation is small (S / S-M per
+the Epics doc).
 
 ## What's in scope vs out of scope
 
 **In scope:**
-- All four phases above for video renditions
+- All five phases above for video renditions
 - Constraint+filter pattern: per-cap state slots + filter step in
   `selectQuality` before bandwidth-based selection runs
 - Config surface under existing `quality?: {…}` engine config
@@ -124,6 +129,15 @@ Things this feature probably forces decisions on, not just additions:
   options: ignore the cap entirely, pick lowest available
   rendition above the cap, or surface an engine error.
   Configurable behavior or engine-level decision.
+- **Cap-combination semantics.** When multiple caps are active
+  (viewport + max-bitrate, or viewport + cap-floor), they combine
+  via *intersection* on the candidate set — each upper-bound cap
+  narrows independently. The cap-floor inverts: it computes the
+  most restrictive other-cap result and enforces a lower bound on
+  it (`max()`). Where this combination lives is part of the
+  filter-then-select shape question above: option (a) puts it in
+  the dispatcher (`switchVideoQuality`) before `selectQuality` is
+  invoked; option (b) bakes it into `selectQuality` itself.
 
 ## Open questions
 
@@ -147,6 +161,19 @@ Things this feature probably forces decisions on, not just additions:
   play"; caps narrow to "what the player chooses to deliver." Apply
   capability filter first, then policy caps (per current cluster
   framing). Confirm ordering when both land.
+- **Cap-floor scope: policy caps only, or all candidate-narrowing
+  signals?** The floor counters the viewport-driven cap (and
+  potentially max-bitrate / max-FPS caps), but should not override
+  capability-filter physics. If [capability-probing](./capability-probing.md)
+  removes unsupported renditions, the floor can't add them back.
+  Confirm the boundary: floor operates over the policy-cap-narrowed
+  set, not over the capability-filtered set.
+- **Cap-floor default value.** Mux Player hardcodes 720p as
+  `MinCapLevelController.minMaxResolution`. For SPF, should the
+  floor default to a value, or require explicit opt-in? Defaulting
+  risks unexpected high-bitrate delivery on tiny embeds; not
+  defaulting means most consumers won't get the perceptual benefit
+  unless they configure it.
 
 ## Related features
 
