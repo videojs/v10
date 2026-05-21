@@ -8,8 +8,8 @@ definition: coarse
 
 Defensive engine logic for HTTP retry/backoff, error-class-specific
 response handling, and pluggable customer policies. The cluster G
-foundation that consumer features ([multi-cdn-failover](#),
-[content-steering](#) — both candidate sister features) build on, and
+foundation that consumer features ([multi-cdn-failover](./multi-cdn-failover.md),
+[content-steering](#) — sister cluster G features) build on, and
 the home for borderline response-error handling that today's `hls.js`-
 parity behavior (treat 4xx as fatal, naive 5xx retry) doesn't cover.
 
@@ -72,8 +72,8 @@ distinction applies, per the [Naive vs Full framing](./clusters.md#naive-vs-full
 
 **Out of scope (separate cluster G features — both consume this
 feature's primitives):**
-- **`[multi-cdn-failover]`** *(candidate, this session)* — alternate-
-  URI rotation on retry-exhaustion. Consumes this feature's retry +
+- **[multi-cdn-failover](./multi-cdn-failover.md)** — alternate-URI
+  rotation on retry-exhaustion. Consumes this feature's retry +
   circuit-breaker state. Adds the URI-rotation policy on top.
 - **`[content-steering]`** *(candidate, this session)* — HLS content-
   steering protocol (server-side host-pool advertisement, client-side
@@ -191,7 +191,7 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Related features
 
-- **`[multi-cdn-failover]`** *(candidate, this session)* — consumer.
+- **[multi-cdn-failover](./multi-cdn-failover.md)** — consumer.
   Sits on top of this feature's retry/breaker primitives; adds
   alternate-URI rotation policy.
 - **`[content-steering]`** *(candidate, this session)* — consumer.
