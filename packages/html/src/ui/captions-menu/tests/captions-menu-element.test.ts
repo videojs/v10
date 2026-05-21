@@ -1,14 +1,16 @@
 import type { MediaTextTrackState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import { createStore } from '@videojs/store';
+import { createStore, type WritableState } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
+import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
+import { MenuViewElement } from '../../menu/menu-view-element';
 import { CaptionsMenuElement } from '../captions-menu-element';
 import { CaptionsMenuTriggerElement } from '../captions-menu-trigger-element';
 import { CaptionsOptionsElement } from '../captions-options-element';
@@ -135,6 +137,30 @@ function setup({
   return { menu, options, provider, store, trigger };
 }
 
+function setupSettingsSubmenu({ textTrackList }: { textTrackList?: MediaTextTrackState['textTrackList'] | undefined }) {
+  const store = createTextTrackStore({ textTrackList, subtitlesShowing: false });
+  const provider = document.createElement('test-captions-menu-player') as TestPlayerProviderElement;
+  const root = createElement(MenuElement);
+  const rootView = createElement(MenuViewElement);
+  const trigger = createElement(CaptionsMenuTriggerElement);
+  const menu = createElement(CaptionsMenuElement);
+  const options = createElement(CaptionsOptionsElement);
+
+  provider.setStore(store);
+  root.open = true;
+  trigger.id = 'captions-trigger';
+  trigger.commandfor = 'captions-menu';
+  menu.id = 'captions-menu';
+
+  menu.append(options);
+  rootView.append(trigger);
+  root.append(rootView, menu);
+  provider.append(root);
+  document.body.append(provider);
+
+  return { menu, options, provider, root, rootView, store, trigger };
+}
+
 async function waitForMenu(
   menu: CaptionsMenuElement,
   trigger?: CaptionsMenuTriggerElement,
@@ -173,6 +199,29 @@ describe('CaptionsMenuElement', () => {
     expect(menu.getAttribute('aria-label')).toBe('Captions CC');
     expect(menu.getAttribute('data-active')).toBe('');
     expect(menu.getAttribute('data-availability')).toBe('available');
+  });
+
+  it('syncs descendant section label parts', async () => {
+    const { menu, trigger } = setup();
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    menu.insertBefore(section, menu.firstChild);
+
+    await waitForMenu(menu, trigger);
+
+    expect(section.textContent).toBe('Captions');
+  });
+
+  it('respects menu-section-label on the menu element for section label parts', async () => {
+    const { menu, trigger } = setup();
+    menu.setAttribute('menu-section-label', 'Subtitles');
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    menu.insertBefore(section, menu.firstChild);
+
+    await waitForMenu(menu, trigger);
+
+    expect(section.textContent).toBe('Subtitles');
   });
 
   it('renders radio items from a template', async () => {
@@ -220,6 +269,39 @@ describe('CaptionsMenuElement', () => {
 
     expect(selectTextTrack).toHaveBeenCalledWith(null);
   });
+
+  it('hides a settings submenu trigger when no captions are available', async () => {
+    const { menu, options, trigger } = setupSettingsSubmenu({
+      textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
+    });
+
+    await waitForMenu(menu, trigger, options);
+
+    expect(trigger.hidden).toBe(true);
+    expect(trigger.hasAttribute('data-item')).toBe(false);
+    expect([...options.querySelectorAll(MenuRadioItemElement.tagName)]).toHaveLength(0);
+  });
+
+  it('updates settings submenu items when captions become available', async () => {
+    const { menu, options, store, trigger } = setupSettingsSubmenu({ textTrackList: [] });
+
+    await waitForMenu(menu, trigger, options);
+
+    expect(trigger.hidden).toBe(true);
+    expect([...options.querySelectorAll(MenuRadioItemElement.tagName)]).toHaveLength(0);
+
+    (store.$state as WritableState<MediaTextTrackState>).patch({
+      textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+    });
+
+    await waitForMenu(menu, trigger, options);
+
+    const items = [...options.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
+    expect(trigger.hidden).toBe(false);
+    expect(trigger.hasAttribute('data-item')).toBe(true);
+    expect(items.map((item) => item.textContent)).toEqual(['Off', 'English']);
+  });
 });
 
 describe('CaptionsMenuTriggerElement', () => {
@@ -232,6 +314,29 @@ describe('CaptionsMenuTriggerElement', () => {
     expect(trigger.getAttribute('aria-label')).toBe('Captions CC');
     expect(trigger.getAttribute('data-active')).toBe('');
     expect(trigger.getAttribute('data-availability')).toBe('available');
+  });
+
+  it('syncs section label part in the trigger', async () => {
+    const { trigger } = setup();
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    trigger.append(section);
+
+    await trigger.updateComplete;
+
+    expect(section.textContent).toBe('Captions');
+  });
+
+  it('respects menu-section-label on the trigger', async () => {
+    const { trigger } = setup();
+    trigger.setAttribute('menu-section-label', 'Subtitles');
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    trigger.append(section);
+
+    await trigger.updateComplete;
+
+    expect(section.textContent).toBe('Subtitles');
   });
 
   it('prevents activation when no captions are available', async () => {
@@ -250,5 +355,44 @@ describe('CaptionsMenuTriggerElement', () => {
     expect(trigger.getAttribute('data-availability')).toBe('unavailable');
     expect(trigger.hasAttribute('data-disabled')).toBe(true);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('does not open a submenu from a secondary pointer button', async () => {
+    const provider = document.createElement('test-captions-menu-player') as TestPlayerProviderElement;
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(CaptionsMenuTriggerElement);
+    const menu = createElement(CaptionsMenuElement);
+    const options = createElement(CaptionsOptionsElement);
+
+    provider.setStore(createTextTrackStore());
+    root.open = true;
+    trigger.id = 'captions-trigger';
+    trigger.commandfor = 'captions-menu';
+    menu.id = 'captions-menu';
+
+    menu.append(options);
+    rootView.append(trigger);
+    root.append(rootView, menu);
+    provider.append(root);
+    document.body.append(provider);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await menu.updateComplete;
+    await options.updateComplete;
+
+    const handled = trigger.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 2 })
+    );
+
+    await root.updateComplete;
+    await trigger.updateComplete;
+    await menu.updateComplete;
+
+    expect(handled).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(menu.hasAttribute('data-open')).toBe(false);
   });
 });

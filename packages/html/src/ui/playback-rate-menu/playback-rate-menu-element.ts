@@ -5,6 +5,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuElement } from '../menu/menu-element';
+import { syncSectionLabelParts } from '../menu/sync-section-label-parts';
 
 export class PlaybackRateMenuElement extends MenuElement {
   static override readonly tagName = 'media-playback-rate-menu';
@@ -12,6 +13,7 @@ export class PlaybackRateMenuElement extends MenuElement {
   static override properties = {
     ...MenuElement.properties,
     label: { type: String },
+    menuSectionLabel: { type: String, attribute: 'menu-section-label' },
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<
     | 'open'
@@ -22,10 +24,12 @@ export class PlaybackRateMenuElement extends MenuElement {
     | 'closeOnOutsideClick'
     | 'boundary'
     | 'label'
+    | 'menuSectionLabel'
     | 'disabled'
   >;
 
   label = '';
+  menuSectionLabel = PlaybackRateMenuCore.defaultProps.menuSectionLabel;
   disabled = false;
   override align: MenuElement['align'] = 'center';
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
@@ -54,6 +58,7 @@ export class PlaybackRateMenuElement extends MenuElement {
 
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
+    syncSectionLabelParts(this, this.#core.getMenuSectionLabel());
   }
 }
 

@@ -1,27 +1,34 @@
 import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
+import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
+import { SubmenuTriggerController } from '../menu/submenu-trigger-controller';
+import { updateMediaMenuSectionTrigger } from '../menu/update-media-menu-section-trigger';
 
 export class PlaybackRateMenuTriggerElement extends MediaElement {
   static readonly tagName = 'media-playback-rate-menu-trigger';
 
   static override properties = {
     label: { type: String },
+    menuSectionLabel: { type: String, attribute: 'menu-section-label' },
     disabled: { type: Boolean },
     commandfor: { type: String },
-  } satisfies PropertyDeclarationMap<'label' | 'disabled' | 'commandfor'>;
+  } satisfies PropertyDeclarationMap<'label' | 'menuSectionLabel' | 'disabled' | 'commandfor'>;
 
   label = '';
+  menuSectionLabel = PlaybackRateMenuCore.defaultProps.menuSectionLabel;
   disabled = false;
   commandfor: string | undefined = undefined;
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
 
   readonly #core = new PlaybackRateMenuCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
+  readonly #submenuTrigger = new SubmenuTriggerController(this, {
+    isDisabled: () => !this.#mediaState.value || this.#core.state.current.disabled,
+  });
 
   #disconnect: AbortController | null = null;
 
@@ -30,14 +37,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
-    applyElementProps(
-      this,
-      {
-        onClick: this.#handleClick,
-        onKeyDown: this.#handleKeyDown,
-      },
-      { signal: this.#disconnect.signal }
-    );
+    this.#submenuTrigger.connect(this.#disconnect.signal);
 
     if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {
       logMissingFeature(this.localName, this.#mediaState.displayName);
@@ -46,6 +46,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#submenuTrigger.cleanupRegistration();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
@@ -65,34 +66,24 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
     this.#core.setMedia(media);
     const state = this.#core.getState();
 
-    applyElementProps(this, {
-      role: 'button',
-      tabIndex: 0,
-      ...this.#core.getAttrs(state),
+    updateMediaMenuSectionTrigger({
+      host: this,
+      state,
+      submenuTrigger: this.#submenuTrigger,
+      getCoreAttrs: (s) => this.#core.getAttrs(s),
+      submenuRegistrationActive: (submenuAttrsPresent) => submenuAttrsPresent,
+      syncVisibleLabel: () => this.#syncLabel(this.#core.getRateLabel(state.rate)),
+      getMenuSectionLabel: () => this.#core.getMenuSectionLabel(),
     });
+
     applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
   }
 
-  #handleClick = (event: MouseEvent): void => {
-    if (this.#mediaState.value && !this.#core.state.current.disabled) return;
+  #syncLabel(label: string): void {
+    const labelPart = this.querySelector<HTMLElement>('[data-part~="label"]');
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  };
-
-  #handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.target !== event.currentTarget) return;
-
-    if (!this.#mediaState.value || this.#core.state.current.disabled) {
-      if (event.key !== 'Tab') event.preventDefault();
-      return;
-    }
-
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.click();
-    }
-  };
+    if (labelPart) labelPart.textContent = label;
+  }
 }
 
 export namespace PlaybackRateMenuTriggerElement {

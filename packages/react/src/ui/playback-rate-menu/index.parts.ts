@@ -6,6 +6,10 @@ export {
 } from './playback-rate-menu-content';
 export { PlaybackRateMenuRoot as Root, type PlaybackRateMenuRootProps as RootProps } from './playback-rate-menu-root';
 export {
+  PlaybackRateMenuSectionLabel as SectionLabel,
+  type PlaybackRateMenuSectionLabelProps as SectionLabelProps,
+} from './playback-rate-menu-section-label';
+export {
   PlaybackRateMenuTrigger as Trigger,
   type PlaybackRateMenuTriggerProps as TriggerProps,
 } from './playback-rate-menu-trigger';

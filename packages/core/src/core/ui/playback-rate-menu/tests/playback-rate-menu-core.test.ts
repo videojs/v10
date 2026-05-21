@@ -63,6 +63,33 @@ describe('PlaybackRateMenuCore', () => {
     });
   });
 
+  describe('getMenuSectionLabel', () => {
+    it('returns the default section label', () => {
+      expect(new PlaybackRateMenuCore().getMenuSectionLabel()).toBe('Speed');
+    });
+
+    it('returns a custom section label', () => {
+      expect(new PlaybackRateMenuCore({ menuSectionLabel: 'Playback speed' }).getMenuSectionLabel()).toBe(
+        'Playback speed'
+      );
+    });
+  });
+
+  describe('getRadioGroupLabel', () => {
+    it('returns the default radio group label', () => {
+      expect(new PlaybackRateMenuCore().getRadioGroupLabel()).toBe('Playback rate');
+    });
+
+    it('returns a custom radio group label', () => {
+      expect(new PlaybackRateMenuCore({ radioGroupLabel: 'Rate' }).getRadioGroupLabel()).toBe('Rate');
+    });
+
+    it('prefixes the default trigger label with the radio group label', () => {
+      const core = new PlaybackRateMenuCore({ radioGroupLabel: 'Rate' });
+      expect(core.getLabel(createState({ rate: 2 }))).toBe('Rate 2');
+    });
+  });
+
   describe('getRateLabel', () => {
     it('formats rate labels by default', () => {
       const core = new PlaybackRateMenuCore();

@@ -55,7 +55,7 @@ export class CaptionsOptionsElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getTrackValue(state.selectedTrackIndex);
-      this.label = this.label || 'Captions';
+      this.label = this.label || this.#core.getMenuSectionLabel();
       this.#syncContent(state);
     }
 

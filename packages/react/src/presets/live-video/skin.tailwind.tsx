@@ -135,10 +135,10 @@ function VolumePopover(): ReactNode {
 }
 
 function CaptionsMenuItems(): ReactNode {
-  const { options, setValue, value } = useCaptionsMenu();
+  const { options, setValue, value, menuSectionLabel } = useCaptionsMenu();
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Captions">
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label={menuSectionLabel}>
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
