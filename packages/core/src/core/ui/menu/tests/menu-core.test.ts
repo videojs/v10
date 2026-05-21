@@ -6,6 +6,7 @@ function createInput(overrides: Partial<MenuInput> = {}): MenuInput {
   return {
     active: false,
     status: 'idle',
+    transitioning: false,
     ...overrides,
   };
 }
@@ -192,7 +193,7 @@ describe('MenuCore', () => {
     it('exports Props, State, Input types via namespace', () => {
       // Compile-time check: ensure namespace types are accessible.
       const _props: MenuCore.Props = {};
-      const _input: MenuCore.Input = { active: false, status: 'idle' };
+      const _input: MenuCore.Input = { active: false, status: 'idle', transitioning: false };
       expect(_props).toBeDefined();
       expect(_input).toBeDefined();
     });
