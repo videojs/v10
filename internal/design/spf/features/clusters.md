@@ -48,9 +48,9 @@ The primary cut for unimplemented work.
 
 | Category | Definition | Examples |
 |---|---|---|
-| **Media-src feature** | Required to support a media-src permutation. Without it, the source either doesn't play or doesn't play correctly. "Correctness" means the engine handles the *presence* of the permutation type — playing one audio track of a multi-language source isn't supporting multi-language audio | `live-stream-support`, `[ll-hls-support]`, `[non-zero-pts-support]`, `multi-language-audio`, `[hevc-variant-selection]`, `[drm-support]` |
-| **Player feature** | Additive functionality not tied to making any source work. Player chooses to do it | `[1080p-resolution-cap]` (billing-driven), `[screen-size-resolution-cap]`, `[audio-only-composition]` (mode-override case) |
-| **Borderline** | Accounts for technically valid but suboptimally-formed-or-delivered content (*content compensation*) or for response errors that emerge from playback behavior (*response-error handling*). The source plays; the work makes it play better in specific quirky cases | `[pseudo-ended-detection]`, `[edit-list-compensation]`, `[viewer-rate-limiting-audit]`, `[buffer-stall-recovery]` |
+| **Media-src feature** | Required to support a media-src permutation. Without it, the source either doesn't play or doesn't play correctly. "Correctness" means the engine handles the *presence* of the permutation type — playing one audio track of a multi-language source isn't supporting multi-language audio | `live-stream-support`, `multi-language-audio` |
+| **Player feature** | Additive functionality not tied to making any source work. Player chooses to do it | *(no documented examples yet — shapes include billing- / viewport-driven selection caps and composition-mode features)* |
+| **Borderline** | Accounts for technically valid but suboptimally-formed-or-delivered content (*content compensation*) or for response errors that emerge from playback behavior (*response-error handling*). The source plays; the work makes it play better in specific quirky cases | *(no documented examples yet — shapes include content-compensation for suboptimal sources and response-error handling)* |
 
 ### Naive vs Full implementation depth
 
@@ -58,9 +58,10 @@ Within a single feature; both depths are valid implementations. Used to scope in
 
 | Example | Naive | Full |
 |---|---|---|
-| `[viewer-rate-limiting-audit]` | Generic 4xx retry/backoff (≈ what hls.js does today) | Response-aware: detect VRLT signature, adjust request pacing |
-| `[pseudo-ended-detection]` | Don't detect — source mostly plays, just stalls near end on Safari | Heuristic detection of pseudo-ended state; fire `ended` correctly |
-| `[playback-token-expiry]` | Treat 4xx as fatal (≈ hls.js) | Provider-aware refresh / recovery hooks |
+| Termination detection (in `live-stream-support`) | `#EXT-X-ENDLIST` recognition only | ENDLIST + unchanged-playlist miss-counter fallback |
+| Response error handling | Generic 4xx retry/backoff (≈ what hls.js does today) | Response-aware: detect specific signatures, adjust pacing |
+| Stalled-playback detection | Don't detect — accept the stall | Heuristic detection of pseudo-ended state; fire `ended` correctly |
+| Token expiry | Treat 4xx as fatal (≈ hls.js) | Provider-aware refresh / recovery hooks |
 
 A feature doc may describe phases that span depth: a partial implementation at one depth still counts as work toward the feature.
 
@@ -82,9 +83,6 @@ Especially applicable within the selection cluster but useful as a general lens.
 | Item | Tier 1: Spec-compliant | Tier 2: Custom behavior |
 |---|---|---|
 | `multi-language-audio` | Recognize tracks; honor `DEFAULT` / `AUTOSELECT` | Programmatic select + persistence API |
-| `[5.1-surround-selection]` | Select 5.1 if supported; fallback otherwise | Force-stereo override |
-| `[multi-cdn-failover]` | Parse spec-extension alternate URIs | Rotation policy, backoff strategy |
-| `[hevc-variant-selection]` | Select HEVC if supported; fallback | Force-AVC override |
 
 ### Composition vs Policy vs middle pattern
 
@@ -92,9 +90,9 @@ A feature's *implementation shape* falls along a spectrum:
 
 | Mechanism | Definition | Where it lives | Examples |
 |---|---|---|---|
-| **Policy** | Pure config / function variation consumed by an existing behavior. No new behaviors | Inside an existing behavior | `[1080p-resolution-cap]` (potentially — a `selectQuality` config) |
-| **Middle pattern** | A new state-producing behavior monitors an external signal and updates state; existing consumer behaviors update to respect that state. Heavier than pure policy but lighter than composition | New behavior + targeted edits to consumers | `[screen-size-resolution-cap]` (`ResizeObserver` monitor → cap state → switching behavior); `[multi-cdn-failover]` (CDN-tracking → selection state → switching/selection); `[pseudo-ended-detection]` (buffer-state monitor → ended signal → ended behavior); `[edit-list-compensation]` (`initPTS` detection → offset state → append behavior) |
-| **Composition** | A different composed engine. Alternative compositions add or subtract behaviors to handle different *modes*. Ideally accomplished by subtraction only — no new behaviors | At the Adapter level, on initial conditions | `[audio-only-composition]`, `[video-only-composition]` |
+| **Policy** | Pure config / function variation consumed by an existing behavior. No new behaviors | Inside an existing behavior | *(no documented examples yet — shape: a height cap consumed by a `selectQuality` config)* |
+| **Middle pattern** | A new state-producing behavior monitors an external signal and updates state; existing consumer behaviors update to respect that state. Heavier than pure policy but lighter than composition | New behavior + targeted edits to consumers | *(no documented examples yet — shapes: `ResizeObserver` → cap state → switching; CDN-tracking → selection state → failover; buffer-state monitor → ended signal; `initPTS` detection → offset state → append)* |
+| **Composition** | A different composed engine. Alternative compositions add or subtract behaviors to handle different *modes*. Ideally accomplished by subtraction only — no new behaviors | At the Adapter level, on initial conditions | *(no documented examples yet — composition variants for audio-only / video-only modes)* |
 
 Composition is bounded to **modes** — currently audio-only and video-only. Most "feels like composition" items actually fit the middle pattern.
 
