@@ -239,9 +239,13 @@ snapshot between operations rather than awaiting `send()` directly.
 - **multi-language-audio** *(coarse)* — Tier 2 audio-flush-on-switch
   will use the `remove` message primitive surfaced through this
   feature's actor.
-- **buffer-flushing** *(not yet documented, candidate)* — language-
-  switch flush orchestration on top of the primitives surfaced here.
-  Driven by `multi-language-audio` Tier 2 first.
+- **Audio SourceBuffer flush orchestration** — not a separately-
+  scoped feature. The primitives (`SourceBufferActor.remove` message
+  + `flushBuffer` helper) live in
+  [mse-mms-pipeline](./mse-mms-pipeline.md) and surface through this
+  feature's actor; orchestration on `selectedAudioTrackId` change is
+  part of [multi-language-audio](./multi-language-audio.md)'s Tier 2
+  mid-stream-switching phase.
 - **[ll-hls-support](./ll-hls-support.md)** *(candidate)* — extends the
   forward-buffer planner with partial-segment-head tracking past the
   last complete segment. Planner extension shape is an open question

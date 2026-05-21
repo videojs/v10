@@ -30,6 +30,15 @@ For the user-observable engine behaviors built on this layer, see the
 relevant feature docs (`source-replacement`, `audio-playback`,
 `subtitles`, `video-abr`, `mse-mms-pipeline`, `buffer-management`).
 
+**Subsumed candidates:** This doc covers the architectural concerns
+that the candidates `hls-multivariant-parsing`, `media-playlist-
+resolution`, and `hls-vod-presentation-modeling` previously named —
+each tracked the HLS-specific parsing + lifecycle work this doc
+captures format-neutrally. They are not separately-scoped features;
+implementation work on those areas extends the parser-interface
+section here. The candidate list (`project_spf_feature_candidates.md`
+in agent memory) annotates them as tabled / subsumed.
+
 ---
 
 ## Architecture Overview
