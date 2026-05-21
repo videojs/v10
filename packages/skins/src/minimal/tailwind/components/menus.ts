@@ -37,6 +37,14 @@ const menuSurface = cn(
   'ring-1 ring-(color:--media-popover-border-color) shadow-md shadow-black/10'
 );
 
+const groupHighlight = cn(
+  'relative flex flex-col gap-0.5',
+  'before:hidden supports-[top:anchor(top)]:before:block',
+  'before:absolute before:pointer-events-none before:rounded-lg before:bg-current/10',
+  'before:transition-[inset] before:duration-100 before:ease-in-out',
+  'before:[position-anchor:--media-menu-item-highlight-anchor] before:[inset:anchor(inside)]'
+);
+
 const menuHostShell = cn(
   popoverShell,
   popoverSideOffsetSize,
@@ -63,14 +71,17 @@ export const menu = {
     'overflow-hidden data-transitioning:overflow-hidden',
     '[&[data-transitioning]_[data-menu-view]]:overflow-hidden'
   ),
-  group: 'flex flex-col gap-0.5',
+  group: groupHighlight,
   item: cn(
     itemBase,
     'group/menu-item justify-between gap-2 px-2.5 tabular-nums text-inherit',
     'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
-  indicator: '-mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
+  indicator: cn(
+    '-mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
+    '[&_.media-icon]:drop-shadow-[0_1px_0_var(--media-current-shadow-color)]'
+  ),
   panel,
   back: cn(
     itemBase,
