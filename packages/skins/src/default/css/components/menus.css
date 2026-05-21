@@ -99,6 +99,25 @@
     gap: 0.125rem;
   }
 
+  & .media-menu__group--standalone {
+    position: relative;
+
+    &::before {
+      position: absolute;
+      position-anchor: --media-menu-item-highlight-anchor;
+      inset: anchor(inside);
+      pointer-events: none;
+      content: "";
+      background-color: oklch(from currentColor l c h / 0.1);
+      border-radius: calc(infinity * 1px);
+      transition: inset ease-in-out 100ms;
+
+      @supports not (top: anchor(top)) {
+        display: none;
+      }
+    }
+  }
+
   & .media-menu__item,
   & .media-menu__back {
     display: flex;
