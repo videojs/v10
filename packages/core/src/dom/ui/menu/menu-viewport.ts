@@ -467,6 +467,7 @@ export function createMenuViewport(
     },
 
     destroy() {
+      state.viewportTransitionId += 1;
       state.childUnsubscribe?.();
       state.childUnsubscribe = null;
       state.rootAttrsUnsubscribe?.();

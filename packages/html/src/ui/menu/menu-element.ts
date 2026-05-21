@@ -297,8 +297,9 @@ export class MenuElement extends MediaElement {
       tabIndex: -1,
       'data-submenu': '',
     });
-    this.#submenuViewCleanup?.();
-    this.#submenuViewCleanup = parentCtx.menu.registerSubmenuView(this, this.#menuViewTransition);
+    if (!this.#submenuViewCleanup) {
+      this.#submenuViewCleanup = parentCtx.menu.registerSubmenuView(this, this.#menuViewTransition);
+    }
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
