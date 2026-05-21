@@ -4,7 +4,7 @@ import '@app/styles.css';
 
 import { CheckIcon, ChevronIcon } from '@videojs/icons/react/minimal';
 import { Menu } from '@videojs/react';
-import { button, icon, menu, popup } from '@videojs/skins/minimal/tailwind/video.tailwind';
+import { button, icon, menu } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ReactNode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -31,9 +31,9 @@ const demoEyebrowClass = 'text-xs font-medium text-zinc-500 uppercase tracking-w
 
 const demoMetaClass = 'text-[0.8125rem] text-zinc-500';
 
-const menuContentClass = cn(popup.popover, menu.root, 'min-w-40 text-zinc-950');
+const menuContentClass = cn(menu.root, 'min-w-40 text-zinc-950');
 
-const menuNavPopupClass = cn(popup.popover, menu.root, menu.settings, 'text-zinc-950');
+const menuNavPopupClass = cn(menu.settings, 'text-zinc-950');
 
 const menuLabelClass = 'block px-2.5 pb-1 pt-1.5 text-xs font-medium text-zinc-500 select-none';
 
