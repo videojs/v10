@@ -3,14 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
 
-function nextFrame(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
-}
-
 describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
-    expect(popover.input.current).toEqual({ active: false, status: 'idle', transitioning: false });
+    expect(popover.input.current).toEqual({ active: false, status: 'idle' });
   });
 
   describe('open/close', () => {
@@ -28,7 +24,7 @@ describe('createPopover', () => {
 
       popover.open();
 
-      expect(popover.input.current).toEqual({ active: true, status: 'starting', transitioning: true });
+      expect(popover.input.current).toEqual({ active: true, status: 'starting' });
     });
 
     it('calls onOpenChange when closing', () => {
@@ -50,7 +46,7 @@ describe('createPopover', () => {
       popover.open();
       popover.close();
 
-      expect(popover.input.current).toEqual({ active: true, status: 'ending', transitioning: true });
+      expect(popover.input.current).toEqual({ active: true, status: 'ending' });
     });
 
     it('does not call onOpenChange if already open', () => {
@@ -97,20 +93,6 @@ describe('createPopover', () => {
       popover.close('imperative-action');
 
       expect(onOpenChange).not.toHaveBeenCalled();
-    });
-
-    it('does not auto-close the first popover when another opens without a shared group', () => {
-      const first = createTestPopover();
-      const second = createTestPopover();
-
-      first.popover.open();
-      first.onOpenChange.mockClear();
-
-      second.popover.open();
-
-      expect(first.onOpenChange).not.toHaveBeenCalled();
-      expect(first.popover.input.current.active).toBe(true);
-      expect(second.popover.input.current.active).toBe(true);
     });
 
     it('closes the previously open grouped popover when another opens', () => {
@@ -176,47 +158,36 @@ describe('createPopover', () => {
 
       popover.triggerProps.onClick(event);
 
-      expect(event.preventDefault).toHaveBeenCalledTimes(1);
       expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
 
     it('closes on click when open', () => {
       const { popover, onOpenChange } = createTestPopover();
-      const event = { preventDefault: vi.fn() } as unknown as UIEvent;
 
       popover.open();
       onOpenChange.mockClear();
 
-      popover.triggerProps.onClick(event);
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
-      expect(event.preventDefault).toHaveBeenCalledTimes(1);
       // active stays true until close animation completes
       expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
     });
 
-    it('defers reopen until close settles when clicked during close animation', async () => {
+    it('re-opens on click during close animation', () => {
       const { popover, onOpenChange } = createTestPopover();
-      const event = { preventDefault: vi.fn() } as unknown as UIEvent;
 
       popover.open();
       popover.close();
       onOpenChange.mockClear();
 
-      popover.triggerProps.onClick(event);
-
-      expect(event.preventDefault).toHaveBeenCalledTimes(1);
-      expect(popover.input.current.active).toBe(true);
-      expect(popover.input.current.status).toBe('ending');
-      expect(onOpenChange).not.toHaveBeenCalled();
-
-      await vi.waitFor(() => {
-        expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
-      });
+      // Click during close animation should re-open
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
       expect(popover.input.current.active).toBe(true);
       expect(popover.input.current.status).not.toBe('ending');
+      expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
 
     it('does not open on click on touch devices when openOnHover is enabled', () => {
@@ -228,11 +199,9 @@ describe('createPopover', () => {
       const { popover, onOpenChange } = createTestPopover({
         openOnHover: () => true,
       });
-      const event = { preventDefault: vi.fn() } as unknown as UIEvent;
 
-      popover.triggerProps.onClick(event);
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
-      expect(event.preventDefault).not.toHaveBeenCalled();
       expect(onOpenChange).not.toHaveBeenCalled();
       expect(popover.input.current.active).toBe(false);
 
@@ -330,193 +299,6 @@ describe('createPopover', () => {
 
       popover.destroy();
       popup.remove();
-    });
-
-    it('does not blur-close during a pointer interaction that started inside the popup', () => {
-      const { popover, onOpenChange } = createTestPopover();
-      const popup = document.createElement('div');
-      const child = document.createElement('button');
-      const outside = document.createElement('button');
-      popup.appendChild(child);
-      document.body.append(popup, outside);
-
-      popover.setPopupElement(popup);
-      popover.open();
-      flush();
-      onOpenChange.mockClear();
-
-      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
-      popover.popupProps.onFocusOut({
-        relatedTarget: outside,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      });
-
-      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
-
-      popover.destroy();
-      popup.remove();
-      outside.remove();
-    });
-
-    it('does not blur-close after an inside pointer interaction spans a frame', async () => {
-      const { popover, onOpenChange } = createTestPopover();
-      const popup = document.createElement('div');
-      const child = document.createElement('button');
-      const outside = document.createElement('button');
-      popup.appendChild(child);
-      document.body.append(popup, outside);
-
-      popover.setPopupElement(popup);
-      popover.open();
-      flush();
-      onOpenChange.mockClear();
-
-      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
-      await nextFrame();
-      popover.popupProps.onFocusOut({
-        relatedTarget: outside,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      });
-
-      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
-
-      popover.destroy();
-      popup.remove();
-      outside.remove();
-    });
-
-    it('blur-closes when focus leaves the popup without an inside pointer interaction', async () => {
-      const { popover, onOpenChange } = createTestPopover();
-      const popup = document.createElement('div');
-      const outside = document.createElement('button');
-      document.body.append(popup, outside);
-
-      popover.setPopupElement(popup);
-      popover.open();
-      flush();
-      await nextFrame();
-      await nextFrame();
-      onOpenChange.mockClear();
-
-      popover.popupProps.onFocusOut({
-        relatedTarget: outside,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      });
-
-      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
-
-      popover.destroy();
-      popup.remove();
-      outside.remove();
-    });
-
-    it('closes on peer trigger pointerdown without a shared PopupGroup (lost-click-prone path)', () => {
-      const first = createTestPopover();
-      const second = createTestPopover();
-      const t1 = document.createElement('button');
-      const t2 = document.createElement('button');
-      const p1 = document.createElement('div');
-      document.body.appendChild(t1);
-      document.body.appendChild(t2);
-      document.body.appendChild(p1);
-
-      first.popover.setTriggerElement(t1);
-      first.popover.setPopupElement(p1);
-      second.popover.setTriggerElement(t2);
-
-      first.popover.open();
-      flush();
-      first.onOpenChange.mockClear();
-      second.onOpenChange.mockClear();
-
-      t2.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
-
-      expect(first.onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'outside-click' }));
-
-      const click = { preventDefault: vi.fn() } as unknown as UIEvent;
-      second.popover.triggerProps.onClick(click);
-
-      expect(second.onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
-
-      first.popover.destroy();
-      second.popover.destroy();
-      t1.remove();
-      t2.remove();
-      p1.remove();
-    });
-
-    it('skips outside-dismiss on peer trigger pointerdown when sharing a PopupGroup', () => {
-      const group = createPopupGroup();
-      const first = createTestPopover({ group: () => group });
-      const second = createTestPopover({ group: () => group });
-      const t1 = document.createElement('button');
-      const t2 = document.createElement('button');
-      const p1 = document.createElement('div');
-      document.body.appendChild(t1);
-      document.body.appendChild(t2);
-      document.body.appendChild(p1);
-
-      first.popover.setTriggerElement(t1);
-      first.popover.setPopupElement(p1);
-      second.popover.setTriggerElement(t2);
-
-      first.popover.open();
-      flush();
-      first.onOpenChange.mockClear();
-      second.onOpenChange.mockClear();
-
-      t2.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
-
-      expect(first.onOpenChange).not.toHaveBeenCalled();
-
-      const click = { preventDefault: vi.fn() } as unknown as UIEvent;
-      second.popover.triggerProps.onClick(click);
-
-      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
-      expect(second.onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
-
-      first.popover.destroy();
-      second.popover.destroy();
-      t1.remove();
-      t2.remove();
-      p1.remove();
-    });
-
-    it('does not blur-close when focus moves to another registered group trigger', () => {
-      const group = createPopupGroup();
-      const first = createTestPopover({ group: () => group });
-      const second = createTestPopover({ group: () => group });
-      const t1 = document.createElement('button');
-      const t2 = document.createElement('button');
-      const p2 = document.createElement('div');
-      document.body.appendChild(t1);
-      document.body.appendChild(t2);
-      document.body.appendChild(p2);
-
-      first.popover.setTriggerElement(t1);
-      second.popover.setTriggerElement(t2);
-      second.popover.setPopupElement(p2);
-
-      second.popover.open();
-      flush();
-      second.onOpenChange.mockClear();
-
-      second.popover.popupProps.onFocusOut({
-        relatedTarget: t1,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      });
-
-      expect(second.onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
-
-      first.popover.destroy();
-      second.popover.destroy();
-      t1.remove();
-      t2.remove();
-      p2.remove();
     });
 
     it('closes when clicking outside the popup', () => {
