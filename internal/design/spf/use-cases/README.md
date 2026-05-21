@@ -139,7 +139,7 @@ A use case may have:
 Initially empty; populated as docs land. Candidates flagged in source material (bracketed per registry convention):
 
 - [`audio-only-mode-override`](./audio-only-mode-override.md) *(coarse)* — audio-only delivery from mixed-manifest sources. Case-2 sibling of [`audio-only-composition`](../features/audio-only-composition.md). *Notion epic #4b.*
-- `[video-only-mode-override]` — video-only delivery from mixed-manifest sources. Case-2 sibling of [`video-only-composition`](../features/video-only-composition.md). *Notion epic NEW-B.*
+- [`video-only-mode-override`](./video-only-mode-override.md) *(coarse)* — video-only delivery from mixed-manifest sources. Case-2 sibling of [`video-only-composition`](../features/video-only-composition.md). Inverse-axis sibling of [`audio-only-mode-override`](./audio-only-mode-override.md). *Notion epic NEW-B.*
 - `[background-looping-video]` — Mux's background-video product scenario: loop + autoplay-muted + GPU/thermal-aware caps + likely silent-video delivery. **Distinct from `video-only-mode-override`** despite shared Mux consumer context; both may share constituent features (likely `video-only-composition`, `buffer-management` loop-around fetching when documented) but address different delivery scenarios. *[GitHub #873](https://github.com/videojs/v10/issues/873); [`mux-background-video`](https://github.com/muxinc/mux-background-video) prior art.*
 - Further candidates surfaced in source material but not yet scoped: picture-in-picture, short-form / shorts-player, audio-podcast mode, cast/remote-display compositions, ambient/decorative video.
 

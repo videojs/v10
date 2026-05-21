@@ -239,7 +239,7 @@ coexist.
 
 ## Related use cases
 
-- **`[video-only-mode-override]`** *(forward-ref; not yet documented)* —
+- **[`video-only-mode-override`](./video-only-mode-override.md)** *(coarse)* —
   inverse-axis sibling. Same shape, video-side instead of audio-side: subtract
   audio behaviors from mixed source to deliver video-only. Distinct from
   `[background-looping-video]` despite shared `video-only-composition`
