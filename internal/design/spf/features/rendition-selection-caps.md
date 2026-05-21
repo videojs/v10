@@ -191,6 +191,10 @@ Things this feature probably forces decisions on, not just additions:
   cluster E (selection policy) and capability filtering in cluster
   D (capability probing primitive); the line matters for
   composition order.
+- **[hevc-variant-selection](./hevc-variant-selection.md)** — sibling
+  constraint+filter feature on the codec axis. Same filter-then-select
+  shape; the open question about per-cap slots vs unified slot is
+  shared.
 - **`[audio-only-composition]` / `[video-only-composition]`**
   *(candidates)* — composition variants for mode-only delivery.
   Different mechanism than caps.

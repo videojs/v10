@@ -99,7 +99,8 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 - **audio-abr** *(coarse, not yet documented, candidate)* — sampling exists; needs `createTrackedFetch` wired into `setupAudioBufferActors` plus an `switchAudioQuality` behavior parallel to `switchVideoQuality`.
 - **[rendition-selection-caps](./rendition-selection-caps.md)** — billing-driven (1080p+), viewport-driven (screen-size), max-bitrate, and max-FPS caps. All filter the candidate set before `selectQuality` runs; `userVideoTrackSelection` is the constraint+filter precedent that feature builds on.
 - **multi-signal-abr** *(coarse, not yet documented, candidate)* — CPU/thermal throttling, network type, battery state as additional ABR inputs.
-- **capability-probing** *(candidate)* — narrows the candidate set ABR operates over. `selectQuality` doesn't change shape; just sees a filtered candidate set with browser-unsupported renditions already excluded.
+- **[capability-probing](./capability-probing.md)** — narrows the candidate set ABR operates over. `selectQuality` doesn't change shape; just sees a filtered candidate set with browser-unsupported renditions already excluded.
+- **[hevc-variant-selection](./hevc-variant-selection.md)** — codec-aware variant filtering (HEVC if supported, AVC fallback). Same constraint+filter pattern as `userVideoTrackSelection`; narrows the candidate set ABR operates over by codec axis. Tier 2 mid-stream `changeType()` phase introduces cross-codec ABR (no algorithm change, just buffer-side switching).
 
 ## See also
 
