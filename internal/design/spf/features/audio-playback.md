@@ -222,9 +222,10 @@ Consumers wanting language-aware selection today must override
 ## Use cases that compose this feature
 
 - **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
-  *(coarse)* — Phase 1 baseline constituent. The audio-only
-  delivery variant composes this feature's rendition selection,
-  media playlist resolution, and segment loading as-is.
+  *(partial — Phase 1 landed)* — Phase 1 baseline constituent. The
+  audio-only delivery variant composes this feature's rendition
+  selection, media playlist resolution, and segment loading as-is via
+  `createAudioOnlyHlsEngine`.
 
 ## See also
 

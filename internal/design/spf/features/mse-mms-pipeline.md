@@ -229,10 +229,12 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
 ## Use cases that compose this feature
 
 - **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
-  *(coarse)* — Phase 1 baseline constituent. Used as-is —
-  `MediaSource` + `endOfStream` gate compose unchanged across
+  *(partial — Phase 1 landed)* — Phase 1 baseline constituent. Used
+  as-is — `MediaSource` + `endOfStream` gate compose unchanged across
   variants per the uniform-across-tracks discipline (`endOfStream`
-  reads `mediaSource.sourceBuffers` aggregately).
+  reads `mediaSource.sourceBuffers` aggregately). Verified end-to-end
+  in `engine-audio-only.test.ts` against both audio-only and mixed-AV
+  manifests.
 - **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)**
   *(coarse)* — Phase 1 baseline constituent. Used as-is; the
   Firefox `mozHasAudio` cross-type invariant documented here is

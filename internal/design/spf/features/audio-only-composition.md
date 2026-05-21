@@ -24,12 +24,23 @@ work goes here.)
 
 ## Status
 
-- **Composition:** partially supported. The HLS engine
-  (`createSimpleHlsEngine`) tolerates audio-only sources today; the
-  test suite includes `engine.test.ts` → "handles audio-only stream
-  (no video tracks)" exercising basic playback. Tolerance derives
-  from `setupVideoBufferActors` and `loadVideoSegments` no-op-ing
-  when `presentation.videoTracks` is empty (rather than asserting).
+- **Composition:** partially supported. Two paths exist today:
+  - `createSimpleHlsEngine` *tolerates* audio-only sources (the long-standing
+    behavior). Tolerance derives from `setupVideoBufferActors` and
+    `loadVideoSegments` no-op-ing when `presentation.videoTracks` is empty.
+    Exercised by `engine.test.ts` → "handles audio-only stream (no video
+    tracks)".
+  - `createAudioOnlyHlsEngine` *explicitly* composes the audio-only variant
+    (shipped via the [`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)
+    Phase 1 pass; shared factory between the Case-1 source-shape variant
+    and the Case-2 adapter-upfront variant). Lives at
+    `packages/spf/src/playback/engines/hls/engine-audio-only.ts`.
+
+  What's still future for this feature: detect-from-parser routing in the
+  default `SimpleHlsMediaElement` so audio-only sources transparently use
+  the explicit variant. Until then, audio-only-source consumers either rely
+  on the default-engine tolerance or instantiate the use case's
+  `SimpleAudioOnlyHlsMediaElement` adapter.
 - **Definition depth:** coarse — scope sketched at the engine-
   variant level. Implementation specifics (engine-variant composition
   shape, audio-only-optimized buffer targets, etc.) tracked as open
@@ -167,13 +178,16 @@ Things this feature probably forces decisions on, not just additions:
 ## Use cases that compose this feature
 
 - **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
-  *(coarse)* — Case-2 sibling use case that composes this
-  feature's engine-variant shape to deliver audio-only from
-  mixed-manifest sources. Source-shape correctness (this
-  feature) vs delivery-mode choice (the use case). The two
-  likely share an engine factory; differ in variant-decision
-  source (source-shape detection here, adapter-upfront for the
-  use case).
+  *(partial — Phase 1 landed)* — Case-2 sibling use case that composes
+  this feature's engine-variant shape to deliver audio-only from
+  mixed-manifest sources. Source-shape correctness (this feature)
+  vs delivery-mode choice (the use case). **Shared factory:**
+  `createAudioOnlyHlsEngine` lives at
+  `packages/spf/src/playback/engines/hls/engine-audio-only.ts` and
+  serves both variants — Phase 1 of the use case ships the
+  adapter-upfront entry point (`SimpleAudioOnlyHlsMediaElement`);
+  Case-1 detect-from-parser routing remains future work on this
+  feature.
 
 ## See also
 

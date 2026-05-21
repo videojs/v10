@@ -199,11 +199,12 @@ each `set src`).
 ## Use cases that compose this feature
 
 - **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
-  *(coarse)* — Phase 1 baseline constituent with an alternative
-  adapter shape. The variant ships an independent
-  `SimpleAudioOnlyHlsMediaElement`-style adapter parallel to
-  `SimpleHlsMediaElement`; the `shareSignals` mechanism + mixin
-  pattern compose unchanged. The consumer-facing API differs.
+  *(partial — Phase 1 landed)* — Phase 1 baseline constituent with an
+  alternative adapter shape. The variant ships an independent
+  `SimpleAudioOnlyHlsMediaElement` adapter (via
+  `SimpleAudioOnlyHlsMediaMixin`) parallel to `SimpleHlsMediaElement`;
+  the `shareSignals` mechanism + mixin pattern compose unchanged. The
+  consumer-facing API matches the WHATWG `HTMLMediaElement` surface.
 - **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)**
   *(coarse)* — Phase 1 baseline constituent on the inverse axis.
   Ships an independent `SimpleVideoOnlyHlsMediaElement`-style
