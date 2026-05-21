@@ -61,9 +61,9 @@ Capability slices around today's audio playback contract.
   fetch path. The sampling primitive exists (used by video); audio
   needs a parallel `switchAudioQuality` behavior to consume it.
 - **Channels-aware selection (5.1 / surround)** — covered by
-  `[5.1-surround-selection]` candidate. Audio tracks carry a
-  `channels` field surfaced by the parser, but it's not used for
-  selection or capability filtering.
+  [5.1-surround-selection](./5.1-surround-selection.md). Audio tracks
+  carry a `channels` field surfaced by the parser, but it's not yet
+  used for selection or capability filtering.
 - **Audio-only composition optimizations** — the engine tolerates
   audio-only sources today (basic coverage via `engine.test.ts`
   "handles audio-only stream"), but there's no engine variant
@@ -182,7 +182,7 @@ Consumers wanting language-aware selection today must override
   more pressing as the `[audio-only-composition]` candidate matures.
 - **Channels exposure vs use.** The parser surfaces `channels` on
   audio tracks but no selection logic consumes it. Stays inert until
-  `[5.1-surround-selection]` wires it.
+  [5.1-surround-selection](./5.1-surround-selection.md) wires it.
 
 ## Related features
 
@@ -206,8 +206,10 @@ Consumers wanting language-aware selection today must override
   gates video and text.
 - **audio-abr** *(not yet documented, candidate)* — bandwidth
   sampling + quality switching for audio.
-- **5.1-surround-selection** *(not yet documented, candidate)* —
-  channels-aware codec-change selection.
+- **[5.1-surround-selection](./5.1-surround-selection.md)** —
+  channels-aware codec-change selection. Consumer of capability-
+  probing on the audio channel-count axis. Wires the `channels` field
+  surfaced by the parser into selection logic.
 - **audio-only-composition** *(not yet documented, candidate)* —
   engine variant optimized for audio-only sources.
 - **capability-probing** *(candidate)* — narrows the audio candidate

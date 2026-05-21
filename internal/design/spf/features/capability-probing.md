@@ -20,7 +20,7 @@ without it, sources with browser-incompatible variants fail late at
 a compatible variant). Cluster D foundation; the
 [clusters.md § Capability probing](./clusters.md#capability-probing)
 section flags this as "deserves a dedicated home" with high reuse —
-consumers include HEVC variant selection, 5.1 surround selection,
+consumers include [HEVC variant selection](./hevc-variant-selection.md), [5.1 surround selection](./5.1-surround-selection.md),
 DRM, and the unsupported-case error mapping.
 
 ## Status
@@ -72,7 +72,10 @@ layer onto specific phases per the
 - **[hevc-variant-selection](./hevc-variant-selection.md)** —
   *consumer*. Uses Tier 1 (select HEVC if supported, fallback to AVC)
   + cross-codec transition probing (mid-stream switching).
-- **`[5.1-surround-selection]`** — *consumer*. Same shape as HEVC.
+- **[5.1-surround-selection](./5.1-surround-selection.md)** —
+  *consumer*. Same shape as HEVC, on the audio channel-count axis.
+  Adds a 5.1-specific runtime-detection phase (downstream-environment-
+  aware channel preference) with no HEVC analog.
 - **`[drm-support]`** (GitHub issue #1411) — EME setup, license
   handling. This feature owns the "what key systems are available?"
   probe; DRM-support uses that answer to set up keys.
@@ -141,7 +144,8 @@ layer onto specific phases per the
   switch consumes `changeType()` probing.
 - **[hevc-variant-selection](./hevc-variant-selection.md)** —
   consumer; selection + cross-codec switching.
-- **`[5.1-surround-selection]`** *(candidate)* — consumer.
+- **[5.1-surround-selection](./5.1-surround-selection.md)** —
+  consumer.
 - **`[drm-support]`** *(candidate, GitHub issue #1411)* — owns EME +
   license; consumes key-system probing.
 - **`[unsupported-case-error-mapping]`** *(candidate)* — sister;

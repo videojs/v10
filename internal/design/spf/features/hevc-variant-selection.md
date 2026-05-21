@@ -170,11 +170,15 @@ Things this feature probably forces decisions on, not just additions:
   + the `changeType()` probe (Tier 2 mid-stream). This feature is
   scoped explicitly as a consumer in capability-probing.md's Out of
   scope and Related features sections.
-- **`[5.1-surround-selection]`** *(candidate)* — parallel sibling
-  with the same structural shape on the audio codec/channel axis.
-  Whether the codec-preference slot pattern generalizes (e.g.,
-  `audioCodecPreference` paired with `videoCodecPreference`) is
-  worth harmonizing when 5.1-surround-selection lands.
+- **[5.1-surround-selection](./5.1-surround-selection.md)** —
+  parallel sibling on the audio channel-count axis. Same structural
+  shape (capability filter + customer override + mid-stream
+  `changeType()`); adds a 5.1-specific runtime-detection phase
+  (downstream-environment-aware channel preference) with no HEVC
+  analog. The codec-preference slot pattern's generalization
+  (`audioChannelPreference` / `videoCodecPreference`) is worth
+  harmonizing as the audio-side `changeType()` call site shape
+  develops.
 - **[video-abr](./video-abr.md)** — selection consumer. `selectQuality`
   operates over the filtered candidate set transparently — no change
   to the ABR algorithm itself, just narrower input. The Tier 2 mid-
