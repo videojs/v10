@@ -230,13 +230,13 @@ Asking the browser what it can play before committing to a codec, container, or 
 
 ### Selection resilience
 
-Fallback and recovery when the selected URI / rendition fails. Where multi-CDN, content steering, and retry/backoff policy live.
+Fallback and recovery when network requests or the selected URI / rendition fail. Spans two axes: **response-error handling** (retry/backoff/circuit-breaker, VRLT-aware throttling response, playback-token-expiry refresh — the Borderline-flavored work for content with poor/unstable network behavior) and **selection-side resilience** (alternate-URI rotation, content-steering protocol — selecting a different URI when the current one fails).
 
-**Signals.** Alternate URIs; HLS spec-extension URIs; CDN rotation; retry / backoff; content steering protocol; `?redundant_streams=true`-style query params.
+**Signals.** Alternate URIs; HLS spec-extension URIs; CDN rotation; retry / backoff; content steering protocol; `?redundant_streams=true`-style query params; VRLT (Viewer Rate Limiting Token) response handling; playback-token-expiry; circuit-breaker per host.
 
-**Docs.** None yet.
+**Docs.** `network-resilience` (foundation — retry/backoff, error classification, VRLT, token-expiry, customer hooks).
 
-**Foundational primitives.** An alternate-URI rotation primitive; a backoff policy primitive. Neither exists yet.
+**Foundational primitives.** A retry/backoff policy + circuit-breaker primitive (lives in `network-resilience`). An alternate-URI rotation primitive (consumed by `[multi-cdn-failover]` / `[content-steering]` candidates) — both consumers build on `network-resilience`'s retry/breaker state.
 
 **Maps to Notion cluster G** ("Selection resilience").
 
