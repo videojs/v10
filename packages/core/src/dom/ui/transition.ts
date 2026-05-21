@@ -41,7 +41,7 @@ export function scheduleTransitionSettle(
 
   function pollVisualComplete(): void {
     pollRaf = 0;
-    if (!isCurrent()) return;
+    if (settled || !isCurrent()) return;
 
     if (options.isVisuallyComplete?.(element)) {
       settle();
