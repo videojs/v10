@@ -493,9 +493,14 @@ file format-specific architectural docs as siblings to this one
 ## Open questions
 
 - **`parseMediaPlaylist` pluggability — when does this become urgent?**
-  Today's direct import is a clear coupling. The first format-extension
-  PR will surface the cost; the call goes to whoever lands the second
-  format. Worth keeping the option open in design discussions.
+  Today's direct import is a clear coupling. Two distinct forcing
+  functions: (a) the first format-extension PR will surface the cost
+  for non-HLS formats, and (b) HLS-only extensions like
+  [features/ll-hls-support.md](./features/ll-hls-support.md) grow the
+  parsed-track output schema (server-control flags, parts, preload
+  hints, skip metadata) — even staying HLS-only, the parser-output
+  shape doesn't stay frozen. Worth keeping the option open in design
+  discussions.
 - **The `PartiallyResolved<T>` pattern — fully format-neutral?** The
   shape is defined generically (`Omit<T, 'segments' | 'initialization'
   | keyof TimeSpan>`), but the *semantic* (multivariant playlist
