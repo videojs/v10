@@ -69,9 +69,9 @@ layer onto specific phases per the
   `[unsupported-case-error-mapping]`)
 
 **Out of scope (separate Media-src candidate features):**
-- **`[hevc-variant-selection]`** — *consumer*. Uses Tier 1 (select
-  HEVC if supported, fallback to AVC) + cross-codec transition
-  probing (mid-stream switching).
+- **[hevc-variant-selection](./hevc-variant-selection.md)** —
+  *consumer*. Uses Tier 1 (select HEVC if supported, fallback to AVC)
+  + cross-codec transition probing (mid-stream switching).
 - **`[5.1-surround-selection]`** — *consumer*. Same shape as HEVC.
 - **`[drm-support]`** (GitHub issue #1411) — EME setup, license
   handling. This feature owns the "what key systems are available?"
@@ -139,8 +139,8 @@ layer onto specific phases per the
   filtered candidates.
 - **multi-language-audio** *(coarse)* — Tier 2 mid-stream codec
   switch consumes `changeType()` probing.
-- **`[hevc-variant-selection]`** *(candidate)* — consumer; selection
-  + cross-codec switching.
+- **[hevc-variant-selection](./hevc-variant-selection.md)** —
+  consumer; selection + cross-codec switching.
 - **`[5.1-surround-selection]`** *(candidate)* — consumer.
 - **`[drm-support]`** *(candidate, GitHub issue #1411)* — owns EME +
   license; consumes key-system probing.
