@@ -56,7 +56,7 @@ three sub-issues, rather than as separate phases.
 
 | Phase | What | Notes |
 |---|---|---|
-| EME setup pipeline | Capability-probing's key-system verdict drives `navigator.requestMediaKeySystemAccess(...)`, which produces a `MediaKeys` instance. `mediaElement.setMediaKeys(mediaKeys)` attaches to the `<video>` element before or during MediaSource setup. Encrypted-event handling on the media element drives `MediaKeySession.generateRequest(initDataType, initData)` to start a session | Shared infrastructure regardless of key system. Gates MSE setup / segment append on key-system readiness |
+| EME setup pipeline | Capability-probing's key-system verdict drives `navigator.requestMediaKeySystemAccess(...)`, which produces a `MediaKeys` instance. `mediaElement.setMediaKeys(mediaKeys)` is called **before MediaSource attachment** per W3C EME (setMediaKeys must complete before encrypted content appends; pre-attachment is the spec-safe ordering). `encrypted` event on the media element fires when init data is appended → `MediaKeySession.generateRequest(initDataType, initData)` starts a session | Shared infrastructure regardless of key system. The generic ordering is settled by spec; the SPF composition question is how to express the gate without DRM-awareness leaking into the standard `setupMediaSource` behavior — see Likely cross-cutting impact for the variant-composition framing |
 | License flow | Per-source license-server configuration (consumer-provided URL + optional headers / auth tokens). `MediaKeySession.message` event → fetch license from server → `MediaKeySession.update(licenseResponse)`. Pluggable hooks for consumer policies (custom headers, body transformation, response transformation) | Consumer-facing config surface lives here. Mux Player's `drm-token` attribute is one consumer of this; videojs-contrib-eme's per-key-system config is another precedent |
 | Per-key-system specifics | Widevine ([#1412](https://github.com/videojs/v10/issues/1412)), PlayReady ([#1413](https://github.com/videojs/v10/issues/1413)), FairPlay ([#1414](https://github.com/videojs/v10/issues/1414)). Per-system: init-data format (PSSH for Widevine, PRO box for PlayReady, content-id derivation for FairPlay), license URL conventions, license body format, server-certificate handshake (FairPlay), browser-API quirks | Three sub-issues. The shared pipeline + license flow above handle most of the machinery; each key system adds its own init-data + license-format adapters |
 | Key delivery and `keystatuschange` reactivity | Browser receives keys via `MediaKeySession.update()`; encrypted segments decrypt automatically. `MediaKeySession.keystatuses` Map tracks per-key status (`usable`, `expired`, `output-restricted`, `released`, etc.); `keystatuschange` event fires on changes. Engine reacts to status transitions (e.g., expired key → re-request) | Tier 2-ish: engine can ignore non-`usable` statuses initially (key expiry surfaces as a playback failure); richer handling is consumer-policy-driven |
@@ -110,17 +110,36 @@ three sub-issues, rather than as separate phases.
 
 Things this feature probably forces decisions on, not just additions:
 
-- **Two-stage gate on MSE setup.** Today's gates (per
-  [mse-mms-pipeline.md](./mse-mms-pipeline.md)): MediaElement +
-  presentation URL + `'open'` readyState gate setupMediaSource;
-  resolved track + open MediaSource gate setupSourceBuffers. DRM
-  introduces additional gates between these: (a) capability-probing
-  result for the key system (Tier 1 gate, fires once), (b) MediaKeys
-  attached to mediaElement (gate on `setMediaKeys()` promise resolving,
-  fires once per source), (c) keys available for the encrypted
-  segments being appended (gate on `keystatuschange`, fires on
-  key delivery). Net effect: MSE setup and segment append wait on
-  more preconditions; gate slot family extends.
+- **Gate chain extension on MSE setup — composition-variant placement.**
+  Per W3C EME, `mediaElement.setMediaKeys()` must complete before
+  encrypted content is appended to a SourceBuffer; the spec-safe
+  ordering is pre-MediaSource-attachment. Today's MSE gates per
+  [mse-mms-pipeline.md](./mse-mms-pipeline.md): MediaElement +
+  presentation URL + `'open'` readyState gate `setupMediaSource`;
+  resolved track + open MediaSource gate `setupSourceBuffers`.
+  Adding a "MediaKeys attached" gate between these is straightforward
+  in isolation; the SPF composition question is how to do it
+  *without* DRM-awareness leaking into the standard `setupMediaSource`
+  (which today, and in DRM-free engine variants, has no need to know
+  about MediaKeys). Per the failure-mode catalog's composition-
+  variant entry: variant-specific behaviors compose into DRM-required
+  engine variants, not as runtime branches in always-on behaviors.
+  Two likely shapes:
+  - **(a)** DRM-required engine variant composes a *different*
+    `setupMediaSource` that gates on a `mediaKeysReady` signal before
+    attaching; standard `setupMediaSource` composes into non-DRM
+    engines unchanged.
+  - **(b)** A new `setupMediaKeys` behavior writes to a generic
+    "ready-to-attach" gate slot that `setupMediaSource` reads;
+    standard engines provide a default-true writer for the slot.
+  Option (a) is cleaner composition-variant discipline (DRM-free
+  engine's `setupMediaSource` is genuinely unchanged); option (b)
+  introduces a slot whose primary purpose is DRM. Lean: (a).
+  Beyond setMediaKeys, additional DRM gates fire downstream:
+  capability-probing's key-system verdict (Tier 1 gate, fires once
+  per source); per-session license obtained + `keystatuschange`
+  confirms at least one `usable` key (fires on key delivery,
+  decryption is async beyond this gate).
 - **Composition variant for DRM-required content.** DRM-required
   engine variants compose additional behaviors (MediaKeys setup,
   license fetcher, encrypted-event handler) atop the standard
@@ -169,6 +188,14 @@ Things this feature probably forces decisions on, not just additions:
   routes to DRM-capable composition). Adapter-upfront is simpler;
   detect-and-route is more adaptive but adds composition-time-
   decision complexity.
+- **Composition-variant shape for the setMediaKeys gate.** Per the
+  cross-cutting note: variant-specific `setupMediaSource` (option a)
+  vs generic ready-to-attach slot (option b). The spec-required
+  ordering (`setMediaKeys` before MediaSource attachment) is not in
+  question; only the SPF composition shape is. Resolving this
+  constrains how DRM-required engine variants are composed and
+  whether non-DRM engines remain genuinely unchanged. Lean: (a) for
+  composition-variant discipline.
 - **License-fetcher hook shape.** Single `getLicense(message)` callback
   vs separate request-transformation + response-transformation hooks
   vs a full fetch-wrapper interface. videojs-contrib-eme's shape vs
