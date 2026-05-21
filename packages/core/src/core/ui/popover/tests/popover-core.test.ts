@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PopoverCore, type PopoverInput } from '../popover-core';
 
-const CLOSED: PopoverInput = { active: false, status: 'idle' };
-const OPEN: PopoverInput = { active: true, status: 'idle' };
+const CLOSED: PopoverInput = { active: false, status: 'idle', transitioning: false };
+const OPEN: PopoverInput = { active: true, status: 'idle', transitioning: false };
 
 describe('PopoverCore', () => {
   it('uses default props', () => {
@@ -138,7 +138,7 @@ describe('PopoverCore', () => {
   describe('transition flags', () => {
     it('sets transitionStarting when status is starting', () => {
       const core = new PopoverCore();
-      core.setInput({ active: true, status: 'starting' });
+      core.setInput({ active: true, status: 'starting', transitioning: true });
       const state = core.getState();
 
       expect(state.transitionStarting).toBe(true);
@@ -147,7 +147,7 @@ describe('PopoverCore', () => {
 
     it('sets transitionEnding when status is ending', () => {
       const core = new PopoverCore();
-      core.setInput({ active: true, status: 'ending' });
+      core.setInput({ active: true, status: 'ending', transitioning: true });
       const state = core.getState();
 
       expect(state.transitionStarting).toBe(false);

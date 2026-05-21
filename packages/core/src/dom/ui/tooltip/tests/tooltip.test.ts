@@ -6,7 +6,7 @@ import { createTestTooltip } from './tooltip-helpers';
 describe('createTooltip', () => {
   it('starts closed', () => {
     const { tooltip } = createTestTooltip();
-    expect(tooltip.input.current).toEqual({ active: false, status: 'idle' });
+    expect(tooltip.input.current).toEqual({ active: false, status: 'idle', transitioning: false });
   });
 
   describe('open/close', () => {
@@ -24,7 +24,7 @@ describe('createTooltip', () => {
 
       tooltip.open();
 
-      expect(tooltip.input.current).toEqual({ active: true, status: 'starting' });
+      expect(tooltip.input.current).toEqual({ active: true, status: 'starting', transitioning: true });
     });
 
     it('calls onOpenChange when closing', () => {

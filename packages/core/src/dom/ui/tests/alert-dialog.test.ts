@@ -21,7 +21,7 @@ afterEach(() => {
 describe('createAlertDialog', () => {
   it('starts closed', () => {
     const { alertDialog } = createTestAlertDialog();
-    expect(alertDialog.input.current).toEqual({ active: false, status: 'idle' });
+    expect(alertDialog.input.current).toEqual({ active: false, status: 'idle', transitioning: false });
   });
 
   describe('open/close', () => {
@@ -39,7 +39,7 @@ describe('createAlertDialog', () => {
 
       alertDialog.open();
 
-      expect(alertDialog.input.current).toEqual({ active: true, status: 'starting' });
+      expect(alertDialog.input.current).toEqual({ active: true, status: 'starting', transitioning: true });
     });
 
     it('calls onOpenChange when closing', () => {
@@ -61,7 +61,7 @@ describe('createAlertDialog', () => {
       alertDialog.open();
       alertDialog.close();
 
-      expect(alertDialog.input.current).toEqual({ active: true, status: 'ending' });
+      expect(alertDialog.input.current).toEqual({ active: true, status: 'ending', transitioning: true });
     });
 
     it('does not call onOpenChange if already open', () => {

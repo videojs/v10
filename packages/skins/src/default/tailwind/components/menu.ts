@@ -5,6 +5,7 @@ export const menu = {
     'box-border min-w-[min(6rem,var(--media-popover-available-width,6rem))]',
     'max-w-(--media-popover-available-width) max-h-(--media-popover-available-height)',
     'p-1.5 !overflow-auto overscroll-none rounded-[1.25rem]',
+    'data-transitioning:overflow-hidden',
     'before:hidden'
   ),
   group: cn(

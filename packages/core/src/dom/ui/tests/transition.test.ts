@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTransition } from '../transition';
+import { createTransition, waitForAnimations } from '../transition';
 
 describe('createTransition', () => {
   it('starts with idle state', () => {
     const handler = createTransition();
-    expect(handler.state.current).toEqual({ active: false, status: 'idle' });
+    expect(handler.state.current).toEqual({ active: false, status: 'idle', transitioning: false });
   });
 
   describe('open', () => {
@@ -13,7 +13,7 @@ describe('createTransition', () => {
 
       handler.open();
 
-      expect(handler.state.current).toEqual({ active: true, status: 'starting' });
+      expect(handler.state.current).toEqual({ active: true, status: 'starting', transitioning: true });
     });
 
     it('transitions to idle after a double-RAF', async () => {
@@ -27,7 +27,31 @@ describe('createTransition', () => {
       });
 
       await promise;
-      expect(handler.state.current).toEqual({ active: true, status: 'idle' });
+      expect(handler.state.current).toEqual({ active: true, status: 'idle', transitioning: false });
+    });
+
+    it('keeps transitioning true until open animations settle', async () => {
+      const handler = createTransition();
+      const el = document.createElement('div');
+      let resolveAnimation!: () => void;
+      const animation = new Promise<void>((resolve) => {
+        resolveAnimation = resolve;
+      });
+
+      el.getAnimations = vi.fn(() => [{ finished: animation } as unknown as Animation]);
+
+      const promise = handler.open(el);
+
+      await vi.waitFor(() => {
+        expect(handler.state.current.status).toBe('idle');
+      });
+
+      expect(handler.state.current.transitioning).toBe(true);
+
+      resolveAnimation();
+      await promise;
+
+      expect(handler.state.current.transitioning).toBe(false);
     });
   });
 
@@ -41,7 +65,7 @@ describe('createTransition', () => {
 
       handler.close(el);
 
-      expect(handler.state.current).toEqual({ active: true, status: 'ending' });
+      expect(handler.state.current).toEqual({ active: true, status: 'ending', transitioning: true });
     });
 
     it('keeps open true during close animation', () => {
@@ -68,7 +92,36 @@ describe('createTransition', () => {
       });
 
       await promise;
-      expect(handler.state.current).toEqual({ active: false, status: 'idle' });
+      expect(handler.state.current).toEqual({ active: false, status: 'idle', transitioning: false });
+    });
+
+    it('waits for descendant animations via getAnimations({ subtree: true })', async () => {
+      const handler = createTransition();
+      const el = document.createElement('div');
+      let resolveAnimation!: () => void;
+      const animation = new Promise<void>((resolve) => {
+        resolveAnimation = resolve;
+      });
+      const pending = { finished: animation } as unknown as Animation;
+
+      el.getAnimations = vi.fn((options?: { subtree?: boolean }) =>
+        options?.subtree ? [pending] : []
+      ) as HTMLElement['getAnimations'];
+
+      handler.open(el);
+      await vi.waitFor(() => {
+        expect(handler.state.current.status).toBe('idle');
+      });
+
+      const closePromise = handler.close(el);
+      expect(handler.state.current.status).toBe('ending');
+      expect(handler.state.current.transitioning).toBe(true);
+      expect(el.getAnimations).toHaveBeenCalledWith({ subtree: true });
+
+      resolveAnimation();
+      await closePromise;
+
+      expect(handler.state.current).toEqual({ active: false, status: 'idle', transitioning: false });
     });
   });
 
@@ -81,6 +134,7 @@ describe('createTransition', () => {
 
       handler.cancel();
       expect(handler.state.current.status).toBe('idle');
+      expect(handler.state.current.transitioning).toBe(false);
     });
 
     it('preserves open state', () => {
@@ -123,5 +177,37 @@ describe('createTransition', () => {
       handler.destroy();
       handler.destroy(); // should not throw
     });
+  });
+});
+
+describe('waitForAnimations', () => {
+  it('waits for the CSS transition fallback when a Web Animation is canceled', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const el = document.createElement('div');
+      const canceledAnimation = Promise.reject(new Error('canceled'));
+      let settled = false;
+
+      el.style.transitionDuration = '100ms';
+      el.getAnimations = vi.fn(() => [{ finished: canceledAnimation } as unknown as Animation]);
+
+      const promise = waitForAnimations(el, { includeCSSTransitions: true }).then(() => {
+        settled = true;
+      });
+
+      await Promise.resolve();
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(99);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await promise;
+
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

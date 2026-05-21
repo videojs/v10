@@ -7,6 +7,7 @@ export const menu = {
     'bg-(--media-tooltip-background-color) p-1 !overflow-auto overscroll-none rounded-xl',
     '[backdrop-filter:var(--media-tooltip-backdrop-filter)]',
     'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/10',
+    'data-transitioning:overflow-hidden',
     'before:hidden'
   ),
   group: 'flex flex-col gap-0.5',

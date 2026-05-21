@@ -88,7 +88,7 @@ export class PopoverCore {
       side: this.#props.side,
       align: this.#props.align,
       modal: this.#props.modal,
-      ...getTransitionFlags(input.status),
+      ...getTransitionFlags(input.status, input.transitioning),
     };
   }
 

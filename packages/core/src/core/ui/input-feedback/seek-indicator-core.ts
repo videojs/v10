@@ -29,6 +29,7 @@ const INITIAL_STATE: SeekIndicatorState = {
   seekTotal: 0,
   value: null,
   currentTime: '0:00',
+  transitioning: false,
   transitionStarting: false,
   transitionEnding: false,
 };

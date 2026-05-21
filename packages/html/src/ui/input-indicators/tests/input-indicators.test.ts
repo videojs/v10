@@ -64,6 +64,7 @@ describe('input indicators', () => {
       max: false,
       transitionStarting: true,
       transitionEnding: false,
+      transitioning: true,
     });
 
     expect(liveElement).toBe(host);

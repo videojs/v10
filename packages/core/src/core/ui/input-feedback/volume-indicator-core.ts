@@ -32,6 +32,7 @@ const INITIAL_STATE: VolumeIndicatorState = {
   fill: null,
   min: false,
   max: false,
+  transitioning: false,
   transitionStarting: false,
   transitionEnding: false,
 };

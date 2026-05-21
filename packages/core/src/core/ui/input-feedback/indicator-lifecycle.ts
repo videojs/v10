@@ -88,6 +88,6 @@ export function getRenderedIndicatorState<State extends IndicatorLifecycleState>
     ...payload,
     open: current.open && transition.active,
     generation: current.open ? current.generation : payload.generation,
-    ...getTransitionFlags(transition.status),
+    ...getTransitionFlags(transition.status, transition.transitioning),
   };
 }
