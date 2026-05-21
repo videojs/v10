@@ -35,10 +35,10 @@ function renderPlaybackRateMenu({
 }
 
 function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value, radioGroupLabel } = usePlaybackRateMenu();
+  const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} label={radioGroupLabel}>
+    <Menu.RadioGroup value={value} onValueChange={setValue} label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
           {option.label}
@@ -117,38 +117,6 @@ describe('PlaybackRateMenu', () => {
 
     expect(screen.getByTestId('trigger').textContent).toBe('Normal');
     expect(screen.getByRole('menuitemradio', { name: 'Normal' }).getAttribute('aria-checked')).toBe('true');
-  });
-
-  it('renders SectionLabel with default menu section copy', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
-
-    render(
-      <PlaybackRateMenu.Root defaultOpen>
-        <PlaybackRateMenu.Content>
-          <PlaybackRateMenu.SectionLabel data-testid="section-label" />
-        </PlaybackRateMenu.Content>
-      </PlaybackRateMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    const section = screen.getByTestId('section-label');
-    expect(section.textContent).toBe('Speed');
-    expect(section.getAttribute('data-part')).toBe('section-label');
-  });
-
-  it('renders SectionLabel from menuSectionLabel on Root', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
-
-    render(
-      <PlaybackRateMenu.Root defaultOpen menuSectionLabel="Tempo">
-        <PlaybackRateMenu.Content>
-          <PlaybackRateMenu.SectionLabel data-testid="section-label" />
-        </PlaybackRateMenu.Content>
-      </PlaybackRateMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByTestId('section-label').textContent).toBe('Tempo');
   });
 
   it('disables the trigger when there are no rates', () => {

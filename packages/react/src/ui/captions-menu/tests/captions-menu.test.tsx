@@ -61,10 +61,10 @@ function renderCaptionsMenu({
 }
 
 function CaptionsMenuItems(): ReactNode {
-  const { menuSectionLabel, options, setValue, value } = useCaptionsMenu();
+  const { options, setValue, value } = useCaptionsMenu();
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} label={menuSectionLabel}>
+    <Menu.RadioGroup value={value} onValueChange={setValue} label="Captions">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
           {option.label}
@@ -138,38 +138,6 @@ describe('CaptionsMenu', () => {
 
     expect(screen.getByTestId('trigger').textContent).toBe('Captions EN captions');
     expect(screen.getByRole('menuitemradio', { name: 'EN captions' }).getAttribute('aria-checked')).toBe('true');
-  });
-
-  it('renders SectionLabel with default menu section copy', () => {
-    const { Wrapper } = createPlayerWrapper(createTextTrackState() as unknown as Record<string, unknown>);
-
-    render(
-      <CaptionsMenu.Root defaultOpen>
-        <CaptionsMenu.Content>
-          <CaptionsMenu.SectionLabel data-testid="section-label" />
-        </CaptionsMenu.Content>
-      </CaptionsMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    const section = screen.getByTestId('section-label');
-    expect(section.textContent).toBe('Captions');
-    expect(section.getAttribute('data-part')).toBe('section-label');
-  });
-
-  it('renders SectionLabel from menuSectionLabel on Root', () => {
-    const { Wrapper } = createPlayerWrapper(createTextTrackState() as unknown as Record<string, unknown>);
-
-    render(
-      <CaptionsMenu.Root defaultOpen menuSectionLabel="Subtitles">
-        <CaptionsMenu.Content>
-          <CaptionsMenu.SectionLabel data-testid="section-label" />
-        </CaptionsMenu.Content>
-      </CaptionsMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByTestId('section-label').textContent).toBe('Subtitles');
   });
 
   it('disables the trigger when no captions are available', () => {
