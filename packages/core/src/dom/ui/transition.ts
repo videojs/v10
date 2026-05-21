@@ -1,5 +1,5 @@
 import { createState, type State } from '@videojs/store';
-import { afterDoubleAnimationFrame, getMaxCSSTransitionTime } from '@videojs/utils/dom';
+import { getMaxCSSTransitionTime } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
 import type { TransitionState } from '../../core/ui/transition';
 
@@ -14,57 +14,6 @@ export interface TransitionApi {
 
 export interface WaitForAnimationsOptions {
   includeCSSTransitions?: boolean;
-}
-
-export interface ScheduleTransitionSettleOptions {
-  includeCSSTransitions?: boolean;
-  isVisuallyComplete?: (element: HTMLElement) => boolean;
-}
-
-/** After double-RAF, optionally poll visual completion, then wait for animations to settle. */
-export function scheduleTransitionSettle(
-  element: HTMLElement,
-  isCurrent: () => boolean,
-  onSettled: () => void,
-  options: ScheduleTransitionSettleOptions = {}
-): () => void {
-  let pollRaf = 0;
-  let settled = false;
-
-  function settle(): void {
-    if (settled || !isCurrent()) return;
-    settled = true;
-    cancelAnimationFrame(pollRaf);
-    pollRaf = 0;
-    onSettled();
-  }
-
-  function pollVisualComplete(): void {
-    pollRaf = 0;
-    if (settled || !isCurrent()) return;
-
-    if (options.isVisuallyComplete?.(element)) {
-      settle();
-      return;
-    }
-
-    pollRaf = requestAnimationFrame(pollVisualComplete);
-  }
-
-  afterDoubleAnimationFrame(isCurrent, () => {
-    pollVisualComplete();
-
-    waitForAnimations(element, {
-      includeCSSTransitions: options.includeCSSTransitions ?? false,
-    }).then(() => {
-      settle();
-    });
-  });
-
-  return () => {
-    settled = true;
-    cancelAnimationFrame(pollRaf);
-  };
 }
 
 /**
@@ -109,8 +58,6 @@ export function createTransition(): TransitionApi {
       element = el;
     }
 
-    const animationTarget = element;
-
     state.patch({ active: true, status: 'starting', transitioning: true });
 
     return new Promise<void>((resolve) => {
@@ -120,7 +67,7 @@ export function createTransition(): TransitionApi {
           rafId2 = 0;
           if (destroyed || currentTransitionId !== transitionId || !state.current.active) return resolve();
           state.patch({ status: 'idle' });
-          waitForAnimations(animationTarget).finally(() => {
+          waitForAnimations(element).finally(() => {
             if (destroyed || currentTransitionId !== transitionId || !state.current.active) return resolve();
             state.patch({ transitioning: false });
             resolve();

@@ -53,6 +53,31 @@ describe('createTransition', () => {
 
       expect(handler.state.current.transitioning).toBe(false);
     });
+
+    it('waits for animations on an element registered after open', async () => {
+      const handler = createTransition();
+      let resolveAnimation!: () => void;
+      const animation = new Promise<void>((resolve) => {
+        resolveAnimation = resolve;
+      });
+
+      const promise = handler.open();
+
+      const el = document.createElement('div');
+      el.getAnimations = vi.fn(() => [{ finished: animation } as unknown as Animation]);
+      handler.setElement(el);
+
+      await vi.waitFor(() => {
+        expect(handler.state.current.status).toBe('idle');
+      });
+
+      expect(handler.state.current.transitioning).toBe(true);
+
+      resolveAnimation();
+      await promise;
+
+      expect(handler.state.current.transitioning).toBe(false);
+    });
   });
 
   describe('close', () => {
