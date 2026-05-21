@@ -214,7 +214,7 @@
     width: var(--media-menu-width);
     min-width: min(var(--media-popover-available-width, 11rem), 11rem);
     height: var(--media-menu-height);
-    max-height: min(var(--media-popover-available-height), 16rem);
+    max-height: min(var(--media-popover-available-height, 16rem), 16rem);
     overflow: hidden;
   }
 }
