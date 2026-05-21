@@ -5,7 +5,7 @@ import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningOptions } from '../popover/popover-positioning';
-import { getSharedMenuPopupGroup, type PopupGroup } from '../popover/popup-group';
+import { createPopupGroup, getSharedMenuPopupGroup, type PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 import type { MenuViewTransitionApi } from './create-menu-view-transition';
 import { createMenuViewTransition, type MenuViewTransitionState } from './create-menu-view-transition';
@@ -40,7 +40,9 @@ export interface MenuOptions {
   onHighlightChange?: (element: HTMLElement | null) => void;
   /**
    * Optional popup group from a player or shell provider.
-   * When omitted or the resolver returns `undefined`, root menus use a document-wide group so peer menus cooperate without extra setup.
+   * When omitted, or when the resolver returns `undefined` on a root menu, menus use a document-wide group
+   * so peer menus cooperate without extra setup. Nested menus with an explicit resolver that returns
+   * `undefined` get an isolated group so they do not join that shared root coordination.
    */
   group?: () => PopupGroup | undefined;
   /**
@@ -133,24 +135,24 @@ export function completeMenuItemSelection(menu: MenuApi, parentMenu: MenuApi | n
 }
 
 /** Submenus register peer triggers but must not replace the root as the group's `current` member. */
-function bindMenuPopupGroup(group: PopupGroup, hasParentMenu: () => boolean): PopupGroup {
+function bindMenuPopupGroup(resolveGroup: () => PopupGroup, hasParentMenu: () => boolean): PopupGroup {
   return {
     open(member) {
       if (hasParentMenu()) return;
-      group.open(member);
+      resolveGroup().open(member);
     },
     close(member) {
       if (hasParentMenu()) return;
-      group.close(member);
+      resolveGroup().close(member);
     },
     addMemberTrigger(element) {
-      return group.addMemberTrigger(element);
+      return resolveGroup().addMemberTrigger(element);
     },
     pathHasPeerMemberTrigger(path, ownTrigger) {
-      return group.pathHasPeerMemberTrigger(path, ownTrigger);
+      return resolveGroup().pathHasPeerMemberTrigger(path, ownTrigger);
     },
     isPeerTrigger(element, ownTrigger) {
-      return group.isPeerTrigger(element, ownTrigger);
+      return resolveGroup().isPeerTrigger(element, ownTrigger);
     },
   };
 }
@@ -178,8 +180,30 @@ export function createMenu(options: MenuOptions): MenuApi {
     return rootPanelTransition;
   }
 
+  let menuPopupGroup: PopupGroup | null = null;
+  let isolatedPopupGroup: PopupGroup | null = null;
+
+  function resolveMenuPopupGroupBase(): PopupGroup {
+    if (options.group === undefined) {
+      return getSharedMenuPopupGroup();
+    }
+
+    const resolved = options.group();
+    if (resolved !== undefined) {
+      return resolved;
+    }
+
+    if (options.parentMenu?.() != null) {
+      isolatedPopupGroup ??= createPopupGroup();
+      return isolatedPopupGroup;
+    }
+
+    return getSharedMenuPopupGroup();
+  }
+
   function getMenuPopupGroup(): PopupGroup {
-    return bindMenuPopupGroup(options.group?.() ?? getSharedMenuPopupGroup(), () => options.parentMenu?.() != null);
+    menuPopupGroup ??= bindMenuPopupGroup(resolveMenuPopupGroupBase, () => options.parentMenu?.() != null);
+    return menuPopupGroup;
   }
 
   function push(menuId: string, triggerId: string): void {
