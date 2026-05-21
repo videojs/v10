@@ -39,7 +39,8 @@ DRM, and the unsupported-case error mapping.
   merging).
 - **Foundational** for cluster D — `[hevc-variant-selection]`,
   `[5.1-surround-selection]`, `[unsupported-case-error-mapping]`, and
-  `[drm-support]` (GitHub issue #1411) all consume probing output.
+  [drm-support](./drm-support.md) (GitHub issue #1411) all consume
+  probing output.
 
 ## Phases of complexity
 
@@ -53,7 +54,7 @@ layer onto specific phases per the
 | Codec / container probing primitive | Uniform API wrapping `MediaSource.isTypeSupported` + `canPlayType`. Helpers for "given a `Track`, can we play it?" Builds on today's `isCodecSupported` | The minimum primitive everything else builds on. Today's `isCodecSupported` is the codec half; the wrapper formalizes the surface |
 | Multivariant CODECS-attribute filtering | At presentation resolution (post-parse), filter `presentation.selectionSets` to drop renditions whose `CODECS` doesn't decode on this browser. Filtered set is what selection behaviors operate over; unsupported renditions never reach selection | Tier 1 (spec-compliant). Today's late-failure path becomes a defensive fallback rarely exercised |
 | Media-playlist / segment-level capability checking | Per-segment CODECS verification + container detection at the media-playlist level. Catches mismatches the multivariant didn't declare | Tier 1. Largely defensive; expected to be rare for well-formed manifests |
-| Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under `[drm-support]` (GitHub issue #1411) | Async — pushes toward a new-behavior filter writer pattern rather than a derived signal |
+| Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under [drm-support](./drm-support.md) (GitHub issue #1411) | Async — pushes toward a new-behavior filter writer pattern rather than a derived signal |
 | Cross-codec transition (`changeType()`) probing | Probe whether `SourceBuffer.changeType()` is available, plus pair-wise support for specific codec transitions (AVC ↔ HEVC, AAC stereo ↔ AC-3 5.1, etc.). Browser support is fragile and pair-specific | Consumers decide whether to attempt mid-stream switches based on this probe; the `changeType()` call itself lives in those consumer features |
 | Unsupported-case error surfacing | When no candidate survives filtering, surface a clear error rather than failing late in `createSourceBuffer`. State-error slot or callback — the interface is defined here; consumer-side mapping lives in `[unsupported-case-error-mapping]` | The "fail loudly upstream" path |
 | Tier 2: customer probing overrides | Config-driven biases: "force AVC even when HEVC supported," "prefer hardware-backed DRM," "exclude codec X." Layered on top of Tier 1's spec-compliant filtering | Tier 2 (custom behavior). Often consumer-policy-driven |
@@ -76,9 +77,10 @@ layer onto specific phases per the
   *consumer*. Same shape as HEVC, on the audio channel-count axis.
   Adds a 5.1-specific runtime-detection phase (downstream-environment-
   aware channel preference) with no HEVC analog.
-- **`[drm-support]`** (GitHub issue #1411) — EME setup, license
-  handling. This feature owns the "what key systems are available?"
-  probe; DRM-support uses that answer to set up keys.
+- **[drm-support](./drm-support.md)** (GitHub issue #1411) — EME
+  setup, license handling. This feature owns the "what key systems
+  are available?" probe; drm-support uses that answer to set up
+  keys.
 - **Multi-language-audio Tier 2 mid-stream codec switch** —
   *consumer* of `changeType()` probing.
 - **`[unsupported-case-error-mapping]`** — sister feature; maps the
@@ -105,7 +107,8 @@ layer onto specific phases per the
   No code change in ABR itself; just narrower input.
 - **DRM gate** — key-system probing becomes the *first* DRM gate.
   Subsequent EME setup, license fetch, key delivery happen under
-  `[drm-support]`, gated on probing's verdict. Crisp boundary:
+  [drm-support](./drm-support.md), gated on probing's verdict.
+  Crisp boundary:
   probing answers "can we?"; DRM-support answers "set it up."
 - **Cross-codec transition consumers** — HEVC, 5.1, multi-language-
   audio Tier 2 all need `changeType()` probing. The actual
@@ -146,7 +149,7 @@ layer onto specific phases per the
   consumer; selection + cross-codec switching.
 - **[5.1-surround-selection](./5.1-surround-selection.md)** —
   consumer.
-- **`[drm-support]`** *(candidate, GitHub issue #1411)* — owns EME +
+- **[drm-support](./drm-support.md)** (GitHub issue #1411) — owns EME +
   license; consumes key-system probing.
 - **`[unsupported-case-error-mapping]`** *(candidate)* — sister;
   consumer-facing error mapping on top of this feature's error

@@ -248,7 +248,7 @@ Key system handling for protected content — EME, license fetch, key-rotation, 
 
 **Signals.** EME, `MediaKeys`, `requestMediaKeySystemAccess`, key system identifiers (Widevine / PlayReady / FairPlay / FairPlay-AirPlay); `#EXT-X-KEY` in playlists; license server URLs; security level constraints; encrypted-event handling on the SourceBuffer.
 
-**Docs.** None yet. Key-system capability probing is owned by `capability-probing` (cluster D); this cluster owns EME setup, license handling, and key delivery downstream of probing's verdict.
+**Docs.** `drm-support` (foundation; GitHub issue #1411). Key-system capability probing is owned by `capability-probing` (cluster D); this cluster owns EME setup, license handling, and key delivery downstream of probing's verdict.
 
 **Foundational primitives.** EME + license-handling base, under issue #1411.
 
