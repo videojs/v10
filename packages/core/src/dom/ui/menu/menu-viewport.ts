@@ -453,12 +453,15 @@ export function createMenuViewport(
         syncChildViewPhase(state, view, viewState);
       };
 
-      state.childUnsubscribe = transition.input.subscribe(syncChild);
+      const unsubscribe = transition.input.subscribe(syncChild);
+      state.childUnsubscribe = unsubscribe;
       syncChild();
 
       return () => {
-        state.childUnsubscribe?.();
-        state.childUnsubscribe = null;
+        unsubscribe();
+        if (state.childUnsubscribe === unsubscribe) {
+          state.childUnsubscribe = null;
+        }
         state.childPhaseKeys.delete(view);
       };
     },

@@ -600,6 +600,67 @@ describe('createMenuViewport', () => {
     expect(resetSpy).not.toHaveBeenCalled();
   });
 
+  it('bindChild cleanup only unsubscribes the view it bound', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const firstView = document.createElement('div');
+    const secondView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuViewAttrs({ root: true }));
+    firstView.setAttribute('data-menu-view', '');
+    secondView.setAttribute('data-menu-view', '');
+    content.append(rootView, firstView, secondView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(firstView, {
+      currentWidth: 200,
+      currentHeight: 120,
+      naturalWidth: 200,
+      naturalHeight: 120,
+    });
+    mockMenuViewSize(secondView, {
+      currentWidth: 240,
+      currentHeight: 140,
+      naturalWidth: 240,
+      naturalHeight: 140,
+    });
+
+    const rootTransition = createMenuViewTransition({ persistent: true });
+    const viewport = createMenuViewport(content, rootTransition);
+
+    const firstTransition = createMockTransition({
+      phase: 'hidden',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    const secondTransition = createMockTransition({
+      phase: 'hidden',
+      direction: 'forward',
+      triggerId: 'trigger-2',
+    });
+
+    const cleanupFirst = viewport.bindChild(firstView, firstTransition);
+    viewport.bindChild(secondView, secondTransition);
+
+    cleanupFirst();
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('');
+
+    (secondTransition.input as WritableState<MenuViewTransitionState>).patch({
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-2',
+    });
+    flush();
+
+    expect(content.style.getPropertyValue('--media-menu-width')).not.toBe('');
+  });
+
   it('hides the root panel when navigation targets a submenu before the child leaves hidden', () => {
     const content = addElement();
     const rootView = document.createElement('div');
