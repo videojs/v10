@@ -106,6 +106,41 @@ incident or risk pattern; the catalog grows as new failure modes surface.
   cluster signals (`clusters.md` § Clusters → each cluster's "Signals"
   list) against the user's description. Multiple clusters can apply;
   surface all that fire so cross-cluster touchpoints get considered.
+- **API-as-feature inflation** — when the user invocation cites a
+  single discrete API (an MDN page, a browser API, a library method)
+  as the feature, don't default to treating it as a feature. An
+  API-shaped invocation is more often a *primitive consumed by an
+  existing phase* than a feature in its own right. Run the Step 1
+  decomposition check against the closest existing feature doc's
+  phase rows before scoping standalone. Worked example:
+  `MediaSource.setLiveSeekableRange` invoked as a feature; the actual
+  fit is the DOM-exposure side of `live-stream-support.md`'s
+  "Live edge tracking" phase row, not a new doc. The invocation
+  framing ("document a feature for [API]") is *not* evidence of
+  feature-level scope.
+- **Composition-variant logic in always-on behaviors** — when a
+  feature or mechanism only applies under one composition variant
+  (live, audio-only, DRM-required, etc.), it lives as a **new
+  behavior composed into that variant**, not as a runtime
+  conditional inside an existing always-on behavior. The SPF
+  principle: live vs VoD (and audio-only vs A+V, etc.) is a
+  *composition-time* distinction, not a runtime branch. Existing
+  behaviors that compose unchanged across variants —
+  `updateMediaSourceDuration` is the canonical example, deliberately
+  simplified to read `mediaSource.sourceBuffers` so audio-only /
+  video-only variants compose it unchanged — must not regain
+  variant-specific branches. See `conventions/behaviors.md` →
+  "One behavior or several" ("extending the simpler shape outward
+  to host the complex case … produces conditional branches and
+  afterthought integrations") and the `updateMediaSourceDuration`
+  worked example in "Inverse: behaviors that operate uniformly
+  across tracks." Worked example: `setLiveSeekableRange` initially
+  proposed as a possible extension to `updateMediaSourceDuration`
+  "under `Infinity` duration"; corrected to a new live-only
+  behavior composed into the live engine variant. Run this check
+  whenever a feature or mechanism is invoked as applying only
+  under live, audio-only, video-only, DRM, or another
+  composition-variant condition.
 
 ## Steps (do these in order; do not skip)
 
@@ -136,18 +171,41 @@ source:
 gathered. Note which clusters fire and which cross-cluster patterns are
 likely in play. This output drives Steps 3, 4, 5, 8.
 
+**Decomposition check (load-bearing).** Before treating this as a new
+feature doc, ask: does any existing feature doc in the fired clusters
+have a phase row, a "What's not implemented" bullet, or a "Likely
+cross-cutting impact" entry whose concern overlaps with this invocation?
+If yes, the default framing is **extend the existing doc** (phase-row
+rewrite, new sibling row, scope-bucket entry, or cross-cutting-impact
+bullet), not new standalone. Apply the same rubric as Step 5's "One
+feature or many?" check: a new doc only earns its place if the concern
+has (a) substantial independent implementation footprint, (b)
+independent priority/timeline, or (c) implies a primitive that other
+documented features consume. Default to extending the existing doc
+unless one of those criteria clearly fires.
+
+This check directly counters the **API-as-feature inflation** failure
+mode (see catalog above): an MDN-link or single-API invocation does not
+by itself establish feature-level scope. The decomposition rubric does.
+
 **Stop and report back to the user** with:
 
 1. The feature name (your best read).
 2. Sources consulted (with links).
 3. Existing doc status (none / coarse / technical / sketched).
 4. Likely clusters from signal match, with confidence notes.
-5. Ambiguities still unresolved (going into Step 2's discussion).
+5. **Recommended framing** — extend `<existing doc>`'s phase row /
+   add sibling phase row to `<existing doc>` / extend `<existing
+   doc>`'s "What's not implemented" / new standalone doc — with
+   rubric reasoning from the decomposition check above. Always have
+   a recommendation; don't hedge by listing options without one.
+6. Ambiguities still unresolved (going into Step 2's discussion).
 
 This is the load-bearing step. Getting it wrong (misreading historical
 context as current scope, missing a sister feature, conflating with
-another feature) invalidates everything downstream — same failure shape
-as `refactor-behavior`'s Step 1 misdiagnosis.
+another feature, inflating an API primitive into a standalone feature)
+invalidates everything downstream — same failure shape as
+`refactor-behavior`'s Step 1 misdiagnosis.
 
 ### Step 2 — Discuss to resolve ambiguities
 
@@ -171,9 +229,19 @@ Step 1's report, drive toward answers for the questions that remain:
 - **Anything else** the source materials didn't clearly resolve.
 
 **Use `AskUserQuestion`** when the choice is clear-cut and short-listable
-(definition depth, implementation status, register-vs-update intent).
-Use free-form discussion when the question doesn't enumerate cleanly
-(scope nuance, what's "related enough").
+(definition depth, implementation status, register-vs-update intent,
+framing — new doc vs extend existing). Use free-form discussion when the
+question doesn't enumerate cleanly (scope nuance, what's "related
+enough").
+
+**Lead with Step 1's recommendation.** Per the system instructions on
+`AskUserQuestion`, when you have a recommended option, it goes first and
+is labeled `(Recommended)` in the option label. The Step 1 decomposition
+check produces this recommendation — carry it through into Step 2's
+question rather than presenting equivalent options in ascending scope.
+Hedging by listing alternatives without a recommendation is the
+canonical anti-pattern; it pushes the call back onto the user when the
+skill's rubric has already answered.
 
 **Discuss-only mode.** If the user signals they want to think out loud
 without producing a doc, stay in Step 2 indefinitely until they explicitly
@@ -438,7 +506,8 @@ headers for each numbered section. Do not write the file until the user
 confirms.
 
 1. **Feature identification** (Step 1's report — name, sources, existing
-   doc status, cluster signals)
+   doc status, cluster signals, recommended framing from the
+   decomposition check)
 2. **Ambiguities to resolve** (Step 2 — questions for the user)
 3. **Grounding summary** (Step 3 — behaviors / actors / state /
    implementation footprint, or what-it-would-touch for coarse)
