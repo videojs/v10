@@ -55,7 +55,7 @@ Capability slices around today's audio playback contract.
   [`multi-language-audio`](./multi-language-audio.md) (coarse). No
   programmatic write to `selectedAudioTrackId`, no audio buffer flush
   on switch.
-- **Audio ABR** — covered by `[audio-abr]` candidate.
+- **Audio ABR** — covered by [audio-abr](./audio-abr.md).
   `setupAudioBufferActors` uses plain `fetchStream`; the
   bandwidth-sampling `createTrackedFetch` isn't wired into the audio
   fetch path. The sampling primitive exists (used by video); audio
@@ -194,7 +194,7 @@ Consumers wanting language-aware selection today must override
   selection is user opt-in by default; audio's default selection
   always picks something (or nothing if no audio renditions).
 - **video-abr** — video equivalent. Video has ABR overlay; audio
-  doesn't (yet — `[audio-abr]` candidate).
+  doesn't (yet — see [audio-abr](./audio-abr.md)).
 - **mse-mms-pipeline** — owns audio SourceBuffer setup
   (`setupAudioBufferActors`). The Firefox `mozHasAudio` cross-type
   invariant lives in that feature's documentation.
@@ -204,8 +204,10 @@ Consumers wanting language-aware selection today must override
   tear down via the resolved/unresolved cascade.
 - **preload-modes** — gates audio loading via the same FSM that
   gates video and text.
-- **audio-abr** *(not yet documented, candidate)* — bandwidth
-  sampling + quality switching for audio.
+- **[audio-abr](./audio-abr.md)** — bandwidth sampling + quality
+  switching for audio. Parallel sibling of video-abr on the audio
+  axis; consumes audio-playback's single-rendition baseline + (when
+  it lands) multi-language-audio's rendition-group machinery.
 - **[5.1-surround-selection](./5.1-surround-selection.md)** —
   channels-aware codec-change selection. Consumer of capability-
   probing on the audio channel-count axis. Wires the `channels` field

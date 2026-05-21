@@ -76,9 +76,10 @@ the Epics doc).
   itself. Different concern: caps narrow the candidate set; ABR
   picks within it. Caps could feed multi-signal-abr as one input,
   but the algorithm-modification work is its own feature.
-- **`[audio-abr]`** — audio quality switching, if it lands, may
-  extend this feature with audio-side caps (e.g., max-channels) or
-  carry them in its own doc.
+- **[audio-abr](./audio-abr.md)** — audio quality switching now
+  documented; its "Audio caps inclusion" open question explicitly
+  references this doc as the resolution candidate. When audio-ABR
+  ships, the audio-caps integration question becomes load-bearing.
 - **`[audio-only-composition]` / `[video-only-composition]`** —
   composition variants that subtract behaviors for mode-only
   delivery. Different mechanism (composition, not constraint).
@@ -183,8 +184,10 @@ Things this feature probably forces decisions on, not just additions:
   pattern.
 - **`[multi-signal-abr]`** *(candidate)* — different concern (ABR
   algorithm extension) but caps could feed it as inputs.
-- **`[audio-abr]`** *(candidate)* — audio quality switching that
-  may extend this feature with audio-side caps.
+- **[audio-abr](./audio-abr.md)** — audio quality switching that
+  may extend this feature with audio-side caps; see that doc's
+  "Audio caps inclusion in rendition-selection-caps.md" open
+  question.
 - **[capability-probing](./capability-probing.md)** — adjacent. Both
   narrow the candidate set, but along different axes (capability =
   physics, caps = policy). The cluster framing places caps in

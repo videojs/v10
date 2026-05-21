@@ -252,7 +252,10 @@ export const setupVideoBufferActors = defineBehavior({
  * a non-sampling `fetchStream` (no audio ABR); adding audio ABR is a
  * localized change to this setup body (swap `fetchStream` for a
  * `createTrackedFetch` call + declare `bandwidthState` writable here)
- * without touching the shared helper.
+ * without touching the shared helper. See
+ * `internal/design/spf/features/audio-abr.md` for the design surface
+ * (bandwidth-state sharing, multi-writer coordination, EWMA mixed-
+ * source sampling).
  */
 export const setupAudioBufferActors = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'] as const,

@@ -33,7 +33,7 @@ Following the Tier 1 / Tier 2 framing from the broader inventory:
 - HLS spec compliance for `EXT-X-MEDIA:TYPE=AUDIO` rendition handling
 
 **Out of scope (separate candidate features):**
-- **audio-abr** — bandwidth-driven switching within an audio rendition group. Today no audio quality switching exists at all (audio segment loader uses plain `fetchStream`, not `createTrackedFetch`). Audio ABR depends on multi-language audio for the rendition-group machinery but is a distinct feature.
+- **[audio-abr](./audio-abr.md)** — bandwidth-driven switching within an audio rendition group. Today no audio quality switching exists at all (audio segment loader uses plain `fetchStream`, not `createTrackedFetch`). Audio ABR depends on multi-language audio for the rendition-group machinery but is a distinct feature.
 - **5.1-surround-selection** — capability-gated codec selection for audio. Layers on top of multi-language audio's rendition surfacing. Also owns the codec-change switching case (`SourceBuffer.changeType()` or buffer recreation), since cross-codec switches are where the SourceBuffer itself needs to mutate.
 - **audio-only-composition** — engine variant for audio-only sources. Different composition concern; this feature is about audio-track *selection*, not whether video is present.
 
@@ -63,7 +63,7 @@ Things this feature probably forces decisions on, not just additions:
 - **mse-mms-pipeline** — owns the audio `SourceBufferActor` and the `remove` / `flushBuffer` primitives that mid-stream language switching builds on; the lifecycle stays put (same-codec, no recreation), and this feature adds the flush orchestration on top.
 - **buffer-management** — audio segment loading uses the same gate shape as video and text; mid-stream switching will push on the planner's track-switch handling (no flush today; same-codec dedup is the current strategy).
 - **track-registry-primitive** *(coarse, not yet documented)* — multi-language audio is likely the second forcing data point. First is text-track multi-writer; this is audio multi-writer with mid-stream switching as an added complication.
-- **audio-abr** *(coarse, not yet documented, candidate)* — built on top of multi-language audio's rendition surfacing.
+- **[audio-abr](./audio-abr.md)** — built on top of multi-language audio's rendition surfacing.
 - **5.1-surround-selection** *(coarse, not yet documented, candidate)* — capability-gated extension.
 - **audio-only-composition** *(coarse, not yet documented, candidate)* — engine variant; orthogonal but composition-relevant.
 - **capability-probing** *(candidate)* — Tier 2 mid-stream codec switching (e.g., stereo AAC → 5.1 AC-3) depends on `changeType()` capability probing surfaced by that feature.
