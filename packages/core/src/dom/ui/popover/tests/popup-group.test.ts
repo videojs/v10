@@ -1,5 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createPopupGroup, getSharedMenuPopupGroup } from '../popup-group';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createPopupGroup, getSharedMenuPopupGroup, resetSharedMenuPopupGroupForTests } from '../popup-group';
+
+afterEach(() => {
+  resetSharedMenuPopupGroupForTests();
+});
 
 describe('getSharedMenuPopupGroup', () => {
   it('returns the same instance across calls', () => {
