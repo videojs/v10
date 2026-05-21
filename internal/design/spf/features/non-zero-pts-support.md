@@ -273,7 +273,8 @@ Things this feature probably forces decisions on, not just additions:
   rollover. Same underlying primitive (re-detect-and-apply offset),
   different motivation (changes mid-source vs stable).
 - **Cluster B Borderline content compensation sub-cluster:**
-  `[pseudo-ended-detection]`, `[edit-list-compensation]`,
+  [pseudo-ended-detection](./pseudo-ended-detection.md),
+  [edit-list-compensation](./edit-list-compensation.md),
   `[buffer-stall-recovery]` — all build on this feature's time-
   mapping primitive but address different content-defect concerns.
   See [clusters.md § Time normalization](./clusters.md#time-normalization)'s

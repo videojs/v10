@@ -173,7 +173,7 @@ Things this feature probably forces decisions on, not just additions:
   is the MSE API used by one action option; the existing
   `endOfStream` gate behavior is the other caller. Coordination
   between the two callers is a cross-cutting concern.
-- **`[edit-list-compensation]`** *(candidate, this session)* —
+- **[edit-list-compensation](./edit-list-compensation.md)** —
   sister Borderline feature; edit-list offsets affect the
   perceived duration boundary.
 - **`[buffer-stall-recovery]`** *(candidate, this session)* —
