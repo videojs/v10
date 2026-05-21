@@ -31,146 +31,137 @@ The detailed surface for the [Video Ad API RFC](index.md). For motivation see [i
 
 Categorizes ad tracks per the IAB CTV Ad Portfolio. Each value corresponds to one `AdTrack` instance.
 
-| Value       | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| LINEAR      | Traditional in-stream ad that replaces content (pre/mid/post-roll).        |
-| PAUSE       | Ad triggered when the viewer pauses content.                               |
-| MENU        | Ad displayed within the platform UI/navigation, outside video playback.    |
-| SQUEEZEBACK | Ad displayed alongside resized content (L-Shape, Frame, Double Box).       |
-| OVERLAY     | Ad displayed over content without resizing it (Corner, Lower Third).       |
-| IN_SCENE    | Ad composited into the video scene (virtual billboard, product placement). |
-| SCREENSAVER | Ad triggered by device/app inactivity.                                     |
+| Value           | Description                                                                |
+| --------------- | -------------------------------------------------------------------------- |
+| `'linear'`      | Traditional in-stream ad that replaces content (pre/mid/post-roll).        |
+| `'pause'`       | Ad triggered when the viewer pauses content.                               |
+| `'menu'`        | Ad displayed within the platform UI/navigation, outside video playback.    |
+| `'squeezeback'` | Ad displayed alongside resized content (L-Shape, Frame, Double Box).       |
+| `'overlay'`     | Ad displayed over content without resizing it (Corner, Lower Third).       |
+| `'in-scene'`    | Ad composited into the video scene (virtual billboard, product placement). |
+| `'screensaver'` | Ad triggered by device/app inactivity.                                     |
 
 ```typescript
-enum AdFormat {
-  LINEAR = 'LINEAR',
-  PAUSE = 'PAUSE',
-  MENU = 'MENU',
-  SQUEEZEBACK = 'SQUEEZEBACK',
-  OVERLAY = 'OVERLAY',
-  IN_SCENE = 'IN_SCENE',
-  SCREENSAVER = 'SCREENSAVER',
-}
+type AdFormat =
+  | 'linear'
+  | 'pause'
+  | 'menu'
+  | 'squeezeback'
+  | 'overlay'
+  | 'in-scene'
+  | 'screensaver';
 ```
 
 ### AdTriggerType
 
 Identifies what causes an ad cue to activate, generalizing across timeline-driven, user-action-driven, and device-state-driven triggers so the API supports the full range of CTV ad formats.
 
-| Value        | Description                                                      |
-| ------------ | ---------------------------------------------------------------- |
-| TIMELINE     | Content reaches a specific time position (pre/mid/post-roll).    |
-| USER_ACTION  | Viewer performs an action (pause, navigate to menu).             |
-| DEVICE_STATE | Device/OS condition is met (inactivity timeout, power-on).       |
-| PROGRAMMATIC | Server-initiated during content playback (overlay, squeezeback). |
-| COMPOSITED   | Pre-composed into the video stream at transcode time (in-scene). |
+| Value            | Description                                                      |
+| ---------------- | ---------------------------------------------------------------- |
+| `'timeline'`     | Content reaches a specific time position (pre/mid/post-roll).    |
+| `'user-action'`  | Viewer performs an action (pause, navigate to menu).             |
+| `'device-state'` | Device/OS condition is met (inactivity timeout, power-on).       |
+| `'programmatic'` | Server-initiated during content playback (overlay, squeezeback). |
+| `'composited'`   | Pre-composed into the video stream at transcode time (in-scene). |
 
 ```typescript
-enum AdTriggerType {
-  TIMELINE = 'TIMELINE',
-  USER_ACTION = 'USER_ACTION',
-  DEVICE_STATE = 'DEVICE_STATE',
-  PROGRAMMATIC = 'PROGRAMMATIC',
-  COMPOSITED = 'COMPOSITED',
-}
+type AdTriggerType =
+  | 'timeline'
+  | 'user-action'
+  | 'device-state'
+  | 'programmatic'
+  | 'composited';
 ```
 
 ### DismissReason
 
 Captures why an ad cue ended, which varies by format.
 
-| Value            | Description                                               |
-| ---------------- | --------------------------------------------------------- |
-| COMPLETED        | Cue reached its natural duration.                         |
-| VIEWER_DISMISSED | Viewer explicitly dismissed the ad.                       |
-| CONTENT_RESUMED  | Viewer resumed content playback (pause/screensaver cues). |
-| NAVIGATED_AWAY   | Viewer navigated away from the ad surface (menu cues).    |
-| DEVICE_TIMEOUT   | Device timed out or shut off.                             |
-| APP_EXITED       | User exited the application.                              |
-| SKIPPED          | Viewer used a skip control.                               |
-| REPLACED         | Another cue replaced this one (refresh cycle).            |
+| Value                  | Description                                               |
+| ---------------------- | --------------------------------------------------------- |
+| `'completed'`          | Cue reached its natural duration.                         |
+| `'viewer-dismissed'`   | Viewer explicitly dismissed the ad.                       |
+| `'content-resumed'`    | Viewer resumed content playback (pause/screensaver cues). |
+| `'navigated-away'`     | Viewer navigated away from the ad surface (menu cues).    |
+| `'device-timeout'`     | Device timed out or shut off.                             |
+| `'app-exited'`         | User exited the application.                              |
+| `'skipped'`            | Viewer used a skip control.                               |
+| `'replaced'`           | Another cue replaced this one (refresh cycle).            |
 
 ```typescript
-enum DismissReason {
-  COMPLETED = 'COMPLETED',
-  VIEWER_DISMISSED = 'VIEWER_DISMISSED',
-  CONTENT_RESUMED = 'CONTENT_RESUMED',
-  NAVIGATED_AWAY = 'NAVIGATED_AWAY',
-  DEVICE_TIMEOUT = 'DEVICE_TIMEOUT',
-  APP_EXITED = 'APP_EXITED',
-  SKIPPED = 'SKIPPED',
-  REPLACED = 'REPLACED',
-}
+type DismissReason =
+  | 'completed'
+  | 'viewer-dismissed'
+  | 'content-resumed'
+  | 'navigated-away'
+  | 'device-timeout'
+  | 'app-exited'
+  | 'skipped'
+  | 'replaced';
 ```
 
 ### AdCueState
 
 Lifecycle state for `AdCue` instances.
 
-| Value        | Description                                                                               |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| SCHEDULED    | Cue is known but not yet triggered. Analogous to a VTTCue before the playhead reaches it. |
-| ACTIVATING   | Cue is transitioning to active (e.g., squeezeback content resize animation in progress).  |
-| ACTIVE       | Cue is fully presenting. Appears in `AdTrack.activeCues`.                                 |
-| DEACTIVATING | Cue is transitioning out (e.g., squeezeback resize reversal).                             |
-| COMPLETED    | Cue has finished. Remains in `AdTrack.cues` for history, but not in `activeCues`.         |
-| ERROR        | Cue failed to load or present.                                                            |
+| Value            | Description                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `'scheduled'`    | Cue is known but not yet triggered. Analogous to a VTTCue before the playhead reaches it. |
+| `'activating'`   | Cue is transitioning to active (e.g., squeezeback content resize animation in progress).  |
+| `'active'`       | Cue is fully presenting. Appears in `AdTrack.activeCues`.                                 |
+| `'deactivating'` | Cue is transitioning out (e.g., squeezeback resize reversal).                             |
+| `'completed'`    | Cue has finished. Remains in `AdTrack.cues` for history, but not in `activeCues`.         |
+| `'error'`        | Cue failed to load or present.                                                            |
 
 ```typescript
-enum AdCueState {
-  SCHEDULED = 'SCHEDULED',
-  ACTIVATING = 'ACTIVATING',
-  ACTIVE = 'ACTIVE',
-  DEACTIVATING = 'DEACTIVATING',
-  COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR',
-}
+type AdCueState =
+  | 'scheduled'
+  | 'activating'
+  | 'active'
+  | 'deactivating'
+  | 'completed'
+  | 'error';
 ```
 
 ### AdState
 
 Lifecycle state for individual `Ad` instances within a cue.
 
-| Value     | Description                                                                        |
-| --------- | ---------------------------------------------------------------------------------- |
-| PENDING   | Ad is in the cue but not yet presenting (queued behind other ads in a linear pod). |
-| ACTIVE    | Ad is currently presenting to the viewer.                                          |
-| COMPLETED | Ad has finished presenting.                                                        |
-| SKIPPED   | Ad was skipped by the viewer.                                                      |
-| ERROR     | Ad failed to load or render.                                                       |
+| Value         | Description                                                                        |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `'pending'`   | Ad is in the cue but not yet presenting (queued behind other ads in a linear pod). |
+| `'active'`    | Ad is currently presenting to the viewer.                                          |
+| `'completed'` | Ad has finished presenting.                                                        |
+| `'skipped'`   | Ad was skipped by the viewer.                                                      |
+| `'error'`     | Ad failed to load or render.                                                       |
 
 ```typescript
-enum AdState {
-  PENDING = 'PENDING',
-  ACTIVE = 'ACTIVE',
-  COMPLETED = 'COMPLETED',
-  SKIPPED = 'SKIPPED',
-  ERROR = 'ERROR',
-}
+type AdState =
+  | 'pending'
+  | 'active'
+  | 'completed'
+  | 'skipped'
+  | 'error';
 ```
 
 ### AdServingMode
 
-Declares how ads on a given track are delivered, distinguishing the three fundamental serving architectures. This is a per-track property because non-linear and linear tracks can use different serving mechanisms within the same playback session. For example, a LINEAR track may be SSAI while a PAUSE track is CLIENT_SIDE.
+Declares how ads on a given track are delivered, distinguishing the three fundamental serving architectures. This is a per-track property because non-linear and linear tracks can use different serving mechanisms within the same playback session. For example, a `'linear'` track may be `'ssai'` while a `'pause'` track is `'client-side'`.
 
 Behavioral contract per value:
 
-- **CLIENT_SIDE**: The player switches to a separate ad stream for each break. Content pauses and resumes around each break. The player receives content-pause and content-resume signals, and the ad creative is fetched client-side via a VAST request.
-- **SSAI**: Ads are pre-stitched into the stream by a server. The stream plays continuously with no switching. Break detection is driven by timed metadata (HLS/DASH) in the stream. Content-pause and content-resume events do not fire.
-- **SGAI**: A hybrid model. The server signals ad break timing (via manifest markers or an out-of-band signaling channel), but the stream is not stitched and the creative is fetched and rendered client-side. The stream plays continuously, but a VAST request fires at each server-signaled break point.
+- **`'client-side'`**: The player switches to a separate ad stream for each break. Content pauses and resumes around each break. The player receives content-pause and content-resume signals, and the ad creative is fetched client-side via a VAST request.
+- **`'ssai'`**: Ads are pre-stitched into the stream by a server. The stream plays continuously with no switching. Break detection is driven by timed metadata (HLS/DASH) in the stream. Content-pause and content-resume events do not fire.
+- **`'sgai'`**: A hybrid model. The server signals ad break timing (via manifest markers or an out-of-band signaling channel), but the stream is not stitched and the creative is fetched and rendered client-side. The stream plays continuously, but a VAST request fires at each server-signaled break point.
 
-| Value        | Description                                                                          |
-| ------------ | ------------------------------------------------------------------------------------ |
-| CLIENT_SIDE  | Client fetches and switches to ad creative. Content pauses around breaks.            |
-| SSAI         | Ads are stitched into the stream server-side. Stream plays continuously.             |
-| SGAI         | Server signals break timing; client fetches and renders creative. No stream switch.  |
+| Value            | Description                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `'client-side'`  | Client fetches and switches to ad creative. Content pauses around breaks.            |
+| `'ssai'`         | Ads are stitched into the stream server-side. Stream plays continuously.             |
+| `'sgai'`         | Server signals break timing; client fetches and renders creative. No stream switch.  |
 
 ```typescript
-enum AdServingMode {
-  CLIENT_SIDE = 'client-side',
-  SSAI = 'ssai',
-  SGAI = 'sgai',
-}
+type AdServingMode = 'client-side' | 'ssai' | 'sgai';
 ```
 
 ## Core Interfaces
@@ -183,7 +174,7 @@ The top-level entry point, modeled after `TextTrackList`. This is the object a p
 | ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | length              | number (readonly)       | Number of `AdTrack` instances (bounded by supported formats).                                                                                                                                 |
 | index               | AdTrack                 | Index access, like `TextTrackList[0]`.                                                                                                                                                        |
-| linearServingMode   | AdServingMode \| null   | Derived convenience getter. Returns the `servingMode` of the LINEAR `AdTrack`, or null if no LINEAR track is registered. Not authoritative — read `AdTrack.servingMode` directly for other formats. |
+| servingMode         | AdServingMode \| null   | List-level default `AdServingMode`. Adapter sets this when the list is initialized. Individual `AdTrack` instances may override via their own `servingMode` for formats that use a different delivery mechanism within the same session (e.g., `'linear'` may be `'ssai'` while `'pause'` is `'client-side'`). Null if the adapter hasn't declared a list-level default. |
 
 | Method                              | Returns         | Description                            |
 | ----------------------------------- | --------------- | -------------------------------------- |
@@ -204,7 +195,7 @@ The top-level entry point, modeled after `TextTrackList`. This is the object a p
 interface AdTrackList extends EventTarget {
   readonly length: number;
   readonly [index: number]: AdTrack;
-  readonly linearServingMode: AdServingMode | null;
+  readonly servingMode: AdServingMode | null;
 
   getTrackById(id: string): AdTrack | null;
   getTrackByFormat(format: AdFormat): AdTrack | null;
@@ -222,11 +213,11 @@ Each `AdTrack` represents a format-based lane for ad experiences. The player cre
 | Property    | Type                   | Description                                                                                                                                                                                                                     |
 | ----------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id          | string (readonly)      | Unique identifier for this track (typically matches the format name).                                                                                                                                                           |
-| format      | AdFormat (readonly)    | Which IAB ad format this track manages (LINEAR, OVERLAY, PAUSE, etc.). Immutable after creation.                                                                                                                                |
+| format      | AdFormat (readonly)    | Which IAB ad format this track manages (`'linear'`, `'overlay'`, `'pause'`, etc.). Immutable after creation.                                                                                                                                |
 | servingMode | AdServingMode          | How ads on this track are delivered. See [AdServingMode](#adservingmode). Set by the adapter when the track is initialized; may be updated if the session changes delivery model.                                               |
 | label       | string (readonly)      | Human-readable label (e.g., 'Linear Ads', 'Overlay Ads'). Parallels `TextTrack.label`.                                                                                                                                          |
 | cues        | AdCueList (readonly)   | All `AdCue` instances known to this track (scheduled, active, completed). Parallels `TextTrack.cues`.                                                                                                                           |
-| activeCues  | AdCueList (readonly)   | `AdCue` instances currently in ACTIVE or ACTIVATING state. Parallels `TextTrack.activeCues`. Updated automatically as cue states change.                                                                                        |
+| activeCues  | AdCueList (readonly)   | `AdCue` instances currently in `'active'` or `'activating'` state. Parallels `TextTrack.activeCues`. Updated automatically as cue states change.                                                                                        |
 
 **Methods on AdTrack:**
 
@@ -264,17 +255,17 @@ interface AdTrack extends EventTarget {
 
 ### AdCue
 
-An `AdCue` represents a group of one or more related ads that present together or sequentially within a single activation window. For LINEAR tracks, this is a pod/break (e.g., a mid-roll with 3 ads). For PAUSE or SCREENSAVER tracks, it is a single presentation session (one or more ads that show while the content is paused). For OVERLAY or SQUEEZEBACK tracks, it is a single appearance. The cue has its own lifecycle state and fires group-level events.
+An `AdCue` represents a group of one or more related ads that present together or sequentially within a single activation window. For `'linear'` tracks, this is a pod/break (e.g., a mid-roll with 3 ads). For `'pause'` or `'screensaver'` tracks, it is a single presentation session (one or more ads that show while the content is paused). For `'overlay'` or `'squeezeback'` tracks, it is a single appearance. The cue has its own lifecycle state and fires group-level events.
 
 | Property      | Type                        | Description                                                                                                                                                       |
 | ------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id            | string                      | Unique identifier for this cue instance.                                                                                                                          |
 | track         | AdTrack \| null (readonly)  | The `AdTrack` this cue belongs to.                                                                                                                                |
-| state         | AdCueState                  | Current lifecycle state: SCHEDULED, ACTIVATING, ACTIVE, DEACTIVATING, COMPLETED, or ERROR.                                                                        |
-| triggerType   | AdTriggerType               | What causes this cue to activate (TIMELINE, USER_ACTION, DEVICE_STATE, PROGRAMMATIC, COMPOSITED).                                                                 |
-| startTime     | number \| null              | Content timeline position (seconds) at which this cue activates. Non-null for TIMELINE cues; null for event-driven cues.                                          |
-| endTime       | number \| null              | Content timeline position at which this cue deactivates. May be null for indeterminate-duration cues.                                                             |
-| duration      | number \| null              | Total expected duration of the cue in seconds. Derived from `endTime − startTime` for TIMELINE cues; set explicitly for others. Null if indeterminate.            |
+| state         | AdCueState                  | Current lifecycle state: `'scheduled'`, `'activating'`, `'active'`, `'deactivating'`, `'completed'`, or `'error'`.                                                 |
+| triggerType   | AdTriggerType               | What causes this cue to activate (`'timeline'`, `'user-action'`, `'device-state'`, `'programmatic'`, `'composited'`).                                              |
+| startTime     | number \| null              | Content timeline position (seconds) at which this cue activates. Non-null for `'timeline'` cues; null for event-driven cues.                                       |
+| endTime       | number \| null              | Content timeline position at which this cue deactivates. May be null for indeterminate-duration cues.                                                              |
+| duration      | number \| null              | Total expected duration of the cue in seconds. Derived from `endTime − startTime` for `'timeline'` cues; set explicitly for others. Null if indeterminate.         |
 | currentTime   | number                      | Elapsed time since this cue became active, in seconds. Resets on each activation.                                                                                 |
 | ads           | AdList (readonly)           | All `Ad` instances in this cue group. For a linear break, this is the ordered pod of ads. For a non-linear cue, this may be a single Ad or multiple concurrent ads. |
 | activeAd      | Ad \| null (readonly)       | The `Ad` currently presenting within this cue. For linear pods, advances through the pod; for non-linear cues, typically the single active Ad.                    |
@@ -294,13 +285,13 @@ Fired on individual `AdCue` instances. Analogous to VTTCue `enter` and `exit` ev
 
 | Event        | Description                                                                                                                                                                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| activating   | Cue is transitioning to active (e.g., squeezeback resize). State changes to ACTIVATING.                                                                                                                                                                |
-| activated    | Cue is fully active and presenting. State changes to ACTIVE. Cue enters `AdTrack.activeCues`. Parallels VTTCue `enter`.                                                                                                                                |
-| deactivating | Cue is transitioning out (e.g., squeezeback resize reversal). State changes to DEACTIVATING.                                                                                                                                                           |
-| deactivated  | Cue is fully inactive. State changes to COMPLETED. Cue exits `activeCues`. Detail includes `DismissReason`. Parallels VTTCue `exit`.                                                                                                                   |
-| timeupdate   | Fires periodically while the cue is in ACTIVE state, mirroring `HTMLMediaElement.ontimeupdate`. Enables countdown timers, progress bars, and other time-dependent UI at the cue/break level without polling. See [The timeupdate Event](#the-timeupdate-event). |
+| activating   | Cue is transitioning to active (e.g., squeezeback resize). State changes to `'activating'`.                                                                                                                                                            |
+| activated    | Cue is fully active and presenting. State changes to `'active'`. Cue enters `AdTrack.activeCues`. Parallels VTTCue `enter`.                                                                                                                            |
+| deactivating | Cue is transitioning out (e.g., squeezeback resize reversal). State changes to `'deactivating'`.                                                                                                                                                       |
+| deactivated  | Cue is fully inactive. State changes to `'completed'`. Cue exits `activeCues`. Detail includes `DismissReason`. Parallels VTTCue `exit`.                                                                                                               |
+| timeupdate   | Fires periodically while the cue is in `'active'` state, mirroring `HTMLMediaElement.ontimeupdate`. Enables countdown timers, progress bars, and other time-dependent UI at the cue/break level without polling. See [The timeupdate Event](#the-timeupdate-event). |
 | adchange     | The `activeAd` within the cue changed (e.g., next ad in a linear pod started). Lets the player react to individual ad transitions without listening to every Ad.                                                                                       |
-| error        | Cue failed to present. State changes to ERROR.                                                                                                                                                                                                         |
+| error        | Cue failed to present. State changes to `'error'`.                                                                                                                                                                                                     |
 
 ```typescript
 interface AdCue extends EventTarget {
@@ -336,7 +327,7 @@ The `Ad` interface represents a single ad experience within a cue. It carries al
 | --------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id              | string                              | Unique identifier for this ad instance.                                                                                                                    |
 | cue             | AdCue \| null (readonly)            | The `AdCue` this ad belongs to.                                                                                                                            |
-| state           | AdState                             | Current lifecycle state: PENDING, ACTIVE, COMPLETED, SKIPPED, or ERROR.                                                                                    |
+| state           | AdState                             | Current lifecycle state: `'pending'`, `'active'`, `'completed'`, `'skipped'`, or `'error'`.                                                                |
 | creative        | AdCreative                          | Metadata about the creative asset (see [AdCreative](#adcreative)).                                                                                         |
 | adViewport      | AdViewport \| null                  | Screen region where the ad creative renders, as percentage insets. Null for external placements.                                                           |
 | contentViewport | AdViewport \| null                  | Screen region where content should render alongside this ad. Non-null only for formats that resize content (e.g., Squeezeback). Null for all other formats. |
@@ -354,8 +345,8 @@ The `Ad` interface represents a single ad experience within a cue. It carries al
 
 | Method                              | Returns | Description                                                                                                             |
 | ----------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| skip()                              | void    | Request to skip this ad. Throws if not skippable or not in ACTIVE state.                                                |
-| dismiss()                           | void    | Request to dismiss a non-linear ad. Only valid for formats that support viewer dismissal (PAUSE, OVERLAY, SCREENSAVER). |
+| skip()                              | void    | Request to skip this ad. Throws if not skippable or not in `'active'` state.                                                          |
+| dismiss()                           | void    | Request to dismiss a non-linear ad. Only valid for formats that support viewer dismissal (`'pause'`, `'overlay'`, `'screensaver'`).   |
 | addEventListener(type, listener)    | void    | Standard EventTarget interface.                                                                                         |
 | removeEventListener(type, listener) | void    | Standard EventTarget interface.                                                                                         |
 
@@ -365,18 +356,18 @@ Fired on individual `Ad` instances within a cue.
 
 | Event            | Description                                                                                                                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| activated        | Ad started presenting. State changes to ACTIVE.                                                                                                                                              |
-| completed        | Ad finished presenting. State changes to COMPLETED.                                                                                                                                          |
-| timeupdate       | Fires periodically while the ad is in ACTIVE state, mirroring `HTMLMediaElement.ontimeupdate`. The ad's `currentTime` property reflects the updated value. See [The timeupdate Event](#the-timeupdate-event). |
+| activated        | Ad started presenting. State changes to `'active'`.                                                                                                                                          |
+| completed        | Ad finished presenting. State changes to `'completed'`.                                                                                                                                      |
+| timeupdate       | Fires periodically while the ad is in `'active'` state, mirroring `HTMLMediaElement.ontimeupdate`. The ad's `currentTime` property reflects the updated value. See [The timeupdate Event](#the-timeupdate-event). |
 | firstquartile    | 25% of ad duration elapsed.                                                                                                                                                                  |
 | midpoint         | 50% of ad duration elapsed.                                                                                                                                                                  |
 | thirdquartile    | 75% of ad duration elapsed.                                                                                                                                                                  |
 | click            | User clicked/selected the ad. Detail includes `clickThroughUrl`.                                                                                                                             |
-| skip             | User skipped the ad. State changes to SKIPPED.                                                                                                                                               |
+| skip             | User skipped the ad. State changes to `'skipped'`.                                                                                                                                           |
 | skippablechanged | The `skippable` state changed (e.g., skip timer elapsed).                                                                                                                                    |
 | pause            | Ad playback paused (for video creatives).                                                                                                                                                    |
 | resume           | Ad playback resumed.                                                                                                                                                                         |
-| error            | Ad failed to load or render. State changes to ERROR.                                                                                                                                         |
+| error            | Ad failed to load or render. State changes to `'error'`.                                                                                                                                     |
 | interactionstart | SIMID interactive session began.                                                                                                                                                             |
 | interactionend   | SIMID interactive session ended.                                                                                                                                                             |
 | refresh          | Non-linear ad creative was refreshed (pause/screensaver ads).                                                                                                                                |
@@ -517,7 +508,7 @@ Describes the screen region an ad or content area occupies, expressed as insets 
 | Squeezeback — Double Box (right)     | { top: 25, right: 0, bottom: 25, left: 50 }   | { top: 0, right: 50, bottom: 0, left: 0 }     | Ad occupies a centered box on the right half. Content fills the left half.         |
 | Pause Ad (partial, 600×600)          | { top: 25, right: 25, bottom: 25, left: 25 }  | null                                          | Ad occupies the center 50% of the paused frame.                                    |
 
-The player uses these viewports to position the ad creative and resize the content element without needing to know a format-specific layout name. This also means custom or future layouts that don't match any predefined enum value are naturally supported.
+The player uses these viewports to position the ad creative and resize the content element without needing to know a format-specific layout name. This also means custom or future layouts that don't match any predefined format value are naturally supported.
 
 ```typescript
 interface AdViewport {
@@ -571,7 +562,7 @@ interface QRCodeInfo {
 
 ### SqueezebackMetadata
 
-Typed metadata for `AdCue` instances on the SQUEEZEBACK track, accessible via `cue.metadata`. This captures cue-level layout instructions for the player: the target content region and transition animation parameters. Note that each `Ad` in the cue also declares its own `adViewport` and `contentViewport` directly (see [Ad](#ad)). For the common case where all ads in a squeezeback share the same content region, `SqueezebackMetadata.contentViewport` and each `Ad`'s `contentViewport` will be equivalent; adapters should populate both to give the player flexibility in which it reads.
+Typed metadata for `AdCue` instances on the `'squeezeback'` track, accessible via `cue.metadata`. This captures cue-level layout instructions for the player: the target content region and transition animation parameters. Note that each `Ad` in the cue also declares its own `adViewport` and `contentViewport` directly (see [Ad](#ad)). For the common case where all ads in a squeezeback share the same content region, `SqueezebackMetadata.contentViewport` and each `Ad`'s `contentViewport` will be equivalent; adapters should populate both to give the player flexibility in which it reads.
 
 | Property           | Type       | Description                                                                                                                                                                                                                 |
 | ------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
