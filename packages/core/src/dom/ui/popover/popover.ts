@@ -68,7 +68,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  let unregisterMemberTrigger: (() => void) | null = null;
   const capturedPointers = new Set<number>();
+  let skipBlurCloseAfterInsidePointer = false;
+  let skipBlurCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const layer = createDismissLayer({
     transition: options.transition,
@@ -110,6 +113,27 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function canToggleOnClick(): boolean {
     if (!options.openOnHover?.()) return true;
     return canHover();
+  }
+
+  function clearInsidePointerBlurCloseGuard(): void {
+    skipBlurCloseAfterInsidePointer = false;
+    if (skipBlurCloseTimeout !== null) {
+      clearTimeout(skipBlurCloseTimeout);
+      skipBlurCloseTimeout = null;
+    }
+  }
+
+  function skipNextBlurCloseAfterInsidePointer(): void {
+    skipBlurCloseAfterInsidePointer = true;
+    if (skipBlurCloseTimeout !== null) clearTimeout(skipBlurCloseTimeout);
+    skipBlurCloseTimeout = setTimeout(clearInsidePointerBlurCloseGuard, 500);
+  }
+
+  function shouldSkipBlurCloseAfterInsidePointer(): boolean {
+    if (!skipBlurCloseAfterInsidePointer) return false;
+
+    clearInsidePointerBlurCloseGuard();
+    return true;
   }
 
   // --- Open/close ---
@@ -180,7 +204,17 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     // the listener is on document, so contains() would always fail.
     const path = event.composedPath();
 
-    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) return;
+    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) {
+      skipNextBlurCloseAfterInsidePointer();
+      return;
+    }
+
+    if (options.group?.()?.pathHasPeerMemberTrigger(path, triggerEl)) {
+      skipNextBlurCloseAfterInsidePointer();
+      return;
+    }
+
+    clearInsidePointerBlurCloseGuard();
 
     applyClose('outside-click', event);
   }
@@ -188,7 +222,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
     options.group?.()?.close(groupMember);
+    unregisterMemberTrigger?.();
+    unregisterMemberTrigger = null;
     clearHoverTimeout();
+    clearInsidePointerBlurCloseGuard();
     capturedPointers.clear();
     triggerEl = null;
     popupEl = null;
@@ -293,6 +330,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
         return;
       }
 
+      if (relatedTarget instanceof HTMLElement && options.group?.()?.isPeerTrigger(relatedTarget, triggerEl)) {
+        return;
+      }
+
+      if (shouldSkipBlurCloseAfterInsidePointer()) return;
+
       applyClose('blur');
     },
   };
@@ -300,7 +343,13 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   // --- Element setters ---
 
   function setTriggerElement(el: HTMLElement | null): void {
+    unregisterMemberTrigger?.();
+    unregisterMemberTrigger = null;
     triggerEl = el;
+    const group = options.group?.();
+    if (el && group) {
+      unregisterMemberTrigger = group.addMemberTrigger(el);
+    }
   }
 
   function setPopupElement(el: HTMLElement | null): void {

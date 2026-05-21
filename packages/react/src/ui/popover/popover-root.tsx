@@ -58,7 +58,6 @@ export function PopoverRoot({
   const delayRef = useLatestRef(delay);
   const closeDelayRef = useLatestRef(closeDelay);
   const popupGroupRef = useLatestRef(popupGroup);
-
   const [popover] = useState(() => {
     const instance = createPopover({
       transition: createTransition(),

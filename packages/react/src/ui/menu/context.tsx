@@ -23,6 +23,8 @@ export interface MenuContextValue {
   push: (menuId: string, triggerId: string) => void;
   /** Pop the current submenu from the navigation stack. */
   pop: () => void;
+  /** Register a nested root menu so it closes when this root menu closes (exclusive / group dismiss). */
+  registerSubmenuDescendant: (api: MenuApi) => () => void;
 }
 
 const MenuContext = createContext<MenuContextValue | null>(null);

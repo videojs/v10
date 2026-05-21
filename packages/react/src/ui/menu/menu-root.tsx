@@ -1,10 +1,16 @@
 'use client';
 
 import { MenuCore, MenuDataAttrs } from '@videojs/core';
-import { createMenu, createTransition, type MenuChangeDetails, type PositioningBoundary } from '@videojs/core/dom';
+import {
+  createMenu,
+  createTransition,
+  type MenuApi,
+  type MenuChangeDetails,
+  type PositioningBoundary,
+} from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -40,6 +46,15 @@ export function MenuRoot({
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
+  const descendantMenusRef = useRef(new Set<MenuApi>());
+  const registerSubmenuDescendantForRoot = useCallback((api: MenuApi) => {
+    descendantMenusRef.current.add(api);
+    return () => {
+      descendantMenusRef.current.delete(api);
+    };
+  }, []);
+  const registerSubmenuDescendant = parentMenu?.registerSubmenuDescendant ?? registerSubmenuDescendantForRoot;
+
   const [core] = useState(() => new MenuCore({ ...coreProps, isSubmenu }));
 
   const isControlled = controlledOpen !== undefined;
@@ -55,6 +70,13 @@ export function MenuRoot({
     const instance = createMenu({
       transition: createTransition(),
       onOpenChange(nextOpen, details) {
+        if (!nextOpen && !isSubmenuRef.current) {
+          for (const sub of [...descendantMenusRef.current]) {
+            if (sub.input.current.active) {
+              sub.close('imperative-action');
+            }
+          }
+        }
         onOpenChangeRef.current?.(nextOpen, details);
       },
       onOpenChangeComplete(nextOpen) {
@@ -95,6 +117,11 @@ export function MenuRoot({
     menu.close('imperative-action');
   }, [controls?.state.visible, isSubmenu, menu]);
 
+  useEffect(() => {
+    if (!isSubmenu) return;
+    return registerSubmenuDescendant(menu);
+  }, [isSubmenu, menu, registerSubmenuDescendant]);
+
   useDestroy(menu);
 
   const input = useSnapshot(menu.input);
@@ -126,6 +153,7 @@ export function MenuRoot({
       navigationDirection,
       push: menu.push,
       pop: menu.pop,
+      registerSubmenuDescendant,
     }),
     [
       core,
@@ -138,6 +166,7 @@ export function MenuRoot({
       activeSubMenuId,
       activeSubMenuTriggerId,
       navigationDirection,
+      registerSubmenuDescendant,
     ]
   );
 
