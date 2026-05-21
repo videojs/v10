@@ -7,7 +7,7 @@
   --menu-item-height: 1.875rem;
   --menu-transition-duration: 250ms;
   box-sizing: border-box;
-  min-width: min(6rem, var(--media-popover-available-width));
+  min-width: min(6rem, var(--media-popover-available-width, 6rem));
   max-width: var(--media-popover-available-width, none);
   max-height: var(--media-popover-available-height, none);
   padding: 0.25rem;
@@ -184,7 +184,7 @@
   /* Settings menu */
   &.media-menu--settings {
     width: var(--media-menu-width);
-    min-width: min(var(--media-popover-available-width), 11rem);
+    min-width: min(var(--media-popover-available-width, 11rem), 11rem);
     height: var(--media-menu-height);
     max-height: min(var(--media-popover-available-height), 16rem);
     overflow: hidden;
