@@ -81,9 +81,9 @@ the Epics doc).
   documented; its "Audio caps inclusion" open question explicitly
   references this doc as the resolution candidate. When audio-ABR
   ships, the audio-caps integration question becomes load-bearing.
-- **`[audio-only-composition]` / `[video-only-composition]`** —
-  composition variants that subtract behaviors for mode-only
-  delivery. Different mechanism (composition, not constraint).
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md) / [`video-only-mode-override`](../use-cases/video-only-mode-override.md)** —
+  use-case compositions that subtract behaviors for mode-only delivery.
+  Different mechanism (composition, not constraint).
 
 **Out of scope (different architectural layer):**
 - Above-engine consumers that write cap state from React / HTML
@@ -199,9 +199,9 @@ Things this feature probably forces decisions on, not just additions:
   constraint+filter feature on the codec axis. Same filter-then-select
   shape; the open question about per-cap slots vs unified slot is
   shared.
-- **`[audio-only-composition]` / `[video-only-composition]`**
-  *(candidates)* — composition variants for mode-only delivery.
-  Different mechanism than caps.
+- **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md) / [`video-only-mode-override`](../use-cases/video-only-mode-override.md)** —
+  use-case compositions for mode-only delivery. Different mechanism
+  than caps (subtract behaviors vs filter candidates).
 
 ## See also
 

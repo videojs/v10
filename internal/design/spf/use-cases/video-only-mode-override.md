@@ -6,22 +6,27 @@ definition: coarse
 
 # Video-only mode override
 
-Engine variant that delivers video-only playback *from mixed-manifest sources*
-(sources containing both audio and video renditions). The Case-2 Player feature
-per [`../features/clusters.md` § Feature classification axes](../features/clusters.md#feature-classification-axes),
-parallel to and distinct from [`video-only-composition`](../features/video-only-composition.md)
-on the inverse axis: this use case is about **delivery-mode choice** (consumer
-wants video-only despite mixed source), where the Case-1 feature is about
-**source-shape correctness** (engine handles video-only manifests).
-Inverse-axis sibling of [`audio-only-mode-override`](./audio-only-mode-override.md).
+Engine variant that delivers video-only playback. Composes regardless of
+source shape: handles both truly video-only HLS sources (manifests with
+no audio renditions) and mixed-AV sources (audio renditions ignored at
+composition time). The variant decision is encoded in the adapter
+choice. Inverse-axis sibling of
+[`audio-only-mode-override`](./audio-only-mode-override.md).
 
-Notion epic [NEW-B](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4):
-*"Subtract-down composition. Drives background-looping engine ([#873](https://github.com/videojs/v10/issues/873));
-placement in this issue set vs under #873: open."* This doc captures the
-Case-2 mode-override concern directly;
+This is a Player-level composition variant per [`../features/clusters.md` §
+Feature classification axes](../features/clusters.md#feature-classification-axes).
+It subsumes what Notion originally framed as two separate concerns
+(Notion epic NEW-A "Basic Video-only" — source-shape correctness — and
+epic NEW-B "Video-only Composition" — delivery-mode choice) into a single
+composition with two variant-decision-source paths
+(see *Variant-decision signal source* below).
+
 [`background-looping-video`](./README.md#index) *(forward-ref; not yet
-documented)* is the related-but-distinct Mux product scenario that may compose
-this use case as part of a broader assembly.
+documented)* is a related-but-distinct Mux product scenario that may
+compose this use case as part of a broader assembly (loop +
+autoplay-muted + GPU/thermal-aware caps). See
+[GitHub #873 (mux-background-video)](https://github.com/videojs/v10/issues/873)
+for product context.
 
 ## Status
 
@@ -32,16 +37,32 @@ this use case as part of a broader assembly.
 - **Definition depth:** coarse — variant shape sketched, engine-factory and
   adapter shapes named at the level of "parallel siblings to the existing
   pair," implementation specifics tracked as open questions.
-- **Source material:** Notion epic NEW-B (Video-only Composition; Cluster E
-  Selection policy layer; Player composition case 2; Eng=M, Validation=M).
+- **Source material:** Notion epics
+  [NEW-A](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) (Basic
+  Video-only, Eng=S / Validation=S) and
+  [NEW-B](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
+  (Video-only Composition, Eng=M / Validation=M). Originally classified
+  as separate Case-1 (Media-src composition case) + Case-2 (Player
+  composition case) concerns; consolidated here because both ship the
+  same engine factory and adapter, distinguished only by which signal
+  sources the variant decision.
 - **Mux relevance:** [GitHub #873 (mux-background-video)](https://github.com/videojs/v10/issues/873)
   is product-adjacent — distinct use case (`background-looping-video`) that
   shares constituent features but addresses a different delivery scenario.
 
 ## Target delivery context
 
-Consumer scenarios where a source has both audio and video renditions but the
-consumer wants video-only delivery:
+**Source-shape correctness — truly video-only sources** (where the manifest
+declares only video renditions and no audio):
+
+- **Video-only HLS assets** — sources published without audio tracks
+  (silent ambient/hero video, ad insertions, certain background-loop
+  prerolls). Today's engine tolerance for missing audio is less
+  established than for missing video (see *Open questions*); this
+  variant composes the video-only pipeline *explicitly* and supplants
+  the implicit tolerance.
+
+**Delivery-mode choice — mixed-AV sources delivered as video-only**:
 
 - **Muted-autoplay social feeds** — autoplay-muted video tiles where audio
   decode + transmission is wasted bandwidth and CPU.
@@ -56,14 +77,15 @@ consumer wants video-only delivery:
   (Phase 2), enables a "muted video + captions" delivery pattern for
   accessibility-first or quiet-environment contexts.
 
-Common to all: the *source* is mixed-AV; the *delivery* is video-only. The
-use case is a customer-facing **mode override**, not a source-shape adaptation.
+Common to all: the *delivery* is video-only. The variant composes
+identically across both source shapes; what differs is the
+*variant-decision source* (see below).
 
 ## Phases of complexity
 
 | Phase | What |
 |---|---|
-| **1 — Basic functionality** | Parallel engine-factory + adapter pair. The engine factory (`createVideoOnlyHlsEngine` or similar) composes the video-side subset of `createSimpleHlsEngine`'s behavior list, subtracting audio-side behaviors entirely. The adapter (`SimpleVideoOnlyHlsMediaElement` or similar) wraps that engine. Includes empirical verification of Firefox `mozHasAudio` behavior under subtractive-audio composition — the Case-1 [`video-only-composition`](../features/video-only-composition.md) flags this as a verify-empirically concern that's *more pointedly* relevant here (mixed-source content with audio subtractively-composed-out may behave differently than a genuinely audio-less source) |
+| **1 — Basic functionality** | Parallel engine-factory + adapter pair. The engine factory (`createHlsVideoOnlyEngine` or similar — mirroring the audio-axis sibling's `createHlsAudioOnlyEngine`) composes the video-side subset of `createSimpleHlsEngine`'s behavior list, subtracting audio-side behaviors entirely. The adapter (`SimpleHlsVideoOnlyMediaElement` or similar) wraps that engine. Includes empirical verification of Firefox `mozHasAudio` behavior under subtractive-audio composition — both for genuinely-no-audio sources and for mixed-source manifests with audio subtractively-composed-out (the latter behavior is less established and may differ from the former) |
 | **2 — Features/functionality relevant to the use case** | Compose constituent feature behaviors as they land: [`subtitles`](../features/subtitles.md) for muted-video + captions a11y delivery pattern (a canonical video-only consumption shape). [`multi-language-audio`](../features/multi-language-audio.md) is *not* relevant here (audio subtracted), and Phase 2's "audio-abr-equivalent" doesn't apply on the video axis (video-abr is already Phase 1 baseline) |
 | **3 — Optimizations** | Alternative default configurations for video-only delivery: possibly muted-by-default playback (browser autoplay policies often allow muted-autoplay), GPU/thermal-aware quality caps when the consumer surface is known low-attention (ambient/background video), simpler `endOfStream` paths (single SourceBuffer to coordinate). Per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases), the Path-A vs Path-B judgment applies for any behavior whose Phase 3 customization significantly diverges from the default |
 
@@ -86,7 +108,7 @@ From `createSimpleHlsEngine`'s composition, omit:
 
 **None.** This use case ships as an *independent adapter* paired with its own
 engine factory. The variant-decision is encoded in the adapter choice itself —
-consumers instantiate `SimpleVideoOnlyHlsMediaElement` to opt in. No runtime
+consumers instantiate `SimpleHlsVideoOnlyMediaElement` to opt in. No runtime
 variant-decision behavior is needed.
 
 ### Alternative implementations (Phase 3 candidates)
@@ -113,21 +135,12 @@ variant-decision behavior is needed.
 
 Phase 1 baseline:
 
-- **[`video-only-composition`](../features/video-only-composition.md)**
-  *(Case-1 sibling)* — used as-is at the *composition mechanism* level. The
-  Case-1 feature's "Video-only engine variant" phase row defines the
-  subtractive composition shape; this use case applies the *same* shape but
-  driven by adapter choice instead of source-shape detection. Whether the two
-  share a single engine factory (with two entry points) or each gets its own
-  factory is an open question. Per the Case-1 doc, video-only source-shape
-  tolerance is currently unverified — the empirical-verification work for
-  source-shape correctness benefits both the Case-1 feature and this use case.
 - **[`video-abr`](../features/video-abr.md)** — used as-is. Multi-bitrate
   video selection (the engine's existing ABR algorithm). The variant always
   plays video.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   used with an alternative adapter shape. The variant ships its own
-  `SimpleVideoOnlyHlsMediaElement`-style adapter parallel to
+  `SimpleHlsVideoOnlyMediaElement`-style adapter parallel to
   `SimpleHlsMediaElement`. The `shareSignals` mechanism + mixin pattern
   compose unchanged.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is.
@@ -161,7 +174,7 @@ const player = new SimpleHlsMediaElement();
 player.src = mixedSourceUrl;
 
 // Video-only mode override
-const videoPlayer = new SimpleVideoOnlyHlsMediaElement();
+const videoPlayer = new SimpleHlsVideoOnlyMediaElement();
 videoPlayer.src = sameMixedSourceUrl;
 ```
 
@@ -176,31 +189,39 @@ wraps it with the API consumers actually call.
 
 ## Variant-decision signal source
 
-**Adapter-upfront.** The adapter is the variant decision — selecting
-`SimpleVideoOnlyHlsMediaElement` over `SimpleHlsMediaElement` *is* the variant
-choice. No detect-from-parser logic, no runtime config branch.
+The variant composes identically regardless of signal source. Two paths
+exist; both target the same engine factory:
 
-Same resolution as [`audio-only-mode-override`](./audio-only-mode-override.md)
-for the recurring cross-feature *Variant-decision signal source* open
-question — Case-2 use cases resolve via adapter choice; Case-1 source-shape
-variants may benefit from detect-from-parser independently.
+**1. Adapter-upfront (target Phase 1).** Selecting
+`SimpleHlsVideoOnlyMediaElement` over `SimpleHlsMediaElement` *is* the
+variant choice. No detect-from-parser logic, no runtime config branch.
+Used by consumers that know they want video-only delivery (the
+delivery-mode-choice scenarios in *Target delivery context*).
+
+**2. Detect-from-parser (future).** A routing-from-default-adapter path
+where `SimpleHlsMediaElement` (or a higher-level adapter) detects a
+video-only source shape from the parsed presentation
+(`presentation.audioTracks` empty) and switches its internal engine
+factory to the video-only variant for that source. Targets the
+source-shape-correctness scenario without forcing consumers of
+video-only sources to opt into a separate adapter type. Not yet built.
+
+Both paths coexist by design — same shape as the audio-axis sibling
+[`audio-only-mode-override`](./audio-only-mode-override.md), whose Phase 1
+implementation pass landed the shared-factory pattern (see that doc's
+*Variant-decision signal source* section).
 
 ## Likely cross-cutting impact
 
-- **Engine variant factory shape: shared with Case-1 or separate?** Both the
-  Case-1 [`video-only-composition`](../features/video-only-composition.md) and
-  this Case-2 use case want an engine that subtracts audio-side behaviors.
-  Lean: shared factory is simpler, matches the "composition is bounded to
-  modes" framing; variant-decision source is orthogonal to the factory. Same
-  question and lean as `audio-only-mode-override` on the audio axis.
-- **Firefox `mozHasAudio` empirical verification.** The Case-1 video-only-
-  composition flags this as unverified for genuinely-no-audio sources; this
-  use case adds the question of behavior under subtractive-audio composition
-  of mixed-source manifests. Phase 1 verification covers both paths jointly.
-  Per [`mse-mms-pipeline`](../features/mse-mms-pipeline.md), `mozHasAudio` is
+- **Firefox `mozHasAudio` empirical verification.** Today's engine
+  tolerance for missing-audio sources is less established than for
+  missing-video. Phase 1 verifies the variant under both source shapes:
+  genuinely-no-audio manifests and mixed-source manifests with audio
+  subtractively composed out. Per
+  [`mse-mms-pipeline`](../features/mse-mms-pipeline.md), `mozHasAudio` is
   the cross-type invariant motivating the current per-type buffer
-  coordination — the video-only variant should produce `mozHasAudio=false`
-  cleanly.
+  coordination — the video-only variant should produce
+  `mozHasAudio=false` cleanly in both cases.
 - **Adapter shape proliferation.** Each use-case composition that gets its
   own adapter multiplies the adapter surface. Shared concern with
   `audio-only-mode-override` and forthcoming use cases.
@@ -220,11 +241,19 @@ variants may benefit from detect-from-parser independently.
 
 ## Open questions
 
-- **Engine variant factory shape** — shared with Case-1 vs separate. Resolves
-  jointly with `audio-only-mode-override`'s analogous question.
-- **Adapter naming.** `SimpleVideoOnlyHlsMediaElement` vs other. Aligns with
-  existing naming in `packages/spf/src/playback/engines/hls/adapter.ts` and
-  downstream `packages/core/src/dom/media/`.
+- **Empirical verification of video-only tolerance.** Does the current
+  `createSimpleHlsEngine` handle video-only manifests cleanly, or does
+  `setupAudioBufferActors` / `loadAudioSegments` fail or no-op
+  inconsistently when `presentation.audioTracks` is empty? Test fixture
+  work needed before scoping the variant implementation in detail. Phase
+  1 of this variant supplants the implicit tolerance entirely by
+  composing the audio-side behaviors out, so the answer informs the
+  rollout plan more than the variant's correctness.
+- **Adapter naming.** Lean: `SimpleHlsVideoOnlyMediaElement` to mirror the
+  audio-axis sibling's `SimpleHlsAudioOnlyMediaElement` (which landed in
+  Phase 1 of that use case). Aligns with the existing
+  `Simple{Variant}HlsMediaElement` naming pattern in
+  `packages/spf/src/playback/engines/hls/`.
 - **Subtitle Phase 1 vs Phase 2.** Currently Phase 2 (per the doc-type-spec
   scoping discussion). Open whether muted-video + captions a11y pattern
   should promote to Phase 1 baseline — depends on whether the canonical
@@ -248,10 +277,6 @@ variants may benefit from detect-from-parser independently.
 
 ## Related features
 
-- **[`video-only-composition`](../features/video-only-composition.md)** —
-  Case-1 sibling on the inverse axis. Source-shape correctness (this
-  feature) vs delivery-mode choice (the use case). Likely shares
-  engine-factory composition.
 - **[`video-abr`](../features/video-abr.md)** — constituent baseline.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   constituent; variant adapter parallels `SimpleHlsMediaElement`.

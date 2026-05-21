@@ -9,9 +9,9 @@ date: 2026-05-21
 
 ## What this directory is for
 
-Use-case compositions are the **Case-2 Player feature** from Notion's "Composition cases per mode" framing — distinct from the Case-1 Media-src features that live in [`../features/`](../features/).
+Use-case compositions are engine *variants*: the engine is composed this way to serve a specific delivery scenario. Same composition assembly + adapter pair, distinguished from the default `createSimpleHlsEngine` + `SimpleHlsMediaElement` by which behaviors are subtracted, added, swapped, or default-tuned.
 
-A Case-1 feature describes an engine capability: the engine *handles* a kind of source correctly. A Case-2 use-case composition describes an engine *variant*: the engine is *composed this way* to serve a specific delivery scenario. Same word can appear on both sides — `audio-only-composition` (Case-1 feature, source-shape correctness for audio-only manifests) and `audio-only-mode-override` (Case-2 use-case composition, audio-only delivery from mixed-manifest sources) are distinct concerns that share vocabulary.
+Each use case doc captures the variant assembly. Notion originally framed these as a Case-1 (Media-src composition) + Case-2 (Player composition) split — source-shape correctness versus delivery-mode choice. In practice, when both cases ship the *same* engine factory (which they do for the audio-only and video-only families), they consolidate into a single use-case doc with a *Variant-decision signal source* section that names both paths (adapter-upfront for the Case-2 framing, detect-from-parser for the Case-1 framing). When they don't share an implementation, separate docs.
 
 The discriminating principle lives in [`../features/clusters.md` § Composition vs Policy vs Middle pattern](../features/clusters.md#composition-vs-policy-vs-middle-pattern), which already names composition as the third implementation shape and quotes the load-bearing line: *"Most 'feels like composition' items actually fit the middle pattern."* This directory holds the rare ones that genuinely qualify.
 
@@ -47,7 +47,7 @@ The cut is **by purpose**, not by composition mechanism. Both use-case compositi
   - **Additive composition** — compose in new behaviors specific to this scenario (e.g., a "force audio-only delivery" variant-decision behavior).
   - **Alternative implementations** — swap an alternate implementation of a behavior the default composition uses (e.g., a loop-around buffer-fetching variant in place of the default forward-buffer behavior).
   - **Alternative default configurations** — tune existing behaviors' defaults for the variant (e.g., shorter forward-buffer targets, autoplay-muted by default, GPU/thermal-aware quality caps).
-- **Bounded to delivery modes.** Currently `audio-only-composition` and `video-only-composition` ground the established modes on the Case-1 side. New modes (background-loop, short-form, podcast, picture-in-picture, …) are admissible on the Case-2 side but go through the rubric below.
+- **Bounded to delivery modes.** Currently `audio-only-mode-override` and `video-only-mode-override` ground the established modes (each covering both source-shape and delivery-mode framings via a shared engine factory). New modes (background-loop, short-form, podcast, picture-in-picture, …) are admissible but go through the rubric below.
 
 ## Decomposition rubric
 
@@ -72,7 +72,7 @@ Failing any one routes elsewhere: cluster-E policy feature, a new phase row insi
 | **Composition specifics** | Per-mechanism breakdown: behaviors subtracted, behaviors added, alternative implementations swapped in, alternative default configurations. Combinations expected; some buckets may be empty. |
 | **Constituent features** | Case-1 features (in [`../features/`](../features/)) supplying engine capabilities the variant rests on, each with the per-feature relationship: *used as-is* / *used with alternative defaults* / *used with alternative implementation of behavior X*. |
 | **Customer-policy surface** | What consumers configure (loop flag, autoplay-muted, buffer targets, GPU/thermal caps, etc.). |
-| **Variant-decision signal source** | Adapter-upfront opt-in vs detect-from-parser. This is a recurring question across all variants — see the open question in `audio-only-composition.md` / `video-only-composition.md` / `live-stream-support.md` for the cross-feature joint resolution. |
+| **Variant-decision signal source** | Adapter-upfront opt-in vs detect-from-parser. This is a recurring question across all variants. Each use case enumerates both paths when both apply (see [`audio-only-mode-override.md`](./audio-only-mode-override.md) and [`video-only-mode-override.md`](./video-only-mode-override.md) for the established pattern). |
 | **Likely cross-cutting impact** | Decisions this variant forces on existing code (not just additions). Includes implications for shared state slots, behaviors that compose unchanged across variants, and behaviors that need per-variant alternative implementations. |
 | **Open questions** | Markers for things to think about, not prompts to resolve in the draft. |
 | **Related use cases** *(when applicable)* | Sibling use-case compositions (e.g., `audio-only-mode-override` ↔ `video-only-mode-override` as inverse-axis siblings). Distinct from constituent features. |
@@ -123,7 +123,7 @@ Two shapes that don't cleanly fit "use case composes feature":
 
 ### Sibling cross-links
 
-For direct **Case-1 / Case-2 sibling** relationships that genuinely exist (e.g., `audio-only-composition` feature ↔ `audio-only-mode-override` use case on the inverse axis), the cross-link still happens — the feature doc's *Out of scope (separate concerns)* flags the use case, and the use case's *Related features* or *See also* cross-refs back. But **constituent** is the primary framing; sibling is a special case that applies only when the use case is on the Case-2 axis of a specific Case-1 feature.
+For direct **Case-1 / Case-2 sibling** relationships that *don't* collapse into a single use case doc (i.e., the engine factory differs between the two cases), the cross-link still happens — the feature doc's *Out of scope (separate concerns)* flags the use case, and the use case's *Related features* or *See also* cross-refs back. But **constituent** is the primary framing; sibling is a special case. When both cases share an engine factory (the audio-only and video-only family pattern), they consolidate into a single use-case doc with a *Variant-decision signal source* section covering both paths — see [`audio-only-mode-override.md`](./audio-only-mode-override.md) for the established example.
 
 A use case may have:
 
@@ -138,9 +138,9 @@ A use case may have:
 
 Initially empty; populated as docs land. Candidates flagged in source material (bracketed per registry convention):
 
-- [`audio-only-mode-override`](./audio-only-mode-override.md) *(coarse)* — audio-only delivery from mixed-manifest sources. Case-2 sibling of [`audio-only-composition`](../features/audio-only-composition.md). *Notion epic #4b.*
-- [`video-only-mode-override`](./video-only-mode-override.md) *(coarse)* — video-only delivery from mixed-manifest sources. Case-2 sibling of [`video-only-composition`](../features/video-only-composition.md). Inverse-axis sibling of [`audio-only-mode-override`](./audio-only-mode-override.md). *Notion epic NEW-B.*
-- `[background-looping-video]` — Mux's background-video product scenario: loop + autoplay-muted + GPU/thermal-aware caps + likely silent-video delivery. **Distinct from `video-only-mode-override`** despite shared Mux consumer context; both may share constituent features (likely `video-only-composition`, `buffer-management` loop-around fetching when documented) but address different delivery scenarios. *[GitHub #873](https://github.com/videojs/v10/issues/873); [`mux-background-video`](https://github.com/muxinc/mux-background-video) prior art.*
+- [`audio-only-mode-override`](./audio-only-mode-override.md) *(partial — Phase 1 landed)* — audio-only delivery. Covers both truly-audio-only HLS sources and mixed-manifest sources delivered as audio-only via the same shared engine factory (`createHlsAudioOnlyEngine`). Subsumes what Notion originally framed as separate epics #4a (Basic Audio-only) and #4b (Audio-only Mode Override).
+- [`video-only-mode-override`](./video-only-mode-override.md) *(coarse)* — video-only delivery. Inverse-axis sibling of [`audio-only-mode-override`](./audio-only-mode-override.md); same shape. Subsumes Notion epics NEW-A (Basic Video-only) and NEW-B (Video-only Composition).
+- `[background-looping-video]` — Mux's background-video product scenario: loop + autoplay-muted + GPU/thermal-aware caps + likely silent-video delivery. **Distinct from `video-only-mode-override`** despite shared Mux consumer context; both may share constituent features but address different delivery scenarios. *[GitHub #873](https://github.com/videojs/v10/issues/873); [`mux-background-video`](https://github.com/muxinc/mux-background-video) prior art.*
 - Further candidates surfaced in source material but not yet scoped: picture-in-picture, short-form / shorts-player, audio-podcast mode, cast/remote-display compositions, ambient/decorative video.
 
 ## See also

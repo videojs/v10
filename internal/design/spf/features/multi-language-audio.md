@@ -35,7 +35,7 @@ Following the Tier 1 / Tier 2 framing from the broader inventory:
 **Out of scope (separate candidate features):**
 - **[audio-abr](./audio-abr.md)** — bandwidth-driven switching within an audio rendition group. Today no audio quality switching exists at all (audio segment loader uses plain `fetchStream`, not `createTrackedFetch`). Audio ABR depends on multi-language audio for the rendition-group machinery but is a distinct feature.
 - **5.1-surround-selection** — capability-gated codec selection for audio. Layers on top of multi-language audio's rendition surfacing. Also owns the codec-change switching case (`SourceBuffer.changeType()` or buffer recreation), since cross-codec switches are where the SourceBuffer itself needs to mutate.
-- **audio-only-composition** — engine variant for audio-only sources. Different composition concern; this feature is about audio-track *selection*, not whether video is present.
+- **[audio-only-mode-override](../use-cases/audio-only-mode-override.md)** *(use case; Phase 1 landed)* — engine variant for audio-only delivery. Different composition concern; this feature is about audio-track *selection*, not whether video is present. When this feature lands, the use case composes it for multi-language audio support within the audio-only variant (use case Phase 2).
 
 **Out of scope (different architectural layer):**
 - **DOM `HTMLMediaElement.audioTracks` exposure** — mirroring `selectedAudioTrackId` into `HTMLMediaElement.audioTracks` (parallel to how `syncTextTracks` mirrors text-track selection into the DOM via `<track>` children) is **not** an SPF concern. Browser-native audio-track UI is uneven (especially Safari), and the API surface is consumer-facing. SPF keeps audio-track selection purely state-driven; an adapter or above-the-engine layer may implement something roughly conforming to this API if needed.
@@ -65,7 +65,7 @@ Things this feature probably forces decisions on, not just additions:
 - **track-registry-primitive** *(coarse, not yet documented)* — multi-language audio is likely the second forcing data point. First is text-track multi-writer; this is audio multi-writer with mid-stream switching as an added complication.
 - **[audio-abr](./audio-abr.md)** — built on top of multi-language audio's rendition surfacing.
 - **5.1-surround-selection** *(coarse, not yet documented, candidate)* — capability-gated extension.
-- **audio-only-composition** *(coarse, not yet documented, candidate)* — engine variant; orthogonal but composition-relevant.
+- **[audio-only-mode-override](../use-cases/audio-only-mode-override.md)** *(use case; Phase 1 landed)* — engine variant; orthogonal but composition-relevant (Phase 2 of the use case composes this feature for multi-language audio).
 - **capability-probing** *(candidate)* — Tier 2 mid-stream codec switching (e.g., stereo AAC → 5.1 AC-3) depends on `changeType()` capability probing surfaced by that feature.
 
 ## Use cases that compose this feature
