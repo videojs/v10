@@ -44,6 +44,7 @@ function createMockTransition(state: MenuViewTransitionState): MenuViewTransitio
 
 interface ViewportSyncOptions {
   hasActiveSubmenu?: boolean;
+  animate?: boolean;
   view?: HTMLElement | null;
   viewState?: MenuViewTransitionState | null;
 }
@@ -52,10 +53,10 @@ function syncMenuViewport(content: HTMLElement | null, sync: ViewportSyncOptions
   if (!content) return;
 
   const viewport = getViewport(content);
-  const { hasActiveSubmenu = false, view = null, viewState = null } = sync;
+  const { hasActiveSubmenu = false, animate, view = null, viewState = null } = sync;
 
   if (!view || !viewState) {
-    viewport.syncRoot(hasActiveSubmenu);
+    viewport.syncRoot(hasActiveSubmenu, animate ? { animate } : undefined);
     flush();
     return;
   }
@@ -600,6 +601,64 @@ describe('createMenuViewport', () => {
     expect(resetSpy).not.toHaveBeenCalled();
   });
 
+  it('keeps earlier submenu views subscribed when additional views register', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const firstView = document.createElement('div');
+    const secondView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuViewAttrs({ root: true }));
+    firstView.setAttribute('data-menu-view', '');
+    secondView.setAttribute('data-menu-view', '');
+    content.append(rootView, firstView, secondView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(firstView, {
+      currentWidth: 200,
+      currentHeight: 120,
+      naturalWidth: 200,
+      naturalHeight: 120,
+    });
+    mockMenuViewSize(secondView, {
+      currentWidth: 240,
+      currentHeight: 140,
+      naturalWidth: 240,
+      naturalHeight: 140,
+    });
+
+    const viewport = createMenuViewport(content);
+
+    const firstTransition = createMockTransition({
+      phase: 'hidden',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    const secondTransition = createMockTransition({
+      phase: 'hidden',
+      direction: 'forward',
+      triggerId: 'trigger-2',
+    });
+
+    viewport.bindChild(firstView, firstTransition);
+    viewport.bindChild(secondView, secondTransition);
+    secondView.hidden = true;
+
+    (firstTransition.input as WritableState<MenuViewTransitionState>).patch({
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    flush();
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('160px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('100px');
+  });
+
   it('bindChild cleanup only unsubscribes the view it bound', () => {
     const content = addElement();
     const rootView = document.createElement('div');
@@ -936,5 +995,65 @@ describe('createMenuViewport', () => {
 
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('160px');
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('');
+  });
+
+  it('restores the root panel when syncRoot runs after the root was hidden for a submenu', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuViewAttrs({ root: true }));
+    menuView.setAttribute('data-menu-view', '');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 180,
+      currentHeight: 74,
+      naturalWidth: 180,
+      naturalHeight: 74,
+    });
+
+    const rootTransition = createMenuViewTransition({ persistent: true });
+    let hasActiveSubmenu = true;
+    const viewport = createMenuViewport(content, rootTransition, {
+      navigation: {
+        hasActiveSubmenu: () => hasActiveSubmenu,
+        direction: () => 'back' as const,
+      },
+    });
+
+    viewport.syncRoot(true);
+    flush();
+
+    expect(rootView.hasAttribute('data-open')).toBe(false);
+
+    hasActiveSubmenu = false;
+    menuView.hidden = true;
+    viewport.syncRoot(false);
+    flush();
+
+    expect(rootView.hasAttribute('data-open')).toBe(true);
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('74px');
+  });
+
+  it('animates the initial root viewport size when animate is requested', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuViewAttrs({ root: true }));
+    content.append(rootView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 180,
+      currentHeight: 74,
+      naturalWidth: 180,
+      naturalHeight: 74,
+    });
+
+    syncMenuViewport(content, { animate: true });
+
+    expect(content.hasAttribute('data-transitioning')).toBe(true);
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('74px');
   });
 });

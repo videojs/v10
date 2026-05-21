@@ -286,7 +286,8 @@ export function createMenu(options: MenuOptions): MenuApi {
       openRafId = 0;
       // Root view children may connect after the menu host (HTML custom elements).
       // Re-measure on open so viewport CSS variables reflect the mounted panel.
-      viewport?.syncRoot(getNavigationInput().current.stack.length > 0);
+      const hasActiveSubmenu = getNavigationInput().current.stack.length > 0;
+      viewport?.syncRoot(hasActiveSubmenu, { animate: !hasActiveSubmenu });
       // Guard against close() being called before the RAF fires — active
       // stays true during the closing animation, so also check status.
       if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;

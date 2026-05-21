@@ -31,12 +31,17 @@ export interface MenuViewportAttrs {
   'data-menu-viewport': '';
 }
 
+export interface MenuViewportSyncRootOptions {
+  /** Animate viewport width/height when establishing the root panel size (e.g. first open). */
+  animate?: boolean;
+}
+
 export interface MenuViewportApi {
   /**
    * When no submenu is on the navigation stack, remeasure and size for the root panel.
    * With an active submenu, only preserves `data-transitioning` during in-flight resizes.
    */
-  syncRoot(hasActiveSubmenu: boolean): void;
+  syncRoot(hasActiveSubmenu: boolean, options?: MenuViewportSyncRootOptions): void;
   /** Subscribe to a submenu view transition and drive viewport/root coordination. */
   bindChild(view: HTMLElement, transition: MenuViewTransitionApi): () => void;
   destroy(): void;
@@ -63,7 +68,7 @@ interface MenuViewportState {
   navigation: MenuViewportNavigationContext | null;
   viewportTransitionId: number;
   viewportTransitioning: boolean;
-  childUnsubscribe: (() => void) | null;
+  childUnsubscribes: Map<HTMLElement, () => void>;
   rootAttrsUnsubscribe: (() => void) | null;
   cancelViewportSettle: (() => void) | null;
   childPhaseKeys: WeakMap<HTMLElement, string>;
@@ -375,7 +380,11 @@ function restoreRootPanelToResting(state: MenuViewportState): void {
   setViewportSize(state.content, size);
 }
 
-function syncRoot(state: MenuViewportState, hasActiveSubmenu: boolean): void {
+function syncRoot(
+  state: MenuViewportState,
+  hasActiveSubmenu: boolean,
+  options: MenuViewportSyncRootOptions = {}
+): void {
   const { content } = state;
 
   if (hasActiveSubmenu) {
@@ -394,7 +403,32 @@ function syncRoot(state: MenuViewportState, hasActiveSubmenu: boolean): void {
   // to root size before the back animation finishes.
   if (!rootView || getActiveMenuViewElement(viewport)) return;
 
+  connectRootView(state, rootView);
+
+  const rootPhase = state.rootTransition.input.current.phase;
+
+  if (rootPhase !== 'active' && rootPhase !== 'entering') {
+    state.rootTransition.sync({
+      active: true,
+      direction: state.navigation?.direction() ?? 'back',
+      triggerId: null,
+    });
+  }
+
   const size = measureRootMenuView(state, rootView, resolveMeasureMinWidth(content));
+  const current = getCurrentViewportSize(content);
+
+  if (options.animate && (!current || !isContentSizeValid(current))) {
+    const fromSize: ContentSize =
+      current && current.width > 0 ? { width: current.width, height: 0 } : { width: size.width, height: 0 };
+    const viewportTransitionId = startViewportTransition(state);
+
+    setViewportSize(content, fromSize);
+    forceLayout(content);
+    setViewportSize(content, size);
+    scheduleViewportTransitionAttrsClear(state, viewportTransitionId);
+    return;
+  }
 
   clearViewportTransition(state);
   setViewportSize(content, size);
@@ -423,7 +457,7 @@ export function createMenuViewport(
     navigation: options.navigation ?? null,
     viewportTransitionId: 0,
     viewportTransitioning: false,
-    childUnsubscribe: null,
+    childUnsubscribes: new Map(),
     rootAttrsUnsubscribe: null,
     cancelViewportSettle: null,
     childPhaseKeys: new WeakMap(),
@@ -436,13 +470,11 @@ export function createMenuViewport(
   }
 
   return {
-    syncRoot(hasActiveSubmenu) {
-      syncRoot(state, hasActiveSubmenu);
+    syncRoot(hasActiveSubmenu, options) {
+      syncRoot(state, hasActiveSubmenu, options);
     },
 
     bindChild(view, transition) {
-      state.childUnsubscribe?.();
-
       const syncChild = (): void => {
         const viewState = transition.input.current;
         const phaseKey = `${viewState.phase}:${viewState.direction}`;
@@ -453,23 +485,31 @@ export function createMenuViewport(
         syncChildViewPhase(state, view, viewState);
       };
 
+      state.childUnsubscribes.get(view)?.();
+
       const unsubscribe = transition.input.subscribe(syncChild);
-      state.childUnsubscribe = unsubscribe;
+      state.childUnsubscribes.set(view, unsubscribe);
       syncChild();
 
       return () => {
+        const existing = state.childUnsubscribes.get(view);
+
+        if (existing !== unsubscribe) return;
+
         unsubscribe();
-        if (state.childUnsubscribe === unsubscribe) {
-          state.childUnsubscribe = null;
-        }
+        state.childUnsubscribes.delete(view);
         state.childPhaseKeys.delete(view);
       };
     },
 
     destroy() {
       state.viewportTransitionId += 1;
-      state.childUnsubscribe?.();
-      state.childUnsubscribe = null;
+
+      for (const unsubscribe of state.childUnsubscribes.values()) {
+        unsubscribe();
+      }
+
+      state.childUnsubscribes.clear();
       state.rootAttrsUnsubscribe?.();
       state.rootAttrsUnsubscribe = null;
       state.cancelViewportSettle?.();
