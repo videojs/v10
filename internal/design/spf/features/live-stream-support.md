@@ -42,11 +42,11 @@ richer live variants (LL-HLS, DVR) sit in sibling features.
 | Manifest reload loop | Periodic media-playlist refetch keyed off `#EXT-X-TARGETDURATION` pacing per HLS spec. Each selected track's media playlist reloads independently as long as the source is live | The core primitive; cluster A foundation |
 | Sliding-window segment tracking | Engine handles segments dropping off the start of the playlist as the window slides forward. Already-buffered segments past the window are still playable; un-fetched segments past the window are no longer fetchable | Affects the segment-loader's planning + back-buffer policy |
 | Live duration semantics | `presentation.duration = Infinity` flows through `config.resolveDuration` (already pluggable). Downstream `updateMediaSourceDuration` propagates to `mediaSource.duration = Infinity` per MSE spec for live | The pluggable `resolveDuration` hook from `mse-mms-pipeline` is the surface; no new state slot needed |
-| Live edge tracking | Engine tracks the latest segment available in the current playlist snapshot. Distinct from `currentTime` (the playhead); the gap between them is the buffer + the user's distance from live edge | Likely a derived signal (computed) rather than a new state slot |
+| Live edge tracking | Engine tracks the latest segment available in the current playlist snapshot. Distinct from `currentTime` (the playhead); the gap between them is the buffer + the user's distance from live edge. DOM exposure via `mediaSource.setLiveSeekableRange(start, end)` so the browser's `HTMLMediaElement.seekable` reflects the live window (without it, `seekable` is empty under `duration === Infinity`) | Likely a derived signal (computed) rather than a new state slot |
 | Reload jitter / backoff | Pacing variations under server delays or slow networks. Naive: poll on target-duration; full: jitter to avoid thundering herd, backoff on consecutive identical-playlist responses | Naive depth matches what hls.js does; full depth adds vendor-specific tuning |
 | Per-type reload coordination | Audio / video / text media playlists each reload independently. Today the per-type `resolveXTrack` family is one-shot; live requires extending or replacing it with a reloading variant | Open question: extend in place, add a sibling `reloadXTrack` behavior, or compose differently |
 | Termination detection (manifest signal) | Recognize when the reload loop should stop. **Naive**: `#EXT-X-ENDLIST` recognition only (assumes spec-compliant servers). Today's parser matches the literal `#EXT-X-ENDLIST` line but doesn't surface the value to the track output — the parser-side fix is part of this phase. **Full**: ENDLIST + unchanged-playlist miss-counter as a fallback for servers that stop updating without emitting `ENDLIST` | Naive vs Full depth per [clusters.md § Feature classification axes](./clusters.md#naive-vs-full-implementation-depth) |
-| Terminated state transition | Engine flips out of live mode for the affected track. Reload loop stops scheduling that track's playlist. The track's segment list stops mutating, which makes the existing `endOfStream` gate naturally reachable (last segment now exists permanently). Per-type independence: audio / video can terminate at different times | The state transition is the only new orchestration; `endOfStream` doesn't need new code, just the playlist to stabilize |
+| Terminated state transition | Engine flips out of live mode for the affected track. Reload loop stops scheduling that track's playlist. The track's segment list stops mutating, which makes the existing `endOfStream` gate naturally reachable (last segment now exists permanently). Per-type independence: audio / video can terminate at different times | The state transition is the only new orchestration; `endOfStream` doesn't need new code, just the playlist to stabilize. `clearLiveSeekableRange()` pairs with the transition so the browser's `seekable` returns to buffer-derived semantics |
 
 ## What's in scope vs out of scope
 
@@ -124,6 +124,37 @@ Things this feature probably forces decisions on, not just additions:
   but is orphaned (the parser returns a `Track`, not
   `MediaPlaylistInfo`). The termination-detection phases need the
   parser to surface the value to the track output.
+- **`mediaSource.*` third-writer pattern — `setLiveSeekableRange`** —
+  `mediaSource.duration` already has two non-overlapping writers
+  (`updateMediaSourceDuration` for the initial `Infinity` write;
+  `endOfStream` for the deterministic final value — see
+  [mse-mms-pipeline.md](./mse-mms-pipeline.md) on DOM-property
+  multi-writer). Live introduces a structurally *different* third
+  writer on the same `mediaSource` resource: ongoing reactive
+  `setLiveSeekableRange(start, end)` calls keyed off live-edge updates,
+  plus `clearLiveSeekableRange()` paired with the terminated-state
+  transition. Distinct from the existing two writers along all three
+  characterization axes — decision domain (derived from playlist
+  snapshot vs. presentation / buffered), trigger (ongoing reactive vs.
+  one-shot transitions), and method (range setter rather than
+  `.duration` assignment). `start` = earliest still-fetchable segment
+  (sliding-window-aware); `end` = live edge. **Lives as a new live-only
+  behavior composed into the live engine variant**, not as a runtime
+  branch inside an existing MSE behavior — live vs VoD is a
+  composition-time distinction, and `updateMediaSourceDuration` is
+  deliberately uniform-across-variants (see
+  [conventions/behaviors.md](../conventions/behaviors.md) → *Inverse:
+  behaviors that operate uniformly across tracks* and the
+  `updateMediaSourceDuration` worked example). Two SPF-shaped options
+  for placement within the live variant: (a) baked into the
+  (yet-to-exist) live track-polling / reload-loop behavior that
+  produces edge data, or (b) a separate behavior reading presentation /
+  segment state and writing to DOM. Current lean: (b) — single-purpose
+  composition keeps other consumers of the same derived live-edge
+  signal (above-engine "seek to live edge," ABR live-edge-distance if
+  ever introduced) pluggable on the same data without coupling to the
+  polling behavior. Gates on MediaSource `'open'`; buffers-idle gating
+  is an implementation detail for the behavior itself.
 
 ## Open questions
 
@@ -164,6 +195,14 @@ Things this feature probably forces decisions on, not just additions:
   spuriously between reloads on a heavily-buffered live source?
   Likely not in practice (reload pace beats consumption pace) but
   worth verifying.
+- **`setLiveSeekableRange` behavior shape within the live variant.**
+  Two SPF-shaped options — (a) call from inside the live track-polling
+  / reload-loop behavior that produces edge data, or (b) a separate
+  behavior reacting to presentation / track state changes. Lean: (b),
+  for single-purpose composition and so other consumers of the same
+  derived live-edge signal can plug in alongside without coupling to
+  the polling behavior. Revisit once the polling behavior's shape
+  lands.
 
 ## Related features
 

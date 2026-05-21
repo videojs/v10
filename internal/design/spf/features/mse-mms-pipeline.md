@@ -64,8 +64,15 @@ share the same four behaviors and one actor.
 - **Continuous live-duration sync** — `Infinity` is supported on the
   initial write, but `updateMediaSourceDuration`'s "exactly once"
   contract doesn't re-sync if `presentation.duration` drifts mid-source.
-  Likely fine for live (one continuous `Infinity`), but `[live-stream-support]`
-  may surface counterexamples.
+  Likely fine for live (one continuous `Infinity`), but
+  [live-stream-support](./live-stream-support.md) may surface
+  counterexamples.
+- **`setLiveSeekableRange` / `clearLiveSeekableRange`** — neither is
+  called today. Live streams under `duration === Infinity` have an
+  empty `HTMLMediaElement.seekable` without the explicit setter.
+  Belongs to [live-stream-support](./live-stream-support.md)'s Live
+  edge tracking + Terminated state transition phases; lives at this
+  feature's MSE boundary.
 
 ## Implementation surface
 
@@ -211,9 +218,10 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
   feature's same-codec lifecycle.
 - **hevc-variant-selection** *(not yet documented, candidate)* —
   same pattern as 5.1 but for video codec swap.
-- **live-stream-support** *(not yet documented, candidate)* — `Infinity`
-  duration + the EOS picture may differ; the "exactly once" duration
-  contract is the spot to revisit.
+- **live-stream-support** — `Infinity` duration + the EOS picture
+  differ; the "exactly once" duration contract is the spot to revisit.
+  Also the home for the `setLiveSeekableRange` / `clearLiveSeekableRange`
+  DOM-exposure surface (see *What's not implemented* above).
 - **drm-support** *(not yet documented, candidate, issue #1411)* —
   key-system readiness would gate MSE setup + append per `clusters.md`.
 
