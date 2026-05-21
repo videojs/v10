@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
-import { createPopupGroup } from '../../popover/popup-group';
+import { createPopupGroup, resetSharedMenuPopupGroupForTests } from '../../popover/popup-group';
 import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
@@ -40,6 +40,7 @@ describe('createMenu', () => {
   let items: HTMLButtonElement[] = [];
 
   beforeEach(() => {
+    resetSharedMenuPopupGroupForTests();
     items = [];
   });
 
