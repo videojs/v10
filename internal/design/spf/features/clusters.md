@@ -28,13 +28,13 @@ Both clusters and patterns are extract-from-real-work — no speculative additio
 
 - A new feature surfaces a signal not covered → extend an existing cluster or file a new one.
 - A pattern recurs across two or more clusters → add to Cross-cluster patterns.
-- Cluster membership of a feature changes (anticipated → documented) → update the cluster's docs list.
-
-Bracketed entries (e.g. `[track-registry-primitive]`) are forward refs to features that don't yet have docs.
+- A new feature gets documented → add it to the relevant cluster's Docs list.
 
 ## Notation
 
-Existing features cite their file: `subtitles`, `video-abr`, `multi-language-audio`. Anticipated / candidate features are bracketed: `[mse-mms-pipeline]`, `[audio-abr]`. Notion-cluster cross-references (e.g., "Notion cluster C") point at the SPF Epics Working Doc taxonomy.
+Existing features cite their file: `subtitles`, `video-abr`, `multi-language-audio`. Notion-cluster cross-references (e.g., "Notion cluster C") point at the SPF Epics Working Doc taxonomy.
+
+Unscoped feature candidates that previously appeared inline as bracketed names (e.g. `[ll-hls-support]`) have been pulled out — they're tracked separately as an unscoped backlog rather than as sibling-feature placeholders in cluster Docs lists. Documenting any of them routes through `/spf-document-feature`, which applies the decomposition rubric at invocation time and decides whether the item becomes a new doc, a phase of an existing doc, or absorption into another doc.
 
 ---
 
@@ -124,7 +124,7 @@ The selection model — which audio / video / text tracks are available, which i
 
 **Signals.** Track selection, switching, filtering, sorting; per-type tracks; state slots named `selected{Audio,Video,Text}TrackId`; behaviors named `select*Track`, `switch*Quality`, `sync*Tracks`; multi-writer track-id slots; manifest renditions with `LANGUAGE` / `NAME` / `DEFAULT` / `AUTOSELECT` / `FORCED` / `CHANNELS` attributes; `userVideoTrackSelection` and similar constraint slots.
 
-**Docs.** `subtitles`, `video-abr`, `audio-playback`, `multi-language-audio`, `[track-registry-primitive]`, `[audio-abr]`, `[5.1-surround-selection]`, `[hevc-variant-selection]`, `[single-video-track-default-selection]`.
+**Docs.** `subtitles`, `video-abr`, `audio-playback`, `multi-language-audio`.
 
 **Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`); the `selected*TrackId` slot family.
 
@@ -140,7 +140,7 @@ Modes, caps, and overrides layered on top of the registry. Where the engine's se
 
 **Signals.** Quality caps (max-height, max-bitrate, max-FPS, screen-size); modes (audio-only, video-only); user overrides via constraint slots; "respect billing constraints" / "respect device capabilities" framing; viewport adaptation.
 
-**Docs.** `[rendition-selection-caps]`, `[1080p-resolution-cap]`, `[screen-size-resolution-cap]`, `[audio-only-composition]`, `[video-only-composition]`, `[multi-signal-abr]`. `video-abr`'s `userVideoTrackSelection` is a partial precedent.
+**Docs.** None yet. `video-abr`'s `userVideoTrackSelection` is a partial precedent for the cluster's constraint+filter pattern.
 
 **Foundational primitives.** Constraint slots that filter the candidate set before selection runs.
 
@@ -156,7 +156,7 @@ Fetching, parsing, and modeling HLS / HAS media — the data structures the rest
 
 **Signals.** Manifest fetching, multivariant playlist parsing, media playlist parsing, presentation modeling; `parseMultivariantPlaylist`, `parseMediaPlaylist`; state slot `presentation` (resolved vs unresolved); `presentation-resolved` state-machine transitions; `PartiallyResolvedTextTrack`-style modeling shapes; HLS attribute extraction.
 
-**Docs.** `[hls-multivariant-parsing]`, `[media-playlist-resolution]`, `[hls-vod-presentation-modeling]`.
+**Docs.** None yet. The architectural deep-dive [`presentation-modeling.md`](../presentation-modeling.md) covers the format-neutral data shape and per-track resolution layer that feature docs in this cluster would consume.
 
 **Foundational primitives.** `Presentation` data shape; `resolvePresentation` behavior + the per-track `resolve*Track` family that patches resolved tracks back into `presentation`.
 
@@ -170,7 +170,7 @@ Fetching, parsing, and modeling HLS / HAS media — the data structures the rest
 
 **Signals.** `setupMediaSource`, `setupVideoBufferActors`, `setupAudioBufferActors`, `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`, `loadAudioSegments`; SourceBuffer setup / append / remove / `changeType()`; per-type buffer setup; `SourceBufferActor` and `SegmentLoaderActor`; ManagedMediaSource (MMS) vs MediaSource (MSE) distinction; codec-bound mimeType ("video/mp4; codecs=..."); A+V SourceBuffer separation per CMAF; forward-buffer / back-buffer management; buffer flush mechanics.
 
-**Docs.** `[mse-mms-pipeline]`, `[per-track-segment-loading]`, `[buffer-flushing]`. `subtitles`'s `loadTextTrackSegments` runs the same preload-aware loading FSM but does not touch MSE buffers. `video-abr`'s same-SourceBuffer-different-bitrate-segments pattern is the precedent for in-track switching.
+**Docs.** `mse-mms-pipeline`, `buffer-management`. `subtitles`'s `loadTextTrackSegments` runs the same preload-aware loading FSM but does not touch MSE buffers. `video-abr`'s same-SourceBuffer-different-bitrate-segments pattern is the precedent for in-track switching.
 
 **Foundational primitives.** Per-type `SourceBufferActor` + `SegmentLoaderActor` pair; `createTrackedFetch` (segment fetch with bandwidth sampling baked in); the preload-aware load FSM (`'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'`).
 
@@ -186,7 +186,7 @@ The mapping between media timeline, playlist position, and `<video>` element tim
 
 **Signals.** `currentTime` tracking; PTS / DTS offsets; seekable range; edit lists; instant clipping; non-zero PTS; pseudo-ended detection; buffer-stall recovery; segment-boundary math; timeline mapping.
 
-**Docs.** `[time-tracking]`, `[edit-list-compensation]`, `[non-zero-pts-support]`, `[pseudo-ended-detection]`, `[buffer-stall-recovery]`, `[instant-clip-support]`.
+**Docs.** None yet.
 
 **Foundational primitives.** A playlist-position-to-media-time mapping primitive (likely emerges from the first feature that genuinely needs it — non-zero PTS or edit lists).
 
@@ -202,7 +202,7 @@ The polling cycle for live and DVR content — reloading the media playlist, tra
 
 **Signals.** Live / DVR / event-stream content; `#EXT-X-ENDLIST`; sliding window; target-duration pacing; LL-HLS blocking reload, delta playlists, preload hints; reload miss-counter; partial segments.
 
-**Docs.** `live-stream-support` (includes termination detection), `[ll-hls-support]`, `[dvr-event-stream-support]`.
+**Docs.** `live-stream-support` (includes termination detection).
 
 **Foundational primitives.** A reload-loop scheduler (the sliding-window + target-duration pacing core); presentation re-resolution flow on each reload.
 
@@ -218,7 +218,7 @@ Asking the browser what it can play before committing to a codec, container, or 
 
 **Signals.** `canPlayType`, `MediaSource.isTypeSupported`, `requestMediaKeySystemAccess`; codec filtering; container support gating; key-system probing; HEVC support detection; channel-count probing; HDR support.
 
-**Docs.** `capability-probing` (covers codec / container filtering, multivariant CODECS filtering, key-system probing, `changeType()` probing, error surfacing; `[container-support]` may fold in or stay separate). `[hevc-variant-selection]` and `[5.1-surround-selection]` straddle this and the track-registry cluster as consumers.
+**Docs.** `capability-probing` (covers codec / container filtering, multivariant CODECS filtering, key-system probing, `changeType()` probing, error surfacing).
 
 **Foundational primitives.** A capability-probe utility wrapping the various browser APIs uniformly. None today.
 
@@ -234,7 +234,7 @@ Fallback and recovery when the selected URI / rendition fails. Where multi-CDN, 
 
 **Signals.** Alternate URIs; HLS spec-extension URIs; CDN rotation; retry / backoff; content steering protocol; `?redundant_streams=true`-style query params.
 
-**Docs.** `[multi-cdn-failover]`, `[content-steering]`, `[selection-retry-backoff]`.
+**Docs.** None yet.
 
 **Foundational primitives.** An alternate-URI rotation primitive; a backoff policy primitive. Neither exists yet.
 
@@ -250,7 +250,7 @@ Key system handling for protected content — EME, license fetch, key-rotation, 
 
 **Signals.** EME, `MediaKeys`, `requestMediaKeySystemAccess`, key system identifiers (Widevine / PlayReady / FairPlay / FairPlay-AirPlay); `#EXT-X-KEY` in playlists; license server URLs; security level constraints; encrypted-event handling on the SourceBuffer.
 
-**Docs.** `[drm-support]` (Notion-tracked under videojs/v10#1411), `[drm-security-levels]`, `[fairplay-airplay-workaround]`. Key-system capability probing is owned by `capability-probing` (cluster D); this cluster owns EME setup, license handling, and key delivery downstream of probing's verdict.
+**Docs.** None yet. Key-system capability probing is owned by `capability-probing` (cluster D); this cluster owns EME setup, license handling, and key delivery downstream of probing's verdict.
 
 **Foundational primitives.** EME + license-handling base, under issue #1411.
 
