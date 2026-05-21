@@ -1,6 +1,13 @@
 import { createState, type State } from '@videojs/store';
+import {
+  type DoubleAnimationFrameHandles,
+  resetDoubleAnimationFrameHandles,
+  scheduleDoubleAnimationFrame,
+} from '@videojs/utils/dom';
 import { getTransitionStyleAttrs, type TransitionStyleAttrs } from '../../../core/ui/transition';
+import { applyElementProps } from '../../utils/element-props';
 import { forceLayout } from '../../utils/layout';
+import { scheduleTransitionSettle, waitForAnimations as waitForElementAnimations } from '../transition';
 
 import type { NavigationState } from './create-menu';
 
@@ -8,12 +15,11 @@ export type MenuViewTransitionPhase = 'hidden' | 'entering' | 'active' | 'exitin
 
 export type MenuViewTransitionDirection = NavigationState['direction'];
 
-export type MenuViewState = 'active' | 'inactive';
-
 export interface MenuViewTransitionState {
   phase: MenuViewTransitionPhase;
   direction: MenuViewTransitionDirection;
   triggerId: string | null;
+  transitioning?: boolean;
 }
 
 export interface MenuViewTransitionSyncOptions {
@@ -24,38 +30,49 @@ export interface MenuViewTransitionSyncOptions {
 
 export interface MenuViewTransitionAttrs extends TransitionStyleAttrs {
   'data-menu-view': '';
-  'data-menu-view-state': MenuViewState;
+  'data-menu-view-id'?: string | undefined;
   'data-direction': MenuViewTransitionDirection;
   'data-open'?: '' | undefined;
   hidden: boolean;
+}
+
+export interface MenuViewTransitionAttrsOptions {
+  id?: string;
+  root?: boolean;
+  persistent?: boolean;
 }
 
 export interface MenuViewTransitionOptions {
   focusFirstItem?: (element: HTMLElement) => void;
   restoreFocus?: (triggerId: string | null) => void;
   waitForAnimations?: (element: HTMLElement) => Promise<void>;
+  persistent?: boolean;
 }
 
 export interface MenuViewTransitionApi {
   input: State<MenuViewTransitionState>;
+  readonly persistent: boolean;
   setElement: (element: HTMLElement | null) => void;
   sync: (options: MenuViewTransitionSyncOptions) => void;
+  reset: () => void;
   destroy: () => void;
 }
 
-const DEFAULT_MENU_VIEW_TRANSITION_STATE: MenuViewTransitionState = {
+export const DEFAULT_MENU_VIEW_TRANSITION_STATE: MenuViewTransitionState = {
   phase: 'hidden',
   direction: 'forward',
   triggerId: null,
+  transitioning: false,
 };
 
-async function waitForElementAnimations(element: HTMLElement): Promise<void> {
-  const animations = element.getAnimations?.() ?? [];
+export const PERSISTENT_MENU_VIEW_RESTING_STATE: MenuViewTransitionState = {
+  phase: 'active',
+  direction: 'forward',
+  triggerId: null,
+  transitioning: false,
+};
 
-  if (!animations.length) return;
-
-  await Promise.all(animations.map((animation) => animation.finished)).catch(() => {});
-}
+const MENU_VIEW_EXIT_OPACITY_THRESHOLD = 0.01;
 
 function focusFirstMenuViewItem(element: HTMLElement): void {
   const firstItem = element.querySelector<HTMLElement>('[data-item]');
@@ -63,43 +80,87 @@ function focusFirstMenuViewItem(element: HTMLElement): void {
   firstItem?.focus({ preventScroll: true });
 }
 
-function getMenuViewState(phase: MenuViewTransitionPhase): MenuViewState {
-  return phase === 'entering' || phase === 'active' ? 'active' : 'inactive';
+function hasMenuViewOpenAttr(state: MenuViewTransitionState, persistent: boolean): boolean {
+  if (persistent) {
+    return state.phase === 'active' || state.phase === 'entering';
+  }
+
+  return state.phase !== 'hidden';
 }
 
-export function getMenuViewTransitionAttrs(state: MenuViewTransitionState): MenuViewTransitionAttrs {
+export function getMenuViewTransitionAttrs(
+  state: MenuViewTransitionState,
+  { id, root = false, persistent = false }: MenuViewTransitionAttrsOptions = {}
+): MenuViewTransitionAttrs {
+  const viewId = id ?? (root ? 'root' : undefined);
+
   return {
     'data-menu-view': '',
-    'data-menu-view-state': getMenuViewState(state.phase),
+    ...(viewId && { 'data-menu-view-id': viewId }),
     'data-direction': state.direction,
     ...getTransitionStyleAttrs({
+      transitioning: state.transitioning,
       transitionStarting: state.phase === 'entering',
       transitionEnding: state.phase === 'exiting',
     }),
-    'data-open': state.phase !== 'hidden' ? '' : undefined,
-    hidden: state.phase === 'hidden',
+    'data-open': hasMenuViewOpenAttr(state, persistent) ? '' : undefined,
+    hidden: persistent ? false : state.phase === 'hidden',
   };
 }
 
+export function applyMenuViewTransitionAttrs(
+  element: HTMLElement,
+  state: MenuViewTransitionState,
+  options: MenuViewTransitionAttrsOptions = {}
+): void {
+  applyElementProps(element, getMenuViewTransitionAttrs(state, options));
+}
+
+function isMenuViewExitVisuallyComplete(view: HTMLElement): boolean {
+  const style = getComputedStyle(view);
+  const opacity = Number.parseFloat(style.opacity);
+
+  if (Number.isFinite(opacity) && opacity <= MENU_VIEW_EXIT_OPACITY_THRESHOLD) {
+    return true;
+  }
+
+  const parent = view.parentElement;
+
+  if (!parent) return false;
+
+  const rect = view.getBoundingClientRect();
+  const parentRect = parent.getBoundingClientRect();
+
+  return rect.right <= parentRect.left || rect.left >= parentRect.right;
+}
+
 export function createMenuViewTransition(options: MenuViewTransitionOptions = {}): MenuViewTransitionApi {
-  const input = createState<MenuViewTransitionState>(DEFAULT_MENU_VIEW_TRANSITION_STATE);
-  const waitForAnimations = options.waitForAnimations ?? waitForElementAnimations;
+  const persistent = options.persistent ?? false;
+  const restingState = persistent ? PERSISTENT_MENU_VIEW_RESTING_STATE : DEFAULT_MENU_VIEW_TRANSITION_STATE;
+  const input = createState<MenuViewTransitionState>(restingState);
+  const waitForAnimations =
+    options.waitForAnimations ??
+    ((element: HTMLElement) => waitForElementAnimations(element, { includeCSSTransitions: true }));
   const focusFirstItem = options.focusFirstItem ?? focusFirstMenuViewItem;
 
   let element: HTMLElement | null = null;
   let transitionId = 0;
-  let raf1 = 0;
-  let raf2 = 0;
+  const enterRafs: DoubleAnimationFrameHandles = { first: 0, second: 0 };
+  let exitRaf = 0;
   let focusRaf = 0;
+  let cancelExitSettle: (() => void) | null = null;
   let scheduledTransitionId = 0;
   let scheduledPhase: MenuViewTransitionPhase | null = null;
 
   function cancelFrames(): void {
-    cancelAnimationFrame(raf1);
-    cancelAnimationFrame(raf2);
+    cancelAnimationFrame(enterRafs.first);
+    cancelAnimationFrame(enterRafs.second);
+    cancelAnimationFrame(exitRaf);
     cancelAnimationFrame(focusRaf);
-    raf1 = 0;
-    raf2 = 0;
+    resetDoubleAnimationFrameHandles(enterRafs);
+    cancelExitSettle?.();
+    cancelExitSettle = null;
+    exitRaf = 0;
     focusRaf = 0;
     scheduledTransitionId = 0;
     scheduledPhase = null;
@@ -124,41 +185,78 @@ export function createMenuViewTransition(options: MenuViewTransitionOptions = {}
   function scheduleEnterComplete(currentTransitionId: number, currentElement: HTMLElement): void {
     forceLayout(currentElement);
 
-    raf1 = requestAnimationFrame(() => {
-      if (currentTransitionId !== transitionId) return;
-
-      raf2 = requestAnimationFrame(() => {
-        if (currentTransitionId !== transitionId) return;
-
+    scheduleDoubleAnimationFrame(
+      enterRafs,
+      () => currentTransitionId === transitionId,
+      () => {
         forceLayout(currentElement);
         input.patch({ phase: 'active' });
 
-        focusRaf = requestAnimationFrame(() => {
-          if (currentTransitionId !== transitionId) return;
-          focusFirstItem(currentElement);
-        });
-      });
-    });
+        if (!persistent) {
+          focusRaf = requestAnimationFrame(() => {
+            if (currentTransitionId !== transitionId) return;
+            focusFirstItem(currentElement);
+          });
+        }
+
+        waitForAnimations(currentElement).then(
+          () => {
+            if (currentTransitionId !== transitionId) return;
+            input.patch({ transitioning: false });
+          },
+          () => {
+            if (currentTransitionId !== transitionId) return;
+            input.patch({ transitioning: false });
+          }
+        );
+      }
+    );
   }
 
   function scheduleExitComplete(currentTransitionId: number, currentElement: HTMLElement): void {
     forceLayout(currentElement);
 
-    raf1 = requestAnimationFrame(async () => {
-      await waitForAnimations(currentElement);
+    if (persistent) {
+      cancelExitSettle = scheduleTransitionSettle(
+        currentElement,
+        () => currentTransitionId === transitionId,
+        () => {
+          if (currentTransitionId !== transitionId) return;
 
+          input.patch({ phase: 'hidden', triggerId: null, transitioning: false });
+        },
+        { includeCSSTransitions: true, isVisuallyComplete: isMenuViewExitVisuallyComplete }
+      );
+      return;
+    }
+
+    exitRaf = requestAnimationFrame(() => {
       if (currentTransitionId !== transitionId) return;
 
-      const { direction, triggerId } = input.current;
+      waitForAnimations(currentElement).then(
+        () => {
+          if (currentTransitionId !== transitionId) return;
 
-      input.patch({
-        phase: 'hidden',
-        triggerId: null,
-      });
+          const { direction, triggerId } = input.current;
 
-      if (direction === 'back') {
-        options.restoreFocus?.(triggerId);
-      }
+          input.patch({ phase: 'hidden', triggerId: null, transitioning: false });
+
+          if (direction === 'back') {
+            options.restoreFocus?.(triggerId);
+          }
+        },
+        () => {
+          if (currentTransitionId !== transitionId) return;
+
+          const { direction, triggerId } = input.current;
+
+          input.patch({ phase: 'hidden', triggerId: null, transitioning: false });
+
+          if (direction === 'back') {
+            options.restoreFocus?.(triggerId);
+          }
+        }
+      );
     });
   }
 
@@ -170,6 +268,7 @@ export function createMenuViewTransition(options: MenuViewTransitionOptions = {}
       phase: 'entering',
       direction,
       triggerId,
+      transitioning: true,
     });
     scheduleCurrentPhase();
   }
@@ -181,6 +280,7 @@ export function createMenuViewTransition(options: MenuViewTransitionOptions = {}
     input.patch({
       phase: 'exiting',
       direction,
+      transitioning: true,
     });
     scheduleCurrentPhase();
   }
@@ -202,17 +302,25 @@ export function createMenuViewTransition(options: MenuViewTransitionOptions = {}
     }
   }
 
+  function reset(): void {
+    transitionId++;
+    cancelFrames();
+    input.patch(restingState);
+  }
+
   function destroy(): void {
     transitionId++;
     cancelFrames();
     element = null;
-    input.patch(DEFAULT_MENU_VIEW_TRANSITION_STATE);
+    input.patch(restingState);
   }
 
   return {
     input,
+    persistent,
     setElement,
     sync,
+    reset,
     destroy,
   };
 }

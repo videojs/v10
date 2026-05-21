@@ -2,7 +2,7 @@ import { TransitionDataAttrs } from '../transition';
 import type { StateAttrMap } from '../types';
 import type { MenuState } from './menu-core';
 
-/** Data attributes set on the menu Content element and inherited by all children. */
+/** Data attributes shared by menu parts. Panel-specific attrs are applied directly to the panel. */
 export const MenuDataAttrs = {
   /** Present when the menu is open. */
   open: 'data-open',
@@ -10,7 +10,5 @@ export const MenuDataAttrs = {
   side: 'data-side',
   /** Popover positioning alignment. Absent on submenus. */
   align: 'data-align',
-  /** Present on Content when this menu is nested inside a parent menu. */
-  isSubmenu: 'data-submenu',
   ...TransitionDataAttrs,
 } as const satisfies StateAttrMap<MenuState>;

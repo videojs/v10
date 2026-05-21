@@ -54,6 +54,7 @@ export class MenuItemElement extends MediaElement {
         {
           onClick: (event: MouseEvent) => {
             const currentCtx = this.#ctx.value;
+            if (event.button !== 0) return;
             if (!currentCtx || this.disabled) return;
 
             const target = this.commandfor;

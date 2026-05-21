@@ -1,14 +1,15 @@
-import { applyElementProps, getMenuRootViewAttrs } from '@videojs/core/dom';
-import type { PropertyValues } from '@videojs/element';
-
+import { applyElementProps, getMenuViewTransitionAttrs, PERSISTENT_MENU_VIEW_RESTING_STATE } from '@videojs/core/dom';
 import { MediaElement } from '../media-element';
 
 export class MenuViewElement extends MediaElement {
   static readonly tagName = 'media-menu-view';
 
-  protected override update(changed: PropertyValues): void {
-    super.update(changed);
+  override connectedCallback(): void {
+    super.connectedCallback();
 
-    applyElementProps(this, getMenuRootViewAttrs());
+    applyElementProps(
+      this,
+      getMenuViewTransitionAttrs(PERSISTENT_MENU_VIEW_RESTING_STATE, { root: true, persistent: true })
+    );
   }
 }

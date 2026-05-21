@@ -78,8 +78,10 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handleSubMenuClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
       (onClick as React.MouseEventHandler<HTMLDivElement> | undefined)?.(event);
       openSubMenu();
+      event.preventDefault();
     },
     [onClick, openSubMenu]
   );

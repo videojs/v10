@@ -18,6 +18,7 @@ export class MenuBackElement extends MediaElement {
 
   #disconnect: AbortController | null = null;
   #bound = false;
+  #cleanupRegistration: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -27,6 +28,8 @@ export class MenuBackElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupRegistration?.();
+    this.#cleanupRegistration = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
     this.#bound = false;
@@ -40,13 +43,19 @@ export class MenuBackElement extends MediaElement {
 
     if (!this.#bound) {
       this.#bound = true;
+      this.#cleanupRegistration = ctx.menu.registerItem(this);
 
       applyElementProps(
         this,
         {
-          onClick: () => {
-            // Pop to the parent menu view.
-            ctx.parentMenu?.pop();
+          onClick: (event: MouseEvent) => {
+            if (event.button !== 0) return;
+            const currentCtx = this.#ctx.value;
+            currentCtx?.parentMenu?.pop();
+          },
+          onPointerenter: () => {
+            const currentCtx = this.#ctx.value;
+            currentCtx?.menu.highlight(this, { focus: false });
           },
         },
         { signal: this.#disconnect.signal }

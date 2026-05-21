@@ -1,11 +1,15 @@
 import { createState, type State } from '@videojs/store';
+import { noop } from '@videojs/utils/function';
 import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningOptions } from '../popover/popover-positioning';
-import { getSharedMenuPopupGroup, type PopupGroup } from '../popover/popup-group';
+import { createPopupGroup, getSharedMenuPopupGroup, type PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
+import type { MenuViewTransitionApi } from './create-menu-view-transition';
+import { createMenuViewTransition, type MenuViewTransitionState } from './create-menu-view-transition';
+import { createMenuViewport, type MenuViewportApi, shouldCreateMenuViewport } from './menu-viewport';
 
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
@@ -34,7 +38,19 @@ export interface MenuOptions {
   closeOnOutsideClick: () => boolean;
   /** Called when the highlighted item changes. */
   onHighlightChange?: (element: HTMLElement | null) => void;
+  /**
+   * Optional popup group from a player or shell provider.
+   * When omitted, or when the resolver returns `undefined` on a root menu, menus use a document-wide group
+   * so peer menus cooperate without extra setup. Nested menus with an explicit resolver that returns
+   * `undefined` get an isolated group so they do not join that shared root coordination.
+   */
   group?: () => PopupGroup | undefined;
+  /**
+   * When this returns an ancestor {@link MenuApi}, this menu is nested under that surface: triggers still
+   * join the peer list for outside-dismiss, but open/close are not forwarded to the popup group (the parent
+   * root coordinates one-open-at-a-time). Omit or return null for a root menu.
+   */
+  parentMenu?: () => MenuApi | null | undefined;
 }
 
 export interface MenuTriggerProps {
@@ -101,6 +117,10 @@ export interface MenuApi {
   push: (menuId: string, triggerId: string) => void;
   /** Pop the current submenu from the navigation stack. */
   pop: () => void;
+  /** Register a submenu panel for viewport transitions on the nearest viewport host. */
+  registerSubmenuView: (view: HTMLElement, transition: MenuViewTransitionApi) => () => void;
+  /** Root panel transition when this menu hosts a viewport (null for submenus). */
+  readonly rootViewTransitionInput: State<MenuViewTransitionState> | null;
   open: (reason?: MenuOpenChangeReason) => void;
   close: (reason?: MenuOpenChangeReason) => void;
   destroy: () => void;
@@ -114,6 +134,29 @@ export function completeMenuItemSelection(menu: MenuApi, parentMenu: MenuApi | n
   }
 }
 
+/** Submenus register peer triggers but must not replace the root as the group's `current` member. */
+function bindMenuPopupGroup(resolveGroup: () => PopupGroup, hasParentMenu: () => boolean): PopupGroup {
+  return {
+    open(member) {
+      if (hasParentMenu()) return;
+      resolveGroup().open(member);
+    },
+    close(member) {
+      if (hasParentMenu()) return;
+      resolveGroup().close(member);
+    },
+    addMemberTrigger(element) {
+      return resolveGroup().addMemberTrigger(element);
+    },
+    pathHasPeerMemberTrigger(path, ownTrigger) {
+      return resolveGroup().pathHasPeerMemberTrigger(path, ownTrigger);
+    },
+    isPeerTrigger(element, ownTrigger) {
+      return resolveGroup().isPeerTrigger(element, ownTrigger);
+    },
+  };
+}
+
 export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.
@@ -121,12 +164,47 @@ export function createMenu(options: MenuOptions): MenuApi {
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let contentElement: HTMLElement | null = null;
+  let viewport: MenuViewportApi | null = null;
+  let unsubscribeNavigation: (() => void) | null = null;
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
   let openRafId = 0;
   let lastCloseReason: MenuOpenChangeReason | null = null;
 
   const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
+  let rootPanelTransition: MenuViewTransitionApi | null = null;
+
+  function getRootPanelTransition(): MenuViewTransitionApi | null {
+    if (options.parentMenu?.()) return null;
+    rootPanelTransition ??= createMenuViewTransition({ persistent: true });
+    return rootPanelTransition;
+  }
+
+  let menuPopupGroup: PopupGroup | null = null;
+  let isolatedPopupGroup: PopupGroup | null = null;
+
+  function resolveMenuPopupGroupBase(): PopupGroup {
+    if (options.group === undefined) {
+      return getSharedMenuPopupGroup();
+    }
+
+    const resolved = options.group();
+    if (resolved !== undefined) {
+      return resolved;
+    }
+
+    if (options.parentMenu?.() != null) {
+      isolatedPopupGroup ??= createPopupGroup();
+      return isolatedPopupGroup;
+    }
+
+    return getSharedMenuPopupGroup();
+  }
+
+  function getMenuPopupGroup(): PopupGroup {
+    menuPopupGroup ??= bindMenuPopupGroup(resolveMenuPopupGroupBase, () => options.parentMenu?.() != null);
+    return menuPopupGroup;
+  }
 
   function push(menuId: string, triggerId: string): void {
     const stack = navigationState.current.stack;
@@ -153,8 +231,21 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   // --- Highlight ---
 
+  function focusItem(element: HTMLElement, highlightOptions?: MenuHighlightOptions): void {
+    if (highlightOptions?.focus === false) return;
+
+    if (highlightOptions?.preventScroll) {
+      element.focus({ preventScroll: true });
+    } else {
+      element.focus();
+    }
+  }
+
   function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
-    if (highlightedItem === element) return;
+    if (highlightedItem === element) {
+      if (element) focusItem(element, highlightOptions);
+      return;
+    }
 
     if (highlightedItem) {
       highlightedItem.tabIndex = -1;
@@ -166,13 +257,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (element) {
       element.tabIndex = 0;
       element.setAttribute(MenuItemDataAttrs.highlighted, '');
-      if (highlightOptions?.focus !== false) {
-        if (highlightOptions?.preventScroll) {
-          element.focus({ preventScroll: true });
-        } else {
-          element.focus();
-        }
-      }
+      focusItem(element, highlightOptions);
     }
 
     options.onHighlightChange?.(element);
@@ -195,6 +280,26 @@ export function createMenu(options: MenuOptions): MenuApi {
     return items.find((item) => item.matches('[aria-checked="true"], [aria-selected="true"]')) ?? items[0] ?? null;
   }
 
+  function getEventItem(event: UIKeyboardEvent): HTMLElement | null {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return null;
+
+    const item = target.closest<HTMLElement>(`[${MenuItemDataAttrs.item}]`);
+
+    if (!item || !items.includes(item)) return null;
+
+    return item;
+  }
+
+  function syncHighlightToEventTarget(event: UIKeyboardEvent): void {
+    const item = getEventItem(event);
+
+    if (!item || item === highlightedItem) return;
+
+    highlight(item, { preventScroll: true });
+  }
+
   // --- Type-ahead ---
 
   function clearTypeahead(): void {
@@ -209,6 +314,10 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = requestAnimationFrame(() => {
       openRafId = 0;
+      // Root view children may connect after the menu host (HTML custom elements).
+      // Re-measure on open so viewport CSS variables reflect the mounted panel.
+      const hasActiveSubmenu = getNavigationInput().current.stack.length > 0;
+      viewport?.syncRoot(hasActiveSubmenu, { animate: !hasActiveSubmenu });
       // Guard against close() being called before the RAF fires — active
       // stays true during the closing animation, so also check status.
       if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;
@@ -238,7 +347,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (match) highlight(match);
   }
 
-  // --- Internal popover ---
+  // --- Internal popover (see `bindMenuPopupGroup` for nested vs root group behavior) ---
 
   const popover = createPopover({
     transition: options.transition,
@@ -253,21 +362,61 @@ export function createMenu(options: MenuOptions): MenuApi {
       } else {
         clearHighlight();
         clearTypeahead();
-        // Reset navigation stack so the menu starts at root next time it opens.
-        navigationState.patch({ stack: [], direction: 'forward' });
       }
     },
     onOpenChangeComplete(open) {
+      if (!open) {
+        // Reset after close animations so submenu views stay mounted during `ending`
+        // (outside click and other dismiss paths would otherwise drop the stack
+        // immediately and tear down nested panels with no transition).
+        navigationState.patch({ stack: [], direction: 'forward' });
+        // Root panel may have been driven to `hidden` while a submenu was open; content
+        // can unmount before the viewport restores it, so reset for the next open.
+        getRootPanelTransition()?.reset();
+      }
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
-      if (!open && lastCloseReason !== 'imperative-action' && lastCloseReason !== 'group-open') {
-        triggerElement?.focus();
+      if (
+        !open &&
+        lastCloseReason !== 'imperative-action' &&
+        lastCloseReason !== 'group-open' &&
+        lastCloseReason !== 'blur'
+      ) {
+        const element = triggerElement;
+
+        const restoreTriggerFocus = (): void => {
+          // Close completion runs before a deferred reopen from a trigger click during
+          // `ending` (see `createPopover`); the reopen is chained on the same close promise.
+          // Without this guard, the scheduled focus runs after the menu has reopened and
+          // highlights an item — pulling focus to the trigger and blur-closing the menu.
+          if (popover.input.current.active) return;
+          // Another root menu may already have focus (e.g. this menu dismissed via
+          // outside-click on a peer trigger before the peer opened). Restoring our trigger
+          // would steal focus from that menu and blur-close it.
+          if (typeof document !== 'undefined') {
+            const active = document.activeElement;
+            const menuSurface = active instanceof HTMLElement ? active.closest('[role="menu"]') : null;
+            if (menuSurface instanceof HTMLElement && contentElement && !contentElement.contains(menuSurface)) {
+              return;
+            }
+            if (active instanceof HTMLElement && getMenuPopupGroup().isPeerTrigger(active, element)) {
+              return;
+            }
+          }
+          element?.focus();
+        };
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(restoreTriggerFocus, 0);
+          });
+        });
       }
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
-    group: () => options.group?.() ?? getSharedMenuPopupGroup(),
+    group: getMenuPopupGroup,
   });
 
   // --- Content keyboard navigation ---
@@ -282,6 +431,10 @@ export function createMenu(options: MenuOptions): MenuApi {
       }
 
       if (items.length === 0) return;
+
+      if (isMenuNavigationKey(event)) {
+        syncHighlightToEventTarget(event);
+      }
 
       switch (key) {
         case 'ArrowDown': {
@@ -340,9 +493,50 @@ export function createMenu(options: MenuOptions): MenuApi {
     popover.setTriggerElement(element);
   }
 
+  function getNavigationInput(): State<NavigationState> {
+    const parent = options.parentMenu?.();
+    return parent ? parent.navigationInput : navigationState;
+  }
+
+  function teardownViewport(): void {
+    unsubscribeNavigation?.();
+    unsubscribeNavigation = null;
+    viewport?.destroy();
+    viewport = null;
+  }
+
+  function subscribeViewportNavigation(): void {
+    unsubscribeNavigation?.();
+    const navInput = getNavigationInput();
+
+    unsubscribeNavigation = navInput.subscribe(() => {
+      viewport?.syncRoot(navInput.current.stack.length > 0);
+    });
+  }
+
   function setContentElement(element: HTMLElement | null): void {
+    teardownViewport();
     contentElement = element;
     popover.setPopupElement(element);
+
+    if (!element) return;
+
+    const isSubmenu = options.parentMenu?.() != null;
+
+    if (shouldCreateMenuViewport(element, isSubmenu)) {
+      viewport = createMenuViewport(element, getRootPanelTransition() ?? undefined, {
+        navigation: {
+          hasActiveSubmenu: () => getNavigationInput().current.stack.length > 0,
+          direction: () => getNavigationInput().current.direction,
+        },
+      });
+      subscribeViewportNavigation();
+      viewport.syncRoot(getNavigationInput().current.stack.length > 0);
+    }
+  }
+
+  function registerSubmenuView(view: HTMLElement, transition: MenuViewTransitionApi): () => void {
+    return viewport?.bindChild(view, transition) ?? noop;
   }
 
   // --- Item registration ---
@@ -379,14 +573,17 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = 0;
     clearTypeahead();
+    teardownViewport();
+    rootPanelTransition?.destroy();
+    rootPanelTransition = null;
+    navigationState.patch({ stack: [], direction: 'forward' });
     popover.destroy();
   }
 
   return {
     input: popover.input as State<MenuInput>,
     navigationInput: navigationState,
-    // Menus open/close on trigger click — forward the popover's click handler.
-    // Hover and focus-based open are disabled (openOnHover not set).
+    // Menus open/close on trigger click — delegate to popover. Hover/focus open are off.
     triggerProps: {
       onClick: popover.triggerProps.onClick,
       onKeyDown: handleTriggerKeyDown,
@@ -398,6 +595,9 @@ export function createMenu(options: MenuOptions): MenuApi {
     get contentElement(): HTMLElement | null {
       return contentElement;
     },
+    get rootViewTransitionInput(): State<MenuViewTransitionState> | null {
+      return getRootPanelTransition()?.input ?? null;
+    },
     setTriggerElement,
     setContentElement,
     registerItem,
@@ -405,6 +605,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     highlightFirstItem,
     push,
     pop,
+    registerSubmenuView,
     open: popover.open,
     close: popover.close,
     destroy,
