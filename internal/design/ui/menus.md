@@ -653,6 +653,8 @@ The menu follows the [WAI-ARIA Menu Pattern](https://www.w3.org/WAI/ARIA/apg/pat
 
 **Roving tabindex:** Items receive real DOM focus, so `:focus-visible` works naturally for keyboard-only styling. Recommended by WAI-ARIA; used by Radix and Base UI.
 
+**Pointer activation:** Menu items and submenu triggers render as `div role="menuitem"`, not native `<button>` elements. Click handlers guard with `if (event.button !== 0) return` before selecting an item or pushing a submenu. A mouse `click` is usually primary-button (`button === 0`), but the guard is intentional: it limits activation to the primary pointer button (matching the ARIA menu activation model), avoids calling `preventDefault()` on non-primary clicks when submenu handlers suppress default behavior, and stays consistent with pointer-event filtering elsewhere in the DOM layer. Keyboard activation uses separate `keydown` handlers (Enter, Space, ArrowRight) and does not rely on this check.
+
 ## Architecture
 
 Three layers, each independently useful:
