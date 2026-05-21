@@ -39,7 +39,7 @@ import { syncPreload } from '../../behaviors/sync-preload';
  * by audio-side behaviors. Video and text-track slots are absent —
  * subtractive composition removes the behaviors that declare them.
  */
-export interface SimpleAudioOnlyHlsEngineState {
+export interface SimpleHlsAudioOnlyEngineState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedAudioTrackId?: string;
@@ -53,16 +53,16 @@ export interface SimpleAudioOnlyHlsEngineState {
  * Subset of `SimpleHlsEngineContext` covering only the platform objects and
  * actor refs managed by audio-side behaviors.
  */
-export interface SimpleAudioOnlyHlsEngineContext {
+export interface SimpleHlsAudioOnlyEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   audioBufferActor?: SourceBufferActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
 }
 
-export type SimpleAudioOnlyHlsEngineSignals = {
-  state: StateSignals<SimpleAudioOnlyHlsEngineState>;
-  context: ContextSignals<SimpleAudioOnlyHlsEngineContext>;
+export type SimpleHlsAudioOnlyEngineSignals = {
+  state: StateSignals<SimpleHlsAudioOnlyEngineState>;
+  context: ContextSignals<SimpleHlsAudioOnlyEngineContext>;
 };
 
 /**
@@ -71,8 +71,8 @@ export type SimpleAudioOnlyHlsEngineSignals = {
  * Subset of `SimpleHlsEngineConfig` — video-quality, bandwidth-estimator,
  * and text-track config fields are omitted (no behavior consumes them).
  */
-export interface SimpleAudioOnlyHlsEngineConfig
-  extends ShareSignalsConfig<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext> {
+export interface SimpleHlsAudioOnlyEngineConfig
+  extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
   preferredAudioLanguage?: string;
   resolveDuration?: PresentationDurationResolver;
   parsePresentation?: ParsePresentation;
@@ -84,7 +84,7 @@ export interface SimpleAudioOnlyHlsEngineConfig
 // Audio-Only HLS Playback Engine
 // ============================================================================
 
-const shareSignals = makeShareSignals<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext>();
+const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>();
 
 /**
  * Create an audio-only HLS playback engine.
@@ -104,8 +104,8 @@ const shareSignals = makeShareSignals<SimpleAudioOnlyHlsEngineState, SimpleAudio
  *
  * @example
  * ```ts
- * let signals: SimpleAudioOnlyHlsEngineSignals;
- * const engine = createAudioOnlyHlsEngine({
+ * let signals: SimpleHlsAudioOnlyEngineSignals;
+ * const engine = createHlsAudioOnlyEngine({
  *   preferredAudioLanguage: 'en',
  *   onSignalsReady: (refs) => {
  *     signals = refs;
@@ -116,9 +116,9 @@ const shareSignals = makeShareSignals<SimpleAudioOnlyHlsEngineState, SimpleAudio
  * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  * ```
  */
-export function createAudioOnlyHlsEngine(
-  config: SimpleAudioOnlyHlsEngineConfig = {}
-): Composition<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext> {
+export function createHlsAudioOnlyEngine(
+  config: SimpleHlsAudioOnlyEngineConfig = {}
+): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
   const finalConfig = {
     ...config,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
-import { createAudioOnlyHlsEngine } from '../engine-audio-only';
+import { createHlsAudioOnlyEngine } from '../engine-audio-only';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('createAudioOnlyHlsEngine', () => {
+describe('createHlsAudioOnlyEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
@@ -38,7 +38,7 @@ describe('createAudioOnlyHlsEngine', () => {
   });
 
   it('creates engine with state, context, and destroy', () => {
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
@@ -48,7 +48,7 @@ describe('createAudioOnlyHlsEngine', () => {
   });
 
   it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
 
     const state = snapshot(engine.state) as Record<string, unknown>;
     // bandwidthState slot may or may not exist depending on whether any
@@ -90,7 +90,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -152,7 +152,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -226,7 +226,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -259,7 +259,7 @@ http://example.com/audio-seg1.m4s
   });
 
   it('cleans up on destroy', () => {
-    const engine = createAudioOnlyHlsEngine();
+    const engine = createHlsAudioOnlyEngine();
     expect(() => engine.destroy()).not.toThrow();
   });
 });

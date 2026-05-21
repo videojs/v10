@@ -1,10 +1,10 @@
 export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
-export type { SimpleAudioOnlyHlsMediaAPI, SimpleAudioOnlyHlsMediaProps } from './adapter-audio-only';
+export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';
 export {
-  SimpleAudioOnlyHlsMediaElement,
-  SimpleAudioOnlyHlsMediaMixin,
-  simpleAudioOnlyHlsMediaDefaultProps,
+  SimpleHlsAudioOnlyMediaElement,
+  SimpleHlsAudioOnlyMediaMixin,
+  simpleHlsAudioOnlyMediaDefaultProps,
 } from './adapter-audio-only';
 export type {
   SimpleHlsEngineConfig,
@@ -14,9 +14,9 @@ export type {
 } from './engine';
 export { createSimpleHlsEngine } from './engine';
 export type {
-  SimpleAudioOnlyHlsEngineConfig,
-  SimpleAudioOnlyHlsEngineContext,
-  SimpleAudioOnlyHlsEngineSignals,
-  SimpleAudioOnlyHlsEngineState,
+  SimpleHlsAudioOnlyEngineConfig,
+  SimpleHlsAudioOnlyEngineContext,
+  SimpleHlsAudioOnlyEngineSignals,
+  SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
-export { createAudioOnlyHlsEngine } from './engine-audio-only';
+export { createHlsAudioOnlyEngine } from './engine-audio-only';

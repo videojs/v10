@@ -1,25 +1,25 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import {
-  createAudioOnlyHlsEngine,
-  type SimpleAudioOnlyHlsEngineConfig,
-  type SimpleAudioOnlyHlsEngineContext,
-  type SimpleAudioOnlyHlsEngineSignals,
-  type SimpleAudioOnlyHlsEngineState,
+  createHlsAudioOnlyEngine,
+  type SimpleHlsAudioOnlyEngineConfig,
+  type SimpleHlsAudioOnlyEngineContext,
+  type SimpleHlsAudioOnlyEngineSignals,
+  type SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
 
-export interface SimpleAudioOnlyHlsMediaProps {
+export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
 }
 
-export const simpleAudioOnlyHlsMediaDefaultProps: SimpleAudioOnlyHlsMediaProps = {
+export const simpleHlsAudioOnlyMediaDefaultProps: SimpleHlsAudioOnlyMediaProps = {
   src: '',
   preload: '',
 };
 
-export interface SimpleAudioOnlyHlsMediaAPI extends SimpleAudioOnlyHlsMediaProps {
-  readonly engine: Composition<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext>;
+export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps {
+  readonly engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -30,27 +30,27 @@ export interface SimpleAudioOnlyHlsMediaAPI extends SimpleAudioOnlyHlsMediaProps
  * Mixin that adds SPF audio-only HLS playback to any base class.
  *
  * Parallel to `SimpleHlsMediaMixin` with one substantive difference: the
- * underlying engine is the audio-only variant (`createAudioOnlyHlsEngine`),
+ * underlying engine is the audio-only variant (`createHlsAudioOnlyEngine`),
  * which omits video and text-track behaviors. The src / preload / play()
  * contract per the WHATWG HTML spec is identical to the default adapter.
  *
  * Selecting this adapter is the variant decision: instantiating
- * `SimpleAudioOnlyHlsMediaElement` opts the consumer into audio-only
+ * `SimpleHlsAudioOnlyMediaElement` opts the consumer into audio-only
  * delivery even when the source is a mixed-AV HLS manifest.
  *
  * @example
- * class SimpleAudioOnlyHlsMedia extends SimpleAudioOnlyHlsMediaMixin(HTMLVideoElementHost) {}
+ * class SimpleHlsAudioOnlyMedia extends SimpleHlsAudioOnlyMediaMixin(HTMLVideoElementHost) {}
  *
- * const media = new SimpleAudioOnlyHlsMedia();
+ * const media = new SimpleHlsAudioOnlyMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
-export function SimpleAudioOnlyHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class SimpleAudioOnlyHlsMediaImpl extends BaseClass {
-    #engine: Composition<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext>;
-    #config: SimpleAudioOnlyHlsEngineConfig;
-    #signals!: SimpleAudioOnlyHlsEngineSignals;
-    #preload: '' | 'none' | 'metadata' | 'auto' = simpleAudioOnlyHlsMediaDefaultProps.preload;
+export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
+    #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
+    #config: SimpleHlsAudioOnlyEngineConfig;
+    #signals!: SimpleHlsAudioOnlyEngineSignals;
+    #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -63,7 +63,7 @@ export function SimpleAudioOnlyHlsMediaMixin<Base extends Constructor<any>>(Base
       this.#engine = this.#createEngine();
     }
 
-    get engine(): Composition<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext> {
+    get engine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
       return this.#engine;
     }
 
@@ -137,7 +137,7 @@ export function SimpleAudioOnlyHlsMediaMixin<Base extends Constructor<any>>(Base
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('SimpleAudioOnlyHlsMediaElement: no media element attached'));
+        return Promise.reject(new Error('SimpleHlsAudioOnlyMediaElement: no media element attached'));
       }
 
       this.#signals.state.loadActivated.set(true);
@@ -161,8 +161,8 @@ export function SimpleAudioOnlyHlsMediaMixin<Base extends Constructor<any>>(Base
     // Private
     // -------------------------------------------------------------------------
 
-    #createEngine(): Composition<SimpleAudioOnlyHlsEngineState, SimpleAudioOnlyHlsEngineContext> {
-      return createAudioOnlyHlsEngine({
+    #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+      return createHlsAudioOnlyEngine({
         ...this.#config,
         onSignalsReady: (signals) => {
           this.#signals = signals;
@@ -178,8 +178,8 @@ export function SimpleAudioOnlyHlsMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  return SimpleAudioOnlyHlsMediaImpl as unknown as MixinReturn<Base, SimpleAudioOnlyHlsMediaAPI>;
+  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI>;
 }
 
 /** Standalone SPF audio-only media adapter with no base class. */
-export class SimpleAudioOnlyHlsMediaElement extends SimpleAudioOnlyHlsMediaMixin(class {}) {}
+export class SimpleHlsAudioOnlyMediaElement extends SimpleHlsAudioOnlyMediaMixin(class {}) {}
