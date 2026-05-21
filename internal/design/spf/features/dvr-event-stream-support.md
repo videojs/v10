@@ -230,7 +230,7 @@ Things this feature probably forces decisions on, not just additions:
   duration semantics during recording; finite duration on event-
   stream termination. Same MSE writer semantics as live;
   `endOfStream` gate logic applies uniformly.
-- **`[non-zero-pts-support]`** *(candidate, cluster B)* — DVR and
+- **[non-zero-pts-support](./non-zero-pts-support.md)** — DVR and
   event streams typically have PTS far from zero (recording starts
   at wall-clock time, not at PTS 0). `currentTime` / `seekable`
   semantics require non-zero-PTS support to be correct.

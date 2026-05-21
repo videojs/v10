@@ -69,7 +69,7 @@ richer live variants (LL-HLS, DVR) sit in sibling features.
   windowing semantics.
 
 **Out of scope (related but separate concerns):**
-- **`[non-zero-pts-support]`** — live streams' PTS advances continuously
+- **[non-zero-pts-support](./non-zero-pts-support.md)** — live streams' PTS advances continuously
   from stream start, typically far from zero. Live needs this for
   correct `currentTime` / `seekable` semantics, but the time-mapping
   primitive itself is a separate cluster B feature.
@@ -212,7 +212,7 @@ Things this feature probably forces decisions on, not just additions:
   Growing playlist + back-seek through history; resolves this doc's
   prior "DVR / event boundary" decomposition question (DVR is its
   own feature, not a phase here).
-- **`[non-zero-pts-support]`** *(candidate, cluster B)* — live PTS
+- **[non-zero-pts-support](./non-zero-pts-support.md)** — live PTS
   starts far from zero. Live without non-zero PTS handling means
   `currentTime` is wrong. Cluster B foundation that live consumes.
 - **mse-mms-pipeline** — `Infinity` duration via `config.resolveDuration`

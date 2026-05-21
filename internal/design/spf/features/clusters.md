@@ -186,13 +186,15 @@ The mapping between media timeline, playlist position, and `<video>` element tim
 
 **Docs.** None yet.
 
-**Foundational primitives.** A playlist-position-to-media-time mapping primitive (likely emerges from the first feature that genuinely needs it — non-zero PTS or edit lists).
+**Docs.** `non-zero-pts-support` (foundation — time-mapping primitive via `SourceBuffer.timestampOffset`; covers non-zero-PTS VOD, instant clips, and live).
+
+**Foundational primitives.** The playlist-position-to-media-time mapping primitive lives in `non-zero-pts-support` and is consumed by every cluster A feature (live, DVR, LL-HLS) for correct `currentTime` / `seekable` semantics.
 
 **Maps to Notion cluster B** ("Time / PTS normalization").
 
 **Common cross-cluster touchpoints.** MSE/buffer management (time mapping affects what's appendable where); manifest reload loop (live presentations' time mapping evolves).
 
-**Sub-cluster: Borderline content compensation.** Within cluster B, a distinct sub-group of features addresses defensive handling of content with sub-optimal or quirky timing information — technically valid but poorly-authored / poorly-delivered. These features sit in the *Borderline* category per [Feature classification axes](#media-src-vs-player-vs-borderline); they share a motivation (compensate for bad source data) but use different mechanisms (heuristic detection / parse-and-offset / detect-and-recover). Candidates: `pseudo-ended-detection`, `edit-list-compensation`, `buffer-stall-recovery`. The general time-mapping primitive these defensive features build on is shared with `non-zero-pts-support` (the cluster B foundation candidate). Whether the three land as separate feature docs or a single umbrella doc is open — likely revisited when the first one is picked for documentation.
+**Sub-cluster: Borderline content compensation.** Within cluster B, a distinct sub-group of features addresses defensive handling of content with sub-optimal or quirky timing information — technically valid but poorly-authored / poorly-delivered. These features sit in the *Borderline* category per [Feature classification axes](#media-src-vs-player-vs-borderline); they share a motivation (compensate for bad source data) but use different mechanisms (heuristic detection / parse-and-offset / detect-and-recover). Candidates: `pseudo-ended-detection`, `edit-list-compensation`, `buffer-stall-recovery`. The general time-mapping primitive these defensive features build on is shared with `non-zero-pts-support` (the cluster B foundation). Whether the three land as separate feature docs or a single umbrella doc is open — likely revisited when the first one is picked for documentation.
 
 ---
 

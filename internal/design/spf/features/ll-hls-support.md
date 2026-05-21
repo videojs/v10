@@ -214,7 +214,7 @@ Things this feature probably forces decisions on, not just additions:
   sampling continues to feed it via `createTrackedFetch`.
   `EXT-X-RENDITION-REPORT` consumption (deferred, see Open questions)
   is the LL-HLS-aware variant-switch optimization.
-- **`[non-zero-pts-support]`** *(candidate, cluster B)* — live streams
+- **[non-zero-pts-support](./non-zero-pts-support.md)** — live streams
   including LL-HLS typically have PTS far from zero; the time-mapping
   primitive is consumed by live (including LL-HLS) for correct
   `currentTime` / `seekable` semantics.
