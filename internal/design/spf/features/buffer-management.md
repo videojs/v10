@@ -242,6 +242,10 @@ snapshot between operations rather than awaiting `send()` directly.
 - **buffer-flushing** *(not yet documented, candidate)* — language-
   switch flush orchestration on top of the primitives surfaced here.
   Driven by `multi-language-audio` Tier 2 first.
+- **[ll-hls-support](./ll-hls-support.md)** *(candidate)* — extends the
+  forward-buffer planner with partial-segment-head tracking past the
+  last complete segment. Planner extension shape is an open question
+  in that feature's doc.
 - **5.1-surround-selection** / **hevc-variant-selection**
   *(candidates)* — cross-codec switches need a `changeType()`
   extension beyond today's same-codec planning.

@@ -58,9 +58,10 @@ richer live variants (LL-HLS, DVR) sit in sibling features.
 - `#EXT-X-ENDLIST` recognition + unchanged-playlist miss-counter fallback for termination detection
 
 **Out of scope (separate Media-src candidate features):**
-- **`[ll-hls-support]`** — blocking reload, partial segments, delta
-  playlists, preload hints. Largest single live-related gap per the
-  permutation matrix; builds directly on this feature's reload loop.
+- **[ll-hls-support](./ll-hls-support.md)** — blocking reload, partial
+  segments, delta playlists, preload hints. Largest single live-related
+  gap per the permutation matrix; builds directly on this feature's
+  reload loop.
 - **`[dvr-event-stream-support]`** — DVR / event streams: growing
   playlist (non-sliding); user can seek backwards through history.
   Extension of this feature with different windowing semantics.
@@ -206,9 +207,9 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Related features
 
-- **`[ll-hls-support]`** *(candidate, not yet documented)* — builds
-  on this feature's reload loop. Adds blocking reload, partial
-  segments, delta playlists, preload hints. Largest live-related gap.
+- **[ll-hls-support](./ll-hls-support.md)** — builds on this feature's
+  reload loop. Adds blocking reload, partial segments, delta playlists,
+  preload hints. Largest live-related gap.
 - **`[dvr-event-stream-support]`** *(candidate)* — different
   windowing semantics on top of the same reload loop.
 - **`[non-zero-pts-support]`** *(candidate, cluster B)* — live PTS
