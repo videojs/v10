@@ -224,6 +224,23 @@ Discipline:
     the downstream skill, (iii) bundle the constituent implementation
     into this use-case pass with explicit user confirmation.
 
+16. **SPF adapter stranded at engine layer** — the implementation pass
+    lands the engine variant + SPF adapter and stops there. The variant
+    is reachable via `@videojs/spf/hls` but **not consumable through
+    the existing player surface** (the `packages/html` custom elements
+    + `packages/react` components + sandbox demos that real consumers
+    actually use). The canonical failure shape: ship a "Phase 1
+    complete" SPF adapter that customers can't actually instantiate
+    via their normal `<simple-x-video>` / `<SimpleXVideo>` flow. Step
+    2's *implementation-scope extensions* question makes the player-
+    package layers explicit opt-ins; the failure is forgetting to ask
+    or defaulting to "engine + adapter only" without surfacing the
+    gap. Step 8's *Out of scope / deferred* sub-list must record every
+    non-landed extension so the surface gap stays visible. Worked
+    example: `audio-only-mode-override` Phase 1 (2026-05-21) landed
+    only the SPF layer — the discovery of this failure mode was the
+    feedback that drove this entry.
+
 ## Steps (do these in order; do not skip)
 
 ### Step 1 — Identify the use case + disambiguate the request
@@ -333,6 +350,43 @@ After Step 1's report:
   applicable. Worked example: `audio-only-mode-override` and
   `audio-only-composition` likely share a `createAudioOnlyHlsEngine`
   factory; explicit coordination prevents drift.
+- **Confirm implementation-scope extensions.** The engine variant +
+  adapter pair in `packages/spf` is the *minimum* implementation
+  surface — but a variant adapter that stops at the SPF layer is
+  effectively unconsumable through the existing player surface. Ask
+  the user (multi-select `AskUserQuestion`) which downstream layers
+  to bundle into this pass:
+  - **Core media wrapper** — `packages/core/src/dom/media/<key>/`
+    (~5 LOC; applies the SPF mixin to `HTMLVideoElementHost`). The
+    minimum bridge between the SPF adapter and the player packages.
+    Worked example: `simple-hls/index.ts` →
+    `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}`.
+  - **HTML custom element** — `packages/html/src/media/<key>-video/`
+    (~5 LOC; wraps the core media in `CustomMediaElement` +
+    `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
+    + `packages/html/src/cdn/media/<key>-video.ts` for the CDN entry.
+    Worked example: `simple-hls-video/index.ts` →
+    `class SimpleHlsVideo extends MediaAttachMixin(CustomMediaElement('video', SimpleHlsMedia)) {}`.
+  - **React component** — `packages/react/src/media/<key>-video/`
+    (~37 LOC; React adapter exposing props matching the HTML
+    surface). Pairs with the HTML custom element.
+  - **Sandbox demo(s)** — `apps/sandbox/src/html-<key>-video/`
+    and/or `apps/sandbox/src/react-<key>-video/` (~50–80 LOC each).
+    Useful for manual verification + developer onboarding.
+    Required prereqs: HTML or React component, depending on which
+    sandbox is included.
+  - **E2E tests** — `apps/e2e/apps/vite/src/pages/html-<key>-video-*.{html,ts}`
+    fixture pages + `apps/e2e/tests/...` Playwright spec.
+    **Lean: defer by default.** Use E2E for behaviors that have
+    documented reliability concerns ([[project-e2e-renderer-reliability]])
+    or that exercise cross-browser invariants the unit tests
+    can't reach. For most Phase 1 use-case lands, the engine-level
+    integration tests + sandbox manual verification suffice;
+    E2E coverage follows once behavior stabilizes.
+
+  Defaults: none. The user explicitly opts in to each layer per
+  pass. Each opt-in becomes its own chunk in Step 3.
+
 - **Surface expected doc revisions.** Walking through the Open
   questions + phase scope often reveals "we'll need to update the
   doc to reflect X" — flag these explicitly so they're not silent.
@@ -342,12 +396,15 @@ After Step 1's report:
   doc.
 
 **Use `AskUserQuestion`** for clear-cut choices (phase scope,
-constituent-readiness strategy, composition mechanism per chunk).
+constituent-readiness strategy, composition mechanism per chunk,
+implementation-scope extensions).
 
 ### Step 3 — Map phases to implementation chunks
 
 Per the agreed scope, decompose into discrete chunks. Chunk shapes
 typical for use-case implementations:
+
+**Core SPF layer (always present):**
 
 - **Engine variant factory creation** (new) — typically the first chunk;
   parallels `createSimpleHlsEngine` shape with the composition mechanism
@@ -360,14 +417,36 @@ typical for use-case implementations:
   `/spf-create-behavior`.
 - **Existing behavior updates** (if any) — route to
   `/spf-update-behavior` or `/refactor-behavior`.
-- **Test scaffolding** — typically: engine-level integration tests for
+- **Engine-level test scaffolding** — engine integration tests for
   the variant; per-behavior tests for any new use-case-specific
   behaviors.
-- **Composition wiring** — final chunk; ties the variant factory into
-  the adapter and exposes via the package's exports.
+- **Composition wiring** — ties the variant factory into the adapter
+  and exposes via `packages/spf/src/playback/engines/hls/index.ts`.
+
+**Implementation-scope-extension layers (opt-in per Step 2):**
+
+- **Core media wrapper** — `packages/core/src/dom/media/<key>/index.ts`
+  applying the SPF mixin to `HTMLVideoElementHost` (or audio host for
+  audio-only variants). Inline implementation; ~5 LOC.
+- **HTML custom element + define entry + CDN entry** —
+  `packages/html/src/media/<key>-video/index.ts`,
+  `packages/html/src/define/media/<key>-video.ts`,
+  `packages/html/src/cdn/media/<key>-video.ts`. Inline implementation;
+  ~5 LOC + boilerplate.
+- **React component** — `packages/react/src/media/<key>-video/index.tsx`
+  exposing the props surface; ~37 LOC. Inline implementation.
+- **Sandbox demo(s)** — `apps/sandbox/src/{html,react}-<key>-video/`
+  (each ~50–80 LOC). Inline implementation; one chunk per surface
+  (html / react / both).
+- **E2E coverage** — fixture pages under
+  `apps/e2e/apps/vite/src/pages/` + Playwright spec under
+  `apps/e2e/tests/`. Inline implementation. Often the largest
+  opt-in chunk; defer by default per the Step 2 lean.
 
 **Output of this step.** A chunk list with mechanism + downstream-skill
-routing per chunk. Same table shape as `/spf-implement-feature`.
+routing per chunk + which layer it lands in. Same table shape as
+`/spf-implement-feature`, with a *Layer* column added when opt-in
+extensions are in scope.
 
 ### Step 4 — Apply cross-cutting concern checks
 
@@ -493,21 +572,41 @@ docs (cascade):
 - **NEW section once any phase implementation lands:
   *Implementation surface*** — required when implementation
   surface is populated. Mirror feature-doc shape (see
-  `audio-playback.md` for the canonical example): an
-  *Engine factory* table (Export / File / Purpose), an *Adapter*
-  table (Export / File / Purpose), the public re-export entry
-  point, and a *Composed behaviors* paragraph for the variant's
-  full composed list.
+  `audio-playback.md` for the canonical example) and extend
+  per opt-in extensions landed in this pass:
+  - *Engine factory* table (Export / File / Purpose) —
+    always present.
+  - *Adapter* table (Export / File / Purpose) — always present.
+  - *Composed behaviors* paragraph — always present.
+  - *Core media wrapper* table — if the core wrapper layer
+    landed (`packages/core/...`).
+  - *HTML custom element* table — if the HTML element layer
+    landed (`packages/html/...`).
+  - *React component* table — if the React layer landed
+    (`packages/react/...`).
+  - Public re-export entry points for each layer that landed.
+  - Each opt-in extension that did *not* land in this pass
+    is noted in the *Out of scope / deferred* section so the
+    surface gap is visible.
 - **NEW section once any phase implementation lands:
   *Verification*** — required when implementation surface is
   populated. **This is the persisted TDD artifact** — the Step 5
   TDD plan lives here in the doc, not just in chat. Mirror
   feature-doc shape (see `audio-playback.md` for the canonical
-  example): a *Unit tests* bullet list (one entry per test file
-  → test name → assertion summary), a *Sandbox* entry if a demo
-  exists, and an *Out of scope / deferred* sub-list for
-  verification gaps (e.g., sandbox demo follow-up, E2E coverage
-  deferred elsewhere). Each new chunk's TDD test gets a line.
+  example), with structure per opt-in extensions landed:
+  - *Unit tests* bullet list (one entry per test file → test
+    name → assertion summary) — engine + adapter coverage,
+    always present.
+  - *Component tests* sub-list — if HTML / React component
+    tests landed.
+  - *Sandbox* entry naming the sandbox app directory(ies) — if
+    sandbox demo(s) landed.
+  - *E2E tests* entry naming fixture pages + Playwright spec
+    paths — if E2E coverage landed.
+  - *Out of scope / deferred* sub-list for verification gaps
+    (sandbox follow-up, E2E coverage deferred elsewhere, etc.).
+    Each non-landed opt-in extension from Step 2 appears here
+    explicitly — the deferral is the artifact.
 - *See also* — add test paths, sandbox demo paths if applicable.
 
 **`definition` advancement rule.** The depth scale per the
