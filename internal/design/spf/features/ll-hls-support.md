@@ -197,8 +197,8 @@ Things this feature probably forces decisions on, not just additions:
   structurally an extension of this feature's reload loop with a
   different pacing model, finer-grained segment list, and added
   optimizations.
-- **`[dvr-event-stream-support]`** *(candidate, cluster A)* — sibling
-  extension on the same reload loop with different windowing
+- **[dvr-event-stream-support](./dvr-event-stream-support.md)** —
+  sibling extension on the same reload loop with different windowing
   semantics. Orthogonal to LL-HLS: a DVR stream can also be low-
   latency (DVR + LL-HLS), in which case both features compose.
 - **[presentation-modeling](../presentation-modeling.md)** —

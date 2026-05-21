@@ -28,8 +28,9 @@ without it, live HLS sources don't play correctly.
   Stream Support (epic #2)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   (cluster A foundation, eng size L, validation M).
 - **Foundational** for the manifest-reload-loop cluster —
-  `[ll-hls-support]` and `[dvr-event-stream-support]` build on this
-  feature.
+  [ll-hls-support](./ll-hls-support.md) and
+  [dvr-event-stream-support](./dvr-event-stream-support.md) build on
+  this feature.
 
 ## Phases of complexity
 
@@ -62,9 +63,10 @@ richer live variants (LL-HLS, DVR) sit in sibling features.
   segments, delta playlists, preload hints. Largest single live-related
   gap per the permutation matrix; builds directly on this feature's
   reload loop.
-- **`[dvr-event-stream-support]`** — DVR / event streams: growing
-  playlist (non-sliding); user can seek backwards through history.
-  Extension of this feature with different windowing semantics.
+- **[dvr-event-stream-support](./dvr-event-stream-support.md)** —
+  DVR / event streams: growing playlist (non-sliding); user can seek
+  backwards through history. Extension of this feature with different
+  windowing semantics.
 
 **Out of scope (related but separate concerns):**
 - **`[non-zero-pts-support]`** — live streams' PTS advances continuously
@@ -178,11 +180,6 @@ Things this feature probably forces decisions on, not just additions:
   live consumers wire their own?** The `resolveDuration` hook is
   already pluggable; the only question is whether the default engine
   variant covers live or requires opt-in.
-- **DVR / event boundary.** A DVR stream is structurally a growing
-  playlist with no `#EXT-X-ENDLIST` (yet). The reload loop is the same
-  shape as live; the difference is windowing semantics (no slide-off).
-  Whether DVR is its own feature or a phase of `live-stream-support`
-  is a sub-question of the cluster's epic-decomposition.
 - **Miss-counter threshold.** Heuristic feature — how many identical-
   manifest reloads constitute termination? hls.js uses some count;
   SPF needs its own choice. Threshold affects false-positive vs
@@ -210,8 +207,11 @@ Things this feature probably forces decisions on, not just additions:
 - **[ll-hls-support](./ll-hls-support.md)** — builds on this feature's
   reload loop. Adds blocking reload, partial segments, delta playlists,
   preload hints. Largest live-related gap.
-- **`[dvr-event-stream-support]`** *(candidate)* — different
-  windowing semantics on top of the same reload loop.
+- **[dvr-event-stream-support](./dvr-event-stream-support.md)** —
+  different windowing semantics on top of the same reload loop.
+  Growing playlist + back-seek through history; resolves this doc's
+  prior "DVR / event boundary" decomposition question (DVR is its
+  own feature, not a phase here).
 - **`[non-zero-pts-support]`** *(candidate, cluster B)* — live PTS
   starts far from zero. Live without non-zero PTS handling means
   `currentTime` is wrong. Cluster B foundation that live consumes.

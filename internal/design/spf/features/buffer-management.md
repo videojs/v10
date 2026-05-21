@@ -246,6 +246,12 @@ snapshot between operations rather than awaiting `send()` directly.
   forward-buffer planner with partial-segment-head tracking past the
   last complete segment. Planner extension shape is an open question
   in that feature's doc.
+- **[dvr-event-stream-support](./dvr-event-stream-support.md)**
+  *(candidate)* — puts pressure on the back-buffer eviction policy
+  (default `keepSegments: 2` evicts history before user can back-
+  seek to it). Variant-specific policy vs configurable threshold is
+  an open question shared with this doc's "Smarter back-buffer
+  eviction" section.
 - **5.1-surround-selection** / **hevc-variant-selection**
   *(candidates)* — cross-codec switches need a `changeType()`
   extension beyond today's same-codec planning.

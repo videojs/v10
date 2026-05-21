@@ -200,7 +200,7 @@ The polling cycle for live and DVR content — reloading the media playlist, tra
 
 **Signals.** Live / DVR / event-stream content; `#EXT-X-ENDLIST`; sliding window; target-duration pacing; LL-HLS blocking reload, delta playlists, preload hints; reload miss-counter; partial segments.
 
-**Docs.** `live-stream-support` (includes termination detection), `ll-hls-support` (extension on top of live-stream-support's reload loop).
+**Docs.** `live-stream-support` (includes termination detection), `ll-hls-support` (low-latency extension on top of live-stream-support's reload loop), `dvr-event-stream-support` (growing-window extension on the same reload loop; orthogonal to LL-HLS).
 
 **Foundational primitives.** A reload-loop scheduler (the sliding-window + target-duration pacing core); presentation re-resolution flow on each reload.
 
