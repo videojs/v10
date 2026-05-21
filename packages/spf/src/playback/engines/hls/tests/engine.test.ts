@@ -272,6 +272,143 @@ http://example.com/audio-seg1.m4s
     engine.destroy();
   });
 
+  it('cleanly replaces source in place via state.presentation overwrite', async () => {
+    // Two sources, A and B, each with their own video + audio playlists.
+    // Source-replacement validation: the resolved/unresolved routing in
+    // `resolvePresentation` should let an in-place `state.presentation.set`
+    // tear down A's actors via reactor state-exit and rebuild fresh actors
+    // for B without recreating the engine.
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",CHANNELS="2",URI="http://example.com/audio-a.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E,mp4a.40.2",AUDIO="audio",RESOLUTION=640x360
+http://example.com/video-a.m3u8`)
+        );
+      }
+      if (url.includes('video-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video-a.mp4"
+#EXTINF:10.0,
+http://example.com/video-a-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('audio-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio-a.mp4"
+#EXTINF:10.0,
+http://example.com/audio-a-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('playlist-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",CHANNELS="2",URI="http://example.com/audio-b.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2000000,CODECS="avc1.4D401F,mp4a.40.2",AUDIO="audio",RESOLUTION=1280x720
+http://example.com/video-b.m3u8`)
+        );
+      }
+      if (url.includes('video-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video-b.mp4"
+#EXTINF:10.0,
+http://example.com/video-b-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('audio-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio-b.mp4"
+#EXTINF:10.0,
+http://example.com/audio-b-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createSimpleHlsEngine();
+    const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
+
+    engine.context.mediaElement.set(mediaElement);
+    engine.state.presentation.set({ url: 'http://example.com/playlist-a.m3u8' });
+    engine.state.preload.set('auto');
+
+    // Wait for source A's pipeline to fully resolve
+    await vi.waitFor(
+      () => {
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
+        expect(state.presentation?.url).toBe('http://example.com/playlist-a.m3u8');
+        expect(state.presentation?.id).toBeDefined();
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(state.selectedAudioTrackId).toBeDefined();
+        expect(owners.mediaSource?.readyState).toBe('open');
+        expect(owners.videoBufferActor).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
+      },
+      { timeout: 5000 }
+    );
+
+    // Capture source A's identities for post-switch comparison
+    const sourceA = snapshot(engine.context);
+    const sourceAMediaSource = sourceA.mediaSource;
+    const sourceAVideoBufferActor = sourceA.videoBufferActor;
+    const sourceAAudioBufferActor = sourceA.audioBufferActor;
+
+    // In-place replacement: overwrite state.presentation with B's unresolved
+    // {url}. resolvePresentation's FSM should route through 'resolving' again;
+    // downstream behaviors tear down via state-exit and rebuild for source B.
+    engine.state.presentation.set({ url: 'http://example.com/playlist-b.m3u8' });
+
+    await vi.waitFor(
+      () => {
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
+
+        // Source B is resolved
+        expect(state.presentation?.url).toBe('http://example.com/playlist-b.m3u8');
+        expect(state.presentation?.id).toBeDefined();
+        expect(state.presentation?.selectionSets).toBeDefined();
+
+        // Tracks re-selected for source B
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(state.selectedAudioTrackId).toBeDefined();
+
+        // Fresh MediaSource + buffer actors (different instances from A)
+        expect(owners.mediaSource?.readyState).toBe('open');
+        expect(owners.mediaSource).not.toBe(sourceAMediaSource);
+        expect(owners.videoBufferActor).not.toBe(sourceAVideoBufferActor);
+        expect(owners.audioBufferActor).not.toBe(sourceAAudioBufferActor);
+      },
+      { timeout: 5000 }
+    );
+
+    engine.destroy();
+  });
+
   it('handles video-only stream (no audio tracks)', async () => {
     // Mock fetch for video-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
