@@ -348,6 +348,13 @@ For each chunk, name:
 
 This output drives Step 6's per-chunk implementation loop.
 
+**The TDD plan is the seed of the feature doc's *Verification*
+section.** Step 8 persists each chunk's test (file path + test name +
+assertion summary) into the feature doc — the TDD plan does not live
+only in chat. Name tests with assertion summaries suitable for the
+doc from the start, so Step 8 is a transcription pass rather than a
+re-articulation.
+
 ### Step 6 — Implement (test-first per chunk; route to downstream skills)
 
 Iterate per chunk:
@@ -405,22 +412,47 @@ Cumulative audit after all chunks:
 The feature doc transitions from `coarse` → `sketched` (or `technical` →
 `sketched`) as code lands. Required updates:
 
-- **Frontmatter `status`** — `implemented` if Phase 1 fully landed;
-  `partial` if subset. Update `definition` accordingly.
-- **Status block** — reflect the implementation state.
+- **Frontmatter `status`** — `implemented` once all phases land;
+  `partial` if any phase landed but others haven't. **Update
+  `definition` per the rule below.**
+- **Status block** — reflect the implementation state, naming what
+  shipped and what remains.
 - **Phases of complexity** — phase rows that are now implemented may
   promote to *implemented*; partially-implemented rows note the partial
   state.
 - **What's not implemented** — shrink to reflect what's now done.
-- **Implementation surface (new section if sketched depth)** —
-  populated with actual file paths, behavior names, state slots, test
-  paths.
-- **Verification (new section if sketched depth)** — populated with
-  test paths, sandbox demo paths.
-- **Open questions** — resolved-through-implementation entries removed;
-  new open questions surfaced by implementation experience added.
+- **Implementation surface (required once any phase implementation
+  lands)** — populated with actual file paths, behavior names, state
+  slots, helpers. See `audio-playback.md` for the canonical shape.
+- **Verification (required once any phase implementation lands)** —
+  **this is the persisted TDD artifact.** The Step 5 TDD plan lives
+  here in the doc, not just in chat. Each chunk's test gets a line:
+  test file path → test name → assertion summary. Add *Sandbox*
+  entries where demos exist; add *Out of scope / deferred* sub-list
+  for verification gaps (sandbox follow-ups, E2E coverage deferred
+  elsewhere).
+- **Open questions** — resolved-through-implementation entries moved
+  to a *Resolved during Phase N implementation* sub-section (kept for
+  traceability); new open questions surfaced by implementation
+  experience added.
 - **Related features** — if implementation revealed new cross-feature
   dependencies, add cross-refs.
+
+**`definition` advancement rule.** Advance per the *highest*
+implementation depth across all phases:
+
+- Any phase's *Implementation surface + Verification* sections
+  populated with concrete exports / file paths / test names →
+  `sketched`.
+- Phases all still scope-and-constraints-only, no implementation →
+  leave at `technical`.
+- Phases still broadly sketched, many open questions → leave at
+  `coarse`.
+
+A feature with Phase 1 implemented but other phases still broadly
+sketched is `sketched` at the doc level — populated surface trumps
+unimplemented phases (which surface in *Phases of complexity* as
+not-yet-landed rows, not in the doc's overall depth).
 
 This is **not optional** — the doc-as-living-artifact discipline is
 load-bearing for the registry staying current. Per the *Status update

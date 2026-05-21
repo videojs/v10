@@ -406,6 +406,13 @@ variant assembly is the primary product, not just the individual
 behaviors. Plan for `engine.test.ts`-style coverage that exercises the
 variant end-to-end against a representative source.
 
+**The TDD plan is the seed of the use-case doc's *Verification*
+section.** Step 8 persists each chunk's test (file path + test name +
+assertion summary) into the use-case doc — the TDD plan does not live
+only in chat. Name tests with assertion summaries suitable for the doc
+from the start, so Step 8 is a transcription pass rather than a
+re-articulation.
+
 ### Step 6 — Implement (test-first per chunk; route to downstream skills)
 
 Iterate per chunk:
@@ -461,24 +468,65 @@ docs (cascade):
 
 **Use-case doc updates:**
 
-- Frontmatter `status` — `implemented` if Phase 1 fully landed;
-  `partial` if subset. Update `definition` accordingly (likely
-  `coarse` → `sketched`).
-- *Status* block — reflect implementation state.
-- *Phases of complexity* — phase rows that landed get promoted; rows
-  partially-implemented note partial state.
+- Frontmatter `status` — `implemented` once all phases land;
+  `partial` if any phase landed but others haven't; `draft` only
+  if nothing has shipped. **Update `definition` per the rule below.**
+- *Status* block — reflect implementation state, naming the
+  factory(ies) and adapter(s) that shipped and what remains.
+- *Phases of complexity* — phase rows that landed get an
+  *(implemented)* marker; rows partially-implemented note partial
+  state with a pointer to which sub-row landed.
 - *Composition specifics* — populated with actual factory/adapter
-  names, behavior subtraction/addition lists, etc.
+  names, behavior subtraction/addition lists, configuration
+  changes (e.g., `initialState` seed dropped). **Subtract / add
+  lists must match the actual composed behavior list**, not the
+  pre-implementation prediction — fix any drift from
+  Step 1's report here.
 - *Constituent features* — per-feature relationship notes get
   concretized with actual file paths if relevant.
 - *Customer-policy surface* — populated with actual adapter API.
 - *Variant-decision signal source* — populated with actual
   composition (typically: adapter-upfront, confirmed).
-- *Open questions* — resolved entries removed; new entries surfaced
-  by implementation added.
-- New section if depth advanced to `sketched`: *Implementation
-  surface* (file paths, behavior names, state slots, tests).
+- *Open questions* — resolved entries moved to a new *Resolved
+  during Phase N implementation* sub-section (kept for
+  traceability); new entries surfaced by implementation added.
+- **NEW section once any phase implementation lands:
+  *Implementation surface*** — required when implementation
+  surface is populated. Mirror feature-doc shape (see
+  `audio-playback.md` for the canonical example): an
+  *Engine factory* table (Export / File / Purpose), an *Adapter*
+  table (Export / File / Purpose), the public re-export entry
+  point, and a *Composed behaviors* paragraph for the variant's
+  full composed list.
+- **NEW section once any phase implementation lands:
+  *Verification*** — required when implementation surface is
+  populated. **This is the persisted TDD artifact** — the Step 5
+  TDD plan lives here in the doc, not just in chat. Mirror
+  feature-doc shape (see `audio-playback.md` for the canonical
+  example): a *Unit tests* bullet list (one entry per test file
+  → test name → assertion summary), a *Sandbox* entry if a demo
+  exists, and an *Out of scope / deferred* sub-list for
+  verification gaps (e.g., sandbox demo follow-up, E2E coverage
+  deferred elsewhere). Each new chunk's TDD test gets a line.
 - *See also* — add test paths, sandbox demo paths if applicable.
+
+**`definition` advancement rule.** The depth scale per the
+use-cases/README is `coarse → technical → sketched`. Advance per
+the *highest* implementation depth across all phases:
+
+- Any phase's *Implementation surface + Verification* sections
+  populated with concrete exports/file paths/test names →
+  `sketched`.
+- Phases all still scope-and-constraints-only, no implementation
+  → leave at `technical`.
+- Phases still broadly sketched, many open questions → leave at
+  `coarse`.
+
+A use case with Phase 1 implemented but Phases 2 and 3 still
+broadly sketched is `sketched` at the doc level — the populated
+surface trumps the unimplemented phases (which surface in
+*Phases of complexity* as not-yet-landed rows, not in the doc's
+overall depth).
 
 **Constituent feature doc cascade:**
 
