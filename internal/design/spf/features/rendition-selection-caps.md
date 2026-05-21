@@ -71,10 +71,11 @@ the Epics doc).
   question — fallback policy)
 
 **Out of scope (separate candidate features):**
-- **`[multi-signal-abr]`** — incorporates non-bandwidth signals
-  (CPU / thermal / network type / battery) into the ABR algorithm
-  itself. Different concern: caps narrow the candidate set; ABR
-  picks within it. Caps could feed multi-signal-abr as one input,
+- **[multi-signal-abr](./multi-signal-abr.md)** — incorporates non-
+  bandwidth signals (CPU / thermal / network type / battery / viewport
+  / customer preference) into the ABR algorithm itself. Different
+  concern: caps narrow the candidate set; multi-signal-abr biases
+  selection within it. Caps could feed multi-signal-abr as one input,
   but the algorithm-modification work is its own feature.
 - **[audio-abr](./audio-abr.md)** — audio quality switching now
   documented; its "Audio caps inclusion" open question explicitly
@@ -182,8 +183,8 @@ Things this feature probably forces decisions on, not just additions:
   is the read-side; `userVideoTrackSelection` is the existing
   constraint+filter precedent. Cap slots layer on top of the same
   pattern.
-- **`[multi-signal-abr]`** *(candidate)* — different concern (ABR
-  algorithm extension) but caps could feed it as inputs.
+- **[multi-signal-abr](./multi-signal-abr.md)** — different concern
+  (ABR algorithm extension) but caps could feed it as inputs.
 - **[audio-abr](./audio-abr.md)** — audio quality switching that
   may extend this feature with audio-side caps; see that doc's
   "Audio caps inclusion in rendition-selection-caps.md" open
