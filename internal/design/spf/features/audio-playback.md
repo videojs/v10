@@ -68,8 +68,8 @@ Capability slices around today's audio playback contract.
   audio-only sources today (basic coverage via `engine.test.ts`
   "handles audio-only stream"), but there's no engine variant
   optimized for audio-only contexts (e.g., shorter buffer targets,
-  no video-related work). Owned by `[audio-only-composition]`
-  candidate when work begins.
+  no video-related work). See [audio-only-composition](./audio-only-composition.md)
+  for the engine-variant scope.
 - **A/V sync handling** — delegated entirely to the browser's MSE
   pipeline. The engine doesn't intervene on audio/video sync.
 
@@ -179,7 +179,8 @@ Consumers wanting language-aware selection today must override
   config field do what its name suggests.
 - **Audio-only composition guarantees.** The engine *tolerates*
   audio-only sources today, but is it *designed* for them? Becomes
-  more pressing as the `[audio-only-composition]` candidate matures.
+  more pressing as [audio-only-composition](./audio-only-composition.md)
+  matures.
 - **Channels exposure vs use.** The parser surfaces `channels` on
   audio tracks but no selection logic consumes it. Stays inert until
   [5.1-surround-selection](./5.1-surround-selection.md) wires it.
@@ -212,7 +213,7 @@ Consumers wanting language-aware selection today must override
   channels-aware codec-change selection. Consumer of capability-
   probing on the audio channel-count axis. Wires the `channels` field
   surfaced by the parser into selection logic.
-- **audio-only-composition** *(not yet documented, candidate)* —
+- **[audio-only-composition](./audio-only-composition.md)** —
   engine variant optimized for audio-only sources.
 - **capability-probing** *(candidate)* — narrows the audio candidate
   set selection runs over; unsupported codecs filtered upstream of
