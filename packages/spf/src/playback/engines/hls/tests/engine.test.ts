@@ -9,15 +9,34 @@ vi.mock('../../../../media/dom/mse/append-segment', () => ({
 
 describe('createSimpleHlsEngine', () => {
   let originalFetch: typeof globalThis.fetch;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  // Tests assert at actor-presence and state-shape level, not at "init
+  // segment appended" level — so unmocked init/segment URLs in the manifests
+  // are intentional. The fetch loop's reject path leaks a console.error in
+  // each test; suppress only the expected patterns so genuine failures still
+  // surface.
+  const expectedErrorPatterns = [
+    /Unexpected error in segment loader.*Unmocked URL/s,
+    /Failed to load text-track segment/,
+  ];
 
   beforeEach(() => {
     // Save original fetch
     originalFetch = globalThis.fetch;
+
+    const originalConsoleError = console.error.bind(console);
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+      if (expectedErrorPatterns.some((p) => p.test(text))) return;
+      originalConsoleError(...args);
+    });
   });
 
   afterEach(() => {
     // Restore original fetch
     globalThis.fetch = originalFetch;
+    consoleErrorSpy.mockRestore();
   });
   it('creates engine with state, owners, and destroy', () => {
     const engine = createSimpleHlsEngine();
