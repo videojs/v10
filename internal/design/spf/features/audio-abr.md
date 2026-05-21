@@ -254,8 +254,9 @@ Things this feature probably forces decisions on, not just additions:
 - **[rendition-selection-caps](./rendition-selection-caps.md)** —
   the "Audio caps" open question becomes load-bearing when audio-ABR
   ships. Cross-link.
-- **`[multi-signal-abr]`** *(candidate)* — non-bandwidth signals
-  feeding ABR; would extend both video and audio.
+- **[multi-signal-abr](./multi-signal-abr.md)** — non-bandwidth
+  signals feeding ABR; extends both video and audio via shared signal-
+  monitor infrastructure with per-type bias calculation.
 - **`[bandwidth-estimation]`** *(coarse, not yet documented,
   candidate)* — the dual-EWMA accumulator is a reusable primitive.
   Audio-ABR is the second consumer; promoting `BandwidthState` to
