@@ -55,7 +55,7 @@ We are reacting to current observable behavior, not a hypothetical user.
 
 ### Option 1: TextTrack-analogous hierarchy
 
-Model the ad domain as `AdTrackList → AdTrack → AdCue → Ad`, mirroring the existing `TextTrackList → TextTrack → VTTCue` API on `HTMLMediaElement`. One `AdTrack` per supported ad format (LINEAR, PAUSE, OVERLAY, etc.). Cues group related ads — a pod for linear, a single appearance for non-linear. Lifecycle events parallel TextTrack semantics (`activated`/`deactivated` ≈ `enter`/`exit`).
+Model the ad domain as `AdTrackList → AdTrack → AdCue → Ad`, mirroring the existing `TextTrackList → TextTrack → VTTCue` API on `HTMLMediaElement`. One `AdTrack` per supported ad format (`'linear'`, `'pause'`, `'overlay'`, etc.). Cues group related ads — a pod for linear, a single appearance for non-linear. Lifecycle events parallel TextTrack semantics (`activated`/`deactivated` ≈ `enter`/`exit`).
 
 - **Enables:** Familiar web semantics. Drop-in mental model for anyone who has used the captions API. Natural support for concurrent experiences (overlay during content + lingering companion). A single hierarchy generalizes across all seven IAB formats without per-format manager classes.
 - **Constrains:** Forces an upfront design that handles every format in one consistent shape. New formats require either a new track or fitting into the existing four-level hierarchy.

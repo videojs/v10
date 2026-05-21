@@ -38,7 +38,7 @@ In the TextTrack API, the hierarchy is:
 The proposed ad API maps as follows:
 
 - `AdTrackList` — a collection of ad tracks, accessible via a player extension (e.g., `videoElement.adTracks`).
-- `AdTrack` — a single track grouped by `AdFormat` (e.g., the LINEAR track, the OVERLAY track). Unlike `TextTrack`, ad tracks are always enabled — there is no visibility `mode` property. If a track exists, it is active. `AdTrack` does expose a `servingMode` property, but this declares how ads are delivered (client-side, SSAI, or SGAI), not whether the track is visible.
+- `AdTrack` — a single track grouped by `AdFormat` (e.g., the `'linear'` track, the `'overlay'` track). Unlike `TextTrack`, ad tracks are always enabled — there is no visibility `mode` property. If a track exists, it is active. `AdTrack` does expose a `servingMode` property, but this declares how ads are delivered (`'client-side'`, `'ssai'`, or `'sgai'`), not whether the track is visible.
 - `AdCue` — a group of one or more related ads within a track. For linear ads, a cue is a pod/break; for non-linear formats, a cue is a presentation opportunity (e.g., a single pause-ad session, a single overlay appearance). The track exposes `cues` (all cue groups) and `activeCues` (groups currently presenting). This parallels `TextTrack.cues` / `TextTrack.activeCues`.
 - `Ad` — an individual ad experience within a cue. Analogous to how a `VTTCue` contains a payload, an `AdCue` contains one or more `Ad` instances. Each `Ad` has its own lifecycle state, timing, creative metadata, and fires its own events.
 
@@ -49,10 +49,10 @@ This gives a four-level hierarchy: `AdTrackList → AdTrack → AdCue → Ad`. T
 | TextTrack API              | Proposed Ad API                       | Role                                                                                                                                                                                                                                                                                  |
 | -------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | TextTrackList              | AdTrackList                           | Top-level collection on the media element. Iterable, emits 'addtrack' / 'removetrack' / 'change'.                                                                                                                                                                                     |
-| TextTrack                  | AdTrack                               | A single lane grouped by category. TextTrack groups by kind (subtitles, captions); AdTrack groups by AdFormat (LINEAR, OVERLAY, etc.). AdTrack has no visibility mode (tracks are always enabled). It exposes servingMode instead, which declares delivery mechanism, not visibility. |
+| TextTrack                  | AdTrack                               | A single lane grouped by category. TextTrack groups by kind (subtitles, captions); AdTrack groups by AdFormat (`'linear'`, `'overlay'`, etc.). AdTrack has no visibility mode (tracks are always enabled). It exposes servingMode instead, which declares delivery mechanism, not visibility. |
 | TextTrack.cues             | AdTrack.cues                          | Read-only list of all cue groups in the track (scheduled, active, completed).                                                                                                                                                                                                         |
 | TextTrack.activeCues       | AdTrack.activeCues                    | Read-only list of cue groups currently presenting. Updated automatically.                                                                                                                                                                                                             |
-| VTTCue                     | AdCue                                 | A group of related ads within a track. For LINEAR: a pod/break. For non-linear: a presentation opportunity. Has its own lifecycle, timing, and events.                                                                                                                                |
+| VTTCue                     | AdCue                                 | A group of related ads within a track. For `'linear'`: a pod/break. For non-linear: a presentation opportunity. Has its own lifecycle, timing, and events.                                                                                                                            |
 | (cue payload)              | Ad                                    | An individual ad within a cue group. Carries creative metadata, per-ad lifecycle state, and fires its own events.                                                                                                                                                                     |
 | VTTCue.startTime           | AdCue.startTime (or trigger metadata) | When/how the cue activates. Timeline-based for linear; event-based for non-linear.                                                                                                                                                                                                    |
 | VTTCue.endTime             | AdCue.endTime / AdCue.duration        | When the cue deactivates. May be null for indeterminate-duration non-linear cues.                                                                                                                                                                                                     |
@@ -85,11 +85,11 @@ Menu ads exist outside video playback. Should the API support an `AdTrackList` w
 
 ### One track per format enforcement
 
-The current design enforces at most one `AdTrack` per `AdFormat`. Should we allow multiple tracks of the same format (e.g., two separate OVERLAY tracks from different ad servers), or should multiple overlays always share one track?
+The current design enforces at most one `AdTrack` per `AdFormat`. Should we allow multiple tracks of the same format (e.g., two separate `'overlay'` tracks from different ad servers), or should multiple overlays always share one track?
 
 ### Cue lifecycle ownership
 
-Who drives state transitions on `AdCue` instances — the adapter or the player? For TIMELINE-triggered cues, the player could automatically activate/deactivate cues as the playhead crosses `startTime`/`endTime` (mirroring how the browser drives VTTCue enter/exit). Non-timeline cues would remain under adapter control. Should this split be formalized?
+Who drives state transitions on `AdCue` instances — the adapter or the player? For `'timeline'`-triggered cues, the player could automatically activate/deactivate cues as the playhead crosses `startTime`/`endTime` (mirroring how the browser drives VTTCue enter/exit). Non-timeline cues would remain under adapter control. Should this split be formalized?
 
 ### Event bubbling
 
@@ -120,6 +120,6 @@ Both `SqueezebackMetadata.contentViewport` (on the cue) and `Ad.contentViewport`
 - **Team review of this RFC:** circulate for feedback, particularly on the cue naming decision and open questions above.
 - **Prototype TypeScript definitions:** translate the interfaces in [api.md](api.md) into a standalone `.d.ts` file. This should include the full `AdTrackList → AdTrack → AdCueList → AdCue → AdList → Ad` hierarchy.
 - **Adapter feasibility check:** validate that ad adapters (IMA SDK wrapper, SSAI stitcher, SGAI signaling client, pod-serving client) can populate the cue/ad model.
-- **Build a reference implementation for linear ads:** implement the LINEAR `AdTrack` and verify that the cue-per-break model maps cleanly to typical VMAP responses.
+- **Build a reference implementation for linear ads:** implement the `'linear'` `AdTrack` and verify that the cue-per-break model maps cleanly to typical VMAP responses.
 - **Extend to one non-linear format:** pick the most impactful non-linear format (likely Overlay or Pause) and build a proof-of-concept adapter to validate the cue lifecycle, trigger model, and event system.
 - **Engage with IAB standards work:** as the IAB continues to develop SIMID and VAST for CTV, align the interactivity interfaces with their evolving specifications.
