@@ -29,7 +29,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 ## What's not implemented
 
 - **Audio ABR** — sampling infrastructure exists (`createTrackedFetch`), but `setupAudioBufferActors` uses plain `fetchStream` instead. Wiring it through is a one-liner; a separate audio-quality-switching behavior would still be needed. Candidate feature.
-- **Rendition selection caps** — no max-height, max-bitrate, or max-FPS constraints on the candidate set. `selectQuality` operates over all video tracks. Candidate feature (1080p cap, screen-size cap are both flagged in the broader inventory).
+- **Rendition selection caps** — no max-height, max-bitrate, or max-FPS constraints on the candidate set. `selectQuality` operates over all video tracks. See [rendition-selection-caps.md](./rendition-selection-caps.md) for the umbrella feature covering billing-driven, viewport-driven, max-bitrate, and max-FPS caps.
 - **Screen-size / viewport adaptation** — initial pick *could* be viewport-aware via custom `picker`, but ABR re-selection ignores device dimensions.
 - **Non-bandwidth signals** — CPU/thermal throttling, network-type (WiFi vs. cellular), battery state are not factored.
 - **Buffer fullness as ABR input** — forward buffer (default 30s) gates *when segment loading starts*, not which track is selected. Bandwidth is the sole ABR input.
@@ -97,7 +97,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 - **buffer-management** — `bandwidthState` is written by `setupVideoBufferActors` via `createTrackedFetch`; samples land on `buffer-management`'s fetch path (`fetchBytes` inside `SegmentLoaderActor`). Sampling is structurally co-located with segment loading, not ABR.
 - **bandwidth-estimation** *(coarse, not yet documented)* — dual-EWMA accumulator is a reusable primitive in `network/`. Could be promoted to its own feature doc when audio ABR or other consumers arrive.
 - **audio-abr** *(coarse, not yet documented, candidate)* — sampling exists; needs `createTrackedFetch` wired into `setupAudioBufferActors` plus an `switchAudioQuality` behavior parallel to `switchVideoQuality`.
-- **rendition-selection-caps** *(coarse, not yet documented, candidate)* — 1080p cap (Mux billing), screen-size cap, max-bitrate cap. All filter the candidate set before `selectQuality` runs.
+- **[rendition-selection-caps](./rendition-selection-caps.md)** — billing-driven (1080p+), viewport-driven (screen-size), max-bitrate, and max-FPS caps. All filter the candidate set before `selectQuality` runs; `userVideoTrackSelection` is the constraint+filter precedent that feature builds on.
 - **multi-signal-abr** *(coarse, not yet documented, candidate)* — CPU/thermal throttling, network type, battery state as additional ABR inputs.
 - **capability-probing** *(candidate)* — narrows the candidate set ABR operates over. `selectQuality` doesn't change shape; just sees a filtered candidate set with browser-unsupported renditions already excluded.
 
