@@ -170,7 +170,13 @@ export function createMenu(options: MenuOptions): MenuApi {
   let lastCloseReason: MenuOpenChangeReason | null = null;
 
   const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
-  const rootPanelTransition = options.parentMenu?.() ? null : createMenuViewTransition({ persistent: true });
+  let rootPanelTransition: MenuViewTransitionApi | null = null;
+
+  function getRootPanelTransition(): MenuViewTransitionApi | null {
+    if (options.parentMenu?.()) return null;
+    rootPanelTransition ??= createMenuViewTransition({ persistent: true });
+    return rootPanelTransition;
+  }
 
   function getMenuPopupGroup(): PopupGroup {
     return bindMenuPopupGroup(options.group?.() ?? getSharedMenuPopupGroup(), () => options.parentMenu?.() != null);
@@ -342,7 +348,7 @@ export function createMenu(options: MenuOptions): MenuApi {
         navigationState.patch({ stack: [], direction: 'forward' });
         // Root panel may have been driven to `hidden` while a submenu was open; content
         // can unmount before the viewport restores it, so reset for the next open.
-        rootPanelTransition?.reset();
+        getRootPanelTransition()?.reset();
       }
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
@@ -494,7 +500,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     const isSubmenu = options.parentMenu?.() != null;
 
     if (shouldCreateMenuViewport(element, isSubmenu)) {
-      viewport = createMenuViewport(element, rootPanelTransition ?? undefined, {
+      viewport = createMenuViewport(element, getRootPanelTransition() ?? undefined, {
         navigation: {
           hasActiveSubmenu: () => getNavigationInput().current.stack.length > 0,
           direction: () => getNavigationInput().current.direction,
@@ -545,6 +551,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     clearTypeahead();
     teardownViewport();
     rootPanelTransition?.destroy();
+    rootPanelTransition = null;
     navigationState.patch({ stack: [], direction: 'forward' });
     popover.destroy();
   }
@@ -565,7 +572,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       return contentElement;
     },
     get rootViewTransitionInput(): State<MenuViewTransitionState> | null {
-      return rootPanelTransition?.input ?? null;
+      return getRootPanelTransition()?.input ?? null;
     },
     setTriggerElement,
     setContentElement,

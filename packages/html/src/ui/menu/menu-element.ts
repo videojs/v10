@@ -89,6 +89,8 @@ export class MenuElement extends MediaElement {
   #navState: NavigationState = { stack: [], direction: 'forward' };
 
   #submenuViewCleanup: (() => void) | null = null;
+  #contentElementRegistered = false;
+  #submenuSyncKey = '';
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
@@ -113,10 +115,6 @@ export class MenuElement extends MediaElement {
       group: () => this.#containerCtx.value?.popupGroup,
       parentMenu: () => this.#parentCtx.value?.menu ?? null,
     });
-
-    // The element itself is the content (popup) for root menus.
-    // Submenu detection happens in update() once parent context is available.
-    this.#menu.setContentElement(this);
 
     applyElementProps(
       this,
@@ -158,6 +156,8 @@ export class MenuElement extends MediaElement {
     this.#menu = null;
     this.#submenuViewCleanup?.();
     this.#submenuViewCleanup = null;
+    this.#contentElementRegistered = false;
+    this.#submenuSyncKey = '';
     this.#disconnect?.abort();
     this.#disconnect = null;
     this.#menuViewTransition.destroy();
@@ -202,6 +202,8 @@ export class MenuElement extends MediaElement {
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
 
+    this.#ensureContentElement(isSubmenu, parentCtx);
+
     this.#navState = this.#menu.navigationInput.current;
     const input = this.#menu.input.current;
     this.#core.setInput(input);
@@ -224,6 +226,14 @@ export class MenuElement extends MediaElement {
       navigation: this.#navState,
       parentMenu,
     });
+  }
+
+  #ensureContentElement(isSubmenu: boolean, parentCtx: MenuContextValue | null): void {
+    if (this.#contentElementRegistered || !this.#menu) return;
+    if (isSubmenu && !parentCtx) return;
+
+    this.#menu.setContentElement(this);
+    this.#contentElementRegistered = true;
   }
 
   #updateAsRoot(state: ReturnType<MenuCore['getState']>): void {
@@ -280,6 +290,14 @@ export class MenuElement extends MediaElement {
     const topEntry = parentNavigation.stack[parentNavigation.stack.length - 1];
     const activeSubMenuId = topEntry?.menuId ?? null;
     const isActive = activeSubMenuId === this.id;
+    const syncKey = `${activeSubMenuId ?? ''}:${topEntry?.triggerId ?? ''}:${parentNavigation.direction}:${isActive}`;
+
+    if (!this.#submenuViewCleanup) {
+      this.#submenuViewCleanup = parentCtx.menu.registerSubmenuView(this, this.#menuViewTransition);
+    }
+
+    if (syncKey === this.#submenuSyncKey) return;
+    this.#submenuSyncKey = syncKey;
 
     this.#menuViewTransition.setElement(this);
     this.#menuViewTransition.sync({
@@ -288,7 +306,6 @@ export class MenuElement extends MediaElement {
       triggerId: topEntry?.triggerId ?? null,
     });
 
-    // Apply base submenu attributes regardless of phase.
     const transitionState = this.#menuViewTransition.input.current;
 
     applyElementProps(this, {
@@ -297,9 +314,6 @@ export class MenuElement extends MediaElement {
       tabIndex: -1,
       'data-submenu': '',
     });
-    if (!this.#submenuViewCleanup) {
-      this.#submenuViewCleanup = parentCtx.menu.registerSubmenuView(this, this.#menuViewTransition);
-    }
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
