@@ -22,8 +22,10 @@ appears in the buffer."
 
 - **Composition:** `createSimpleHlsEngine` (HLS VoD)
 - **Definition depth:** sketched — capability surface and implementation
-  footprint documented; `MediaSourceActor` factoring + buffer-flushing
-  orchestration are open follow-ups tracked under sibling candidates
+  footprint documented; `MediaSourceActor` factoring is an open
+  follow-up tracked under sibling candidates. Audio SourceBuffer flush
+  orchestration is part of [multi-language-audio](./multi-language-audio.md)'s
+  Tier 2 mid-stream-switching phase, not a separately-scoped feature
 
 ## Phases of complexity
 
@@ -45,8 +47,9 @@ share the same four behaviors and one actor.
 - **Mid-stream same-codec buffer flush orchestration** — `SourceBufferActor`
   accepts `remove` messages and `flushBuffer` exists in `media/dom/mse/`,
   but no SPF behavior drives flushing on language switch or other
-  mid-stream cleanup. Belongs to `[buffer-flushing]` (and the Tier 2
-  `multi-language-audio` switch story).
+  mid-stream cleanup. Belongs to [multi-language-audio](./multi-language-audio.md)'s
+  Tier 2 mid-stream-switching phase, which orchestrates flush on top
+  of this feature's `remove`-message + `flushBuffer` primitives.
 - **`changeType()` codec-change switching** — cross-tick mid-stream track
   switch after appends begin is "out of scope for this behavior" per
   `setup-buffer-actors.ts`. Routes to `[5.1-surround-selection]` and
@@ -103,7 +106,7 @@ invariant.
 |---|---|
 | `mediasource-setup.ts` | `createMediaSource({ preferManaged })`, `attachMediaSource` (MMS `srcObject` + `disableRemotePlayback` / MSE `createObjectURL` branch), `createSourceBuffer`, `buildMimeCodec`, `isCodecSupported`, `onMediaSourceReadyStateChange`, `waitForMediaSourceOpen`, `supportsMediaSource`, `supportsManagedMediaSource` |
 | `append-segment.ts` | `appendSegment` — ArrayBuffer + streaming append primitive (used by `SourceBufferActor`'s append tasks) |
-| `buffer-flusher.ts` | `flushBuffer` — range removal primitive (used by `SourceBufferActor`'s `remove` task; future `[buffer-flushing]` orchestrator consumes via the actor message, not directly) |
+| `buffer-flusher.ts` | `flushBuffer` — range removal primitive (used by `SourceBufferActor`'s `remove` task; [multi-language-audio](./multi-language-audio.md)'s Tier 2 mid-stream-switching phase consumes via the actor message, not directly) |
 | `duration.ts` | `shouldUpdateDuration`, `waitForSourceBuffersReady`, `getMaxBufferedEnd` (spec-clamp helper) |
 | `end-of-stream.ts` | `isLastSegmentAppended` predicate |
 | `mediasource.d.ts` | `ManagedMediaSource` global type augmentation (Safari-only API, not in standard DOM lib) |
@@ -203,16 +206,14 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
   (`createTrackedFetch` writes `bandwidthState`); ABR consumes. Sampling
   lives here, selection lives there.
 - **multi-language-audio** — its Tier 2 "audio SourceBuffer flush on
-  switch" is the canonical consumer of the future `[buffer-flushing]`
-  feature that would compose on top of this one's `remove` message
-  surface.
+  switch" orchestrates flush on top of this feature's `remove`-message
+  + `flushBuffer` primitives. The orchestration belongs in
+  multi-language-audio (not a separately-scoped buffer-flushing
+  feature).
 - **buffer-management** — sibling feature for the per-type load-FSM
   and segment planning that runs *on top of* the buffers + actors this
   feature stands up. Sends `append-init` / `append-segment` / `remove`
   / `cancel` messages to the `SourceBufferActor` documented here.
-- **buffer-flushing** *(not yet documented, candidate)* — orchestrator
-  on top of the `SourceBufferActor` `remove` message + `flushBuffer`
-  primitive surfaced here. Driven by `multi-language-audio` Tier 2 first.
 - **5.1-surround-selection** *(not yet documented, candidate)* —
   cross-codec switching via `changeType()`; out of scope for this
   feature's same-codec lifecycle.
