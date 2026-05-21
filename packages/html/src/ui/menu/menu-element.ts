@@ -296,15 +296,16 @@ export class MenuElement extends MediaElement {
       this.#submenuViewCleanup = parentCtx.menu.registerSubmenuView(this, this.#menuViewTransition);
     }
 
-    if (syncKey === this.#submenuSyncKey) return;
-    this.#submenuSyncKey = syncKey;
+    if (syncKey !== this.#submenuSyncKey) {
+      this.#submenuSyncKey = syncKey;
 
-    this.#menuViewTransition.setElement(this);
-    this.#menuViewTransition.sync({
-      active: isActive,
-      direction: parentNavigation.direction,
-      triggerId: topEntry?.triggerId ?? null,
-    });
+      this.#menuViewTransition.setElement(this);
+      this.#menuViewTransition.sync({
+        active: isActive,
+        direction: parentNavigation.direction,
+        triggerId: topEntry?.triggerId ?? null,
+      });
+    }
 
     const transitionState = this.#menuViewTransition.input.current;
 
