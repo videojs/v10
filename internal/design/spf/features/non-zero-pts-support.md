@@ -9,14 +9,20 @@ definition: technical
 Time-mapping primitive for sources where media-segment PTS
 (Presentation Timestamps) don't start at zero. Three motivating
 source types — re-mastered VOD, deliberate instant clips, and live
-streams — all share the same underlying mechanism: detect the first
-segment's PTS, apply a negative `timestampOffset` to the SourceBuffer,
-and map MSE-side time back to user-visible `currentTime` starting at
-zero. The cluster B foundation; consumed by every cluster A feature
+streams — all share the same underlying problem: detect the first
+segment's PTS, then make user-visible `currentTime` start at zero.
+The cluster B foundation; consumed by every cluster A feature
 ([live-stream-support](./live-stream-support.md),
 [dvr-event-stream-support](./dvr-event-stream-support.md),
 [ll-hls-support](./ll-hls-support.md)) for correct `currentTime` /
-`seekable` semantics.
+`seekable` semantics. **Implementation mechanism is an open
+architectural question** — two viable approaches with different
+trade-offs (see Open questions): apply the offset to the SourceBuffer
+via `timestampOffset` (browser handles the translation; A/V sync risk
+from per-buffer offset divergence) vs simulate the offset via adapter
++ math in behaviors/compositions (buffer holds original PTS;
+translation happens at every consumer boundary; no A/V drift risk
+but bigger translation surface).
 
 A **Media-src feature** in the framing from
 [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes):
@@ -56,9 +62,9 @@ composition with other cluster A features.
 
 | Phase | Source type | What | Notes |
 |---|---|---|---|
-| Non-zero-PTS VOD | Re-mastered or processed VOD where the manifest retains original PTS rather than zero-rebasing the source. Source has stable, non-zero PTS throughout. Often the result of clipping / transcoding pipelines that preserve PTS | Detect first-segment baseMediaDecodeTime from init segment (MP4 `tfdt` box, timescale-aware). Compute `presentationTimeOffset = -baseMediaDecodeTime / timescale`. Apply via `sourceBuffer.timestampOffset = presentationTimeOffset` before any append. User-visible `currentTime` now starts at zero | The baseline non-zero PTS case. Mechanism is one-time setup (offset detected once, applied once, never changes during source lifetime) |
-| Instant clips (deliberate offset) | Sources where the consumer / Mux Video creates a clip by serving a manifest starting at a non-zero PTS (the clip's start position in the original media). User-visible `currentTime` should still start at zero | Same mechanism as non-zero-PTS VOD. **Plus:** optionally surface the original PTS to the consumer for telemetry / "watch from minute N of source" use cases. Customer-data hooks: HLS `EXT-X-START` time-offset attribute (if present) or manifest-level clip metadata can hint at the offset | The deliberate-clip case. Engine treats it identically to non-zero-PTS VOD; the difference is that the offset is intentional and the value carries meaning customer-side (e.g., for Mux Data telemetry mapping the clipped-content currentTime back to original-media position) |
-| Live streams with non-zero PTS | Live encoder PTS counts from broadcast / encoder start. First segment loaded by the engine has a large PTS (potentially hours/days). Sliding-window updates roll segments off the start as live progresses; the *seekable range* slides forward but the offset itself is stable within an encoder run | Same first-segment-PTS-detection mechanism. **Composes with:** [live-stream-support](./live-stream-support.md)'s `setLiveSeekableRange` — the live window's start/end are offset-corrected to user-visible time. **Composes with:** [dvr-event-stream-support](./dvr-event-stream-support.md)'s growing-window — start = first-segment PTS - offset; end = live edge PTS - offset. **Composes with:** [ll-hls-support](./ll-hls-support.md)'s partial-segment edge tracking — same offset applies | The live-specific case. Encoder restart (new encoder run on the same source URL) is one of the discontinuity scenarios carved out to the sister feature |
+| Non-zero-PTS VOD | Re-mastered or processed VOD where the manifest retains original PTS rather than zero-rebasing the source. Source has stable, non-zero PTS throughout. Often the result of clipping / transcoding pipelines that preserve PTS | Detect first-segment baseMediaDecodeTime from init segment (MP4 `tfdt` box, timescale-aware). Compute `presentationTimeOffset = -baseMediaDecodeTime / timescale`. Apply the offset via the chosen mechanism (see Open questions on mechanism choice). User-visible `currentTime` resolves to zero at source start | The baseline non-zero PTS case. Offset is one-time setup (detected once at first segment, stable during source lifetime). Mechanism choice (timestampOffset vs simulated translation) affects everything downstream but doesn't change the per-phase user-visible semantics |
+| Instant clips (deliberate offset) | Sources where the consumer / Mux Video creates a clip by serving a manifest starting at a non-zero PTS (the clip's start position in the original media). User-visible `currentTime` should still start at zero | Same offset-detection mechanism as non-zero-PTS VOD. **Plus:** optionally surface the original PTS to the consumer for telemetry / "watch from minute N of source" use cases. Customer-data hooks: HLS `EXT-X-START` time-offset attribute (if present) or manifest-level clip metadata can hint at the offset | The deliberate-clip case. Engine treats it identically to non-zero-PTS VOD; the difference is that the offset is intentional and the value carries meaning customer-side (e.g., for Mux Data telemetry mapping the clipped-content currentTime back to original-media position) |
+| Live streams with non-zero PTS | Live encoder PTS counts from broadcast / encoder start. First segment loaded by the engine has a large PTS (potentially hours/days). Sliding-window updates roll segments off the start as live progresses; the *seekable range* slides forward but the offset itself is stable within an encoder run | Same first-segment-PTS-detection mechanism. **Composes with:** [live-stream-support](./live-stream-support.md)'s `setLiveSeekableRange` — the live window's start/end are user-visible-time values (offset-corrected, however the mechanism translates). **Composes with:** [dvr-event-stream-support](./dvr-event-stream-support.md)'s growing-window — start = user-visible time of first retained segment; end = user-visible time of live edge. **Composes with:** [ll-hls-support](./ll-hls-support.md)'s partial-segment edge tracking — same offset applies | The live-specific case. Encoder restart (new encoder run on the same source URL) is one of the discontinuity scenarios carved out to the sister feature |
 
 ## What's in scope vs out of scope
 
@@ -109,14 +115,43 @@ Things this feature probably forces decisions on, not just additions:
   pipeline. Lean: (a) — init segments are small and already buffered
   before the segment-stream begins; a one-shot parser at append time
   is the cleanest insertion point.
-- **`timestampOffset` write timing.** MSE requires `timestampOffset`
-  to be set on the SourceBuffer **before** appending the segment
-  whose PTS the offset corrects. This sequences against
-  [mse-mms-pipeline](./mse-mms-pipeline.md)'s segment-append flow:
-  setup → setMediaKeys (if DRM) → addSourceBuffer →
-  detect-PTS-from-init-segment → set timestampOffset → append init
-  segment → append media segments. Adds a stage to the MSE setup
-  pipeline.
+- **Mechanism choice: `timestampOffset` vs simulated translation
+  (load-bearing).** Two viable approaches with different trade-offs:
+
+  *(a) `SourceBuffer.timestampOffset`*: Set
+  `sourceBuffer.timestampOffset = -firstPTS` before appending the
+  first segment; browser shifts all timestamps; `currentTime` and
+  `seekable` are naturally offset-corrected. Sequences against
+  [mse-mms-pipeline](./mse-mms-pipeline.md)'s setup: setup →
+  setMediaKeys (if DRM) → addSourceBuffer →
+  detect-PTS-from-init-segment → set timestampOffset → append.
+  **Risks:** per-SourceBuffer write (video and audio buffers have
+  separate offset values); sub-millisecond detection-time precision
+  differences between video and audio init segments can cause A/V
+  drift that compounds. Mid-source offset changes (discontinuity)
+  require coordinated multi-buffer writes. Browser quirks during
+  append (Safari especially).
+
+  *(b) Simulated translation*: Don't set `timestampOffset`; buffer
+  holds original PTS. The `<video>` element's `currentTime` reads in
+  original PTS (large for non-zero-PTS sources). Engine + adapter
+  translate at every consumer boundary: customer-reading `currentTime`
+  → subtract offset; customer seeking → add offset; `setLiveSeekableRange`
+  → write original-PTS values to MSE, expose user-visible-time values
+  through engine state. **Risks:** translation layer at every
+  boundary; consumer-facing APIs must consistently use translated
+  values (any leak of raw `<video>.currentTime` shows wrong time);
+  bigger code surface than mechanism (a). **Benefits:** no A/V drift
+  risk (no per-buffer offset divergence); MSE buffer stays "pure";
+  discontinuity handling can change the translation offset without
+  any MSE coordination.
+
+  Both mechanisms preserve user-visible semantics; the choice is
+  engineering trade-off (browser quirks + A/V sync risk vs
+  translation surface area). Mechanism (b) is more SPF-natural —
+  behavior-driven translation at boundaries fits the composition
+  model; (a) is more browser-API-natural — uses what the spec
+  provides. See Open questions.
 - **State slot for the offset.** New slot:
   `presentationTimeOffset: { [trackType: 'video' | 'audio']: number }`
   or similar. Per-type (video and audio can have independent PTS
@@ -124,18 +159,17 @@ Things this feature probably forces decisions on, not just additions:
   `setLiveSeekableRange` writer (live + DVR + LL-HLS), engine-side
   `currentTime` consumers (telemetry, customer hooks), and any
   cluster B sister feature.
-- **`currentTime` semantics — engine-side vs DOM-side.** The
-  `<video>` element's `currentTime` is already offset-corrected
-  (because `timestampOffset` was applied at append time). So
-  consumers reading from the DOM get the corrected value naturally.
-  Engine-side `state.currentTime` mirrors DOM-side; no separate
-  mapping required after the offset is applied to the buffer.
-- **`seekable` range semantics.** Browser-reported `seekable` is
-  offset-corrected too (because the buffer was filled with
-  offset-corrected timestamps). For live + DVR, the engine's explicit
-  `setLiveSeekableRange(start, end)` call must pass offset-corrected
-  values — engine reads `presentationTimeOffset` and computes
-  user-visible range.
+- **`currentTime` and `seekable` semantics — depends on mechanism.**
+  Under (a) `timestampOffset`: browser does the translation; DOM-side
+  `currentTime` and `seekable` are naturally offset-corrected;
+  engine-side mirrors DOM-side. Under (b) simulated translation:
+  DOM-side reads original PTS; engine/adapter applies offset at
+  every read boundary; consumer-facing `state.currentTime` is the
+  offset-corrected value; `setLiveSeekableRange` writes original-PTS
+  values (so MSE knows what it's been fed) but engine state exposes
+  user-visible-time values. The mechanism choice is invisible to
+  consumers — both paths preserve user-visible-time semantics — but
+  the implementation surface differs substantially.
 - **Live + encoder-restart scenario.** When a live encoder restarts
   on the same source URL, the new PTS series starts at a different
   value than the previous one. Without `EXT-X-DISCONTINUITY` tags,
@@ -154,10 +188,22 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Open questions
 
+- **Mechanism choice: `timestampOffset` vs simulated translation
+  (load-bearing).** Per the cross-cutting note. Both viable. (a)
+  uses the browser's MSE API directly but exposes A/V sync risk
+  from per-buffer offset divergence + browser-specific quirks.
+  (b) keeps the MSE buffer "pure" with original PTS and translates
+  at every consumer boundary; bigger translation surface but
+  eliminates the A/V drift risk and simplifies discontinuity
+  handling (sister feature). The choice constrains the entire
+  feature's implementation; resolving it requires empirical work
+  (test A/V sync drift on target browsers under mechanism (a)) and
+  scoping the translation surface under (b). No clear lean yet.
 - **PTS-detection implementation: parser depth.** Full MP4 box
   parser inside SPF vs targeted `tfdt`-only extractor vs depend on
   an external `mp4box.js`-style library. Lean: targeted extractor
-  (small surface, only what's needed).
+  (small surface, only what's needed). Independent of mechanism
+  choice.
 - **`EXT-X-PROGRAM-DATE-TIME` consumption.** HLS spec attribute
   giving wall-clock time per segment. Useful for: (a) correlating
   user-visible time with broadcast time; (b) cross-checking
@@ -209,9 +255,11 @@ Things this feature probably forces decisions on, not just additions:
 - **[ll-hls-support](./ll-hls-support.md)** *(consumer)* — partial-
   segment edge tracking + live-edge updates all use offset-corrected
   values.
-- **[mse-mms-pipeline](./mse-mms-pipeline.md)** —
-  `SourceBuffer.timestampOffset` is the MSE API consumed; the
-  segment-append sequence gains a PTS-detection + offset-write stage.
+- **[mse-mms-pipeline](./mse-mms-pipeline.md)** — under mechanism
+  (a), `SourceBuffer.timestampOffset` is the MSE API consumed; the
+  segment-append sequence gains a PTS-detection + offset-write
+  stage. Under mechanism (b), MSE-side is unchanged; translation
+  lives in adapter / behavior boundary instead.
 - **[buffer-management](./buffer-management.md)** — forward-buffer
   planner operates on `currentTime` and segment time ranges; both
   are offset-corrected naturally. Planner code doesn't change.
@@ -247,6 +295,8 @@ Things this feature probably forces decisions on, not just additions:
   and [`EXT-X-PROGRAM-DATE-TIME`](https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis#section-4.4.4.6)
   — HLS spec time-related metadata attributes
 - [MSE Spec — `SourceBuffer.timestampOffset`](https://w3c.github.io/media-source/#dom-sourcebuffer-timestampoffset)
-  — the MSE API for shifting appended segment timestamps
+  — the MSE API for shifting appended segment timestamps; one of the
+  two candidate mechanisms (A/V sync risk from per-buffer offset
+  divergence)
 - [ISO BMFF — `tfdt` box (Track Fragment Decode Time)](https://www.iso.org/standard/68960.html)
   — MP4 init/media segment PTS source
