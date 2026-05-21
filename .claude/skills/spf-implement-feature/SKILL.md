@@ -119,9 +119,16 @@ Downstream skills routed-to:
   (iii) a use case, (iv) cluster-E policy, (v) something not yet
   documented. Step 1's disambiguation must resolve before gathering
   sources or planning. Proceeding-with-assumption is the canonical
-  failure shape. Worked example: invocation "implement audio-only" —
-  `audio-only-composition` (Case-1 feature) and `audio-only-mode-override`
-  (Case-2 use case) share vocabulary; the right route differs.
+  failure shape. Worked example: invocation "implement resolution
+  capping" — could be (i) the `rendition-selection-caps` feature (the
+  right route; cluster-E selection policy), (ii) a use-case composition
+  shape (incorrect — composition vs runtime config), or (iii) something
+  else entirely. The disambiguation discipline catches it. Another
+  worked example: invocation "implement audio-only" maps to the
+  `audio-only-mode-override` use case (which absorbed what was
+  previously framed as a separate `audio-only-composition` feature);
+  the disambiguation is between use case and cluster-E policy, not
+  between feature framings.
 
 - **Routing-out failure** — Step 1's disambiguation should route
   confidently. The failure mode is "ambiguity discovered but not

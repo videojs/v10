@@ -122,18 +122,23 @@ actual use.
   → "When the constituent-features framing doesn't apply."
 
 - **Forgetting the Case-1 feature sibling** — when a use case is the
-  Case-2 axis of an existing Case-1 feature (e.g.,
-  `audio-only-mode-override` ↔ `audio-only-composition`), the cross-link
-  must go both ways. The feature doc's *Out of scope (separate concerns)*
-  must reference the use case; the use case's *Related features* / *See
-  also* must reference the feature. Step 8 cascade enforces; Step 7 audit
-  catches misses. Note: not every use case has a Case-1 sibling —
-  `background-looping-video` has constituent features but no single
-  Case-1 axis-counterpart.
+  Case-2 axis of an existing Case-1 feature *and the two ship distinct
+  engine factories*, the cross-link must go both ways. The feature doc's
+  *Out of scope (separate concerns)* must reference the use case; the
+  use case's *Related features* / *See also* must reference the feature.
+  Step 8 cascade enforces; Step 7 audit catches misses. **Caveat:** when
+  the Case-1 and Case-2 framings ship the *same* engine factory (the
+  audio-only and video-only family pattern — see
+  `audio-only-mode-override.md` for the canonical example), they
+  consolidate into a single use-case doc with a *Variant-decision signal
+  source* section covering both paths. The Case-1 feature doc does not
+  exist separately in those cases. Not every use case has a Case-1
+  sibling — `background-looping-video` has constituent features but no
+  single Case-1 axis-counterpart.
 
 - **Conflating sibling use cases** — e.g., `video-only-mode-override` and
-  `background-looping-video` both touch the `video-only-composition`
-  feature but address different delivery scenarios (video-without-audio
+  `background-looping-video` both touch the video-only delivery
+  composition but address different delivery scenarios (video-without-audio
   delivery vs Mux background-video product). Check at Step 5: distinct
   customer story? distinct composition specifics? If yes, separate docs
   with a *Related use cases* cross-link between them — not a merged doc.
@@ -147,12 +152,11 @@ actual use.
   configuration — not a runtime conditional branch in the always-on body.
 
 - **Constituent features vs vocabulary-sharing features** —
-  `audio-only-composition` is a *constituent feature* of
+  `audio-playback` is a *constituent feature* of
   `audio-only-mode-override` (the use case composes the feature's
-  engine-variant shape), not just a sibling. The constituent relationship
-  is "this use case composes the feature's behaviors." The sibling
-  relationship (when it applies) is "Case-1 ↔ Case-2 on the same axis."
-  Both can apply to the same feature-use-case pair. Vocabulary-sharing
+  rendition selection + media playlist resolution + segment loading),
+  not just a vocabulary sibling. The constituent relationship is
+  "this use case composes the feature's behaviors." Vocabulary-sharing
   alone is not constituent: `audio-abr` shares vocabulary with
   `audio-only-mode-override` but is constituent only if the use case
   composes audio-abr's behaviors into the variant.
@@ -221,8 +225,10 @@ Common shapes:
 
 - Fails (1) → middle pattern or cluster-E policy → `/spf-document-feature`.
 - Fails (2) or (4) → composition-variant *phase row* inside an existing
-  feature doc (analog to `audio-only-composition.md`'s "Audio-only engine
-  variant" row), not standalone.
+  feature doc (composition-variant pattern from
+  [`../conventions/behaviors.md` § Inverse: behaviors that operate
+  uniformly across tracks](../conventions/behaviors.md#inverse-behaviors-that-operate-uniformly-across-tracks)),
+  not standalone.
 - Fails (3) → either the features aren't documented yet (write them
   first via `/spf-document-feature`) or this isn't actually a use-case
   composition.
@@ -398,8 +404,8 @@ phases in, ask: is this really one use case, or is the variant actually
 a decomposition into multiple use cases? Heuristic: a slice belongs in
 its own doc if it has (a) a distinct customer story, (b) distinct
 composition specifics, or (c) independent timeline. Worked example:
-`video-only-mode-override` vs `background-looping-video` — same
-constituent feature (`video-only-composition`), distinct customer
+`video-only-mode-override` vs `background-looping-video` — both
+exercise video-only delivery composition, distinct customer
 stories, distinct composition specifics.
 
 ### Step 6 — Draft (or update) the doc

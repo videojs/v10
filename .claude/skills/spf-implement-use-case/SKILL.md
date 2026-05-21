@@ -136,9 +136,13 @@ Discipline:
    (iii) a feature, (iv) something not yet documented. Step 1's
    disambiguation must resolve before gathering sources or planning.
    Proceeding-with-assumption is the canonical failure shape. Worked
-   example: invocation "implement audio-only" — `audio-only-composition`
-   (Case-1 feature) and `audio-only-mode-override` (Case-2 use case) share
-   vocabulary; the right route differs.
+   examples: invocation "implement resolution capping" — routes to
+   `/spf-implement-feature` on `rendition-selection-caps` (cluster-E
+   policy), not here. Invocation "implement audio-only" maps to the
+   `audio-only-mode-override` use case (which absorbed what was
+   previously framed as a separate `audio-only-composition` feature);
+   the disambiguation between feature and use-case framings is
+   resolved by the consolidated doc.
 
 2. **Routing-out failure** — Step 1's disambiguation should route
    confidently. The failure mode is "ambiguity discovered but not
@@ -162,15 +166,17 @@ Discipline:
    `status`, code-grounding via the feature doc's `Implementation
    surface` section).
 
-6. **Shared-factory-with-Case-1-sibling miscoordination** — the use case
-   and its Case-1 feature sibling both want the engine variant factory;
-   building it twice or building it without coordinating produces drift.
-   The use-cases/README *Engine variant factory shape* cross-cutting
-   note flags this; the skill must surface it explicitly when a Case-1
-   sibling exists. Worked example: `audio-only-composition` (Case-1) +
-   `audio-only-mode-override` (Case-2) both need a `createAudioOnlyHlsEngine`
-   factory; the lean is shared factory with variant-decision source as
-   the orthogonal axis.
+6. **Shared-factory-with-Case-1-sibling miscoordination** — when a use
+   case has a Case-1 feature sibling and both want the engine variant
+   factory, building it twice or building it without coordinating
+   produces drift. **Resolved pattern (since 2026-05-21):** when both
+   cases ship the *same* engine factory, the Case-1 feature doc
+   consolidates into the use-case doc with a *Variant-decision signal
+   source* section covering both paths (`audio-only-mode-override` is
+   the canonical example). The skill must surface this when a Case-1
+   sibling exists in the source material — recommend consolidation
+   when the factory is shared, separate docs only when the factories
+   differ.
 
 7. **Adapter shape proliferation un-flagged** — each use-case adapter
    multiplies the surface. The use-cases/README cross-cutting note
@@ -347,9 +353,13 @@ After Step 1's report:
     chunks and the variant assembly chunks; the doc updates cover
     both docs).
 - **Confirm shared-factory-with-Case-1-sibling coordination** if
-  applicable. Worked example: `audio-only-mode-override` and
-  `audio-only-composition` likely share a `createAudioOnlyHlsEngine`
-  factory; explicit coordination prevents drift.
+  applicable. Pattern: if the source material distinguishes a Case-1
+  source-shape concern from the Case-2 delivery-mode concern but both
+  ship the *same* engine factory, recommend consolidating into one
+  use-case doc with a *Variant-decision signal source* section
+  covering both paths (`audio-only-mode-override` is the canonical
+  example — that consolidation landed 2026-05-21 absorbing what was
+  previously a separate `audio-only-composition` feature doc).
 - **Confirm implementation-scope extensions.** The engine variant +
   adapter pair in `packages/spf` is the *minimum* implementation
   surface — but a variant adapter that stops at the SPF layer is
@@ -370,11 +380,14 @@ After Step 1's report:
   - **React component** — `packages/react/src/media/<key>-video/`
     (~37 LOC; React adapter exposing props matching the HTML
     surface). Pairs with the HTML custom element.
-  - **Sandbox demo(s)** — `apps/sandbox/src/html-<key>-video/`
-    and/or `apps/sandbox/src/react-<key>-video/` (~50–80 LOC each).
-    Useful for manual verification + developer onboarding.
-    Required prereqs: HTML or React component, depending on which
-    sandbox is included.
+  - **Sandbox demo(s)** — `apps/sandbox/templates/html-<key>-video/`
+    and/or `apps/sandbox/templates/react-<key>-video/` (~50–80 LOC
+    each). **Write to `templates/`, not `src/`.** Per the sandbox
+    README, `apps/sandbox/src/*` is gitignored — `pnpm dev:sandbox`
+    mirrors `templates/` into `src/` on startup, leaving local edits
+    in `src/` untouched. Useful for manual verification + developer
+    onboarding. Required prereqs: HTML or React component, depending
+    on which sandbox is included.
   - **E2E tests** — `apps/e2e/apps/vite/src/pages/html-<key>-video-*.{html,ts}`
     fixture pages + `apps/e2e/tests/...` Playwright spec.
     **Lean: defer by default.** Use E2E for behaviors that have
@@ -435,9 +448,10 @@ typical for use-case implementations:
   ~5 LOC + boilerplate.
 - **React component** — `packages/react/src/media/<key>-video/index.tsx`
   exposing the props surface; ~37 LOC. Inline implementation.
-- **Sandbox demo(s)** — `apps/sandbox/src/{html,react}-<key>-video/`
-  (each ~50–80 LOC). Inline implementation; one chunk per surface
-  (html / react / both).
+- **Sandbox demo(s)** — `apps/sandbox/templates/{html,react}-<key>-video/`
+  (each ~50–80 LOC). **Write to `templates/`, not `src/`** (which is
+  gitignored — see sandbox README). Inline implementation; one chunk
+  per surface (html / react / both).
 - **E2E coverage** — fixture pages under
   `apps/e2e/apps/vite/src/pages/` + Playwright spec under
   `apps/e2e/tests/`. Inline implementation. Often the largest
