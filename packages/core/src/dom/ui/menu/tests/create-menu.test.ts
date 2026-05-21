@@ -112,6 +112,60 @@ describe('createMenu', () => {
       expect(menu.navigationInput.current.direction).toBe('forward');
     });
 
+    it('syncs viewport size when opening after the root view connects later than the menu host', async () => {
+      const { menu } = createTestMenu();
+      const content = document.createElement('div');
+      const rootView = document.createElement('div');
+
+      content.style.setProperty('min-width', '11rem');
+      document.body.append(content);
+      menu.setContentElement(content);
+
+      expect(content.style.getPropertyValue('--media-menu-width')).toBe('');
+      expect(content.style.getPropertyValue('--media-menu-height')).toBe('');
+
+      rootView.setAttribute('data-menu-view', '');
+      rootView.setAttribute('data-menu-view-id', 'root');
+      rootView.textContent = 'Speed\nCaptions';
+
+      function isMeasuringOpenRoot(): boolean {
+        return (
+          rootView.hasAttribute('data-open') &&
+          rootView.style.getPropertyValue('display') === 'block' &&
+          rootView.style.getPropertyValue('width') === 'max-content'
+        );
+      }
+
+      rootView.getBoundingClientRect = vi.fn(() =>
+        isMeasuringOpenRoot()
+          ? { width: 180, height: 74, top: 0, left: 0, right: 180, bottom: 74, x: 0, y: 0, toJSON: () => ({}) }
+          : { width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}) }
+      );
+
+      Object.defineProperty(rootView, 'scrollWidth', {
+        configurable: true,
+        get: () => (isMeasuringOpenRoot() ? 180 : 0),
+      });
+
+      Object.defineProperty(rootView, 'scrollHeight', {
+        configurable: true,
+        get: () => (isMeasuringOpenRoot() ? 74 : 0),
+      });
+
+      content.append(rootView);
+
+      menu.open();
+
+      await vi.waitFor(() => {
+        expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+        expect(content.style.getPropertyValue('--media-menu-height')).toBe('74px');
+      });
+
+      menu.setContentElement(null);
+      menu.destroy();
+      content.remove();
+    });
+
     it('resets the root panel transition after close when a submenu was open', async () => {
       const onOpenChangeComplete = vi.fn();
       const { menu } = createTestMenu({ onOpenChangeComplete });
