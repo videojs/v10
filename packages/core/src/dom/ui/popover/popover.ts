@@ -68,7 +68,14 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  let unregisterMemberTrigger: (() => void) | null = null;
   const capturedPointers = new Set<number>();
+  let skipBlurCloseAfterInsidePointer = false;
+  let skipBlurCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  /** Settled when the current close animation finishes (see `applyClose`). */
+  let closeAnimationPromise: Promise<void> | null = null;
+  /** True while a trigger click during `ending` has scheduled `applyOpen` after close settles. */
+  let reopenAfterClosePending = false;
 
   const layer = createDismissLayer({
     transition: options.transition,
@@ -78,7 +85,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       applyClose('escape', event);
     },
     onDocumentActive(signal) {
-      listen(document, 'pointerdown', handleDocumentPointerdown, { capture: true, signal });
+      listen(document, 'pointerdown', handleDocumentPointerdown, {
+        capture: true,
+        signal,
+      });
     },
   });
 
@@ -112,25 +122,49 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     return canHover();
   }
 
+  function clearInsidePointerBlurCloseGuard(): void {
+    skipBlurCloseAfterInsidePointer = false;
+    if (skipBlurCloseTimeout !== null) {
+      clearTimeout(skipBlurCloseTimeout);
+      skipBlurCloseTimeout = null;
+    }
+  }
+
+  function skipNextBlurCloseAfterInsidePointer(): void {
+    // Some browsers retarget focus to the shadow host/body between pointerdown
+    // and click. Keep this armed through the gesture so inside menu actions can
+    // decide whether the popup closes.
+    skipBlurCloseAfterInsidePointer = true;
+    if (skipBlurCloseTimeout !== null) clearTimeout(skipBlurCloseTimeout);
+    skipBlurCloseTimeout = setTimeout(clearInsidePointerBlurCloseGuard, 500);
+  }
+
+  function shouldSkipBlurCloseAfterInsidePointer(): boolean {
+    if (!skipBlurCloseAfterInsidePointer) return false;
+
+    clearInsidePointerBlurCloseGuard();
+    return true;
+  }
+
   // --- Open/close ---
 
   /**
    * The transition handler manages animation lifecycle via `createState`:
    *
-   * **Open:** `transition.open()` patches `{ active: true, status: 'starting' }`.
-   * After one RAF it patches `{ status: 'idle' }` and the promise resolves.
+   * **Open:** `transition.open()` patches `{ active: true, status: 'starting', transitioning: true }`.
+   * After one RAF it patches `{ status: 'idle' }`; the promise resolves when animations settle.
    * Frameworks render `data-starting-style` / `data-ending-style` via
    * `getPopupAttrs(state)` — no imperative DOM mutation needed.
    *
-   * **Close:** `transition.close(el)` patches `{ status: 'ending' }` (keeping
+   * **Close:** `transition.close(el)` patches `{ status: 'ending', transitioning: true }` (keeping
    * `active: true` so the element stays mounted). After a double-RAF it waits
-   * for `getAnimations()` to settle, then patches `{ active: false, status: 'idle' }`.
+   * for `getAnimations({ subtree: true })` to settle, then patches `{ active: false, status: 'idle' }`.
    *
    * `onOpenChange` fires immediately (before animations).
    * `onOpenChangeComplete` fires after animations finish.
    */
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
-    const opening = layer.open();
+    const opening = layer.open(popupEl);
     if (!opening) return;
 
     options.group?.()?.open(groupMember);
@@ -147,6 +181,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
     const closing = layer.close(popupEl);
     if (!closing) return;
+
+    closeAnimationPromise = closing.finally(() => {
+      closeAnimationPromise = null;
+    });
 
     options.group?.()?.close(groupMember);
 
@@ -180,7 +218,14 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     // the listener is on document, so contains() would always fail.
     const path = event.composedPath();
 
-    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) return;
+    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) {
+      skipNextBlurCloseAfterInsidePointer();
+      return;
+    }
+
+    clearInsidePointerBlurCloseGuard();
+
+    if (options.group?.()?.pathHasPeerMemberTrigger(path, triggerEl)) return;
 
     applyClose('outside-click', event);
   }
@@ -188,7 +233,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
     options.group?.()?.close(groupMember);
+    unregisterMemberTrigger?.();
+    unregisterMemberTrigger = null;
     clearHoverTimeout();
+    clearInsidePointerBlurCloseGuard();
     capturedPointers.clear();
     triggerEl = null;
     popupEl = null;
@@ -200,13 +248,38 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     onClick(event) {
       if (!canToggleOnClick()) return;
 
-      // During a close animation (open=true, status=ending), treat
-      // the click as a re-open rather than a second close attempt.
-      if (state.current.active && state.current.status !== 'ending') {
-        applyClose('click', event);
-      } else {
+      event.preventDefault();
+
+      const { active, status } = state.current;
+
+      if (!active) {
         applyOpen('click', event);
+        return;
       }
+
+      // During the close animation `layer.close()` is a no-op. Canceling the close via
+      // `transition.cancel()` + immediate `open()` leaves transitions half-applied (Safari)
+      // and conflicts with menu triggers that share this handler. Defer reopen until the
+      // in-flight close settles so rapid double-clicks still toggle reliably.
+      if (status === 'ending') {
+        const pending = closeAnimationPromise;
+        if (!pending || reopenAfterClosePending) return;
+
+        reopenAfterClosePending = true;
+        pending
+          .then(() => {
+            if (layer.signal.aborted) return;
+            if (!state.current.active) {
+              applyOpen('click', event);
+            }
+          })
+          .finally(() => {
+            reopenAfterClosePending = false;
+          });
+        return;
+      }
+
+      applyClose('click', event);
     },
 
     onPointerEnter(_event) {
@@ -293,14 +366,45 @@ export function createPopover(options: PopoverOptions): PopoverApi {
         return;
       }
 
-      applyClose('blur');
+      if (relatedTarget instanceof HTMLElement && options.group?.()?.isPeerTrigger?.(relatedTarget, triggerEl)) {
+        return;
+      }
+
+      if (shouldSkipBlurCloseAfterInsidePointer()) return;
+
+      if (relatedTarget !== null) {
+        if (!state.current.active || state.current.status === 'ending') return;
+        applyClose('blur');
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!state.current.active || state.current.status === 'ending' || state.current.status === 'starting') {
+            return;
+          }
+
+          const active = typeof document !== 'undefined' ? document.activeElement : null;
+          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) {
+            return;
+          }
+
+          applyClose('blur');
+        });
+      });
     },
   };
 
   // --- Element setters ---
 
   function setTriggerElement(el: HTMLElement | null): void {
+    unregisterMemberTrigger?.();
+    unregisterMemberTrigger = null;
     triggerEl = el;
+    const group = options.group?.();
+    if (el && group) {
+      unregisterMemberTrigger = group.addMemberTrigger(el);
+    }
   }
 
   function setPopupElement(el: HTMLElement | null): void {
@@ -311,9 +415,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     }
 
     popupEl = el;
+    options.transition.setElement(el);
 
     if (el) {
-      // If the popover is already open (e.g., React mount after state
+      // If the popover is already open (e.g. React mount after state
       // change), show the popover now. In `applyOpen` the element may not
       // have been in the DOM yet, so the earlier `tryShowPopover` was a no-op.
       if (state.current.active) {
@@ -333,6 +438,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     setPopupElement,
     open,
     close,
-    destroy: layer.destroy,
+    destroy() {
+      layer.destroy();
+    },
   };
 }

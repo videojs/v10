@@ -1,11 +1,11 @@
 'use client';
 
 import type { Media } from '@videojs/core';
-import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
+import { createPopupGroup, type MediaContainer, type PopupGroup } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
-import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useRef, useState } from 'react';
 
 import { useComposedRefs } from '../utils/use-composed-refs';
 
@@ -19,6 +19,10 @@ export interface PlayerContextValue {
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
+
+/** Explicit shell {@link PopupGroup} from {@link PopupGroupProvider}; menus default to a document-wide group when unset. */
+const ShellPopupGroupContext = createContext<PopupGroup | undefined>(undefined);
+
 const EMPTY_UNSUBSCRIBE = () => {};
 const EMPTY_STORE = {
   state: {} as UnknownState,
@@ -33,6 +37,12 @@ export function PlayerContextProvider({
   children: ReactNode;
 }): ReactNode {
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+}
+
+/** Optional: supplies an explicit shell-scoped {@link PopupGroup} instead of only the document-wide menu group. */
+export function PopupGroupProvider({ children }: { children: ReactNode }): ReactNode {
+  const [popupGroup] = useState(() => createPopupGroup());
+  return <ShellPopupGroupContext.Provider value={popupGroup}>{children}</ShellPopupGroupContext.Provider>;
 }
 
 /** Access the full player context value. Throws if used outside a Player Provider. */
@@ -95,10 +105,11 @@ export function useOptionalContainer(): MediaContainer | null {
   return ctx?.container ?? null;
 }
 
-/** Access the interactive popup group when a Player Provider is available. */
+/** Access an explicit popup group from a player or shell provider, if any (menus still coordinate document-wide when this is absent). */
 export function useOptionalPopupGroup(): PopupGroup | undefined {
-  const ctx = useContext(PlayerContext);
-  return ctx?.popupGroup;
+  const player = useContext(PlayerContext);
+  const shell = useContext(ShellPopupGroupContext);
+  return player?.popupGroup ?? shell;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */

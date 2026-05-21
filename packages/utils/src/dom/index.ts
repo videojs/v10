@@ -1,4 +1,10 @@
-export { animationFrame } from './animation-frame';
+export {
+  afterDoubleAnimationFrame,
+  animationFrame,
+  type DoubleAnimationFrameHandles,
+  resetDoubleAnimationFrameHandles,
+  scheduleDoubleAnimationFrame,
+} from './animation-frame';
 export { namedNodeMapToObject, serializeAttributes } from './attributes';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
@@ -23,7 +29,12 @@ export {
   type ShadowStyle,
 } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
-export { applyStyles, resolveCSSLength } from './style';
+export {
+  applyStyles,
+  getMaxCSSTransitionTime,
+  parseCSSTimeList,
+  resolveCSSLength,
+} from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
 export { createTemplate, renderTemplate } from './template';
 export { findTrackElement, getTextTrackList } from './text-track';
