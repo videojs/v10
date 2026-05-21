@@ -138,7 +138,7 @@ Modes, caps, and overrides layered on top of the registry. Where the engine's se
 
 **Signals.** Quality caps (max-height, max-bitrate, max-FPS, screen-size); modes (audio-only, video-only); user overrides via constraint slots; "respect billing constraints" / "respect device capabilities" framing; viewport adaptation.
 
-**Docs.** None yet. `video-abr`'s `userVideoTrackSelection` is a partial precedent for the cluster's constraint+filter pattern.
+**Docs.** `rendition-selection-caps`. `video-abr`'s `userVideoTrackSelection` is the constraint+filter precedent this cluster's caps build on.
 
 **Foundational primitives.** Constraint slots that filter the candidate set before selection runs.
 
