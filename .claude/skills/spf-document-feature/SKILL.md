@@ -118,6 +118,25 @@ incident or risk pattern; the catalog grows as new failure modes surface.
   "Live edge tracking" phase row, not a new doc. The invocation
   framing ("document a feature for [API]") is *not* evidence of
   feature-level scope.
+- **Weak-criterion decomposition without surfacing alternatives** —
+  symmetric counterpart to API-as-feature inflation. When the Step 1
+  decomposition rubric fires only *weakly* on (a)/(b)/(c) — e.g., (a)
+  is weak because the mechanism already lives in a closely-related
+  doc, or (c) is weak because no primitive is genuinely produced —
+  surface realistic alternative framings in the Step 1 report
+  proactively: (1) absorb into the closest documented feature as
+  worked-example annotations on existing phase rows, (2) broader
+  unified doc covering parallel siblings, (3) standalone. Even if
+  the recommendation lands on standalone, the user gets to see the
+  judgment call explicitly rather than having to surface it
+  themselves. Worked example: `hevc-variant-selection` invocation
+  (2026-05-20); Step 1 recommended standalone, but the mechanism
+  already lived in `capability-probing.md`'s "Multivariant CODECS-
+  attribute filtering" and "Tier 2: customer probing overrides"
+  phase rows. The user had to ask "is this a distinct feature or a
+  complexity phase?" to surface the absorb-into-capability-probing
+  and broader-`capability-gated-variant-selection` alternatives. The
+  Step 1 report should have presented them up front.
 - **Composition-variant logic in always-on behaviors** — when a
   feature or mechanism only applies under one composition variant
   (live, audio-only, DRM-required, etc.), it lives as a **new
