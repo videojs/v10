@@ -130,9 +130,15 @@ layer onto specific phases per the
 - **Tier 2 customer override surface.** Config-driven (engine-wide)
   vs per-source vs both? Per-source is more flexible but harder to
   wire.
-- **Container-detection scope.** Cluster D has a bracketed
-  `[container-support]` candidate. Folds here as part of multivariant
-  filtering, or stays separate (mostly MPEG-TS relevant)?
+- **Container-detection scope.** [container-support](./container-support.md)
+  is documented as standalone (cluster-less; MSE doesn't accept
+  non-fMP4 containers per spec, so the concern is structurally
+  different from capability-probing's "what can the browser decode
+  in fMP4?" framing). Open: should this feature surface container-
+  format detection as part of multivariant filtering (filter out
+  MPEG-TS variants when no transmuxer is composed)? That would
+  resolve the scope intersection cleanly without building the
+  transmuxer.
 
 ## Related features
 
@@ -154,8 +160,13 @@ layer onto specific phases per the
 - **`[unsupported-case-error-mapping]`** *(candidate)* — sister;
   consumer-facing error mapping on top of this feature's error
   primitive.
-- **`[container-support]`** *(candidate)* — open whether it folds in
-  or stays separate.
+- **[container-support](./container-support.md)** — standalone
+  feature (cluster-less); resolved per the doc's framing that MSE
+  doesn't accept non-fMP4 containers per spec, making the concern
+  fundamentally different from capability-probing's framing.
+  Container-detection-without-transmuxer remains a possible cross-
+  feature integration point (filter MPEG-TS variants when no
+  transmuxer is composed).
 
 ## See also
 
