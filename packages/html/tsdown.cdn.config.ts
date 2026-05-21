@@ -26,7 +26,15 @@ const presets = [
   'audio-minimal-ui',
   'background',
 ];
-const media = ['hls-video', 'mux-audio', 'mux-video', 'native-hls-video', 'simple-hls-video', 'dash-video'];
+const media = [
+  'hls-video',
+  'mux-audio',
+  'mux-video',
+  'native-hls-video',
+  'simple-hls-audio-only',
+  'simple-hls-video',
+  'dash-video',
+];
 
 const entries = [
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),

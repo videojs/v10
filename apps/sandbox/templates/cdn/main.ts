@@ -44,6 +44,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
       break;
     case 'audio':
     case 'mux-audio':
+    case 'simple-hls-audio-only':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
       break;
@@ -70,6 +71,9 @@ async function loadCdnMedia(preset: Preset) {
     case 'simple-hls-video':
       await import('@videojs/html/cdn/media/simple-hls-video');
       break;
+    case 'simple-hls-audio-only':
+      await import('@videojs/html/cdn/media/simple-hls-audio-only');
+      break;
     case 'dash-video':
       await import('@videojs/html/cdn/media/dash-video');
       break;
@@ -80,15 +84,19 @@ async function loadCdnMedia(preset: Preset) {
 // Rendering — produces the exact HTML markup the installation builder generates.
 // ---------------------------------------------------------------------------
 
+function isAudioPreset(preset: Preset): boolean {
+  return preset === 'audio' || preset === 'mux-audio' || preset === 'simple-hls-audio-only';
+}
+
 function getPlayerTag(preset: Preset, live: boolean): string {
   if (preset === 'background-video') return 'background-video-player';
-  if (preset === 'audio' || preset === 'mux-audio') return live ? 'live-audio-player' : 'audio-player';
+  if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
   return live ? 'live-video-player' : 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (preset === 'background-video') return 'background-video-skin';
-  if (preset === 'audio' || preset === 'mux-audio') return CSS_SKIN_TAGS[skin].audio;
+  if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
   if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
   return CSS_SKIN_TAGS[skin].video;
 }
@@ -100,6 +108,7 @@ function getMediaTag(preset: Preset): string {
     'mux-audio': 'mux-audio',
     'native-hls-video': 'native-hls-video',
     'simple-hls-video': 'simple-hls-video',
+    'simple-hls-audio-only': 'simple-hls-audio-only',
     'dash-video': 'dash-video',
     audio: 'audio',
     'background-video': 'background-video',
@@ -109,7 +118,7 @@ function getMediaTag(preset: Preset): string {
 }
 
 function loadStylesheets(preset: Preset, skin: Skin) {
-  if (preset === 'audio' || preset === 'mux-audio') loadAudioStylesheets(skin);
+  if (isAudioPreset(preset)) loadAudioStylesheets(skin);
   else if (preset !== 'background-video') loadVideoStylesheets(skin);
   // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
@@ -169,7 +178,7 @@ async function render() {
     return;
   }
 
-  if (preset === 'audio' || preset === 'mux-audio') {
+  if (isAudioPreset(preset)) {
     root.innerHTML = html`
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>

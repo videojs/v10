@@ -264,7 +264,7 @@ snapshot between operations rather than awaiting `send()` directly.
 
 - **[`audio-only-mode-override`](../use-cases/audio-only-mode-override.md)**
   *(partial — Phase 1 landed)* — Phase 1 baseline constituent (used
-  as-is via `createAudioOnlyHlsEngine`); Phase 3 surfaces
+  as-is via `createHlsAudioOnlyEngine`); Phase 3 surfaces
   alternative-default-config candidates (shorter
   `forwardBuffer.bufferDuration` for audio-only) and a Path-B
   candidate (audio-only-tuned buffer-management behavior).

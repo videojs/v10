@@ -49,6 +49,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'mux-video': 'Mux Video',
   'mux-audio': 'Mux Audio',
   'simple-hls-video': 'Simple HLS Video',
+  'simple-hls-audio-only': 'Simple HLS Audio-Only',
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
