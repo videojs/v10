@@ -17,6 +17,8 @@ export interface PlaybackRateMenuResult {
   rate: number;
   value: string;
   options: PlaybackRateMenuOption[];
+  menuSectionLabel: string;
+  radioGroupLabel: string;
   disabled: boolean;
   setRate: (rate: number) => void;
   setValue: (value: string) => void;
@@ -38,6 +40,8 @@ export function usePlaybackRateMenu(): PlaybackRateMenuResult {
       label: core.getRateLabel(rate),
       disabled: state.disabled,
     })),
+    menuSectionLabel: core.getMenuSectionLabel(),
+    radioGroupLabel: core.getRadioGroupLabel(),
     disabled: state.disabled,
     setRate,
     setValue,

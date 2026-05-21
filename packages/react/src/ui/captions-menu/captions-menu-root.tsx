@@ -17,6 +17,7 @@ export function CaptionsMenuRoot({
   label,
   formatTrack,
   offLabel,
+  menuSectionLabel,
   disabled,
   align = 'center',
   children,
@@ -25,7 +26,7 @@ export function CaptionsMenuRoot({
   const textTrack = usePlayer(selectTextTrack);
   const [core] = useState(() => new CaptionsMenuCore());
 
-  core.setProps({ label, formatTrack, offLabel, disabled });
+  core.setProps({ label, formatTrack, offLabel, menuSectionLabel, disabled });
 
   if (!textTrack) {
     if (__DEV__) logMissingFeature('CaptionsMenu', selectTextTrack.displayName ?? 'textTrack');

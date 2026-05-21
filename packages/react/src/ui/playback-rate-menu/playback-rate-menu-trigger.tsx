@@ -1,7 +1,7 @@
 'use client';
 
 import { type PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
-import { isNull, isUndefined } from '@videojs/utils/predicate';
+import { isFunction, isNull, isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode, Ref } from 'react';
 import { forwardRef, isValidElement } from 'react';
 
@@ -23,7 +23,13 @@ export const PlaybackRateMenuTrigger = forwardRef<HTMLButtonElement | HTMLDivEle
     const renderedChildren = isValidElement<{ children?: ReactNode }>(render) ? render.props.children : undefined;
     const hasOwnChildren = !isUndefined(children);
     const hasRenderedChildren = !isUndefined(renderedChildren);
-    const triggerChildren = hasOwnChildren ? children : hasRenderedChildren ? undefined : core.getRateLabel(state.rate);
+    const triggerChildren = hasOwnChildren
+      ? children
+      : hasRenderedChildren
+        ? undefined
+        : isFunction(render)
+          ? undefined
+          : core.getRateLabel(state.rate);
     const childrenProps = !isUndefined(triggerChildren) ? { children: triggerChildren } : undefined;
     const inlineLabelProps =
       hasChildren(triggerChildren) || hasChildren(renderedChildren) ? { 'data-inline-rate-label': '' } : undefined;

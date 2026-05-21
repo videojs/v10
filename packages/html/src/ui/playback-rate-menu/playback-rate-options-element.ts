@@ -53,7 +53,7 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getRateValue(state.rate);
-      this.label = this.label || 'Playback rate';
+      this.label = this.label || this.#core.getRadioGroupLabel();
       this.#syncContent(state);
     }
 

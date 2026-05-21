@@ -11,6 +11,14 @@ export interface PlaybackRateMenuProps {
   label?: string | ((state: PlaybackRateMenuState) => string) | undefined;
   /** Custom formatter for visible playback rate labels. */
   formatRate?: ((rate: number) => string) | undefined;
+  /**
+   * Section title for the nested speed row (and back button) when playback rate is in a submenu.
+   */
+  menuSectionLabel?: string | undefined;
+  /**
+   * Accessible label for the rate radio group and default trigger text prefix before the numeric rate.
+   */
+  radioGroupLabel?: string | undefined;
   /** Whether playback rate selection is disabled. */
   disabled?: boolean | undefined;
 }
@@ -29,6 +37,8 @@ export class PlaybackRateMenuCore {
   static readonly defaultProps: NonNullableObject<PlaybackRateMenuProps> = {
     label: '',
     formatRate: formatPlaybackRate,
+    menuSectionLabel: 'Speed',
+    radioGroupLabel: 'Playback rate',
     disabled: false,
   };
 
@@ -60,7 +70,15 @@ export class PlaybackRateMenuCore {
       return label;
     }
 
-    return `Playback rate ${state.rate}`;
+    return `${this.getRadioGroupLabel()}, ${this.getRateLabel(state.rate)}`;
+  }
+
+  getMenuSectionLabel(): string {
+    return this.#props.menuSectionLabel;
+  }
+
+  getRadioGroupLabel(): string {
+    return this.#props.radioGroupLabel;
   }
 
   getRateLabel(rate: number): string {

@@ -18,6 +18,7 @@ export interface CaptionsMenuResult {
   selectedTrackIndex: number | null;
   value: string;
   options: CaptionsMenuOption[];
+  menuSectionLabel: string;
   availability: CaptionsMenuCore.State['availability'];
   disabled: boolean;
   setTrack: (trackIndex: number | null) => void;
@@ -54,6 +55,7 @@ export function useCaptionsMenu(): CaptionsMenuResult {
           ]
         : [],
     availability: state.availability,
+    menuSectionLabel: core.getMenuSectionLabel(),
     disabled: state.disabled,
     setTrack,
     setValue,

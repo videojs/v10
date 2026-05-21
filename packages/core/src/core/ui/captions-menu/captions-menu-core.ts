@@ -19,6 +19,11 @@ export interface CaptionsMenuProps {
   formatTrack?: ((track: CaptionsMenuTrack) => string) | undefined;
   /** Custom label for the off option. */
   offLabel?: string | undefined;
+  /**
+   * Section title for the track list (radio group legend) and nested settings row / back button.
+   * Also prefixes the default trigger label when `label` is not set.
+   */
+  menuSectionLabel?: string | undefined;
   /** Whether captions selection is disabled. */
   disabled?: boolean | undefined;
 }
@@ -46,6 +51,7 @@ export class CaptionsMenuCore {
     label: '',
     formatTrack: formatTextTrack,
     offLabel: 'Off',
+    menuSectionLabel: 'Captions',
     disabled: false,
   };
 
@@ -80,7 +86,12 @@ export class CaptionsMenuCore {
     }
 
     const selectedTrack = this.getSelectedTrack(state);
-    return `Captions ${selectedTrack ? this.getTrackLabel(selectedTrack) : this.getOffLabel()}`;
+    const value = selectedTrack ? this.getTrackLabel(selectedTrack) : this.getOffLabel();
+    return `${this.getMenuSectionLabel()}, ${value}`;
+  }
+
+  getMenuSectionLabel(): string {
+    return this.#props.menuSectionLabel;
   }
 
   getOffLabel(): string {

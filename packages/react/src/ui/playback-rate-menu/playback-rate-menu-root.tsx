@@ -16,6 +16,8 @@ export interface PlaybackRateMenuRootProps extends Omit<MenuRootProps, 'children
 export function PlaybackRateMenuRoot({
   label,
   formatRate,
+  menuSectionLabel,
+  radioGroupLabel,
   disabled,
   align = 'center',
   children,
@@ -24,7 +26,7 @@ export function PlaybackRateMenuRoot({
   const playbackRate = usePlayer(selectPlaybackRate);
   const [core] = useState(() => new PlaybackRateMenuCore());
 
-  core.setProps({ label, formatRate, disabled });
+  core.setProps({ label, formatRate, disabled, menuSectionLabel, radioGroupLabel });
 
   if (!playbackRate) {
     if (__DEV__) logMissingFeature('PlaybackRateMenu', selectPlaybackRate.displayName ?? 'playbackRate');

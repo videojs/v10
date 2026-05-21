@@ -1,7 +1,7 @@
 'use client';
 
 import { type CaptionsMenuCore, CaptionsMenuDataAttrs } from '@videojs/core';
-import { isNull, isUndefined } from '@videojs/utils/predicate';
+import { isFunction, isNull, isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode, Ref } from 'react';
 import { forwardRef, isValidElement } from 'react';
 
@@ -23,7 +23,13 @@ export const CaptionsMenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement
     const renderedChildren = isValidElement<{ children?: ReactNode }>(render) ? render.props.children : undefined;
     const hasOwnChildren = !isUndefined(children);
     const hasRenderedChildren = !isUndefined(renderedChildren);
-    const triggerChildren = hasOwnChildren ? children : hasRenderedChildren ? undefined : state.label;
+    const triggerChildren = hasOwnChildren
+      ? children
+      : hasRenderedChildren
+        ? undefined
+        : isFunction(render)
+          ? undefined
+          : state.label;
     const childrenProps = hasChildren(triggerChildren) ? { children: triggerChildren } : undefined;
 
     return (

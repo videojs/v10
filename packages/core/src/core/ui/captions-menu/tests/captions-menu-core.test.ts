@@ -75,12 +75,12 @@ describe('CaptionsMenuCore', () => {
         tracks: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing', index: 0 }],
       });
 
-      expect(core.getLabel(state)).toBe('Captions English');
+      expect(core.getLabel(state)).toBe('Captions, English');
     });
 
     it('returns default off label when no track is selected', () => {
       const core = new CaptionsMenuCore();
-      expect(core.getLabel(createState())).toBe('Captions Off');
+      expect(core.getLabel(createState())).toBe('Captions, Off');
     });
 
     it('returns custom string label', () => {
@@ -115,11 +115,30 @@ describe('CaptionsMenuCore', () => {
     });
   });
 
+  describe('getMenuSectionLabel', () => {
+    it('returns the default section label', () => {
+      expect(new CaptionsMenuCore().getMenuSectionLabel()).toBe('Captions');
+    });
+
+    it('returns a custom section label', () => {
+      expect(new CaptionsMenuCore({ menuSectionLabel: 'Subtitles' }).getMenuSectionLabel()).toBe('Subtitles');
+    });
+
+    it('prefixes the default trigger label using the section label', () => {
+      const core = new CaptionsMenuCore({ menuSectionLabel: 'Subtitles' });
+      const state = createState({
+        selectedTrackIndex: 0,
+        tracks: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing', index: 0 }],
+      });
+      expect(core.getLabel(state)).toBe('Subtitles, English');
+    });
+  });
+
   describe('getAttrs', () => {
     it('returns aria-label', () => {
       const core = new CaptionsMenuCore();
       const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBe('Captions Off');
+      expect(attrs['aria-label']).toBe('Captions, Off');
     });
 
     it('sets aria-disabled when disabled', () => {
