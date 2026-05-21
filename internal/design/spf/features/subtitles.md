@@ -98,6 +98,10 @@ References to other features in the registry. Bracketed entries are candidate fe
 - **styled-webvtt-cues** *(coarse, not yet documented)* — candidate extension for SPF-side cue styling.
 - **text-track-error-recovery** *(coarse, not yet documented)* — candidate extension for retry / fallback / state-surfacing on segment fetch errors.
 
+## Use cases that compose this feature
+
+- **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)** *(coarse)* — Phase 2 constituent. The video-only delivery variant composes subtitles for the muted-video + captions a11y delivery pattern — a canonical accessible consumption shape for video-only contexts.
+
 ## See also
 
 - [text-track-architecture.md](../text-track-architecture.md) — architectural deep-dive (Actor/Reactor patterns, state machines, friction, open questions)

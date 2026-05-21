@@ -102,6 +102,10 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 - **[capability-probing](./capability-probing.md)** — narrows the candidate set ABR operates over. `selectQuality` doesn't change shape; just sees a filtered candidate set with browser-unsupported renditions already excluded.
 - **[hevc-variant-selection](./hevc-variant-selection.md)** — codec-aware variant filtering (HEVC if supported, AVC fallback). Same constraint+filter pattern as `userVideoTrackSelection`; narrows the candidate set ABR operates over by codec axis. Tier 2 mid-stream `changeType()` phase introduces cross-codec ABR (no algorithm change, just buffer-side switching).
 
+## Use cases that compose this feature
+
+- **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)** *(coarse)* — Phase 1 baseline constituent. The video-only delivery variant composes video-abr as-is for multi-bitrate video selection.
+
 ## See also
 
 - [presentation-modeling.md](../presentation-modeling.md) — architectural deep-dive on the format-neutral data shape; ABR consumes resolved video tracks surfaced by the parser interface this layer defines.

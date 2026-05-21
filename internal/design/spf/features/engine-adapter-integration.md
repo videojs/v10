@@ -204,6 +204,12 @@ each `set src`).
   `SimpleAudioOnlyHlsMediaElement`-style adapter parallel to
   `SimpleHlsMediaElement`; the `shareSignals` mechanism + mixin
   pattern compose unchanged. The consumer-facing API differs.
+- **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)**
+  *(coarse)* — Phase 1 baseline constituent on the inverse axis.
+  Ships an independent `SimpleVideoOnlyHlsMediaElement`-style
+  adapter parallel to `SimpleHlsMediaElement`. Same `shareSignals`
+  pattern; consumer-facing API differs from both default and
+  audio-only-mode-override.
 
 ## See also
 

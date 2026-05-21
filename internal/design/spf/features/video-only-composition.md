@@ -180,11 +180,12 @@ Things this feature probably forces decisions on, not just additions:
 
 ## Use cases that compose this feature
 
-- **`[video-only-mode-override]`** *(forward-ref; not yet
-  documented)* — Case-2 sibling use case that composes this
+- **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)**
+  *(coarse)* — Case-2 sibling use case that composes this
   feature's engine-variant shape to deliver video-only from
   mixed-manifest sources. Source-shape correctness (this
-  feature) vs delivery-mode choice (the use case). Notion
+  feature) vs delivery-mode choice (the use case). Likely shares
+  engine factory; differs in variant-decision source. Notion
   NEW-B.
 - **`[background-looping-video]`** *(forward-ref; not yet
   documented)* — Mux's background-video product scenario.
