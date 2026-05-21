@@ -115,6 +115,25 @@ describe('CaptionsMenuCore', () => {
     });
   });
 
+  describe('getMenuSectionLabel', () => {
+    it('returns the default section label', () => {
+      expect(new CaptionsMenuCore().getMenuSectionLabel()).toBe('Captions');
+    });
+
+    it('returns a custom section label', () => {
+      expect(new CaptionsMenuCore({ menuSectionLabel: 'Subtitles' }).getMenuSectionLabel()).toBe('Subtitles');
+    });
+
+    it('prefixes the default trigger label using the section label', () => {
+      const core = new CaptionsMenuCore({ menuSectionLabel: 'Subtitles' });
+      const state = createState({
+        selectedTrackIndex: 0,
+        tracks: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing', index: 0 }],
+      });
+      expect(core.getLabel(state)).toBe('Subtitles English');
+    });
+  });
+
   describe('getAttrs', () => {
     it('returns aria-label', () => {
       const core = new CaptionsMenuCore();

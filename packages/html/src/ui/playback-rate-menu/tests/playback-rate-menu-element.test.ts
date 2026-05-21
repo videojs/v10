@@ -6,9 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
+import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
+import { MenuViewElement } from '../../menu/menu-view-element';
 import { PlaybackRateMenuElement } from '../playback-rate-menu-element';
 import { PlaybackRateMenuTriggerElement } from '../playback-rate-menu-trigger-element';
 import { PlaybackRateOptionsElement } from '../playback-rate-options-element';
@@ -167,6 +169,29 @@ describe('PlaybackRateMenuElement', () => {
     expect(menu.getAttribute('data-rate')).toBe('1.25');
   });
 
+  it('syncs descendant section label parts', async () => {
+    const { menu, trigger } = setup();
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    menu.insertBefore(section, menu.firstChild);
+
+    await waitForMenu(menu, trigger);
+
+    expect(section.textContent).toBe('Speed');
+  });
+
+  it('respects menu-section-label on the menu element for section label parts', async () => {
+    const { menu, trigger } = setup();
+    menu.setAttribute('menu-section-label', 'Tempo');
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    menu.insertBefore(section, menu.firstChild);
+
+    await waitForMenu(menu, trigger);
+
+    expect(section.textContent).toBe('Tempo');
+  });
+
   it('renders radio items from a template', async () => {
     const { menu, options, trigger } = setup({
       template:
@@ -219,6 +244,29 @@ describe('PlaybackRateMenuTriggerElement', () => {
     expect(trigger.getAttribute('data-rate')).toBe('2');
   });
 
+  it('syncs section label part in the trigger', async () => {
+    const { trigger } = setup({ playbackRate: 2 });
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    trigger.append(section);
+
+    await trigger.updateComplete;
+
+    expect(section.textContent).toBe('Speed');
+  });
+
+  it('respects menu-section-label on the trigger', async () => {
+    const { trigger } = setup({ playbackRate: 2 });
+    trigger.setAttribute('menu-section-label', 'Tempo');
+    const section = document.createElement('span');
+    section.setAttribute('data-part', 'section-label');
+    trigger.append(section);
+
+    await trigger.updateComplete;
+
+    expect(section.textContent).toBe('Tempo');
+  });
+
   it('prevents activation when there are no playback rates', async () => {
     const { trigger } = setup({ playbackRates: [] });
 
@@ -231,5 +279,44 @@ describe('PlaybackRateMenuTriggerElement', () => {
     expect(trigger.getAttribute('aria-disabled')).toBe('true');
     expect(trigger.hasAttribute('data-disabled')).toBe(true);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('does not open a submenu from a secondary pointer button', async () => {
+    const provider = document.createElement('test-playback-rate-player') as TestPlayerProviderElement;
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(PlaybackRateMenuTriggerElement);
+    const menu = createElement(PlaybackRateMenuElement);
+    const options = createElement(PlaybackRateOptionsElement);
+
+    provider.setStore(createPlaybackRateStore());
+    root.open = true;
+    trigger.id = 'playback-rate-trigger';
+    trigger.commandfor = 'playback-rate-menu';
+    menu.id = 'playback-rate-menu';
+
+    menu.append(options);
+    rootView.append(trigger);
+    root.append(rootView, menu);
+    provider.append(root);
+    document.body.append(provider);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await menu.updateComplete;
+    await options.updateComplete;
+
+    const handled = trigger.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 2 })
+    );
+
+    await root.updateComplete;
+    await trigger.updateComplete;
+    await menu.updateComplete;
+
+    expect(handled).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(menu.hasAttribute('data-open')).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuElement } from '../menu/menu-element';
+import { syncSectionLabelParts } from '../menu/sync-section-label-parts';
 
 export class CaptionsMenuElement extends MenuElement {
   static override readonly tagName = 'media-captions-menu';
@@ -13,6 +14,7 @@ export class CaptionsMenuElement extends MenuElement {
     ...MenuElement.properties,
     label: { type: String },
     offLabel: { type: String, attribute: 'off-label' },
+    menuSectionLabel: { type: String, attribute: 'menu-section-label' },
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<
     | 'open'
@@ -24,11 +26,13 @@ export class CaptionsMenuElement extends MenuElement {
     | 'boundary'
     | 'label'
     | 'offLabel'
+    | 'menuSectionLabel'
     | 'disabled'
   >;
 
   label = '';
   offLabel = CaptionsMenuCore.defaultProps.offLabel;
+  menuSectionLabel = CaptionsMenuCore.defaultProps.menuSectionLabel;
   disabled = false;
   override align: MenuElement['align'] = 'center';
   formatTrack = CaptionsMenuCore.defaultProps.formatTrack;
@@ -57,6 +61,7 @@ export class CaptionsMenuElement extends MenuElement {
 
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, CaptionsMenuDataAttrs);
+    syncSectionLabelParts(this, this.#core.getMenuSectionLabel());
   }
 }
 

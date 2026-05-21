@@ -6,6 +6,10 @@ export {
 } from './captions-menu-content';
 export { CaptionsMenuRoot as Root, type CaptionsMenuRootProps as RootProps } from './captions-menu-root';
 export {
+  CaptionsMenuSectionLabel as SectionLabel,
+  type CaptionsMenuSectionLabelProps as SectionLabelProps,
+} from './captions-menu-section-label';
+export {
   CaptionsMenuTrigger as Trigger,
   type CaptionsMenuTriggerProps as TriggerProps,
 } from './captions-menu-trigger';
