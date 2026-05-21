@@ -60,13 +60,14 @@ three sub-issues, rather than as separate phases.
 | License flow | Per-source license-server configuration (consumer-provided URL + optional headers / auth tokens). `MediaKeySession.message` event → fetch license from server → `MediaKeySession.update(licenseResponse)`. Pluggable hooks for consumer policies (custom headers, body transformation, response transformation) | Consumer-facing config surface lives here. Mux Player's `drm-token` attribute is one consumer of this; videojs-contrib-eme's per-key-system config is another precedent |
 | Per-key-system specifics | Widevine ([#1412](https://github.com/videojs/v10/issues/1412)), PlayReady ([#1413](https://github.com/videojs/v10/issues/1413)), FairPlay ([#1414](https://github.com/videojs/v10/issues/1414)). Per-system: init-data format (PSSH for Widevine, PRO box for PlayReady, content-id derivation for FairPlay), license URL conventions, license body format, server-certificate handshake (FairPlay), browser-API quirks | Three sub-issues. The shared pipeline + license flow above handle most of the machinery; each key system adds its own init-data + license-format adapters |
 | Key delivery and `keystatuschange` reactivity | Browser receives keys via `MediaKeySession.update()`; encrypted segments decrypt automatically. `MediaKeySession.keystatuses` Map tracks per-key status (`usable`, `expired`, `output-restricted`, `released`, etc.); `keystatuschange` event fires on changes. Engine reacts to status transitions (e.g., expired key → re-request) | Tier 2-ish: engine can ignore non-`usable` statuses initially (key expiry surfaces as a playback failure); richer handling is consumer-policy-driven |
+| Security-level capability and constraint filtering | Probe device security level (Widevine L1 hardware-backed / L2 hybrid / L3 software-only; PlayReady SL150 / SL2000 / SL3000; FairPlay key-duration / persistent-vs-streaming model) via `MediaKeySystemAccess.getConfiguration()`. HDCP output-protection requirements similarly probed. Match against per-rendition security-level requirements (e.g., 4K HDR HEVC often requires L1 Widevine) and license-server policy. Write a `deviceSecurityLevel` constraint slot read by ABR / variant selection; renditions exceeding the device's level filter out, or the engine surfaces a failure when no compatible rendition remains | Constraint+filter pattern parallel to [rendition-selection-caps](./rendition-selection-caps.md) and [hevc-variant-selection](./hevc-variant-selection.md). Probing extends [capability-probing](./capability-probing.md)'s key-system probe with security-level configuration. Borderline classification (Media-src for "play protected content correctly"; Player for customer-policy caps) — current scope leans Media-src |
 | Parser surface for key tags | `parseMediaPlaylist` recognizes `#EXT-X-KEY` and `#EXT-X-SESSION-KEY` from media playlists; multivariant parser surfaces session keys at presentation resolution. Init-data flows from the parsed-track output through MSE setup to the EME pipeline | Parser-side change. Today neither tag is recognized; both are silently passed through |
 | Encrypted-event handling on `SourceBuffer` / mediaElement | `encrypted` event on `mediaElement` triggers session creation via init-data. Once keys are delivered, segment-append proceeds normally; the engine doesn't intervene per-segment | Cross-cluster MSE concern; segment-append flow is unchanged for encrypted streams aside from the key-readiness gate |
 
 ## What's in scope vs out of scope
 
 **In scope:**
-- All six phases above for HLS protected content with EME-supported
+- All seven phases above for HLS protected content with EME-supported
   key systems (Widevine, PlayReady, FairPlay)
 - MediaKeys / MediaKeySession lifecycle management (per-source setup,
   source-change cleanup)
@@ -75,13 +76,16 @@ three sub-issues, rather than as separate phases.
 - Parser surface for `#EXT-X-KEY` and `#EXT-X-SESSION-KEY` tags
 - `keystatuschange` event reactivity baseline (surface failures)
 - Engine-composition variant for DRM-required content
+- Security-level probing extension to capability-probing's key-system
+  probe (returns supported security levels per key system via
+  `MediaKeySystemAccess.getConfiguration()`)
+- Security-level constraint slot (`deviceSecurityLevel`) + filter-
+  pattern integration with rendition selection (parallel to
+  `userVideoTrackSelection` in video-abr.md and per-cap slots in
+  rendition-selection-caps.md)
+- HDCP output-protection requirement detection and gating
 
 **Out of scope (separate Media-src candidate features):**
-- **`[drm-security-levels]`** *(candidate, this session)* — HDCP
-  output-protection requirements, hardware-DRM enforcement, security-
-  level constraints (e.g., HEVC requires hardware DRM for L1
-  Widevine). Layered on top of this feature's MediaKeys configuration
-  surface.
 - **`[fairplay-airplay-workaround]`** *(candidate, this session)* —
   Apple-specific FairPlay quirks during AirPlay sessions. Consumes
   this feature's FairPlay setup as a baseline.
@@ -192,13 +196,22 @@ Things this feature probably forces decisions on, not just additions:
   the reload-loop + license-fetcher may both need re-trigger logic).
   Cross-cluster A + F open question; resolution likely after both
   clusters have implementation work.
-- **Output-protection-aware ABR.** The video-ABR algorithm doesn't
-  today consider per-rendition output-protection requirements (e.g.,
-  some HEVC renditions require hardware DRM for L1 Widevine; HDCP
-  requirements may differ per rendition). When `drm-security-levels`
-  lands, ABR may need to filter the candidate set based on the
-  current security-level state. Cross-feature with `video-abr` and
-  the upcoming `drm-security-levels` doc.
+- **Output-protection-aware ABR coordination.** Renditions tagged
+  with security-level / HDCP requirements interact with video-ABR
+  and hevc-variant-selection. ABR's candidate set should be filtered
+  by the `deviceSecurityLevel` constraint slot before bandwidth-
+  driven selection runs. Filter ordering: capability filter
+  (physics) → policy caps → security-level → bandwidth-driven
+  selection. Per-rendition requirement tagging is open: parser-
+  surfaced HLS extension attributes vs runtime-probed via license-
+  server policy vs both. Server-side conventions vary.
+- **Per-rendition security-level tag surface.** HLS doesn't have a
+  spec-defined attribute for "this rendition requires L1 Widevine."
+  Providers commonly encode the requirement in proprietary attributes
+  (`URI-SECURITY-LEVEL`, etc.) or imply it from `RESOLUTION` thresholds
+  (4K+ requires hardware DRM by convention on many platforms). Parser
+  needs an extension axis for surfacing the requirement; license-
+  server policy is the orthogonal source.
 
 ## Related features
 
@@ -206,9 +219,6 @@ Things this feature probably forces decisions on, not just additions:
   prerequisite)* — owns key-system probing; this feature consumes the
   verdict. Crisp boundary: probing = "can we?"; this feature =
   "set it up."
-- **`[drm-security-levels]`** *(candidate, this session)* — extends
-  this feature with HDCP / output-protection / hardware-DRM
-  enforcement. Consumes the MediaKeys configuration surface.
 - **`[fairplay-airplay-workaround]`** *(candidate, this session)* —
   Apple-specific FairPlay quirks during AirPlay sessions. Consumes
   this feature's FairPlay setup as the baseline.
@@ -252,5 +262,9 @@ Things this feature probably forces decisions on, not just additions:
 - [Mux Player DRM integration](https://www.mux.com/docs/guides/protect-videos-with-drm)
   — adapter-layer prior art; `drm-token` attribute on `<mux-player>`
 - [W3C Encrypted Media Extensions](https://www.w3.org/TR/encrypted-media/)
-  — EME spec
+  — EME spec; [`MediaKeySystemAccess.getConfiguration()`](https://www.w3.org/TR/encrypted-media/#dom-mediakeysystemaccess-getconfiguration)
+  is the security-level probing surface
+- [HDCP specification (DCP LLC)](https://www.digital-cp.com/) —
+  output-protection requirements; the protection-level data this
+  feature gates on for high-resolution / premium content
 - [HLS Spec — `EXT-X-KEY` / `EXT-X-SESSION-KEY`](https://datatracker.ietf.org/doc/html/rfc8216bis)
