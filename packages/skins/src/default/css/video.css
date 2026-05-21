@@ -10,11 +10,11 @@
 @import "./components/button.css";
 @import "./components/button-group.css";
 @import "./components/icons.css";
-@import "./components/menus.css";
 @import "./components/poster.css";
 @import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "./components/captions.css";
 @import "./components/input-feedback.css";
 @import "../../shared/css/video/icon-state.css";
@@ -49,8 +49,8 @@
   --media-error-dialog-transition-duration: 350ms;
   --media-error-dialog-transition-delay: 100ms;
   --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
+  --media-popover-transition-duration: 100ms;
+  --media-popover-transition-timing-function: ease-out;
   --media-tooltip-side-offset: 0.75rem;
   --media-tooltip-boundary-offset: 0.5rem;
   --media-popover-side-offset: 0.5rem;
@@ -61,7 +61,7 @@
     --media-error-dialog-transition-duration: 50ms;
     --media-error-dialog-transition-delay: 0ms;
     --media-error-dialog-transition-timing-function: ease-out;
-    --media-popup-transition-duration: 0ms;
+    --media-popover-transition-duration: 0ms;
   }
 
   @media (prefers-color-scheme: dark) {

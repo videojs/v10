@@ -10,6 +10,7 @@ import {
   ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
+  GearIcon,
   PauseIcon,
   PipEnterIcon,
   PipExitIcon,
@@ -96,10 +97,10 @@ function VolumePopover(): ReactNode {
 }
 
 function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+  const { options, setValue, value, radioGroupLabel } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label={radioGroupLabel}>
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -113,10 +114,10 @@ function PlaybackRateMenuItems(): ReactNode {
 }
 
 function CaptionsMenuItems(): ReactNode {
-  const { options, setValue, value } = useCaptionsMenu();
+  const { options, setValue, value, menuSectionLabel } = useCaptionsMenu();
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Captions">
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label={menuSectionLabel}>
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -126,6 +127,105 @@ function CaptionsMenuItems(): ReactNode {
         </Menu.RadioItem>
       ))}
     </Menu.RadioGroup>
+  );
+}
+
+function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
+  return <ChevronIcon className={cn('media-icon media-menu__chevron', flipped ? 'media-icon--flipped' : undefined)} />;
+}
+
+function PlaybackRateSettingsSubmenu(): ReactNode {
+  return (
+    <PlaybackRateMenu.Root>
+      <PlaybackRateSettingsSubmenuContent />
+    </PlaybackRateMenu.Root>
+  );
+}
+
+function PlaybackRateSettingsSubmenuContent(): ReactNode {
+  const { options, state, value } = usePlaybackRateMenu();
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? state.label;
+
+  return (
+    <>
+      <PlaybackRateMenu.Trigger
+        className="media-menu__item media-menu__item--submenu"
+        render={(props) => (
+          <div {...props}>
+            <PlaybackRateMenu.SectionLabel />
+            <span className="media-menu__hint">
+              <span className="media-menu__hint-label">{selectedLabel}</span>
+              <MenuChevron />
+            </span>
+          </div>
+        )}
+      />
+      <PlaybackRateMenu.Content className="media-menu__panel">
+        <Menu.Back className="media-menu__back">
+          <MenuChevron flipped />
+          <PlaybackRateMenu.SectionLabel />
+        </Menu.Back>
+        <PlaybackRateMenuItems />
+      </PlaybackRateMenu.Content>
+    </>
+  );
+}
+
+function CaptionsSettingsSubmenu(): ReactNode {
+  return (
+    <CaptionsMenu.Root>
+      <CaptionsSettingsSubmenuContent />
+    </CaptionsMenu.Root>
+  );
+}
+
+function CaptionsSettingsSubmenuContent(): ReactNode {
+  const { availability, options, state, value } = useCaptionsMenu();
+
+  if (availability !== 'available') return null;
+
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? state.label;
+
+  return (
+    <>
+      <CaptionsMenu.Trigger
+        className="media-menu__item media-menu__item--submenu"
+        render={(props) => (
+          <div {...props}>
+            <CaptionsMenu.SectionLabel />
+            <span className="media-menu__hint">
+              <span className="media-menu__hint-label">{selectedLabel}</span>
+              <MenuChevron />
+            </span>
+          </div>
+        )}
+      />
+      <CaptionsMenu.Content className="media-menu__panel">
+        <Menu.Back className="media-menu__back">
+          <MenuChevron flipped />
+          <CaptionsMenu.SectionLabel />
+        </Menu.Back>
+        <CaptionsMenuItems />
+      </CaptionsMenu.Content>
+    </>
+  );
+}
+
+function SettingsMenu(): ReactNode {
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger aria-label="Settings" className="media-button--settings" render={<Button />}>
+        <GearIcon className="media-icon media-icon--settings" />
+      </Menu.Trigger>
+      <Menu.Content className="media-popover media-menu media-menu--settings">
+        <Menu.View className="media-menu__panel">
+          <div className="media-menu__group">
+            <PlaybackRateSettingsSubmenu />
+            <CaptionsSettingsSubmenu />
+          </div>
+        </Menu.View>
+      </Menu.Content>
+    </Menu.Root>
   );
 }
 
@@ -232,24 +332,9 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
-            <PlaybackRateMenu.Root side="top" align="center">
-              <PlaybackRateMenu.Trigger className="media-button--playback-rate" render={<Button />} />
-              <PlaybackRateMenu.Content className="media-popover media-menu media-menu--playback-rate">
-                <PlaybackRateMenuItems />
-              </PlaybackRateMenu.Content>
-            </PlaybackRateMenu.Root>
-
             <VolumePopover />
 
-            <CaptionsMenu.Root side="top" align="center">
-              <CaptionsMenu.Trigger className="media-button--captions" render={<Button />}>
-                <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-              </CaptionsMenu.Trigger>
-              <CaptionsMenu.Content className="media-popover media-menu media-menu--captions">
-                <CaptionsMenuItems />
-              </CaptionsMenu.Content>
-            </CaptionsMenu.Root>
+            <SettingsMenu />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

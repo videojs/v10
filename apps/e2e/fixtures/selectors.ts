@@ -48,6 +48,9 @@ export const SELECTORS = {
    * (covers HTML `<media-playback-rate-menu>` and React/Tailwind without `media-menu--playback-rate`).
    */
   playbackRateMenuPanel: '[data-rate][role="menu"]',
+  settingsButton: '.media-button--settings',
+  settingsCaptionsItem: 'media-captions-menu-trigger, [role="menuitem"]:has-text("Captions")',
+  settingsSpeedItem: 'media-playback-rate-menu-trigger, [role="menuitem"]:has-text("Speed")',
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls

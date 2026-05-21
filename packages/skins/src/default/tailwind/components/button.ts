@@ -6,7 +6,7 @@ export const button = {
     'py-2 px-4 rounded-full',
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
-    'active:scale-[0.98]',
+    'active:scale-98',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
     'focus-visible:outline-current focus-visible:outline-offset-2',
     'data-[availability=unavailable]:hidden',

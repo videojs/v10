@@ -6,6 +6,7 @@
 .media-minimal-skin *::before,
 .media-minimal-skin *::after {
   box-sizing: border-box;
+  scrollbar-color: currentColor transparent;
 }
 .media-minimal-skin img,
 .media-minimal-skin video,

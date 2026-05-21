@@ -8,8 +8,8 @@
   overflow: visible;
   color: inherit;
   border: 0;
-  transition-timing-function: var(--media-popup-transition-timing-function);
-  transition-duration: var(--media-popup-transition-duration);
+  transition-timing-function: var(--media-popover-transition-timing-function);
+  transition-duration: var(--media-popover-transition-duration);
   transition-property: scale, opacity, filter;
 
   &[data-starting-style],
@@ -88,13 +88,13 @@
   font-size: 0.75rem; /* 12px at 100% font size */
   color: var(--media-tooltip-text-color);
   white-space: nowrap;
-  background-color: var(--media-tooltip-background-color);
+  background-color: var(--media-popover-background-color);
   border-radius: 0.5rem;
   box-shadow:
-    0 0 0 1px var(--media-tooltip-border-color),
+    0 0 0 1px var(--media-popover-border-color),
     0 4px 6px -1px oklch(0 0 0 / 0.1),
     0 2px 4px -2px oklch(0 0 0 / 0.1);
-  backdrop-filter: var(--media-tooltip-backdrop-filter);
+  backdrop-filter: var(--media-popover-backdrop-filter);
 
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {

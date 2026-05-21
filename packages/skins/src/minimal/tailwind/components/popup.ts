@@ -35,8 +35,8 @@ export const popoverShell = cn(popupReset, popupSideOffsetBefore, popupSideOrigi
 
 const popoverAnimation = cn(
   'transition-[transform,scale,opacity,filter]',
-  'duration-(--media-popup-transition-duration)',
-  'ease-(--media-popup-transition-timing-function)'
+  'duration-(--media-popover-transition-duration)',
+  'ease-(--media-popover-transition-timing-function)'
 );
 
 export const popup = {
@@ -53,8 +53,8 @@ export const popup = {
     tooltipSideOffsetSize,
     popoverAnimation,
     'px-2 py-1 rounded-lg text-[0.75rem] whitespace-nowrap',
-    'bg-(--media-tooltip-background-color) [backdrop-filter:var(--media-tooltip-backdrop-filter)]',
-    'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/10',
+    'bg-(--media-popover-background-color) backdrop-filter-(--media-popover-backdrop-filter)',
+    'ring-1 ring-(color:--media-popover-border-color) shadow-md shadow-black/10',
     'text-(--media-tooltip-text-color)',
     'overflow-visible',
     'data-transitioning:overflow-hidden'

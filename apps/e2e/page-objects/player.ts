@@ -62,6 +62,18 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.playbackRateButton).first();
   }
 
+  get settingsButton(): Locator {
+    return this.page.locator(SELECTORS.settingsButton).first();
+  }
+
+  get settingsCaptionsItem(): Locator {
+    return this.page.locator(SELECTORS.settingsCaptionsItem).first();
+  }
+
+  get settingsSpeedItem(): Locator {
+    return this.page.locator(SELECTORS.settingsSpeedItem).first();
+  }
+
   get poster(): Locator {
     return this.page.locator(SELECTORS.poster).first();
   }
@@ -147,6 +159,24 @@ export class PlayerPage {
     // Fall back to dispatching click via JS, then verify UI state.
     await this.playButton.dispatchEvent('click');
     await expect(this.playButton).toHaveAttribute(DATA_ATTRS.paused, '', { timeout: 5_000 });
+  }
+
+  async openPlaybackRateSettings(): Promise<void> {
+    await this.settingsButton.click();
+    await this.settingsSpeedItem.click();
+  }
+
+  async openCaptionsSettings(): Promise<void> {
+    await this.settingsButton.click();
+    await this.settingsCaptionsItem.click();
+  }
+
+  async getPlaybackRate(): Promise<number> {
+    return this.page.evaluate((selector) => {
+      const media = document.querySelector(selector) as HTMLMediaElement | null;
+      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      return actual?.playbackRate ?? 1;
+    }, SELECTORS.media);
   }
 
   /** Click at a percentage position on the time slider. */
