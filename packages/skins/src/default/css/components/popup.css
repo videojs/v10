@@ -9,8 +9,8 @@
   color: inherit;
   border: 0;
   filter: blur(0px);
-  transition-timing-function: var(--media-popup-transition-timing-function);
-  transition-duration: var(--media-popup-transition-duration);
+  transition-timing-function: var(--media-popover-transition-timing-function);
+  transition-duration: var(--media-popover-transition-duration);
   transition-property: scale, opacity, filter;
 
   &[data-starting-style],

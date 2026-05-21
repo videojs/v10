@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { menu as baseMenu } from './components/menu';
+import { menu as baseMenu } from './components/menus';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
@@ -22,15 +22,15 @@ export const root = cn(
   '[--media-surface-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-error-dialog-transition-duration:250ms]',
   '[--media-error-dialog-transition-delay:100ms]',
-  '[--media-popup-transition-duration:100ms]',
-  '[--media-popup-transition-timing-function:ease-out]',
+  '[--media-popover-transition-duration:100ms]',
+  '[--media-popover-transition-timing-function:ease-out]',
   '[--media-tooltip-side-offset:0.75rem]',
   '[--media-tooltip-boundary-offset:0.75rem]',
   '[--media-popover-side-offset:0.75rem]',
   '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
-  'motion-reduce:[--media-popup-transition-duration:0ms]',
+  'motion-reduce:[--media-popover-transition-duration:0ms]',
   'dark:[--media-surface-background-color:oklch(0_0_0/0.4)]',
   'dark:[--media-text-color:var(--media-color-primary,oklch(1_0_0))]',
   '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(1_0_0)]',
@@ -106,10 +106,11 @@ export const error = {
 export { iconState } from '../../shared/tailwind/icon-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
-export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { icon, iconContainer, iconFlipped, iconHidden } from './components/icons';
 export const menu = {
   ...baseMenu,
   root: cn(surface, baseMenu.root),
+  settings: cn(surface, baseMenu.settings),
 };
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';

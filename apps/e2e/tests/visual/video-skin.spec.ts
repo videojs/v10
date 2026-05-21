@@ -70,8 +70,7 @@ test.describe('Visual — Captions', () => {
       timeout: 5_000,
     });
 
-    // Enable captions
-    await captionsBtn.click();
+    await player.openCaptionsSettings();
     await page.getByRole('menuitemradio', { name: 'English' }).first().click();
     await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.active, '');
 

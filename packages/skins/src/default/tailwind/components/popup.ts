@@ -35,8 +35,8 @@ export const popoverShell = cn(popupReset, popupSideOffsetBefore, popupSideOrigi
 
 const popoverAnimation = cn(
   'transition-[transform,scale,opacity,filter]',
-  'duration-(--media-popup-transition-duration)',
-  'ease-(--media-popup-transition-timing-function)'
+  'duration-(--media-popover-transition-duration)',
+  'ease-(--media-popover-transition-timing-function)'
 );
 
 export const popup = {

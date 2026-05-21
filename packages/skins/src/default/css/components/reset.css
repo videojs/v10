@@ -6,6 +6,7 @@
 .media-default-skin *::before,
 .media-default-skin *::after {
   box-sizing: border-box;
+  scrollbar-color: currentColor transparent;
 }
 .media-default-skin img,
 .media-default-skin video,

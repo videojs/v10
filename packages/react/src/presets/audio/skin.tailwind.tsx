@@ -126,7 +126,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value, radioGroupLabel } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label={radioGroupLabel}>
+    <Menu.RadioGroup className={menu.standaloneGroup} value={value} onValueChange={setValue} label={radioGroupLabel}>
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>

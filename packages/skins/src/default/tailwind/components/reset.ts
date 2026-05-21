@@ -2,6 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const reset = cn(
   '**:box-border',
+  '**:[scrollbar-color:currentColor_transparent]',
   // Keep authored templates hidden even when component classes set display.
   '[&_[hidden][hidden]]:hidden',
   '[&_button]:font-[inherit]',

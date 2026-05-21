@@ -7,9 +7,9 @@ export const button = {
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
     'focus-visible:outline-current focus-visible:outline-offset-2',
-    'active:scale-[0.98]',
+    'active:scale-98',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
-    'supports-[corner-shape:squircle]:rounded-[1rem]',
+    'supports-[corner-shape:squircle]:rounded-2xl',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]',
     'data-[availability=unavailable]:hidden',
     'data-[availability=unsupported]:hidden'

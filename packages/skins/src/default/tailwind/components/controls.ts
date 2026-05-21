@@ -5,7 +5,7 @@ export const controls = cn(
   'peer/controls',
   // Layout
   '@container/media-controls',
-  'p-[0.375rem] flex items-center gap-x-[0.075rem]',
+  'p-1.5 flex items-center gap-x-[0.075rem]',
   'rounded-3xl',
   // Text shadow
   'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)'

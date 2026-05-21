@@ -16,11 +16,11 @@ export const root = cn(
   '[--media-controls-text-color:var(--media-color-primary,oklch(0_0_0))]',
   '[--media-error-dialog-transition-duration:250ms]',
   '[--media-error-dialog-transition-delay:100ms]',
-  '[--media-popup-transition-duration:100ms]',
-  '[--media-popup-transition-timing-function:ease-out]',
-  '[--media-tooltip-background-color:oklch(1_0_0/0.1)]',
-  '[--media-tooltip-border-color:oklch(0_0_0/0.05)]',
-  '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
+  '[--media-popover-transition-duration:100ms]',
+  '[--media-popover-transition-timing-function:ease-out]',
+  '[--media-popover-background-color:oklch(1_0_0/0.1)]',
+  '[--media-popover-border-color:oklch(0_0_0/0.05)]',
+  '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-tooltip-text-color:currentColor]',
   '[--media-tooltip-side-offset:0.75rem]',
   '[--media-tooltip-boundary-offset:0.75rem]',
@@ -28,14 +28,14 @@ export const root = cn(
   '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
-  'motion-reduce:[--media-popup-transition-duration:0ms]',
+  'motion-reduce:[--media-popover-transition-duration:0ms]',
   'dark:[--media-controls-background-color:oklch(0_0_0)]',
   'dark:[--media-controls-border-color:oklch(1_0_0/0.1)]',
   'dark:[--media-controls-text-color:var(--media-color-primary,oklch(1_0_0))]',
-  '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(1_0_0)]',
-  'contrast-more:[--media-tooltip-background-color:oklch(1_0_0)]',
-  'dark:[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
-  'dark:contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]'
+  '[@media(prefers-reduced-transparency:reduce)]:[--media-popover-background-color:oklch(1_0_0)]',
+  'contrast-more:[--media-popover-background-color:oklch(1_0_0)]',
+  'dark:[@media(prefers-reduced-transparency:reduce)]:[--media-popover-background-color:oklch(0_0_0)]',
+  'dark:contrast-more:[--media-popover-background-color:oklch(0_0_0)]'
 );
 
 /* ==========================================================================
@@ -94,8 +94,8 @@ export { iconState } from '../../shared/tailwind/icon-state';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
-export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { menu } from './components/menu';
+export { icon, iconContainer, iconFlipped, iconHidden } from './components/icons';
+export { menu } from './components/menus';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { slider } from './components/slider';

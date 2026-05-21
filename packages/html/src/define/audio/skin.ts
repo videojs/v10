@@ -70,7 +70,7 @@ function getTemplateHTML() {
           <div class="media-button-group">
             <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-menu-trigger>
             <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-surface media-popover media-menu media-menu--playback-rate">
-              <media-playback-rate-options class="media-menu__group">
+              <media-playback-rate-options class="media-menu__group media-menu__group--standalone">
                 <template>
                   <media-menu-radio-item class="media-menu__item">
                     <span data-part="label"></span>

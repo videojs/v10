@@ -33,11 +33,11 @@
   --media-error-dialog-transition-duration: 150ms;
   --media-error-dialog-transition-delay: 100ms;
   --media-error-dialog-transition-timing-function: ease-out;
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-background-color: oklch(1 0 0 / 0.1);
-  --media-tooltip-border-color: transparent;
-  --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
+  --media-popover-transition-duration: 100ms;
+  --media-popover-transition-timing-function: ease-out;
+  --media-popover-background-color: oklch(0 0 0 / 0.5);
+  --media-popover-border-color: oklch(1 0 0 / 0.05);
+  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.5rem;
   --media-tooltip-boundary-offset: 0.5rem;
@@ -49,7 +49,7 @@
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
     --media-error-dialog-transition-delay: 0ms;
-    --media-popup-transition-duration: 0ms;
+    --media-popover-transition-duration: 0ms;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -58,7 +58,7 @@
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
     --media-controls-background-color: oklch(0 0 0);
-    --media-tooltip-background-color: oklch(0 0 0);
+    --media-popover-background-color: oklch(0 0 0);
   }
 
   @container media-root (width > 42rem) {
