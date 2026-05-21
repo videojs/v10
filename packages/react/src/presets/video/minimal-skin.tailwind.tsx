@@ -301,7 +301,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           <div className={buttonGroupEnd}>
             <PlaybackRateMenu.Root side="top" align="center">
               <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
-              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
+              <PlaybackRateMenu.Content className={menu.root}>
                 <PlaybackRateMenuItems />
               </PlaybackRateMenu.Content>
             </PlaybackRateMenu.Root>
@@ -313,7 +313,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
                 <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
               </CaptionsMenu.Trigger>
-              <CaptionsMenu.Content className={cn(popup.popover, menu.root)}>
+              <CaptionsMenu.Content className={menu.root}>
                 <CaptionsMenuItems />
               </CaptionsMenu.Content>
             </CaptionsMenu.Root>

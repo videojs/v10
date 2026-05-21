@@ -222,7 +222,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                 <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
                 <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
               </CaptionsMenu.Trigger>
-              <CaptionsMenu.Content className={cn(popup.popover, menu.root)}>
+              <CaptionsMenu.Content className={menu.root}>
                 <CaptionsMenuItems />
               </CaptionsMenu.Content>
             </CaptionsMenu.Root>
