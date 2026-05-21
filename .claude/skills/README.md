@@ -47,8 +47,11 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [refactor-behavior](refactor-behavior/SKILL.md) | Refactor an SPF behavior using purpose-first discipline       | No          |
 | [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
 | [rfc](rfc/SKILL.md)                     | Write RFCs — proposals needing buy-in (public API, product, DX)        | No          |
+| [spf-create-behavior](spf-create-behavior/SKILL.md) | Create a new SPF behavior with conventions-aligned shape (stub; grows with use) | No |
 | [spf-document-feature](spf-document-feature/SKILL.md) | Produce/update SPF feature registry docs (triangulation, cluster heuristics, cross-cutting checks, cascade) | No |
 | [spf-document-use-case](spf-document-use-case/SKILL.md) | Produce/update SPF use-case-composition registry docs (four-mechanism taxonomy, constituent-feature cascade) | No |
+| [spf-implement-feature](spf-implement-feature/SKILL.md) | Implement an SPF feature from its registry doc (phase scoping, chunk decomposition, downstream-skill routing, doc-as-living-artifact) | No |
+| [spf-update-behavior](spf-update-behavior/SKILL.md) | Update an existing SPF behavior whose purpose is changing (stub; distinct from /refactor-behavior which preserves purpose) | No |
 | [split-behavior](split-behavior/SKILL.md) | Split one SPF behavior into N with axis-declared, constraints-audited discipline | No |
 
 ## Review Workflows
