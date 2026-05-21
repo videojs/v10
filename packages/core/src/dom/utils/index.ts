@@ -11,5 +11,16 @@ export {
   resolvePositioningBoundary,
 } from './layout';
 export { logMissingFeature } from './log';
+export {
+  type ContentSize,
+  DEFAULT_MEASURE_STYLE_PROPERTIES,
+  type InlineStyleSnapshot,
+  isContentSizeValid,
+  type MeasureContentSizeOptions,
+  measureContentSize,
+  restoreInlineStyle,
+  type StylePropertySnapshot,
+  snapshotInlineStyle,
+} from './measure';
 export { getPercentFromPointerEvent } from './pointer';
 export { applyStateDataAttrs, getStateDataAttrs } from './state-data-attrs';

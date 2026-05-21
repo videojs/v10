@@ -33,6 +33,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
 
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
       if (disabled) return;
       onClick?.(event);
       onSelect?.();

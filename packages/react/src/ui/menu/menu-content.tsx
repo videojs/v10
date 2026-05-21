@@ -14,11 +14,10 @@ import {
   isMenuNavigationKey,
   resolveOffsets,
   resolvePositioningBoundary,
-  syncMenuViewRoot,
-  syncMenuViewTransition,
   type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
+import { flush } from '@videojs/store';
 import { useSnapshot } from '@videojs/store/react';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties } from 'react';
@@ -108,13 +107,16 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   { render, className, style, onKeyDown, onBlur, ...elementProps },
   forwardedRef
 ) {
-  const { core, menu, state, stateAttrMap, anchorName, contentId, boundary, container, activeSubMenuId } =
-    useMenuContext();
+  const { core, menu, state, stateAttrMap, anchorName, contentId, boundary, container } = useMenuContext();
   const subMenuCtx = useSubMenuContext();
   const isSubmenu = state.isSubmenu;
 
   const parentMenu = subMenuCtx?.parentMenu ?? null;
   const subMenuId = subMenuCtx?.subMenuId ?? null;
+  const parentMenuRef = useRef(parentMenu);
+  parentMenuRef.current = parentMenu;
+  const subMenuIdRef = useRef(subMenuId);
+  subMenuIdRef.current = subMenuId;
 
   const isActive =
     isSubmenu && parentMenu !== null && subMenuId !== null ? parentMenu.activeSubMenuId === subMenuId : false;
@@ -122,6 +124,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const [menuViewTransition] = useState(() =>
     createMenuViewTransition({
       focusFirstItem() {
+        const parent = parentMenuRef.current;
+        if (parent && (!parent.menu.input.current.active || parent.menu.input.current.status === 'ending')) return;
+
         menu.highlightFirstItem({ preventScroll: true });
       },
       restoreFocus(triggerId) {
@@ -133,11 +138,40 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   );
   const menuViewTransitionState = useSnapshot(menuViewTransition.input);
   const menuViewElementRef = useRef<HTMLDivElement | null>(null);
+  const submenuViewCleanupRef = useRef<(() => void) | null>(null);
   const parentContentElementRef = useRef<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
     return () => menuViewTransition.destroy();
   }, [menuViewTransition]);
+
+  const setMenuViewElement = useCallback(
+    (element: HTMLDivElement | null) => {
+      submenuViewCleanupRef.current?.();
+      submenuViewCleanupRef.current = null;
+      menuViewElementRef.current = element;
+      menu.setContentElement(element);
+      menuViewTransition.setElement(element);
+
+      const parent = parentMenuRef.current;
+
+      if (element && parent) {
+        const activeSubMenuId = subMenuIdRef.current;
+
+        if (activeSubMenuId !== null && parent.activeSubMenuId === activeSubMenuId) {
+          menuViewTransition.sync({
+            active: true,
+            direction: parent.navigationDirection,
+            triggerId: parent.activeSubMenuTriggerId ?? null,
+          });
+          flush();
+        }
+
+        submenuViewCleanupRef.current = parent.menu.registerSubmenuView(element, menuViewTransition);
+      }
+    },
+    [menu, menuViewTransition]
+  );
 
   useLayoutEffect(() => {
     if (!isSubmenu) return;
@@ -147,16 +181,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       direction: parentMenu?.navigationDirection ?? 'forward',
       triggerId: parentMenu?.activeSubMenuTriggerId ?? null,
     });
-  }, [isActive, isSubmenu, parentMenu, menuViewTransition]);
 
-  const setMenuViewElement = useCallback(
-    (element: HTMLDivElement | null) => {
-      menuViewElementRef.current = element;
-      menu.setContentElement(element);
-      menuViewTransition.setElement(element);
-    },
-    [menu, menuViewTransition]
-  );
+    flush();
+  }, [isSubmenu, isActive, parentMenu, menuViewTransition]);
 
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -208,13 +235,23 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     [onBlur, menu]
   );
 
-  // ─── Root content state (always declared — Rules of Hooks) ───────────────
-  const internalRef = useRef<HTMLDivElement>(null);
+  const contentElementRef = useRef<HTMLDivElement | null>(null);
+  const contentMountedRef = useRef(false);
+  const [, setContentMounted] = useState(false); // re-render children once the viewport is attached
 
   const contentRef = useCallback(
     (element: HTMLDivElement | null) => {
       if (isSubmenu) return;
+      if (contentElementRef.current === element) return;
+
+      contentElementRef.current = element;
       menu.setContentElement(element);
+
+      if (element && !contentMountedRef.current) {
+        contentMountedRef.current = true;
+        setContentMounted(true);
+      }
+
       if (element && supportsAnchorPositioning()) {
         element.style.setProperty('position-anchor', `--${anchorName}`);
       }
@@ -222,7 +259,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     [isSubmenu, menu, anchorName]
   );
 
-  const rootComposedRef = useComposedRefs(forwardedRef, contentRef, internalRef);
+  const rootComposedRef = useComposedRefs(forwardedRef, contentRef);
   const menuViewComposedRef = useComposedRefs(forwardedRef, setMenuViewElement);
 
   const positionOptions = useMemo(() => getRootPositionOptions(state.side, state.align), [state.side, state.align]);
@@ -237,21 +274,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   useLayoutEffect(() => {
     if (isSubmenu) return;
-    if (!state.open) return;
-
-    syncMenuViewRoot(internalRef.current, activeSubMenuId !== null);
-  }, [isSubmenu, state.open, activeSubMenuId]);
-
-  useLayoutEffect(() => {
-    if (!isSubmenu) return;
-
-    const parentContentElement = parentMenu?.menu.contentElement ?? parentContentElementRef.current;
-    parentContentElementRef.current = parentContentElement;
-    syncMenuViewTransition(parentContentElement, menuViewElementRef.current, menuViewTransitionState);
-  });
-
-  useLayoutEffect(() => {
-    if (isSubmenu) return;
     if (!positionOptions) return;
     if (!state.open) {
       setManualStyle(null);
@@ -262,7 +284,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
     function measure(): void {
       const triggerElement = menu.triggerElement;
-      const contentElement = internalRef.current;
+      const contentElement = contentElementRef.current;
       if (!triggerElement || !contentElement) return;
 
       const triggerRect = triggerElement.getBoundingClientRect();
@@ -287,7 +309,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     measure();
 
     const triggerElement = menu.triggerElement;
-    const contentElement = internalRef.current;
+    const contentElement = contentElementRef.current;
     const boundaryElement = contentElement
       ? resolvePositioningBoundary(boundary, {
           container,
@@ -297,7 +319,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
     let animationFrameId = 0;
     function reposition(event?: Event): void {
-      if (event && isEventWithinElement(event, internalRef.current)) return;
+      if (event && isEventWithinElement(event, contentElementRef.current)) return;
 
       cancelAnimationFrame(animationFrameId);
       animationFrameId = requestAnimationFrame(measure);
@@ -322,8 +344,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     };
   }, [isSubmenu, state.open, anchorName, positionOptions, menu, boundary, container]);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   if (isSubmenu) {
     if (menuViewTransitionState.phase === 'hidden') return null;
 
@@ -336,7 +356,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
         ref: menuViewComposedRef,
         props: [
           {
-            ...getMenuViewTransitionAttrs(menuViewTransitionState),
+            ...getMenuViewTransitionAttrs(menuViewTransitionState, { id: subMenuId ?? contentId }),
             role: 'menu' as const,
             tabIndex: -1,
             'data-submenu': '',
@@ -350,6 +370,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     );
 
     const parentContentElement = parentMenu?.menu.contentElement ?? parentContentElementRef.current;
+    parentContentElementRef.current = parentContentElement;
 
     const parentViewportElement = getMenuViewportElement(parentContentElement);
 

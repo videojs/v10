@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createMenuViewTransition, getMenuViewTransitionAttrs } from '../create-menu-view-transition';
+import {
+  createMenuViewTransition,
+  getMenuViewTransitionAttrs,
+  PERSISTENT_MENU_VIEW_RESTING_STATE,
+} from '../create-menu-view-transition';
 
 function createElement(): HTMLElement {
   const element = document.createElement('div');
@@ -37,6 +41,7 @@ describe('createMenuViewTransition', () => {
       phase: 'hidden',
       direction: 'forward',
       triggerId: null,
+      transitioning: false,
     });
   });
 
@@ -52,6 +57,7 @@ describe('createMenuViewTransition', () => {
       phase: 'entering',
       direction: 'forward',
       triggerId: 'trigger-1',
+      transitioning: true,
     });
 
     await nextFrame();
@@ -62,6 +68,64 @@ describe('createMenuViewTransition', () => {
     await nextFrame();
 
     expect(focusFirstItem).toHaveBeenCalledWith(element);
+    expect(transition.input.current.transitioning).toBe(false);
+  });
+
+  it('keeps transitioning true until enter animations settle', async () => {
+    const element = addElement();
+    let resolveAnimation = () => {};
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    const transition = createMenuViewTransition({ waitForAnimations: () => animationFinished });
+
+    transition.setElement(element);
+    transition.sync({ active: true, direction: 'forward', triggerId: 'trigger-1' });
+
+    await nextFrame();
+    await nextFrame();
+
+    expect(transition.input.current.phase).toBe('active');
+    expect(transition.input.current.transitioning).toBe(true);
+
+    resolveAnimation();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(transition.input.current.transitioning).toBe(false);
+  });
+
+  it('keeps transitioning true until default CSS transitions settle', async () => {
+    const element = addElement();
+    const getComputedStyle = window.getComputedStyle.bind(window);
+    const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation((target) => {
+      const style = getComputedStyle(target);
+
+      if (target !== element) return style;
+
+      return Object.assign(Object.create(style), {
+        transitionDelay: '0ms',
+        transitionDuration: '30ms',
+      }) as CSSStyleDeclaration;
+    });
+    const transition = createMenuViewTransition();
+
+    try {
+      transition.setElement(element);
+      transition.sync({ active: true, direction: 'forward', triggerId: 'trigger-1' });
+
+      await nextFrame();
+      await nextFrame();
+
+      expect(transition.input.current.phase).toBe('active');
+      expect(transition.input.current.transitioning).toBe(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 40));
+
+      expect(transition.input.current.transitioning).toBe(false);
+    } finally {
+      getComputedStyleSpy.mockRestore();
+    }
   });
 
   it('focuses the first menu view item without scrolling by default', async () => {
@@ -104,8 +168,8 @@ describe('createMenuViewTransition', () => {
     expect(transition.input.current.phase).toBe('exiting');
 
     await nextFrame();
+    await nextFrame();
 
-    expect(transition.input.current.phase).toBe('exiting');
     expect(waitForAnimations).toHaveBeenCalledWith(element);
 
     resolveAnimation();
@@ -134,6 +198,8 @@ describe('createMenuViewTransition', () => {
     await nextFrame();
 
     transition.sync({ active: false, direction: 'back' });
+
+    await nextFrame();
     await nextFrame();
 
     resolveAnimation();
@@ -192,8 +258,75 @@ describe('createMenuViewTransition', () => {
     resolveAnimation();
     await Promise.resolve();
     await Promise.resolve();
+    await nextFrame();
+    await nextFrame();
 
-    expect(transition.input.current.phase).toBe('entering');
+    expect(transition.input.current.phase).toBe('active');
+    expect(element.hidden).toBe(false);
+  });
+
+  it('starts at the persistent resting state', () => {
+    const transition = createMenuViewTransition({ persistent: true });
+
+    expect(transition.input.current).toEqual(PERSISTENT_MENU_VIEW_RESTING_STATE);
+    expect(transition.persistent).toBe(true);
+  });
+
+  it('keeps persistent panels in the DOM with data-open at rest', () => {
+    expect(getMenuViewTransitionAttrs(PERSISTENT_MENU_VIEW_RESTING_STATE, { root: true, persistent: true })).toEqual({
+      'data-menu-view': '',
+      'data-menu-view-id': 'root',
+      'data-direction': 'forward',
+      'data-open': '',
+      hidden: false,
+    });
+  });
+
+  it('omits data-open while a persistent panel is exiting', () => {
+    expect(
+      getMenuViewTransitionAttrs(
+        {
+          phase: 'exiting',
+          direction: 'forward',
+          triggerId: null,
+          transitioning: true,
+        },
+        { root: true, persistent: true }
+      )
+    ).toMatchObject({
+      'data-ending-style': '',
+      'data-open': undefined,
+      hidden: false,
+    });
+  });
+
+  it('returns to hidden with persistent attrs after a persistent exit completes', async () => {
+    const element = addElement();
+    let resolveAnimation = () => {};
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    const transition = createMenuViewTransition({
+      persistent: true,
+      waitForAnimations: () => animationFinished,
+    });
+
+    transition.setElement(element);
+    transition.sync({ active: true, direction: 'forward', triggerId: null });
+
+    await nextFrame();
+    await nextFrame();
+
+    transition.sync({ active: false, direction: 'forward' });
+    await nextFrame();
+    await nextFrame();
+
+    resolveAnimation();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(transition.input.current.phase).toBe('hidden');
+    expect(element.hidden).toBe(false);
   });
 
   it('maps phase state to generic menu view transition attributes', () => {
@@ -202,11 +335,12 @@ describe('createMenuViewTransition', () => {
         phase: 'entering',
         direction: 'forward',
         triggerId: 'trigger-1',
+        transitioning: true,
       })
     ).toEqual({
       'data-menu-view': '',
-      'data-menu-view-state': 'active',
       'data-direction': 'forward',
+      'data-transitioning': '',
       'data-starting-style': '',
       'data-open': '',
       'data-ending-style': undefined,
@@ -218,11 +352,12 @@ describe('createMenuViewTransition', () => {
         phase: 'exiting',
         direction: 'back',
         triggerId: 'trigger-1',
+        transitioning: true,
       })
     ).toEqual({
       'data-menu-view': '',
-      'data-menu-view-state': 'inactive',
       'data-direction': 'back',
+      'data-transitioning': '',
       'data-starting-style': undefined,
       'data-open': '',
       'data-ending-style': '',

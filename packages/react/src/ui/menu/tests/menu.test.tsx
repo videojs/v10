@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { flush } from '@videojs/store';
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-
 import { ControlsContextProvider } from '../../controls/context';
 import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
@@ -12,6 +12,47 @@ import { MenuTrigger } from '../menu-trigger';
 import { MenuView } from '../menu-view';
 
 afterEach(cleanup);
+
+async function settleActiveSubmenuView(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        flush();
+        resolve();
+      });
+    });
+  });
+}
+
+function PeerMenusWithSubmenuFixture({
+  onSecondOpenChange,
+}: {
+  onSecondOpenChange?: (open: boolean, details: { reason: string }) => void;
+}) {
+  return (
+    <>
+      <MenuRoot defaultOpen>
+        <MenuTrigger data-testid="peer-a-trigger">Menu A</MenuTrigger>
+        <MenuContent data-testid="peer-a-content">
+          <MenuView data-testid="peer-a-view">
+            <MenuRoot>
+              <MenuTrigger data-testid="peer-sub-trigger">Sub</MenuTrigger>
+              <MenuContent data-testid="peer-sub-content">
+                <MenuItem>Sub item</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </MenuView>
+        </MenuContent>
+      </MenuRoot>
+      <MenuRoot {...(onSecondOpenChange ? { onOpenChange: onSecondOpenChange } : {})}>
+        <MenuTrigger data-testid="peer-b-trigger">Menu B</MenuTrigger>
+        <MenuContent data-testid="peer-b-content">
+          <MenuItem data-testid="peer-b-item">Option</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+    </>
+  );
+}
 
 function SubmenuFixture() {
   return (
@@ -263,15 +304,85 @@ function FocusOutFixture({ onRootOpenChange }: { onRootOpenChange: NonNullable<M
   );
 }
 
+function SubmenuFocusOutFixture({
+  onRootOpenChange,
+}: {
+  onRootOpenChange: NonNullable<MenuRoot.Props['onOpenChange']>;
+}) {
+  return (
+    <>
+      <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent data-testid="root-content">
+          <MenuView data-testid="root-view">
+            <MenuRoot>
+              <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+              <MenuContent data-testid="submenu-content">
+                <MenuItem data-testid="submenu-item">Auto</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </MenuView>
+        </MenuContent>
+      </MenuRoot>
+      <button type="button" data-testid="outside">
+        Outside
+      </button>
+    </>
+  );
+}
+
 describe('MenuContent', () => {
+  it('shows the root panel after closing with an open submenu and reopening', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(
+      <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="root-content">
+          <MenuView data-testid="root-view">
+            <MenuRoot>
+              <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+              <MenuContent data-testid="submenu-content">
+                <MenuItem data-testid="submenu-item">Auto</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </MenuView>
+        </MenuContent>
+      </MenuRoot>
+    );
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
+
+    onRootOpenChange.mockClear();
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    await waitFor(() => {
+      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
+    });
+
+    await settleActiveSubmenuView();
+
+    onRootOpenChange.mockClear();
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    await waitFor(() => {
+      expect(onRootOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+    });
+
+    await settleActiveSubmenuView();
+
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
+    expect(screen.queryByTestId('submenu-content')).toBeNull();
+  });
+
   it('marks the root view inactive while a submenu view is active', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-    });
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
   });
 
   it('portals submenu content into the parent content viewport', async () => {
@@ -309,8 +420,11 @@ describe('MenuContent', () => {
     render(<SubmenuFixture />);
 
     expect(screen.getByTestId('root-content').hasAttribute('data-menu-viewport')).toBe(true);
-    expect(screen.getByTestId('root-view').hasAttribute('data-menu-root-view')).toBe(true);
     expect(screen.getByTestId('root-view').hasAttribute('data-menu-view')).toBe(true);
+    expect(screen.getByTestId('root-view').getAttribute('data-menu-view-id')).toBe('root');
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
+    expect(screen.getByTestId('root-view').getAttribute('data-direction')).toBe('forward');
+    expect(screen.getByTestId('root-view').hasAttribute('hidden')).toBe(false);
   });
 
   it('forces layout while the submenu starting style is applied', async () => {
@@ -318,7 +432,7 @@ describe('MenuContent', () => {
     const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
     HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRectMock() {
-      if (this.hasAttribute('data-submenu')) {
+      if (this.hasAttribute('data-menu-view') && this.getAttribute('data-menu-view-id') !== 'root') {
         startingStyleMeasurements.push(this.hasAttribute('data-starting-style'));
       }
 
@@ -346,14 +460,32 @@ describe('MenuContent', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('submenu-content')).not.toBeNull();
     });
+    await settleActiveSubmenuView();
 
     fireEvent.click(screen.getByTestId('submenu-back'));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
       expect(screen.getByTestId('submenu-content').hasAttribute('hidden')).toBe(false);
     });
+
+    await settleActiveSubmenuView();
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it('does not open a submenu from a secondary pointer button', () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.pointerDown(screen.getByTestId('submenu-trigger'), { button: 2 });
+
+    expect(screen.queryByTestId('submenu-content')).toBeNull();
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
   });
 
   it('handles keyboard navigation in the active submenu view', async () => {
@@ -372,14 +504,50 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
-  it('highlights the first item when a submenu view becomes active', async () => {
+  it('highlights the back button when a submenu view becomes active', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
+      expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(true);
     });
+  });
+
+  it('does not mark submenu child parts with the submenu panel attribute', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-content').hasAttribute('data-submenu')).toBe(true);
+    });
+
+    expect(screen.getByTestId('submenu-back').hasAttribute('data-submenu')).toBe(false);
+    expect(screen.getByTestId('submenu-item').hasAttribute('data-submenu')).toBe(false);
+  });
+
+  it('highlights pointer-entered back buttons without moving focus', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
+    });
+
+    const back = screen.getByTestId('submenu-back');
+    const item = screen.getByTestId('submenu-item');
+    const focus = vi.spyOn(back, 'focus');
+
+    fireEvent.pointerEnter(item);
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+
+    fireEvent.pointerEnter(back);
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(back.hasAttribute('data-highlighted')).toBe(true);
+    expect(item.hasAttribute('data-highlighted')).toBe(false);
   });
 
   it('returns to the parent view when selecting an item in a submenu', async () => {
@@ -388,17 +556,16 @@ describe('MenuContent', () => {
     render(<SubmenuSelectFixture onSelect={onSelect} />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-    });
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
 
     fireEvent.click(screen.getByTestId('submenu-item'));
 
     expect(onSelect).toHaveBeenCalledTimes(1);
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
     });
   });
 
@@ -409,15 +576,14 @@ describe('MenuContent', () => {
     onRootOpenChange.mockClear();
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-    });
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'Escape' });
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
     });
 
     expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
@@ -428,15 +594,14 @@ describe('MenuContent', () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-    });
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(true);
     });
   });
 
@@ -446,14 +611,13 @@ describe('MenuContent', () => {
     render(<SubmenuPreventDefaultFixture onSubmenuKeyDown={onSubmenuKeyDown} />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await settleActiveSubmenuView();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-    });
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
 
-    expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+    expect(screen.getByTestId('root-view').hasAttribute('data-open')).toBe(false);
   });
 
   it('allows Escape from an inactive sibling submenu view to close the root menu', async () => {
@@ -465,7 +629,7 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('quality-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('quality-content').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('quality-content').hasAttribute('data-open')).toBe(true);
     });
 
     const exitingContent = screen.getByTestId('quality-content');
@@ -532,6 +696,26 @@ describe('MenuContent', () => {
 
     expect(onContainerKeyDown).not.toHaveBeenCalled();
     expect(screen.getByTestId('item').hasAttribute('data-highlighted')).toBe(true);
+  });
+
+  it('closes an open root menu from its trigger in one click', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(
+      <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">
+          <MenuItem data-testid="item">Auto</MenuItem>
+        </MenuContent>
+      </MenuRoot>
+    );
+    onRootOpenChange.mockClear();
+
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    await waitFor(() => {
+      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
+    });
   });
 
   it('prevents default before native player hotkeys receive menu keys', () => {
@@ -606,5 +790,67 @@ describe('MenuContent', () => {
     await waitFor(() => {
       expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
     });
+  });
+
+  it('closes when focus moves outside while a submenu is open', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(<SubmenuFocusOutFixture onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
+    });
+
+    fireEvent.focusOut(screen.getByTestId('root-content'), { relatedTarget: screen.getByTestId('outside') });
+
+    await waitFor(() => {
+      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
+    });
+  });
+
+  it('stays open when focus moves within the popup while a submenu is open', async () => {
+    const onRootOpenChange = vi.fn();
+
+    render(<SubmenuFocusOutFixture onRootOpenChange={onRootOpenChange} />);
+    onRootOpenChange.mockClear();
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
+    });
+
+    fireEvent.focusOut(screen.getByTestId('root-content'), { relatedTarget: screen.getByTestId('submenu-item') });
+
+    expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+  });
+
+  it('keeps the second root menu open after clicking its trigger while a sibling submenu is active', async () => {
+    const onSecond = vi.fn();
+    render(<PeerMenusWithSubmenuFixture onSecondOpenChange={onSecond} />);
+
+    fireEvent.click(screen.getByTestId('peer-sub-trigger'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('peer-sub-content')).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByTestId('peer-b-trigger'));
+
+    await waitFor(() => {
+      expect(onSecond).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+    });
+
+    expect(screen.queryByTestId('peer-b-content')).not.toBeNull();
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+
+    expect(onSecond.mock.calls).toEqual([[true, expect.objectContaining({ reason: 'click' })]]);
   });
 });

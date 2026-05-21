@@ -746,7 +746,7 @@ interface MenuApi {
 ```
 
 `createMenuViewTransition()` handles the double-RAF lifecycle for menu view enter/exit hooks (same pattern as `createTransition()`).
-`menu-viewport-transition.ts` handles shared menu viewport measurement, width/height variables, and root/child view state coordination.
+`createMenuViewport()` (in `menu-viewport.ts`) handles shared menu viewport measurement, width/height variables, and root/child view coordination. `MenuApi` owns the viewport lifecycle and exposes `registerSubmenuView()` for submenu panels.
 
 **Item collection:** Items self-register via `registerItem(el)` returning a cleanup function. Sorted by `compareDocumentPosition`. Works across Shadow DOM boundaries without coupling to ARIA role strings.
 
@@ -766,7 +766,7 @@ menu-css-vars.ts
 ```text
 create-menu.ts
 create-menu-view-transition.ts
-menu-viewport-transition.ts
+menu-viewport.ts
 ```
 
 **React** (`packages/react/src/ui/menu/`):

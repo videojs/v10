@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { createPopupGroup } from '../../popover/popup-group';
 import { createTransition } from '../../transition';
 import { createMenu, type MenuChangeDetails } from '../create-menu';
 
@@ -6,6 +7,7 @@ export function createTestMenu(overrides?: Partial<Parameters<typeof createMenu>
   const onOpenChange = vi.fn<(open: boolean, details: MenuChangeDetails) => void>();
   const onHighlightChange = vi.fn<(element: HTMLElement | null) => void>();
   const transition = overrides?.transition ?? createTransition();
+  const isolatedGroup = createPopupGroup();
 
   const menu = createMenu({
     transition,
@@ -13,6 +15,7 @@ export function createTestMenu(overrides?: Partial<Parameters<typeof createMenu>
     closeOnEscape: () => true,
     closeOnOutsideClick: () => true,
     onHighlightChange,
+    group: () => isolatedGroup,
     ...overrides,
   });
 

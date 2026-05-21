@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
-import { createPopupGroup, resetSharedMenuPopupGroupForTests } from '../../popover/popup-group';
-import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
+import { createPopupGroup, type PopupGroup, resetSharedMenuPopupGroupForTests } from '../../popover/popup-group';
+import { createTransition } from '../../transition';
+import { completeMenuItemSelection, createMenu, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
+import { createMenuViewTransition, PERSISTENT_MENU_VIEW_RESTING_STATE } from '../create-menu-view-transition';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -94,6 +96,58 @@ describe('createMenu', () => {
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
     });
 
+    it('clears submenu navigation only after close animation completes', async () => {
+      const onOpenChangeComplete = vi.fn();
+      const { menu } = createTestMenu({ onOpenChangeComplete });
+
+      menu.open();
+      menu.push('sub-id', 'trigger-id');
+      menu.close();
+
+      expect(menu.navigationInput.current.stack).toEqual([{ menuId: 'sub-id', triggerId: 'trigger-id' }]);
+
+      await vi.waitFor(() => expect(onOpenChangeComplete).toHaveBeenCalledWith(false));
+
+      expect(menu.navigationInput.current.stack).toEqual([]);
+      expect(menu.navigationInput.current.direction).toBe('forward');
+    });
+
+    it('resets the root panel transition after close when a submenu was open', async () => {
+      const onOpenChangeComplete = vi.fn();
+      const { menu } = createTestMenu({ onOpenChangeComplete });
+      const content = document.createElement('div');
+      const rootView = document.createElement('div');
+
+      rootView.setAttribute('data-menu-view', '');
+      rootView.setAttribute('data-menu-view-id', 'root');
+      content.append(rootView);
+      document.body.append(content);
+
+      const submenuView = document.createElement('div');
+      submenuView.setAttribute('data-menu-view', '');
+      const submenuTransition = createMenuViewTransition();
+
+      menu.open();
+      menu.setContentElement(content);
+      const unbindSubmenu = menu.registerSubmenuView(submenuView, submenuTransition);
+
+      menu.push('sub-id', 'trigger-id');
+      submenuTransition.sync({ active: true, direction: 'forward', triggerId: 'trigger-id' });
+
+      expect(menu.rootViewTransitionInput?.current.phase).not.toBe('hidden');
+
+      menu.close();
+
+      await vi.waitFor(() => expect(onOpenChangeComplete).toHaveBeenCalledWith(false));
+
+      expect(menu.rootViewTransitionInput?.current).toEqual(PERSISTENT_MENU_VIEW_RESTING_STATE);
+
+      unbindSubmenu();
+      menu.setContentElement(null);
+      menu.destroy();
+      content.remove();
+    });
+
     it('does not open when already open', () => {
       const { menu, onOpenChange } = createTestMenu();
 
@@ -113,7 +167,103 @@ describe('createMenu', () => {
       expect(onOpenChange).not.toHaveBeenCalled();
     });
 
-    it('closes the previously open grouped menu when another opens', () => {
+    it('closes the previously open root menu when another opens (document-wide default group)', () => {
+      const onFirst = vi.fn();
+      const onSecond = vi.fn();
+      const first = createMenu({
+        transition: createTransition(),
+        onOpenChange: onFirst,
+        closeOnEscape: () => true,
+        closeOnOutsideClick: () => true,
+      });
+      const second = createMenu({
+        transition: createTransition(),
+        onOpenChange: onSecond,
+        closeOnEscape: () => true,
+        closeOnOutsideClick: () => true,
+      });
+
+      first.open();
+      onFirst.mockClear();
+
+      second.open();
+
+      expect(onFirst).toHaveBeenCalledWith(false, { reason: 'group-open' });
+      expect(onSecond).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
+
+    it('re-evaluates group resolver so menus join a later explicit PopupGroup', async () => {
+      resetSharedMenuPopupGroupForTests();
+      const explicit = createPopupGroup();
+      let groupRef: PopupGroup | undefined;
+
+      const onA = vi.fn();
+      const onB = vi.fn();
+
+      const first = createMenu({
+        transition: createTransition(),
+        onOpenChange: onA,
+        closeOnEscape: () => true,
+        closeOnOutsideClick: () => true,
+        group: () => groupRef,
+      });
+      const second = createMenu({
+        transition: createTransition(),
+        onOpenChange: onB,
+        closeOnEscape: () => true,
+        closeOnOutsideClick: () => true,
+        group: () => groupRef,
+      });
+
+      const t1 = document.createElement('button');
+      const c1 = document.createElement('div');
+      const t2 = document.createElement('button');
+      const c2 = document.createElement('div');
+      first.setTriggerElement(t1);
+      first.setContentElement(c1);
+      second.setTriggerElement(t2);
+      second.setContentElement(c2);
+
+      first.open();
+      onA.mockClear();
+      second.open();
+
+      expect(onA).toHaveBeenCalledWith(false, { reason: 'group-open' });
+
+      second.close();
+      await vi.waitFor(() => expect(second.input.current.active).toBe(false));
+
+      onA.mockClear();
+      onB.mockClear();
+
+      groupRef = explicit;
+
+      first.open();
+      second.open();
+
+      expect(onA).toHaveBeenCalledWith(false, { reason: 'group-open' });
+
+      first.destroy();
+      second.destroy();
+    });
+
+    it('does not auto-close across different explicit PopupGroups', () => {
+      const g1 = createPopupGroup();
+      const g2 = createPopupGroup();
+      const first = createTestMenu({ group: () => g1 });
+      const second = createTestMenu({ group: () => g2 });
+
+      first.menu.open();
+      first.onOpenChange.mockClear();
+
+      second.menu.open();
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+      expect(first.menu.input.current.active).toBe(true);
+      expect(second.menu.input.current.active).toBe(true);
+    });
+
+    it('closes the previously open root menu when another opens with the same explicit PopupGroup', () => {
       const group = createPopupGroup();
       const first = createTestMenu({ group: () => group });
       const second = createTestMenu({ group: () => group });
@@ -125,6 +275,52 @@ describe('createMenu', () => {
 
       expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
       expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
+
+    it('does not restore trigger focus after blur close', async () => {
+      const { menu } = createTestMenu();
+      const t1 = document.createElement('button');
+      document.body.appendChild(t1);
+
+      menu.setTriggerElement(t1);
+      menu.open();
+      menu.close('blur');
+
+      const focusSpy = vi.spyOn(t1, 'focus');
+
+      await vi.waitFor(() => expect(menu.input.current.active).toBe(false));
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+
+      expect(focusSpy).not.toHaveBeenCalled();
+
+      menu.destroy();
+      t1.remove();
+    });
+
+    it('restores trigger focus after outside-click close', async () => {
+      const { menu } = createTestMenu();
+      const t1 = document.createElement('button');
+      document.body.appendChild(t1);
+      menu.setTriggerElement(t1);
+      menu.open();
+      menu.close('outside-click');
+
+      const focusSpy = vi.spyOn(t1, 'focus');
+
+      await vi.waitFor(() => expect(menu.input.current.active).toBe(false));
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+      await vi.waitFor(() => expect(focusSpy).toHaveBeenCalledTimes(1));
+
+      menu.destroy();
+      t1.remove();
     });
 
     it('highlights the first DOM item when items register after opening', () => {
@@ -221,6 +417,46 @@ describe('createMenu', () => {
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'blur' });
     });
 
+    it('peer root can open after first loses focus to the peer trigger without closing the peer', () => {
+      const { menu: menuA, onOpenChange: onA } = createTestMenu();
+      const { menu: menuB, onOpenChange: onB } = createTestMenu();
+
+      const aT = document.createElement('button');
+      const aC = document.createElement('div');
+      const subItem = document.createElement('button');
+      aC.appendChild(subItem);
+      const bT = document.createElement('button');
+      const bC = document.createElement('div');
+      document.body.append(aT, aC, bT, bC);
+
+      menuA.setTriggerElement(aT);
+      menuA.setContentElement(aC);
+      menuB.setTriggerElement(bT);
+      menuB.setContentElement(bC);
+
+      menuA.open();
+      menuA.registerItem(subItem);
+      subItem.focus();
+
+      onA.mockClear();
+      onB.mockClear();
+
+      menuA.contentProps.onFocusOut(makeFocusEvent(bT));
+      menuB.open('click');
+      bT.focus();
+
+      expect(onA).toHaveBeenCalledWith(false, { reason: 'blur' });
+      expect(onB).toHaveBeenCalledWith(true, { reason: 'click' });
+      expect(onB).not.toHaveBeenCalledWith(false, expect.anything());
+
+      menuA.destroy();
+      menuB.destroy();
+      aT.remove();
+      aC.remove();
+      bT.remove();
+      bC.remove();
+    });
+
     it('keeps the menu open when focus moves inside the menu', () => {
       const { menu, onOpenChange } = createTestMenu();
       const content = document.createElement('div');
@@ -287,22 +523,84 @@ describe('createMenu', () => {
   describe('triggerProps', () => {
     it('opens on click when closed', () => {
       const { menu, onOpenChange } = createTestMenu();
+      const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent;
 
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
+      menu.triggerProps.onClick(event);
 
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
       expect(menu.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
 
     it('closes on click when open', () => {
       const { menu, onOpenChange } = createTestMenu();
+      const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent;
 
       menu.open();
       onOpenChange.mockClear();
 
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
+      menu.triggerProps.onClick(event);
 
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
+    });
+
+    it('defers reopen until close settles when trigger is clicked during close animation', async () => {
+      const { menu, onOpenChange } = createTestMenu();
+      const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent;
+
+      menu.open();
+      menu.close();
+      onOpenChange.mockClear();
+
+      menu.triggerProps.onClick(event);
+
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+      expect(menu.input.current.active).toBe(true);
+      expect(menu.input.current.status).toBe('ending');
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      await vi.waitFor(() => {
+        expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+      });
+
+      expect(menu.input.current.active).toBe(true);
+      expect(menu.input.current.status).not.toBe('ending');
+    });
+
+    it('does not focus the trigger after deferred reopen when the close animation completes', async () => {
+      const { menu } = createTestMenu();
+      const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent;
+      const trigger = document.createElement('button');
+      document.body.appendChild(trigger);
+      const item = addItem('Alpha');
+      menu.registerItem(item);
+
+      menu.setTriggerElement(trigger);
+      const focusSpy = vi.spyOn(trigger, 'focus');
+
+      menu.open();
+      menu.close();
+      menu.triggerProps.onClick(event);
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(true);
+        expect(menu.input.current.status).not.toBe('ending');
+      });
+
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 0);
+          });
+        });
+      });
+
+      expect(focusSpy).not.toHaveBeenCalled();
+      expect(item.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
+
+      menu.destroy();
+      trigger.remove();
     });
 
     it('handles navigation keys while the open trigger has focus', () => {
@@ -365,10 +663,9 @@ describe('createMenu', () => {
       expect(focus).not.toHaveBeenCalled();
     });
 
-    it('does not restore focus when another grouped popup opens', async () => {
-      const group = createPopupGroup();
-      const first = createTestMenu({ group: () => group });
-      const second = createTestMenu({ group: () => group });
+    it('does not restore focus when opening a second root menu leaves the first open', async () => {
+      const first = createTestMenu();
+      const second = createTestMenu();
       const trigger = document.createElement('button');
       const focus = vi.spyOn(trigger, 'focus');
 
@@ -377,9 +674,10 @@ describe('createMenu', () => {
       second.menu.open();
 
       await vi.waitFor(() => {
-        expect(first.menu.input.current.active).toBe(false);
+        expect(second.menu.input.current.active).toBe(true);
       });
 
+      expect(first.menu.input.current.active).toBe(true);
       expect(focus).not.toHaveBeenCalled();
     });
   });
@@ -509,6 +807,20 @@ describe('createMenu', () => {
       expect(onHighlightChange).not.toHaveBeenCalled();
     });
 
+    it('can focus the same item that is already highlighted', () => {
+      const { menu, onHighlightChange } = createTestMenu();
+      const element = addItem('Alpha');
+      const focus = vi.spyOn(element, 'focus');
+      menu.registerItem(element);
+      menu.highlight(element, { focus: false });
+      onHighlightChange.mockClear();
+
+      menu.highlight(element);
+
+      expect(focus).toHaveBeenCalledTimes(1);
+      expect(onHighlightChange).not.toHaveBeenCalled();
+    });
+
     it('highlights the first item in DOM order', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -601,6 +913,23 @@ describe('createMenu', () => {
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('ArrowDown uses the focused item as the origin when hover highlight differs', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(c, { focus: false });
+      a.focus();
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown', { target: a }));
+
+      expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(c.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+    });
+
     it('ArrowUp highlights last item when nothing highlighted', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -680,6 +1009,27 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('Enter'));
 
       expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Enter activates the focused item when hover highlight differs', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      const onFocusedClick = vi.fn();
+      const onHighlightedClick = vi.fn();
+      a.addEventListener('click', onFocusedClick);
+      c.addEventListener('click', onHighlightedClick);
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(c, { focus: false });
+      a.focus();
+
+      menu.contentProps.onKeyDown(makeKeyEvent('Enter', { target: a }));
+
+      expect(onFocusedClick).toHaveBeenCalledTimes(1);
+      expect(onHighlightedClick).not.toHaveBeenCalled();
     });
 
     it('Space calls click on highlighted item', () => {

@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../../player/context';
 import { ControlsElement } from '../../controls/controls-element';
 import { MediaElement } from '../../media-element';
+import { MenuBackElement } from '../menu-back-element';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuItemElement } from '../menu-item-element';
@@ -100,10 +101,15 @@ describe('MenuElement', () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
     const child = createElement(MenuElement);
+    const back = createElement(MenuBackElement);
+    const item = createElement(MenuItemElement);
 
     root.open = true;
     child.id = 'child-menu';
+    back.textContent = 'Back';
+    item.textContent = 'Auto';
 
+    child.append(back, item);
     rootView.append(child);
     root.append(rootView);
     document.body.append(root);
@@ -111,13 +117,20 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await rootView.updateComplete;
     await child.updateComplete;
+    await back.updateComplete;
+    await item.updateComplete;
 
     expect(root.hasAttribute('data-menu-viewport')).toBe(true);
-    expect(rootView.hasAttribute('data-menu-root-view')).toBe(true);
     expect(rootView.hasAttribute('data-menu-view')).toBe(true);
+    expect(rootView.getAttribute('data-menu-view-id')).toBe('root');
+    expect(rootView.hasAttribute('data-open')).toBe(true);
+    expect(rootView.getAttribute('data-direction')).toBe('forward');
+    expect(rootView.hasAttribute('hidden')).toBe(false);
     expect(child.hasAttribute('data-menu-view')).toBe(true);
-    expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
+    expect(child.hasAttribute('data-open')).toBe(false);
     expect(child.hasAttribute('data-submenu')).toBe(true);
+    expect(back.hasAttribute('data-submenu')).toBe(false);
+    expect(item.hasAttribute('data-submenu')).toBe(false);
   });
 
   it('handles keyboard navigation in the active nested menu view', async () => {
@@ -188,6 +201,42 @@ describe('MenuElement', () => {
     });
   });
 
+  it('does not open a nested menu from a secondary pointer button', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+
+    root.open = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    child.id = 'child-menu';
+    item.textContent = 'Auto';
+
+    rootView.append(trigger);
+    child.append(item);
+    root.append(rootView, child);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await item.updateComplete;
+
+    const handled = trigger.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 2 })
+    );
+
+    await root.updateComplete;
+    await child.updateComplete;
+
+    expect(handled).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(child.hasAttribute('data-open')).toBe(false);
+  });
+
   it('returns to the parent view when selecting an item in a nested menu', async () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
@@ -219,7 +268,7 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await child.updateComplete;
     await waitForAssertion(() => {
-      expect(child.getAttribute('data-menu-view-state')).toBe('active');
+      expect(child.hasAttribute('data-open')).toBe(true);
     });
 
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -229,7 +278,7 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await child.updateComplete;
     await waitForAssertion(() => {
-      expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(child.hasAttribute('data-open')).toBe(false);
     });
   });
 
@@ -281,6 +330,50 @@ describe('MenuElement', () => {
     expect(item.hasAttribute('data-highlighted')).toBe(true);
   });
 
+  it('highlights pointer-entered back buttons without moving focus', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const back = createElement(MenuBackElement);
+    const item = createElement(MenuItemElement);
+
+    root.open = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    child.id = 'child-menu';
+    back.textContent = 'Back';
+    item.textContent = 'Auto';
+
+    rootView.append(trigger);
+    child.append(back, item);
+    root.append(rootView, child);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await back.updateComplete;
+    await item.updateComplete;
+
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+
+    const focus = vi.spyOn(back, 'focus');
+
+    item.dispatchEvent(new Event('pointerenter'));
+    expect(item.hasAttribute('data-highlighted')).toBe(true);
+
+    back.dispatchEvent(new Event('pointerenter'));
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(back.hasAttribute('data-highlighted')).toBe(true);
+    expect(item.hasAttribute('data-highlighted')).toBe(false);
+  });
+
   it('closes when focus moves outside the root menu', async () => {
     const root = createElement(MenuElement);
     const item = createElement(MenuItemElement);
@@ -303,6 +396,55 @@ describe('MenuElement', () => {
     await root.updateComplete;
 
     expect(root.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'blur' }) })
+    );
+  });
+
+  it('closes when focus moves outside the root menu while a nested menu is active', async () => {
+    const root = createElement(MenuElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const outside = document.createElement('button');
+    const onOpenChange = vi.fn();
+
+    root.open = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    child.id = 'child-menu';
+    item.textContent = 'Auto';
+
+    root.addEventListener('open-change', onOpenChange);
+    rootView.append(trigger);
+    child.append(item);
+    root.append(rootView, child);
+    document.body.append(root, outside);
+
+    await root.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await item.updateComplete;
+
+    onOpenChange.mockClear();
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+    await waitForAssertion(() => {
+      expect(child.hasAttribute('data-open')).toBe(true);
+    });
+
+    root.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+    await waitForAssertion(() => {
+      expect(root.open).toBe(false);
+    });
+
     expect(onOpenChange).toHaveBeenCalledWith(
       expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'blur' }) })
     );
@@ -340,7 +482,7 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await child.updateComplete;
     await waitForAssertion(() => {
-      expect(child.getAttribute('data-menu-view-state')).toBe('active');
+      expect(child.hasAttribute('data-open')).toBe(true);
     });
 
     child.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
@@ -348,7 +490,7 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await child.updateComplete;
     await waitForAssertion(() => {
-      expect(child.getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(child.hasAttribute('data-open')).toBe(false);
     });
 
     expect(root.open).toBe(true);
@@ -400,7 +542,7 @@ describe('MenuElement', () => {
     await root.updateComplete;
     await quality.updateComplete;
     await waitForAssertion(() => {
-      expect(quality.getAttribute('data-menu-view-state')).toBe('active');
+      expect(quality.hasAttribute('data-open')).toBe(true);
     });
 
     speedTrigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -520,6 +662,39 @@ describe('MenuElement', () => {
 
     expect(onWrapperKeyDown).not.toHaveBeenCalled();
     expect(item.hasAttribute('data-highlighted')).toBe(true);
+  });
+
+  it('closes an open root menu from its trigger in one click', async () => {
+    const wrapper = document.createElement('div');
+    const trigger = document.createElement('button');
+    const root = createElement(MenuElement);
+    const item = createElement(MenuItemElement);
+    const onOpenChange = vi.fn();
+
+    root.id = 'root-menu';
+    root.open = true;
+    trigger.setAttribute('commandfor', 'root-menu');
+    item.textContent = 'Auto';
+
+    root.addEventListener('open-change', onOpenChange);
+    root.append(item);
+    wrapper.append(trigger, root);
+    document.body.append(wrapper);
+
+    await root.updateComplete;
+    await item.updateComplete;
+    onOpenChange.mockClear();
+
+    expect(trigger.getAttribute('command')).toBe('--media-menu-root-trigger');
+
+    trigger.click();
+
+    await root.updateComplete;
+
+    expect(root.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'click' }) })
+    );
   });
 
   it('closes an open root menu when parent controls hide', async () => {

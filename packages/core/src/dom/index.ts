@@ -17,7 +17,7 @@ export * from './ui/event';
 export * from './ui/input-action';
 export * from './ui/menu/create-menu';
 export * from './ui/menu/create-menu-view-transition';
-export * from './ui/menu/menu-viewport-transition';
+export * from './ui/menu/menu-viewport';
 export * from './ui/popover/popover';
 export * from './ui/popover/popover-positioning';
 export * from './ui/popover/popup-group';
