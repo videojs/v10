@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TooltipCore, type TooltipInput } from '../tooltip-core';
 
-const CLOSED: TooltipInput = { active: false, status: 'idle' };
-const OPEN: TooltipInput = { active: true, status: 'idle' };
+const CLOSED: TooltipInput = { active: false, status: 'idle', transitioning: false };
+const OPEN: TooltipInput = { active: true, status: 'idle', transitioning: false };
 
 describe('TooltipCore', () => {
   it('uses default props', () => {
@@ -65,7 +65,7 @@ describe('TooltipCore', () => {
   describe('transition flags', () => {
     it('sets transitionStarting when status is starting', () => {
       const core = new TooltipCore();
-      core.setInput({ active: true, status: 'starting' });
+      core.setInput({ active: true, status: 'starting', transitioning: true });
       const state = core.getState();
 
       expect(state.transitionStarting).toBe(true);
@@ -74,7 +74,7 @@ describe('TooltipCore', () => {
 
     it('sets transitionEnding when status is ending', () => {
       const core = new TooltipCore();
-      core.setInput({ active: true, status: 'ending' });
+      core.setInput({ active: true, status: 'ending', transitioning: true });
       const state = core.getState();
 
       expect(state.transitionStarting).toBe(false);

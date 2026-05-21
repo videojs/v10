@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { AlertDialogCore, type AlertDialogInput } from '../alert-dialog-core';
 
-const CLOSED: AlertDialogInput = { active: false, status: 'idle' };
-const OPEN: AlertDialogInput = { active: true, status: 'idle' };
-const STARTING: AlertDialogInput = { active: true, status: 'starting' };
-const ENDING: AlertDialogInput = { active: true, status: 'ending' };
+const CLOSED: AlertDialogInput = { active: false, status: 'idle', transitioning: false };
+const OPEN: AlertDialogInput = { active: true, status: 'idle', transitioning: false };
+const STARTING: AlertDialogInput = { active: true, status: 'starting', transitioning: true };
+const ENDING: AlertDialogInput = { active: true, status: 'ending', transitioning: true };
 
 describe('AlertDialogCore', () => {
   it('uses default props', () => {

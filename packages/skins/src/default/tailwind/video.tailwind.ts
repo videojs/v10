@@ -4,6 +4,7 @@ import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { inputFeedback as baseInputFeedback } from './components/input-feedback';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
@@ -212,7 +213,10 @@ export { iconState } from '../../shared/tailwind/icon-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { menu } from './components/menu';
+export const menu = {
+  ...baseMenu,
+  root: cn(surface, baseMenu.root),
+};
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

@@ -25,6 +25,7 @@ describe('input indicators', () => {
       value: null,
       transitionStarting: false,
       transitionEnding: false,
+      transitioning: false,
     };
 
     const { getByTestId } = render(
@@ -54,6 +55,7 @@ describe('input indicators', () => {
       max: false,
       transitionStarting: false,
       transitionEnding: false,
+      transitioning: false,
     };
 
     const { getByTestId } = render(
@@ -82,6 +84,7 @@ describe('input indicators', () => {
       currentTime: '0:30',
       transitionStarting: false,
       transitionEnding: false,
+      transitioning: false,
     };
 
     const { getByTestId } = render(

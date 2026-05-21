@@ -33,6 +33,7 @@ const INITIAL_STATE: StatusIndicatorState = {
   status: null,
   label: null,
   value: null,
+  transitioning: false,
   transitionStarting: false,
   transitionEnding: false,
 };

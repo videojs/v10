@@ -20,6 +20,10 @@
     scale: 0.85;
   }
 
+  &[data-transitioning] {
+    overflow: hidden;
+  }
+
   &[data-instant] {
     transition-duration: 0ms;
   }

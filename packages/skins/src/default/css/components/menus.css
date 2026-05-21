@@ -16,6 +16,10 @@
   &::before {
     display: none;
   }
+
+  &[data-transitioning] {
+    overflow: hidden;
+  }
 }
 
 .media-default-skin .media-popover.media-menu .media-menu__group {

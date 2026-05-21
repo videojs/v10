@@ -85,7 +85,7 @@ function getTemplateHTML() {
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-menu-trigger>
-              <media-captions-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
+              <media-captions-menu id="captions-menu" side="top" align="center" class="${menu.root}">
                 <media-captions-options class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">

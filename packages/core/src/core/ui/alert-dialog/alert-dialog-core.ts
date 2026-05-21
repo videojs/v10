@@ -55,7 +55,7 @@ export class AlertDialogCore {
       status: input.status,
       titleId: this.#titleId,
       descriptionId: this.#descriptionId,
-      ...getTransitionFlags(input.status),
+      ...getTransitionFlags(input.status, input.transitioning),
     };
   }
 

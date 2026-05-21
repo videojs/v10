@@ -2,6 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
@@ -106,7 +107,10 @@ export { iconState } from '../../shared/tailwind/icon-state';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { menu } from './components/menu';
+export const menu = {
+  ...baseMenu,
+  root: cn(surface, baseMenu.root),
+};
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';

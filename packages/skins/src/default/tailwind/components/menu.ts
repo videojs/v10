@@ -1,10 +1,23 @@
 import { cn } from '@videojs/utils/style';
 
+import { popoverShell, popoverSideOffsetSize } from './popup';
+
+const menuHostShell = cn(
+  popoverShell,
+  popoverSideOffsetSize,
+  'transition-[transform,scale,opacity,filter]',
+  'duration-(--media-popup-transition-duration)',
+  'ease-(--media-popup-transition-timing-function)',
+  'box-border rounded-[1.25rem] p-1.5 overscroll-none'
+);
+
 export const menu = {
+  /** Standalone menu popover host (captions, playback rate). */
   root: cn(
-    'box-border min-w-[min(6rem,var(--media-popover-available-width,6rem))]',
+    menuHostShell,
+    'min-w-[min(6rem,var(--media-popover-available-width,6rem))]',
     'max-w-(--media-popover-available-width) max-h-(--media-popover-available-height)',
-    'p-1.5 !overflow-auto overscroll-none rounded-[1.25rem]',
+    'overflow-auto data-transitioning:overflow-hidden',
     'before:hidden'
   ),
   group: cn(

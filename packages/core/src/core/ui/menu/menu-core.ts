@@ -76,7 +76,7 @@ export class MenuCore {
       side: isSubmenu ? undefined : this.#props.side,
       align: isSubmenu ? undefined : this.#props.align,
       isSubmenu,
-      ...getTransitionFlags(input.status),
+      ...getTransitionFlags(input.status, input.transitioning),
     };
   }
 

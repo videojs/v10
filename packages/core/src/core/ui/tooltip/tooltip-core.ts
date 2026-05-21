@@ -72,7 +72,7 @@ export class TooltipCore {
       status: input.status,
       side: this.#props.side,
       align: this.#props.align,
-      ...getTransitionFlags(input.status),
+      ...getTransitionFlags(input.status, input.transitioning),
     };
   }
 

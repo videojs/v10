@@ -15,6 +15,7 @@ const IDLE_STATE: TestState = {
   open: false,
   generation: 0,
   value: null,
+  transitioning: false,
   transitionStarting: false,
   transitionEnding: false,
 };
@@ -31,6 +32,7 @@ describe('indicator-lifecycle', () => {
     const rendered = getRenderedIndicatorState(IDLE_STATE, snapshot, {
       active: true,
       status: 'ending',
+      transitioning: true,
     });
 
     expect(rendered.open).toBe(false);

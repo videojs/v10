@@ -17,7 +17,7 @@ function createTestLayer(overrides?: Partial<Parameters<typeof createDismissLaye
 describe('createDismissLayer', () => {
   it('starts closed', () => {
     const { layer } = createTestLayer();
-    expect(layer.input.current).toEqual({ active: false, status: 'idle' });
+    expect(layer.input.current).toEqual({ active: false, status: 'idle', transitioning: false });
   });
 
   describe('open', () => {
@@ -27,7 +27,7 @@ describe('createDismissLayer', () => {
       const result = layer.open();
 
       expect(result).toBeInstanceOf(Promise);
-      expect(layer.input.current).toEqual({ active: true, status: 'starting' });
+      expect(layer.input.current).toEqual({ active: true, status: 'starting', transitioning: true });
     });
 
     it('returns null if already open', () => {
@@ -71,7 +71,7 @@ describe('createDismissLayer', () => {
       const result = layer.close(null);
 
       expect(result).toBeInstanceOf(Promise);
-      expect(layer.input.current).toEqual({ active: true, status: 'ending' });
+      expect(layer.input.current).toEqual({ active: true, status: 'ending', transitioning: true });
     });
 
     it('returns null if already closed', () => {
