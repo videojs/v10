@@ -71,13 +71,13 @@ vs Full depth where relevant per the
 - **[network-resilience](./network-resilience.md)** *(foundation,
   prerequisite)* — retry + backoff + circuit-breaker. Multi-CDN
   consumes; doesn't reimplement.
-- **`[content-steering]`** *(candidate, this session)* — HLS content-
+- **[content-steering](./content-steering.md)** — HLS content-
   steering protocol. Server-side host-pool advertisement (dynamically
   updated). Different mechanism than static alternate-URI lists.
-  When content-steering lands, the rotation policy may consume the
-  steering-advertised host pool as the candidate set; multi-CDN's
-  rotation primitive composes with content-steering's pool
-  advertisement.
+  Content-steering's pathway-priority composes with this feature's
+  rotation primitive: pathway-priority is the dynamic ordering bias
+  (a sort key); static manifest alternate-URI lists are the static
+  candidate set.
 
 **Out of scope (different architectural layer):**
 - Adapter-layer customer-facing UI surfaces (e.g., "Switch CDN"
@@ -171,10 +171,9 @@ Things this feature probably forces decisions on, not just additions:
   prerequisite)* — retry + backoff + circuit-breaker foundation.
   Multi-CDN consumes the retry-exhaustion signal (rotation trigger)
   and the per-URI circuit-breaker state (per-URI health tracking).
-- **`[content-steering]`** *(candidate, this session)* — parallel
-  sister; dynamic host-pool advertisement variant. Composition
-  question (rotation within steered pool) is the key cross-feature
-  decision.
+- **[content-steering](./content-steering.md)** — parallel sister;
+  dynamic host-pool advertisement variant. Pathway-priority composes
+  with this feature's rotation primitive (sort-key shape).
 - **[presentation-modeling](../presentation-modeling.md)** — `Track`
   data shape grows `alternateUris` field; parser extension is in
   scope here.
