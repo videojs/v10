@@ -5,6 +5,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
+import { syncSectionLabelParts } from '../menu/sync-section-label-parts';
 
 export class CaptionsMenuTriggerElement extends MediaElement {
   static readonly tagName = 'media-captions-menu-trigger';
@@ -12,12 +13,14 @@ export class CaptionsMenuTriggerElement extends MediaElement {
   static override properties = {
     label: { type: String },
     offLabel: { type: String, attribute: 'off-label' },
+    menuSectionLabel: { type: String, attribute: 'menu-section-label' },
     disabled: { type: Boolean },
     commandfor: { type: String },
-  } satisfies PropertyDeclarationMap<'label' | 'offLabel' | 'disabled' | 'commandfor'>;
+  } satisfies PropertyDeclarationMap<'label' | 'offLabel' | 'menuSectionLabel' | 'disabled' | 'commandfor'>;
 
   label = '';
   offLabel = CaptionsMenuCore.defaultProps.offLabel;
+  menuSectionLabel = CaptionsMenuCore.defaultProps.menuSectionLabel;
   disabled = false;
   commandfor: string | undefined = undefined;
   formatTrack = CaptionsMenuCore.defaultProps.formatTrack;
@@ -72,6 +75,7 @@ export class CaptionsMenuTriggerElement extends MediaElement {
       tabIndex: 0,
       ...this.#core.getAttrs(state),
     });
+    syncSectionLabelParts(this, this.#core.getMenuSectionLabel());
     applyStateDataAttrs(this, state, CaptionsMenuDataAttrs);
   }
 

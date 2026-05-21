@@ -5,17 +5,20 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
+import { syncSectionLabelParts } from '../menu/sync-section-label-parts';
 
 export class PlaybackRateMenuTriggerElement extends MediaElement {
   static readonly tagName = 'media-playback-rate-menu-trigger';
 
   static override properties = {
     label: { type: String },
+    menuSectionLabel: { type: String, attribute: 'menu-section-label' },
     disabled: { type: Boolean },
     commandfor: { type: String },
-  } satisfies PropertyDeclarationMap<'label' | 'disabled' | 'commandfor'>;
+  } satisfies PropertyDeclarationMap<'label' | 'menuSectionLabel' | 'disabled' | 'commandfor'>;
 
   label = '';
+  menuSectionLabel = PlaybackRateMenuCore.defaultProps.menuSectionLabel;
   disabled = false;
   commandfor: string | undefined = undefined;
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
@@ -70,6 +73,7 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
       tabIndex: 0,
       ...this.#core.getAttrs(state),
     });
+    syncSectionLabelParts(this, this.#core.getMenuSectionLabel());
     applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
   }
 
