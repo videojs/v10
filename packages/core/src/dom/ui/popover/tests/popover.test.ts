@@ -364,6 +364,85 @@ describe('createPopover', () => {
       popover.destroy();
       host.remove();
     });
+
+    it('skips outside-dismiss on peer trigger pointerdown when sharing a PopupGroup', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+      const t1 = document.createElement('button');
+      const t2 = document.createElement('button');
+      const p1 = document.createElement('div');
+      document.body.appendChild(t1);
+      document.body.appendChild(t2);
+      document.body.appendChild(p1);
+
+      first.popover.setTriggerElement(t1);
+      first.popover.setPopupElement(p1);
+      second.popover.setTriggerElement(t2);
+
+      first.popover.open();
+      flush();
+      first.onOpenChange.mockClear();
+      second.onOpenChange.mockClear();
+
+      t2.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+
+      const click = { preventDefault: vi.fn() } as unknown as UIEvent;
+      second.popover.triggerProps.onClick(click);
+
+      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+
+      first.popover.destroy();
+      second.popover.destroy();
+      t1.remove();
+      t2.remove();
+      p1.remove();
+    });
+
+    it('does not blur-close before group-open when peer trigger is pointerdowned', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+      const t1 = document.createElement('button');
+      const t2 = document.createElement('button');
+      const p1 = document.createElement('div');
+      document.body.appendChild(t1);
+      document.body.appendChild(t2);
+      document.body.appendChild(p1);
+
+      first.popover.setTriggerElement(t1);
+      first.popover.setPopupElement(p1);
+      second.popover.setTriggerElement(t2);
+
+      first.popover.open();
+      flush();
+      first.onOpenChange.mockClear();
+      second.onOpenChange.mockClear();
+
+      t2.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      first.popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+
+      const click = { preventDefault: vi.fn() } as unknown as UIEvent;
+      second.popover.triggerProps.onClick(click);
+
+      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
+
+      first.popover.destroy();
+      second.popover.destroy();
+      t1.remove();
+      t2.remove();
+      p1.remove();
+    });
   });
 
   describe('destroy', () => {

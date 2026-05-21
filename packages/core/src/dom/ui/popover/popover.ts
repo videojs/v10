@@ -209,9 +209,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       return;
     }
 
-    clearInsidePointerBlurCloseGuard();
+    if (options.group?.()?.pathHasPeerMemberTrigger(path, triggerEl)) {
+      skipNextBlurCloseAfterInsidePointer();
+      return;
+    }
 
-    if (options.group?.()?.pathHasPeerMemberTrigger(path, triggerEl)) return;
+    clearInsidePointerBlurCloseGuard();
 
     applyClose('outside-click', event);
   }
@@ -324,6 +327,10 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       const relatedTarget = event.relatedTarget as Node | null;
 
       if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) {
+        return;
+      }
+
+      if (relatedTarget instanceof HTMLElement && options.group?.()?.isPeerTrigger(relatedTarget, triggerEl)) {
         return;
       }
 

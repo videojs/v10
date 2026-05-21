@@ -4,7 +4,7 @@ import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningOptions } from '../popover/popover-positioning';
-import type { PopupGroup } from '../popover/popup-group';
+import { getSharedMenuPopupGroup, type PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
@@ -267,7 +267,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
-    ...(options.group ? { group: options.group } : {}),
+    group: () => options.group?.() ?? getSharedMenuPopupGroup(),
   });
 
   // --- Content keyboard navigation ---
