@@ -40,6 +40,40 @@ update as living artifact) is where the registry stays in sync with code.
 The arg is the feature doc's filename (without extension), e.g.
 `audio-abr`. The skill reads the feature doc as its source of truth.
 
+## Doc-as-starting-point principle
+
+The feature doc is the **starting point for planning, not a hardened
+specification**. This principle is load-bearing throughout the skill —
+explicit because both directions of failure are real:
+
+- **Silent override** (covered by `Feature-doc-grounding drift` failure
+  mode) — implementation diverges from the doc without surfacing the
+  divergence; the doc becomes stale silently.
+- **Rigid following** (covered by `Treating feature doc as hardened spec`
+  failure mode) — implementation refuses to revise the doc when new
+  questions surface or drift is discovered; the doc becomes a misleading
+  constraint.
+
+Acknowledge the doc's `definition` depth explicitly when planning:
+
+- **`coarse`** — feature sketched, many open questions. Implementation
+  fills in significant detail; revisions to the doc are expected
+  throughout. Planning is substantial.
+- **`technical`** — scope and constraints articulated; specifics still
+  open. Implementation maps to constraints; moderate planning + revision.
+- **`sketched`** — implementation surface populated. Implementation
+  primarily verifies; revisions for drift only.
+
+Discipline:
+
+- **Every doc revision is explicit and surfaced** to the user during the
+  implementation pass. Never silent.
+- **Step 8 consolidates** the cumulative doc update reflecting all
+  revisions made during implementation — it's not the *only* revision
+  point, just the cumulative one.
+- **Open questions are markers**, not absent specs — the implementation
+  resolves them through experience or explicitly defers them.
+
 ## Reference docs
 
 Primary:
@@ -79,6 +113,28 @@ Downstream skills routed-to:
   and `packages/spf/src/network/` changes.
 
 ## Failure-mode catalog (seeded; grows with use)
+
+- **Skipping disambiguation** — invoking with a name or description that
+  ambiguously maps to (i) an existing feature, (ii) a different feature,
+  (iii) a use case, (iv) cluster-E policy, (v) something not yet
+  documented. Step 1's disambiguation must resolve before gathering
+  sources or planning. Proceeding-with-assumption is the canonical
+  failure shape. Worked example: invocation "implement audio-only" —
+  `audio-only-composition` (Case-1 feature) and `audio-only-mode-override`
+  (Case-2 use case) share vocabulary; the right route differs.
+
+- **Routing-out failure** — Step 1's disambiguation should route
+  confidently. The failure mode is "ambiguity discovered but not
+  resolved" — silently picking one interpretation when the user could
+  have meant another (especially: a request that's actually a use case
+  routed-here as a feature, or vice versa). Always surface and confirm.
+
+- **Treating feature doc as hardened spec** — refusing to revise the
+  doc when implementation reveals new questions, refines framing, or
+  surfaces drift. Inverse failure of silent-override (see
+  `Feature-doc-grounding drift`). The right discipline is explicit,
+  user-surfaced revision per the *Doc-as-starting-point principle*
+  section above.
 
 - **Skipping the open-questions discussion** — feature docs at coarse depth
   have unresolved open questions that block implementation. Resolving them
@@ -141,9 +197,49 @@ Downstream skills routed-to:
 
 ## Steps (do these in order; do not skip)
 
-### Step 1 — Identify the feature and gather sources
+### Step 1 — Identify the feature + disambiguate the request
 
-The load-bearing setup step. Triangulate from every available source:
+The load-bearing setup step. **Disambiguation comes first** — before
+gathering sources or planning, confirm what the user actually wants.
+
+**1a. Identify the candidate.**
+
+- If the user passed a name → verify
+  `internal/design/spf/features/<name>.md` exists.
+- If the user passed a description (no name) → parse for candidates,
+  match against existing feature docs.
+- If multiple candidates match → surface options to the user.
+
+**1b. Verify the candidate is actually a feature.**
+
+Apply the discriminator from `features/clusters.md` and the use-cases
+boundary:
+
+- **Source-shape correctness or engine capability?** If yes → feature
+  (Case-1), stay here.
+- **Delivery-mode choice / variant assembly?** If yes → this is a
+  **use-case composition** (Case-2) → route to `/spf-implement-use-case`.
+- **Runtime policy tuning without composition change?** If yes → still
+  a feature (cluster-E policy), but the implementation shape is
+  config/middle-pattern, not composition; stay here.
+- **Ambiguous between Case-1 and Case-2?** Same vocabulary often appears
+  on both sides (audio-only, video-only, live). Surface to user; don't
+  pick silently.
+
+**1c. Route the request appropriately.**
+
+- **Stays here** — confirmed feature, doc exists. Proceed to 1d.
+- **No doc exists for the candidate** → route to `/spf-document-feature`
+  to produce the doc; return here once doc lands.
+- **It's actually a use case, doc exists** → route to
+  `/spf-implement-use-case`.
+- **It's actually a use case, no doc exists** → route to
+  `/spf-document-use-case` first, then `/spf-implement-use-case`.
+- **Ambiguous between options** → surface to user; do not pick silently.
+
+**1d. Gather sources.** (Once routing is confirmed and we're staying here.)
+
+Triangulate from every available source:
 
 - **The user's invocation message.** Feature name? Phase scope target?
   Specific concerns?
@@ -152,6 +248,8 @@ The load-bearing setup step. Triangulate from every available source:
   available?), Open questions (what blocks implementation?), Likely
   cross-cutting impact (what will the implementation force elsewhere?),
   Implementation surface / What's not implemented (where in code?).
+  Note the doc's `definition` depth and `status` per the *Doc-as-
+  starting-point principle* above.
 - **Constituent feature docs.** Per the use-cases/README.md framing,
   features may compose into use cases. If implementing for a use case,
   read the use-case doc to understand the composition target.
