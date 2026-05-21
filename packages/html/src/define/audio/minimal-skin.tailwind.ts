@@ -92,7 +92,7 @@ function getTemplateHTML() {
             <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-menu-trigger>
             <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${menu.root}">
-              <media-playback-rate-options class="${menu.group}">
+              <media-playback-rate-options class="${menu.standaloneGroup}">
                 <template>
                   <media-menu-radio-item class="${menu.item}">
                     <span data-part="label"></span>

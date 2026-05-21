@@ -81,7 +81,7 @@ root.innerHTML = `
         </button>
         <media-menu id="quality-menu" boundary="viewport" class="${menuContentClass}">
           <media-menu-label class="${menuLabelClass}">Resolution</media-menu-label>
-          <media-menu-radio-group id="quality-group" value="auto" class="${menu.group}">
+          <media-menu-radio-group id="quality-group" value="auto" class="${menu.standaloneGroup}">
             <media-menu-radio-item value="auto" class="${menuItemClass}"><span>Auto</span>${itemIndicator}</media-menu-radio-item>
             <media-menu-radio-item value="1080p" class="${menuItemClass}"><span>1080p</span>${itemIndicator}</media-menu-radio-item>
             <media-menu-radio-item value="720p" class="${menuItemClass}"><span>720p</span>${itemIndicator}</media-menu-radio-item>
@@ -104,7 +104,7 @@ root.innerHTML = `
         </button>
         <media-menu id="settings-menu" boundary="viewport" class="${menuContentClass}">
           <media-menu-label class="${menuLabelClass}">Playback</media-menu-label>
-          <div class="${menu.group}">
+          <div class="${menu.standaloneGroup}">
             <media-menu-checkbox-item id="loop-item" class="${menuItemClass}"><span>Loop</span>${itemIndicator}</media-menu-checkbox-item>
             <media-menu-checkbox-item id="autoplay-item" class="${menuItemClass}"><span>Autoplay</span>${itemIndicator}</media-menu-checkbox-item>
           </div>

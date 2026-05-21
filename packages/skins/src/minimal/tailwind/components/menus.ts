@@ -37,8 +37,11 @@ const menuSurface = cn(
   'ring-1 ring-(color:--media-popover-border-color) shadow-md shadow-black/10'
 );
 
-const groupHighlight = cn(
-  'relative flex flex-col gap-0.5',
+const group = 'flex flex-col gap-0.5';
+
+const standaloneGroup = cn(
+  group,
+  'relative',
   'before:hidden supports-[top:anchor(top)]:before:block',
   'before:absolute before:pointer-events-none before:rounded-lg before:bg-current/10',
   'before:transition-[inset] before:duration-100 before:ease-in-out',
@@ -71,7 +74,8 @@ export const menu = {
     'overflow-hidden data-transitioning:overflow-hidden',
     '[&[data-transitioning]_[data-menu-view]]:overflow-hidden'
   ),
-  group: groupHighlight,
+  group,
+  standaloneGroup,
   item: cn(
     itemBase,
     'group/menu-item justify-between gap-2 px-2.5 tabular-nums text-inherit',

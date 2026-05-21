@@ -39,8 +39,11 @@ const menuTokens = cn(
   'motion-reduce:[--menu-transition-duration:0ms]'
 );
 
-const groupHighlight = cn(
-  'relative flex flex-col gap-0.5',
+const group = 'flex flex-col gap-0.5';
+
+const standaloneGroup = cn(
+  group,
+  'relative',
   'before:hidden supports-[top:anchor(top)]:before:block',
   'before:absolute before:pointer-events-none before:rounded-full before:bg-current/10',
   'before:transition-[inset] before:duration-100 before:ease-in-out',
@@ -73,7 +76,8 @@ export const menu = {
     '[&[data-transitioning]_[data-menu-view]]:overflow-hidden',
     '[&[data-transitioning]_[data-menu-view]::before]:duration-0'
   ),
-  group: groupHighlight,
+  group,
+  standaloneGroup,
   item: cn(
     itemBase,
     'group/menu-item justify-between gap-2 px-3 tabular-nums text-inherit',
