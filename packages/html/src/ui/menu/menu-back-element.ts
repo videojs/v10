@@ -48,7 +48,8 @@ export class MenuBackElement extends MediaElement {
       applyElementProps(
         this,
         {
-          onClick: () => {
+          onClick: (event: MouseEvent) => {
+            if (event.button !== 0) return;
             const currentCtx = this.#ctx.value;
             currentCtx?.parentMenu?.pop();
           },

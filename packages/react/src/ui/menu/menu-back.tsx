@@ -30,6 +30,7 @@ export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function Me
 
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
       onClick?.(event);
       parentMenu?.pop();
     },
