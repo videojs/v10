@@ -1,3 +1,5 @@
+import '../define/i18n';
+
 export type {
   Contains,
   Locale,

@@ -2,7 +2,6 @@ import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../define/i18n';
 import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 

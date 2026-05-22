@@ -14,6 +14,7 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
     "./dist/*/define/**/*.js",
+    "./dist/*/i18n/index.js",
     "./dist/*/icons/element/**/*.js",
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
@@ -129,11 +130,6 @@
       "development": "./dist/dev/i18n/locales/*.js",
       "default": "./dist/default/i18n/locales/*.js"
     },
-    "./define/i18n": {
-      "types": "./dist/dev/define/i18n.d.ts",
-      "development": "./dist/dev/define/i18n.js",
-      "default": "./dist/default/define/i18n.js"
-    },
     "./*.css": "./dist/default/define/*.css",
     "./*": {
       "types": "./dist/dev/define/*.d.ts",
@@ -147,7 +143,7 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo' 'src/i18n/**/*.d.ts' 'src/i18n/**/*.d.ts.map'",
+    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
   "dependencies": {

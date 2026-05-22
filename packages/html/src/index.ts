@@ -25,7 +25,7 @@ export type {
   Translations,
   Translator,
 } from './i18n';
-// i18n — register `<media-i18n-provider>` / `<media-text>` via `@videojs/html/define/i18n`.
+// i18n — `@videojs/html/i18n` registers `<media-i18n-provider>` / `<media-text>`.
 export {
   context as i18nContext,
   createI18n,

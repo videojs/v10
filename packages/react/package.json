@@ -111,7 +111,7 @@
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist docs types '*.tsbuildinfo' 'src/i18n/**/*.d.ts' 'src/i18n/**/*.d.ts.map'",
+    "clean": "rimraf --glob dist docs types '*.tsbuildinfo'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts react"
   },
   "peerDependencies": {
