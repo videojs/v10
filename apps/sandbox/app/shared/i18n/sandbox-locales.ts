@@ -34,6 +34,7 @@ const LANGUAGE_NAMES = new Intl.DisplayNames('en', { type: 'language' });
 
 /** v8 `np` is not a valid BCP 47 tag (Nepali is `ne`). */
 const LOCALE_LABEL_OVERRIDES: Partial<Record<SandboxLocaleTag, string>> = {
+  ba: 'Bosnian',
   np: 'Nepali',
 };
 
