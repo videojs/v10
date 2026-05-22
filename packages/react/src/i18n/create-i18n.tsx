@@ -243,12 +243,16 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 
   function useTranslator(): Translator {
     const ctx = useContext(I18nContext);
-    const fallbackRef = useRef<Translator | undefined>(undefined);
-    if (!fallbackRef.current) {
-      fallbackRef.current = createTranslator(getI18nTranslations('en'), 'en');
-    }
+    const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
+
+    useEffect(() => {
+      return onI18nRegistryChange(() => invalidateRegistry());
+    }, []);
+
+    const fallback = useMemo(() => createTranslator(getI18nTranslations('en'), 'en'), [registryEpoch]);
+
     if (!ctx) {
-      return fallbackRef.current;
+      return fallback;
     }
     return ctx.translator;
   }
