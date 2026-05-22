@@ -2,12 +2,8 @@ import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-<<<<<<< HEAD
-=======
-import '../../define/i18n';
-import { MediaI18nProviderElement, MediaTextElement } from '../../i18n';
->>>>>>> c75a798f (fix(html): use i18n barrel imports in tests after rebase)
 import { createI18n } from '../../i18n/create-i18n';
+import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 
 describe('createI18n (HTML)', () => {
   afterEach(() => {
