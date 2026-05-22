@@ -198,7 +198,9 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     }, [resolvedLocale]);
 
     const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
-    useEffect(() => onI18nRegistryChange(() => invalidateRegistry()), []);
+    useEffect(() => {
+      return onI18nRegistryChange(() => invalidateRegistry());
+    }, []);
 
     const [lazyLayer, setLazyLayer] = useState<Partial<Translations>>({});
 
