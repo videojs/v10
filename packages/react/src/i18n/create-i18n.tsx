@@ -168,15 +168,23 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     children,
     onActiveLocaleChange,
   }: I18nProviderProps): ReactNode {
-    const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
-    const langRootElement = langRootRef?.current ?? null;
     const onActiveLocaleChangeRef = useRef(onActiveLocaleChange);
     onActiveLocaleChangeRef.current = onActiveLocaleChange;
+    const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
+    const attachedLangRootRef = useRef<Element | null>(null);
 
     useLayoutEffect(() => {
-      if (!langRootRef) return;
-      invalidateLangRoot();
-    }, [langRootElement]);
+      if (!langRootRef) {
+        attachedLangRootRef.current = null;
+        return;
+      }
+      const node = langRootRef.current;
+      if (node === attachedLangRootRef.current) return;
+      attachedLangRootRef.current = node;
+      if (node) {
+        invalidateLangRoot();
+      }
+    });
 
     const ambientLang = useSyncExternalStore(
       subscribeAmbientLang,
