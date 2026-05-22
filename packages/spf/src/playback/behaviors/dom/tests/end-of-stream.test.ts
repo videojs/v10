@@ -12,7 +12,20 @@ function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamStat
   };
 }
 
-function makeContext(initial: EndOfStreamContext = {}): ContextSignals<EndOfStreamContext> {
+// Test-only context shape: extends EndOfStreamContext (which only declares
+// `mediaSource` as a contributed slot) with the optional buffer-actor
+// signals endOfStream reads defensively. The behavior under test composes
+// against whatever's actually present in scope — these tests stand the
+// signals up directly to exercise that runtime read path.
+interface EndOfStreamTestContext extends EndOfStreamContext {
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
+}
+
+function makeContext(initial: EndOfStreamTestContext = {}): ContextSignals<EndOfStreamContext> & {
+  videoBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+  audioBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+} {
   return {
     mediaSource: signal<MediaSource | undefined>(initial.mediaSource),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
@@ -20,12 +33,17 @@ function makeContext(initial: EndOfStreamContext = {}): ContextSignals<EndOfStre
   };
 }
 
-function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfStreamContext) {
+function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfStreamTestContext) {
   // Default `currentTime` well past any test scenario's last-segment startTime
   // — tests that exercise the currentTime gate pass their own value.
   const state = makeState({ currentTime: 1000, ...initialState });
   const context = makeContext(initialContext);
-  const cleanup = endOfStream.setup({ state, context });
+  // endOfStream uses a manual Behavior<> literal (not defineBehavior), so
+  // its public setup signature requires config even though the behavior
+  // doesn't consume it. Pass {} explicitly. cleanup widens to
+  // BehaviorCleanup (void | () => void | { destroy }) — the real return is
+  // a () => void; cast for callable ergonomics in tests.
+  const cleanup = endOfStream.setup({ state, context, config: {} }) as () => void;
   return { state, context, cleanup };
 }
 

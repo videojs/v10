@@ -171,16 +171,24 @@ http://example.com/audio-seg1.m4s
         expect(owners.mediaSource).toBeDefined();
         expect((owners.mediaSource as MediaSource).readyState).toBe('open');
 
-        // Video-side not exercised. The variant either omits these slots
-        // entirely (no behavior declares them) or leaves them undefined.
+        // Video buffer / segment-loader slots absent — no composed
+        // behavior in this variant declares them. `endOfStream` reads
+        // videoBufferActor defensively (optional context field) so its
+        // presence in the composition doesn't leak the slot. Asserting
+        // absence catches regressions where a behavior re-introduces a
+        // video-side context declaration.
+        expect('videoBufferActor' in owners).toBe(false);
+        expect('videoSegmentLoaderActor' in owners).toBe(false);
+
+        // `selectedVideoTrackId` is still declared by
+        // `calculatePresentationDuration` (a uniform-across-tracks
+        // behavior that reads both selectedVideoTrackId and
+        // selectedAudioTrackId to feed the duration resolver). The slot
+        // exists but no behavior in this variant writes it. Follow-up:
+        // apply the same defensive-read pattern endOfStream uses, to
+        // make this declaration optional too.
         if ('selectedVideoTrackId' in state) {
           expect(state.selectedVideoTrackId).toBeUndefined();
-        }
-        if ('videoBufferActor' in owners) {
-          expect(owners.videoBufferActor).toBeUndefined();
-        }
-        if ('videoSegmentLoaderActor' in owners) {
-          expect(owners.videoSegmentLoaderActor).toBeUndefined();
         }
       },
       { timeout: 2000 }
@@ -242,15 +250,11 @@ http://example.com/audio-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
 
-        if ('selectedTextTrackId' in state) {
-          expect(state.selectedTextTrackId).toBeUndefined();
-        }
-        if ('textTracksActor' in owners) {
-          expect(owners.textTracksActor).toBeUndefined();
-        }
-        if ('textTrackSegmentLoaderActor' in owners) {
-          expect(owners.textTrackSegmentLoaderActor).toBeUndefined();
-        }
+        // Text-track slots absent — Phase 1 subtracts all text-track
+        // behaviors, and no remaining behavior declares the slots.
+        expect('selectedTextTrackId' in state).toBe(false);
+        expect('textTracksActor' in owners).toBe(false);
+        expect('textTrackSegmentLoaderActor' in owners).toBe(false);
       },
       { timeout: 2000 }
     );
