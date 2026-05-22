@@ -79,8 +79,8 @@ interface EjectedSkinEntry {
   platform: 'html' | 'react';
   style: 'css' | 'tailwind';
   html?: string;
-  tsx?: string;
-  jsx?: string;
+  tsx?: Record<string, string>;
+  jsx?: Record<string, string>;
   css?: string;
 }
 
@@ -1397,11 +1397,17 @@ function destructureSkinProps(source: string): string {
 }
 
 /**
- * Flatten the skin into a Player component: merge SkinProps into PlayerProps
- * (adding `src`), inline the skin body into VideoPlayer/AudioPlayer wrapped
- * in `Player.Provider`, and remove the separate Skin export.
+ * Flatten the skin into a Player component. Produces two files:
+ *   - `player.ts`: owns the `createPlayer({ features })` call and exports `Player`.
+ *   - `VideoPlayer.tsx` / `AudioPlayer.tsx`: imports `Player` from `./player` and
+ *     owns the React component. Splitting these avoids React Fast Refresh bailing
+ *     out (a file must export only components for Fast Refresh to apply edits).
+ *
+ * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body
+ * into VideoPlayer/AudioPlayer wrapped in `Player.Provider`, and removes the
+ * separate Skin export.
  */
-function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
+function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: string; component: string } {
   const isVideo = mediaType === 'video';
   const mediaTag = isVideo ? 'Video' : 'Audio';
   const features = isVideo ? 'videoFeatures' : 'audioFeatures';
@@ -1409,25 +1415,28 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
   const subpath = isVideo ? 'video' : 'audio';
   const playsInline = isVideo ? ' playsInline' : '';
 
-  // 1. Add createPlayer to the @videojs/react import
-  source = source.replace(
-    /import \{([^}]+)\} from '@videojs\/react';/,
-    (_, names) => `import { createPlayer,${names}} from '@videojs/react';`
-  );
+  const player = [
+    `import { createPlayer } from '@videojs/react';`,
+    `import { ${features} } from '@videojs/react/${subpath}';`,
+    '',
+    `export const Player = createPlayer({ features: ${features} });`,
+    '',
+  ].join('\n');
 
-  // 2. Add Video/Audio + features import and CSS import
-  const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
+  // 1. Add Video/Audio import, CSS import, and Player import from ./player
+  const mediaImport = `import { ${mediaTag} } from '@videojs/react/${subpath}';`;
   const cssImport = "import './player.css';";
-  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}\n${cssImport}`);
-
-  // 3. Add Player const above the interface, rename SkinProps → PlayerProps, replace `children` with `src`
+  const playerImport = "import { Player } from './player';";
   source = source.replace(
-    /export interface \w+SkinProps/,
-    `export const Player = createPlayer({ features: ${features} });\n\nexport interface ${playerName}Props`
+    /(import \{[^}]*\} from '@videojs\/react';)/,
+    `$1\n${mediaImport}\n${cssImport}\n${playerImport}`
   );
+
+  // 2. Rename SkinProps → PlayerProps, replace `children` with `src`
+  source = source.replace(/export interface \w+SkinProps/, `export interface ${playerName}Props`);
   source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;`);
 
-  // 4. Replace the skin function: rename, swap children→src, wrap in Player.Provider
+  // 3. Replace the skin function: rename, swap children→src, wrap in Player.Provider
   //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
   source = source.replace(
     /export function \w+Skin\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
@@ -1452,7 +1461,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
       const hasPoster = destructuredRest.includes('poster');
       const posterExample = hasPoster ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
 
-      // Player const, @example JSDoc, and the function signature
+      // @example JSDoc and the function signature
       const header = [
         '/**',
         ' * @example',
@@ -1469,17 +1478,19 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
     }
   );
 
-  // 5. Remove the "Skin" section header (it's now part of "Player")
+  // 4. Remove the "Skin" section header (it's now part of "Player")
   source = source.replace(/\/\/ =+\n\/\/ Skin\n\/\/ =+\n\n/, `${sectionHeader('Player')}\n\n`);
 
-  return source;
+  return { player, component: source };
 }
 
 /**
  * Process a React skin: rewrite icon imports, resolve imports,
  * and produce both TSX and JSX versions.
  */
-async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx: string }> {
+async function processReactSkin(
+  skin: ReactSkinDef
+): Promise<{ tsx: Record<string, string>; jsx: Record<string, string> }> {
   const absPath = resolve(ROOT, skin.source);
   let source = readFileSync(absPath, 'utf-8');
   source = rewriteReactIconImports(source);
@@ -1521,12 +1532,21 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   // 10. Destructure skin props in function argument instead of body
   tsx = destructureSkinProps(tsx);
 
-  // 11. Flatten skin into player (merge props, inline body, wrap in Player.Provider)
-  tsx = flattenSkinIntoPlayer(tsx, getSkinMediaType(skin));
+  // 11. Flatten skin into player (split into player.ts + Player.tsx, wrap in Player.Provider)
+  const mediaType = getSkinMediaType(skin);
+  const { player, component } = flattenSkinIntoPlayer(tsx, mediaType);
+  const componentFile = mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer';
 
-  const jsx = tsxToJsx(tsx);
-
-  return { tsx, jsx };
+  return {
+    tsx: {
+      'player.ts': player,
+      [`${componentFile}.tsx`]: component,
+    },
+    jsx: {
+      'player.js': tsxToJsx(player),
+      [`${componentFile}.jsx`]: tsxToJsx(component),
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
