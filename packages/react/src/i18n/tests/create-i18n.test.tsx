@@ -1,5 +1,5 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistryForTesting, type Translations } from '@videojs/core/i18n';
 import { createRef, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
