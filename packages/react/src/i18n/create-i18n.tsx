@@ -171,26 +171,28 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const onActiveLocaleChangeRef = useRef(onActiveLocaleChange);
     onActiveLocaleChangeRef.current = onActiveLocaleChange;
     const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
-    const attachedLangRootRef = useRef<Element | null>(null);
+    const langRootElementRef = useRef<Element | null>(null);
 
     useLayoutEffect(() => {
       if (!langRootRef) {
-        attachedLangRootRef.current = null;
+        if (langRootElementRef.current !== null) {
+          langRootElementRef.current = null;
+          invalidateLangRoot();
+        }
         return;
       }
       const node = langRootRef.current;
-      if (node === attachedLangRootRef.current) return;
-      attachedLangRootRef.current = node;
-      if (node) {
-        invalidateLangRoot();
-      }
+      if (node === langRootElementRef.current) return;
+      langRootElementRef.current = node;
+      invalidateLangRoot();
     });
 
     const ambientLang = useSyncExternalStore(
       subscribeAmbientLang,
       () => {
         if (langRootRef) {
-          return nearestLang(langRootRef.current);
+          const root = langRootElementRef.current ?? langRootRef.current;
+          return nearestLang(root);
         }
         const root = typeof document !== 'undefined' ? document.documentElement : null;
         return nearestLang(root);
