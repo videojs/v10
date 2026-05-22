@@ -70,7 +70,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   function Provider({ children }: ProviderProps): ReactNode {
-    const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
+    const [store, setStore] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
@@ -79,6 +79,16 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     useEffect(() => {
       if (!media) return;
+
+      // The store may have been destroyed during an asynchronous gap between React
+      // effect cleanup and re-setup (e.g., React <Activity> hide → reveal). The
+      // useState initializer does not re-run in this case, so we recreate and swap
+      // the store instance to unblock the next render cycle.
+      if (store.destroyed) {
+        setStore(createStore<PlayerTarget>()(combine(...config.features)));
+        return;
+      }
+
       return store.attach({ media, container });
     }, [media, container, store]);
 

@@ -1,9 +1,10 @@
-import { render, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
 import type { PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { usePlayerContext } from '../context';
 import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -66,6 +67,51 @@ describe('createPlayer', () => {
       vi.useRealTimers();
     });
 
+    it('recovers after Activity-style async destroy (React <Activity>)', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
+
+      let store!: PlayerStore;
+      // Captured inside TestComponent so we can trigger a media-dep change
+      // from the test body, simulating Activity reveal re-running the attach effect.
+      let setMediaFn!: (media: HTMLMediaElement | null) => void;
+
+      function TestComponent() {
+        store = usePlayer();
+        const { setMedia } = usePlayerContext();
+        setMediaFn = setMedia;
+        return null;
+      }
+
+      render(
+        <Provider>
+          <TestComponent />
+        </Provider>
+      );
+
+      const originalStore = store;
+      expect(originalStore.destroyed).toBe(false);
+
+      // Simulate the Activity gap: the deferred timeout fires before React gets
+      // a chance to re-run effects, leaving the store destroyed.
+      originalStore.destroy();
+      expect(originalStore.destroyed).toBe(true);
+
+      // Trigger the attach effect to re-run by changing the `media` dep — this
+      // mirrors what happens in the real app where Activity reveals the subtree
+      // with an already-attached media element. Without the fix this throws
+      // StoreError('DESTROYED').
+      expect(() => {
+        act(() => {
+          setMediaFn(document.createElement('video'));
+        });
+      }).not.toThrow();
+
+      // Provider should have swapped in a fresh store so the player is operational.
+      expect(store).toBeDefined();
+      expect(store.destroyed).toBe(false);
+      expect(store).not.toBe(originalStore);
+    });
+
     it('survives React StrictMode without StoreError', () => {
       const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
@@ -88,6 +134,43 @@ describe('createPlayer', () => {
 
       expect(store).toBeDefined();
       expect(store.destroyed).toBe(false);
+    });
+
+    it('StrictMode: preserves the same store instance and cancels the pending destroy', () => {
+      vi.useFakeTimers();
+
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
+
+      // Track every store instance the component sees across all renders.
+      const seenStores = new Set<PlayerStore>();
+      let currentStore!: PlayerStore;
+
+      function TestComponent() {
+        currentStore = usePlayer();
+        seenStores.add(currentStore);
+        return null;
+      }
+
+      render(
+        <StrictMode>
+          <Provider>
+            <TestComponent />
+          </Provider>
+        </StrictMode>
+      );
+
+      // Flush timers — the deferred destroy was scheduled during StrictMode's
+      // simulated cleanup. If it was NOT cancelled by the re-mount effect, the
+      // store would be destroyed here.
+      vi.runAllTimers();
+
+      // The Activity guard must not have fired: one store instance, not two.
+      // (setStore would have been called and produced a second instance.)
+      expect(seenStores.size).toBe(1);
+      // Deferred destroy was cancelled — store is alive after all timers flush.
+      expect(currentStore.destroyed).toBe(false);
+
+      vi.useRealTimers();
     });
 
     it('uses displayName when provided', () => {
