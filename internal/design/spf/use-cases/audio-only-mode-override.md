@@ -149,13 +149,15 @@ Phase 1 baseline:
 - **[`buffer-management`](../features/buffer-management.md)** — used as-is in
   Phase 1; Phase 3 surfaces alternative defaults.
 
-Phase 2 (when these features land):
+Phase 2:
 
-- **[`audio-abr`](../features/audio-abr.md)** — when implemented, composed in
-  for multi-bitrate audio. Used as-is.
-- **[`multi-language-audio`](../features/multi-language-audio.md)** — when
-  implemented, composed in for mixed sources with multi-language audio. Used
-  as-is.
+- **[`audio-abr`](../features/audio-abr.md)** *(not yet implemented)* — when
+  implemented, composed in for multi-bitrate audio. Used as-is.
+- **[`multi-language-audio`](../features/multi-language-audio.md)** *(partial — landed)* —
+  composed in unchanged; variant state exposes `userAudioTrackSelection` slot
+  and `selectAudioTrack` / `setupAudioBufferActors` carry over from the
+  default engine. Consumer can write language filters or specific track IDs
+  for mid-stream switching within the audio-only variant.
 
 ## Customer-policy surface
 
