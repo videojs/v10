@@ -2,7 +2,7 @@
 export const BUILT_IN_LOCALES = [
   'ar',
   'az',
-  'ba',
+  'bs',
   'bg',
   'bn',
   'ca',

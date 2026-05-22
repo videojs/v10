@@ -1,9 +1,9 @@
 import type { Translations } from '@videojs/core/i18n';
 import ar from './locales/ar';
 import az from './locales/az';
-import ba from './locales/ba';
 import bg from './locales/bg';
 import bn from './locales/bn';
+import bs from './locales/bs';
 import ca from './locales/ca';
 import cs from './locales/cs';
 import cy from './locales/cy';
@@ -57,7 +57,7 @@ export const all = {
   en: en,
   ar: ar,
   az: az,
-  ba: ba,
+  bs: bs,
   bg: bg,
   bn: bn,
   ca: ca,
