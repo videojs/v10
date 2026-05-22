@@ -6,6 +6,7 @@ import {
   getErrorDialogTitleLabel,
   type MediaError,
   resolveErrorDialogDescription,
+  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   type AlertDialogApi,
@@ -40,6 +41,7 @@ export class ErrorDialogElement extends MediaElement {
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
   #lastError: MediaError | null = null;
+  #lastDescription: TranslationKeyOrString | null = null;
 
   constructor() {
     super();
@@ -92,6 +94,7 @@ export class ErrorDialogElement extends MediaElement {
 
     if (!hasError && !isOpen) {
       this.#lastError = null;
+      this.#lastDescription = null;
     }
 
     if (hasError && !isOpen) {
@@ -128,8 +131,12 @@ export class ErrorDialogElement extends MediaElement {
 
     const desc = this.querySelector('media-alert-dialog-description');
     if (desc) {
-      const description = resolveErrorDialogDescription(error);
-      desc.textContent = resolveTranslationPhrase(t, description);
+      const description = error ? resolveErrorDialogDescription(error) : null;
+      if (description) {
+        this.#lastDescription = description;
+      }
+      const copy = description ?? this.#lastDescription ?? 'mediaErrorFallback';
+      desc.textContent = resolveTranslationPhrase(t, copy);
     }
 
     const close = this.querySelector('media-alert-dialog-close');
