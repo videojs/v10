@@ -203,23 +203,22 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     }, []);
 
     const [lazyLayer, setLazyLayer] = useState<Partial<Translations>>({});
+    const lazySeqRef = useRef(0);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: rerun when `resolvedLocale` changes even though the reset callback does not reference it.
     useLayoutEffect(() => {
+      lazySeqRef.current += 1;
       setLazyLayer({});
     }, [resolvedLocale]);
 
     useEffect(() => {
-      let cancelled = false;
+      const seq = lazySeqRef.current;
+      const locale = resolvedLocale;
       void (async () => {
-        const mergedLazy = await mergeBuiltinOverlays(resolvedLocale, loadBuiltin);
-        if (!cancelled) {
-          setLazyLayer(mergedLazy);
-        }
+        const mergedLazy = await mergeBuiltinOverlays(locale, loadBuiltin);
+        if (seq !== lazySeqRef.current) return;
+        setLazyLayer(mergedLazy);
       })();
-      return () => {
-        cancelled = true;
-      };
     }, [resolvedLocale]);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: `registryEpoch` bumps on registry mutations; `getI18nTranslations` reads mutable registry state.

@@ -332,6 +332,53 @@ describe('createI18n', () => {
     });
   });
 
+  it('does not apply stale lazy locale overlays after locale switch', async () => {
+    let resolveDe: ((value: Partial<Translations>) => void) | undefined;
+    const deLoad = new Promise<Partial<Translations>>((resolve) => {
+      resolveDe = resolve;
+    });
+
+    const { I18nProvider, useTranslator } = createI18n({
+      loadBuiltinLocale: async (tag) => {
+        if (tag === 'de') {
+          return deLoad;
+        }
+        if (tag === 'fr') {
+          return { play: 'Lecture' };
+        }
+        return undefined;
+      },
+    });
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    const { rerender } = render(
+      <I18nProvider locale="de">
+        <Probe />
+      </I18nProvider>
+    );
+
+    rerender(
+      <I18nProvider locale="fr">
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Lecture')).not.toBeNull();
+    });
+
+    resolveDe?.({ play: 'Abspielen' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Abspielen')).toBeNull();
+      expect(screen.queryByText('Lecture')).not.toBeNull();
+    });
+  });
+
   it('does not re-notify onActiveLocaleChange when the handler identity changes', async () => {
     registerI18n('de', { play: 'Los' });
     document.documentElement.lang = 'de';
