@@ -163,6 +163,21 @@ describe('createI18n (HTML)', () => {
     expect(el.textContent).toBe('Play');
   });
 
+  it('selectCaptionsByLocale prefers exact language match over regional prefix', () => {
+    const video = document.createElement('video');
+    video.addTextTrack('subtitles', 'FR Canada', 'fr-CA');
+    video.addTextTrack('subtitles', 'FR generic', 'fr');
+
+    document.body.appendChild(video);
+
+    selectCaptionsByLocale({ target: { media: video, container: null } } as AnyPlayerStore, 'fr');
+
+    const generic = [...video.textTracks].find((t) => t.language === 'fr');
+    const regional = [...video.textTracks].find((t) => t.language === 'fr-CA');
+    expect(generic?.mode).toBe('showing');
+    expect(regional?.mode).toBe('disabled');
+  });
+
   it('selectCaptionsByLocale prefers regional track over generic language', () => {
     const video = document.createElement('video');
     video.addTextTrack('subtitles', 'FR generic', 'fr');

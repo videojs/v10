@@ -6,6 +6,16 @@ function normalizeLangTag(tag: string): string {
   return tag.trim().replace(/_/g, '-').toLowerCase();
 }
 
+function pickTrackForTag(candidates: TextTrack[], tag: string): TextTrack | undefined {
+  const exact = candidates.find((t) => normalizeLangTag(t.language ?? '') === tag);
+  if (exact) return exact;
+
+  return candidates.find((t) => {
+    const lang = normalizeLangTag(t.language ?? '');
+    return lang.startsWith(`${tag}-`);
+  });
+}
+
 /**
  * Picks caption/subtitle tracks matching {@link localeLookupChain} and shows the best match.
  * Other subtitle/caption tracks are disabled. No-op when there is no match (preserves user state).
@@ -21,10 +31,7 @@ export function selectCaptionsByLocale(store: AnyPlayerStore | undefined, locale
   const chain = localeLookupChain(locale).map(normalizeLangTag);
   let picked: TextTrack | undefined;
   for (const tag of chain) {
-    picked = candidates.find((t) => {
-      const lang = normalizeLangTag(t.language ?? '');
-      return lang === tag || lang.startsWith(`${tag}-`);
-    });
+    picked = pickTrackForTag(candidates, tag);
     if (picked) break;
   }
   if (!picked) return;
