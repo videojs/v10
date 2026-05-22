@@ -468,4 +468,66 @@ describe('createI18n', () => {
       expect(screen.queryByText('RegistryPlay')).not.toBeNull();
     });
   });
+
+  it('ignores rejected built-in locale loads', async () => {
+    registerI18n('de', { play: 'RegistryPlay' });
+    const { I18nProvider, useTranslator } = createI18n({
+      loadBuiltinLocale: async () => {
+        throw new Error('load failed');
+      },
+    });
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(
+      <I18nProvider locale="de">
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('RegistryPlay')).not.toBeNull();
+    });
+  });
+
+  it('does not loop when langRootRef identity changes each render', async () => {
+    registerI18n('fr', { play: 'Lire' });
+    const renderSpy = vi.fn();
+    const { I18nProvider, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      renderSpy();
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    function Shell(): ReactElement {
+      const rootRef = createRef<HTMLDivElement>();
+      return (
+        <section lang="fr">
+          <I18nProvider langRootRef={rootRef}>
+            <div ref={rootRef}>
+              <Probe />
+            </div>
+          </I18nProvider>
+        </section>
+      );
+    }
+
+    const { rerender } = render(<Shell />);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Lire')).not.toBeNull();
+    });
+
+    const rendersAfterMount = renderSpy.mock.calls.length;
+
+    rerender(<Shell />);
+    rerender(<Shell />);
+
+    expect(renderSpy.mock.calls.length - rendersAfterMount).toBeLessThanOrEqual(2);
+  });
 });
