@@ -174,10 +174,9 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     onActiveLocaleChangeRef.current = onActiveLocaleChange;
 
     useLayoutEffect(() => {
-      if (langRootRef) {
-        invalidateLangRoot();
-      }
-    }, [langRootRef, langRootElement]);
+      if (!langRootRef) return;
+      invalidateLangRoot();
+    }, [langRootElement]);
 
     const ambientLang = useSyncExternalStore(
       subscribeAmbientLang,
@@ -215,9 +214,13 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       const seq = lazySeqRef.current;
       const locale = resolvedLocale;
       void (async () => {
-        const mergedLazy = await mergeBuiltinOverlays(locale, loadBuiltin);
-        if (seq !== lazySeqRef.current) return;
-        setLazyLayer(mergedLazy);
+        try {
+          const mergedLazy = await mergeBuiltinOverlays(locale, loadBuiltin);
+          if (seq !== lazySeqRef.current) return;
+          setLazyLayer(mergedLazy);
+        } catch {
+          // Ignore rejected built-in locale loads; registry/prop layers still apply.
+        }
       })();
     }, [resolvedLocale]);
 
