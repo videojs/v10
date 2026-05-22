@@ -1,7 +1,5 @@
 import '@app/styles.css';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
-import { translations } from '@app/shared/i18n/sandbox-translations';
-import { registerI18n } from '@videojs/core/i18n';
 import '@videojs/html/i18n';
 import '@videojs/html/video/player';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
@@ -18,8 +16,6 @@ import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-registerI18n('ja', translations.ja);
-
 const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
@@ -33,7 +29,7 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
-      <media-i18n-provider lang="ja">
+      <media-i18n-provider>
         <${tag} class="aspect-video max-w-4xl mx-auto">
           <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
             ${renderStoryboard(storyboard)}

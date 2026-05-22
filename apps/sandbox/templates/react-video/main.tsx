@@ -1,5 +1,4 @@
 import '@app/styles.css';
-import { translations } from '@app/shared/i18n/sandbox-translations';
 import { VideoProvider } from '@app/shared/react/providers';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
@@ -35,7 +34,7 @@ function App() {
 
   return (
     <VideoProvider>
-      <I18nProvider locale="ja" translations={translations.ja}>
+      <I18nProvider>
         <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <Video
             src={SOURCES[source].url}
