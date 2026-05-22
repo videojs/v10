@@ -142,7 +142,7 @@ describe('VolumeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('volume');
-      expect(attrs['aria-valuetext']).toBe('volumeSliderValueText');
+      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.75));
       expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.75) });
       expect(attrs.role).toBe('slider');
     });
@@ -165,7 +165,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('volumeSliderValueText');
+      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.333));
       expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.333) });
     });
 
