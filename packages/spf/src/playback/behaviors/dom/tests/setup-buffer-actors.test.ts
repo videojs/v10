@@ -5,7 +5,12 @@ import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
-import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
+import type {
+  SourceBufferActor,
+  SourceBufferActorContext,
+  SourceBufferActorState,
+  SourceBufferMessage,
+} from '../../../actors/dom/source-buffer';
 import {
   type BufferActorsContext,
   type BufferActorsState,
@@ -38,6 +43,38 @@ vi.mock('../../../actors/dom/segment-loader', async (importOriginal) => {
       (_sourceBufferActor: SourceBufferActor, _fetchBytes: unknown): SegmentLoaderActor =>
         ({ destroy: vi.fn() }) as unknown as SegmentLoaderActor
     ),
+  };
+});
+
+// Per-instance store of mock SourceBufferActors so tests can read/modify
+// their snapshots and verify messages sent. Cleared in beforeEach.
+const mockSourceBufferActors: MockSourceBufferActor[] = [];
+type MockSourceBufferActor = {
+  snapshot: ReturnType<typeof signal<{ value: SourceBufferActorState; context: SourceBufferActorContext }>>;
+  send: ReturnType<typeof vi.fn>;
+  destroy: ReturnType<typeof vi.fn>;
+};
+
+// Mock `createSourceBufferActor` so the test can drive snapshot state
+// (e.g., set `initTrackId` to simulate that the loader has appended init for
+// a specific track) and assert on dispatched messages (e.g., the `remove`
+// message dispatched by mid-stream flush orchestration).
+vi.mock('../../../actors/dom/source-buffer', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../actors/dom/source-buffer')>();
+  return {
+    ...actual,
+    createSourceBufferActor: vi.fn((): SourceBufferActor => {
+      const mock: MockSourceBufferActor = {
+        snapshot: signal<{ value: SourceBufferActorState; context: SourceBufferActorContext }>({
+          value: 'idle',
+          context: { segments: [], bufferedRanges: [], initTrackId: undefined },
+        }),
+        send: vi.fn(),
+        destroy: vi.fn(),
+      };
+      mockSourceBufferActors.push(mock);
+      return mock as unknown as SourceBufferActor;
+    }),
   };
 });
 
@@ -165,6 +202,7 @@ function makeState(initial: BufferActorsState = {}): StateSignals<BufferActorsSt
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
+    currentTime: signal<number | undefined>(initial.currentTime),
   };
 }
 
@@ -210,6 +248,7 @@ function setupSetupBufferActors(initialState: BufferActorsState = {}, initialCon
 describe('setupVideoBufferActors + setupAudioBufferActors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSourceBufferActors.length = 0;
   });
 
   it('creates video buffer + loader actors for video-only source', async () => {
@@ -432,6 +471,155 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
       expect(context.videoBufferActor.get()).toBeUndefined();
       expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
     });
+
+    cleanup();
+  });
+
+  it('flushes audio buffer at next-segment-boundary on mid-stream track switch', async () => {
+    // Multi-language-audio Tier 2 mid-stream switch: when
+    // `selectedAudioTrackId` changes after the loader has appended an init
+    // segment (initTrackId set), the audio buffer flushes the stale rendition
+    // from the next segment boundary forward. Current segment continues
+    // playing; new rendition starts at the boundary.
+    const audioTrackEn: AudioTrack = {
+      ...createResolvedAudioTrack('audio-en'),
+      language: 'en',
+      segments: [
+        { id: 'seg-0', url: 'http://example.com/en-0.m4s', startTime: 0, duration: 6 },
+        { id: 'seg-1', url: 'http://example.com/en-1.m4s', startTime: 6, duration: 6 },
+        { id: 'seg-2', url: 'http://example.com/en-2.m4s', startTime: 12, duration: 6 },
+      ],
+    };
+    const audioTrackEs: AudioTrack = {
+      ...createResolvedAudioTrack('audio-es'),
+      language: 'es',
+    };
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        {
+          id: 'audio-set',
+          type: 'audio' as const,
+          switchingSets: [
+            {
+              id: 'audio-switching',
+              type: 'audio' as const,
+              tracks: [audioTrackEn, audioTrackEs],
+            },
+          ],
+        },
+      ],
+      startTime: 0,
+    };
+
+    const { state, context, cleanup } = setupSetupBufferActors();
+    context.mediaSource.set({} as MediaSource);
+    state.presentation.set(presentation);
+    state.selectedAudioTrackId.set('audio-en');
+    state.currentTime.set(2); // playhead 2s into segment 0 (0-6s)
+
+    await vi.waitFor(() => {
+      expect(context.audioBufferActor.get()).toBeDefined();
+    });
+
+    const audioActor = mockSourceBufferActors[mockSourceBufferActors.length - 1]!;
+    // Simulate the loader having dispatched append-init for audio-en — the
+    // flush effect's mismatch detection compares initTrackId vs selected.
+    audioActor.snapshot.set({
+      value: 'idle',
+      context: {
+        segments: [],
+        bufferedRanges: [],
+        initTrackId: 'audio-en',
+      },
+    });
+    audioActor.send.mockClear();
+
+    // Mid-stream switch to Spanish.
+    state.selectedAudioTrackId.set('audio-es');
+
+    await vi.waitFor(() => {
+      expect(audioActor.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'remove',
+          start: 6, // next segment boundary at/after playhead (2s) is seg-1 start = 6s
+        })
+      );
+    });
+
+    // End is well past presentation length so the remove covers all stale
+    // ahead-buffer.
+    const removeCall = audioActor.send.mock.calls.find((c) => (c[0] as SourceBufferMessage).type === 'remove')!;
+    const removeMsg = removeCall[0] as Extract<SourceBufferMessage, { type: 'remove' }>;
+    expect(removeMsg.end).toBeGreaterThan(60);
+
+    cleanup();
+  });
+
+  it('does not flush on initial buffer setup (initTrackId undefined)', async () => {
+    // Initial entry: bufferActor exists but no init has been appended yet
+    // (initTrackId === undefined). Even though selectedAudioTrackId is set,
+    // there's nothing to flush — the effect should bail.
+    const audioTrack = createResolvedAudioTrack('audio-en');
+    const { state, context, cleanup } = setupSetupBufferActors();
+
+    context.mediaSource.set({} as MediaSource);
+    state.presentation.set(createPresentationWithTracks({ audio: audioTrack }));
+    state.selectedAudioTrackId.set('audio-en');
+    state.currentTime.set(0);
+
+    await vi.waitFor(() => {
+      expect(context.audioBufferActor.get()).toBeDefined();
+    });
+
+    const audioActor = mockSourceBufferActors[mockSourceBufferActors.length - 1]!;
+    // initTrackId stays undefined (loader hasn't appended yet). Effect should
+    // have run on entry but not dispatched remove.
+    const removeCalls = audioActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
+    expect(removeCalls).toHaveLength(0);
+
+    cleanup();
+  });
+
+  it('does not flush when initTrackId matches selected track (steady state)', async () => {
+    // Steady state: initTrackId === selectedAudioTrackId. Snapshot updates
+    // (new segments appended) re-fire the effect but should not trigger a
+    // flush — only true track-id mismatch does.
+    const audioTrack = createResolvedAudioTrack('audio-en');
+    const { state, context, cleanup } = setupSetupBufferActors();
+
+    context.mediaSource.set({} as MediaSource);
+    state.presentation.set(createPresentationWithTracks({ audio: audioTrack }));
+    state.selectedAudioTrackId.set('audio-en');
+    state.currentTime.set(0);
+
+    await vi.waitFor(() => {
+      expect(context.audioBufferActor.get()).toBeDefined();
+    });
+
+    const audioActor = mockSourceBufferActors[mockSourceBufferActors.length - 1]!;
+    audioActor.snapshot.set({
+      value: 'idle',
+      context: { segments: [], bufferedRanges: [], initTrackId: 'audio-en' },
+    });
+    audioActor.send.mockClear();
+
+    // Snapshot update with new segments — should NOT trigger flush.
+    audioActor.snapshot.set({
+      value: 'idle',
+      context: {
+        segments: [{ id: 'seg-0', startTime: 0, duration: 6, trackId: 'audio-en' }],
+        bufferedRanges: [{ start: 0, end: 6 }],
+        initTrackId: 'audio-en',
+      },
+    });
+
+    // Give the effect a chance to fire.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const removeCalls = audioActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
+    expect(removeCalls).toHaveLength(0);
 
     cleanup();
   });

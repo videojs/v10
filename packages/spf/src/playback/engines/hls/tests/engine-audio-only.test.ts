@@ -47,6 +47,21 @@ describe('createHlsAudioOnlyEngine', () => {
     engine.destroy();
   });
 
+  it('exposes userAudioTrackSelection slot for multi-language-audio Tier 2 writes', () => {
+    const engine = createHlsAudioOnlyEngine();
+
+    // Slot exists as a signal — consumer-facing programmatic-write path
+    // for multi-language-audio.
+    expect(engine.state.userAudioTrackSelection).toBeDefined();
+    expect(typeof engine.state.userAudioTrackSelection.get).toBe('function');
+    expect(typeof engine.state.userAudioTrackSelection.set).toBe('function');
+
+    engine.state.userAudioTrackSelection.set({ language: 'es' });
+    expect(engine.state.userAudioTrackSelection.get()).toEqual({ language: 'es' });
+
+    engine.destroy();
+  });
+
   it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
     const engine = createHlsAudioOnlyEngine();
 

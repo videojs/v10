@@ -15,7 +15,7 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -64,6 +64,13 @@ export interface SimpleHlsEngineState {
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
   userVideoTrackSelection?: Partial<VideoTrack>;
+  /**
+   * Consumer-driven constraint narrowing the audio candidate set. Sibling
+   * of `userVideoTrackSelection`. Partial-track shape — `{ language: 'es' }`,
+   * `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and re-picks
+   * when it changes. Multi-language-audio Tier 2 programmatic-write path.
+   */
+  userAudioTrackSelection?: Partial<AudioTrack>;
   currentTime?: number;
   loadActivated?: boolean;
 }
