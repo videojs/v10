@@ -92,7 +92,12 @@ function calculatePresentationDurationSetup({
     const duration = config.resolveDuration(resolverInput);
     if (duration === undefined || Number.isNaN(duration) || duration <= 0) return;
 
-    update(state.presentation, (current) => (current ? { ...current, duration } : current));
+    // Patch-object form requires `T extends object`; `state.presentation`'s
+    // T is `MaybeResolvedPresentation | undefined`, which doesn't satisfy
+    // the constraint. The guard at the top of the effect already
+    // established that the slot holds a defined value, so cast to narrow
+    // the signal type and use the cleaner merge form.
+    update(state.presentation as Signal<MaybeResolvedPresentation>, { duration });
   });
 }
 
