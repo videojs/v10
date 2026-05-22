@@ -5,6 +5,7 @@ import packageJson from './package.json' with { type: 'json' };
 import { BUILT_IN_LOCALES } from './src/core/i18n/built-in-locales.ts';
 
 const localeEntries = Object.fromEntries([
+  ['i18n/all', './src/core/i18n/all.ts'],
   ['i18n/locales/en', './src/core/i18n/locales/en.ts'],
   ...BUILT_IN_LOCALES.map((tag) => [`i18n/locales/${tag}`, `./src/core/i18n/locales/${tag}.ts`]),
   ['i18n/locales/pt', './src/core/i18n/locales/pt.ts'],
