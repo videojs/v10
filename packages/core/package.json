@@ -38,6 +38,11 @@
       "types": "./dist/dev/i18n.d.ts",
       "development": "./dist/dev/i18n.js",
       "default": "./dist/default/i18n.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -52,7 +57,7 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo' 'src/core/i18n/**/*.d.ts' 'src/core/i18n/**/*.d.ts.map'"
   },
   "dependencies": {
     "@videojs/spf": "workspace:*",

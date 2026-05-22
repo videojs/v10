@@ -1,4 +1,4 @@
-export { englishTranslations } from './locales/en';
+export { default as translations } from './locales/en';
 export {
   getI18nTranslations,
   hasRegisteredI18n,

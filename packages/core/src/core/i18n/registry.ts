@@ -1,4 +1,4 @@
-import { englishTranslations } from './locales/en';
+import en from './locales/en';
 import type { Translations } from './types';
 
 const registry = new Map<string, Partial<Translations>>();
@@ -101,7 +101,7 @@ export function hasRegisteredI18n(locale: string): boolean {
 export function resetI18nRegistryForTesting(): void {
   registry.clear();
   subscribers.clear();
-  registry.set('en', { ...englishTranslations });
+  registry.set('en', { ...en });
 }
 
-registry.set('en', { ...englishTranslations });
+registry.set('en', { ...en });

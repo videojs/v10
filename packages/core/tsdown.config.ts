@@ -8,6 +8,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     i18n: './src/core/i18n/index.ts',
+    'i18n/locales/en': './src/core/i18n/locales/en.ts',
     dom: './src/dom/index.ts',
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls/index': './src/dom/media/hls/index.ts',
