@@ -143,7 +143,7 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
+    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo' 'src/i18n/**/*.d.ts' 'src/i18n/**/*.d.ts.map'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
   "dependencies": {

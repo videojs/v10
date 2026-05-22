@@ -1,3 +1,4 @@
+import { globSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -7,9 +8,23 @@ import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '..
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
+const indexEntries = Object.fromEntries(
+  globSync('src/**/index.{ts,tsx}').map((file) => {
+    const key = file.replace('src/', '').replace(/\.tsx?$/, '');
+    return [key, file];
+  })
+);
+
+const i18nLocaleEntries = {
+  'i18n/locales/en': 'src/i18n/locales/en.ts',
+};
+
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
-  entry: 'src/**/index.{ts,tsx}',
+  entry: {
+    ...indexEntries,
+    ...i18nLocaleEntries,
+  },
   noExternal: [/^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
