@@ -148,7 +148,7 @@ export function App() {
         onPreloadChange={setPreload}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
-        isSimpleHlsVideo={preset === 'simple-hls-video'}
+        isSimpleHls={preset.startsWith('simple-hls-')}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
         platforms={PLATFORMS}
