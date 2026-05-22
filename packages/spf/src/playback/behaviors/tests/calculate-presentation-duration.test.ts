@@ -9,11 +9,32 @@ import {
 } from '../calculate-presentation-duration';
 
 function makeState(initial: PresentationDurationState = {}): StateSignals<PresentationDurationState> {
+  // Tests stand up signals for all three state slots — though
+  // calculatePresentationDuration only declares `presentation` in its
+  // stateKeys (the other two are read defensively as optional fields
+  // contributed by other behaviors at composition time). The tests
+  // exercise the defensive read path by providing the optional signals
+  // directly.
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
   };
+}
+
+function setupDuration(
+  state: StateSignals<PresentationDurationState>,
+  resolveDuration: PresentationDurationResolver
+): () => void {
+  // calculatePresentationDuration uses a manual Behavior<> literal, so the
+  // public setup signature requires `context` even though the behavior
+  // doesn't consume it. Cleanup widens to BehaviorCleanup; cast for
+  // callable ergonomics.
+  return calculatePresentationDuration.setup({
+    state,
+    context: {},
+    config: { resolveDuration },
+  }) as () => void;
 }
 
 const mockPresentation = (overrides: Partial<Presentation> = {}): Presentation =>
@@ -30,7 +51,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration: PresentationDurationResolver = () => 120.5;
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
 
@@ -45,7 +66,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration: PresentationDurationResolver = () => Number.POSITIVE_INFINITY;
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
 
@@ -60,7 +81,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration = vi.fn<PresentationDurationResolver>(() => 60);
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
     state.selectedVideoTrackId.set('video-1');
@@ -84,7 +105,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration: PresentationDurationResolver = () => undefined;
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
 
@@ -99,7 +120,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration: PresentationDurationResolver = () => Number.NaN;
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
 
@@ -114,7 +135,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState();
     const resolveDuration = vi.fn<PresentationDurationResolver>().mockReturnValueOnce(0).mockReturnValueOnce(-5);
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     state.presentation.set(mockPresentation());
     state.selectedVideoTrackId.set('video-1');
@@ -130,7 +151,7 @@ describe('calculatePresentationDuration', () => {
     const state = makeState({ presentation: mockPresentation({ duration: 60 }) });
     const resolveDuration = vi.fn<PresentationDurationResolver>(() => 120);
 
-    const cleanup = calculatePresentationDuration.setup({ state, config: { resolveDuration } });
+    const cleanup = setupDuration(state, resolveDuration);
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
