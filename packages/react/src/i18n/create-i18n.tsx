@@ -169,18 +169,24 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     onActiveLocaleChange,
   }: I18nProviderProps): ReactNode {
     const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
+    const langRootElement = langRootRef?.current ?? null;
+    const onActiveLocaleChangeRef = useRef(onActiveLocaleChange);
+    onActiveLocaleChangeRef.current = onActiveLocaleChange;
 
     useLayoutEffect(() => {
       if (langRootRef) {
         invalidateLangRoot();
       }
-    }, [langRootRef]);
+    }, [langRootRef, langRootElement]);
 
     const ambientLang = useSyncExternalStore(
       subscribeAmbientLang,
       () => {
-        const langRoot = langRootRef?.current ?? (typeof document !== 'undefined' ? document.documentElement : null);
-        return nearestLang(langRoot);
+        if (langRootRef) {
+          return nearestLang(langRootRef.current);
+        }
+        const root = typeof document !== 'undefined' ? document.documentElement : null;
+        return nearestLang(root);
       },
       ambientLangServerSnapshot
     );
@@ -188,8 +194,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const resolvedLocale = useMemo(() => effectiveLocale(localeProp, ambientLang), [localeProp, ambientLang]);
 
     useEffect(() => {
-      onActiveLocaleChange?.(resolvedLocale);
-    }, [resolvedLocale, onActiveLocaleChange]);
+      onActiveLocaleChangeRef.current?.(resolvedLocale);
+    }, [resolvedLocale]);
 
     const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
     useEffect(() => onI18nRegistryChange(() => invalidateRegistry()), []);

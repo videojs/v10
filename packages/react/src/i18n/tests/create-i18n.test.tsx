@@ -126,6 +126,35 @@ describe('createI18n', () => {
     });
   });
 
+  it('does not inherit html lang before langRootRef attaches', async () => {
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.setAttribute('lang', 'de');
+
+    const rootRef = createRef<HTMLDivElement>();
+    const { I18nProvider, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(
+      <section lang="fr">
+        <I18nProvider langRootRef={rootRef}>
+          <div ref={rootRef}>
+            <Probe />
+          </div>
+        </I18nProvider>
+      </section>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Lire')).not.toBeNull();
+    });
+    expect(screen.queryByText('Los')).toBeNull();
+  });
+
   it('prefers the closest lang attribute over html lang', async () => {
     registerI18n('de', { play: 'Los' });
     registerI18n('fr', { play: 'Lire' });
@@ -301,6 +330,38 @@ describe('createI18n', () => {
     await waitFor(() => {
       expect(screen.queryByText('es-MX')).not.toBeNull();
     });
+  });
+
+  it('does not re-notify onActiveLocaleChange when the handler identity changes', async () => {
+    registerI18n('de', { play: 'Los' });
+    document.documentElement.lang = 'de';
+
+    const onActiveLocaleChange = vi.fn();
+    const { I18nProvider } = createI18n();
+
+    function Probe(): ReactElement {
+      return <span>x</span>;
+    }
+
+    const { rerender } = render(
+      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('de');
+    });
+
+    const callCountAfterMount = onActiveLocaleChange.mock.calls.length;
+
+    rerender(
+      <I18nProvider onActiveLocaleChange={() => {}}>
+        <Probe />
+      </I18nProvider>
+    );
+
+    expect(onActiveLocaleChange.mock.calls.length).toBe(callCountAfterMount);
   });
 
   it('notifies onActiveLocaleChange when resolved locale changes', async () => {
