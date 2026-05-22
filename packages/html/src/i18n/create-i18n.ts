@@ -12,9 +12,7 @@ import { type Context, ContextConsumer, ContextProvider, createContext } from '@
 import { mergeLocaleOverlays, subscribeAmbientLang } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
-import { playerContext } from '../player/context';
 import { resolveProviderLocale } from './locale';
-import { selectCaptionsByLocale } from './select-captions-by-locale';
 
 async function noopBuiltinPack(_tag: string): Promise<Partial<Translations> | undefined> {
   return undefined;
@@ -116,12 +114,6 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       /** Locale snapshot when the current `#lazySeq` async load was started (see `willUpdate` drift guard). */
       #lazyResetStartedForLocale: Locale | undefined;
 
-      readonly #storeConsumer = new ContextConsumer(this, {
-        context: playerContext,
-        callback: () => this.#syncCaptions(),
-        subscribe: true,
-      });
-
       override connectedCallback(): void {
         super.connectedCallback();
         this.#registryUnsub = onI18nRegistryChange(() => this.requestUpdate());
@@ -159,7 +151,6 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       protected override updated(changed: PropertyValues): void {
         super.updated(changed);
         this.#publish();
-        this.#syncCaptions();
       }
 
       #resetLazyAndLoad(): void {
@@ -189,10 +180,6 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         };
         const translator = createTranslator(translations, locale);
         this.#i18nProvider.setValue({ translator, locale });
-      }
-
-      #syncCaptions(): void {
-        selectCaptionsByLocale(this.#storeConsumer.value ?? undefined, this.#resolvedLocale());
       }
     }
     return I18nProviderElement;

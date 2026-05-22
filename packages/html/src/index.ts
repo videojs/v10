@@ -43,7 +43,6 @@ export {
   registerI18n,
   resolvePlayerLocale,
   resolveProviderLocale,
-  selectCaptionsByLocale,
 } from './i18n';
 // Media
 export { MediaContainerElement } from './media/container-element';

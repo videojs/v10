@@ -1,4 +1,3 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../define/i18n';
 import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
-import { selectCaptionsByLocale } from '../select-captions-by-locale';
 
 describe('createI18n (HTML)', () => {
   afterEach(() => {
@@ -161,48 +159,5 @@ describe('createI18n (HTML)', () => {
     document.body.appendChild(el);
     await Promise.resolve();
     expect(el.textContent).toBe('Play');
-  });
-
-  it('selectCaptionsByLocale prefers exact language match over regional prefix', () => {
-    const video = document.createElement('video');
-    video.addTextTrack('subtitles', 'FR Canada', 'fr-CA');
-    video.addTextTrack('subtitles', 'FR generic', 'fr');
-
-    document.body.appendChild(video);
-
-    selectCaptionsByLocale({ target: { media: video, container: null } } as AnyPlayerStore, 'fr');
-
-    const generic = [...video.textTracks].find((t) => t.language === 'fr');
-    const regional = [...video.textTracks].find((t) => t.language === 'fr-CA');
-    expect(generic?.mode).toBe('showing');
-    expect(regional?.mode).toBe('disabled');
-  });
-
-  it('selectCaptionsByLocale prefers regional track over generic language', () => {
-    const video = document.createElement('video');
-    video.addTextTrack('subtitles', 'FR generic', 'fr');
-    video.addTextTrack('subtitles', 'FR France', 'fr-FR');
-
-    document.body.appendChild(video);
-
-    selectCaptionsByLocale({ target: { media: video, container: null } } as AnyPlayerStore, 'fr-FR');
-
-    const generic = [...video.textTracks].find((t) => t.language === 'fr');
-    const regional = [...video.textTracks].find((t) => t.language === 'fr-FR');
-    expect(regional?.mode).toBe('showing');
-    expect(generic?.mode).toBe('disabled');
-  });
-
-  it('selectCaptionsByLocale activates a matching text track', () => {
-    const video = document.createElement('video');
-    video.addTextTrack('subtitles', 'DE', 'de');
-    video.addTextTrack('subtitles', 'FR', 'fr');
-
-    document.body.appendChild(video);
-
-    selectCaptionsByLocale({ target: { media: video, container: null } } as AnyPlayerStore, 'fr');
-
-    const frTrack = [...video.textTracks].find((t) => t.language === 'fr');
-    expect(frTrack?.mode).toBe('showing');
   });
 });
