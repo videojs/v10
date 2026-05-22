@@ -450,4 +450,22 @@ describe('createI18n', () => {
     render(<Probe />);
     expect(screen.queryByText('Play')).not.toBeNull();
   });
+
+  it('refreshes fallback translator when the registry updates outside a provider', async () => {
+    const { useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(<Probe />);
+    expect(screen.queryByText('Play')).not.toBeNull();
+
+    registerI18n('en', { play: 'RegistryPlay' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('RegistryPlay')).not.toBeNull();
+    });
+  });
 });
