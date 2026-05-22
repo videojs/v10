@@ -72,7 +72,7 @@ function getTemplateHTML() {
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-menu-trigger>
             <media-captions-menu id="captions-menu" side="top" align="center" class="media-surface media-popover media-menu media-menu--captions">
-              <media-captions-options class="media-menu__group media-menu__group--standalone">
+              <media-captions-options class="media-menu__group">
                 <template>
                   <media-menu-radio-item class="media-menu__item">
                     <span data-part="label"></span>

@@ -4,15 +4,10 @@ import { popoverShell, popoverSideOffsetSize } from './popup';
 
 const panel = cn(
   'absolute inset-0 overflow-auto overscroll-none p-1.5 outline-none translate-none',
-  'before:hidden supports-[top:anchor(top)]:before:block',
-  'before:absolute before:h-(--menu-item-height) before:pointer-events-none before:rounded-full before:bg-current/10',
-  'before:transition-[inset] before:duration-100 before:ease-in-out',
-  'before:[position-anchor:--media-menu-item-highlight-anchor] before:[inset:anchor(inside)]',
-  'data-transitioning:overflow-hidden data-transitioning:before:duration-0 data-transitioning:before:opacity-0',
+  'data-transitioning:overflow-hidden in-data-transitioning:overflow-hidden',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:blur data-ending-style:blur',
-  'data-starting-style:before:duration-0 data-ending-style:before:duration-0',
   'data-starting-style:transition-none',
   'not-data-open:not-data-ending-style:-translate-x-full',
   'not-data-open:not-data-ending-style:transition-none',
@@ -27,27 +22,14 @@ const itemBase = cn(
   'flex h-(--menu-item-height) cursor-pointer select-none items-center rounded-full',
   'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
   'outline-2 -outline-offset-2 outline-transparent',
+  'transition-[background-color,color] duration-(--menu-item-transition-duration) ease-out',
   'hover:bg-current/10 data-highlighted:bg-current/10',
-  'supports-[top:anchor(top)]:hover:bg-transparent supports-[top:anchor(top)]:data-highlighted:bg-transparent',
-  'supports-[top:anchor(top)]:hover:[anchor-name:--media-menu-item-highlight-anchor]',
-  'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
   'focus-visible:outline-current focus-visible:outline-offset-2'
 );
 
 const menuTokens = cn(
-  '[--menu-item-height:1.875rem] [--menu-transition-duration:250ms]',
-  'motion-reduce:[--menu-transition-duration:0ms]'
-);
-
-const group = 'flex flex-col gap-0.5';
-
-const standaloneGroup = cn(
-  group,
-  'relative',
-  'before:hidden supports-[top:anchor(top)]:before:block',
-  'before:absolute before:pointer-events-none before:rounded-full before:bg-current/10',
-  'before:transition-[inset] before:duration-100 before:ease-in-out',
-  'before:[position-anchor:--media-menu-item-highlight-anchor] before:[inset:anchor(inside)]'
+  '[--menu-item-height:1.875rem] [--menu-transition-duration:250ms] [--menu-item-transition-duration:100ms]',
+  'motion-reduce:[--menu-transition-duration:0ms] motion-reduce:[--menu-item-transition-duration:0ms]'
 );
 
 const menuHostShell = cn(
@@ -72,12 +54,9 @@ export const menu = {
     'min-w-[min(var(--media-popover-available-width,11rem),11rem)]',
     'max-h-[min(var(--media-popover-available-height,16rem),16rem)]',
     'w-(--media-menu-width) h-(--media-menu-height)',
-    'overflow-hidden data-transitioning:overflow-hidden',
-    '[&[data-transitioning]_[data-menu-view]]:overflow-hidden',
-    '[&[data-transitioning]_[data-menu-view]::before]:duration-0'
+    'overflow-hidden data-transitioning:overflow-hidden'
   ),
-  group,
-  standaloneGroup,
+  group: 'flex flex-col gap-0.5',
   item: cn(
     itemBase,
     'group/menu-item justify-between gap-2 px-3 tabular-nums text-inherit',
