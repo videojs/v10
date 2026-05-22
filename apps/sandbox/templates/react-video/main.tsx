@@ -34,14 +34,14 @@ function App() {
   const loop = useLoop();
   const preload = usePreload();
   const locale = useLocale();
-  const [ready, setReady] = useState(false);
+  const [registeredLocale, setRegisteredLocale] = useState<string | null>(null);
 
   useEffect(() => {
     ensureSandboxLocale(locale);
-    setReady(true);
+    setRegisteredLocale(locale);
   }, [locale]);
 
-  if (!ready) {
+  if (registeredLocale !== locale) {
     return null;
   }
 
