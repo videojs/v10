@@ -8,10 +8,6 @@ let localeApplySeq = 0;
 
 document.documentElement.lang = locale;
 
-export function getSandboxHtmlLocale(): SandboxLocaleTag {
-  return locale;
-}
-
 export function wrapSandboxHtmlI18n(content: string): string {
   return `<media-i18n-provider lang="${locale}">${content}</media-i18n-provider>`;
 }
