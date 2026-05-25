@@ -26,7 +26,7 @@ export default {
   timeCurrent: 'Current time',
   timeDuration: 'Duration',
   timeRemaining: 'Remaining',
-  remainingTimeSuffix: 'remaining',
+  timeRemainingPhrase: '{duration} remaining',
   playbackRateAria: 'Playback rate {rate}',
   timeSliderValueTextRange: '{current} of {duration}',
   volumeSliderValueTextMuted: '{percent}, muted',

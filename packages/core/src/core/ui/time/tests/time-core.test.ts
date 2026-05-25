@@ -160,18 +160,18 @@ describe('TimeCore', () => {
       expect(attrs['aria-valuetext']).toBe(formatDuration(90 - 300));
     });
 
-    it('uses translate for remaining suffix when provided', () => {
+    it('uses formatRemaining for remaining phrase when provided', () => {
       const core = new TimeCore({
         type: 'remaining',
         formatOptions: {
           locale: 'en',
-          translate: (key) => (key === 'remaining' ? 'restante' : 'remaining'),
+          formatRemaining: (duration) => `quedan ${duration}`,
         },
       });
       core.setMedia(createMediaState({ currentTime: 60, duration: 120 }));
       const state = core.getState();
 
-      expect(state.phrase.endsWith('restante')).toBe(true);
+      expect(state.phrase.startsWith('quedan ')).toBe(true);
     });
   });
 });

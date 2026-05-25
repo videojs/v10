@@ -113,9 +113,10 @@ describe('formatDuration', () => {
     expect(formatDuration(-30)).toMatch(/remaining$/i);
   });
 
-  it('uses translate only for remaining suffix', () => {
-    expect(formatDuration(-30, { translate: () => 'restante' })).toMatch(/restante$/);
-    expect(formatDuration(90, { translate: () => 'should-not-appear' })).toBe(formatDuration(90));
+  it('uses formatRemaining only for negative durations', () => {
+    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/^quedan /);
+    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/30/);
+    expect(formatDuration(90, { formatRemaining: () => 'should-not-appear' })).toBe(formatDuration(90));
   });
 
   it('uses Intl.DurationFormat when supported; otherwise matches formatTimeAsPhrase', () => {
