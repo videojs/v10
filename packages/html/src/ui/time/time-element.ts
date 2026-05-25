@@ -1,14 +1,13 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
-import { createTranslator, resolveTranslationPhrase, translations } from '@videojs/core/i18n';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-
-const translator = createTranslator(translations, 'en');
 
 export class TimeElement extends MediaElement {
   static readonly tagName = 'media-time';
@@ -27,6 +26,7 @@ export class TimeElement extends MediaElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
+  readonly #i18n = new I18nController(this);
 
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');
@@ -86,7 +86,8 @@ export class TimeElement extends MediaElement {
       label: this.label,
       toggle: this.toggle,
       formatOptions: {
-        formatRemaining: (duration) => resolveTranslationPhrase(translator, 'timeRemainingPhrase', { duration }),
+        locale: this.#i18n.locale,
+        formatRemaining: (duration) => resolveTranslationPhrase(this.#i18n.value, 'timeRemainingPhrase', { duration }),
       },
     });
     this.#core.setMedia(media);
@@ -99,7 +100,7 @@ export class TimeElement extends MediaElement {
     const attrs = this.#core.getAttrs(state, this.type);
     applyElementProps(this, {
       ...attrs,
-      'aria-label': resolveTranslationPhrase(translator, attrs['aria-label'], this.#core.getLabelParams(state)),
+      'aria-label': resolveTranslationPhrase(this.#i18n.value, attrs['aria-label'], this.#core.getLabelParams(state)),
     });
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
