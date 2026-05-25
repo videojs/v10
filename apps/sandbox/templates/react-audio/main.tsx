@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import { AudioProvider } from '@app/shared/react/providers';
+import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
 import { useLoop } from '@app/shared/react/use-loop';
@@ -10,7 +11,6 @@ import { useSource } from '@app/shared/react/use-source';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { Audio } from '@videojs/react/audio';
-import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
 function readStyling(): Styling {
@@ -20,18 +20,20 @@ function readStyling(): Styling {
 function App() {
   const skin = useSkin();
   const source = useSource(true);
-  const styling = useMemo(readStyling, []);
+  const styling = readStyling();
   const autoplay = useAutoplay();
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
 
   return (
-    <AudioProvider>
-      <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
-        <Audio src={SOURCES[source].url} autoPlay={autoplay} muted={muted} loop={loop} preload={preload} />
-      </AudioSkinComponent>
-    </AudioProvider>
+    <SandboxI18nProvider>
+      <AudioProvider>
+        <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
+          <Audio src={SOURCES[source].url} autoPlay={autoplay} muted={muted} loop={loop} preload={preload} />
+        </AudioSkinComponent>
+      </AudioProvider>
+    </SandboxI18nProvider>
   );
 }
 
