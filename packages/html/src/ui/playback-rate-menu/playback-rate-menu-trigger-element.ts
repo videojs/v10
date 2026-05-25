@@ -2,6 +2,7 @@ import {
   PlaybackRateMenuCore,
   PlaybackRateMenuDataAttrs,
   resolveControlAttrs,
+  resolveControlLabel,
   type TranslationKeyOrString,
 } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
@@ -60,6 +61,13 @@ export class PlaybackRateMenuTriggerElement extends MediaElement {
   /** Returns the trigger's current label derived from media state. */
   getLabel(): TranslationKeyOrString | undefined {
     return this.#core.state.current.label || undefined;
+  }
+
+  getResolvedLabel(): string | undefined {
+    const media = this.#mediaState.value;
+    if (!media) return undefined;
+    const state = this.#core.getState();
+    return resolveControlLabel(this.#i18n.value, this.#core, state);
   }
 
   protected override update(changed: PropertyValues): void {

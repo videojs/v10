@@ -6,6 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
+import { I18nProviderMixin } from '../i18n/instance';
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 
@@ -17,7 +18,7 @@ const sharedSheet = createShadowStyle(sharedStyles);
  * `static template` into it, and applies shared + per-skin styles
  * via `adoptedStyleSheets` (or `<style>` fallback).
  */
-export class SkinElement extends ReactiveElement {
+export class SkinElement extends I18nProviderMixin(ReactiveElement) {
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static styles?: ShadowStyle;
   static template?: HTMLTemplateElement | null;

@@ -12,6 +12,11 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
   const url = `https://cdn.jsdelivr.net/npm/@videojs/html@${options.version}/cdn/i18n.js`;
   const devFile = 'i18n.dev.js';
 
+  function isCdnI18nEntry(importer: string): boolean {
+    const normalized = importer.replaceAll('\\', '/');
+    return normalized.includes('/cdn/i18n.ts') || normalized.endsWith('/cdn/i18n.js');
+  }
+
   return {
     name: 'cdn-i18n-external',
 
@@ -19,7 +24,7 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
       if (source === CDN_I18N_REGISTRY) {
         return { id: CDN_I18N_REGISTRY, external: true };
       }
-      if (source === '@videojs/core/i18n' && importer && !importer.includes('/cdn/i18n.ts')) {
+      if (source === '@videojs/core/i18n' && importer && !isCdnI18nEntry(importer)) {
         return { id: CDN_I18N_REGISTRY, external: true };
       }
       return null;
