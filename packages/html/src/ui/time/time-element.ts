@@ -1,15 +1,14 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
-import { createTranslator, resolveTranslation, translations } from '@videojs/core/i18n';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-
-const translator = createTranslator(translations, 'en');
 
 export class TimeElement extends MediaElement {
   static readonly tagName = 'media-time';
@@ -28,6 +27,7 @@ export class TimeElement extends MediaElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
+  readonly #i18n = new I18nController(this);
 
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');
@@ -97,7 +97,7 @@ export class TimeElement extends MediaElement {
     const attrs = this.#core.getAttrs(state, this.type);
     applyElementProps(this, {
       ...attrs,
-      'aria-label': resolveTranslation(translator, attrs['aria-label'], this.#getLabelParams(state)),
+      'aria-label': resolveTranslation(this.#i18n.value, attrs['aria-label'], this.#getLabelParams(state)),
     });
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
@@ -109,8 +109,8 @@ export class TimeElement extends MediaElement {
     }
 
     return {
-      duration: resolveTranslation(translator, '{duration} remaining', {
-        duration: formatTimeAsPhrase(Math.abs(state.seconds)),
+      duration: resolveTranslation(this.#i18n.value, '{duration} remaining', {
+        duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale: this.#i18n.locale }),
       }),
     };
   }

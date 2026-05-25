@@ -5,6 +5,7 @@ import {
   TooltipCSSVars,
   TooltipDataAttrs,
   type TooltipInput,
+  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   applyElementProps,
@@ -23,12 +24,15 @@ import {
   type TooltipChangeDetails,
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, listen, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { isFunction } from '@videojs/utils/predicate';
 
+import { I18nController } from '../../i18n/instance';
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
@@ -37,7 +41,8 @@ import { TooltipLabelElement } from './tooltip-label-element';
 import { TooltipShortcutElement } from './tooltip-shortcut-element';
 
 type TriggerElement = HTMLElement & {
-  getLabel(): string | undefined;
+  getLabel(): TranslationKeyOrString | undefined;
+  getResolvedLabel?(): string | undefined;
   getShortcut?: (() => string | undefined) | undefined;
   $state: State<ButtonState>;
 };
@@ -72,6 +77,7 @@ export class TooltipElement extends MediaElement {
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
+  readonly #i18n = new I18nController(this);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
@@ -167,6 +173,10 @@ export class TooltipElement extends MediaElement {
     const triggerEl = this.#position.findTrigger();
     this.#syncTrigger(triggerEl);
 
+    if (this.#currentTrigger && isLabelTrigger(this.#currentTrigger)) {
+      this.#syncContent(this.#currentTrigger);
+    }
+
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
     this.#core.setInput(input);
@@ -246,7 +256,12 @@ export class TooltipElement extends MediaElement {
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    const label = triggerEl.getLabel() ?? '';
+    const label = triggerEl.getLabel();
+    const resolved = isFunction(triggerEl.getResolvedLabel)
+      ? triggerEl.getResolvedLabel()
+      : label
+        ? resolveTranslationPhrase(this.#i18n.value, label)
+        : undefined;
     const shortcut = triggerEl.getShortcut?.();
 
     let labelEl = TooltipLabelElement.findIn(this);
@@ -260,7 +275,7 @@ export class TooltipElement extends MediaElement {
       this.replaceChildren(labelEl, shortcutEl);
     }
 
-    labelEl?.setSyncedText(label);
+    labelEl?.setSyncedText(resolved ?? '');
     shortcutEl?.setSyncedShortcut(shortcut);
   }
 
