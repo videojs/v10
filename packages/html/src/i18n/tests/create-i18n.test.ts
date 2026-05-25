@@ -209,4 +209,32 @@ describe('createI18n (HTML)', () => {
     });
     expect(getBrowserTranslations).not.toHaveBeenCalled();
   });
+
+  it('does not register browser translations after locale changes', async () => {
+    let resolveBrowser: ((value: Partial<coreI18n.Translations>) => void) | undefined;
+    const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveBrowser = resolve;
+        })
+    );
+    const registerI18nSpy = vi.spyOn(coreI18n, 'registerI18n');
+
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'xx');
+    document.body.appendChild(provider);
+
+    await vi.waitFor(() => {
+      expect(getBrowserTranslations).toHaveBeenCalledWith('xx');
+    });
+
+    provider.setAttribute('lang', 'fr');
+    await Promise.resolve();
+
+    resolveBrowser?.({ play: 'StaleBrowserPlay' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(registerI18nSpy).not.toHaveBeenCalledWith('xx', { play: 'StaleBrowserPlay' });
+  });
 });
