@@ -150,7 +150,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   };
 
   return (
-    <I18nProvider>
+    <I18nProvider langRootRef={internalRef}>
       <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
         {children}
       </div>
