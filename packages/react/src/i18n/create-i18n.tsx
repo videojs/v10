@@ -98,7 +98,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 
   const I18nContext = createContext<I18nContextValue | null>(null);
 
-  function I18nProvider({
+  function I18nProviderRoot({
     locale: localeProp,
     langRootRef,
     translations: translationsProp,
@@ -194,6 +194,19 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     );
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+  }
+
+  function I18nProvider(props: I18nProviderProps): ReactNode {
+    const parent = useContext(I18nContext);
+    const hasOverrides =
+      props.locale !== undefined ||
+      props.translations !== undefined ||
+      props.langRootRef !== undefined ||
+      props.onActiveLocaleChange !== undefined;
+    if (parent && !hasOverrides) {
+      return props.children;
+    }
+    return <I18nProviderRoot {...props} />;
   }
 
   function useTranslator(): Translator {

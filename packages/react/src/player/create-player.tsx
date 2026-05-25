@@ -16,9 +16,8 @@ import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { I18nProvider } from '../i18n';
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
@@ -75,8 +74,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
-    const langRootRef = useRef<HTMLElement | null>(null);
-    langRootRef.current = container;
 
     useDestroy(store);
 
@@ -87,7 +84,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     return (
       <PlayerContextProvider value={{ store, media, setMedia, container, setContainer, popupGroup }}>
-        <I18nProvider langRootRef={langRootRef}>{children}</I18nProvider>
+        {children}
       </PlayerContextProvider>
     );
   }
