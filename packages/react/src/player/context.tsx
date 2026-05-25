@@ -7,6 +7,7 @@ import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
 
+import { I18nProvider } from '../i18n';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
 export interface PlayerContextValue {
@@ -149,9 +150,11 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   };
 
   return (
-    <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
-      {children}
-    </div>
+    <I18nProvider>
+      <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
+        {children}
+      </div>
+    </I18nProvider>
   );
 });
 
