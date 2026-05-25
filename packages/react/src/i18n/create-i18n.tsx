@@ -128,7 +128,10 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       subscribeAmbientLang,
       () => {
         if (langRootRef) {
-          const root = langRootElementRef.current ?? langRootRef.current;
+          const root =
+            langRootElementRef.current ??
+            langRootRef.current ??
+            (typeof document !== 'undefined' ? document.documentElement : null);
           return localeFromDomLang(nearestLang(root));
         }
         const root = typeof document !== 'undefined' ? document.documentElement : null;
@@ -206,7 +209,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     if (parent && !hasOverrides) {
       return props.children;
     }
-    return <I18nProviderRoot {...props} />;
+    const locale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
+    return <I18nProviderRoot {...props} locale={locale} />;
   }
 
   function useTranslator(): Translator {

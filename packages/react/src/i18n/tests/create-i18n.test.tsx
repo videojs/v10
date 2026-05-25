@@ -576,4 +576,32 @@ describe('createI18n', () => {
     });
     expect(getBrowserTranslations).not.toHaveBeenCalled();
   });
+
+  it('inherits ancestor locale when a nested provider only overrides translations', async () => {
+    registerI18n('de', { play: 'Abspielen', pause: 'Pause' });
+
+    const { I18nProvider, useTranslator, useLocale } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      const locale = useLocale();
+      return (
+        <span>
+          {locale}:{t('play')}:{t('pause')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider locale="de">
+        <I18nProvider translations={{ play: 'Override' }}>
+          <Probe />
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('de:Override:Pause')).not.toBeNull();
+    });
+  });
 });
