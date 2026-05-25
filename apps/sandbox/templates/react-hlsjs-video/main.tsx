@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
+import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -34,15 +35,16 @@ function App() {
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
   return (
-    <Provider>
-      <VideoSkinComponent
-        poster={poster}
-        skin={skin}
-        styling={styling}
-        live={live}
-        className="aspect-video max-w-4xl mx-auto"
-      >
-        <HlsJsVideo
+    <SandboxI18nProvider>
+      <Provider>
+        <VideoSkinComponent
+          poster={poster}
+          skin={skin}
+          styling={styling}
+          live={live}
+          className="aspect-video max-w-4xl mx-auto"
+      	>
+          <HlsJsVideo
           src={SOURCES[source].url}
           autoPlay={autoplay}
           muted={muted}
@@ -51,10 +53,12 @@ function App() {
           playsInline
           crossOrigin="anonymous"
         >
-          <Storyboard src={storyboard} />
+            <Storyboard src={storyboard} />
+          </HlsVideo>
         </HlsJsVideo>
       </VideoSkinComponent>
     </Provider>
+	</SandboxI18nProvider>
   );
 }
 

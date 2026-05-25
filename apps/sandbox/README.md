@@ -12,6 +12,8 @@ pnpm dev                     # also runs the docs site
 
 Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
 
+**Language** is in **Player settings** (gear icon) for every preset (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
+
 The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `simple-hls-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 
 ## How it works
@@ -22,7 +24,7 @@ Three directories participate:
 - **`templates/`** — The source of truth for each sandbox. One subdirectory per entry point, each containing its own `index.html` and `main.ts` / `main.tsx`. Checked into git.
 - **`src/`** — Your working copy where you freely edit, experiment, and break things. Fully gitignored (`src/*`).
 
-On `pnpm dev:sandbox`, `scripts/setup.ts` mirrors every file from `templates/` into `src/` that doesn't already exist there. Existing files in `src/` are never overwritten, so your local changes persist across restarts.
+On `pnpm dev:sandbox`, `scripts/setup.ts` mirrors new files from `templates/` into `src/` and overwrites `src/` files that differ from `templates/`. Edits made only in `src/` are replaced on the next dev start — use `sync` to copy them into `templates/` first.
 
 Vite discovers sandbox entries by scanning `src/*` for subdirectories that contain an `index.html` — no manual registration is needed.
 
