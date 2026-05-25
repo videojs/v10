@@ -633,7 +633,7 @@ describe('createI18n', () => {
     });
   });
 
-  it('passes through when a nested provider only supplies langRootRef', async () => {
+  it('passes through when a nested provider only supplies langRootRef under an explicit locale', async () => {
     registerI18n('de', { play: 'Abspielen' });
 
     const { I18nProvider, useTranslator } = createI18n();
@@ -656,5 +656,35 @@ describe('createI18n', () => {
     await waitFor(() => {
       expect(screen.queryByText('Abspielen')).not.toBeNull();
     });
+  });
+
+  it('resolves langRootRef when nested under an ambient ancestor provider', async () => {
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const { I18nProvider, useTranslator } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      return <span>{useTranslator()('play')}</span>;
+    }
+
+    render(
+      <I18nProvider>
+        <section lang="fr">
+          <I18nProvider langRootRef={rootRef}>
+            <div ref={rootRef}>
+              <Probe />
+            </div>
+          </I18nProvider>
+        </section>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Lire')).not.toBeNull();
+    });
+    expect(screen.queryByText('Los')).toBeNull();
   });
 });

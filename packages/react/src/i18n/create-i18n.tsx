@@ -79,6 +79,8 @@ export interface I18nProviderProps {
 export interface I18nContextValue {
   translator: Translator;
   locale: Locale;
+  /** True when {@link I18nProviderProps.locale} was set explicitly on this provider. */
+  localeFromProp: boolean;
 }
 
 export interface CreateI18nResult {
@@ -193,8 +195,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const translator = useMemo(() => createTranslator(translations, resolvedLocale), [translations, resolvedLocale]);
 
     const value = useMemo<I18nContextValue>(
-      () => ({ translator, locale: resolvedLocale }),
-      [translator, resolvedLocale]
+      () => ({ translator, locale: resolvedLocale, localeFromProp: localeProp !== undefined }),
+      [translator, resolvedLocale, localeProp]
     );
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -204,7 +206,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const parent = useContext(I18nContext);
     const hasOverrides =
       props.locale !== undefined || props.translations !== undefined || props.onActiveLocaleChange !== undefined;
-    if (parent && !hasOverrides) {
+    const langRootOnly = props.langRootRef !== undefined && !hasOverrides;
+    if (parent && !hasOverrides && (!langRootOnly || parent.localeFromProp)) {
       return props.children;
     }
     const inheritedLocale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
