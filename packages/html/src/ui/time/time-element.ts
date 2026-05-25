@@ -51,8 +51,7 @@ export class TimeElement extends MediaElement {
       label: this.label,
       formatOptions: {
         locale: this.#i18n.locale,
-        translate: (key) =>
-          key === 'remaining' ? resolveTranslationPhrase(this.#i18n.value, 'remainingTimeSuffix') : 'remaining',
+        formatRemaining: (duration) => resolveTranslationPhrase(this.#i18n.value, 'timeRemainingPhrase', { duration }),
       },
     });
   }
