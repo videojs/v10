@@ -27,6 +27,7 @@ const preset = (params.get('preset') ?? 'video') as Preset;
 const state = createHtmlSandboxState(preset === 'audio');
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
+let localeApplySeq = 0;
 
 function updateProviderLang(tag: SandboxLocaleTag): void {
   document.querySelector('media-i18n-provider')?.setAttribute('lang', tag);
@@ -68,8 +69,9 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
   return document.querySelector('media-play-button')?.getAttribute('aria-label') ?? undefined;
 }
 
-async function syncCdnI18nProvider(tag: SandboxLocaleTag): Promise<void> {
+async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<void> {
   await ensureCdnSandboxLocale(tag);
+  if (seq !== localeApplySeq) return;
   updateProviderLang(tag);
 
   const provider = document.querySelector('media-i18n-provider') as LitElementLike | null;
@@ -77,12 +79,14 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag): Promise<void> {
 
   provider.requestUpdate();
   await provider.updateComplete;
+  if (seq !== localeApplySeq) return;
 
   if (!import.meta.env.DEV || tag === 'en') return;
   if (!document.querySelector('media-play-button')) return;
 
   const expected = getI18nTranslations(tag).play;
   const playLabel = await waitForCdnPlayLabel(expected);
+  if (seq !== localeApplySeq) return;
 
   if (playLabel !== expected) {
     throw new Error(
@@ -92,9 +96,10 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag): Promise<void> {
 }
 
 async function applyLocale(next: SandboxLocaleTag): Promise<void> {
+  const seq = ++localeApplySeq;
   locale = next;
   document.documentElement.lang = locale;
-  await syncCdnI18nProvider(locale);
+  await syncCdnI18nProvider(locale, seq);
 }
 
 // ---------------------------------------------------------------------------
@@ -268,7 +273,7 @@ async function render() {
         </${skinTag}>
       `
     );
-    await syncCdnI18nProvider(locale);
+    await syncCdnI18nProvider(locale, localeApplySeq);
     return;
   }
 
@@ -285,7 +290,7 @@ async function render() {
         )}
       </div>
     `;
-    await syncCdnI18nProvider(locale);
+    await syncCdnI18nProvider(locale, localeApplySeq);
     return;
   }
 
@@ -300,7 +305,7 @@ async function render() {
 
   root.innerHTML = wrapCdnPlayerI18n(playerTag, skin);
 
-  await syncCdnI18nProvider(locale);
+  await syncCdnI18nProvider(locale, localeApplySeq);
 
   if (import.meta.env.DEV && !document.querySelector('media-i18n-provider')) {
     throw new Error(
