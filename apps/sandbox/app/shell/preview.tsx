@@ -46,11 +46,10 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   const previousLocaleRef = useRef(locale);
 
   useEffect(() => {
-    if (!reloadOnLocale) return;
     if (previousLocaleRef.current === locale) return;
     previousLocaleRef.current = locale;
-    setIframeUrl(buildUrl(pagePath, true));
-    // biome-ignore lint/correctness/useExhaustiveDependencies: CDN locale swaps need a full reload; other toggles use postMessage.
+    setIframeUrl(buildUrl(pagePath, reloadOnLocale));
+    // biome-ignore lint/correctness/useExhaustiveDependencies: keep iframe `src` locale in sync; other toggles use postMessage.
   }, [locale, pagePath, reloadOnLocale]);
 
   return (
