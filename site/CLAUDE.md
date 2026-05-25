@@ -29,7 +29,7 @@ git push origin site/v10
 
 The next release force-pushes `main` to `site/v10`, which already includes the cherry-picked commit (since it originated on `main`). All fixes must land on `main` first — the `site/v10` branch has branch protection that restricts direct pushes to the CD bot.
 
-**Branch deploys (main.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs. They also render a dismissable top banner (`src/components/PrereleaseBanner.astro`) that links back to the stable site. The banner is gated by `isPrereleaseSite(Astro.site)` from `src/consts.ts` — change `PRERELEASE_URL` there if the pre-release hostname moves.
+**Branch deploys (main.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs. They also render a top banner (`src/components/PrereleaseBanner.astro`) that links back to the stable site. The banner is gated by `isPrereleaseSite(Astro.site)` from `src/consts.ts` — change `PRERELEASE_URL` there if the pre-release hostname moves.
 
 ## Commands
 
