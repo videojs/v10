@@ -1,8 +1,10 @@
 import { defaults } from '@videojs/utils/object';
+import { formatVolumePercent } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaVolumeState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
+import type { TranslationKeyOrString } from '../types';
 
 export interface VolumeSliderProps extends SliderProps {
   /** Step increment for wheel scrolling. */
@@ -23,11 +25,12 @@ export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, '
 export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,
-    label: 'Volume',
+    label: '',
     wheelStep: 5,
   };
 
   #media: MediaVolumeState | null = null;
+  #formatLocale: string | string[] | undefined;
 
   constructor(props?: VolumeSliderProps) {
     super();
@@ -40,6 +43,11 @@ export class VolumeSliderCore extends SliderCore {
 
   setMedia(media: MediaVolumeState): void {
     this.#media = media;
+  }
+
+  /** @internal Platform adapters set the active i18n locale for `aria-valuetext` percent formatting. */
+  setFormatLocale(locale: string | string[] | undefined): void {
+    this.#formatLocale = locale;
   }
 
   getState(): VolumeSliderState {
@@ -67,17 +75,24 @@ export class VolumeSliderCore extends SliderCore {
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Volume';
+  override getLabel(state: SliderState): TranslationKeyOrString {
+    return super.getLabel(state) || 'volume';
+  }
+
+  getValueText(state: VolumeSliderState): TranslationKeyOrString {
+    return state.muted ? 'volumeSliderValueTextMuted' : this.getValueTextParams(state).percent;
+  }
+
+  getValueTextParams(state: VolumeSliderState): { percent: string } {
+    return { percent: formatVolumePercent(state.value / 100, this.#formatLocale) };
   }
 
   override getAttrs(state: VolumeSliderState) {
     const base = super.getAttrs(state);
-    const valuetext = `${Math.round(state.value)} percent${state.muted ? ', muted' : ''}`;
 
     return {
       ...base,
-      'aria-valuetext': valuetext,
+      'aria-valuetext': this.getValueText(state),
     };
   }
 }

@@ -47,7 +47,7 @@ describe('PlaybackRateMenuCore', () => {
   describe('getLabel', () => {
     it('returns default label with rate', () => {
       const core = new PlaybackRateMenuCore();
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate 1.5');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('playbackRateAria');
     });
 
     it('returns custom string label', () => {
@@ -60,6 +60,18 @@ describe('PlaybackRateMenuCore', () => {
         label: (state) => `${state.rate}× speed`,
       });
       expect(core.getLabel(createState({ rate: 2 }))).toBe('2× speed');
+    });
+  });
+
+  describe('getLabelParams', () => {
+    it('returns rate for default label', () => {
+      const core = new PlaybackRateMenuCore();
+      expect(core.getLabelParams(createState({ rate: 2 }))).toEqual({ rate: 2 });
+    });
+
+    it('returns undefined when custom label is set', () => {
+      const core = new PlaybackRateMenuCore({ label: 'Speed' });
+      expect(core.getLabelParams(createState())).toBeUndefined();
     });
   });
 
@@ -82,7 +94,7 @@ describe('PlaybackRateMenuCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateMenuCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toBe('Playback rate 1.5');
+      expect(attrs['aria-label']).toBe('playbackRateAria');
     });
 
     it('sets aria-disabled when disabled', () => {

@@ -15,7 +15,9 @@
     "player",
     "videojs"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "**/i18n/registry.js"
+  ],
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -31,6 +33,16 @@
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
       "default": "./dist/default/dom/media/*/index.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n.d.ts",
+      "development": "./dist/dev/i18n.js",
+      "default": "./dist/default/i18n.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "main": "dist/default/index.js",

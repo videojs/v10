@@ -1,9 +1,10 @@
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
-import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
+import { formatDuration, formatTime, secondsToIsoDuration, type TimeFormatOptions } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import type { TranslationKeyOrString } from '../types';
 
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
@@ -14,7 +15,9 @@ export interface TimeProps {
   /** Symbol prepended to remaining time. */
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
-  label?: string | ((state: TimeState) => string) | undefined;
+  label?: TranslationKeyOrString | ((state: TimeState) => TranslationKeyOrString) | undefined;
+  /** Options for `formatDuration` when building spoken-duration copy (`phrase` state and screen readers), not digital clock text. */
+  formatOptions?: TimeFormatOptions | undefined;
 }
 
 export interface TimeState {
@@ -32,20 +35,22 @@ export interface TimeState {
   datetime: string;
 }
 
-const DEFAULT_LABELS: Record<TimeType, string> = {
-  current: 'Current time',
-  duration: 'Duration',
-  remaining: 'Remaining',
+const DEFAULT_LABEL_KEYS: Record<TimeType, 'timeCurrent' | 'timeDuration' | 'timeRemaining'> = {
+  current: 'timeCurrent',
+  duration: 'timeDuration',
+  remaining: 'timeRemaining',
 };
 
+type TimeCoreResolvedProps = NonNullableObject<Omit<TimeProps, 'formatOptions'>> & Pick<TimeProps, 'formatOptions'>;
+
 export class TimeCore {
-  static readonly defaultProps: NonNullableObject<TimeProps> = {
+  static readonly defaultProps: NonNullableObject<Omit<TimeProps, 'formatOptions'>> = {
     type: 'current',
     negativeSign: '-',
     label: '',
   };
 
-  #props = { ...TimeCore.defaultProps };
+  #props: TimeCoreResolvedProps = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
 
   constructor(props?: TimeProps) {
@@ -53,7 +58,7 @@ export class TimeCore {
   }
 
   setProps(props: TimeProps): void {
-    this.#props = defaults(props, TimeCore.defaultProps);
+    this.#props = defaults(props, TimeCore.defaultProps) as TimeCoreResolvedProps;
   }
 
   setMedia(media: MediaTimeState): void {
@@ -82,15 +87,15 @@ export class TimeCore {
   }
 
   #getPhrase(): string {
-    const { type } = this.#props;
+    const { type, formatOptions } = this.#props;
     const seconds = this.#getSeconds();
 
     if (type === 'remaining') {
       // Use negative to trigger "remaining" suffix
-      return formatTimeAsPhrase(seconds < 0 ? seconds : -Math.abs(seconds));
+      return formatDuration(seconds < 0 ? seconds : -Math.abs(seconds), formatOptions);
     }
 
-    return formatTimeAsPhrase(seconds);
+    return formatDuration(seconds, formatOptions);
   }
 
   #getDatetime(): string {
@@ -98,17 +103,11 @@ export class TimeCore {
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
-  getLabel(state: TimeState): string {
-    const { label } = this.#props;
+  getLabel(state: TimeState): TranslationKeyOrString {
+    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    if (custom !== undefined) return custom;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    return DEFAULT_LABELS[this.#props.type];
+    return DEFAULT_LABEL_KEYS[this.#props.type];
   }
 
   getAttrs(state: TimeState) {

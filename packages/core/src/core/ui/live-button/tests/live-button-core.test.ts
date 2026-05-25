@@ -148,12 +148,12 @@ describe('LiveButtonCore', () => {
   describe('getLabel', () => {
     it('returns "Seek to live edge" when behind live', () => {
       const core = new LiveButtonCore();
-      expect(core.getLabel(createState({ live: true, liveEdge: false }))).toBe('Seek to live edge');
+      expect(core.getLabel(createState({ live: true, liveEdge: false }))).toBe('seekToLiveEdge');
     });
 
     it('returns "Playing live" when at live edge', () => {
       const core = new LiveButtonCore();
-      expect(core.getLabel(createState({ live: true, liveEdge: true }))).toBe('Playing live');
+      expect(core.getLabel(createState({ live: true, liveEdge: true }))).toBe('playingLive');
     });
 
     it('returns custom string label', () => {
