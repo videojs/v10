@@ -1,8 +1,9 @@
-import { StatusAnnouncerCore } from '@videojs/core';
+import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
 import { getMediaSnapshot, subscribeToInputActions } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
+import { I18nController } from '../../i18n/instance';
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -16,6 +17,7 @@ export class StatusAnnouncerElement extends MediaElement {
 
   closeDelay: number | undefined;
 
+  readonly #i18n = new I18nController(this);
   readonly #core = new StatusAnnouncerCore();
   readonly #player = new PlayerController(this, playerContext);
   readonly #container = new ContextConsumer(this, {
@@ -54,7 +56,10 @@ export class StatusAnnouncerElement extends MediaElement {
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
-    this.#core.setProps({ closeDelay: this.closeDelay });
+    this.#core.setProps({
+      closeDelay: this.closeDelay,
+      labels: createInputIndicatorLabels(this.#i18n.value),
+    });
   }
 
   protected override update(changed: PropertyValues): void {

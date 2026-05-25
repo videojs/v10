@@ -69,7 +69,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
 
   get target(): HTMLVideoElement | null {
     return (
-      this.querySelector(':scope > [slot=media]') ??
+      this.querySelector<HTMLVideoElement>(':scope > [slot=media]') ??
       this.querySelector('video') ??
       this.shadowRoot?.querySelector('video') ??
       null

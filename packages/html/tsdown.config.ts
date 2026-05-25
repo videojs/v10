@@ -6,8 +6,8 @@ import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
-
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/built-in-locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
@@ -34,10 +34,18 @@ const iconEntries = Object.fromEntries(
   })
 );
 
+const i18nLocaleEntries = Object.fromEntries([
+  ['i18n/locales/all', 'src/i18n/locales/all.ts'],
+  ['i18n/locales/en', 'src/i18n/locales/en.ts'],
+  ...SHIPPED_LOCALE_TAGS.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
+]);
+
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   entry: {
     index: 'src/index.ts',
+    'i18n/index': 'src/i18n/index.ts',
+    ...i18nLocaleEntries,
     ...iconEntries,
     ...defineEntries,
     ...presetEntries,
