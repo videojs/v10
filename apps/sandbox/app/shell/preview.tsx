@@ -2,7 +2,7 @@ import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Preset, Skin, Styling } from '@app/types';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
@@ -43,9 +43,12 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   // toggle — those changes are streamed in via postMessage.
   const [iframeUrl, setIframeUrl] = useState(() => buildUrl(pagePath));
   const openUrl = buildUrl(pagePath);
+  const previousLocaleRef = useRef(locale);
 
   useEffect(() => {
     if (!reloadOnLocale) return;
+    if (previousLocaleRef.current === locale) return;
+    previousLocaleRef.current = locale;
     setIframeUrl(buildUrl(pagePath, true));
     // biome-ignore lint/correctness/useExhaustiveDependencies: CDN locale swaps need a full reload; other toggles use postMessage.
   }, [locale, pagePath, reloadOnLocale]);
