@@ -28,6 +28,9 @@ function objectEntry(tag: string): string {
 function generateLoadLocaleTs(): string {
   const tags = [...BUILT_IN_LOCALES, ...LOCALE_ALIAS_TAGS];
   const entries = tags.map((tag) => `  '${tag}': () => import('./locales/${tag}'),`).join('\n');
+  const normalizedEntries = tags
+    .map((tag) => `  '${tag.trim().replaceAll('_', '-').toLowerCase()}': '${tag}',`)
+    .join('\n');
 
   return `${GENERATED_HEADER}import { hasRegisteredI18n } from './registry';
 import type { Translations } from './types';
@@ -36,10 +39,19 @@ const loaders = {
 ${entries}
 } as const satisfies Record<string, () => Promise<{ default: Partial<Translations> }>>;
 
+const loaderTagByNormalized = {
+${normalizedEntries}
+} as const satisfies Record<string, keyof typeof loaders>;
+
+function normalizeLocaleTag(tag: string): string {
+  return tag.trim().replaceAll('_', '-').toLowerCase();
+}
+
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<Translations> | undefined> {
   if (hasRegisteredI18n(tag)) return undefined;
-  const load = loaders[tag as keyof typeof loaders];
+  const loaderTag = loaderTagByNormalized[normalizeLocaleTag(tag) as keyof typeof loaderTagByNormalized];
+  const load = loaderTag ? loaders[loaderTag] : undefined;
   if (!load) return undefined;
   return (await load()).default;
 }
