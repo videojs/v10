@@ -179,6 +179,34 @@ export function pickVideoTrack(presentation: Presentation, config: VideoSelectio
 }
 
 /**
+ * Pick the video track with the highest resolution (width x height).
+ *
+ * Falls back to `bandwidth` when resolution metadata is missing.
+ *
+ * Pair with `selectVideoTrack`; compose `switchVideoQuality` instead
+ * for runtime-adapted quality.
+ */
+export function pickMaxResolutionVideoTrack(presentation: MaybeResolvedPresentation): string | undefined {
+  const videoSet = presentation.selectionSets?.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
+  const tracks = videoSet?.switchingSets[0]?.tracks;
+  if (!tracks?.length) return undefined;
+
+  let bestId: string | undefined;
+  let bestArea = -1;
+  let bestBandwidth = -1;
+  for (const track of tracks) {
+    const area = track.width && track.height ? track.width * track.height : 0;
+    const bandwidth = track.bandwidth ?? 0;
+    if (area > bestArea || (area === bestArea && bandwidth > bestBandwidth)) {
+      bestArea = area;
+      bestBandwidth = bandwidth;
+      bestId = track.id;
+    }
+  }
+  return bestId;
+}
+
+/**
  * Pick audio track.
  *
  * Selection priority:

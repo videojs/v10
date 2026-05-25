@@ -7,7 +7,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../types';
-import { pickAudioTrack, pickTextTrack, pickVideoTrack } from '../select-tracks';
+import { pickAudioTrack, pickMaxResolutionVideoTrack, pickTextTrack, pickVideoTrack } from '../select-tracks';
 
 // Helper to create a minimal presentation
 function createPresentation(config: {
@@ -173,6 +173,103 @@ describe('pickVideoTrack', () => {
       type: 'video',
     });
     expect(selected).toBe('720p'); // Falls back since it's the only/lowest option
+  });
+});
+
+describe('pickMaxResolutionVideoTrack', () => {
+  it('selects the track with the highest width × height area', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: '360p',
+        url: 'http://example.com/360p.m3u8',
+        bandwidth: 500_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 640,
+        height: 360,
+      },
+      {
+        type: 'video',
+        id: '1080p',
+        url: 'http://example.com/1080p.m3u8',
+        bandwidth: 4_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+      {
+        type: 'video',
+        id: '720p',
+        url: 'http://example.com/720p.m3u8',
+        bandwidth: 2_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1280,
+        height: 720,
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p');
+  });
+
+  it('falls back to bandwidth when resolution metadata is missing', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'low',
+        url: 'http://example.com/low.m3u8',
+        bandwidth: 500_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+      },
+      {
+        type: 'video',
+        id: 'high',
+        url: 'http://example.com/high.m3u8',
+        bandwidth: 4_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('high');
+  });
+
+  it('breaks ties on equal resolution by bandwidth', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: '1080p-low',
+        url: 'http://example.com/1080p-low.m3u8',
+        bandwidth: 3_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+      {
+        type: 'video',
+        id: '1080p-high',
+        url: 'http://example.com/1080p-high.m3u8',
+        bandwidth: 6_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p-high');
+  });
+
+  it('returns undefined when no video tracks exist', () => {
+    const presentation = createPresentation({ audio: [] });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBeUndefined();
   });
 });
 
