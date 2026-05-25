@@ -1,13 +1,10 @@
 import { isNumber } from '../predicate/predicate';
 
-/** Translates the “remaining” suffix for negative durations passed to {@link formatDuration}. */
-export type TimeTranslate = (key: 'remaining') => string;
-
 export type TimeFormatOptions = {
   /** BCP 47 tag(s) for {@link Intl.DurationFormat} (and percent formatting where applicable). */
   locale?: string | string[];
-  /** Called only when `seconds` is negative; should return the localized word for “remaining” (no leading space). */
-  translate?: TimeTranslate;
+  /** Called only when `seconds` is negative; formats the localized remaining-time phrase for the duration body. */
+  formatRemaining?: (duration: string) => string;
   /** Passed to `Intl.DurationFormat`; defaults to `"long"`. */
   style?: 'long' | 'short' | 'narrow' | 'digital';
 };
@@ -187,8 +184,8 @@ export function secondsToIsoDuration(seconds: number): string {
 /**
  * Human-readable duration using {@link Intl.DurationFormat} when available.
  *
- * Negative `seconds` denote remaining time: the absolute value is formatted, then a suffix is appended.
- * Use `translate` to localize that suffix; otherwise the English word `remaining` is used.
+ * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a
+ * localized phrase via {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
  */
 export function formatDuration(seconds: number, options?: TimeFormatOptions): string {
   if (!isValidTime(seconds)) {
@@ -225,8 +222,8 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
   }
 
   if (negative) {
-    const suffix = options?.translate?.('remaining') ?? 'remaining';
-    return `${body} ${suffix}`;
+    const formatRemaining = options?.formatRemaining;
+    return formatRemaining ? formatRemaining(body) : `${body} remaining`;
   }
 
   return body;
