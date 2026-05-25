@@ -75,18 +75,18 @@ describe('SeekButtonCore', () => {
   describe('getLabel', () => {
     it('returns forward label for forward direction', () => {
       const core = new SeekButtonCore({ seconds: 30 });
-      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward 30 seconds');
+      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('seekForward');
     });
 
     it('returns backward label for backward direction', () => {
       const core = new SeekButtonCore({ seconds: -10 });
-      expect(core.getLabel(createState({ direction: 'backward' }))).toBe('Seek backward 10 seconds');
+      expect(core.getLabel(createState({ direction: 'backward' }))).toBe('seekBackward');
     });
 
     it('uses absolute value in backward label', () => {
       const core = new SeekButtonCore({ seconds: -30 });
       const label = core.getLabel(createState({ direction: 'backward' }));
-      expect(label).toBe('Seek backward 30 seconds');
+      expect(label).toBe('seekBackward');
       expect(label).not.toContain('-');
     });
 
@@ -105,7 +105,40 @@ describe('SeekButtonCore', () => {
 
     it('falls back to default when function returns empty', () => {
       const core = new SeekButtonCore({ seconds: 10, label: () => '' });
-      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward 10 seconds');
+      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('seekForward');
+    });
+  });
+
+  describe('getLabelParams', () => {
+    it('returns seconds for default forward label', () => {
+      const core = new SeekButtonCore({ seconds: 30 });
+      expect(core.getLabelParams(createState({ direction: 'forward' }))).toEqual({ seconds: 30 });
+    });
+
+    it('returns positive seconds for backward seek', () => {
+      const core = new SeekButtonCore({ seconds: -10 });
+      expect(core.getLabelParams(createState({ direction: 'backward' }))).toEqual({ seconds: 10 });
+    });
+
+    it('returns undefined when custom label is set', () => {
+      const core = new SeekButtonCore({ label: 'Skip' });
+      expect(core.getLabelParams(createState())).toBeUndefined();
+    });
+
+    it('shares one label callback invocation with getLabel for the same state', () => {
+      let calls = 0;
+      const core = new SeekButtonCore({
+        seconds: 30,
+        label: () => {
+          calls += 1;
+          return calls === 1 ? 'custom' : '';
+        },
+      });
+      const state = createState({ direction: 'forward' });
+
+      expect(core.getLabel(state)).toBe('custom');
+      expect(core.getLabelParams(state)).toBeUndefined();
+      expect(calls).toBe(1);
     });
   });
 
@@ -113,7 +146,7 @@ describe('SeekButtonCore', () => {
     it('returns aria-label', () => {
       const core = new SeekButtonCore({ seconds: 30 });
       const attrs = core.getAttrs(createState({ direction: 'forward' }));
-      expect(attrs['aria-label']).toBe('Seek forward 30 seconds');
+      expect(attrs['aria-label']).toBe('seekForward');
     });
 
     it('sets aria-disabled when disabled', () => {

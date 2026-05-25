@@ -3,10 +3,16 @@ import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
 
+const localeEntries = {
+  'i18n/locales/en': './src/core/i18n/locales/en.ts',
+};
+
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
+    i18n: './src/core/i18n/index.ts',
+    ...localeEntries,
     dom: './src/dom/index.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',

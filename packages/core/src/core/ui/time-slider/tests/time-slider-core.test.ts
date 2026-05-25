@@ -1,3 +1,4 @@
+import { formatDuration } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaBufferState, MediaTimeState } from '../../../media/state';
@@ -33,7 +34,7 @@ describe('TimeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(TimeSliderCore.defaultProps).toEqual({
-        label: 'Seek',
+        label: '',
         step: 1,
         largeStep: 10,
         orientation: 'horizontal',
@@ -156,8 +157,12 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Seek');
-      expect(attrs['aria-valuetext']).toBe('1 minute, 30 seconds of 5 minutes');
+      expect(attrs['aria-label']).toBe('seek');
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(90),
+        duration: formatDuration(300),
+      });
       expect(attrs.role).toBe('slider');
     });
 
@@ -178,7 +183,11 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(0),
+        duration: formatDuration(0),
+      });
     });
 
     it('announces drag position in valuetext during drag', () => {
@@ -188,9 +197,12 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      // pointerPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
       expect(attrs['aria-valuenow']).toBe(150);
-      expect(attrs['aria-valuetext']).toBe('2 minutes, 30 seconds of 5 minutes');
+      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatDuration(150),
+        duration: formatDuration(300),
+      });
     });
   });
 

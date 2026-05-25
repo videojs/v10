@@ -1,6 +1,7 @@
 export { animationFrame } from './animation-frame';
 export { namedNodeMapToObject, serializeAttributes } from './attributes';
 export { isRTL } from './direction';
+export { effectiveLocale } from './effective-locale';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
 export { idleCallback } from './idle-callback';
 export {
@@ -12,6 +13,9 @@ export {
   isInteractiveTarget,
 } from './interactive';
 export { listen } from './listen';
+export { localeFromDomLang } from './locale-from-dom-lang';
+export { mergeLocaleOverlays } from './merge-locale-overlays';
+export { nearestLang } from './nearest-lang';
 export { isMacOS } from './platform';
 export { tryHidePopover, tryShowPopover } from './popover';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
@@ -25,6 +29,7 @@ export {
 } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
 export { applyStyles, resolveCSSLength } from './style';
+export { subscribeAmbientLang } from './subscribe-ambient-lang';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
 export { createTemplate, renderTemplate } from './template';
 export {
