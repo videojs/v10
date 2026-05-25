@@ -1,10 +1,11 @@
 'use client';
 
-import { type PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
+import { type PlaybackRateMenuCore, PlaybackRateMenuDataAttrs, resolveControlAttrs } from '@videojs/core';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode, Ref } from 'react';
 import { forwardRef, isValidElement } from 'react';
 
+import { useTranslator } from '../../i18n';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { MenuTrigger } from '../menu/menu-trigger';
@@ -19,6 +20,7 @@ function hasChildren(children: ReactNode): boolean {
 export const PlaybackRateMenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, PlaybackRateMenuTriggerProps>(
   function PlaybackRateMenuTrigger({ render, className, style, children, disabled, ...elementProps }, forwardedRef) {
     const { core, state } = usePlaybackRateMenuContext();
+    const translator = useTranslator();
     const isDisabled = state.disabled || Boolean(disabled);
     const renderedChildren = isValidElement<{ children?: ReactNode }>(render) ? render.props.children : undefined;
     const hasOwnChildren = !isUndefined(children);
@@ -43,7 +45,14 @@ export const PlaybackRateMenuTrigger = forwardRef<HTMLButtonElement | HTMLDivEle
               state,
               stateAttrMap: PlaybackRateMenuDataAttrs,
               ref: [forwardedRef as Ref<HTMLButtonElement & HTMLDivElement>],
-              props: [menuProps, core.getAttrs(state), elementProps, disabledProps, inlineLabelProps, childrenProps],
+              props: [
+                menuProps,
+                resolveControlAttrs(translator, core, state),
+                elementProps,
+                disabledProps,
+                inlineLabelProps,
+                childrenProps,
+              ],
             }
           );
         }}
