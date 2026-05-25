@@ -1,209 +1,189 @@
 ---
 status: draft
 date: 2026-05-20
+updated: 2026-05-25
 ---
 
 # PlaybackRates
 
-Headless component for configuring the list of available playback rates from outside the skin.
+Store feature and configuration API for the available playback rate list. Rates are set at the root player and optionally constrained by source plugins.
 
 ## Problem
 
 The `playbackRate` store feature shipped with a hard-coded list of rates
 `[0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2]`. There was no consumer API to override
-it and no mechanism for source plugins (YouTube,
-Vimeo, HLS) to communicate their own supported rate lists to the UI.
+it and no mechanism for source plugins (YouTube, Vimeo, HLS) to communicate
+their own supported rate lists to the UI.
 
 Requirements:
 
 - Declarative HTML-first API — configure via markup, no scripting required
 - React component equivalent
 - Source plugins can inject constraints independently of consumer intent
-- Zero UI output — the component renders nothing
 - The effective rate list flows to both `PlaybackRateButton` and
   `PlaybackRateMenu` without changes to either consumer
 
 ## API
 
-### Component
+### Configuration
 
-A single headless `<media-playback-rates>` / `<PlaybackRates>` component.
-It lives as a sibling inside the player provider — same pattern as `<Hotkey>`.
+Rates are configured at the root player. Rate controls read the effective list
+from the store directly.
 
 #### HTML
 
 ```html
-<video-player>
+<media-player playback-rates="0.5 1 1.5 2">
   <video-minimal-skin>
     <mux-video src="..."></mux-video>
   </video-minimal-skin>
-
-  <!-- override default rates -->
-  <media-playback-rates rates="0.5 1 1.5 2"></media-playback-rates>
-</video-player>
+</media-player>
 ```
 
 #### React
 
 ```tsx
-<Player.Provider>
+<Player.Provider playbackRates={[0.5, 1, 1.5, 2]}>
   <VideoSkin>
     <Video src="..." />
   </VideoSkin>
-
-  <PlaybackRates rates={[0.5, 1, 1.5, 2]} />
 </Player.Provider>
 ```
 
-#### Props
+#### Root player props
 
 | Prop | Type | Default | Description |
-|---|---|---|---|
-| `rates` | `number[]` | `DEFAULT_RATES` | Available playback rates. Space-separated string in HTML, number array in React. |
+| --- | --- | --- | --- |
+| `playbackRates` | `number[]` | `DEFAULT_RATES` | Available playback rates. Space-separated string in HTML, number array in React. |
 
 ### Store state
 
-The feature exposes three rate-related fields and two actions beyond the
-pre-existing `playbackRate` / `setPlaybackRate`:
-
 ```ts
 interface MediaPlaybackRateState {
-  /** Derived — the effective list the UI reads. */
+  /** Derived — the effective list the UI reads. Never set directly. */
   readonly playbackRates: readonly number[];
-  /** Set by <PlaybackRates> — consumer intent. */
+  /** Set by the root player — consumer intent. */
   readonly requestedRates: readonly number[];
   /** Set by source plugins — null when unconstrained. */
   readonly sourceRates: readonly number[] | null;
-  /** True while sourceRates overrides requestedRates. */
-  readonly ratesLockedBySource: boolean;
-
-  setRequestedRates(rates: number[]): void;
-  setSourceRates(rates: number[] | null): void;
+  /** Currently active rate. */
+  readonly playbackRate: number;
 }
 ```
 
-`DEFAULT_RATES` is exported from `@videojs/core/dom` so headless components
-and source plugins can reset to the same baseline.
+Three actions — no others:
+
+```ts
+setRequestedRates(rates: number[]): void;
+setSourceRates(rates: number[] | null): void;
+setPlaybackRate(rate: number): void;
+```
+
+`DEFAULT_RATES` is exported from `@videojs/core/dom` so rate controls and
+source plugins can reference the same baseline.
 
 ## Architecture
 
+### Data flow
+
+```
+<media-player playback-rates="...">
+  ↓ parse, validate
+  store.setRequestedRates(...)
+
+store.requestedRates + store.sourceRates
+  ↓ (computed intersection)
+  store.playbackRates  ← derived getter, never stored
+
+  ↓ read via selector
+<media-playback-rate-button>  ← read only; click → setPlaybackRate(next)
+```
+
 ### Derived state
 
-`playbackRates` is never set directly — it is always computed:
-
-```
-requestedRates (consumer) ─┐
-                            ├─ computeEffectiveRates() ─→ playbackRates
-sourceRates (plugin)    ───┘
-```
-
-Effective rates rules:
+`playbackRates` is a computed getter — never stored, always derived:
 
 | Condition | `playbackRates` |
-|---|---|
-| No source constraint | `requestedRates` |
-| Source + overlap | `intersection(requested, source)` |
-| Source + no overlap | `source` (source wins entirely) |
+| --- | --- |
+| No source constraint (`sourceRates === null`) | `requestedRates` |
+| Source constraint with overlap | `intersection(requested, source)` |
+| Source constraint, no overlap | `[]` — button is disabled |
 
-`ratesLockedBySource` is `true` whenever `sourceRates !== null`, regardless
-of overlap. It lets the UI signal that rates are externally constrained.
+### Rate guard
 
-### Closure variables
+Whenever `requestedRates` or `sourceRates` changes, the current rate is
+checked against the new effective list. If it is no longer valid, it resets
+to the first available rate (or `1` if the list is empty).
 
-`requestedRates` and `sourceRates` are closure variables inside the feature's
-`state()` factory, not stored in the reactive slice. They serve as the
-authoritative input to the next `computeEffectiveRates()` call without relying
-on `get()` — which could return stale state if both actions fire in the same
-synchronous tick.
+### Input validation
 
-### Sanitization
+`requestedRates` is validated on write: non-finite and non-positive values are
+filtered, duplicates are removed (first occurrence wins), and consumer order is
+preserved — no automatic sorting. If nothing valid remains, `DEFAULT_RATES` is
+used as the fallback.
 
-`sanitizeRates()` is applied to the `rates` argument of `setRequestedRates`:
-
-- Filters non-finite and non-positive values
-- Deduplicates preserving first occurrence (no auto-sort — consumer order is respected)
-- Falls back to `[...DEFAULT_RATES]` if nothing valid remains
-
-`sourceRates` is not sanitized — source plugins are trusted to provide valid arrays.
-
-### Array equality guard
-
-`arraysEqual()` compares `requestedRates` before writing. If the incoming
-sanitized array is identical to the current value, `set()` is skipped. This
-prevents redundant subscriber notifications when the same logical rates are
-written again (e.g., from a React effect re-running with a stable array).
+`sourceRates` is not validated — source plugins are trusted to provide valid arrays.
 
 ## Decisions
 
-**Separate headless component, not a prop on the button or menu.** A single
-`<PlaybackRates>` sibling sets rates once for all consumers (button + menu
-read the same `playbackRates` from the store). Adding a `rates` prop to each
-consumer would require coordinating multiple sources of truth and duplicating
-sanitization. The headless pattern is identical to `<Hotkey>`.
+**Configuration at the root player.** The consumer sets `playback-rates` on
+`<media-player>`. This keeps configuration at the component that owns the player
+lifecycle and makes the data flow unambiguous: one owner writes, all consumers
+read. It also establishes a pattern that scales to other features such as quality
+selection.
 
-**Closure variables instead of `get()`.** Reading state via `get()` inside
-`setRequestedRates` creates a stale-read race: if `setRequestedRates` and
-`setSourceRates` are called in the same synchronous tick, the second call
-would compute effective rates using the old value of the first (before `set()`
-has propagated). Closure vars are always up-to-date at call time.
+**Pure intersection.** When source rates and requested rates have no overlap,
+`playbackRates` is empty and the button is disabled. The previous "source wins
+entirely on no-overlap" rule added complexity for a case that should not occur
+in a correctly configured integration.
 
-**`usePlayer()` without selector in React.** `usePlayer(selectPlaybackRate)`
-subscribes to state changes. `setRequestedRates` writes new array references →
-the subscription fires → React re-renders → the effect re-runs → infinite
-loop. `usePlayer()` with no selector returns a stable store reference backed
-by `noopSubscribe` — it never causes re-renders. `selectPlaybackRate(store.state)`
-is applied inside the effect to access the actions without subscribing.
+**`playbackRates` is a derived getter, not stored.** Storing the derived value
+would require invalidation logic and risks stale reads if both `setRequestedRates`
+and `setSourceRates` fire in the same synchronous tick. A getter recomputes from
+the authoritative inputs every time it is read.
 
-**No reset on unmount.** When `<PlaybackRates>` unmounts the last set rates
-persist in the store. Reset-on-unmount would create a visible flash during
-provider re-renders and React Strict Mode double-invoke (rates briefly revert
-to `DEFAULT_RATES`). Consumers who need reset can mount
-`<PlaybackRates rates={DEFAULT_RATES} />` explicitly.
-
-**Space-separated attribute format.** `rates="0.5 1 1.5 2"` matches the
-multi-value attribute convention used elsewhere in the component set (e.g.,
-`<media-status-indicator actions="toggleSubtitles toggleFullscreen">`). JSON
-(`[0.5,1]`) is awkward for HTML authors; comma-separated conflicts with how
-some template engines split attribute values.
-
-**`PlayerController` without selector in HTML.** Using `PlayerController` with
-a selector wraps a `StoreController` whose `.value` getter throws
-`"Store not available"` when the store is `null` — the `?.` optional chain on
-the subsequent method call does not protect against the throw. Without a
-selector, `PlayerController.value` returns `undefined` safely when disconnected.
+**Space-separated attribute format.** `playback-rates="0.5 1 1.5 2"` matches
+the multi-value attribute convention used elsewhere in the component set (e.g.,
+`actions="toggleSubtitles toggleFullscreen"`). JSON is awkward for HTML authors;
+comma-separated conflicts with how some template engines split attribute values.
 
 ## Edge cases
 
-**Empty or all-invalid rates** — `sanitizeRates([])` falls back to
-`[...DEFAULT_RATES]`, so `<media-playback-rates rates="">` never leaves the
+**Empty or all-invalid rates** — If no valid rates remain after validation,
+`DEFAULT_RATES` is used. `<media-player playback-rates="">` never leaves the
 player rateless.
 
-**Duplicates** — Deduplicated at sanitization time. `rates="1 1.5 1"` becomes
-`[1, 1.5]`.
+**Duplicates** — Deduplicated at write time, preserving the first occurrence.
+`playback-rates="1 1.5 1"` becomes `[1, 1.5]`.
 
-**Source rates, no overlap** — `computeEffectiveRates([0.5, 1, 1.5], [2, 4])`
-returns `[2, 4]`. Source wins entirely; `ratesLockedBySource` is `true`.
+**Source rates, no overlap** — `playbackRates` becomes empty and the button is
+disabled. This signals a configuration mismatch rather than silently overriding
+consumer intent.
 
 **`setSourceRates(null)`** — Clears the constraint. `playbackRates` reverts to
-`requestedRates`. `ratesLockedBySource` becomes `false`.
+`requestedRates`.
 
-**Disconnect order in HTML** — `PlaybackRatesElement.disconnectedCallback`
-must reset rates *before* calling `super.disconnectedCallback()`. The super
-call disconnects the `PlayerController`, making the store inaccessible.
-Calling reset after super is a silent no-op.
+**Current rate becomes invalid** — After any change to `requestedRates` or
+`sourceRates`, if the current rate is no longer in the effective list, it resets
+to the first available rate or `1`.
 
 ## Descoped
 
 | Feature | Reason |
-|---|---|
-| Reset on unmount | Causes a flash during re-mount. Last value persisting is the safer default; explicit reset is always available. |
-| Per-component `rates` prop (on button or menu) | A single `<PlaybackRates>` sibling is sufficient. Multiple coordinated sources add complexity with no benefit. |
-| `setSourceRates` on `<PlaybackRates>` | Source plugins call `setSourceRates` directly via the store. A consumer-facing source API is a separate concern. |
+| --- | --- |
+| `ratesLockedBySource` flag | The UI can derive this from `sourceRates !== null`. Storing a derived boolean creates a second source of truth. |
+| `setSourceRates` consumer API | Source plugins call `setSourceRates` directly via the store. A consumer-facing source API is a separate concern. |
+
+## Scalability
+
+This pattern — configure at root, derived effective state, read-only consumers —
+applies directly to quality selection and other features that require both
+consumer configuration and source plugin constraints.
 
 ## References
 
 - Issue [#1404](https://github.com/videojs/v10/issues/1404)
 - `internal/design/ui/playback-rate-button.md` — Deferred: Custom `rates` Prop section
 - `packages/core/src/dom/store/features/playback-rate.ts`
-- `packages/react/src/ui/playback-rates/playback-rates.tsx`
-- `packages/html/src/ui/playback-rates/playback-rates-element.ts`
+- `packages/react/src/ui/playback-rate-button/playback-rate-button.tsx`
+- `packages/html/src/ui/playback-rate-button/playback-rate-button-element.ts`
