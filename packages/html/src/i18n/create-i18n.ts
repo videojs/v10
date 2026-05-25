@@ -165,6 +165,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
           if (seq !== this.#lazySeq) return;
           if (shouldAttemptBrowserTranslation(localeSnapshot, merged)) {
             const browser = await getBrowserTranslations(localeSnapshot);
+            if (seq !== this.#lazySeq) return;
             if (Object.keys(browser).length) registerI18n(localeSnapshot, browser);
           }
           if (seq !== this.#lazySeq) return;
