@@ -41,9 +41,9 @@ export const Value = forwardRef(function Value(
     formatOptions: {
       ...formatOptions,
       locale: formatOptions?.locale ?? locale,
-      translate:
-        formatOptions?.translate ??
-        ((key) => (key === 'remaining' ? resolveTranslationPhrase(translator, 'remainingTimeSuffix') : 'remaining')),
+      formatRemaining:
+        formatOptions?.formatRemaining ??
+        ((duration) => resolveTranslationPhrase(translator, 'timeRemainingPhrase', { duration })),
     },
   });
 
