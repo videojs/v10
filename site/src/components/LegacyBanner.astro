@@ -1,11 +1,11 @@
 ---
-import { LEGACY_BANNER_DISMISS_KEY } from '@/consts';
+import { BANNER_DISMISS_KEY } from '@/consts';
 ---
 
 <div
   data-legacy-banner
   class:list={[
-    "legacy-banner-dismissed:hidden",
+    "banner-dismissed:hidden",
     "relative py-2 text-p3 md:text-p2",
     "border-b border-manila-75 bg-manila-50 text-faded-black",
     "dark:border-soot dark:bg-warm-gray dark:text-manila-light",
@@ -47,14 +47,14 @@ import { LEGACY_BANNER_DISMISS_KEY } from '@/consts';
   </button>
 </div>
 
-<script is:inline define:vars={{ bannerKey: LEGACY_BANNER_DISMISS_KEY }}>
+<script is:inline define:vars={{ bannerKey: BANNER_DISMISS_KEY }}>
   var dismissBtn = document.querySelector("[data-legacy-banner-dismiss]");
   if (dismissBtn) {
     dismissBtn.addEventListener("click", function () {
       try {
         localStorage.setItem(bannerKey, "true");
       } catch (e) {}
-      document.documentElement.classList.add("legacy-banner-dismissed");
+      document.documentElement.classList.add("banner-dismissed");
     });
   }
 </script>

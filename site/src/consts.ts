@@ -13,7 +13,7 @@ export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
 export const MUX_URL = 'https://www.mux.com?utm_source=videojs&utm_campaign=vjs10';
 export const MUX_SUPPORT_URL = 'https://www.mux.com/sales-contact?form=sales&utm_source=videojs&utm_campaign=vjs10';
 export const THEME_KEY = 'vjs-site-theme';
-export const LEGACY_BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
+export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
 
 export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
