@@ -56,10 +56,69 @@ const loaders = {
   zh: () => import('./locales/zh'),
 } as const satisfies Record<string, () => Promise<{ default: Partial<Translations> }>>;
 
+const loaderTagByNormalized = {
+  ar: 'ar',
+  az: 'az',
+  bs: 'bs',
+  bg: 'bg',
+  bn: 'bn',
+  ca: 'ca',
+  cs: 'cs',
+  cy: 'cy',
+  da: 'da',
+  de: 'de',
+  el: 'el',
+  es: 'es',
+  et: 'et',
+  eu: 'eu',
+  fa: 'fa',
+  fi: 'fi',
+  fr: 'fr',
+  gd: 'gd',
+  gl: 'gl',
+  he: 'he',
+  hi: 'hi',
+  hr: 'hr',
+  hu: 'hu',
+  it: 'it',
+  ja: 'ja',
+  ko: 'ko',
+  lv: 'lv',
+  mr: 'mr',
+  nb: 'nb',
+  nl: 'nl',
+  nn: 'nn',
+  ne: 'ne',
+  oc: 'oc',
+  pl: 'pl',
+  'pt-br': 'pt-BR',
+  'pt-pt': 'pt-PT',
+  ro: 'ro',
+  ru: 'ru',
+  sk: 'sk',
+  sl: 'sl',
+  sr: 'sr',
+  sv: 'sv',
+  te: 'te',
+  th: 'th',
+  tr: 'tr',
+  uk: 'uk',
+  vi: 'vi',
+  'zh-cn': 'zh-CN',
+  'zh-tw': 'zh-TW',
+  pt: 'pt',
+  zh: 'zh',
+} as const satisfies Record<string, keyof typeof loaders>;
+
+function normalizeLocaleTag(tag: string): string {
+  return tag.trim().replaceAll('_', '-').toLowerCase();
+}
+
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<Translations> | undefined> {
   if (hasRegisteredI18n(tag)) return undefined;
-  const load = loaders[tag as keyof typeof loaders];
+  const loaderTag = loaderTagByNormalized[normalizeLocaleTag(tag) as keyof typeof loaderTagByNormalized];
+  const load = loaderTag ? loaders[loaderTag] : undefined;
   if (!load) return undefined;
   return (await load()).default;
 }

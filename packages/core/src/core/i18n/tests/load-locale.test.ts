@@ -23,4 +23,11 @@ describe('loadLocale', () => {
     const pt = await loadLocale('pt');
     expect(pt?.play).toBeTruthy();
   });
+
+  it('loads regional tags regardless of casing', async () => {
+    const ptBr = await loadLocale('pt-br');
+    const zhTw = await loadLocale('zh-TW');
+    expect(ptBr?.play).toBeTruthy();
+    expect(zhTw?.play).toBeTruthy();
+  });
 });
