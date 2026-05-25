@@ -1,3 +1,5 @@
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import type { PartiallyResolvedTextTrack, TextTrack } from '../../types';
 
 /**
@@ -44,7 +46,7 @@ export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement
   const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
   for (const el of elements) {
     const track = el.track;
-    if (track.mode === 'showing' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) {
       return track;
     }
   }
@@ -72,7 +74,7 @@ export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement
 export function syncTextTrackModes(textTracks: TextTrackList, selectedId: string | undefined): void {
   for (let i = 0; i < textTracks.length; i++) {
     const track = textTracks[i]!;
-    if (track.kind !== 'subtitles' && track.kind !== 'captions') continue;
+    if (!isCaptionOrSubtitleTrack(track)) continue;
     track.mode = track.id === selectedId ? 'showing' : 'disabled';
   }
 }

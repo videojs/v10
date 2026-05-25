@@ -1,4 +1,5 @@
 import { createState } from '@videojs/store';
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -66,9 +67,7 @@ export class CaptionsButtonCore {
 
   getState(): CaptionsButtonState {
     const media = this.#media!;
-    const availability: CaptionsButtonState['availability'] = media.textTrackList.some(
-      (t) => t.kind === 'captions' || t.kind === 'subtitles'
-    )
+    const availability: CaptionsButtonState['availability'] = media.textTrackList.some(isCaptionOrSubtitleTrack)
       ? 'available'
       : 'unavailable';
 

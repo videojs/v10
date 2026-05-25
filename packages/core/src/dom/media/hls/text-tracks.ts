@@ -1,4 +1,4 @@
-import { listen } from '@videojs/utils/dom';
+import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
@@ -83,7 +83,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
         if (!engine.subtitleTracks.length) return;
 
         const showingTrack = Array.from(media.textTracks).find((textTrack) => {
-          return textTrack.id && textTrack.mode === 'showing' && ['subtitles', 'captions'].includes(textTrack.kind);
+          return textTrack.id && textTrack.mode === 'showing' && isCaptionOrSubtitleTrack(textTrack);
         });
 
         if (!showingTrack) return;
@@ -165,7 +165,7 @@ function addTextTrack(
   if (defaultTrack) {
     trackEl.default = true;
   }
-  trackEl.track.mode = ['subtitles', 'captions'].includes(kind) ? 'disabled' : 'hidden';
+  trackEl.track.mode = isCaptionOrSubtitleTrack({ kind }) ? 'disabled' : 'hidden';
 
   // Add data attribute to identify tracks that should be removed when switching sources/destroying hls.js instance.
   trackEl.setAttribute('data-removeondestroy', '');

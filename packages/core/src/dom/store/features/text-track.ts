@@ -1,4 +1,4 @@
-import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
+import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import type { TextTrackLike } from '../../../core/media/types';
@@ -17,10 +17,7 @@ export const textTrackFeature = definePlayerFeature({
       const { media } = target();
       if (!isMediaTextTrackCapable(media)) return false;
 
-      const subtitlesTracks = getTextTrackList(
-        media,
-        (track) => track.kind === 'subtitles' || track.kind === 'captions'
-      );
+      const subtitlesTracks = getTextTrackList(media, isCaptionOrSubtitleTrack);
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track) => track.mode === 'showing');
@@ -62,7 +59,7 @@ export const textTrackFeature = definePlayerFeature({
           mode: track.mode,
         });
 
-        if ((track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing') {
+        if (isCaptionOrSubtitleTrack(track) && track.mode === 'showing') {
           subtitlesShowing = true;
         }
       }
