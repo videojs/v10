@@ -2,17 +2,16 @@
 
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
-import { createTranslator, resolveTranslation, translations } from '@videojs/core/i18n';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 
+import { useLocale, useTranslator } from '../../i18n';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-
-const translator = createTranslator(translations, 'en');
 
 export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State>, 'children'>, TimeCore.Props {}
 
@@ -33,6 +32,9 @@ export const Value = forwardRef(function Value(
   const { render, className, style, type, negativeSign, label, toggle = false, ...elementProps } = componentProps;
 
   const time = usePlayer(selectTime);
+  const translator = useTranslator();
+  const locale = useLocale();
+
   const [core] = useState(() => new TimeCore());
 
   const defaultType = type ?? TimeCore.defaultProps.type;
@@ -62,7 +64,7 @@ export const Value = forwardRef(function Value(
     labelParams && state.type === 'remaining'
       ? {
           duration: resolveTranslation(translator, '{duration} remaining', {
-            duration: formatTimeAsPhrase(Math.abs(state.seconds)),
+            duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
           }),
         }
       : labelParams;
