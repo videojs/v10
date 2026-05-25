@@ -2,7 +2,7 @@ import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Preset, Skin, Styling } from '@app/types';
-import { forwardRef, useCallback, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
@@ -21,24 +21,21 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale },
   ref
 ) {
-  const buildUrl = useCallback(
-    (base: string, bustCache = false) => {
-      const params = new URLSearchParams({
-        preset,
-        skin,
-        styling,
-        source,
-        autoplay: autoplay ? '1' : '0',
-        muted: muted ? '1' : '0',
-        loop: loop ? '1' : '0',
-        preload,
-        locale,
-      });
-      if (bustCache) params.set('_', String(Date.now()));
-      return `${base}?${params}`;
-    },
-    [preset, skin, styling, source, autoplay, muted, loop, preload, locale]
-  );
+  const buildUrl = (base: string, bustCache = false) => {
+    const params = new URLSearchParams({
+      preset,
+      skin,
+      styling,
+      source,
+      autoplay: autoplay ? '1' : '0',
+      muted: muted ? '1' : '0',
+      loop: loop ? '1' : '0',
+      preload,
+      locale,
+    });
+    if (bustCache) params.set('_', String(Date.now()));
+    return `${base}?${params}`;
+  };
 
   const reloadOnLocale = pagePath === '/cdn/';
 
@@ -50,7 +47,8 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   useEffect(() => {
     if (!reloadOnLocale) return;
     setIframeUrl(buildUrl(pagePath, true));
-  }, [pagePath, reloadOnLocale, buildUrl]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: CDN locale swaps need a full reload; other toggles use postMessage.
+  }, [locale, pagePath, reloadOnLocale]);
 
   return (
     <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">
