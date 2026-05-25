@@ -32,7 +32,7 @@ function generateLoadLocaleTs(): string {
     .map((tag) => `  '${tag.trim().replaceAll('_', '-').toLowerCase()}': '${tag}',`)
     .join('\n');
 
-  return `${GENERATED_HEADER}import { canonicalLocaleRegistryKey, hasRegisteredI18n } from './registry';
+  return `${GENERATED_HEADER}import { canonicalLocaleRegistryKey, hasRegisteredI18n, localeLookupChain } from './registry';
 import type { Translations } from './types';
 
 const loaders = {
@@ -46,11 +46,14 @@ ${normalizedEntries}
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<Translations> | undefined> {
   if (hasRegisteredI18n(tag)) return undefined;
-  const loaderTag =
-    loaderTagByNormalized[canonicalLocaleRegistryKey(tag) as keyof typeof loaderTagByNormalized];
-  const load = loaderTag ? loaders[loaderTag] : undefined;
-  if (!load) return undefined;
-  return (await load()).default;
+  for (const chainTag of localeLookupChain(tag)) {
+    if (hasRegisteredI18n(chainTag)) return undefined;
+    const loaderTag =
+      loaderTagByNormalized[canonicalLocaleRegistryKey(chainTag) as keyof typeof loaderTagByNormalized];
+    const load = loaderTag ? loaders[loaderTag] : undefined;
+    if (load) return (await load()).default;
+  }
+  return undefined;
 }
 `;
 }
