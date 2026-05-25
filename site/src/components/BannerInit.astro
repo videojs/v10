@@ -1,20 +1,11 @@
 ---
-import { LEGACY_BANNER_DISMISS_KEY, PRERELEASE_BANNER_DISMISS_KEY } from '@/consts';
+import { LEGACY_BANNER_DISMISS_KEY } from '@/consts';
 ---
 
-<script
-  is:inline
-  define:vars={{
-    legacyKey: LEGACY_BANNER_DISMISS_KEY,
-    prereleaseKey: PRERELEASE_BANNER_DISMISS_KEY,
-  }}
->
+<script is:inline define:vars={{ bannerKey: LEGACY_BANNER_DISMISS_KEY }}>
   if (typeof localStorage !== "undefined" && typeof document !== "undefined") {
-    if (localStorage[legacyKey] === "true") {
+    if (localStorage[bannerKey] === "true") {
       document.documentElement.classList.add("legacy-banner-dismissed");
-    }
-    if (localStorage[prereleaseKey] === "true") {
-      document.documentElement.classList.add("prerelease-banner-dismissed");
     }
   }
 </script>
