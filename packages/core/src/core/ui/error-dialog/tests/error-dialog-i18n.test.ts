@@ -37,6 +37,11 @@ describe('resolveErrorDialogDescription', () => {
     expect(resolveErrorDialogDescription(error, null)).toBe('Custom failure');
   });
 
+  it('returns custom message text on standard codes without context', () => {
+    const error = new MediaError('App network failure', MediaError.MEDIA_ERR_NETWORK);
+    expect(resolveErrorDialogDescription(error, null)).toBe('App network failure');
+  });
+
   it('returns a registry key for browser-specific messages on standard codes', () => {
     const error = new MediaError('Failed to open media', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
     expect(resolveErrorDialogDescription(error, null)).toBe('mediaErrorSrcNotSupported');
