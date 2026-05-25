@@ -26,7 +26,7 @@ function stripUnicodeExtensions(tag: string): string {
 }
 
 /** Registry map key: normalized tag with unicode extensions removed (same base as {@link localeLookupChain}). */
-function canonicalLocaleRegistryKey(locale: string): string {
+export function canonicalLocaleRegistryKey(locale: string): string {
   return stripUnicodeExtensions(normalizeLocaleTag(locale));
 }
 
