@@ -632,4 +632,29 @@ describe('createI18n', () => {
       expect(screen.queryByText('de:Override:Pause')).not.toBeNull();
     });
   });
+
+  it('passes through when a nested provider only supplies langRootRef', async () => {
+    registerI18n('de', { play: 'Abspielen' });
+
+    const { I18nProvider, useTranslator } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      return <span>{useTranslator()('play')}</span>;
+    }
+
+    render(
+      <I18nProvider locale="de">
+        <I18nProvider langRootRef={rootRef}>
+          <div ref={rootRef}>
+            <Probe />
+          </div>
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Abspielen')).not.toBeNull();
+    });
+  });
 });

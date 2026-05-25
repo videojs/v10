@@ -203,10 +203,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   function I18nProvider(props: I18nProviderProps): ReactNode {
     const parent = useContext(I18nContext);
     const hasOverrides =
-      props.locale !== undefined ||
-      props.translations !== undefined ||
-      props.langRootRef !== undefined ||
-      props.onActiveLocaleChange !== undefined;
+      props.locale !== undefined || props.translations !== undefined || props.onActiveLocaleChange !== undefined;
     if (parent && !hasOverrides) {
       return props.children;
     }
