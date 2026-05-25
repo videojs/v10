@@ -577,6 +577,34 @@ describe('createI18n', () => {
     expect(getBrowserTranslations).not.toHaveBeenCalled();
   });
 
+  it('does not register browser translations after locale changes', async () => {
+    let resolveBrowser: ((value: Partial<Translations>) => void) | undefined;
+    const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveBrowser = resolve;
+        })
+    );
+    const registerI18nSpy = vi.spyOn(coreI18n, 'registerI18n');
+
+    const { I18nProvider } = createI18n();
+
+    const { rerender } = render(<I18nProvider locale="xx">{null}</I18nProvider>);
+
+    await waitFor(() => {
+      expect(getBrowserTranslations).toHaveBeenCalledWith('xx');
+    });
+
+    rerender(<I18nProvider locale="fr">{null}</I18nProvider>);
+    await Promise.resolve();
+
+    resolveBrowser?.({ play: 'StaleBrowserPlay' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(registerI18nSpy).not.toHaveBeenCalledWith('xx', { play: 'StaleBrowserPlay' });
+  });
+
   it('inherits ancestor locale when a nested provider only overrides translations', async () => {
     registerI18n('de', { play: 'Abspielen', pause: 'Pause' });
 
