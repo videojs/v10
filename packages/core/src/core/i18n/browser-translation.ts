@@ -68,6 +68,10 @@ async function translateProtectingPlaceholders(translator: BrowserTranslatorInst
 
 const cache = new Map<string, Partial<Translations>>();
 
+function isEnglishLocaleTag(tag: string): boolean {
+  return tag === 'en' || tag.startsWith('en-');
+}
+
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
   if (!('Translator' in globalThis)) return undefined;
   return (globalThis as typeof globalThis & { Translator: BrowserTranslatorConstructor }).Translator;
@@ -76,7 +80,7 @@ function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
 /** First non-English tag in the lookup chain used as the browser translation target. */
 export function resolveBrowserTranslationTarget(locale: string): string | undefined {
   for (const tag of localeLookupChain(locale)) {
-    if (tag !== 'en') return tag;
+    if (!isEnglishLocaleTag(tag)) return tag;
   }
   return undefined;
 }
@@ -87,7 +91,7 @@ export function shouldAttemptBrowserTranslation(locale: Locale, lazyLayer: Parti
   if (!target) return false;
   if (Object.keys(lazyLayer).length > 0) return false;
 
-  return !localeLookupChain(locale).some((tag) => tag !== 'en' && hasRegisteredI18n(tag));
+  return !localeLookupChain(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredI18n(tag));
 }
 
 /**

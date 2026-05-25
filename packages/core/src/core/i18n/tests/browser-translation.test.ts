@@ -40,6 +40,8 @@ describe('resolveBrowserTranslationTarget', () => {
   it('returns the first non-en tag in the lookup chain', () => {
     expect(resolveBrowserTranslationTarget('fr-CA')).toBe('fr-ca');
     expect(resolveBrowserTranslationTarget('en')).toBeUndefined();
+    expect(resolveBrowserTranslationTarget('en-US')).toBeUndefined();
+    expect(resolveBrowserTranslationTarget('en-GB')).toBeUndefined();
   });
 });
 
@@ -50,6 +52,7 @@ describe('shouldAttemptBrowserTranslation', () => {
 
   it('skips English', () => {
     expect(shouldAttemptBrowserTranslation('en', {})).toBe(false);
+    expect(shouldAttemptBrowserTranslation('en-US', {})).toBe(false);
   });
 
   it('skips when lazy built-in layer loaded', () => {
