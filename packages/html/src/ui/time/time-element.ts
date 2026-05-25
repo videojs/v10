@@ -13,7 +13,7 @@ export class TimeElement extends MediaElement {
     type: { type: String },
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
-  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
+  } satisfies PropertyDeclarationMap<keyof Omit<TimeCore.Props, 'formatOptions'>>;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;

@@ -1,5 +1,5 @@
-import { createTranslator, type Translations } from '@videojs/core/i18n';
 import { describe, expect, it } from 'vitest';
+import { createTranslator, type Translations } from '../../../i18n';
 
 import { createInputIndicatorLabels } from '../labels';
 

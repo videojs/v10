@@ -163,7 +163,7 @@ describe('PlaybackRateMenuElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
-    expect(menu.getAttribute('aria-label')).toBe('Playback rate 1.25');
+    expect(menu.getAttribute('aria-label')).toBe('playbackRateAria');
     expect(menu.getAttribute('data-rate')).toBe('1.25');
   });
 
@@ -215,7 +215,7 @@ describe('PlaybackRateMenuTriggerElement', () => {
     await trigger.updateComplete;
 
     expect(trigger.getAttribute('role')).toBe('button');
-    expect(trigger.getAttribute('aria-label')).toBe('Playback rate 2');
+    expect(trigger.getAttribute('aria-label')).toBe('playbackRateAria');
     expect(trigger.getAttribute('data-rate')).toBe('2');
   });
 
