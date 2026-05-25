@@ -30,4 +30,9 @@ describe('loadLocale', () => {
     expect(ptBr?.play).toBeTruthy();
     expect(zhTw?.play).toBeTruthy();
   });
+
+  it('loads packs when unicode locale extensions are present', async () => {
+    const zhCn = await loadLocale('zh-CN-u-nu-hans');
+    expect(zhCn?.play).toBeTruthy();
+  });
 });
