@@ -169,11 +169,11 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
         <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
-              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
               <ErrorDialog.Description className={error.description} />
             </div>
             <div className={error.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.subtle)}>OK</ErrorDialog.Close>
+              <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>
