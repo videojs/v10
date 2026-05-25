@@ -52,6 +52,8 @@
     "dist"
   ],
   "scripts": {
+    "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
+    "prebuild": "pnpm run generate:locales",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
