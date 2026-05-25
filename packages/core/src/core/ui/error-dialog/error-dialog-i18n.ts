@@ -20,6 +20,10 @@ const MEDIA_ERROR_CODE_TO_KEY: Record<number, MediaErrorTranslationKey | undefin
   [MediaError.MEDIA_ERR_CUSTOM]: 'mediaErrorCustom',
 };
 
+const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {
+  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: ['Failed to open media'],
+};
+
 function isStandardMediaErrorCode(code: number): boolean {
   return (
     code === MediaError.MEDIA_ERR_ABORTED ||
@@ -58,10 +62,8 @@ export function resolveErrorDialogDescription(
       if (key && defaultForCode && message === defaultForCode) {
         return key;
       }
-      // `<video>` and other hosts expose UA-specific strings (for example Firefox's
-      // "Failed to open media"). Prefer registry keys for standard HTMLMediaElement codes
-      // unless a source attached context (HLS, app code) with its own copy.
-      if (key && isStandardMediaErrorCode(error.code) && !error.context) {
+      const uaVariants = STANDARD_CODE_UA_MESSAGES[error.code];
+      if (key && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
         return key;
       }
       return message;
