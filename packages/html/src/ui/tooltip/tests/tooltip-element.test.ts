@@ -119,4 +119,43 @@ describe('TooltipElement', () => {
 
     expect(tooltip.textContent).toBe('Lire');
   });
+
+  it('falls back to translating getLabel when getResolvedLabel is undefined', async () => {
+    registerI18n('es', { play: 'Reproducir' });
+
+    class StubTrigger extends HTMLElement {
+      static readonly tagName = 'stub-tooltip-trigger';
+
+      readonly $state = { subscribe: () => () => {} };
+
+      getLabel(): string {
+        return 'play';
+      }
+
+      getResolvedLabel(): undefined {
+        return undefined;
+      }
+    }
+
+    defineElement(StubTrigger.tagName, StubTrigger);
+    ensureDefined(TooltipElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+
+    const trigger = document.createElement(StubTrigger.tagName) as StubTrigger;
+    trigger.setAttribute('commandfor', 'tip');
+
+    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    tooltip.id = 'tip';
+    tooltip.setAttribute('open', '');
+
+    document.body.append(provider);
+    provider.append(trigger, tooltip);
+
+    await tooltip.updateComplete;
+
+    expect(tooltip.textContent).toBe('Reproducir');
+  });
 });

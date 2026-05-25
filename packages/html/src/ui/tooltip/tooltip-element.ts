@@ -250,11 +250,10 @@ export class TooltipElement extends MediaElement {
 
   #syncContent(triggerEl: TriggerElement): void {
     const label = triggerEl.getLabel();
-    const resolved = isFunction(triggerEl.getResolvedLabel)
-      ? triggerEl.getResolvedLabel()
-      : label
-        ? resolveTranslationPhrase(this.#i18n.value, label)
-        : undefined;
+    let resolved = isFunction(triggerEl.getResolvedLabel) ? triggerEl.getResolvedLabel() : undefined;
+    if (resolved === undefined && label) {
+      resolved = resolveTranslationPhrase(this.#i18n.value, label);
+    }
     this.textContent = resolved ?? '';
   }
 
