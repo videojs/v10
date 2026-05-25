@@ -209,8 +209,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     if (parent && !hasOverrides) {
       return props.children;
     }
-    const locale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
-    return <I18nProviderRoot {...props} locale={locale} />;
+    const inheritedLocale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
+    return <I18nProviderRoot {...props} {...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {})} />;
   }
 
   function useTranslator(): Translator {
