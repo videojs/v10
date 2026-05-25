@@ -83,6 +83,25 @@ describe('generateReactInstallCode', () => {
 });
 
 describe('generateHTMLUsageCode', () => {
+  it('returns ejected HTML and CSS when embedMethod is ejected', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, embedMethod: 'ejected' });
+    // No separate JS imports — the ejected skin HTML contains its own script/link tags
+    expect(result.js).toBeUndefined();
+    expect(result.css).toBeDefined();
+    expect(result.html).toBeTruthy();
+  });
+
+  it('falls back to packaged for background-video even when ejected is requested', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'background-video',
+      renderer: 'background-video',
+      embedMethod: 'ejected',
+    });
+    expect(result.html).toContain('<background-video-player>');
+    expect(result.css).toBeUndefined();
+  });
+
   it('generates HTML with video-player and video-skin for default video', () => {
     const result = generateHTMLUsageCode(baseHTML);
     expect(result.html).toContain('<video-player>');
@@ -151,6 +170,25 @@ describe('generateHTMLUsageCode', () => {
 });
 
 describe('generateReactCreateCode', () => {
+  it('returns Skin.tsx and skin.css in addition to MyPlayer.tsx when ejected', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result['MyPlayer.tsx']).toBeDefined();
+    expect(result['Skin.tsx']).toBeDefined();
+    expect(result['skin.css']).toBeDefined();
+  });
+
+  it('falls back to packaged for background-video even when ejected is requested', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'background-video',
+      renderer: 'background-video',
+      embedMethod: 'ejected',
+    });
+    expect(result['MyPlayer.tsx']).toBeDefined();
+    expect(result['Skin.tsx']).toBeUndefined();
+    expect(result['skin.css']).toBeUndefined();
+  });
+
   it('generates a React player component for default video', () => {
     const result = generateReactCreateCode(baseReact);
     const code = result['MyPlayer.tsx'];

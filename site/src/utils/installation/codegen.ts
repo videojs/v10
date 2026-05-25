@@ -1,5 +1,6 @@
 import { VJS10_DEMO_VIDEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
+import { generateEjectedSkinCode } from '@/utils/installation/ejected';
 import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
 export interface InstallationOptions {
@@ -161,8 +162,12 @@ import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 }
 
 export function generateHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-): { html: string; js?: string } {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod' | 'embedMethod'>
+): { html: string; js?: string; css?: string } {
+  if (opts.embedMethod === 'ejected' && opts.useCase !== 'background-video') {
+    const ejectedSkin = generateEjectedSkinCode({ skin: opts.skin, framework: 'html' });
+    return { html: ejectedSkin.html ?? '', css: ejectedSkin.css };
+  }
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
   return { html, js };
@@ -213,9 +218,9 @@ function getRendererMediaSubpath(renderer: Renderer): string {
 }
 
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
-  const { useCase, skin, renderer } = opts;
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'embedMethod'>
+): { 'MyPlayer.tsx': string; 'Skin.tsx'?: string; 'skin.css'?: string } {
+  const { useCase, skin, renderer, embedMethod } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const featureType = getUseCaseFeatures(useCase);
 
@@ -248,8 +253,7 @@ export function generateReactCreateCode(
     ...(mediaImport ? [mediaImport] : []),
   ].join('\n');
 
-  return {
-    'MyPlayer.tsx': `'use client';
+  const myPlayerCode = `'use client';
 
 ${imports}
 
@@ -267,8 +271,19 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
       </${skinComponent}>
     </Player.Provider>
   );
-};`,
-  };
+};`;
+
+  if (embedMethod === 'ejected' && useCase !== 'background-video') {
+    const ejectedSkin = generateEjectedSkinCode({ skin, framework: 'react' });
+    const result: { 'MyPlayer.tsx': string; 'Skin.tsx'?: string; 'skin.css'?: string } = {
+      'MyPlayer.tsx': myPlayerCode,
+    };
+    if (ejectedSkin.tsx) result['Skin.tsx'] = ejectedSkin.tsx;
+    if (ejectedSkin.css) result['skin.css'] = ejectedSkin.css;
+    return result;
+  }
+
+  return { 'MyPlayer.tsx': myPlayerCode };
 }
 
 // ---------------------------------------------------------------------------

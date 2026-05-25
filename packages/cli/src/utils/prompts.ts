@@ -49,6 +49,16 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   ];
 }
 
+function embedMethodOptionsForUseCase(useCase: UseCase): Array<{ value: EmbedMethod; label: string }> {
+  if (useCase === 'background-video') {
+    return [{ value: 'packaged', label: 'Packaged (pre-built skin)' }];
+  }
+  return [
+    { value: 'packaged', label: 'Packaged (pre-built skin)' },
+    { value: 'ejected', label: 'Ejected (copy skin source into your project)' },
+  ];
+}
+
 function installMethodOptions(framework: Framework): Array<{ value: InstallMethod; label: string }> {
   const options: Array<{ value: InstallMethod; label: string }> = [
     { value: 'npm', label: 'npm' },
@@ -160,20 +170,17 @@ export async function promptInstallOptions(
     })());
 
   const embedMethod: EmbedMethod =
-    useCase === 'background-video'
-      ? 'packaged'
-      : (flags.embedMethod ??
-        (await (async () => {
-          const value = await p.select<EmbedMethod>({
-            message: 'Embed method',
-            options: [
-              { value: 'packaged' as const, label: 'Packaged (pre-built skin)' },
-              { value: 'ejected' as const, label: 'Ejected (copy skin source into your project)' },
-            ],
-          });
-          if (p.isCancel(value)) process.exit(0);
-          return value;
-        })()));
+    flags.embedMethod ??
+    (await (async () => {
+      const options = embedMethodOptionsForUseCase(useCase);
+      if (options.length === 1) return options[0]!.value;
+      const value = await p.select<EmbedMethod>({
+        message: 'Embed method',
+        options,
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value;
+    })());
 
   return {
     framework,

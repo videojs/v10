@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
+import { embedMethod, installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { generateHTMLUsageCode } from '@/utils/installation/codegen';
 
 export default function HTMLUsageCodeBlock() {
@@ -10,6 +10,7 @@ export default function HTMLUsageCodeBlock() {
   const $renderer = useStore(renderer);
   const $installMethod = useStore(installMethod);
   const $sourceUrl = useStore(sourceUrl);
+  const $embedMethod = useStore(embedMethod);
 
   const result = generateHTMLUsageCode({
     useCase: $useCase,
@@ -17,6 +18,7 @@ export default function HTMLUsageCodeBlock() {
     renderer: $renderer,
     sourceUrl: $sourceUrl,
     installMethod: $installMethod,
+    embedMethod: $embedMethod,
   });
 
   return (
@@ -38,10 +40,16 @@ export default function HTMLUsageCodeBlock() {
           <Tab value="html" initial>
             HTML
           </Tab>
+          {result.css && <Tab value="css">skin.css</Tab>}
         </TabsList>
         <TabsPanel value="html" initial>
           <ClientCode code={result.html} lang="html" />
         </TabsPanel>
+        {result.css && (
+          <TabsPanel value="css">
+            <ClientCode code={result.css} lang="css" />
+          </TabsPanel>
+        )}
       </TabsRoot>
     </>
   );

@@ -11,11 +11,24 @@ declare module '@/utils/installation/types' {
   export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio';
   export type UseCase = 'default-video' | 'default-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
+  export type EmbedMethod = 'packaged' | 'ejected';
   export const VALID_RENDERERS: Record<UseCase, Renderer[]>;
 }
 
+declare module '@/utils/installation/ejected' {
+  import type { Skin } from '@/utils/installation/types';
+
+  export interface EjectedSkinCode {
+    tsx?: string;
+    html?: string;
+    css?: string;
+  }
+
+  export function generateEjectedSkinCode(opts: { skin: Skin; framework: 'html' | 'react' }): EjectedSkinCode;
+}
+
 declare module '@/utils/installation/codegen' {
-  import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+  import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
   export interface InstallationOptions {
     framework: 'html' | 'react';
@@ -24,6 +37,7 @@ declare module '@/utils/installation/codegen' {
     renderer: Renderer;
     sourceUrl: string;
     installMethod: InstallMethod;
+    embedMethod?: EmbedMethod;
   }
 
   type ValidationResult = { valid: true } | { valid: false; reason: string };
@@ -37,12 +51,12 @@ declare module '@/utils/installation/codegen' {
   export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 
   export function generateHTMLUsageCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-  ): { html: string; js?: string };
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod' | 'embedMethod'>
+  ): { html: string; js?: string; css?: string };
 
   export function generateReactCreateCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-  ): Record<'MyPlayer.tsx', string>;
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'embedMethod'>
+  ): { 'MyPlayer.tsx': string; 'Skin.tsx'?: string; 'skin.css'?: string };
 
   export function generateReactUsageCode(
     opts: Pick<InstallationOptions, 'renderer' | 'sourceUrl'>

@@ -17,8 +17,8 @@ export default defineConfig({
     __CLI_VERSION__: JSON.stringify(pkg.version),
   },
   alias: {
-    '@/content/ejected-skins.json': resolve(__dirname, '../../site/src/content/ejected-skins.json'),
     '@/utils/installation/codegen': resolve(__dirname, '../../site/src/utils/installation/codegen.ts'),
+    '@/utils/installation/ejected': resolve(__dirname, '../../site/src/utils/installation/ejected.ts'),
     '@/utils/installation/types': resolve(__dirname, '../../site/src/utils/installation/types.ts'),
     '@/utils/installation/cdn-code': resolve(__dirname, '../../site/src/utils/installation/cdn-code.ts'),
     '@/utils/installation/detect-renderer': resolve(__dirname, '../../site/src/utils/installation/detect-renderer.ts'),

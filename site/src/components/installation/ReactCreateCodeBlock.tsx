@@ -1,30 +1,46 @@
 import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { renderer, skin, useCase } from '@/stores/installation';
+import { embedMethod, renderer, skin, useCase } from '@/stores/installation';
 import { generateReactCreateCode } from '@/utils/installation/codegen';
 
 export default function ReactCreateCodeBlock() {
   const $useCase = useStore(useCase);
   const $skin = useStore(skin);
   const $renderer = useStore(renderer);
+  const $embedMethod = useStore(embedMethod);
 
   const result = generateReactCreateCode({
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,
+    embedMethod: $embedMethod,
   });
+
+  const hasSkinFiles = 'Skin.tsx' in result || 'skin.css' in result;
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="React implementation">
-        <Tab value="react" initial>
+        <Tab value="index" initial>
           ./components/player/index.tsx
         </Tab>
+        {hasSkinFiles && <Tab value="skin-tsx">./components/player/Skin.tsx</Tab>}
+        {hasSkinFiles && <Tab value="skin-css">./components/player/skin.css</Tab>}
       </TabsList>
-      <TabsPanel value="react" initial>
+      <TabsPanel value="index" initial>
         <ClientCode code={result['MyPlayer.tsx']} lang="tsx" />
       </TabsPanel>
+      {hasSkinFiles && result['Skin.tsx'] && (
+        <TabsPanel value="skin-tsx">
+          <ClientCode code={result['Skin.tsx']} lang="tsx" />
+        </TabsPanel>
+      )}
+      {hasSkinFiles && result['skin.css'] && (
+        <TabsPanel value="skin-css">
+          <ClientCode code={result['skin.css']} lang="css" />
+        </TabsPanel>
+      )}
     </TabsRoot>
   );
 }
