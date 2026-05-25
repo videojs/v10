@@ -90,7 +90,6 @@ export const controls = cn(
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
   'p-1 gap-x-2 flex-wrap rounded-xl',
-  'mx-auto max-w-4xl',
   'text-white z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',

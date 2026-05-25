@@ -96,7 +96,6 @@ export const controls = cn(
   surface,
   // Position & wrapping layout (small)
   'absolute bottom-2 inset-x-2 flex-wrap',
-  'mx-auto max-w-4xl',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',

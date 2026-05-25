@@ -162,9 +162,7 @@
   z-index: 10;
   flex-wrap: wrap;
   column-gap: 0.5rem;
-  max-width: 56rem;
   padding: 0.25rem;
-  margin-inline: auto;
   color: oklch(1 0 0);
   border-radius: 0.75rem;
   transition-timing-function: var(--media-controls-transition-timing-function);

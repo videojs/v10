@@ -162,8 +162,6 @@
   bottom: 0.5rem;
   z-index: 10;
   flex-wrap: wrap;
-  max-width: 56rem;
-  margin-inline: auto;
   color: var(--media-color-primary, oklch(1 0 0));
   transform-origin: bottom;
   transition-timing-function: var(--media-controls-transition-timing-function);
