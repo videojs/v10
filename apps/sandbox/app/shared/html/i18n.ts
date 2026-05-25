@@ -4,6 +4,7 @@ import { ensureSandboxLocale, type SandboxLocaleTag } from '../i18n/sandbox-loca
 import { getInitialLocale, onLocaleChange } from '../sandbox-listener';
 
 let locale: SandboxLocaleTag = getInitialLocale();
+let localeApplySeq = 0;
 
 document.documentElement.lang = locale;
 
@@ -20,9 +21,11 @@ export async function prepareSandboxHtmlLocale(): Promise<void> {
 }
 
 export async function applySandboxHtmlLocale(next: SandboxLocaleTag): Promise<void> {
+  const seq = ++localeApplySeq;
   locale = next;
   document.documentElement.lang = locale;
   await ensureSandboxLocale(locale);
+  if (seq !== localeApplySeq) return;
   document.querySelector('media-i18n-provider')?.setAttribute('lang', locale);
 }
 
@@ -32,8 +35,13 @@ export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
       void applySandboxHtmlLocale(next);
       return;
     }
+    const seq = ++localeApplySeq;
     locale = next;
     document.documentElement.lang = locale;
-    void rerender();
+    void (async () => {
+      await ensureSandboxLocale(locale);
+      if (seq !== localeApplySeq) return;
+      rerender();
+    })();
   });
 }
