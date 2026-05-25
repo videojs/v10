@@ -10,6 +10,7 @@ export {
   getBrowserTranslations,
   getI18nTranslations,
   hasRegisteredI18n,
+  loadLocale,
   localeLookupChain,
   onI18nRegistryChange,
   registerI18n,
