@@ -128,12 +128,6 @@ function getSandboxEntries(): Record<string, string> {
     }
   }
 
-  // Prefer templates for CDN — `src/cdn/` is easy to leave stale without a setup run.
-  const cdnTemplateIndex = resolve(__dirname, 'templates/cdn/index.html');
-  if (existsSync(cdnTemplateIndex)) {
-    entries.cdn = cdnTemplateIndex;
-  }
-
   return entries;
 }
 
