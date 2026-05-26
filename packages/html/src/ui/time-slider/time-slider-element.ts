@@ -116,21 +116,26 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
-    // Resume playback if disconnected mid-drag — createSlider's destroy() does not
-    // fire onDragEnd, so without this the player would stay paused. Read playback
-    // before super so the PlayerController is still attached.
-    if (this.#wasPlayingBeforeDrag) {
-      this.#playbackState.value?.play().catch(() => {});
-      this.#wasPlayingBeforeDrag = false;
-    }
+    this.#resumeIfDragPaused();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#resumeIfDragPaused();
     this.#slider?.destroy();
     super.destroyCallback();
+  }
+
+  // createSlider's destroy() does not fire onDragEnd, so a teardown mid-drag
+  // would leave playback paused. Called from both disconnect and destroy paths
+  // before super so the PlayerController is still attached.
+  #resumeIfDragPaused(): void {
+    if (this.#wasPlayingBeforeDrag) {
+      this.#playbackState.value?.play().catch(() => {});
+      this.#wasPlayingBeforeDrag = false;
+    }
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
