@@ -113,7 +113,6 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/create-player' },
       { slug: 'reference/create-i18n' },
-      { slug: 'reference/i18n-provider' },
       { slug: 'reference/use-translator' },
       { slug: 'reference/use-locale' },
       { slug: 'reference/use-player' },
