@@ -262,7 +262,7 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
  *
  * @example
  * ```ts
- * const composition = createComposition([resolvePresentation, switchVideoQuality], {
+ * const composition = createComposition([resolvePresentation, switchVideoTrack], {
  *   config: { parsePresentation: parseMultivariantPlaylist, initialBandwidth: 2_000_000 },
  *   initialState: { bandwidthState: { fastEstimate: 0, ... } },
  * });

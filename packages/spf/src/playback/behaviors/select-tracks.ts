@@ -19,9 +19,9 @@
  * picker without an intermediate wrapping layer.
  *
  * Compose `selectVideoTrack` for the simple "pick a default video track"
- * behavior, or `switchVideoQuality` (`./quality-switching.ts`) for the
+ * behavior, or `switchVideoTrack` (`./track-switching.ts`) for the
  * ABR-driven variant. Compose `selectAudioTrack` for the simple default
- * pick, or `switchAudioTrack` (`./quality-switching.ts`) for the
+ * pick, or `switchAudioTrack` (`./track-switching.ts`) for the
  * filter-reactive + mid-stream-flush slot-owner variant — when audio-abr
  * lands, `switchAudioTrack` extends into `switchAudioQuality`. Compose
  * only one per type — they're alternatives, not stackable (each writes
@@ -169,7 +169,7 @@ export interface SelectVideoTrackConfig extends Omit<VideoSelectionConfig, 'type
  * Select a video track when a presentation loads. Clears the selection on
  * src unload.
  *
- * This is the simple, non-ABR counterpart to `switchVideoQuality` — compose
+ * This is the simple, non-ABR counterpart to `switchVideoTrack` — compose
  * one or the other, not both (both write `selectedVideoTrackId`). Composing
  * `selectVideoTrack` alone tree-shakes out the ABR code path
  * (bandwidth-estimator, quality-selection); use it for sources without
@@ -207,7 +207,7 @@ export interface SelectAudioTrackConfig extends Omit<AudioSelectionConfig, 'type
  * on src unload.
  *
  * This is the simple, lifecycle-only counterpart to `switchAudioTrack`
- * (in `./quality-switching.ts`) — compose one or the other, not both
+ * (in `./track-switching.ts`) — compose one or the other, not both
  * (both write `selectedAudioTrackId`). `switchAudioTrack` adds
  * filter-reactivity (`userAudioTrackSelection`) and mid-stream-flush
  * orchestration; `selectAudioTrack` covers the default-on-load case

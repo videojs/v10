@@ -121,7 +121,7 @@ export interface TextSelectionConfig {
  * select, or `undefined` to leave the slot unset.
  *
  * Behaviors that own a track-selection slot (`selectAudioTrack`,
- * `selectTextTrack`, `selectVideoTrack`, `switchVideoQuality`) accept a
+ * `selectTextTrack`, `selectVideoTrack`, `switchVideoTrack`) accept a
  * `TrackPicker` via config. The behavior passes its own config straight
  * through as the picker's second argument — pickers that need richer
  * options (language preferences, default-track filtering, bandwidth-aware
@@ -173,7 +173,7 @@ export function pickVideoTrack(presentation: Presentation, config: VideoSelectio
   const safetyMargin = config.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
 
   // selectQuality works with both partially resolved and resolved tracks
-  const selected = selectQuality(switchingSet.tracks as any, initialBandwidth, { safetyMargin });
+  const selected = selectQuality(switchingSet.tracks as any, { bandwidth: initialBandwidth, safetyMargin });
 
   return selected?.id;
 }

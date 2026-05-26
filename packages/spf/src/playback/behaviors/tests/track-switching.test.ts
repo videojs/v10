@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type {
+  AudioSelectionSet,
+  AudioTrack,
   MaybeResolvedPresentation,
   PartiallyResolvedVideoTrack,
   Presentation,
@@ -9,13 +11,25 @@ import type {
   VideoTrack,
 } from '../../../media/types';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
-import { type QualitySwitchingConfig, type QualitySwitchingState, switchVideoQuality } from '../quality-switching';
+import {
+  switchAudioTrack,
+  switchVideoTrack,
+  type TrackSwitchingConfig,
+  type TrackSwitchingState,
+} from '../track-switching';
 
 // ============================================================================
 // Test helpers
 // ============================================================================
 
-function makeState(initial: QualitySwitchingState = {}): StateSignals<QualitySwitchingState> {
+interface SwitchVideoTrackState {
+  presentation?: MaybeResolvedPresentation;
+  bandwidthState?: BandwidthState;
+  selectedVideoTrackId?: string;
+  userVideoTrackSelection?: Partial<VideoTrack>;
+}
+
+function makeState(initial: Partial<TrackSwitchingState> = {}): StateSignals<SwitchVideoTrackState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
@@ -70,15 +84,15 @@ const tracks = [
 ];
 
 // ============================================================================
-// switchVideoQuality
+// switchVideoTrack
 // ============================================================================
 
-describe('switchVideoQuality', () => {
+describe('switchVideoTrack', () => {
   describe('lifecycle (presentation-unresolved ↔ presentation-resolved)', () => {
     it('does nothing without a presentation', async () => {
       const state = makeState({ bandwidthState: createBandwidthState(3_000_000) });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBeUndefined();
       reactor.destroy();
@@ -90,7 +104,7 @@ describe('switchVideoQuality', () => {
         bandwidthState: createBandwidthState(3_000_000),
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -107,7 +121,7 @@ describe('switchVideoQuality', () => {
         bandwidthState: createBandwidthState(3_000_000),
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -119,7 +133,7 @@ describe('switchVideoQuality', () => {
     it('re-picks default after src reset (presentation undefined → new resolved)', async () => {
       const state = makeState({ presentation: createPresentation(tracks) });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       // initialBandwidth-driven default — see "default-pick" describe.
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -141,7 +155,7 @@ describe('switchVideoQuality', () => {
     it('picks the initialBandwidth-optimal track when bandwidthState is undefined and no selection', async () => {
       const state = makeState({ presentation: createPresentation(tracks) });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       // Default initialBandwidth is 5 Mbps; 1080p (4.8 Mbps) requires
       // 5.65 Mbps with safetyMargin 0.85, so the optimal is 720p.
@@ -158,7 +172,7 @@ describe('switchVideoQuality', () => {
       // unified with the pre-trust path.
       const state = makeState({ presentation: createPresentation(tracks), selectedVideoTrackId: '1080p' });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -174,7 +188,7 @@ describe('switchVideoQuality', () => {
         userVideoTrackSelection: { id: '360p' },
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       // Bandwidth would normally select 1080p, but the filter locks to 360p.
       expect(state.selectedVideoTrackId.get()).toBe('360p');
@@ -189,7 +203,7 @@ describe('switchVideoQuality', () => {
         userVideoTrackSelection: { id: '720p' },
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -216,7 +230,7 @@ describe('switchVideoQuality', () => {
         userVideoTrackSelection: { id: '360p' },
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('360p');
 
@@ -235,7 +249,7 @@ describe('switchVideoQuality', () => {
         userVideoTrackSelection: { id: 'nonexistent-from-old-src' },
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       // Filter matches zero tracks → fall back to full candidate set →
       // ABR picks optimal at 3 Mbps.
@@ -257,7 +271,7 @@ describe('switchVideoQuality', () => {
         userVideoTrackSelection: { height: 1080 },
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       // Among 1080a (3M) and 1080b (5.5M), 8 Mbps fits both; selectQuality
       // picks the highest bandwidth track (5.5M → 1080-high).
@@ -275,7 +289,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -293,7 +307,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
@@ -313,7 +327,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
 
@@ -333,7 +347,7 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: 'low',
       });
 
-      const reactor = switchVideoQuality.setup({ state });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('low');
 
@@ -349,8 +363,8 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: QualitySwitchingConfig = { quality: { safetyMargin: 1.0 } };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const config: TrackSwitchingConfig = { quality: { safetyMargin: 1.0 } };
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       reactor.destroy();
@@ -364,8 +378,8 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: 'low',
       });
 
-      const config: QualitySwitchingConfig = { quality: { upgradeMargin: 1.05 } };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const config: TrackSwitchingConfig = { quality: { upgradeMargin: 1.05 } };
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('high');
 
@@ -387,8 +401,8 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: QualitySwitchingConfig = { initialBandwidth: 5_000_000 };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const config: TrackSwitchingConfig = { initialBandwidth: 5_000_000 };
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
       reactor.destroy();
@@ -403,8 +417,8 @@ describe('switchVideoQuality', () => {
         bandwidthState: createBandwidthState(6_000_000),
       });
 
-      const config: QualitySwitchingConfig = { picker: () => '360p' };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const config: TrackSwitchingConfig = { picker: () => '360p' };
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       // Picker drives the initial selection.
       expect(state.selectedVideoTrackId.get()).toBe('360p');
@@ -424,8 +438,8 @@ describe('switchVideoQuality', () => {
         bandwidthState: createBandwidthState(3_000_000),
       });
 
-      const config: QualitySwitchingConfig = { picker: () => undefined };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const config: TrackSwitchingConfig = { picker: () => undefined };
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       // 3 Mbps with default safetyMargin 0.85 → 720p (1080p needs 5.65 Mbps).
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -451,11 +465,11 @@ describe('switchVideoQuality', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const config: QualitySwitchingConfig = {
+      const config: TrackSwitchingConfig = {
         bandwidth: { minTotalBytes: 40_000 },
         initialBandwidth: 5_000_000,
       };
-      const reactor = switchVideoQuality.setup({ state, config });
+      const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       // With the override the 800 kbps measurement is trusted and drives a
       // downgrade to 360p; at the default threshold the 5 Mbps initial
@@ -463,5 +477,195 @@ describe('switchVideoQuality', () => {
       expect(state.selectedVideoTrackId.get()).toBe('360p');
       reactor.destroy();
     });
+  });
+});
+
+// ============================================================================
+// switchAudioTrack
+//
+// The audio variant shares `setupTrackSwitching` with `switchVideoTrack` —
+// these tests cover the audio-specific surface: default picker, language
+// pinning, filter reactivity, single-candidate short-circuit. The
+// bandwidth-driven re-evaluation tests live above under `switchVideoTrack`
+// and don't need duplicating; audio's `selectAudioCurrent` pins to the
+// current track and is exercised here by the steady-state assertions.
+// ============================================================================
+
+interface SwitchAudioTrackState {
+  presentation?: MaybeResolvedPresentation;
+  bandwidthState?: BandwidthState;
+  selectedAudioTrackId?: string;
+  userAudioTrackSelection?: Partial<AudioTrack>;
+}
+
+function makeAudioState(initial: SwitchAudioTrackState = {}): StateSignals<SwitchAudioTrackState> {
+  return {
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
+    selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
+    userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(initial.userAudioTrackSelection),
+  };
+}
+
+function createAudioPresentation(tracks: AudioTrack[]): Presentation {
+  return {
+    id: 'pres-1',
+    url: 'http://example.com/playlist.m3u8',
+    selectionSets: [
+      {
+        id: 'audio-set',
+        type: 'audio' as const,
+        switchingSets: [
+          {
+            id: 'audio-switching',
+            type: 'audio' as const,
+            tracks,
+          },
+        ],
+      } as AudioSelectionSet,
+    ],
+    startTime: 0,
+  };
+}
+
+function makeAudioTrack(id: string, overrides: Partial<AudioTrack> = {}): AudioTrack {
+  return {
+    type: 'audio',
+    id,
+    url: `http://example.com/${id}.m3u8`,
+    bandwidth: 128_000,
+    mimeType: 'audio/mp4',
+    codecs: ['mp4a.40.2'],
+    groupId: 'audio',
+    name: id,
+    sampleRate: 48000,
+    channels: 2,
+    startTime: 0,
+    duration: 10,
+    initialization: { url: `http://example.com/${id}-init.mp4` },
+    segments: [],
+    ...overrides,
+  };
+}
+
+describe('switchAudioTrack', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('selects the first audio track when no preference or filter', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+
+    reactor.destroy();
+  });
+
+  it('picks track matching preferredAudioLanguage when supplied', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-en', { language: 'en' }),
+        makeAudioTrack('audio-es', { language: 'es' }),
+      ]),
+    });
+
+    const reactor = switchAudioTrack.setup({ state, config: { preferredAudioLanguage: 'es' } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+
+    reactor.destroy();
+  });
+
+  it('clears selectedAudioTrackId on src unload', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+});
+
+describe('switchAudioTrack — userAudioTrackSelection filter', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('narrows candidates by filter (language)', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-en', { language: 'en' }),
+        makeAudioTrack('audio-es', { language: 'es' }),
+      ]),
+      userAudioTrackSelection: { language: 'es' },
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+
+    reactor.destroy();
+  });
+
+  it('re-picks on filter change mid-presentation', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-en', { language: 'en' }),
+        makeAudioTrack('audio-es', { language: 'es' }),
+      ]),
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+
+    state.userAudioTrackSelection.set({ language: 'es' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+
+    reactor.destroy();
+  });
+
+  it('filter narrowing to a single track short-circuits the picker', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-en', { language: 'en' }),
+        makeAudioTrack('audio-es', { language: 'es' }),
+      ]),
+      userAudioTrackSelection: { id: 'audio-es' },
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+
+    reactor.destroy();
+  });
+
+  it('empty filter result falls back to unfiltered candidate set', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
+      userAudioTrackSelection: { language: 'es' }, // no Spanish track exists
+    });
+
+    const reactor = switchAudioTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+
+    reactor.destroy();
   });
 });

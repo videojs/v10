@@ -28,7 +28,7 @@
  * with its upstream and downstream siblings:
  *
  * 1. **Upstream — default selections land in one `runPending`.**
- *    `selectAudioTrack` (default audio) and `switchVideoQuality`
+ *    `selectAudioTrack` (default audio) and `switchVideoTrack`
  *    (default video) both subscribe to `state.presentation` flipping to
  *    resolved; their effects run in the same `runPending` iteration and
  *    write `selectedAudioTrackId` + `selectedVideoTrackId` within it.
@@ -260,7 +260,7 @@ export const setupVideoBufferActors = defineBehavior({
  * **Mid-stream audio track switching is NOT this behavior's concern.**
  * Slot writes to `selectedAudioTrackId` (default selection, programmatic
  * filter-driven, future ABR) are owned by `switchAudioTrack` / future
- * `switchAudioQuality` in `quality-switching.ts`. Flush orchestration on
+ * `switchAudioQuality` in `track-switching.ts`. Flush orchestration on
  * track change is dispatched from there via `audioBufferActor.send(...)`
  * — keeping this setup behavior focused on per-source actor lifecycle.
  */

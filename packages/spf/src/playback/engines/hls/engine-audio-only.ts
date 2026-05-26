@@ -25,8 +25,8 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
-import { switchAudioTrack } from '../../behaviors/switch-audio-track';
 import { syncPreload } from '../../behaviors/sync-preload';
+import { switchAudioTrack } from '../../behaviors/track-switching';
 
 // ============================================================================
 // Audio-Only HLS Engine State & Context
@@ -98,7 +98,7 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  * Create an audio-only HLS playback engine.
  *
  * Subtractive composition variant of `createSimpleHlsEngine`: omits
- * video-side behaviors (`resolveVideoTrack`, `switchVideoQuality`,
+ * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
  * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
  * (`selectTextTrack`, `resolveTextTrack`, `syncTextTracks`,
  * `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio

@@ -35,12 +35,11 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectTextTrack } from '../../behaviors/select-tracks';
-import { switchAudioTrack } from '../../behaviors/switch-audio-track';
 import { syncPreload } from '../../behaviors/sync-preload';
+import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -245,7 +244,7 @@ export function createSimpleHlsEngine(
       resolvePresentation,
 
       // Track selection (reads config for initial preferences).
-      // Video selection lives in switchVideoQuality (composed below);
+      // Video selection lives in switchVideoTrack (composed below);
       // audio selection lives in switchAudioTrack (composed below) —
       // both are slot owners with filter-reactivity, mirroring shapes.
       selectTextTrack,
@@ -270,7 +269,7 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchVideoQuality,
+      switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in
       // `segment-loader`'s `planTasks` (predicate: language differs from
@@ -295,7 +294,7 @@ export function createSimpleHlsEngine(
     ],
     {
       config: finalConfig,
-      // Seed bandwidthState so switchVideoQuality fires on initial subscribe
+      // Seed bandwidthState so switchVideoTrack fires on initial subscribe
       // with the `initialBandwidth` fallback rather than waiting for the
       // first chunk. The empty sample buffer means `getBandwidthEstimate`
       // returns the configured initial bandwidth until real samples land.

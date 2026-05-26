@@ -118,7 +118,7 @@ function syncTextTracksSetup({
           // `getTracksByType('text', ...)` returns text tracks only — the
           // selection-set filter inside the helper ensures that — but its
           // declared return is the wide track union. Mirror the cast
-          // pattern used by `quality-switching` for the video branch.
+          // pattern used by `track-switching` for the video branch.
           const modelTextTracks = getTracksByType(state.presentation.get()!, 'text') as readonly (
             | PartiallyResolvedTextTrack
             | TextTrack
