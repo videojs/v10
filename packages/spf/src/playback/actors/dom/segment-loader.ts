@@ -289,9 +289,19 @@ export function createSegmentLoaderActor(
    * @todo Rename alongside LoadTask (e.g. planOps).
    *
    * Case 1 — Removes: forward and back buffer flush points, segment-aligned.
-   *   No flush on track switch: appending new content overwrites existing buffer
-   *   ranges, and the actor's time-aligned deduplication keeps the segment model
-   *   accurate as new segments arrive.
+   *   ABR-style track switches (same content, different bitrate) do not flush:
+   *   appending new content overwrites existing buffer ranges, and the actor's
+   *   time-aligned deduplication keeps the segment model accurate as new
+   *   segments arrive.
+   *
+   *   Cross-rendition track switches (audio language change, text language
+   *   change) do flush: the buffered content is semantically incompatible with
+   *   the newly-selected track, so overwrite-on-append would leave stale
+   *   content playing until each replacement segment lands. Today's predicate:
+   *   `actorCtx.initTrackLanguage !== track.language` — fires for language
+   *   changes, no-ops for video / same-language audio bitrate switches.
+   *   Future stage: pluggable predicate / strategy at actor construction time
+   *   for codec-change (5.1 surround) and other cross-rendition shapes.
    *
    * Case 2 — Init: schedule if not yet committed for this track.
    *
@@ -307,8 +317,27 @@ export function createSegmentLoaderActor(
     const currentTime = range?.start ?? 0;
     const tasks: LoadTask[] = [];
 
+    // Cross-rendition flush check (mid-stream language change). Fires when
+    // (a) an init segment has already been committed for some track,
+    // (b) the newly-selected track is a different track, and
+    // (c) the languages differ. Removes everything from the next segment
+    // boundary at/after the playhead forward. Current segment plays through;
+    // new rendition takes over at the boundary. Computed against the
+    // currently-buffered segments (stable reference; new track's playlist
+    // may not be resolved yet at first load).
+    const isCrossRenditionSwitch =
+      actorCtx.initTrackId !== undefined &&
+      actorCtx.initTrackId !== track.id &&
+      actorCtx.initTrackLanguage !== track.language;
+
     // Case 1: Removes
     if (range) {
+      if (isCrossRenditionSwitch) {
+        const nextBoundary = actorCtx.segments.find((s) => s.startTime > currentTime)?.startTime;
+        if (nextBoundary !== undefined) {
+          tasks.push({ type: 'remove', start: nextBoundary, end: Infinity });
+        }
+      }
       const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime, forwardBufferConfig);
       if (forwardFlushStart < Infinity) {
         tasks.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
@@ -323,7 +352,7 @@ export function createSegmentLoaderActor(
     if (actorCtx.initTrackId !== track.id) {
       tasks.push({
         type: 'append-init',
-        meta: { trackId: track.id },
+        meta: { trackId: track.id, language: track.language },
         url: track.initialization.url,
         ...(track.initialization.byteRange !== undefined && { byteRange: track.initialization.byteRange }),
       });

@@ -31,6 +31,12 @@ export const SOURCES = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-multi-audio': {
+    label: 'HLS - Multi-language audio',
+    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'hls-live': {
     label: 'HLS - Live Stream Big Buck Bunny',
     url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',

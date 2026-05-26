@@ -17,6 +17,7 @@ const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
+const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
@@ -60,6 +61,10 @@ function formatBandwidth(bps: number): string {
 
 function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+}
+
+function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+  return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
@@ -166,6 +171,64 @@ function renderRenditionPicker() {
       signals.state.userVideoTrackSelection.set({ id: track.id });
     });
     renditionButtonsDiv.appendChild(btn);
+  }
+}
+
+function renderAudioTrackPicker() {
+  if (!engine || !signals) return;
+  const presentation = engine.state.presentation.get();
+  const selectedAudioTrackId = engine.state.selectedAudioTrackId.get();
+  const userFilter = engine.state.userAudioTrackSelection.get();
+  const isPinned = userFilter !== undefined;
+  const tracks = getAudioTracks(presentation);
+
+  if (tracks.length === 0) {
+    audioTrackButtonsDiv.textContent = presentation ? 'No audio tracks found' : 'Waiting for presentation…';
+    return;
+  }
+
+  audioTrackButtonsDiv.innerHTML = '';
+
+  const statusRow = document.createElement('div');
+  statusRow.className = 'audio-status';
+  const modeLabel = document.createElement('span');
+  modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
+  modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
+  statusRow.appendChild(modeLabel);
+  if (isPinned) {
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-filter-btn';
+    clearBtn.textContent = 'Clear filter';
+    clearBtn.addEventListener('click', () => {
+      log('Cleared userAudioTrackSelection (back to default picker)', 'success');
+      signals.state.userAudioTrackSelection.set(undefined);
+    });
+    statusRow.appendChild(clearBtn);
+  }
+  audioTrackButtonsDiv.appendChild(statusRow);
+
+  for (const track of tracks) {
+    const isSelected = track.id === selectedAudioTrackId;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    const lang = track.language ?? '—';
+    const name = 'name' in track && track.name ? track.name : track.id;
+    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+    btn.textContent = `${lang} · ${name}${badge}`;
+    btn.title = `id: ${track.id}${track.language ? ` · lang: ${track.language}` : ''}`;
+    btn.addEventListener('click', () => {
+      // Prefer pinning by language (the multi-language-audio Tier 2 case);
+      // fall back to id-pin if the track has no language attribute.
+      const filter = track.language ? { language: track.language } : { id: track.id };
+      log(
+        `Audio track filter: ${JSON.stringify(filter)} — mid-stream flush will fire if language differs from buffered`,
+        'warning'
+      );
+      signals.state.userAudioTrackSelection.set(filter);
+    });
+    audioTrackButtonsDiv.appendChild(btn);
   }
 }
 
@@ -333,11 +396,13 @@ function startEngine(src: string) {
     }
   });
 
-  // Throughput + rendition picker + resolution status — re-render on any state change
+  // Throughput + rendition picker + audio-track picker + resolution status —
+  // re-render on any state change
   const stopStateUI = effect(() => {
     snapshot(engine.state); // track all state changes
     updateThroughputDisplay();
     renderRenditionPicker();
+    renderAudioTrackPicker();
     renderResolutionStatus();
   });
 

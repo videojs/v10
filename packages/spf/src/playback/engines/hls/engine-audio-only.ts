@@ -25,7 +25,7 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack } from '../../behaviors/select-tracks';
+import { switchAudioTrack } from '../../behaviors/switch-audio-track';
 import { syncPreload } from '../../behaviors/sync-preload';
 
 // ============================================================================
@@ -139,8 +139,10 @@ export function createHlsAudioOnlyEngine(
       trackLoadTriggers,
       resolvePresentation,
 
-      // Track selection — audio only.
-      selectAudioTrack,
+      // Audio track selection — slot owner with filter reactivity.
+      // Mid-stream flush on language switch is handled in segment-loader's
+      // planTasks, not here.
+      switchAudioTrack,
 
       // Resolve selected tracks — audio only.
       resolveAudioTrack,

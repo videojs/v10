@@ -4,7 +4,6 @@ import { signal } from '../../../core/signals/primitives';
 import type { TrackSelectionState } from '../../../media/primitives/select-tracks';
 import type {
   AudioSelectionSet,
-  AudioTrack,
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedVideoTrack,
@@ -14,15 +13,12 @@ import type {
 } from '../../../media/types';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
 
-type AudioState = TrackSelectionState & { userAudioTrackSelection?: Partial<AudioTrack> };
-
-function makeState(initial: AudioState = {}): StateSignals<AudioState> {
+function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
-    userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(initial.userAudioTrackSelection),
   };
 }
 
@@ -311,175 +307,6 @@ describe('selectAudioTrack', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('audio-fr');
-
-    reactor.destroy();
-  });
-
-  it('narrows candidates by userAudioTrackSelection filter (language)', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        language: 'en',
-        sampleRate: 48000,
-        channels: 2,
-      },
-      {
-        type: 'audio',
-        id: 'audio-es',
-        url: 'http://example.com/audio-es.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'Spanish',
-        language: 'es',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-    const state = makeState({ presentation, userAudioTrackSelection: { language: 'es' } });
-
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Filter narrows to one Spanish track; selection picks it regardless of
-    // default picker preference.
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
-  it('re-picks on userAudioTrackSelection change mid-presentation', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        language: 'en',
-        sampleRate: 48000,
-        channels: 2,
-      },
-      {
-        type: 'audio',
-        id: 'audio-es',
-        url: 'http://example.com/audio-es.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'Spanish',
-        language: 'es',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    // Consumer writes filter; selection re-picks to Spanish.
-    state.userAudioTrackSelection.set({ language: 'es' });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    // Consumer clears filter; selection stays on the current pick (no
-    // re-pick to first — the slot is non-empty and the filter no longer
-    // narrows; ABR-shaped behavior would re-evaluate, but the simple picker
-    // only fires when slot is empty or filter narrows to one).
-    state.userAudioTrackSelection.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
-  it('filter narrowing to a single track short-circuits the picker', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        language: 'en',
-        sampleRate: 48000,
-        channels: 2,
-      },
-      {
-        type: 'audio',
-        id: 'audio-es',
-        url: 'http://example.com/audio-es.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'Spanish',
-        language: 'es',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-    const state = makeState({ presentation, userAudioTrackSelection: { id: 'audio-es' } });
-
-    // Picker would normally pick first (no preferredAudioLanguage). Filter pins to es.
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
-  it('empty filter result falls back to unfiltered candidate set', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        language: 'en',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-    // Filter narrows to zero (no Spanish track). Picker falls back to full set.
-    const state = makeState({ presentation, userAudioTrackSelection: { language: 'es' } });
-
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
   });

@@ -38,7 +38,8 @@ import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasourc
 import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
+import { selectTextTrack } from '../../behaviors/select-tracks';
+import { switchAudioTrack } from '../../behaviors/switch-audio-track';
 import { syncPreload } from '../../behaviors/sync-preload';
 
 // ============================================================================
@@ -244,9 +245,9 @@ export function createSimpleHlsEngine(
       resolvePresentation,
 
       // Track selection (reads config for initial preferences).
-      // Video selection lives in switchVideoQuality, which owns the
-      // default-pick + ABR-driven adjustment for selectedVideoTrackId.
-      selectAudioTrack,
+      // Video selection lives in switchVideoQuality (composed below);
+      // audio selection lives in switchAudioTrack (composed below) —
+      // both are slot owners with filter-reactivity, mirroring shapes.
       selectTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
@@ -270,6 +271,10 @@ export function createSimpleHlsEngine(
       // Playback tracking
       trackCurrentTime,
       switchVideoQuality,
+      switchAudioTrack,
+      // Mid-stream audio-buffer flush on language switch is handled in
+      // `segment-loader`'s `planTasks` (predicate: language differs from
+      // the previously-buffered track) — not in switchAudioTrack itself.
 
       // Segment loading
       loadVideoSegments,

@@ -1,45 +1,38 @@
 /**
- * **Default audio/text track selection on src load / unselect on src unload.**
- * When a presentation is resolved, sets `selectedAudioTrackId` /
- * `selectedTextTrackId` to a per-type-picker default if no selection already
- * exists. When the presentation is unset/reset (transitions back to
- * unresolved), clears the selection so a stale id from the previous source
- * doesn't persist.
+ * **Default audio/text/video track selection on src load / unselect on src unload.**
+ * When a presentation is resolved, sets `selectedVideoTrackId` /
+ * `selectedAudioTrackId` / `selectedTextTrackId` to a per-type-picker default
+ * if no selection already exists. When the presentation is unset/reset
+ * (transitions back to unresolved), clears the selection so a stale id from
+ * the previous source doesn't persist.
  *
- * **Audio is filter-reactive.** `selectAudioTrack` reads
- * `userAudioTrackSelection` (consumer intent, sibling of
- * `userVideoTrackSelection`) and narrows the audio candidate set before
- * invoking the picker. On filter changes mid-presentation, the audio
- * selection re-evaluates; when the filter narrows to a single track, the
- * picker is short-circuited. This is the multi-language-audio Tier 2
- * programmatic-write path. `selectVideoTrack` / `selectTextTrack` remain
- * lifecycle-driven (entry-only); only the audio variant has filter
- * reactivity today.
+ * Lifecycle-driven: each transition fires its work once. Does not police the
+ * selection between transitions; external writes (user picks, ABR, programmatic
+ * filter-driven re-picks) are left alone.
  *
  * Picker is config-driven: each per-type export wires a sensible default
- * (`pickAudioTrack` for audio, `pickTextTrack` for text, `pickFirstTrackId`
- * for video) and the caller can supply their own via `config.picker` for
- * custom selection logic (language preferences, default-track handling,
- * etc.). The behavior's `config` is forwarded to the picker as its second
- * argument, so options like `preferredAudioLanguage` /
- * `preferredSubtitleLanguage` reach the picker without an intermediate
- * wrapping layer.
+ * (`pickAudioTrack` for audio — three-tier language-aware; `pickTextTrack`
+ * for text; `pickFirstTrackId` for video) and the caller can supply their
+ * own via `config.picker` for custom selection logic. The behavior's
+ * `config` is forwarded to the picker as its second argument, so options
+ * like `preferredAudioLanguage` / `preferredSubtitleLanguage` reach the
+ * picker without an intermediate wrapping layer.
  *
  * Compose `selectVideoTrack` for the simple "pick a default video track"
  * behavior, or `switchVideoQuality` (`./quality-switching.ts`) for the
- * ABR-driven variant — they're alternatives, not stackable (both write
- * `selectedVideoTrackId`). The simple variant tree-shakes out the
- * ABR machinery (bandwidth-estimator, quality-selection algorithms).
- *
- * When `switchAudioQuality` (audio-abr Phase 3) lands, `selectAudioTrack`
- * shrinks back to the non-filter shape — the filter reactivity migrates
- * to `switchAudioQuality`, matching the video precedent
- * (`selectVideoTrack` / `switchVideoQuality` are mutually exclusive).
+ * ABR-driven variant. Compose `selectAudioTrack` for the simple default
+ * pick, or `switchAudioTrack` (`./quality-switching.ts`) for the
+ * filter-reactive + mid-stream-flush slot-owner variant — when audio-abr
+ * lands, `switchAudioTrack` extends into `switchAudioQuality`. Compose
+ * only one per type — they're alternatives, not stackable (each writes
+ * the same `selected*TrackId` slot). The simple variants tree-shake out
+ * the heavier machinery (bandwidth estimator, quality selection, flush
+ * orchestration).
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
   type AudioSelectionConfig,
   pickAudioTrack,
@@ -50,9 +43,7 @@ import {
   type TrackSelectionState,
   type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
-import type { AudioTrack, MaybeResolvedPresentation, PartiallyResolvedAudioTrack } from '../../media/types';
 import { isResolvedPresentation, type Presentation } from '../../media/types';
-import { getTracksByType } from '../../media/utils/tracks';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -119,119 +110,6 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
           }
           return () => state[selectedKey].set(undefined);
         },
-      },
-    },
-  });
-}
-
-// ============================================================================
-// Audio specialization helper — filter-reactive variant
-//
-// `setupAudioTrackSelection` is the audio-specific sibling of
-// `setupTrackSelection`. Same overall reactor shape (state-exit clear), but
-// the body runs as a state-driven `effects:` array so it re-fires on
-// `userAudioTrackSelection` changes mid-presentation. Mirrors
-// `setupQualitySwitching`'s filter-narrowing pattern minus the
-// bandwidth/ABR layer.
-//
-// When `switchAudioQuality` (audio-abr Phase 3) lands and takes over
-// `selectedAudioTrackId` ownership, this filter logic migrates there and
-// `selectAudioTrack` shrinks back to the lifecycle-only helper. The two are
-// mutually exclusive at composition time (both write the slot), matching
-// the `selectVideoTrack` / `switchVideoQuality` precedent.
-// ============================================================================
-
-type AudioSelectStateMap = {
-  presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
-  selectedAudioTrackId: Signal<string | undefined>;
-  userAudioTrackSelection: ReadonlySignal<Partial<AudioTrack> | undefined>;
-};
-
-interface AudioSelectionSetupConfig<PickerConfig> {
-  picker: TrackPicker<PickerConfig>;
-  pickerConfig?: PickerConfig;
-}
-
-function setupAudioTrackSelection<PickerConfig>({
-  state,
-  config: { picker, pickerConfig },
-}: {
-  state: AudioSelectStateMap;
-  config: AudioSelectionSetupConfig<PickerConfig>;
-}) {
-  const derivedStateSignal = computed(() =>
-    isResolvedPresentation(state.presentation.get())
-      ? ('presentation-resolved' as const)
-      : ('presentation-unresolved' as const)
-  );
-
-  return createMachineReactor({
-    initial: 'presentation-unresolved',
-    monitor: () => derivedStateSignal.get(),
-    states: {
-      'presentation-unresolved': {},
-      'presentation-resolved': {
-        // State-exit clear covers both src unload and behavior destroy
-        // (canonical cleanup-binds-to-setup per reactors.md).
-        entry: () => () => state.selectedAudioTrackId.set(undefined),
-        effects: [
-          () => {
-            // The reactor's state transitions handle relevant presentation
-            // identity changes; within 'presentation-resolved' we peek so
-            // internal updates (resolveAudioTrack patching segments) don't
-            // re-fire the effect. Filter changes DO re-fire (tracked via
-            // .get()) — that's the Tier 2 programmatic-write trigger.
-            const presentation = peek(state.presentation);
-            if (!presentation) return;
-
-            const allTracks = getTracksByType(presentation, 'audio') as readonly (
-              | PartiallyResolvedAudioTrack
-              | AudioTrack
-            )[];
-            if (!allTracks.length) return;
-
-            const userFilter = state.userAudioTrackSelection.get();
-            // Filter logic mirrors setupQualitySwitching's pattern:
-            // partial-track-description match across every present key.
-            const matching = userFilter
-              ? allTracks.filter((track) => {
-                  for (const key in userFilter) {
-                    const filterValue = userFilter[key as keyof AudioTrack];
-                    if (filterValue !== undefined && track[key as keyof AudioTrack] !== filterValue) return false;
-                  }
-                  return true;
-                })
-              : allTracks;
-            // Fall back to all tracks if filter excludes everything — don't
-            // stall playback on a no-match filter (e.g., language filter
-            // for a source that doesn't carry that language).
-            const candidates = matching.length > 0 ? matching : allTracks;
-            const selectedId = state.selectedAudioTrackId.get();
-
-            // Single-candidate short-circuit: filter pinned the choice.
-            // Skip the picker; write the only candidate directly.
-            if (candidates.length === 1) {
-              if (candidates[0]!.id !== selectedId) state.selectedAudioTrackId.set(candidates[0]!.id);
-              return;
-            }
-
-            // Initial entry (slot empty): invoke picker. The picker reads
-            // the full presentation; if its choice happens to land outside
-            // the filter-narrowed set, fall back to first narrowed track
-            // so consumer filter intent wins over picker default.
-            //
-            // Subsequent re-fires (slot already set): leave the current
-            // selection unless the filter narrowed to a single track
-            // (handled above). External writes — including future
-            // switchAudioQuality (audio-abr) writes — are respected.
-            if (!selectedId) {
-              const pickerChoice = picker(presentation, pickerConfig);
-              const inCandidates = pickerChoice && candidates.some((t) => t.id === pickerChoice);
-              const id = inCandidates ? pickerChoice : candidates[0]?.id;
-              if (id) state.selectedAudioTrackId.set(id);
-            }
-          },
-        ],
       },
     },
   });
@@ -317,20 +195,25 @@ export const selectVideoTrack = defineBehavior({
 
 /**
  * Config for `selectAudioTrack`. Pass `picker` to fully override selection
- * logic; otherwise the default `pickFirstTrackId` is used (which ignores
- * the other fields — they reach the picker as its second arg for callers
- * who supply a richer picker, like a language-aware one).
+ * logic; otherwise the default `pickAudioTrack` is used (three-tier:
+ * `preferredAudioLanguage` → `DEFAULT=YES` → first track).
  */
 export interface SelectAudioTrackConfig extends Omit<AudioSelectionConfig, 'type'> {
   picker?: TrackPicker<SelectAudioTrackConfig>;
 }
 
 /**
- * Manage `selectedAudioTrackId`: pick a default on src load, re-pick when
- * `userAudioTrackSelection` narrows the candidate set, clear on src unload.
- * The filter is a partial-track description (`{ language: 'es' }`,
- * `{ id: 'specific-track' }`, etc.); when narrowing produces a single track,
- * the picker is short-circuited and that track is written directly.
+ * Select an audio track when a presentation loads. Clears the selection
+ * on src unload.
+ *
+ * This is the simple, lifecycle-only counterpart to `switchAudioTrack`
+ * (in `./quality-switching.ts`) — compose one or the other, not both
+ * (both write `selectedAudioTrackId`). `switchAudioTrack` adds
+ * filter-reactivity (`userAudioTrackSelection`) and mid-stream-flush
+ * orchestration; `selectAudioTrack` covers the default-on-load case
+ * without those. Use this variant for test setups, audio-only flows
+ * that don't expose language switching, or composition variants that
+ * intentionally pin a track.
  *
  * @example
  * const reactor = selectAudioTrack.setup({ state });
@@ -343,12 +226,13 @@ export interface SelectAudioTrackConfig extends Omit<AudioSelectionConfig, 'type
  * });
  */
 export const selectAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId', 'userAudioTrackSelection'],
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state, config }: { state: AudioSelectStateMap; config?: SelectAudioTrackConfig }) =>
-    setupAudioTrackSelection({
+  setup: ({ state, config }: { state: SelectStateMap<'selectedAudioTrackId'>; config?: SelectAudioTrackConfig }) =>
+    setupTrackSelection({
       state,
       config: {
+        ...AUDIO_TRACK_SELECTION_CONFIG,
         picker: config?.picker ?? AUDIO_TRACK_SELECTION_CONFIG.picker,
         pickerConfig: config,
       },
