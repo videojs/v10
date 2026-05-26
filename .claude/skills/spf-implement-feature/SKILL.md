@@ -171,17 +171,73 @@ Downstream skills routed-to:
 
 - **Cross-cluster axis traversal short-circuit** — treating the
   feature doc's *Related features* list as the *ceiling* for
-  cross-cluster candidates rather than the *floor*. For cluster-C
-  (track & variant registry) features, at minimum check
-  capability-probing (D), rendition-selection-caps (E),
+  cross-cluster candidates rather than the *floor*. Has two faces:
+  (i) **surfacing failure** — not enumerating the cross-cluster
+  cousins at all; (ii) **assessment failure** — enumerating them but
+  rating them all "ignore for now," skipping past the
+  design-with-in-mind landing zone.
+
+  For cluster-C (track & variant registry) features, at minimum
+  check capability-probing (D), rendition-selection-caps (E),
   multi-cdn-failover (G), drm-support (H) — these cousins all
   participate in the "filter / prioritize / select track candidates"
   axis (see `clusters.md` → *Selection / filtering across clusters*).
+  Analogous cross-cluster cousins exist for other primary clusters;
+  consult the clusters doc before defaulting to "no cross-cluster
+  candidates."
+
+  **DWIM is the default recommendation for cross-cluster cousins**,
+  unless Impact-if-deferred pushes higher or Shape-constraint-if-
+  deferred is genuinely low. The clusters doc names this
+  explicitly: *"Candidates often land as design-with-in-mind rather
+  than full fold-in (each cluster owns its own primitives), but
+  surfacing them keeps the cluster-C feature's shape from painting
+  into a corner."* See Step 2d's *Default-recommended outcome per
+  candidate type* table — cross-cluster cousins are the row where
+  DWIM is the prior, not Ignore.
+
   Worked example: `multi-language-audio`'s *Related features* lists
-  `capability-probing` but omits `multi-cdn-failover`; surfacing the
-  full cross-cluster axis catches multi-cdn-failover as a
-  design-with-in-mind candidate explicitly, rather than silently
-  omitting it from Step 2's fold-in walk.
+  `capability-probing` but omits `rendition-selection-caps`,
+  `multi-cdn-failover`, `drm-support`. The implementation pass
+  should rate all four as DWIM: codec filtering composes with the
+  `userAudioTrackSelection` filter slot on the same axis; audio
+  caps would bias the same candidate set the filter narrows;
+  per-language URI rotation needs to stay extensible during
+  mid-stream-switch design; per-language key-system filtering
+  interacts with selection. Rating any of these "ignore" without
+  surfacing as DWIM is the assessment-failure shape; rating all
+  four as DWIM without surfacing each via `AskUserQuestion` is the
+  narrative-batched-skip shape (see next entry).
+
+- **Narrative-batched-skip of `AskUserQuestion` for "obvious"
+  candidates** — collapsing multiple fold-in candidates into a single
+  narrative sentence ("the remaining cross-cluster cousins all
+  default to ignore for now") and skipping the per-candidate
+  `AskUserQuestion` because the recommendation feels obvious. The
+  structured presentation is the load-bearing pressure that surfaces
+  assessment misjudgments — bypassing it lets misjudged
+  recommendations slip through unchallenged. This failure mode often
+  pairs with *Cross-cluster axis traversal short-circuit*'s
+  assessment-failure face: candidates rated "ignore for now" feel
+  uncontroversial enough to batch, and the batching is what hides
+  the misjudgment.
+
+  **Discipline.** Use `AskUserQuestion` per candidate **regardless of
+  recommendation strength**, even when the recommendation feels
+  obvious. If multiple candidates would otherwise be batched into one
+  narrative paragraph, group by shared rationale into 2–3
+  `AskUserQuestion` calls (4 candidates per call, per the
+  `AskUserQuestion` cap) — but every candidate appears as a discrete
+  row with discrete options, with DWIM and Ignore both visible in the
+  option list for cross-cluster cousins specifically.
+
+  Worked example: implementation pass enumerated 4 cross-cluster
+  cousins (cap-probing / caps / CDN / DRM) and assessed all as
+  "ignore for now," then narrative-batched ("the cross-cluster cousins
+  all default to ignore"). User pushback identified 3 of 4 as
+  design-with-in-mind that the narrative-batch silently suppressed.
+  Per-candidate `AskUserQuestion` with DWIM visible would have caught
+  the misjudgment by the first candidate.
 
 - **Order-inversion not surfaced** — when this feature anchors on a
   sibling's slot-owner shape (a *destination-architecture sibling*),
@@ -485,26 +541,46 @@ behaviors counts as a fold-in candidate).
 
 **2d. Assess each candidate; recommend an outcome.**
 
-Three criteria per candidate:
+Four criteria per candidate. **Shape-constraint-if-deferred comes
+first** because it's the criterion that catches *design-with-in-mind*
+— the other three are oriented toward "should we write code for this
+candidate now?" and miss the design-shape question if it's not asked
+separately. Per the *Cross-cluster axis traversal short-circuit*
+failure mode.
 
-1. **Impact if deferred** — would solving this feature without
+1. **Shape-constraint-if-deferred** — if we don't design this
+   feature with the candidate's eventual shape in mind, will the
+   structures we land make later integration awkward? Will slots,
+   composition seams, layering decisions, or filter-pipeline order
+   need to mutate when the candidate ships? High shape-constraint →
+   design-with-in-mind (or stronger); low shape-constraint → ignore
+   is safe.
+2. **Impact if deferred** — would solving this feature without
    considering the candidate produce a solution that needs
    significant refactor / rework / re-characterization when the
    candidate later lands? Or that would be insufficient when the
    candidate lands?
-2. **Overall speed if combined** — would partially or fully
+3. **Overall speed if combined** — would partially or fully
    implementing the candidate now produce overall less work than
    serial implementation, even at moderate cost to this feature's
    specific velocity?
-3. **Scope discipline** — is the candidate's bundled work focused
+4. **Scope discipline** — is the candidate's bundled work focused
    enough to remain a discrete partial-implementation, or does it
    sprawl into ocean-boiling territory?
 
-The third criterion is where the **boiling-the-ocean check** lives
+The fourth criterion is where the **boiling-the-ocean check** lives
 — but it's a check on *scope sprawl*, not a default veto. Per the
 *Boil-the-ocean false positive* failure mode, rejecting candidates
 reflexively as "too big" misses the real question: "can this be cut
 to a focused partial-implementation?"
+
+**Why four criteria, not three.** The previous three-criteria rubric
+biased the recommendation toward "implement now or ignore" — when the
+implement-now threshold failed, the natural cognitive landing slid
+past design-with-in-mind to ignore. Lifting shape-constraint to
+criterion #1 pulls the design-shape question to the front of the
+assessment, where it can land on DWIM as the right answer instead of
+being skipped past.
 
 Five outcomes per candidate:
 
@@ -535,6 +611,26 @@ Per the *Conflating partial-implementation with design-with-in-mind*
 failure mode, the partial vs design-with-in-mind distinction is
 load-bearing — partial means code lands; design-with-in-mind means
 no code, only shape constraints.
+
+**Default-recommended outcome per candidate type.** The four-criteria
+walk can land anywhere on the outcome spectrum, but candidate type
+carries strong priors. Diverging from the default without naming
+*which criterion* pushed the assessment is a smell:
+
+| Candidate type | Default outcome | Notes |
+|---|---|---|
+| **Destination-architecture sibling** (cluster sibling at `definition: technical`+ carrying this feature's destination slot-owner shape) | Flip ordering **or** Full fold-in | Per *Order-inversion not surfaced* failure mode. Never *ignore* — architecturally wrong by construction. |
+| **Primary cluster sibling** | Full fold-in / Partial | Assess via the four criteria. *Ignore* only if low-impact AND low-shape-constraint. |
+| **Cross-cluster axis cousin** (e.g., cluster D / E / G / H cousins for a cluster-C feature) | **Design with in mind** | Per *Cross-cluster axis traversal short-circuit* failure mode + `clusters.md` → *Selection / filtering across clusters*. Promote to Partial / Full only if Impact-if-deferred clears the threshold; demote to Ignore only if Shape-constraint-if-deferred is genuinely low. |
+| **Use-case composition refactor** | Design with in mind | Let standard composition land cleanly; verify the variant engine composes post-landing. |
+
+The defaults are starting points. When your assessment lands at a
+different outcome, name *which criterion* pushed it (e.g.,
+"Impact-if-deferred is high, so promoting capability-probing from
+DWIM to Partial"). The defaults exist to counter-bias the historical
+"implement now / ignore" pull of the four-criteria walk —
+particularly for cross-cluster cousins, where the cluster doc
+already says DWIM is the typical landing.
 
 **Value-curve check before recommending scope.** Per `clusters.md`'s
 "can-play vs actual support" framing, check whether the
