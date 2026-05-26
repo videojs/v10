@@ -75,6 +75,7 @@ defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 afterEach(() => {
   resetI18nRegistryForTesting();
   document.body.innerHTML = '';
+  document.documentElement.removeAttribute('lang');
   vi.restoreAllMocks();
 });
 
@@ -122,6 +123,34 @@ describe('MediaButtonElement', () => {
     expect(button.getAttribute('aria-label')).toBe('Reproducir');
 
     provider.setAttribute('lang', 'fr');
+    await vi.waitFor(() => {
+      expect(button.getAttribute('aria-label')).toBe('Lire');
+    });
+
+    flush();
+  });
+
+  it('updates aria-label when html lang changes and provider has no explicit lang', async () => {
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    ensureDefined(PlayButtonElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const provider = new MediaI18nProviderElement();
+    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+
+    document.body.append(player);
+    player.append(provider);
+    provider.append(button);
+
+    await vi.waitFor(() => {
+      expect(button.getAttribute('aria-label')).toBe('Los');
+    });
+
+    document.documentElement.lang = 'fr';
     await vi.waitFor(() => {
       expect(button.getAttribute('aria-label')).toBe('Lire');
     });
