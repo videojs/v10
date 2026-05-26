@@ -29,11 +29,17 @@ const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
 let localeApplySeq = 0;
 
-function updateProviderLang(tag: SandboxLocaleTag): void {
-  document.querySelector('media-i18n-provider')?.setAttribute('lang', tag);
-}
-
 type LitElementLike = HTMLElement & { requestUpdate?: () => void; updateComplete?: Promise<unknown> };
+
+function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
+  return html`
+    <${playerTag}>
+      <media-i18n-provider>
+        ${inner}
+      </media-i18n-provider>
+    </${playerTag}>
+  `;
+}
 
 async function waitForMediaMetadata(timeoutMs = 15_000): Promise<void> {
   const deadline = performance.now() + timeoutMs;
@@ -72,7 +78,6 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<void> {
   await ensureCdnSandboxLocale(tag);
   if (seq !== localeApplySeq) return;
-  updateProviderLang(tag);
 
   const provider = document.querySelector('media-i18n-provider') as LitElementLike | null;
   if (!provider?.requestUpdate) return;
@@ -218,16 +223,6 @@ function canPlayLive(preset: Preset): boolean {
   return (
     preset === 'hlsjs-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
   );
-}
-
-function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
-  return html`
-    <${playerTag}>
-      <media-i18n-provider lang="${locale}">
-        ${inner}
-      </media-i18n-provider>
-    </${playerTag}>
-  `;
 }
 
 async function render() {
