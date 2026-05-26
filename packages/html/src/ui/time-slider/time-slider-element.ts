@@ -94,7 +94,7 @@ export class TimeSliderElement extends MediaElement {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        if (this.pauseWhileDragging && this.#wasPlayingBeforeDrag) {
+        if (this.#wasPlayingBeforeDrag) {
           this.#playbackState.value?.play().catch(() => {
             // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
           });
@@ -116,6 +116,13 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    // Resume playback if disconnected mid-drag — createSlider's destroy() does not
+    // fire onDragEnd, so without this the player would stay paused. Read playback
+    // before super so the PlayerController is still attached.
+    if (this.#wasPlayingBeforeDrag) {
+      this.#playbackState.value?.play().catch(() => {});
+      this.#wasPlayingBeforeDrag = false;
+    }
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;

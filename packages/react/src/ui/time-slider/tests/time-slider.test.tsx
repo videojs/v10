@@ -289,4 +289,48 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     capturedSliderOptions.current.onDragEnd?.();
     expect(onDragEnd).toHaveBeenCalled();
   });
+
+  it('resumes on drag-end even if pauseWhileDragging is turned off mid-drag', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    const { rerender } = render(
+      <Wrapper>
+        <TimeSliderRoot pauseWhileDragging />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <Wrapper>
+        <TimeSliderRoot pauseWhileDragging={false} />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('resumes on unmount if a drag paused playback', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    const { unmount } = render(
+      <Wrapper>
+        <TimeSliderRoot pauseWhileDragging />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
+  });
 });

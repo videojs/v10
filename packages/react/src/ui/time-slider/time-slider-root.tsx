@@ -3,7 +3,7 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { formatTime } from '@videojs/utils/time';
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -66,7 +66,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     };
 
     const handleDragEnd = () => {
-      if (pauseWhileDragging && wasPlayingRef.current) {
+      if (wasPlayingRef.current) {
         playbackRef.current?.play().catch(() => {
           // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
         });
@@ -74,6 +74,17 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       wasPlayingRef.current = false;
       onDragEnd?.();
     };
+
+    // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
+    // does not fire onDragEnd, so without this the player would stay paused.
+    useEffect(() => {
+      return () => {
+        if (wasPlayingRef.current) {
+          playbackRef.current?.play().catch(() => {});
+          wasPlayingRef.current = false;
+        }
+      };
+    }, []);
 
     const duration = time?.duration ?? 0;
 
