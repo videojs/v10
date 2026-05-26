@@ -103,7 +103,8 @@ loadAudioSegments,
 
 | Behavior | File | Responsibility |
 |---|---|---|
-| `selectAudioTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default audio rendition selection on source load |
+| `selectAudioTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default audio rendition selection on source load. Lifecycle-only; mutually exclusive with `switchAudioTrack` |
+| `switchAudioTrack` | `packages/spf/src/playback/behaviors/dom/switch-audio-track.ts` | Filter-reactive slot owner + mid-stream flush dispatcher. **Owned architecturally by [`multi-language-audio`](./multi-language-audio.md)** — composed in both `createSimpleHlsEngine` and `createHlsAudioOnlyEngine` today |
 | `resolveAudioTrack` | `packages/spf/src/playback/behaviors/resolve-track.ts` | Fetches the selected audio media playlist |
 | `setupAudioBufferActors` | `packages/spf/src/playback/behaviors/dom/setup-buffer-actors.ts` | Audio SourceBuffer + actor setup. **Owned architecturally by `mse-mms-pipeline`** |
 | `loadAudioSegments` | `packages/spf/src/playback/behaviors/dom/load-segments.ts` | Audio segment loading dispatcher. **Owned architecturally by `buffer-management`** |
@@ -117,14 +118,15 @@ loadAudioSegments,
 
 **State slots:**
 
-- `selectedAudioTrackId` — single-writer (`selectAudioTrack`). Stays
-  single-writer under `multi-language-audio`'s Tier 2 programmatic
-  path (constraint+filter via `userAudioTrackSelection`, not direct
-  multi-writer write). Becomes the slot owner's responsibility of
-  `switchAudioQuality` when [audio-abr](./audio-abr.md) lands.
+- `selectedAudioTrackId` — single-writer. Owner depends on which audio-
+  selection behavior is composed: `selectAudioTrack` (lifecycle-only) or
+  `switchAudioTrack` (filter-reactive + mid-stream flush; the variant
+  composed in `createSimpleHlsEngine` and `createHlsAudioOnlyEngine`
+  today). Becomes `switchAudioQuality`'s responsibility when
+  [audio-abr](./audio-abr.md) lands (extends `switchAudioTrack`).
 - `userAudioTrackSelection` — added by [`multi-language-audio`](./multi-language-audio.md).
   Consumer-driven `Partial<AudioTrack>` filter narrowing the audio
-  candidate set before `selectAudioTrack`'s picker runs.
+  candidate set before `switchAudioTrack`'s picker runs.
 - Reads `presentation` (audio renditions surface in
   `presentation.selectionSets`)
 
