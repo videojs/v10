@@ -213,6 +213,38 @@ describe('createI18n', () => {
     });
   });
 
+  it('updates langRootRef provider when html lang property changes', async () => {
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const rootRef = createRef<HTMLDivElement>();
+    const { I18nProvider, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(
+      <I18nProvider langRootRef={rootRef}>
+        <div ref={rootRef}>
+          <Probe />
+        </div>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Los')).not.toBeNull();
+    });
+
+    document.documentElement.lang = 'fr';
+
+    await waitFor(() => {
+      expect(screen.queryByText('Lire')).not.toBeNull();
+    });
+  });
+
   it('refreshes merged translations when the registry updates after mount', async () => {
     registerI18n('en', { play: 'First' });
     const { I18nProvider, useTranslator } = createI18n();
