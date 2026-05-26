@@ -119,6 +119,12 @@ describe('formatDuration', () => {
     expect(formatDuration(90, { formatRemaining: () => 'should-not-appear' })).toBe(formatDuration(90));
   });
 
+  it('omits English remaining suffix for non-English locales without formatRemaining', () => {
+    const formatted = formatDuration(-30, { locale: 'es' });
+    expect(formatted).toMatch(/30/);
+    expect(formatted).not.toMatch(/remaining$/i);
+  });
+
   it('uses Intl.DurationFormat when supported; otherwise matches formatTimeAsPhrase', () => {
     const DurationFormatConstructor = (Intl as typeof Intl & { DurationFormat?: unknown }).DurationFormat;
     const hasDurationFormat = typeof DurationFormatConstructor === 'function';

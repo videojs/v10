@@ -30,6 +30,12 @@ function localeCacheKey(locale?: string | string[]): string {
   return Array.isArray(locale) ? locale.join('\0') : locale;
 }
 
+function isEnglishLocale(locale?: string | string[]): boolean {
+  const tag = Array.isArray(locale) ? locale[0] : locale;
+  if (!tag) return true;
+  return tag === 'en' || tag.startsWith('en-');
+}
+
 function getPercentFormatter(locale?: string | string[]): Intl.NumberFormat | undefined {
   const key = localeCacheKey(locale);
   let formatter = percentFormatters.get(key);
@@ -223,7 +229,9 @@ export function formatDuration(seconds: number, options?: TimeFormatOptions): st
 
   if (negative) {
     const formatRemaining = options?.formatRemaining;
-    return formatRemaining ? formatRemaining(body) : `${body} remaining`;
+    if (formatRemaining) return formatRemaining(body);
+    if (isEnglishLocale(options?.locale)) return `${body} remaining`;
+    return body;
   }
 
   return body;
