@@ -197,6 +197,38 @@ describe('textTrackFeature', () => {
       expect(store.state.toggleSubtitles()).toBe(false);
     });
 
+    it('selectSubtitlesTrack() enables one track and disables the others', () => {
+      const video = createVideo();
+      const englishTrack = createMockTrack('subtitles', 'disabled');
+      englishTrack.label = 'English';
+      const spanishTrack = createMockTrack('subtitles', 'disabled');
+      spanishTrack.label = 'Spanish';
+      mockTextTracks(video, [englishTrack, spanishTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      store.state.selectSubtitlesTrack('1');
+
+      expect(englishTrack.mode).toBe('disabled');
+      expect(spanishTrack.mode).toBe('showing');
+    });
+
+    it('selectSubtitlesTrack("off") disables all caption tracks', () => {
+      const video = createVideo();
+      const englishTrack = createMockTrack('subtitles', 'showing');
+      const spanishTrack = createMockTrack('subtitles', 'disabled');
+      mockTextTracks(video, [englishTrack, spanishTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      store.state.selectSubtitlesTrack('off');
+
+      expect(englishTrack.mode).toBe('disabled');
+      expect(spanishTrack.mode).toBe('disabled');
+    });
+
     it('stops updating after destroy', () => {
       const video = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);

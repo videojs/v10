@@ -65,10 +65,22 @@ function getTemplateHTML() {
               </media-volume-slider>
             </media-popover>
 
-            <media-captions-button commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
+            <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-button>
+            <media-menu id="captions-menu" side="top" align="center" class="media-popover media-menu media-menu--captions">
+              <media-captions-radio-group class="media-menu__group">
+                <template>
+                  <media-menu-radio-item class="media-menu__item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-menu__indicator">
+                      ${renderIcon('check', { class: 'media-icon' })}
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-captions-radio-group>
+            </media-menu>
             <media-tooltip id="captions-tooltip" side="top" class="media-tooltip"></media-tooltip>
 
             <media-cast-button commandfor="cast-tooltip" class="media-button media-button--subtle media-button--icon media-button--cast">

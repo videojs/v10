@@ -24,6 +24,7 @@ import {
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -125,6 +126,72 @@ function PlaybackRateTrigger(): ReactNode {
       disabled={playbackRate.disabled}
       render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
     />
+  );
+}
+
+function CaptionsRadioGroup(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions?.showMenu) return null;
+
+  const { options, setValue, value } = captions;
+
+  return (
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Captions">
+      {options.map((option) => (
+        <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
+          <span>{option.label}</span>
+          <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+            <CheckIcon className="media-icon" />
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+
+function CaptionsTrigger(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions) return null;
+
+  const { disabled, state } = captions;
+
+  if (!captions.showMenu) {
+    return (
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <CaptionsButton className="media-button--captions" render={<Button />}>
+              <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+              <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            </CaptionsButton>
+          }
+        />
+        <Tooltip.Popup className="media-tooltip" />
+      </Tooltip.Root>
+    );
+  }
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        disabled={disabled}
+        render={
+          <Button
+            className="media-button--captions"
+            disabled={disabled}
+            data-active={state.subtitlesShowing ? '' : undefined}
+            data-availability="available"
+            aria-label={state.label}
+          >
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+          </Button>
+        }
+      />
+      <Menu.Content className="media-popover media-menu media-menu--captions">
+        <CaptionsRadioGroup />
+      </Menu.Content>
+    </Menu.Root>
   );
 }
 
@@ -240,17 +307,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className="media-button--captions" render={<Button />}>
-                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className="media-tooltip" />
-            </Tooltip.Root>
+            <CaptionsTrigger />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

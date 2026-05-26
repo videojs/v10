@@ -6,6 +6,8 @@ export * from './ui/buffering-indicator/buffering-indicator-core';
 export * from './ui/buffering-indicator/buffering-indicator-data-attrs';
 export * from './ui/captions-button/captions-button-core';
 export * from './ui/captions-button/captions-button-data-attrs';
+export * from './ui/captions-radio-group/captions-radio-group-core';
+export * from './ui/captions-radio-group/captions-radio-group-data-attrs';
 export * from './ui/cast-button/cast-button-core';
 export * from './ui/cast-button/cast-button-data-attrs';
 export * from './ui/controls/controls-core';

@@ -12,6 +12,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(() => true),
+    selectSubtitlesTrack: vi.fn(),
     ...overrides,
   };
 }

@@ -278,6 +278,8 @@ export interface MediaTextTrackState {
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
   toggleSubtitles(forceShow?: boolean): boolean;
+  /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
+  selectSubtitlesTrack(value: string): void;
 }
 
 export interface MediaError {
