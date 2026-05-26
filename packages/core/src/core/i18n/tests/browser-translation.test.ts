@@ -51,21 +51,26 @@ describe('shouldAttemptBrowserTranslation', () => {
   });
 
   it('skips English', () => {
-    expect(shouldAttemptBrowserTranslation('en', {})).toBe(false);
-    expect(shouldAttemptBrowserTranslation('en-US', {})).toBe(false);
+    expect(shouldAttemptBrowserTranslation('en', [])).toBe(false);
+    expect(shouldAttemptBrowserTranslation('en-US', [])).toBe(false);
   });
 
-  it('skips when lazy built-in layer loaded', () => {
-    expect(shouldAttemptBrowserTranslation('xx', { play: 'Builtin' })).toBe(false);
+  it('skips when a non-English lazy built-in tag loaded', () => {
+    expect(shouldAttemptBrowserTranslation('xx', ['xx'])).toBe(false);
+    expect(shouldAttemptBrowserTranslation('es', ['en', 'es'])).toBe(false);
+  });
+
+  it('attempts when only English lazy tags loaded', () => {
+    expect(shouldAttemptBrowserTranslation('xx', ['en'])).toBe(true);
   });
 
   it('skips when a non-en tag in the chain is registered', () => {
     registerI18n('es', { play: 'Ir' });
-    expect(shouldAttemptBrowserTranslation('es-MX', {})).toBe(false);
+    expect(shouldAttemptBrowserTranslation('es-MX', [])).toBe(false);
   });
 
   it('attempts when locale has no pack', () => {
-    expect(shouldAttemptBrowserTranslation('xx', {})).toBe(true);
+    expect(shouldAttemptBrowserTranslation('xx', [])).toBe(true);
   });
 });
 

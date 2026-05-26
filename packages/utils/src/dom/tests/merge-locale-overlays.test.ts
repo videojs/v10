@@ -8,13 +8,16 @@ describe('mergeLocaleOverlays', () => {
     const load = async (tag: string): Promise<Partial<Record<'a' | 'b' | 'c', string>> | undefined> =>
       tag === 'en' ? { a: 'en-a', b: 'en-b' } : tag === 'es' ? { b: 'es-b', c: 'es-c' } : undefined;
 
-    const merged = await mergeLocaleOverlays('es', load, chain);
+    const { merged, loadedTags } = await mergeLocaleOverlays('es', load, chain);
     expect(merged).toEqual({ a: 'en-a', b: 'es-b', c: 'es-c' });
+    expect(loadedTags).toEqual(['es', 'en']);
   });
 
   it('skips undefined layers', async () => {
-    const chain = () => ['en', 'xx'];
+    const chain = () => ['xx', 'en'];
     const load = async (tag: string) => (tag === 'en' ? { k: 'v' } : undefined);
-    expect(await mergeLocaleOverlays('xx', load, chain)).toEqual({ k: 'v' });
+    const { merged, loadedTags } = await mergeLocaleOverlays('xx', load, chain);
+    expect(merged).toEqual({ k: 'v' });
+    expect(loadedTags).toEqual(['en']);
   });
 });

@@ -86,10 +86,10 @@ export function resolveBrowserTranslationTarget(locale: string): string | undefi
 }
 
 /** Whether to invoke the Browser Translation API for this locale after lazy built-in loading. */
-export function shouldAttemptBrowserTranslation(locale: Locale, lazyLayer: Partial<Translations>): boolean {
+export function shouldAttemptBrowserTranslation(locale: Locale, loadedLazyTags: readonly string[]): boolean {
   const target = resolveBrowserTranslationTarget(locale);
   if (!target) return false;
-  if (Object.keys(lazyLayer).length > 0) return false;
+  if (loadedLazyTags.some((tag) => !isEnglishLocaleTag(tag))) return false;
 
   return !localeLookupChain(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredI18n(tag));
 }
