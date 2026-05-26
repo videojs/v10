@@ -90,9 +90,76 @@ Or set `document.documentElement.lang` if the player inherits ambient language.
 
 ## Avoid flash while switching
 
-Async lazy loads can briefly show English. Pre-import the pack and pass `translations`:
+Async lazy loads can briefly show English. Preload copy before the active locale changes — three common patterns:
+
+### Pre-register at bootstrap (React and HTML)
+
+<DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> writes to a global registry that providers read synchronously. Register every locale you plan to switch between once at startup; `loadLocale` skips tags already in the registry.
 
 <FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { registerI18n } from '@videojs/react/i18n';
+import es from '@videojs/react/i18n/locales/es';
+import fr from '@videojs/react/i18n/locales/fr';
+
+registerI18n('es', es);
+registerI18n('fr', fr);
+
+// Switching locale is instant — no remount, no lazy-load gap
+<I18nProvider locale={userLocale}>
+  <VideoSkin>...</VideoSkin>
+</I18nProvider>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import es from '@videojs/html/i18n/locales/es';
+import fr from '@videojs/html/i18n/locales/fr';
+
+registerI18n('es', es);
+registerI18n('fr', fr);
+```
+
+```html
+<media-i18n-provider id="provider">
+  <video-player>...</video-player>
+</media-i18n-provider>
+
+<script type="module">
+  document.getElementById('provider').lang = 'fr';
+</script>
+```
+
+</FrameworkCase>
+
+### Prefetch before switching (React)
+
+When you cannot register every locale up front, import and register immediately before updating `locale`:
+
+```tsx
+import { registerI18n } from '@videojs/react/i18n';
+
+async function switchTo(next: 'es' | 'fr') {
+  const { default: translations } = await import(`@videojs/react/i18n/locales/${next}`);
+  registerI18n(next, translations);
+  setLocale(next);
+}
+
+<I18nProvider locale={locale}>
+  ...
+</I18nProvider>
+```
+
+You still pay the import cost once per locale, but later switches to the same tag stay synchronous.
+
+### Scoped overrides with `translations` (React)
+
+Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> when overrides should apply to one subtree only, or when you want copy colocated with the switch handler:
 
 ```tsx
 async function switchTo(next: string) {
@@ -105,7 +172,15 @@ async function switchTo(next: string) {
 </I18nProvider>
 ```
 
-</FrameworkCase>
+| Approach | Scope | Best for |
+| --- | --- | --- |
+| `registerI18n` at bootstrap | Global — all providers | Language picker with a fixed set of locales |
+| `registerI18n` before switch | Global — all providers | On-demand prefetch before changing `locale` |
+| `I18nProvider translations` | Single provider subtree | Scoped overrides, SSR first paint |
+
+<Aside type="note">
+`registerI18n` merges into the global registry — repeated calls add or replace keys for the same tag, they do not wipe other locales. Registry updates notify mounted providers via `onI18nRegistryChange`, so late registrations still refresh wired controls.
+</Aside>
 
 <Aside type="tip">
 For server-rendered first paint, see <DocsLink slug="how-to/i18n-ssr">SSR and hydration</DocsLink>.
