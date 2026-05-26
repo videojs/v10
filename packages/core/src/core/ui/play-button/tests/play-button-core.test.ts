@@ -96,6 +96,26 @@ describe('PlayButtonCore', () => {
       const core = new PlayButtonCore({ label: () => '' });
       expect(core.getLabel(createState({ paused: true }))).toBe('Play');
     });
+
+    it('appends title when metadata is set', () => {
+      const core = new PlayButtonCore();
+      core.setMetadata({ title: 'Big Buck Bunny', setTitle: vi.fn() });
+      expect(core.getLabel(createState({ paused: true }))).toBe('Play, Big Buck Bunny');
+      expect(core.getLabel(createState({ paused: false }))).toBe('Pause, Big Buck Bunny');
+      expect(core.getLabel(createState({ ended: true }))).toBe('Replay, Big Buck Bunny');
+    });
+
+    it('omits title suffix when metadata title is null', () => {
+      const core = new PlayButtonCore();
+      core.setMetadata({ title: null, setTitle: vi.fn() });
+      expect(core.getLabel(createState({ paused: true }))).toBe('Play');
+    });
+
+    it('custom label takes precedence over title suffix', () => {
+      const core = new PlayButtonCore({ label: 'Start' });
+      core.setMetadata({ title: 'Big Buck Bunny', setTitle: vi.fn() });
+      expect(core.getLabel(createState())).toBe('Start');
+    });
   });
 
   describe('getAttrs', () => {

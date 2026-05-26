@@ -9,7 +9,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
-export interface ValueProps extends UIComponentProps<'span', TitleCore.State>, TitleCore.Props {}
+export interface ValueProps extends Omit<UIComponentProps<'span', TitleCore.State>, 'children'>, TitleCore.Props {}
 
 /**
  * Displays the current media title.
