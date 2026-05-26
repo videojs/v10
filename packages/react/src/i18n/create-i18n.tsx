@@ -167,15 +167,15 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       const locale = resolvedLocale;
       void (async () => {
         try {
-          const mergedLazy = await mergeLocaleOverlays(locale, loadLocale, localeLookupChain);
+          const { merged, loadedTags } = await mergeLocaleOverlays(locale, loadLocale, localeLookupChain);
           if (seq !== lazySeqRef.current) return;
-          if (shouldAttemptBrowserTranslation(locale, mergedLazy)) {
+          if (shouldAttemptBrowserTranslation(locale, loadedTags)) {
             const browser = await getBrowserTranslations(locale);
             if (seq !== lazySeqRef.current) return;
             if (Object.keys(browser).length) registerI18n(locale, browser);
           }
           if (seq !== lazySeqRef.current) return;
-          setLazyLayer(mergedLazy);
+          setLazyLayer(merged);
         } catch {
           // Ignore rejected built-in locale loads; registry/prop layers still apply.
         }
