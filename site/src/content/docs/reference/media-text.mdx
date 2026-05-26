@@ -1,0 +1,27 @@
+---
+title: media-text
+description: HTML custom element that renders a translated string by opaque key
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["html"]}>
+
+`<media-text>` renders the translated value for a registry key inside a <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> (or any ancestor with the i18n provider mixin). Use it for standalone labels, tooltips, or demos — skin controls resolve keys internally.
+
+```html
+<media-i18n-provider lang="ja">
+  <media-text key="play"></media-text>
+</media-i18n-provider>
+```
+
+## Attributes
+
+| Attribute | Description |
+| --- | --- |
+| `key` | Opaque translation key (`play`, `pause`, `timeRemainingPhrase`, …). |
+
+Parametric keys are not yet supported on `<media-text>` — use `createTranslator` in script for interpolated strings.
+
+</FrameworkCase>

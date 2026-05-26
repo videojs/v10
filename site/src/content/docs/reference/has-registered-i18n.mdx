@@ -1,0 +1,19 @@
+---
+title: hasRegisteredI18n
+description: Check whether an exact locale tag exists in the global i18n registry
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`hasRegisteredI18n` returns whether a normalized locale tag has an explicit registry layer from `registerI18n`. It does **not** indicate whether a lazy built-in pack exists — only registry entries count.
+
+```ts
+import { hasRegisteredI18n, registerI18n } from '@videojs/html/i18n';
+
+hasRegisteredI18n('fr'); // false until registered
+registerI18n('fr', { play: 'Lecture' });
+hasRegisteredI18n('fr'); // true
+```
+
+<UtilReference util="hasRegisteredI18n" />

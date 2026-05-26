@@ -1,0 +1,27 @@
+---
+title: useLocale
+description: React hook that returns the active BCP 47 locale from the nearest I18nProvider
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["react"]}>
+
+`useLocale` returns the resolved BCP 47 tag from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>, or `'en'` when none is mounted.
+
+Use it when UI copy depends on the active locale outside the translator — for example formatting or caption language hooks.
+
+```tsx
+import { useLocale } from '@videojs/react/i18n';
+
+function LocaleBadge() {
+  const locale = useLocale();
+  return <span lang={locale}>{locale}</span>;
+}
+```
+
+<UtilReference util="useLocale" />
+
+</FrameworkCase>

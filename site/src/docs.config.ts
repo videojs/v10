@@ -44,6 +44,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },
+      { slug: 'concepts/i18n', sidebarLabel: 'Internationalization' },
     ],
   },
   {
@@ -54,6 +55,11 @@ export const sidebar: Sidebar = [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
+      { slug: 'how-to/i18n-register-locale', sidebarLabel: 'Register a locale' },
+      { slug: 'how-to/i18n-override-translations', sidebarLabel: 'Override translations' },
+      { slug: 'how-to/i18n-switch-locale', sidebarLabel: 'Switch locale' },
+      { slug: 'how-to/i18n-ssr', sidebarLabel: 'SSR with locale' },
+      { slug: 'how-to/i18n-add-built-in-locale', sidebarLabel: 'Add a built-in locale' },
     ],
   },
   {
@@ -111,6 +117,10 @@ export const sidebar: Sidebar = [
     frameworks: ['react'],
     contents: [
       { slug: 'reference/create-player' },
+      { slug: 'reference/create-i18n' },
+      { slug: 'reference/i18n-provider' },
+      { slug: 'reference/use-translator' },
+      { slug: 'reference/use-locale' },
       { slug: 'reference/use-player' },
       { slug: 'reference/use-media' },
       { slug: 'reference/use-store' },
@@ -139,6 +149,8 @@ export const sidebar: Sidebar = [
     frameworks: ['html'],
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
+      { slug: 'reference/media-i18n-provider', sidebarLabel: 'media-i18n-provider' },
+      { slug: 'reference/media-text', sidebarLabel: 'media-text' },
       { slug: 'reference/player-controller' },
       {
         sidebarLabel: 'Advanced',
@@ -159,6 +171,10 @@ export const sidebar: Sidebar = [
     llmsDescription: 'API reference for feature modules that provide player capabilities and state.',
     contents: [
       { slug: 'reference/create-selector' },
+      { slug: 'reference/register-i18n', sidebarLabel: 'registerI18n' },
+      { slug: 'reference/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
+      { slug: 'reference/has-registered-i18n', sidebarLabel: 'hasRegisteredI18n' },
+      { slug: 'reference/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
       { slug: 'reference/feature-buffer' },
       { slug: 'reference/feature-controls' },
       { slug: 'reference/feature-error' },

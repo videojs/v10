@@ -1,0 +1,28 @@
+---
+title: I18nProvider
+description: React provider that resolves locale and supplies a typed translator to descendants
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["react"]}>
+
+`I18nProvider` resolves the active locale, merges registry and lazy pack layers, and exposes a translator through context. Preset skins mount it inside <DocsLink slug="reference/player-container">`Container`</DocsLink> with `langRootRef` on the player shell.
+
+Wrap custom controls or force a locale explicitly:
+
+```tsx
+import { I18nProvider } from '@videojs/react/i18n';
+
+<I18nProvider locale="de" translations={{ play: 'Abspielen' }}>
+  <MyControls />
+</I18nProvider>
+```
+
+Omit `locale` to inherit the nearest `lang` attribute (via `langRootRef` or `<html lang>`). See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge priority and SSR guidance.
+
+<UtilReference util="I18nProvider" />
+
+</FrameworkCase>
