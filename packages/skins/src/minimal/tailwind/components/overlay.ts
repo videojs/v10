@@ -6,7 +6,7 @@ export const overlay = cn(
   'pointer-events-none rounded-[inherit]',
   // Default: hidden
   'opacity-0',
-  'bg-linear-to-t from-black/70 via-black/50 via-[7.5rem] to-transparent',
+  '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.3),oklch(0_0_0/0.15),oklch(0_0_0/0)),linear-gradient(to_top,oklch(0_0_0/0.5),oklch(0_0_0/0.3),oklch(0_0_0/0))]',
   'backdrop-blur-none backdrop-saturate-100',
   // Transitions
   'transition-[opacity,backdrop-filter]',

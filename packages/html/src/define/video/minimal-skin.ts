@@ -146,6 +146,8 @@ function getTemplateHTML() {
 
       <div class="media-overlay"></div>
 
+      <media-title class="media-title"></media-title>
+
       <!-- Hotkeys -->
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>

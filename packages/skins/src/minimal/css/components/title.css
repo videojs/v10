@@ -1,0 +1,29 @@
+.media-minimal-skin .media-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  padding: 0.75rem 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--media-color-primary, oklch(1 0 0));
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition-timing-function: ease-out;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-property: opacity;
+}
+
+.media-minimal-skin .media-title:not([data-has-title]) {
+  display: none;
+}
+
+.media-minimal-skin .media-controls[data-visible] ~ .media-title {
+  opacity: 1;
+}
+
+.media-minimal-skin .media-error[data-open] ~ .media-title {
+  display: none;
+}

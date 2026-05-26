@@ -202,3 +202,4 @@ export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
+export { title } from './components/title';

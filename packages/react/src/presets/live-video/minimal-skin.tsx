@@ -35,6 +35,7 @@ import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
+import { Title } from '@/ui/title';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
@@ -201,6 +202,8 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      <Title.Value className="media-title" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />
