@@ -331,22 +331,37 @@ export function createSegmentLoaderActor(
       actorCtx.initTrackLanguage !== track.language;
 
     // Case 1: Removes
+    const removes: Array<{ start: number; end: number }> = [];
     if (range) {
       if (isCrossRenditionSwitch) {
         const nextBoundary = actorCtx.segments.find((s) => s.startTime > currentTime)?.startTime;
         if (nextBoundary !== undefined) {
-          tasks.push({ type: 'remove', start: nextBoundary, end: Infinity });
+          removes.push({ start: nextBoundary, end: Infinity });
         }
       }
       const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime, forwardBufferConfig);
       if (forwardFlushStart < Infinity) {
-        tasks.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
+        removes.push({ start: forwardFlushStart, end: Infinity });
       }
       const backFlushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime, backBufferConfig);
       if (backFlushEnd > 0) {
-        tasks.push({ type: 'remove', start: 0, end: backFlushEnd });
+        removes.push({ start: 0, end: backFlushEnd });
       }
+      for (const r of removes) tasks.push({ type: 'remove', start: r.start, end: r.end });
     }
+
+    // Treat any segment overlapping a planned remove as not-buffered. Without
+    // this, sibling renditions that share segment IDs and startTimes (audio
+    // language variants) would see the new track's same-startTime segments
+    // marked "buffered" by the pre-flush snapshot, skip them in `getSegmentsToLoad`,
+    // and leave a permanent gap from `nextBoundary` to the end of the old buffer
+    // window after the cross-rendition flush — stalling playback.
+    const overlapsRemove = (seg: { startTime: number; duration: number }): boolean => {
+      const segEnd = seg.startTime + seg.duration;
+      return removes.some((r) => seg.startTime < r.end && segEnd > r.start);
+    };
+    const effectiveBuffered =
+      removes.length > 0 ? bufferedSegments.filter((s) => !overlapsRemove(s)) : bufferedSegments;
 
     // Case 2: Init
     if (actorCtx.initTrackId !== track.id) {
@@ -362,14 +377,19 @@ export function createSegmentLoaderActor(
     if (range) {
       const segmentsToLoad = getSegmentsToLoad(
         track.segments,
-        bufferedSegments,
+        effectiveBuffered,
         currentTime,
         forwardBufferConfig
       ).filter((seg) => {
         // Quality-aware filter: skip segments already covered by equal-or-higher-quality
         // content in the actor context. Preserves buffered high-quality content during
         // ABR downgrades; loads during upgrades and for uncovered positions.
-        const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < SEGMENT_TIME_EPSILON);
+        // Actor entries that overlap a planned remove are treated as nonexistent
+        // here — they're about to be flushed, so the new-track segment must load
+        // regardless of the existing entry's bandwidth.
+        const existing = actorCtx.segments.find(
+          (s) => !overlapsRemove(s) && Math.abs(s.startTime - seg.startTime) < SEGMENT_TIME_EPSILON
+        );
         // Partial segments are still streaming — treat as not buffered so they
         // are always re-planned (avoids relying on incomplete data).
         if (existing?.partial) return true;

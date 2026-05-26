@@ -158,6 +158,62 @@ describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
     loader.destroy();
   });
 
+  it('schedules new-track segments within the cross-rendition flush range', async () => {
+    // Regression test for the stall bug:
+    //
+    // Cross-rendition audio renditions share segment IDs and startTimes (e.g.,
+    // every variant has its own `segment-1` at startTime=6). When the loader
+    // dispatched `remove [nextBoundary, Infinity)` for a language switch, the
+    // pre-flush `bufferedSegments` snapshot still marked the new-track segments
+    // at those startTimes as "already buffered" — so `getSegmentsToLoad`
+    // skipped them. Playback stalled at `nextBoundary` because the old buffer
+    // ended there and no new segments were scheduled to fill the gap, and
+    // because `currentTime` was stuck, no later effect run rescued it.
+    //
+    // Fix: segments overlapping a planned remove are treated as not-buffered
+    // for `getSegmentsToLoad`, so the loader schedules them on the same plan
+    // pass that emits the flush.
+    const bufferActor = createMockBufferActor({
+      initTrackId: 'audio-en',
+      initTrackLanguage: 'en',
+      // Buffered seg-0 (0-6) + seg-1 (6-12) + seg-2 (12-18). The cross-rendition
+      // flush will remove [6, Infinity) — that's seg-1 and seg-2 of the new track.
+      segments: [
+        { id: 'audio-en-0', startTime: 0, duration: 6, trackId: 'audio-en' },
+        { id: 'audio-en-1', startTime: 6, duration: 6, trackId: 'audio-en' },
+        { id: 'audio-en-2', startTime: 12, duration: 6, trackId: 'audio-en' },
+      ],
+      bufferedRanges: [{ start: 0, end: 18 }],
+    });
+
+    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+
+    const newTrack = makeAudioTrack('audio-es', { language: 'es' });
+    // Playhead at 2s (mid-seg-0). nextBoundary = 6 → flush [6, Infinity).
+    // Without the fix: seg-1 (6) and seg-2 (12) would be skipped because the
+    // pre-flush bufferedSegments mark startTimes {0, 6, 12} as buffered.
+    loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
+
+    await vi.waitFor(() => {
+      const appendSegmentCalls = bufferActor.send.mock.calls.filter(
+        (c) => (c[0] as SourceBufferMessage).type === 'append-segment'
+      );
+      expect(appendSegmentCalls.length).toBeGreaterThan(0);
+    });
+
+    const segmentStartTimes = bufferActor.send.mock.calls
+      .map((c) => c[0] as SourceBufferMessage)
+      .filter((m): m is Extract<SourceBufferMessage, { type: 'append-segment' }> => m.type === 'append-segment')
+      .map((m) => m.meta.startTime);
+
+    // seg-1 (startTime 6) is inside the flush range — must be re-scheduled.
+    // seg-2 (startTime 12) is also inside the flush range — must be re-scheduled.
+    expect(segmentStartTimes).toContain(6);
+    expect(segmentStartTimes).toContain(12);
+
+    loader.destroy();
+  });
+
   it('captures language into append-init meta for downstream tracking', async () => {
     // Verify that planTasks includes `language` in the append-init meta
     // so the SourceBufferActor can capture initTrackLanguage on commit.
