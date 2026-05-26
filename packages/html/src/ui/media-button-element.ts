@@ -5,7 +5,13 @@ import type {
   MediaButtonComponent,
   StateAttrMap,
 } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
+import {
+  applyElementProps,
+  applyStateDataAttrs,
+  createButton,
+  logMissingFeature,
+  type UIEvent,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 

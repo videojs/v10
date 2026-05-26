@@ -1,6 +1,6 @@
 'use client';
 
-import { createButton } from '@videojs/core/dom';
+import { createButton, type UIEvent } from '@videojs/core/dom';
 import type { ComponentPropsWithRef, Ref } from 'react';
 import { useCallback } from 'react';
 import { mergeProps } from '../../utils/merge-props';

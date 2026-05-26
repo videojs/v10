@@ -1,4 +1,4 @@
-import type { UIKeyboardEvent } from './event';
+import type { UIEvent, UIKeyboardEvent } from './event';
 
 export interface ButtonOptions {
   onActivate: (event: UIEvent) => void;
