@@ -35,19 +35,11 @@ export const SELECTORS = {
   pipButton: 'media-pip-button, .media-button--pip',
   captionsButton: 'media-captions-button, .media-button--captions',
   playbackRateButton: [
-    // Legacy cycle button / CSS skins (explicit class)
     withinControls('media-playback-rate-button'),
     withinControls('.media-button--playback-rate'),
-    // HTML menu trigger — exclude nested settings-submenu rows (.media-menu__item)
-    withinControls('media-playback-rate-menu-trigger:not(.media-menu__item)'),
-    // Tailwind skins (utility classes only) + React menu triggers
     withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
   ].join(', '),
-  /**
-   * Open playback rate surface: trigger is also `data-rate`, so require `role="menu"` too
-   * (covers HTML `<media-playback-rate-menu>` and React/Tailwind without `media-menu--playback-rate`).
-   */
-  playbackRateMenuPanel: '[data-rate][role="menu"]',
+  playbackRateMenuPanel: '#playback-rate-menu[role="menu"], [role="menu"]#playback-rate-menu',
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls

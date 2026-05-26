@@ -57,7 +57,7 @@ import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
+import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
@@ -154,8 +154,11 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+function PlaybackRateOptions(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  if (!rateState) return null;
+
+  const { options, setValue, value } = rateState;
 
   return (
     <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
@@ -168,6 +171,27 @@ function PlaybackRateMenuItems(): ReactNode {
         </Menu.RadioItem>
       ))}
     </Menu.RadioGroup>
+  );
+}
+
+function PlaybackRateTrigger(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  if (!rateState) return null;
+
+  const { rate, disabled } = rateState;
+
+  return (
+    <Menu.Trigger
+      disabled={disabled}
+      render={
+        <Button
+          className={playbackRate.button}
+          disabled={disabled}
+          data-rate={String(rate)}
+          aria-label={`Playback rate ${rate}`}
+        />
+      }
+    />
   );
 }
 
@@ -282,12 +306,12 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           </div>
 
           <div className={buttonGroupEnd}>
-            <PlaybackRateMenu.Root side="top" align="center">
-              <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
-              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateMenuItems />
-              </PlaybackRateMenu.Content>
-            </PlaybackRateMenu.Root>
+            <Menu.Root side="top" align="center">
+              <PlaybackRateTrigger />
+              <Menu.Content className={cn(popup.popover, menu.root)}>
+                <PlaybackRateOptions />
+              </Menu.Content>
+            </Menu.Root>
 
             <VolumePopover />
 

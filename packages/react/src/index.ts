@@ -51,13 +51,13 @@ export { Menu, type MenuContextValue, useMenuContext, useOptionalMenuContext } f
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
-export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export {
-  PlaybackRateMenu,
-  type PlaybackRateMenuOption,
-  type PlaybackRateMenuResult,
-  usePlaybackRateMenu,
-} from './ui/playback-rate-menu';
+  type PlaybackRateOption,
+  type PlaybackRateOptionsProps,
+  type PlaybackRateOptionsResult,
+  usePlaybackRateOptions,
+} from './ui/playback-rate';
+export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';

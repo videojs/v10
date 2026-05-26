@@ -16,7 +16,7 @@ import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
+import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -69,8 +69,11 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+function PlaybackRateOptions(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  if (!rateState) return null;
+
+  const { options, setValue, value } = rateState;
 
   return (
     <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
@@ -83,6 +86,27 @@ function PlaybackRateMenuItems(): ReactNode {
         </Menu.RadioItem>
       ))}
     </Menu.RadioGroup>
+  );
+}
+
+function PlaybackRateTrigger(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  if (!rateState) return null;
+
+  const { rate, disabled } = rateState;
+
+  return (
+    <Menu.Trigger
+      disabled={disabled}
+      render={
+        <Button
+          className="media-button--playback-rate"
+          disabled={disabled}
+          data-rate={String(rate)}
+          aria-label={`Playback rate ${rate}`}
+        />
+      }
+    />
   );
 }
 
@@ -169,12 +193,12 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
-            <PlaybackRateMenu.Root side="top" align="center" boundary="viewport">
-              <PlaybackRateMenu.Trigger className="media-button--playback-rate" render={<Button />} />
-              <PlaybackRateMenu.Content className="media-popover media-menu media-menu--playback-rate">
-                <PlaybackRateMenuItems />
-              </PlaybackRateMenu.Content>
-            </PlaybackRateMenu.Root>
+            <Menu.Root side="top" align="center" boundary="viewport">
+              <PlaybackRateTrigger />
+              <Menu.Content className="media-popover media-menu media-menu--playback-rate">
+                <PlaybackRateOptions />
+              </Menu.Content>
+            </Menu.Root>
 
             <VolumePopover />
           </div>

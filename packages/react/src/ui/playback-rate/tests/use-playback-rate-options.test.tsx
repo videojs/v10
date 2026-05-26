@@ -1,10 +1,12 @@
+'use client';
+
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
-import { PlaybackRateMenu, usePlaybackRateMenu } from '..';
+import { usePlaybackRateOptions } from '../use-playback-rate-options';
 
 afterEach(cleanup);
 
@@ -22,20 +24,23 @@ function renderPlaybackRateMenu({
   const { Wrapper } = createPlayerWrapper({ playbackRates, playbackRate, setPlaybackRate });
 
   render(
-    <PlaybackRateMenu.Root defaultOpen formatRate={formatRate}>
-      <PlaybackRateMenu.Trigger data-testid="trigger" />
-      <PlaybackRateMenu.Content data-testid="content">
-        <PlaybackRateMenuItems />
-      </PlaybackRateMenu.Content>
-    </PlaybackRateMenu.Root>,
+    <Menu.Root defaultOpen align="center">
+      <PlaybackRateTrigger formatRate={formatRate} />
+      <Menu.Content data-testid="content">
+        <PlaybackRateOptions formatRate={formatRate} />
+      </Menu.Content>
+    </Menu.Root>,
     { wrapper: Wrapper }
   );
 
   return { setPlaybackRate };
 }
 
-function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+function PlaybackRateOptions({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
+  const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+  if (!rateState) return null;
+
+  const { options, setValue, value } = rateState;
 
   return (
     <Menu.RadioGroup value={value} onValueChange={setValue} label="Playback rate">
@@ -48,42 +53,36 @@ function PlaybackRateMenuItems(): ReactNode {
   );
 }
 
-describe('PlaybackRateMenu', () => {
-  it('renders a dynamic trigger from the current playback rate', () => {
+function PlaybackRateTrigger({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
+  const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+  if (!rateState) return null;
+
+  const { rate, disabled } = rateState;
+
+  return (
+    <Menu.Trigger
+      disabled={disabled}
+      render={
+        <button
+          type="button"
+          data-testid="trigger"
+          disabled={disabled}
+          data-rate={String(rate)}
+          aria-label={`Playback rate ${rate}`}
+        />
+      }
+    />
+  );
+}
+
+describe('usePlaybackRateOptions', () => {
+  it('renders a trigger with the current playback rate state', () => {
     renderPlaybackRateMenu({ playbackRate: 1.5 });
 
     const trigger = screen.getByTestId('trigger');
 
-    expect(trigger.textContent).toBe('1.5×');
     expect(trigger.getAttribute('aria-label')).toBe('Playback rate 1.5');
     expect(trigger.getAttribute('data-rate')).toBe('1.5');
-    expect(trigger.hasAttribute('data-inline-rate-label')).toBe(true);
-  });
-
-  it('renders the current rate inside a rendered button without children', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
-
-    render(
-      <PlaybackRateMenu.Root defaultOpen>
-        <PlaybackRateMenu.Trigger render={<button type="button" data-testid="trigger" />} />
-      </PlaybackRateMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByTestId('trigger').textContent).toBe('1×');
-  });
-
-  it('preserves children on a rendered button', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
-
-    render(
-      <PlaybackRateMenu.Root defaultOpen>
-        <PlaybackRateMenu.Trigger render={<button type="button">Text</button>} />
-      </PlaybackRateMenu.Root>,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByText('Text').textContent).toBe('Text');
   });
 
   it('renders radio items from the available playback rates', () => {
@@ -109,13 +108,12 @@ describe('PlaybackRateMenu', () => {
     expect(setPlaybackRate).toHaveBeenCalledWith(2);
   });
 
-  it('uses a custom rate formatter for the trigger and items', () => {
+  it('uses a custom rate formatter for items', () => {
     renderPlaybackRateMenu({
       playbackRate: 1,
       formatRate: (rate) => (rate === 1 ? 'Normal' : `${rate}×`),
     });
 
-    expect(screen.getByTestId('trigger').textContent).toBe('Normal');
     expect(screen.getByRole('menuitemradio', { name: 'Normal' }).getAttribute('aria-checked')).toBe('true');
   });
 
@@ -124,7 +122,6 @@ describe('PlaybackRateMenu', () => {
 
     const trigger = screen.getByTestId('trigger');
 
-    expect(trigger.hasAttribute('disabled')).toBe(true);
-    expect(trigger.hasAttribute('data-disabled')).toBe(true);
+    expect((trigger as HTMLButtonElement).disabled).toBe(true);
   });
 });

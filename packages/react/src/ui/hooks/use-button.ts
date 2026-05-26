@@ -7,7 +7,7 @@ import { mergeProps } from '../../utils/merge-props';
 
 export interface UseButtonParameters {
   displayName: string;
-  onActivate: () => void;
+  onActivate: (event: UIEvent) => void;
   isDisabled: () => boolean;
 }
 

@@ -4,8 +4,7 @@
 import { MediaContainerElement } from '../../media/container-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
-import { PlaybackRateMenuElement } from '../../ui/playback-rate-menu/playback-rate-menu-element';
-import { PlaybackRateMenuTriggerElement } from '../../ui/playback-rate-menu/playback-rate-menu-trigger-element';
+import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
 import { PlaybackRateOptionsElement } from '../../ui/playback-rate-menu/playback-rate-options-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
@@ -32,9 +31,8 @@ defineMenu();
 // Standalone elements.
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
+safeDefine(PlaybackRateButtonElement);
 safeDefine(PlaybackRateOptionsElement);
-safeDefine(PlaybackRateMenuTriggerElement);
-safeDefine(PlaybackRateMenuElement);
 safeDefine(PopoverElement);
 safeDefine(SeekButtonElement);
 safeDefine(TooltipElement);

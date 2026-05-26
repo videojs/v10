@@ -88,8 +88,8 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-menu-trigger>
-            <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" class="media-popover media-menu media-menu--playback-rate">
+            <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
+            <media-menu id="playback-rate-menu" side="top" align="center" class="media-popover media-menu">
               <media-playback-rate-options class="media-menu__group">
                 <template>
                   <media-menu-radio-item class="media-menu__item">
@@ -100,7 +100,7 @@ function getTemplateHTML() {
                   </media-menu-radio-item>
                 </template>
               </media-playback-rate-options>
-            </media-playback-rate-menu>
+            </media-menu>
 
             <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
