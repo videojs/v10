@@ -100,6 +100,7 @@ export interface CreateI18nResult {
  * Creates an i18n provider and hooks for the shared React i18n context.
  *
  * @param options - Optional hooks such as custom built-in locale loading.
+ * @public
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   return createI18nWithBase(i18nBase, options);
@@ -272,3 +273,31 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
 
   return { I18nContext, I18nProvider, useTranslator: base.useTranslator, useLocale: base.useLocale };
 }
+
+const defaultI18n = createI18n();
+
+/** React context carrying the active translator and locale. @public */
+export const I18nContext = defaultI18n.I18nContext;
+
+/**
+ * Resolves locale and supplies a typed translator to descendants. Preset skins mount this
+ * inside {@link PlayerContainer} with `langRootRef`; use an explicit provider for forced
+ * locales, SSR copy, or controls outside the player shell.
+ *
+ * @public
+ */
+export const I18nProvider = defaultI18n.I18nProvider;
+
+/**
+ * Returns the translator for the nearest `I18nProvider`, or English defaults when none is mounted.
+ *
+ * @public
+ */
+export const useTranslator = defaultI18n.useTranslator;
+
+/**
+ * Returns the active BCP 47 locale tag from the nearest `I18nProvider`, or `'en'` when none is mounted.
+ *
+ * @public
+ */
+export const useLocale = defaultI18n.useLocale;

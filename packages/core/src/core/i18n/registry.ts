@@ -75,6 +75,13 @@ function mergeLookupChain(chain: string[]): Translations {
   return merged as Translations;
 }
 
+/**
+ * Register or merge translation strings for a BCP 47 locale tag.
+ *
+ * @param locale - BCP 47 tag (normalized to lowercase; unicode extensions stripped for the registry key).
+ * @param translations - Partial map of opaque keys to translated strings; merges with any existing layer for the tag.
+ * @public
+ */
 export function registerI18n(locale: string, translations: Partial<Translations>): void {
   const tag = canonicalLocaleRegistryKey(locale);
   const existing = registry.get(tag) ?? {};
@@ -82,10 +89,22 @@ export function registerI18n(locale: string, translations: Partial<Translations>
   notify();
 }
 
+/**
+ * Return the merged translation map for a locale, walking the BCP 47 lookup chain to English defaults.
+ *
+ * @param locale - BCP 47 tag to resolve (e.g. `es-MX`, `zh-Hant-HK`).
+ * @public
+ */
 export function getI18nTranslations(locale: string): Translations {
   return mergeLookupChain(localeLookupChain(locale));
 }
 
+/**
+ * Subscribe to global registry mutations (for example after `registerI18n` or browser translation prefetch).
+ *
+ * @param callback - Invoked when any locale layer changes.
+ * @public
+ */
 export function onI18nRegistryChange(callback: () => void): () => void {
   subscribers.add(callback);
   return () => {
@@ -93,6 +112,12 @@ export function onI18nRegistryChange(callback: () => void): () => void {
   };
 }
 
+/**
+ * Whether an exact locale tag has been registered via `registerI18n` (not whether lazy packs exist).
+ *
+ * @param locale - BCP 47 tag to test.
+ * @public
+ */
 export function hasRegisteredI18n(locale: string): boolean {
   return registry.has(canonicalLocaleRegistryKey(locale));
 }

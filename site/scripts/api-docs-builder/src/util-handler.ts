@@ -75,9 +75,11 @@ interface EntryPoint {
 // (e.g., "create-player" for React, "html-create-player" for HTML).
 const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/react/src/index.ts', framework: 'react' },
+  { index: 'packages/react/src/i18n/index.ts', framework: 'react' },
   { index: 'packages/store/src/react/hooks/index.ts', framework: 'react' },
   { index: 'packages/html/src/index.ts', framework: 'html' },
   { index: 'packages/store/src/html/controllers/index.ts', framework: 'html' },
+  { index: 'packages/core/src/core/i18n/index.ts', framework: null },
   { index: 'packages/core/src/dom/store/selectors.ts', framework: null },
   { index: 'packages/store/src/core/selector.ts', framework: null },
 ];
@@ -154,6 +156,40 @@ function getDisplayName(name: string): string {
     return name.replace(/^create/, '');
   }
   return name;
+}
+
+/** Kebab slugs for exports where `kebabCase` splits `I18n` incorrectly (e.g. `register-i-18-n`). */
+const UTIL_SLUG_OVERRIDES: Record<string, string> = {
+  registerI18n: 'register-i18n',
+  getI18nTranslations: 'get-i18n-translations',
+  hasRegisteredI18n: 'has-registered-i18n',
+  onI18nRegistryChange: 'on-i18n-registry-change',
+  createI18n: 'create-i18n',
+  createTranslator: 'create-translator',
+  I18nProvider: 'i18n-provider',
+};
+
+function utilSlug(name: string): string {
+  return UTIL_SLUG_OVERRIDES[name] ?? kebabCase(name);
+}
+
+function normalizeDescription(description: unknown): string | undefined {
+  if (!description) return undefined;
+  if (typeof description === 'string') return description;
+  if (Array.isArray(description)) {
+    const text = description
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object' && 'text' in part && typeof part.text === 'string') {
+          return part.text;
+        }
+        return '';
+      })
+      .join('')
+      .trim();
+    return text || undefined;
+  }
+  return undefined;
 }
 
 // ─── Extraction: Functions ─────────────────────────────────────────
@@ -843,7 +879,7 @@ function processExport(
   if (!isUtilExport(exportNode)) return;
 
   const displayName = getDisplayName(exportNode.name);
-  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
@@ -861,7 +897,7 @@ function processExport(
     return;
   }
 
-  const description = exportNode.documentation?.description;
+  const description = normalizeDescription(exportNode.documentation?.description);
   const data: UtilReference = {
     name: displayName,
     overloads,
@@ -892,7 +928,7 @@ function processRawExport(
   if (!isRawUtilExport(info)) return;
 
   const displayName = getDisplayName(info.name);
-  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 

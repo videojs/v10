@@ -1,0 +1,155 @@
+---
+title: Internationalization (i18n)
+description: How Video.js translates player UI copy with opaque keys, a global registry, and locale providers
+frameworkTitle:
+  html: Internationalization in HTML
+  react: Internationalization in React
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js translates control labels, ARIA text, tooltips, and error copy through a single **global registry**. Components ask for strings by **opaque key** (`play`, `pause`, `seekForward`) — not by English text — so locale files stay stable when copy changes.
+
+```html title="html"
+<html lang="es">
+  <video-player>
+    <video-skin>
+      <video src="..." playsinline></video>
+    </video-skin>
+  </video-player>
+</html>
+```
+
+```tsx title="react"
+<html lang="es">
+  <Provider>
+    <VideoSkin>
+      <Video src="..." playsInline />
+    </VideoSkin>
+  </Provider>
+</html>
+```
+
+Register a locale once (or rely on lazy-loaded built-in packs), set `lang`, and skins pick up translated strings automatically.
+
+## Opaque keys
+
+Core controls expose keys, not visible labels. `PlayButtonCore.getLabel()` returns `'play'`; the translator turns that into `'Play'`, `'Reproducir'`, or your override.
+
+Keys are typed in `TranslationParams` — TypeScript catches missing `{param}` placeholders and wrong argument names at compile time. See `packages/core/src/core/i18n/types.ts` for the full key list.
+
+Parametric strings use `{placeholder}` tokens, for example `seekForward: 'Seek forward {seconds} seconds'` and `timeRemainingPhrase: '{duration} remaining'`.
+
+## Global registry
+
+`registerI18n(locale, translations)` merges strings into a process-wide map. English (`en`) is pre-registered when `@videojs/core/i18n` loads.
+
+| API | Purpose |
+| --- | --- |
+| <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> | Add or merge a locale layer |
+| <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink> | Read the merged map for a locale |
+| <DocsLink slug="reference/has-registered-i18n">`hasRegisteredI18n`</DocsLink> | Check whether a tag is in the registry |
+| <DocsLink slug="reference/on-i18n-registry-change">`onI18nRegistryChange`</DocsLink> | Subscribe to registry updates |
+
+Import from `@videojs/html/i18n`, `@videojs/react/i18n`, or `@videojs/core/i18n` depending on your bundle.
+
+## When you need a provider
+
+**You usually don't** — if the active locale is available and packs are registered (or lazy-loaded), built-in players already wire providers:
+
+<FrameworkCase frameworks={["html"]}>
+
+- `<video-player>`, `<audio-player>`, and skins include an i18n provider mixin.
+- Set `<html lang="es">` (or `lang` on an ancestor) and ship/register Spanish strings.
+
+Use <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> when you render **standalone** controls outside a player, or when one page hosts players in different languages.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+- Preset skins render inside <DocsLink slug="reference/player-container">`Container`</DocsLink>, which mounts <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> with `langRootRef` on the player shell.
+- Set `<html lang="es">` and register or lazy-load Spanish.
+
+Wrap with an explicit <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> when you need a forced locale, per-render overrides, or custom controls outside `Container`.
+
+</FrameworkCase>
+
+**You do need to register or lazy-load packs** before labels appear in the target language. `<html lang="fr">` alone does nothing if French strings were never registered and no built-in `fr` pack loads.
+
+## Locale resolution
+
+Providers resolve the active locale in order:
+
+1. **Explicit** — `lang` on <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> or `locale` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>
+2. **Ambient** — nearest ancestor `[lang]` (HTML) or `langRootRef` / `<html lang>` (React)
+3. **Fallback** — English defaults
+
+Changing `<html lang>` re-renders wired controls without remounting the player. An explicit `locale` / `lang` on a provider overrides ambient `<html lang>` until you remove or update that override.
+
+## BCP 47 fallback
+
+Lookups walk a **parent chain**, not sibling locales. `es-MX` falls back to `es`, then `en` — not to `es-419`.
+
+```
+es-MX  →  es  →  en
+zh-Hant-HK  →  zh-hant  →  zh  →  en
+```
+
+`getI18nTranslations`, lazy `loadLocale`, and providers all use the same chain via `localeLookupChain`.
+
+## Merge priority
+
+Later layers win over earlier ones:
+
+| Layer | Source |
+| --- | --- |
+| 1 (base) | English defaults (`en.ts`) |
+| 2 | Browser Translation API (Chrome, pre-installed model only) |
+| 3 | `registerI18n` / CDN locale modules |
+| 4 | Lazy built-in packs (`loadLocale`) |
+| 5 (top) | React `translations` prop on `I18nProvider` |
+
+## Built-in locale packs
+
+Video.js ships ~50 locale files under `@videojs/core/i18n/locales/*`, re-exported from `@videojs/html/i18n/locales/*` and `@videojs/react/i18n/locales/*`. Providers call `loadLocale` automatically when a pack is not already registered.
+
+CDN consumers load self-registering modules:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/locales/es.js"></script>
+```
+
+## Common pitfalls
+
+```tsx
+// ❌ Don't — key is the English word; keys are opaque tokens
+registerI18n('es', { Play: 'Reproducir' });
+
+// ✅ Do
+registerI18n('es', { play: 'Reproducir' });
+```
+
+```tsx
+// ❌ Don't — parametric key without the placeholder
+registerI18n('es', { seekForward: 'Adelante 10 segundos' }); // TS error: missing {seconds}
+
+// ✅ Do
+registerI18n('es', { seekForward: 'Adelantar {seconds} segundos' });
+```
+
+<Aside type="tip">
+For zero flash-of-English on SSR or locale switches, pass `translations` directly to `I18nProvider` instead of relying on async `loadLocale`. See <DocsLink slug="how-to/i18n-ssr">SSR with locale</DocsLink>.
+</Aside>
+
+## See also
+
+- <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink>
+- <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>
+- <DocsLink slug="how-to/i18n-ssr">SSR and hydration</DocsLink>
+- <DocsLink slug="how-to/i18n-add-built-in-locale">Add a built-in locale (contributors)</DocsLink>
+- <DocsLink slug="concepts/accessibility">Accessibility</DocsLink> — translated ARIA labels
