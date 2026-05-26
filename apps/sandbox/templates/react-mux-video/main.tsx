@@ -10,6 +10,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
+import { useTitle } from '@app/shared/react/use-title';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { MuxVideo } from '@videojs/react/media/mux-video';
@@ -26,6 +27,7 @@ function App() {
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
   const storyboard = useStoryboard();
+  const title = useTitle();
   const live = isLiveSource(source);
   const autoplay = useAutoplay();
   const muted = useMuted();
@@ -34,7 +36,7 @@ function App() {
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
   return (
-    <Provider>
+    <Provider title={title}>
       <VideoSkinComponent
         poster={poster}
         skin={skin}

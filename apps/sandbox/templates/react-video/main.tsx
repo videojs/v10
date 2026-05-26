@@ -10,6 +10,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
+import { useTitle } from '@app/shared/react/use-title';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { Video } from '@videojs/react/video';
@@ -23,6 +24,7 @@ function readStyling(): Styling {
 function App() {
   const skin = useSkin();
   const source = useSource();
+  const title = useTitle();
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
   const storyboard = useStoryboard();
@@ -32,7 +34,7 @@ function App() {
   const preload = usePreload();
 
   return (
-    <VideoProvider>
+    <VideoProvider title={title}>
       <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <Video
           src={SOURCES[source].url}

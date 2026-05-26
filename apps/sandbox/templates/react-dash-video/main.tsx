@@ -7,6 +7,7 @@ import { useMuted } from '@app/shared/react/use-muted';
 import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
+import { useTitle } from '@app/shared/react/use-title';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { DashVideo } from '@videojs/react/media/dash-video';
@@ -20,6 +21,7 @@ function readStyling(): Styling {
 function App() {
   const skin = useSkin();
   const source = useSource();
+  const title = useTitle();
   const styling = useMemo(readStyling, []);
   const autoplay = useAutoplay();
   const muted = useMuted();
@@ -27,7 +29,7 @@ function App() {
   const preload = usePreload();
 
   return (
-    <VideoProvider>
+    <VideoProvider title={title}>
       <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <DashVideo
           src={SOURCES[source].url}
