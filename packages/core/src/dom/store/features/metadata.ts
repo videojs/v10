@@ -11,15 +11,23 @@ export const metadataFeature = definePlayerFeature({
   }),
 
   attach({ signal, get, store }) {
-    if (!('mediaSession' in navigator)) return;
+    const session = 'mediaSession' in navigator ? navigator.mediaSession : null;
+    if (!session) return;
 
     const sync = () => {
       const { title } = get();
-      navigator.mediaSession.metadata = title ? new MediaMetadata({ title }) : null;
+      session.metadata = title ? new MediaMetadata({ title }) : null;
     };
 
     const unsub = store.subscribe(sync);
-    signal.addEventListener('abort', unsub, { once: true });
+    signal.addEventListener(
+      'abort',
+      () => {
+        unsub();
+        session.metadata = null;
+      },
+      { once: true }
+    );
 
     sync();
   },
