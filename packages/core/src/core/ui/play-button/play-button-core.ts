@@ -3,7 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { MediaMetadataState, MediaPlaybackState } from '../../media/state';
+import type { MediaPlaybackState } from '../../media/state';
 import type { ButtonState } from '../types';
 
 export interface PlayButtonProps {
@@ -30,7 +30,6 @@ export class PlayButtonCore {
 
   #props = { ...PlayButtonCore.defaultProps };
   #media: MediaPlaybackState | null = null;
-  #title: string | null = null;
 
   constructor(props?: PlayButtonProps) {
     if (props) this.setProps(props);
@@ -38,10 +37,6 @@ export class PlayButtonCore {
 
   setProps(props: PlayButtonProps): void {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
-  }
-
-  setMetadata(metadata: MediaMetadataState): void {
-    this.#title = metadata.title;
   }
 
   getLabel(state: PlayButtonState): string {
@@ -54,14 +49,8 @@ export class PlayButtonCore {
       return label;
     }
 
-    let base: string;
-    if (state.ended) {
-      base = 'Replay';
-    } else {
-      base = state.paused ? 'Play' : 'Pause';
-    }
-
-    return this.#title ? `${base}, ${this.#title}` : base;
+    if (state.ended) return 'Replay';
+    return state.paused ? 'Play' : 'Pause';
   }
 
   getAttrs(state: PlayButtonState) {
