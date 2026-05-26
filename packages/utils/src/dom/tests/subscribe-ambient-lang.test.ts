@@ -18,6 +18,16 @@ describe('subscribeAmbientLang', () => {
     off();
   });
 
+  it('invokes callback when html lang property changes', async () => {
+    const spy = vi.fn();
+    const off = subscribeAmbientLang(spy);
+    document.documentElement.lang = 'fr';
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(spy).toHaveBeenCalled();
+    off();
+  });
+
   it('unsubscribe stops notifications', async () => {
     const spy = vi.fn();
     const off = subscribeAmbientLang(spy);

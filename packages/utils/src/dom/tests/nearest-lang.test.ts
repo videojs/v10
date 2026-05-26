@@ -47,4 +47,11 @@ describe('nearestLang', () => {
     document.body.appendChild(outer);
     expect(nearestLang(inner)).toBe('de');
   });
+
+  it('reads lang IDL property on html when set via documentElement.lang', () => {
+    document.documentElement.lang = 'fr';
+    const inner = document.createElement('div');
+    document.body.appendChild(inner);
+    expect(nearestLang(inner)).toBe('fr');
+  });
 });
