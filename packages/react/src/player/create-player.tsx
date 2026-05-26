@@ -16,7 +16,7 @@ import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -79,9 +79,15 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     useDestroy(store);
 
+    const titleRef = useRef(title);
+    titleRef.current = title;
+
     useEffect(() => {
       if (!media) return;
-      return store.attach({ media, container });
+      const cleanup = store.attach({ media, container });
+      const s = store.state as { setTitle?: (t: string | null) => void };
+      s.setTitle?.(titleRef.current ?? null);
+      return cleanup;
     }, [media, container, store]);
 
     useLayoutEffect(() => {
