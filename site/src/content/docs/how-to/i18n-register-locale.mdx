@@ -71,12 +71,12 @@ Preset skins use `Container`, which includes <DocsLink slug="reference/i18n-prov
 ```ts title="my-es.ts"
 import type { Translations } from '@videojs/core/i18n';
 
-const es: Partial<Translations> = {
+const es = {
   play: 'Reproducir',
   pause: 'Pausa',
   mute: 'Silenciar',
   unmute: 'Activar sonido',
-};
+} satisfies Partial<Translations>;
 
 export default es;
 ```
@@ -127,5 +127,6 @@ Load your module after the player script, before playback starts.
 ## What's next?
 
 - <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
+- <DocsLink slug="reference/translations">`Translations`</DocsLink> type
 - <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
 - <DocsLink slug="reference/register-i18n">`registerI18n` reference</DocsLink>

@@ -1,0 +1,53 @@
+---
+title: Translations
+description: Partial map of opaque translation keys to localized strings
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`Translations` is the shape for locale packs passed to <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, the React `translations` prop on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>, and <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink>. Every entry is optional — missing keys fall back through the BCP 47 chain to English.
+
+## Import
+
+```ts
+import type { Translations } from '@videojs/core/i18n';
+```
+
+## Definition
+
+```ts
+type Translations = {
+  [K in keyof TranslationParams]?: TranslationParams[K] extends never
+    ? string
+    : /* parametric keys must include required {placeholder} tokens */
+      string;
+};
+```
+
+Parametric values must include the same `{placeholder}` substrings as English (`{seconds}`, `{duration}`, …). TypeScript enforces this when you use `satisfies Partial<Translations>`.
+
+## Examples
+
+```ts
+import type { Translations } from '@videojs/core/i18n';
+
+const es = {
+  play: 'Reproducir',
+  pause: 'Pausa',
+  seekForward: 'Adelantar {seconds} segundos',
+} satisfies Partial<Translations>;
+
+registerI18n('es', es);
+```
+
+```tsx
+<I18nProvider locale="de" translations={{ play: 'Abspielen' }} />
+```
+
+Only supplied keys override lower layers. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge priority.
+
+## Related
+
+- <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>
+- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink>
+- <DocsLink slug="how-to/i18n-override-translations">Override translation keys</DocsLink>

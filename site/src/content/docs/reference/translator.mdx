@@ -1,0 +1,56 @@
+---
+title: Translator
+description: Typed function that resolves opaque translation keys to localized strings
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`Translator` is the callable returned by <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink> and <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>. It turns opaque keys from core controls into localized copy and interpolates `{placeholder}` tokens when params are required.
+
+## Import
+
+```ts
+import type { Translator } from '@videojs/core/i18n';
+```
+
+## Definition
+
+```ts
+type Translator = <K extends keyof TranslationParams>(
+  key: K,
+  ...args: TranslationParams[K] extends never ? [] : [params: TranslationParams[K]]
+) => string;
+```
+
+- Plain keys: `t('play')`
+- Parametric keys: `t('seekForward', { seconds: 10 })`
+
+Missing keys in the active map resolve to the key string (`'play'`) so partial locale packs degrade visibly during development.
+
+## Create manually
+
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/core/i18n';
+
+const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
+t('pause'); // localized or key fallback
+```
+
+## React hook
+
+```tsx
+import { useTranslator } from '@videojs/react/i18n';
+
+function Label() {
+  const t = useTranslator();
+  return <span>{t('play')}</span>;
+}
+```
+
+Control components resolve keys from core `getLabel()` through `resolveControlLabel` / `resolveControlAttrs` — you rarely call `t()` directly unless building custom UI.
+
+## Related
+
+- <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink>
+- <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>
+- <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>

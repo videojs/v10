@@ -161,6 +161,18 @@ export const sidebar: Sidebar = [
       { slug: 'reference/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
       { slug: 'reference/has-registered-i18n', sidebarLabel: 'hasRegisteredI18n' },
       { slug: 'reference/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
+      { slug: 'reference/create-translator', sidebarLabel: 'createTranslator' },
+      {
+        sidebarLabel: 'Types',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/built-in-locale', sidebarLabel: 'BuiltInLocale' },
+          { slug: 'reference/locale', sidebarLabel: 'Locale' },
+          { slug: 'reference/translation-params', sidebarLabel: 'TranslationParams' },
+          { slug: 'reference/translations', sidebarLabel: 'Translations' },
+          { slug: 'reference/translator', sidebarLabel: 'Translator' },
+        ],
+      },
       { slug: 'reference/feature-buffer' },
       { slug: 'reference/feature-controls' },
       { slug: 'reference/feature-error' },

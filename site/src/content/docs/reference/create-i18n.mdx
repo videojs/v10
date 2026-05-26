@@ -15,7 +15,10 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import { createI18n } from '@videojs/react/i18n';
 
 const { I18nProvider, useTranslator } = createI18n({
-  loadLocale: async (tag) => import(`./locales/${tag}.json`),
+  loadLocale: async (tag) => {
+    const mod = await import(`@videojs/react/i18n/locales/${tag}`);
+    return mod.default;
+  },
 });
 
 function App() {
