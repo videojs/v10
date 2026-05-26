@@ -66,6 +66,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/player-provider' },
       { slug: 'reference/player-container' },
+      { slug: 'reference/i18n-provider' },
       // sorted alphabetically
       { slug: 'reference/airplay-button' },
       { slug: 'reference/audio-track-radio-group' },
