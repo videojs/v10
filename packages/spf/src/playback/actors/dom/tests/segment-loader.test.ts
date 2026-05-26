@@ -66,12 +66,13 @@ const mockFetchBytes = vi.fn(async () => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
-  it('dispatches `remove` from next segment boundary on audio language switch', async () => {
-    // Simulate that the audio buffer has already been initialized with 'en'
-    // and has some buffered segments. Then load the 'es' track — planTasks
-    // should detect the language difference and schedule a `remove` task
-    // covering the ahead-buffer from the next segment boundary forward.
+describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => {
+  it('does NOT emit an explicit remove on cross-rendition switch; relies on MSE overwrite-on-append', async () => {
+    // Audio renditions share segment IDs and startTimes. Appending the new
+    // track's segments at the same timestamps overwrites the old data in
+    // the SourceBuffer — no explicit `remove` task needed, and no audible
+    // silence-gap during the swap. planTasks emits only the new-track init
+    // + new-track segments inside the (formerly-flushed) range.
     const bufferActor = createMockBufferActor({
       initTrackId: 'audio-en',
       initTrackLanguage: 'en',
@@ -86,22 +87,24 @@ describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
-    // Playhead at 2s (mid-segment-0). Next boundary at 6s (start of segment 1).
+    // Playhead at 2s (mid-segment-0). currentSegmentStart = 0.
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
 
-    // The first scheduled task is the flush. Wait for the send to fire.
+    // Wait for the loader to schedule its work (init + segments).
     await vi.waitFor(() => {
-      const removeCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
-      expect(removeCalls.length).toBeGreaterThan(0);
+      const initCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'append-init');
+      expect(initCalls.length).toBeGreaterThan(0);
     });
 
-    const removeMsg = bufferActor.send.mock.calls
+    // No cross-rendition remove emitted. Forward / back flushes are
+    // computed independently and don't fire here (the buffered range is
+    // entirely inside the load window, and no back-buffer threshold is
+    // crossed at currentTime=2).
+    const removeMsgs = bufferActor.send.mock.calls
       .map((c) => c[0] as SourceBufferMessage)
-      .find((m): m is Extract<SourceBufferMessage, { type: 'remove' }> => m.type === 'remove' && m.start === 6);
+      .filter((m): m is Extract<SourceBufferMessage, { type: 'remove' }> => m.type === 'remove');
 
-    expect(removeMsg).toBeDefined();
-    expect(removeMsg!.start).toBe(6);
-    expect(removeMsg!.end).toBe(Infinity);
+    expect(removeMsgs).toHaveLength(0);
 
     loader.destroy();
   });
@@ -158,26 +161,19 @@ describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
     loader.destroy();
   });
 
-  it('schedules new-track segments within the cross-rendition flush range', async () => {
-    // Regression test for the stall bug:
-    //
-    // Cross-rendition audio renditions share segment IDs and startTimes (e.g.,
-    // every variant has its own `segment-1` at startTime=6). When the loader
-    // dispatched `remove [nextBoundary, Infinity)` for a language switch, the
-    // pre-flush `bufferedSegments` snapshot still marked the new-track segments
-    // at those startTimes as "already buffered" — so `getSegmentsToLoad`
-    // skipped them. Playback stalled at `nextBoundary` because the old buffer
-    // ended there and no new segments were scheduled to fill the gap, and
-    // because `currentTime` was stuck, no later effect run rescued it.
-    //
-    // Fix: segments overlapping a planned remove are treated as not-buffered
-    // for `getSegmentsToLoad`, so the loader schedules them on the same plan
-    // pass that emits the flush.
+  it('schedules new-track segments inside the cross-rendition stale range (including current segment)', async () => {
+    // Cross-rendition audio renditions share segment IDs and startTimes
+    // (e.g., every variant has its own `segment-1` at startTime=6).
+    // planTasks treats the range from `currentSegmentStart` forward as
+    // stale (will be overwritten by new appends via MSE
+    // overwrite-on-append) and re-schedules every new-track segment in
+    // that range — including the segment containing the playhead. The
+    // pre-flush `bufferedSegments` snapshot would otherwise mark those
+    // same-startTime new-track segments "already buffered" and skip them.
     const bufferActor = createMockBufferActor({
       initTrackId: 'audio-en',
       initTrackLanguage: 'en',
-      // Buffered seg-0 (0-6) + seg-1 (6-12) + seg-2 (12-18). The cross-rendition
-      // flush will remove [6, Infinity) — that's seg-1 and seg-2 of the new track.
+      // Buffered seg-0 (0-6), seg-1 (6-12), seg-2 (12-18).
       segments: [
         { id: 'audio-en-0', startTime: 0, duration: 6, trackId: 'audio-en' },
         { id: 'audio-en-1', startTime: 6, duration: 6, trackId: 'audio-en' },
@@ -189,9 +185,8 @@ describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
-    // Playhead at 2s (mid-seg-0). nextBoundary = 6 → flush [6, Infinity).
-    // Without the fix: seg-1 (6) and seg-2 (12) would be skipped because the
-    // pre-flush bufferedSegments mark startTimes {0, 6, 12} as buffered.
+    // Playhead at 2s (mid-seg-0). currentSegmentStart = 0 → stale range
+    // is [0, Infinity). All three segments overlap and must be re-scheduled.
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
 
     await vi.waitFor(() => {
@@ -206,8 +201,11 @@ describe('createSegmentLoaderActor — planTasks cross-rendition flush', () => {
       .filter((m): m is Extract<SourceBufferMessage, { type: 'append-segment' }> => m.type === 'append-segment')
       .map((m) => m.meta.startTime);
 
-    // seg-1 (startTime 6) is inside the flush range — must be re-scheduled.
-    // seg-2 (startTime 12) is also inside the flush range — must be re-scheduled.
+    // The current segment (startTime 0, containing playhead at 2) is
+    // re-scheduled so the audible switch happens within milliseconds
+    // of the new-track segment landing rather than waiting for the next
+    // boundary.
+    expect(segmentStartTimes).toContain(0);
     expect(segmentStartTimes).toContain(6);
     expect(segmentStartTimes).toContain(12);
 
