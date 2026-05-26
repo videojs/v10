@@ -9,7 +9,7 @@ let localeApplySeq = 0;
 document.documentElement.lang = locale;
 
 export function wrapSandboxHtmlI18n(content: string): string {
-  return `<media-i18n-provider lang="${locale}">${content}</media-i18n-provider>`;
+  return `<media-i18n-provider>${content}</media-i18n-provider>`;
 }
 
 export async function prepareSandboxHtmlLocale(): Promise<void> {
@@ -22,7 +22,6 @@ export async function applySandboxHtmlLocale(next: SandboxLocaleTag): Promise<vo
   document.documentElement.lang = locale;
   await ensureSandboxLocale(locale);
   if (seq !== localeApplySeq) return;
-  document.querySelector('media-i18n-provider')?.setAttribute('lang', locale);
 }
 
 export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
