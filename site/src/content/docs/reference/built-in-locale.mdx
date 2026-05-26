@@ -1,0 +1,50 @@
+---
+title: BuiltInLocale
+description: Union of shipped BCP 47 locale tags with autocomplete in TypeScript
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`BuiltInLocale` narrows <DocsLink slug="reference/locale">`Locale`</DocsLink> to tags with shipped translation packs in `@videojs/core/i18n/locales/*`. TypeScript suggests these tags when you call `registerI18n`, `loadLocale`, or import locale modules.
+
+## Import
+
+```ts
+import type { BuiltInLocale } from '@videojs/core/i18n';
+```
+
+Runtime lists are also exported:
+
+```ts
+import { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS, SHIPPED_LOCALE_TAGS } from '@videojs/core/i18n';
+```
+
+## Definition
+
+```ts
+type BuiltInLocale =
+  | (typeof BUILT_IN_LOCALES)[number]
+  | (typeof LOCALE_ALIAS_TAGS)[number];
+```
+
+`BUILT_IN_LOCALES` lists regional packs (`es`, `pt-BR`, `zh-CN`, …). `LOCALE_ALIAS_TAGS` adds shorthand tags (`pt`, `zh`) that resolve to regional packs through the lookup chain.
+
+## Lazy loading
+
+Providers call `loadLocale(tag)` for tags in `SHIPPED_LOCALE_TAGS` when a pack is not already registered. Explicit `registerI18n` or CDN locale modules skip the async gap on first paint.
+
+## Examples
+
+```ts
+import es from '@videojs/react/i18n/locales/es';
+
+registerI18n('es', es); // 'es' autocompletes as BuiltInLocale
+```
+
+Custom app locales (`'xx'`) use `Locale` but are not members of `BuiltInLocale`.
+
+## Related
+
+- <DocsLink slug="reference/locale">`Locale`</DocsLink>
+- <DocsLink slug="how-to/i18n-add-built-in-locale">Add a built-in locale (contributors)</DocsLink>
+- <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink>

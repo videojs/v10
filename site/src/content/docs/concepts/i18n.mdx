@@ -23,13 +23,18 @@ Video.js translates control labels, ARIA text, tooltips, and error copy through 
 ```
 
 ```tsx title="react"
-<html lang="es">
-  <Provider>
-    <VideoSkin>
-      <Video src="..." playsInline />
-    </VideoSkin>
-  </Provider>
-</html>
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+// Set `<html lang="es">` on the document (layout, _document, or index.html)
+export function App() {
+  return (
+    <Provider>
+      <VideoSkin>
+        <Video src="..." playsInline />
+      </VideoSkin>
+    </Provider>
+  );
+}
 ```
 
 Register a locale once (or rely on lazy-loaded built-in packs), set `lang`, and skins pick up translated strings automatically.
@@ -38,7 +43,7 @@ Register a locale once (or rely on lazy-loaded built-in packs), set `lang`, and 
 
 Core controls expose keys, not visible labels. `PlayButtonCore.getLabel()` returns `'play'`; the translator turns that into `'Play'`, `'Reproducir'`, or your override.
 
-Keys are typed in `TranslationParams` — TypeScript catches missing `{param}` placeholders and wrong argument names at compile time. See `packages/core/src/core/i18n/types.ts` for the full key list.
+Keys are typed in <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink> — TypeScript catches missing `{param}` placeholders and wrong argument names at compile time.
 
 Parametric strings use `{placeholder}` tokens, for example `seekForward: 'Seek forward {seconds} seconds'` and `timeRemainingPhrase: '{duration} remaining'`.
 
@@ -147,6 +152,7 @@ For zero flash-of-English on SSR or locale switches, pass `translations` directl
 
 ## See also
 
+- <DocsLink slug="reference/locale">`Locale`</DocsLink>, <DocsLink slug="reference/translations">`Translations`</DocsLink>, <DocsLink slug="reference/translator">`Translator`</DocsLink> — core types
 - <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink>
 - <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
 - <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>

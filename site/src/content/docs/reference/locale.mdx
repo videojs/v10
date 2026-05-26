@@ -1,0 +1,41 @@
+---
+title: Locale
+description: BCP 47 language tag type for i18n registry and provider APIs
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`Locale` is the BCP 47 tag type used by <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, providers, and <DocsLink slug="reference/translator">`Translator`</DocsLink>. Shipped packs autocomplete as <DocsLink slug="reference/built-in-locale">`BuiltInLocale`</DocsLink>; any other tag remains valid at runtime.
+
+## Import
+
+```ts
+import type { Locale } from '@videojs/core/i18n';
+// or @videojs/html/i18n, @videojs/react/i18n
+```
+
+## Definition
+
+```ts
+type Locale = BuiltInLocale | (string & {});
+```
+
+The `(string & {})` pattern keeps custom tags (`'xx'`, `'en-US'`) type-safe without losing autocomplete for built-ins.
+
+## Resolution
+
+Providers and `getI18nTranslations` normalize tags and walk the parent chain (`es-MX` → `es` → `en`) via `localeLookupChain`. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for explicit vs ambient resolution.
+
+## Examples
+
+```ts
+const es: Locale = 'es';
+const custom: Locale = 'en-US';
+const regional: Locale = 'pt-BR';
+```
+
+## Related
+
+- <DocsLink slug="reference/built-in-locale">`BuiltInLocale`</DocsLink>
+- <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>
