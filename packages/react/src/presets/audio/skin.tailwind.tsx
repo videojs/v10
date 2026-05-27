@@ -123,7 +123,7 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateOptions(): ReactNode {
+function PlaybackRateRadioGroup(): ReactNode {
   const rateState = usePlaybackRateOptions();
   if (!rateState) return null;
 
@@ -239,7 +239,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateOptions />
+                <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>
 

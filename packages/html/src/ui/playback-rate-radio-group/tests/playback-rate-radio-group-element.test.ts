@@ -11,7 +11,7 @@ import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
 import { PlaybackRateButtonElement } from '../../playback-rate-button/playback-rate-button-element';
-import { PlaybackRateOptionsElement } from '../playback-rate-options-element';
+import { PlaybackRateRadioGroupElement } from '../playback-rate-radio-group-element';
 
 let tagCounter = 0;
 
@@ -92,7 +92,7 @@ defineElement(MenuElement.tagName, MenuElement);
 defineElement(MenuRadioGroupElement.tagName, MenuRadioGroupElement);
 defineElement(MenuRadioItemElement.tagName, MenuRadioItemElement);
 defineElement(MenuItemIndicatorElement.tagName, MenuItemIndicatorElement);
-defineElement(PlaybackRateOptionsElement.tagName, PlaybackRateOptionsElement);
+defineElement(PlaybackRateRadioGroupElement.tagName, PlaybackRateRadioGroupElement);
 defineElement(PlaybackRateButtonElement.tagName, PlaybackRateButtonElement);
 defineElement('test-playback-rate-player', TestPlayerProviderElement);
 
@@ -111,7 +111,7 @@ function setup({
   const provider = document.createElement('test-playback-rate-player') as TestPlayerProviderElement;
   const trigger = createElement(PlaybackRateButtonElement);
   const menu = createElement(MenuElement);
-  const options = createElement(PlaybackRateOptionsElement);
+  const options = createElement(PlaybackRateRadioGroupElement);
 
   provider.setStore(store);
   menu.id = 'playback-rate-menu';
@@ -133,13 +133,13 @@ function setup({
 async function waitForMenu(
   menu: MenuElement,
   trigger?: PlaybackRateButtonElement,
-  options?: PlaybackRateOptionsElement
+  options?: PlaybackRateRadioGroupElement
 ): Promise<void> {
   await trigger?.updateComplete;
   await menu.updateComplete;
   await options?.updateComplete;
 
-  const group = menu.querySelector<PlaybackRateOptionsElement>(PlaybackRateOptionsElement.tagName);
+  const group = menu.querySelector<PlaybackRateRadioGroupElement>(PlaybackRateRadioGroupElement.tagName);
   await group?.updateComplete;
 
   const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
@@ -153,7 +153,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('PlaybackRateOptionsElement', () => {
+describe('PlaybackRateRadioGroupElement', () => {
   it('renders radio items from the available playback rates', async () => {
     const { menu, trigger } = setup({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
 

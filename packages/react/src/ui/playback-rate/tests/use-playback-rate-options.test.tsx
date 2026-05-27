@@ -28,7 +28,7 @@ function renderPlaybackRateOptions({
     <Menu.Root defaultOpen align="center">
       <PlaybackRateTrigger formatRate={formatRate} />
       <Menu.Content data-testid="content">
-        <PlaybackRateOptions formatRate={formatRate} />
+        <PlaybackRateRadioGroup formatRate={formatRate} />
       </Menu.Content>
     </Menu.Root>,
     { wrapper: Wrapper }
@@ -37,7 +37,7 @@ function renderPlaybackRateOptions({
   return { setPlaybackRate };
 }
 
-function PlaybackRateOptions({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
+function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
   const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
   if (!rateState) return null;
 

@@ -96,7 +96,7 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateOptions(): ReactNode {
+function PlaybackRateRadioGroup(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
   if (!playbackRate) return null;
 
@@ -230,7 +230,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
             <Menu.Root side="top" align="center">
               <PlaybackRateTrigger />
               <Menu.Content className="media-surface media-popover media-menu media-menu--playback-rate">
-                <PlaybackRateOptions />
+                <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>
 

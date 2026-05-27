@@ -114,7 +114,7 @@ function getTemplateHTML() {
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
-              <media-playback-rate-options class="${menu.group}">
+              <media-playback-rate-radio-group class="${menu.group}">
                 <template>
                   <media-menu-radio-item class="${menu.item}">
                     <span data-part="label"></span>
@@ -123,7 +123,7 @@ function getTemplateHTML() {
                     </media-menu-item-indicator>
                   </media-menu-radio-item>
                 </template>
-              </media-playback-rate-options>
+              </media-playback-rate-radio-group>
             </media-menu>
 
             <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">

@@ -1,4 +1,4 @@
-import { PlaybackRateOptionsCore, PlaybackRateOptionsDataAttrs } from '@videojs/core';
+import { PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -8,8 +8,8 @@ import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
 
-export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
-  static override readonly tagName = 'media-playback-rate-options';
+export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
+  static override readonly tagName = 'media-playback-rate-radio-group';
 
   static override properties = {
     ...MenuRadioGroupElement.properties,
@@ -17,9 +17,9 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
   disabled = false;
-  formatRate = PlaybackRateOptionsCore.defaultProps.formatRate;
+  formatRate = PlaybackRateRadioGroupCore.defaultProps.formatRate;
 
-  readonly #core = new PlaybackRateOptionsCore();
+  readonly #core = new PlaybackRateRadioGroupCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
 
   #ratesKey = '';
@@ -45,7 +45,7 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 
   protected override update(changed: PropertyValues): void {
     const media = this.#mediaState.value;
-    let state: PlaybackRateOptionsCore.State | null = null;
+    let state: PlaybackRateRadioGroupCore.State | null = null;
 
     if (media) {
       this.#core.setProps({ formatRate: this.formatRate, disabled: this.disabled });
@@ -59,10 +59,10 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 
     super.update(changed);
 
-    if (state) applyStateDataAttrs(this, state, PlaybackRateOptionsDataAttrs);
+    if (state) applyStateDataAttrs(this, state, PlaybackRateRadioGroupDataAttrs);
   }
 
-  #syncContent(state: PlaybackRateOptionsCore.State): void {
+  #syncContent(state: PlaybackRateRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const ratesKey = `${state.rates.join('|')}::${templateKey}`;
@@ -142,6 +142,6 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
   };
 }
 
-export namespace PlaybackRateOptionsElement {
-  export type State = PlaybackRateOptionsCore.State;
+export namespace PlaybackRateRadioGroupElement {
+  export type State = PlaybackRateRadioGroupCore.State;
 }
