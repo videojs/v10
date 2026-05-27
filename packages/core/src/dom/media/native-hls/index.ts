@@ -1,3 +1,4 @@
+import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 import { nativeHlsErrors } from './errors';
@@ -21,7 +22,8 @@ export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
-export class NativeHlsMedia extends HTMLVideoElementHost implements NativeHlsMediaProps {
+const NativeHlsMediaBase = MediaTracksMixin(HTMLVideoElementHost);
+export class NativeHlsMedia extends NativeHlsMediaBase implements NativeHlsMediaProps {
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 

@@ -1,14 +1,16 @@
 import { shallowEqual } from '@videojs/utils/object';
 import HlsJs from 'hls.js';
+import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import { type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { type HlsJsConfig, HlsJsMedia } from '../hls-js';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 import { NativeHlsMedia } from '../native-hls';
 
-interface EngineKey {
-  engine: 'mse' | 'native';
-  hlsJs: Partial<HlsJsConfig> | undefined;
+export interface HlsMediaProps {
+  src: string;
+  preload: MediaPreloadType;
+  config: HlsMediaConfig;
 }
 
 export interface HlsMediaConfig {
@@ -19,10 +21,9 @@ export interface HlsMediaConfig {
   [key: string]: unknown;
 }
 
-export interface HlsMediaProps {
-  src: string;
-  preload: MediaPreloadType;
-  config: HlsMediaConfig;
+interface EngineKey {
+  engine: 'mse' | 'native';
+  hlsJs: Partial<HlsJsConfig> | undefined;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
@@ -34,7 +35,8 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
 const M3U8_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
 const MP4_CONTENT_TYPE = 'video/mp4';
 
-export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
+const HlsMediaBase = MediaTracksMixin(HTMLVideoElementHost<HlsJs>);
+export class HlsMedia extends HlsMediaBase implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #pendingLoad: Promise<void> | null = null;
   #prevEngineKey: EngineKey | null = null;
@@ -55,7 +57,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   override get engine() {
-    return this.#delegate?.engine ?? null;
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.engine : null;
   }
 
   get config() {
@@ -111,6 +113,22 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   override get error() {
     return this.#delegate?.error ?? null;
+  }
+
+  override get videoTracks() {
+    return this.#delegate?.videoTracks ?? super.videoTracks;
+  }
+
+  override get audioTracks() {
+    return this.#delegate?.audioTracks ?? super.audioTracks;
+  }
+
+  override get videoRenditions() {
+    return this.#delegate?.videoRenditions ?? super.videoRenditions;
+  }
+
+  override get audioRenditions() {
+    return this.#delegate?.audioRenditions ?? super.audioRenditions;
   }
 
   load() {

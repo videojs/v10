@@ -1,14 +1,20 @@
 import { MediaLayer } from '../../core/media/media-layer';
 import type {
+  AudioRenditionListLike,
+  AudioTrackLike,
+  AudioTrackListLike,
   CanPlayTypeResult,
   EventLike,
   TextTrackKind,
   TextTrackLike,
   Video,
   VideoEvents,
+  VideoRenditionListLike,
+  VideoTrackLike,
+  VideoTrackListLike,
 } from '../../core/media/types';
 import { MediaStreamTypes } from '../../core/media/types';
-import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import { EMPTY_CONFIG, EMPTY_MEDIA_LIST, EMPTY_REMOTE, EMPTY_TIME_RANGES } from './constants';
 
 export abstract class HTMLMediaElementLayer<
   Target extends HTMLMediaElement = HTMLMediaElement,
@@ -60,6 +66,40 @@ export abstract class HTMLMediaElementLayer<
 
   get targetLiveWindow() {
     return this.next?.targetLiveWindow ?? Number.NaN;
+  }
+
+  get videoTracks() {
+    return this.next?.videoTracks ?? (EMPTY_MEDIA_LIST as unknown as VideoTrackListLike);
+  }
+
+  get audioTracks() {
+    return this.next?.audioTracks ?? (EMPTY_MEDIA_LIST as unknown as AudioTrackListLike);
+  }
+
+  get videoRenditions() {
+    return this.next?.videoRenditions ?? (EMPTY_MEDIA_LIST as unknown as VideoRenditionListLike);
+  }
+
+  get audioRenditions() {
+    return this.next?.audioRenditions ?? (EMPTY_MEDIA_LIST as unknown as AudioRenditionListLike);
+  }
+
+  addVideoTrack(kind: string, label?: string, language?: string) {
+    if (!this.next) throw new Error('[vjs] Cannot add video track without a media target.');
+    return this.next.addVideoTrack(kind, label, language);
+  }
+
+  removeVideoTrack(track: VideoTrackLike) {
+    this.next?.removeVideoTrack(track);
+  }
+
+  addAudioTrack(kind: string, label?: string, language?: string) {
+    if (!this.next) throw new Error('[vjs] Cannot add audio track without a media target.');
+    return this.next.addAudioTrack(kind, label, language);
+  }
+
+  removeAudioTrack(track: AudioTrackLike) {
+    this.next?.removeAudioTrack(track);
   }
 
   // -- Playback --
@@ -209,7 +249,7 @@ export abstract class HTMLMediaElementLayer<
   // -- Text tracks --
 
   get textTracks() {
-    return this.next?.textTracks ?? EMPTY_TEXT_TRACKS;
+    return this.next?.textTracks ?? (EMPTY_MEDIA_LIST as unknown as TextTrackListLike);
   }
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {

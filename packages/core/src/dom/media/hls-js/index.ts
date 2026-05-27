@@ -1,7 +1,9 @@
 import HlsJs, { type HlsConfig as HlsJsConfig } from 'hls.js';
+import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 import { hlsJsErrors } from './errors';
 import { hlsJsLive } from './live';
+import { hlsJsMediaTracks } from './media-tracks';
 import { hlsJsMetadataTracks } from './metadata-tracks';
 import { hlsJsPreload } from './preload';
 import { hlsJsStreamType } from './stream-type';
@@ -23,7 +25,8 @@ export interface HlsJsMediaParams {
   config?: Partial<HlsJsConfig>;
 }
 
-export class HlsJsMedia extends HTMLVideoElementHost<HlsJs> {
+const HlsJsMediaBase = MediaTracksMixin(HTMLVideoElementHost<HlsJs>);
+export class HlsJsMedia extends HlsJsMediaBase {
   #engine: HlsJs | null;
 
   constructor(params: HlsJsMediaParams = {}) {
@@ -36,6 +39,7 @@ export class HlsJsMedia extends HTMLVideoElementHost<HlsJs> {
     hlsJsPreload().install(this);
     hlsJsMetadataTracks().install(this);
     hlsJsTextTracks().install(this);
+    hlsJsMediaTracks().install(this);
   }
 
   override get engine(): HlsJs | null {

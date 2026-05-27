@@ -1,6 +1,6 @@
 /// <reference path="../../../../node_modules/mux-embed/dist/types/mux-embed.d.ts" preserve="true" />
 
-import Hls from 'hls.js';
+import HlsJs from 'hls.js';
 import Mux, { type Options as MuxDataOptions, type Mux as MuxDataSdk } from 'mux-embed';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
@@ -99,7 +99,7 @@ class MuxData implements MuxDataProps, MediaExtension {
       ...(this.beaconCollectionDomain ? { beaconCollectionDomain: this.beaconCollectionDomain } : {}),
       ...(this.disableCookies ? { disableCookies: this.disableCookies } : {}),
       ...(hlsjs ? { hlsjs } : {}),
-      Hls,
+      Hls: HlsJs,
       data: {
         ...(this.envKey ? { env_key: this.envKey } : {}),
         // Some Mux Data integrations key off `player_software_name` and others off `player_software`;

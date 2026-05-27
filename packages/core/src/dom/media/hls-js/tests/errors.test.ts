@@ -1,4 +1,4 @@
-import Hls from 'hls.js';
+import HlsJs from 'hls.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
 import { HTMLVideoElementHost } from '../../html-video-element-host';
@@ -8,7 +8,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-function createEngine(): Hls {
+function createEngine(): HlsJs {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
   return {
     on(event: string, fn: (...args: any[]) => void) {
@@ -21,12 +21,12 @@ function createEngine(): Hls {
     emit(event: string, ...args: any[]) {
       for (const fn of listeners.get(event) ?? []) fn(event, ...args);
     },
-  } as unknown as Hls;
+  } as unknown as HlsJs;
 }
 
-class HlsHost extends HTMLVideoElementHost<Hls> {
-  #engine: Hls;
-  constructor(engine: Hls) {
+class HlsHost extends HTMLVideoElementHost<HlsJs> {
+  #engine: HlsJs;
+  constructor(engine: HlsJs) {
     super();
     this.#engine = engine;
   }
@@ -43,7 +43,7 @@ function setup() {
   host.target = video;
   const extension = hlsJsErrors();
   extension.install(host);
-  (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+  (engine as any).emit(HlsJs.Events.MEDIA_ATTACHED);
   return { engine, host, video, extension };
 }
 
@@ -53,9 +53,9 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR,
       fatal: true,
       error: new Error('network failure'),
     });
@@ -66,7 +66,7 @@ describe('hlsJsErrors', () => {
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
     expect(event.error.fatal).toBe(true);
-    expect(event.error.context).toBe(Hls.ErrorDetails.MANIFEST_LOAD_ERROR);
+    expect(event.error.context).toBe(HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR);
     expect(event.error.data).toBeDefined();
   });
 
@@ -75,9 +75,9 @@ describe('hlsJsErrors', () => {
 
     expect(host.error).toBeNull();
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR,
       fatal: true,
       error: new Error('network failure'),
     });
@@ -91,9 +91,9 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.FRAG_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.FRAG_LOAD_ERROR,
       fatal: false,
       error: new Error('transient'),
     });
@@ -107,9 +107,9 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.MEDIA_ERROR,
-      details: Hls.ErrorDetails.BUFFER_APPEND_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.MEDIA_ERROR,
+      details: HlsJs.ErrorDetails.BUFFER_APPEND_ERROR,
       fatal: true,
       error: new Error('decode'),
     });
@@ -123,9 +123,9 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.KEY_SYSTEM_ERROR,
-      details: Hls.ErrorDetails.KEY_SYSTEM_NO_KEYS,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.KEY_SYSTEM_ERROR,
+      details: HlsJs.ErrorDetails.KEY_SYSTEM_NO_KEYS,
       fatal: true,
       error: new Error('drm'),
     });
@@ -139,11 +139,11 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.MEDIA_DETACHED);
+    (engine as any).emit(HlsJs.Events.MEDIA_DETACHED);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR,
       fatal: true,
       error: new Error('after detach'),
     });
@@ -154,16 +154,16 @@ describe('hlsJsErrors', () => {
   it('resets error after MEDIA_DETACHED', () => {
     const { engine, host } = setup();
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR,
       fatal: true,
       error: new Error('failure'),
     });
 
     expect(host.error).not.toBeNull();
 
-    (engine as any).emit(Hls.Events.MEDIA_DETACHED);
+    (engine as any).emit(HlsJs.Events.MEDIA_DETACHED);
 
     expect(host.error).toBeNull();
   });
@@ -173,9 +173,9 @@ describe('hlsJsErrors', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.OTHER_ERROR,
-      details: Hls.ErrorDetails.INTERNAL_EXCEPTION,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.OTHER_ERROR,
+      details: HlsJs.ErrorDetails.INTERNAL_EXCEPTION,
       fatal: true,
       error: new Error('something broke'),
     });
@@ -192,9 +192,9 @@ describe('hlsJsErrors', () => {
 
     extension.destroy();
 
-    (engine as any).emit(Hls.Events.ERROR, {
-      type: Hls.ErrorTypes.NETWORK_ERROR,
-      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+    (engine as any).emit(HlsJs.Events.ERROR, {
+      type: HlsJs.ErrorTypes.NETWORK_ERROR,
+      details: HlsJs.ErrorDetails.MANIFEST_LOAD_ERROR,
       fatal: true,
       error: new Error('post-destroy'),
     });

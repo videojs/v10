@@ -239,6 +239,119 @@ export interface MediaTextTrackCapability {
 }
 
 // ----------------------------------------
+// Media tracks
+// ----------------------------------------
+
+interface TrackEventLike<Track> extends EventLike {
+  readonly track: Track;
+}
+
+interface RenditionEventLike<Rendition> extends EventLike {
+  readonly rendition: Rendition;
+}
+
+interface TrackListEvents<Track> {
+  addtrack: TrackEventLike<Track>;
+  removetrack: TrackEventLike<Track>;
+  change: EventLike;
+}
+
+interface RenditionListEvents<Rendition> {
+  addrendition: RenditionEventLike<Rendition>;
+  removerendition: RenditionEventLike<Rendition>;
+  change: EventLike;
+}
+
+export interface AudioTrackLike {
+  id: string | undefined;
+  readonly kind: string | undefined;
+  readonly label: string;
+  readonly language: string;
+  enabled: boolean;
+  addRendition(src: string, codec?: string | undefined, bitrate?: number | undefined): AudioRenditionLike;
+  removeRendition(rendition: AudioRenditionLike): void;
+}
+
+export interface AudioTrackListLike extends EventTargetLike<TrackListEvents<AudioTrackLike>> {
+  readonly length: number;
+  readonly [index: number]: AudioTrackLike;
+  [Symbol.iterator](): Iterator<AudioTrackLike>;
+  getTrackById(id: string): AudioTrackLike | null;
+}
+
+export interface AudioRenditionLike {
+  id: string | undefined;
+  readonly bitrate: number | undefined;
+  readonly codec: string | undefined;
+  selected: boolean;
+}
+
+export interface AudioRenditionListLike extends EventTargetLike<RenditionListEvents<AudioRenditionLike>> {
+  readonly length: number;
+  readonly [index: number]: AudioRenditionLike;
+  [Symbol.iterator](): Iterator<AudioRenditionLike>;
+  getRenditionById(id: string): AudioRenditionLike | null;
+  selectedIndex: number;
+}
+
+export interface VideoTrackLike {
+  id: string | undefined;
+  readonly kind: string | undefined;
+  readonly label: string;
+  readonly language: string;
+  selected: boolean;
+  addRendition(
+    src: string,
+    width?: number | undefined,
+    height?: number | undefined,
+    codec?: string | undefined,
+    bitrate?: number | undefined,
+    frameRate?: number | undefined
+  ): VideoRenditionLike;
+  removeRendition(rendition: VideoRenditionLike): void;
+}
+
+export interface VideoTrackListLike extends EventTargetLike<TrackListEvents<VideoTrackLike>> {
+  readonly length: number;
+  readonly [index: number]: VideoTrackLike;
+  [Symbol.iterator](): Iterator<VideoTrackLike>;
+  getTrackById(id: string): VideoTrackLike | null;
+  readonly selectedIndex: number;
+}
+
+export interface VideoRenditionLike {
+  id: string | undefined;
+  readonly width: number | undefined;
+  readonly height: number | undefined;
+  readonly bitrate: number | undefined;
+  readonly frameRate: number | undefined;
+  readonly codec: string | undefined;
+  selected: boolean;
+}
+
+export interface VideoRenditionListLike extends EventTargetLike<RenditionListEvents<VideoRenditionLike>> {
+  readonly length: number;
+  readonly [index: number]: VideoRenditionLike;
+  [Symbol.iterator](): Iterator<VideoRenditionLike>;
+  getRenditionById(id: string): VideoRenditionLike | null;
+  selectedIndex: number;
+}
+
+export interface MediaAudioTrackCapability {
+  readonly audioTracks: AudioTrackListLike;
+  readonly audioRenditions: AudioRenditionListLike;
+  addAudioTrack(kind: string, label?: string, language?: string): AudioTrackLike;
+  removeAudioTrack(track: AudioTrackLike): void;
+}
+
+export interface MediaVideoTrackCapability {
+  readonly videoTracks: VideoTrackListLike;
+  readonly videoRenditions: VideoRenditionListLike;
+  addVideoTrack(kind: string, label?: string, language?: string): VideoTrackLike;
+  removeVideoTrack(track: VideoTrackLike): void;
+}
+
+// ----------------------------------------
 // Fullscreen
 // ----------------------------------------
 
@@ -398,8 +511,8 @@ export interface Media<Engine = unknown, Events extends { [K in keyof Events]: E
     EventTargetLike<Events> {
   readonly engine?: Engine | null;
   readonly target?: unknown;
-  readonly next?: Media | null;
-  readonly root?: Media | null;
+  readonly next?: Media<Engine, any> | null;
+  readonly root?: Media<Engine, any> | null;
   destroy?(): Promise<void> | void;
 }
 
@@ -431,6 +544,8 @@ export interface MediaFull<Engine = unknown, Events extends { [K in keyof Events
     MediaPlayedCapability,
     MediaErrorCapability,
     MediaTextTrackCapability,
+    MediaAudioTrackCapability,
+    MediaVideoTrackCapability,
     MediaStreamTypeCapability,
     MediaLiveCapability,
     MediaRemotePlaybackCapability,
