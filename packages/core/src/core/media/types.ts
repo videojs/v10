@@ -310,6 +310,17 @@ export interface MediaRemotePlaybackCapability {
 }
 
 // ----------------------------------------
+// Playback options
+// ----------------------------------------
+
+export interface MediaPlaybackOptionsCapability {
+  autoplay: boolean;
+  defaultMuted: boolean;
+  controls: boolean;
+  playsInline: boolean;
+}
+
+// ----------------------------------------
 // Config
 // ----------------------------------------
 
@@ -363,6 +374,7 @@ export interface MediaFull
     MediaStreamTypeCapability,
     MediaLiveCapability,
     MediaRemotePlaybackCapability,
+    MediaPlaybackOptionsCapability,
     MediaConfigCapability {}
 
 export interface VideoEvents

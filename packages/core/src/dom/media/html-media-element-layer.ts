@@ -151,6 +151,40 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     if (this.next) this.next.playbackRate = value;
   }
 
+  // -- Playback options --
+
+  get autoplay() {
+    return this.next?.autoplay ?? false;
+  }
+
+  set autoplay(value) {
+    if (this.next) this.next.autoplay = value;
+  }
+
+  get defaultMuted() {
+    return this.next?.defaultMuted ?? false;
+  }
+
+  set defaultMuted(value) {
+    if (this.next) this.next.defaultMuted = value;
+  }
+
+  get controls() {
+    return this.next?.controls ?? false;
+  }
+
+  set controls(value) {
+    if (this.next) this.next.controls = value;
+  }
+
+  get playsInline() {
+    return this.next?.playsInline ?? false;
+  }
+
+  set playsInline(value) {
+    if (this.next) this.next.playsInline = value;
+  }
+
   // -- Buffer --
 
   get buffered() {

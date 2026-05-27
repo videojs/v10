@@ -135,9 +135,19 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (isDefined) return;
       isDefined = true;
 
+      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
+
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
+          // Defer to the explicit `ctor.properties` loop when its attribute
+          // mapping diverges from `kebabCase(prop)`. Covers multi-word camelCase
+          // props (`playsInline` → `'playsinline'`) and explicit overrides
+          // (`defaultMuted` → `attribute: 'muted'`). Single-word props in
+          // `properties` (like `loop`, `preload`) keep their legacy proto-walk
+          // path so the mediaHost still receives the setter call.
+          const propConfig = properties[prop];
+          if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -180,7 +190,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         }
       }
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
       for (const [prop, { type, attribute }] of Object.entries(properties)) {
         if (prop in CustomMedia.prototype) continue;
 
