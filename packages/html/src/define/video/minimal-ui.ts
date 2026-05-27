@@ -12,7 +12,7 @@ import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
-import { PlaybackRateOptionsElement } from '../../ui/playback-rate-menu/playback-rate-options-element';
+import { PlaybackRateOptionsElement } from '../../ui/playback-rate-options/playback-rate-options-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';

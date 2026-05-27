@@ -1,12 +1,12 @@
 'use client';
 
-import { type PlaybackRateMenuCore, PlaybackRateMenuCore as PlaybackRateMenuCoreClass } from '@videojs/core';
+import { type PlaybackRateOptionsCore, PlaybackRateOptionsCore as PlaybackRateOptionsCoreClass } from '@videojs/core';
 import { logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import { useCallback, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 
-export interface PlaybackRateOptionsProps extends PlaybackRateMenuCore.Props {}
+export interface PlaybackRateOptionsProps extends PlaybackRateOptionsCore.Props {}
 
 export interface PlaybackRateOption {
   rate: number;
@@ -16,7 +16,7 @@ export interface PlaybackRateOption {
 }
 
 export interface PlaybackRateOptionsResult {
-  state: PlaybackRateMenuCore.State;
+  state: PlaybackRateOptionsCore.State;
   rate: number;
   value: string;
   options: PlaybackRateOption[];
@@ -27,7 +27,7 @@ export interface PlaybackRateOptionsResult {
 
 export function usePlaybackRateOptions(props?: PlaybackRateOptionsProps): PlaybackRateOptionsResult | null {
   const media = usePlayer(selectPlaybackRate);
-  const [core] = useState(() => new PlaybackRateMenuCoreClass());
+  const [core] = useState(() => new PlaybackRateOptionsCoreClass());
 
   core.setProps(props ?? {});
 

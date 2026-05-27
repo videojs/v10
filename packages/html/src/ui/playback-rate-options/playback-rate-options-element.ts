@@ -1,4 +1,4 @@
-import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
+import { PlaybackRateOptionsCore, PlaybackRateOptionsDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -17,9 +17,9 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
   disabled = false;
-  formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
+  formatRate = PlaybackRateOptionsCore.defaultProps.formatRate;
 
-  readonly #core = new PlaybackRateMenuCore();
+  readonly #core = new PlaybackRateOptionsCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
 
   #ratesKey = '';
@@ -45,7 +45,7 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 
   protected override update(changed: PropertyValues): void {
     const media = this.#mediaState.value;
-    let state: PlaybackRateMenuCore.State | null = null;
+    let state: PlaybackRateOptionsCore.State | null = null;
 
     if (media) {
       this.#core.setProps({ formatRate: this.formatRate, disabled: this.disabled });
@@ -59,10 +59,10 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 
     super.update(changed);
 
-    if (state) applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
+    if (state) applyStateDataAttrs(this, state, PlaybackRateOptionsDataAttrs);
   }
 
-  #syncContent(state: PlaybackRateMenuCore.State): void {
+  #syncContent(state: PlaybackRateOptionsCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const ratesKey = `${state.rates.join('|')}::${templateKey}`;
@@ -143,5 +143,5 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 }
 
 export namespace PlaybackRateOptionsElement {
-  export type State = PlaybackRateMenuCore.State;
+  export type State = PlaybackRateOptionsCore.State;
 }

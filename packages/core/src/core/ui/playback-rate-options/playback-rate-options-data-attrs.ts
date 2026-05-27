@@ -1,9 +1,9 @@
 import type { StateAttrMap } from '../types';
-import type { PlaybackRateMenuState } from './playback-rate-menu-core';
+import type { PlaybackRateOptionsState } from './playback-rate-options-core';
 
-export const PlaybackRateMenuDataAttrs = {
+export const PlaybackRateOptionsDataAttrs = {
   /** Current playback rate. */
   rate: 'data-rate',
   /** Present when playback rate selection is disabled. */
   disabled: 'data-disabled',
-} as const satisfies StateAttrMap<PlaybackRateMenuState>;
+} as const satisfies StateAttrMap<PlaybackRateOptionsState>;

@@ -8,7 +8,7 @@ import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
-import { PlaybackRateOptionsElement } from '../../ui/playback-rate-menu/playback-rate-options-element';
+import { PlaybackRateOptionsElement } from '../../ui/playback-rate-options/playback-rate-options-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';

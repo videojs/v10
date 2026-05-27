@@ -10,7 +10,7 @@ import { usePlaybackRateOptions } from '../use-playback-rate-options';
 
 afterEach(cleanup);
 
-function renderPlaybackRateMenu({
+function renderPlaybackRateOptions({
   playbackRates = [0.5, 1, 1.5, 2],
   playbackRate = 1.5,
   setPlaybackRate = vi.fn(),
@@ -77,7 +77,7 @@ function PlaybackRateTrigger({ formatRate }: { formatRate?: ((rate: number) => s
 
 describe('usePlaybackRateOptions', () => {
   it('renders a trigger with the current playback rate state', () => {
-    renderPlaybackRateMenu({ playbackRate: 1.5 });
+    renderPlaybackRateOptions({ playbackRate: 1.5 });
 
     const trigger = screen.getByTestId('trigger');
 
@@ -86,7 +86,7 @@ describe('usePlaybackRateOptions', () => {
   });
 
   it('renders radio items from the available playback rates', () => {
-    renderPlaybackRateMenu({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
+    renderPlaybackRateOptions({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
 
     expect(screen.getByRole('menuitemradio', { name: '1×' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: '1.25×' }).getAttribute('aria-checked')).toBe('true');
@@ -94,14 +94,14 @@ describe('usePlaybackRateOptions', () => {
   });
 
   it('center aligns the popup by default', () => {
-    renderPlaybackRateMenu();
+    renderPlaybackRateOptions();
 
     expect(screen.getByTestId('content').getAttribute('data-align')).toBe('center');
   });
 
   it('sets the selected playback rate', () => {
     const setPlaybackRate = vi.fn();
-    renderPlaybackRateMenu({ setPlaybackRate });
+    renderPlaybackRateOptions({ setPlaybackRate });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '2×' }));
 
@@ -109,7 +109,7 @@ describe('usePlaybackRateOptions', () => {
   });
 
   it('uses a custom rate formatter for items', () => {
-    renderPlaybackRateMenu({
+    renderPlaybackRateOptions({
       playbackRate: 1,
       formatRate: (rate) => (rate === 1 ? 'Normal' : `${rate}×`),
     });
@@ -118,7 +118,7 @@ describe('usePlaybackRateOptions', () => {
   });
 
   it('disables the trigger when there are no rates', () => {
-    renderPlaybackRateMenu({ playbackRates: [] });
+    renderPlaybackRateOptions({ playbackRates: [] });
 
     const trigger = screen.getByTestId('trigger');
 

@@ -67,7 +67,7 @@ export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
-export { PlaybackRateOptionsElement } from './ui/playback-rate-menu/playback-rate-options-element';
+export { PlaybackRateOptionsElement } from './ui/playback-rate-options/playback-rate-options-element';
 export { PopoverElement } from './ui/popover/popover-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
