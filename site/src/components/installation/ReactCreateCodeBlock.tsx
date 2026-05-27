@@ -17,7 +17,8 @@ export default function ReactCreateCodeBlock() {
     embedMethod: $embedMethod,
   });
 
-  const hasSkinFiles = 'Skin.tsx' in result || 'skin.css' in result;
+  const hasSkinTsx = 'Skin.tsx' in result && !!result['Skin.tsx'];
+  const hasSkinCss = 'skin.css' in result && !!result['skin.css'];
 
   return (
     <TabsRoot maxWidth={false}>
@@ -25,20 +26,20 @@ export default function ReactCreateCodeBlock() {
         <Tab value="index" initial>
           ./components/player/index.tsx
         </Tab>
-        {hasSkinFiles && <Tab value="skin-tsx">./components/player/Skin.tsx</Tab>}
-        {hasSkinFiles && <Tab value="skin-css">./components/player/skin.css</Tab>}
+        {hasSkinTsx && <Tab value="skin-tsx">./components/player/Skin.tsx</Tab>}
+        {hasSkinCss && <Tab value="skin-css">./components/player/skin.css</Tab>}
       </TabsList>
       <TabsPanel value="index" initial>
         <ClientCode code={result['MyPlayer.tsx']} lang="tsx" />
       </TabsPanel>
-      {hasSkinFiles && result['Skin.tsx'] && (
+      {hasSkinTsx && (
         <TabsPanel value="skin-tsx">
-          <ClientCode code={result['Skin.tsx']} lang="tsx" />
+          <ClientCode code={result['Skin.tsx']!} lang="tsx" />
         </TabsPanel>
       )}
-      {hasSkinFiles && result['skin.css'] && (
+      {hasSkinCss && (
         <TabsPanel value="skin-css">
-          <ClientCode code={result['skin.css']} lang="css" />
+          <ClientCode code={result['skin.css']!} lang="css" />
         </TabsPanel>
       )}
     </TabsRoot>

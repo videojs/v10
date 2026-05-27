@@ -91,6 +91,30 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toBeTruthy();
   });
 
+  it('injects custom sourceUrl into ejected HTML media element', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      embedMethod: 'ejected',
+      sourceUrl: 'https://example.com/custom.mp4',
+    });
+    expect(result.html).toContain('src="https://example.com/custom.mp4"');
+  });
+
+  it('uses default demo URL in ejected HTML when sourceUrl is empty', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, embedMethod: 'ejected', sourceUrl: '' });
+    expect(result.html).toContain('stream.mux.com');
+  });
+
+  it('uses HLS demo URL in ejected HTML for HLS renderer', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      embedMethod: 'ejected',
+      renderer: 'hls',
+      sourceUrl: '',
+    });
+    expect(result.html).toContain('.m3u8');
+  });
+
   it('falls back to packaged for background-video even when ejected is requested', () => {
     const result = generateHTMLUsageCode({
       ...baseHTML,
@@ -170,11 +194,34 @@ describe('generateHTMLUsageCode', () => {
 });
 
 describe('generateReactCreateCode', () => {
-  it('returns Skin.tsx and skin.css in addition to MyPlayer.tsx when ejected', () => {
+  it('replaces MyPlayer.tsx with the ejected player when ejected, no Skin.tsx', () => {
     const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    // The ejected TSX is the full self-contained player — no separate Skin.tsx.
     expect(result['MyPlayer.tsx']).toBeDefined();
-    expect(result['Skin.tsx']).toBeDefined();
+    expect(result['Skin.tsx']).toBeUndefined();
     expect(result['skin.css']).toBeDefined();
+  });
+
+  it('ejected MyPlayer.tsx exports MyPlayer as alias for the ejected component', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result['MyPlayer.tsx']).toContain('export { VideoPlayer as MyPlayer }');
+  });
+
+  it('ejected MyPlayer.tsx imports skin.css not player.css', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result['MyPlayer.tsx']).toContain("import './skin.css'");
+    expect(result['MyPlayer.tsx']).not.toContain("import './player.css'");
+  });
+
+  it('ejected MyPlayer.tsx for audio exports AudioPlayer as MyPlayer', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'html5-audio',
+      embedMethod: 'ejected',
+    });
+    expect(result['MyPlayer.tsx']).toContain('export { AudioPlayer as MyPlayer }');
   });
 
   it('falls back to packaged for background-video even when ejected is requested', () => {
