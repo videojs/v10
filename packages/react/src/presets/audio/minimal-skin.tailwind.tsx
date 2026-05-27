@@ -33,6 +33,7 @@ import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
@@ -144,12 +145,10 @@ function PlaybackRateTrigger(): ReactNode {
   const rateState = usePlaybackRateOptions();
   if (!rateState) return null;
 
-  const { rate, disabled } = rateState;
-
   return (
     <Menu.Trigger
-      disabled={disabled}
-      render={<Button className={playbackRate.button} data-rate={String(rate)} aria-label={`Playback rate ${rate}`} />}
+      disabled={rateState.disabled}
+      render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />}
     />
   );
 }

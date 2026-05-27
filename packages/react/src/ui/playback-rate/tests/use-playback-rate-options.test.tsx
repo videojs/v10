@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
+import { PlaybackRateButton } from '../../playback-rate-button';
 import { usePlaybackRateOptions } from '../use-playback-rate-options';
 
 afterEach(cleanup);
@@ -57,20 +58,10 @@ function PlaybackRateTrigger({ formatRate }: { formatRate?: ((rate: number) => s
   const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
   if (!rateState) return null;
 
-  const { rate, disabled } = rateState;
-
   return (
     <Menu.Trigger
-      disabled={disabled}
-      render={
-        <button
-          type="button"
-          data-testid="trigger"
-          disabled={disabled}
-          data-rate={String(rate)}
-          aria-label={`Playback rate ${rate}`}
-        />
-      }
+      disabled={rateState.disabled}
+      render={<PlaybackRateButton data-testid="trigger" render={<button type="button" />} />}
     />
   );
 }
@@ -122,6 +113,6 @@ describe('usePlaybackRateOptions', () => {
 
     const trigger = screen.getByTestId('trigger');
 
-    expect((trigger as HTMLButtonElement).disabled).toBe(true);
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
   });
 });
