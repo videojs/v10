@@ -317,6 +317,13 @@ export interface MediaPlaybackOptionsCapability {
   autoplay: boolean;
   defaultMuted: boolean;
   controls: boolean;
+}
+
+// ----------------------------------------
+// Plays inline (video-only)
+// ----------------------------------------
+
+export interface MediaPlaysInlineCapability {
   playsInline: boolean;
 }
 
@@ -399,7 +406,8 @@ export interface Video
     MediaErrorCapability,
     MediaTextTrackCapability,
     MediaFullscreenCapability,
-    MediaPictureInPictureCapability {}
+    MediaPictureInPictureCapability,
+    MediaPlaysInlineCapability {}
 
 export interface AudioEvents
   extends MediaPlaybackEvents,

@@ -177,14 +177,6 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     if (this.next) this.next.controls = value;
   }
 
-  get playsInline() {
-    return this.next?.playsInline ?? false;
-  }
-
-  set playsInline(value) {
-    if (this.next) this.next.playsInline = value;
-  }
-
   // -- Buffer --
 
   get buffered() {

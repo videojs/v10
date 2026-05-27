@@ -12,6 +12,14 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
     if (this.target) this.target.poster = value;
   }
 
+  get playsInline() {
+    return this.target?.playsInline ?? false;
+  }
+
+  set playsInline(value: boolean) {
+    if (this.target) this.target.playsInline = value;
+  }
+
   get webkitPresentationMode() {
     return (this.target as WebKitVideoElement | null)?.webkitPresentationMode;
   }

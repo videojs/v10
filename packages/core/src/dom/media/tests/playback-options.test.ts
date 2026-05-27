@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 
-describe('HTMLMediaElementLayer playback options', () => {
-  function createHost() {
-    const host = new HTMLVideoElementHost();
-    const video = document.createElement('video');
-    host.target = video;
-    return { host, video };
-  }
+function createHost() {
+  const host = new HTMLVideoElementHost();
+  const video = document.createElement('video');
+  host.target = video;
+  return { host, video };
+}
 
+describe('HTMLMediaElementLayer playback options', () => {
   describe('autoplay', () => {
     it('returns false when no target is attached', () => {
       const host = new HTMLVideoElementHost();
@@ -56,19 +56,19 @@ describe('HTMLMediaElementLayer playback options', () => {
       expect(host.controls).toBe(true);
     });
   });
+});
 
-  describe('playsInline', () => {
-    it('returns false when no target is attached', () => {
-      const host = new HTMLVideoElementHost();
-      expect(host.playsInline).toBe(false);
-    });
+describe('HTMLVideoElementHost playsInline', () => {
+  it('returns false when no target is attached', () => {
+    const host = new HTMLVideoElementHost();
+    expect(host.playsInline).toBe(false);
+  });
 
-    it('reads and writes through the chain', () => {
-      const { host, video } = createHost();
+  it('reads and writes the target', () => {
+    const { host, video } = createHost();
 
-      host.playsInline = true;
-      expect(video.playsInline).toBe(true);
-      expect(host.playsInline).toBe(true);
-    });
+    host.playsInline = true;
+    expect(video.playsInline).toBe(true);
+    expect(host.playsInline).toBe(true);
   });
 });
