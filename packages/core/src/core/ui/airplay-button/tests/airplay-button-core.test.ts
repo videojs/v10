@@ -140,11 +140,11 @@ describe('AirplayButtonCore', () => {
       expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
 
-    it('does nothing when unsupported', async () => {
+    it('toggles regardless of availability (the button is hidden when unavailable)', async () => {
       const core = new AirplayButtonCore();
       const media = createMediaState({ remotePlaybackAvailability: 'unsupported' });
       await core.toggle(media);
-      expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).toHaveBeenCalled();
     });
 
     it('catches AirPlay errors silently', async () => {

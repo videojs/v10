@@ -87,7 +87,6 @@ export class AirplayButtonCore {
 
   async toggle(state: MediaRemotePlaybackState): Promise<void> {
     if (this.#props.disabled) return;
-    if (state.remotePlaybackAvailability !== 'available') return;
 
     try {
       await state.toggleRemotePlayback();
