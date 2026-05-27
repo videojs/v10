@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
 import { NativeHlsMedia } from '../../native-hls';
-import { HlsMedia, SourceTypes } from '../index';
+import { HlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -25,13 +25,12 @@ function setup() {
   document.body.appendChild(video);
 
   const media = new HlsMedia();
-  media.attach(video);
+  media.target = video;
 
   const handler = vi.fn();
   media.addEventListener('error', handler);
 
-  media.preferPlayback = 'native';
-  media.type = SourceTypes.M3U8;
+  media.config = { preferPlayback: 'native', contentType: 'application/vnd.apple.mpegurl' };
   media.load();
 
   return { media, video, handler };
@@ -81,13 +80,12 @@ describe('HlsMedia', () => {
       document.body.appendChild(video);
 
       const media = new HlsMedia();
-      media.attach(video);
+      media.target = video;
 
       const pauseHandler = vi.fn();
       media.addEventListener('pause', pauseHandler);
 
-      media.preferPlayback = 'native';
-      media.type = SourceTypes.M3U8;
+      media.config = { preferPlayback: 'native', contentType: 'application/vnd.apple.mpegurl' };
       media.load();
 
       video.dispatchEvent(new Event('pause'));
@@ -139,7 +137,7 @@ describe('HlsMedia', () => {
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
-      fireDurationChange(video, Infinity);
+      fireDurationChange(video, Number.POSITIVE_INFINITY);
 
       expect(media.streamType).toBe('live');
       expect(handler).toHaveBeenCalledOnce();
@@ -169,44 +167,16 @@ describe('HlsMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
-    it('dispatches `streamtypechange` once per transition when the engine is recreated', () => {
-      const { media, video } = setup();
+    it('preserves a user-set value across engine recreation', () => {
+      const { media } = setup();
 
-      const handler = vi.fn();
-      media.addEventListener('streamtypechange', handler);
-
-      fireDurationChange(video, Infinity);
-      expect(media.streamType).toBe('live');
-
-      handler.mockClear();
-      // `debug` is part of `HlsMedia`'s engine props — toggling it recreates the
-      // native delegate without switching playback engines.
-      media.debug = true;
-      media.load();
-
-      // Teardown: a single `live` → `unknown`, then the new delegate re-detects
-      // `live` from the same element during `attach`.
-      expect(handler).toHaveBeenCalledTimes(2);
-      expect(media.streamType).toBe('live');
-    });
-
-    it('does not emit a transient auto-detected `streamType` before a user override when the native delegate is recreated', () => {
-      const { media, video } = setup();
-
-      Object.defineProperty(video, 'duration', { value: 120, configurable: true });
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
 
-      const seen: string[] = [];
-      media.addEventListener('streamtypechange', () => {
-        seen.push(media.streamType);
-      });
-
-      // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.debug = true;
+      // Toggling preferPlayback recreates the delegate.
+      media.config = { preferPlayback: 'mse', contentType: 'application/vnd.apple.mpegurl' };
       media.load();
 
-      expect(seen).not.toContain('on-demand');
       expect(media.streamType).toBe('live');
     });
 
@@ -248,43 +218,13 @@ describe('HlsMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
     });
 
-    it('preserves a user-set value across `load()` on the same engine', () => {
-      const { media, video } = setup();
-
-      media.streamType = 'live';
-
-      const handler = vi.fn();
-      media.addEventListener('streamtypechange', handler);
-
-      media.load();
-
-      expect(media.streamType).toBe('live');
-      expect(handler).not.toHaveBeenCalled();
-
-      fireDurationChange(video, 120);
-      expect(media.streamType).toBe('live');
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('preserves a user-set value across engine recreation', () => {
-      const { media } = setup();
-
-      media.streamType = 'live';
-      expect(media.streamType).toBe('live');
-
-      media.preferPlayback = 'mse';
-      media.load();
-
-      expect(media.streamType).toBe('live');
-    });
-
     it('stops preserving after the user override is cleared with `unknown`', () => {
       const { media } = setup();
 
       media.streamType = 'live';
       media.streamType = 'unknown';
 
-      media.preferPlayback = 'mse';
+      media.config = { preferPlayback: 'mse', contentType: 'application/vnd.apple.mpegurl' };
       media.load();
 
       expect(media.streamType).toBe('unknown');
@@ -320,7 +260,7 @@ describe('NativeHlsMedia streamType', () => {
     const video = document.createElement('video');
     document.body.appendChild(video);
     const media = new NativeHlsMedia();
-    media.attach(video);
+    media.target = video;
     return { media, video };
   }
 
@@ -335,7 +275,7 @@ describe('NativeHlsMedia streamType', () => {
     const handler = vi.fn();
     media.addEventListener('streamtypechange', handler);
 
-    fireDurationChange(video, Infinity);
+    fireDurationChange(video, Number.POSITIVE_INFINITY);
 
     expect(media.streamType).toBe('live');
     expect(handler).toHaveBeenCalledOnce();

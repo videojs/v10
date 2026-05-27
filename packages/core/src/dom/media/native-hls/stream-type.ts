@@ -1,82 +1,92 @@
-import type { Constructor } from '@videojs/utils/types';
+import { defineExtension } from '../../../core/media/media-extension';
+import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import type { NativeMediaHost } from './errors';
+import type { HTMLMediaElementHost } from '../html-media-element-host';
+import { HTMLMediaElementLayer } from '../html-media-element-layer';
 
-export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
-    #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
-    #isUserStreamType = false;
-    #disconnect: AbortController | null = null;
+export type NativeHlsStreamTypeMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
 
-    get streamType(): MediaStreamType {
-      return this.#streamType;
-    }
+/**
+ * Derives `streamType` from the underlying media element's `duration`:
+ * `Infinity` → `LIVE`, finite/positive → `ON_DEMAND`, otherwise `UNKNOWN`.
+ *
+ * Detection is re-run on `durationchange` / `loadedmetadata` and reset on
+ * `emptied`. Setting `streamType` to anything other than `UNKNOWN` locks in
+ * the user override; setting it to `UNKNOWN` returns control to detection.
+ *
+ * @example nativeHlsStreamType().install(media);
+ */
+export class NativeHlsStreamType {
+  readonly name = 'native-hls-stream-type';
 
-    set streamType(value: MediaStreamType) {
-      if (value === MediaStreamTypes.UNKNOWN) {
-        this.#isUserStreamType = false;
-        this.#setDetected(this.#detect());
-        return;
-      }
+  install(media: NativeHlsStreamTypeMedia) {
+    return addLayer(media, new NativeHlsStreamTypeLayer());
+  }
+}
 
-      this.#isUserStreamType = true;
-      this.#update(value);
-    }
+export const nativeHlsStreamType = defineExtension<void, NativeHlsStreamTypeMedia, NativeHlsStreamType>(
+  () => new NativeHlsStreamType()
+);
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
-    }
+class NativeHlsStreamTypeLayer extends HTMLMediaElementLayer {
+  #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
+  #userOverride = false;
+  #abort: AbortController | null = null;
 
-    detach(): void {
-      this.#destroy();
-      this.#setDetected(MediaStreamTypes.UNKNOWN);
-      super.detach?.();
-    }
-
-    destroy(): void {
-      this.#destroy();
-      super.destroy?.();
-    }
-
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-    }
-
-    #init(target: HTMLMediaElement): void {
-      this.#destroy();
-      this.#disconnect = new AbortController();
-      const { signal } = this.#disconnect;
-
-      const detect = () => this.#setDetected(this.#detect(target));
-
-      target.addEventListener('durationchange', detect, { signal });
-      target.addEventListener('loadedmetadata', detect, { signal });
-      target.addEventListener('emptied', () => this.#setDetected(MediaStreamTypes.UNKNOWN), { signal });
-
-      detect();
-    }
-
-    #detect(target: HTMLMediaElement | null = this.target as HTMLMediaElement | null): MediaStreamType {
-      if (!target) return MediaStreamTypes.UNKNOWN;
-      const { duration } = target;
-      if (duration === Infinity) return MediaStreamTypes.LIVE;
-      if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;
-      return MediaStreamTypes.UNKNOWN;
-    }
-
-    #setDetected(value: MediaStreamType): void {
-      if (this.#isUserStreamType) return;
-      this.#update(value);
-    }
-
-    #update(value: MediaStreamType): void {
-      if (this.#streamType === value) return;
-      this.#streamType = value;
-      this.dispatchEvent(new Event('streamtypechange'));
-    }
+  override get streamType(): MediaStreamType {
+    return this.#streamType;
   }
 
-  return NativeHlsMediaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
+  override set streamType(streamType: MediaStreamType) {
+    if (streamType === MediaStreamTypes.UNKNOWN) {
+      this.#userOverride = false;
+      this.#detect();
+      return;
+    }
+    this.#userOverride = true;
+    this.#update(streamType);
+  }
+
+  override get target() {
+    return super.target;
+  }
+
+  override set target(target: HTMLMediaElement | null) {
+    this.#abort?.abort();
+    this.#abort = null;
+
+    super.target = target;
+
+    if (target) {
+      this.#abort = new AbortController();
+      const { signal } = this.#abort;
+      target.addEventListener('durationchange', () => this.#detect(), { signal });
+      target.addEventListener('loadedmetadata', () => this.#detect(), { signal });
+      target.addEventListener('emptied', () => this.#reset(), { signal });
+    }
+
+    this.#detect();
+  }
+
+  #detect() {
+    if (this.#userOverride) return;
+    this.#update(deriveStreamType(this.duration));
+  }
+
+  #reset() {
+    if (this.#userOverride) return;
+    this.#update(MediaStreamTypes.UNKNOWN);
+  }
+
+  #update(streamType: MediaStreamType) {
+    if (this.#streamType === streamType) return;
+    this.#streamType = streamType;
+    this.dispatchEvent(new Event('streamtypechange'));
+  }
+}
+
+function deriveStreamType(duration: number): MediaStreamType {
+  if (duration === Number.POSITIVE_INFINITY) return MediaStreamTypes.LIVE;
+  if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;
+  return MediaStreamTypes.UNKNOWN;
 }

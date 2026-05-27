@@ -23,7 +23,7 @@ function setup() {
   document.body.appendChild(video);
 
   const media = new DashMedia();
-  media.attach(video);
+  media.target = video;
 
   return { media, video };
 }

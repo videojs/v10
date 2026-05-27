@@ -1,7 +1,7 @@
 import { isFunction } from '@videojs/utils/predicate';
 import type { Video, VideoEvents } from '../../core/media/types';
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
-import { HTMLMediaElementHost } from './media-host';
+import { HTMLMediaElementHost } from './html-media-element-host';
 
 export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement, VideoEvents> implements Video {
   get poster() {

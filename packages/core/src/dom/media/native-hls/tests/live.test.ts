@@ -1,30 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HTMLMediaElementHost } from '../../html-media-element-host';
+import { nativeHlsLive } from '../live';
 
-import type { NativeMediaHost } from '../errors';
-import { NativeHlsMediaLiveMixin } from '../live';
-
-class FakeHost extends EventTarget implements NativeMediaHost {
-  #target: HTMLMediaElement | null = null;
-
-  get target() {
-    return this.#target;
-  }
-
-  attach(target: HTMLMediaElement): void {
-    if (!target || this.#target === target) return;
-    this.#target = target;
-  }
-
-  detach(): void {
-    this.#target = null;
-  }
-
-  destroy(): void {
-    this.#target = null;
-  }
-}
-
-const NativeHlsMediaLive = NativeHlsMediaLiveMixin(FakeHost);
+class FakeNativeHlsMedia extends HTMLMediaElementHost<HTMLMediaElement> {}
 
 function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTMLVideoElement {
   const video = document.createElement('video');
@@ -63,7 +41,7 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
 }
 
 async function flushPromises() {
-  // Allow the async fetch chain inside the mixin to settle.
+  // Allow the async fetch chain inside the extension to settle.
   await new Promise((resolve) => setTimeout(resolve, 0));
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -72,10 +50,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('NativeHlsMediaLiveMixin', () => {
+describe('nativeHlsLive', () => {
   describe('defaults', () => {
     it('returns `NaN` for both properties before a playlist is parsed', () => {
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
+
       expect(host.liveEdgeStart).toBeNaN();
       expect(host.targetLiveWindow).toBeNaN();
     });
@@ -94,13 +74,14 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('derives `targetLiveWindow=0` and offset from `#EXT-X-TARGETDURATION`', async () => {
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       const handler = vi.fn();
       host.addEventListener('targetlivewindowchange', handler);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
 
       await flushPromises();
@@ -126,10 +107,11 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('derives `targetLiveWindow=Infinity`', async () => {
       mockFetch({ 'https://example.com/dvr.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/dvr.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -152,10 +134,11 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('leaves `targetLiveWindow=NaN` for on-demand', async () => {
       mockFetch({ 'https://example.com/vod.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/vod.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -177,10 +160,11 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('uses `PART-TARGET * 2` for the offset', async () => {
       mockFetch({ 'https://example.com/ll.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/ll.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -200,10 +184,11 @@ describe('NativeHlsMediaLiveMixin', () => {
         'https://example.com/media.m3u8': media,
       });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/master.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -217,10 +202,11 @@ describe('NativeHlsMediaLiveMixin', () => {
       const fetchSpy = vi.fn();
       vi.stubGlobal('fetch', fetchSpy);
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/video.mp4', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -234,10 +220,11 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('leaves values at `NaN` on fetch failure', async () => {
       mockFetch({ 'https://example.com/missing.m3u8': { status: 404 } });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/missing.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -249,10 +236,11 @@ describe('NativeHlsMediaLiveMixin', () => {
       const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
@@ -264,20 +252,21 @@ describe('NativeHlsMediaLiveMixin', () => {
       expect(host.liveEdgeStart).toBeNaN();
     });
 
-    it('resets to `NaN` after `destroy`', async () => {
+    it('resets to `NaN` when the layer is destroyed', async () => {
       const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new FakeNativeHlsMedia();
+      const destroy = nativeHlsLive().install(host);
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
-      host.attach(video);
+      host.target = video;
       video.dispatchEvent(new Event('loadstart'));
       await flushPromises();
 
       expect(host.targetLiveWindow).toBe(0);
 
-      host.destroy();
+      destroy();
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();

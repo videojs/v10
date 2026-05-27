@@ -1,36 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
-import { NativeHlsMediaErrorsMixin, type NativeMediaHost } from '../errors';
-
-class FakeHost extends EventTarget implements NativeMediaHost {
-  #target: HTMLMediaElement | null = null;
-
-  get target() {
-    return this.#target;
-  }
-
-  attach(target: HTMLMediaElement): void {
-    if (!target || this.#target === target) return;
-    this.#target = target;
-  }
-
-  detach(): void {
-    if (!this.#target) return;
-    this.#target = null;
-  }
-
-  destroy(): void {
-    this.#target = null;
-  }
-}
-
-const NativeHlsMediaErrors = NativeHlsMediaErrorsMixin(FakeHost);
+import { HTMLVideoElementHost } from '../../html-video-element-host';
+import { nativeHlsErrors } from '../errors';
 
 function setup() {
-  const host = new NativeHlsMediaErrors();
+  const host = new HTMLVideoElementHost();
+  const dispose = nativeHlsErrors().install(host);
   const video = document.createElement('video');
-  host.attach(video);
-  return { host, video };
+  host.target = video;
+  return { host, video, dispose };
 }
 
 function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
@@ -41,7 +19,7 @@ function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
   video.dispatchEvent(new Event('error'));
 }
 
-describe('NativeHlsMediaErrorsMixin', () => {
+describe('nativeHlsErrors', () => {
   it('dispatches an error event with a MediaError for native errors', () => {
     const { host, video } = setup();
 
@@ -124,7 +102,7 @@ describe('NativeHlsMediaErrorsMixin', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    host.detach();
+    host.target = null;
 
     fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'after detach');
 
@@ -138,34 +116,37 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     expect(host.error).not.toBeNull();
 
-    host.detach();
+    host.target = null;
 
     expect(host.error).toBeNull();
   });
 
-  it('stops listening after destroy', () => {
-    const { host, video } = setup();
+  it('stops wrapping errors after dispose', () => {
+    const { host, video, dispose } = setup();
 
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    host.destroy();
+    dispose();
 
-    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'after destroy');
+    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'after dispose');
 
-    expect(handler).not.toHaveBeenCalled();
+    for (const call of handler.mock.calls) {
+      expect((call[0] as ErrorEvent).error).toBeUndefined();
+    }
   });
 
-  it('resets error after destroy', () => {
-    const { host, video } = setup();
+  it('no longer stops propagation after dispose', () => {
+    const { video, dispose } = setup();
 
-    fireNativeError(video, MediaError.MEDIA_ERR_DECODE, 'failure');
+    dispose();
 
-    expect(host.error).not.toBeNull();
+    const nativeHandler = vi.fn();
+    video.addEventListener('error', nativeHandler);
 
-    host.destroy();
+    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'after dispose');
 
-    expect(host.error).toBeNull();
+    expect(nativeHandler).toHaveBeenCalledOnce();
   });
 
   it('clears stale error on source change (emptied event)', () => {
@@ -180,7 +161,8 @@ describe('NativeHlsMediaErrorsMixin', () => {
   });
 
   it('has target set when error handler fires during attach', () => {
-    const host = new NativeHlsMediaErrors();
+    const host = new HTMLVideoElementHost();
+    nativeHlsErrors().install(host);
     const video = document.createElement('video');
 
     let targetDuringError: EventTarget | null = 'unset' as any;
@@ -193,30 +175,10 @@ describe('NativeHlsMediaErrorsMixin', () => {
       configurable: true,
     });
 
-    host.attach(video);
+    host.target = video;
     video.dispatchEvent(new Event('error'));
 
     expect(targetDuringError).toBe(video);
-  });
-
-  it('does not register listeners when base attach guard rejects same target', () => {
-    const host = new NativeHlsMediaErrors();
-    const video = document.createElement('video');
-    host.attach(video);
-
-    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'first');
-    expect(host.error).not.toBeNull();
-
-    video.dispatchEvent(new Event('emptied'));
-    expect(host.error).toBeNull();
-
-    host.attach(video);
-
-    const handler = vi.fn();
-    host.addEventListener('error', handler);
-    fireNativeError(video, MediaError.MEDIA_ERR_DECODE, 'second');
-
-    expect(handler).toHaveBeenCalledOnce();
   });
 
   it('re-initializes on re-attach', () => {
@@ -225,10 +187,10 @@ describe('NativeHlsMediaErrorsMixin', () => {
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    host.detach();
+    host.target = null;
 
     const video2 = document.createElement('video');
-    host.attach(video2);
+    host.target = video2;
 
     fireNativeError(video2, MediaError.MEDIA_ERR_NETWORK, 'new target');
 

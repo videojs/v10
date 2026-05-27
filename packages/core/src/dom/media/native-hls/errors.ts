@@ -1,49 +1,50 @@
-import type { Constructor } from '@videojs/utils/types';
-
 import { MediaError } from '../../../core/media/media-error';
+import { defineExtension } from '../../../core/media/media-extension';
+import { addLayer } from '../../../core/media/media-layer';
+import type { HTMLMediaElementHost } from '../html-media-element-host';
+import { HTMLMediaElementLayer } from '../html-media-element-layer';
 
-export interface NativeMediaHost extends EventTarget {
-  readonly target: EventTarget | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-  destroy?(): void;
+export type NativeHlsErrorsMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
+
+/**
+ * Wraps native `error` events on the media element into `MediaError`, exposes
+ * the result via the chain's `error` getter, and stops the native event from
+ * propagating to other listeners on the target.
+ *
+ * @example nativeHlsErrors().install(media);
+ */
+export class NativeHlsErrors {
+  readonly name = 'native-hls-errors';
+
+  install(media: NativeHlsErrorsMedia) {
+    return addLayer(media, new NativeHlsErrorsLayer());
+  }
 }
 
-export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
-    #disconnect: AbortController | null = null;
-    #error: MediaError | null = null;
+export const nativeHlsErrors = defineExtension<void, NativeHlsErrorsMedia, NativeHlsErrors>(
+  () => new NativeHlsErrors()
+);
 
-    get error(): MediaError | null {
-      return this.#error;
-    }
+class NativeHlsErrorsLayer extends HTMLMediaElementLayer {
+  #error: MediaError | null = null;
+  #abort: AbortController | null = null;
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
-    }
+  override get error() {
+    return this.#error;
+  }
 
-    detach(): void {
-      this.#destroy();
-      super.detach?.();
-    }
+  override get target() {
+    return super.target;
+  }
 
-    destroy(): void {
-      this.#destroy();
-      super.destroy?.();
-    }
+  override set target(target: HTMLMediaElement | null) {
+    this.#abort?.abort();
+    this.#abort = null;
+    this.#error = null;
 
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-      this.#error = null;
-    }
-
-    #init(target: HTMLMediaElement): void {
-      this.#destroy();
-      this.#disconnect = new AbortController();
-
-      const signal = this.#disconnect.signal;
+    if (target) {
+      this.#abort = new AbortController();
+      const { signal } = this.#abort;
 
       target.addEventListener(
         'error',
@@ -55,21 +56,13 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           const error = new MediaError(native.message, native.code, true);
           this.#error = error;
-
           this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
         },
-        { signal, capture: true }
+        { capture: true, signal }
       );
-
-      target.addEventListener(
-        'emptied',
-        () => {
-          this.#error = null;
-        },
-        { signal }
-      );
+      target.addEventListener('emptied', () => (this.#error = null), { signal });
     }
-  }
 
-  return NativeHlsMediaErrors as unknown as Base & Constructor<{ readonly error: MediaError | null }>;
+    super.target = target;
+  }
 }

@@ -15,7 +15,7 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleHlsMediaElement } from '../adapter';
+import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
 
 describe('SimpleHlsMediaElement', () => {
   // Prevent real network calls from engines that auto-trigger resolution
@@ -85,30 +85,30 @@ describe('SimpleHlsMediaElement', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // attach / detach — media element lifecycle (reuses the same engine)
+  // target — media element lifecycle (reuses the same engine)
   // ---------------------------------------------------------------------------
-  describe('attach / detach', () => {
+  describe('target', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
       const media = new SimpleHlsMediaElement();
       expect(media.engine).not.toBeNull();
     });
 
-    it('reuses the same engine instance across attach calls', () => {
+    it('reuses the same engine instance across target assignments', () => {
       const media = new SimpleHlsMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
-      media.attach(el1);
+      media.target = el1;
       const engineAfterFirstAttach = media.engine;
-      media.attach(el2);
+      media.target = el2;
       expect(media.engine).toBe(engineAfterFirstAttach);
     });
 
-    it('reuses the same engine instance across attach/detach cycles', () => {
+    it('reuses the same engine instance across target attach/detach cycles', () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('video');
       const engine = media.engine;
-      media.detach();
-      media.attach(document.createElement('video'));
+      media.target = null;
+      media.target = document.createElement('video');
       expect(media.engine).toBe(engine);
     });
 
@@ -130,7 +130,7 @@ describe('SimpleHlsMediaElement', () => {
     it('re-attaches the media element to the new engine when src changes', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.src = 'https://example.com/v1.m3u8';
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
@@ -138,7 +138,7 @@ describe('SimpleHlsMediaElement', () => {
     it('cancels pending play listener when src changes', async () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.src = 'https://example.com/v1.m3u8';
       el.play = () => Promise.reject(new Error('no supported sources'));
       media.play().catch(() => {});
@@ -149,50 +149,79 @@ describe('SimpleHlsMediaElement', () => {
       expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
     });
 
-    it('sets mediaElement in owners when attached', () => {
+    it('sets mediaElement on engine context when target is assigned', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
-    it('clears mediaElement in owners when detached', () => {
+    it('clears mediaElement on engine context when target is cleared', () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
-      media.detach();
+      media.target = document.createElement('video');
+      media.target = null;
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
     });
 
-    it('updates mediaElement when re-attached to a different element', () => {
+    it('updates mediaElement when target is reassigned to a different element', () => {
       const media = new SimpleHlsMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
-      media.attach(el1);
-      media.attach(el2);
+      media.target = el1;
+      media.target = el2;
       expect(media.engine.context.mediaElement.get()).toBe(el2);
     });
 
-    it('preserves src across attach/detach cycles', () => {
+    it('preserves src across target attach/detach cycles', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      media.attach(document.createElement('video'));
-      media.detach();
+      media.target = document.createElement('video');
+      media.target = null;
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
-    it('src set before attach is reflected in engine state', () => {
+    it('src set before target is reflected in engine state', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('video');
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
-    it('detach does not destroy the engine', () => {
+    it('clearing target does not destroy the engine', () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('video');
       const spy = vi.spyOn(media.engine, 'destroy');
-      media.detach();
+      media.target = null;
       expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('reads back the most recently assigned target', () => {
+      const media = new SimpleHlsMediaElement();
+      const el = document.createElement('video');
+      media.target = el;
+      expect(media.target).toBe(el);
+    });
+
+    it('forwards target to a base class that defines its own accessor', () => {
+      // Simulate a base like HTMLVideoElementHost / MediaLayer that exposes its
+      // own target accessor — the mixin should delegate to it so the layer
+      // chain stays in sync.
+      class TargetBase {
+        baseTarget: HTMLMediaElement | null = null;
+        get target(): HTMLMediaElement | null {
+          return this.baseTarget;
+        }
+        set target(value: HTMLMediaElement | null) {
+          this.baseTarget = value;
+        }
+      }
+      const Composed = SimpleHlsMediaMixin(TargetBase);
+      const media = new Composed();
+      const el = document.createElement('video');
+      media.target = el;
+      expect((media as unknown as TargetBase).baseTarget).toBe(el);
+      expect(media.target).toBe(el);
+      expect(media.engine.context.mediaElement.get()).toBe(el);
     });
   });
 
@@ -202,7 +231,7 @@ describe('SimpleHlsMediaElement', () => {
   describe('play()', () => {
     it('returns a Promise', () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('video');
       const result = media.play();
       expect(result).toBeInstanceOf(Promise);
       // Prevent unhandled rejection — play without src is expected to fail
@@ -211,7 +240,7 @@ describe('SimpleHlsMediaElement', () => {
 
     it('sets loadActivated on engine state when called', () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('video');
       media.play().catch(() => {});
       expect(media.engine.state.loadActivated.get()).toBe(true);
     });
@@ -219,7 +248,7 @@ describe('SimpleHlsMediaElement', () => {
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.src = 'https://example.com/v.m3u8';
 
       // Simulate element having no blob URL yet on first call, as if MSE
@@ -250,7 +279,7 @@ describe('SimpleHlsMediaElement', () => {
     it('re-throws when play() rejects and no adapter src is set', async () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       // No src on adapter — nothing pending to wait for
 
       const err = new Error('autoplay policy');
@@ -259,10 +288,10 @@ describe('SimpleHlsMediaElement', () => {
       await expect(media.play()).rejects.toThrow('autoplay policy');
     });
 
-    it('removes the pending loadstart listener on detach', async () => {
+    it('removes the pending loadstart listener when target is cleared', async () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.src = 'https://example.com/v.m3u8';
 
       el.play = () => Promise.reject(new Error('no supported sources'));
@@ -271,7 +300,7 @@ describe('SimpleHlsMediaElement', () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
       const spy = vi.spyOn(el, 'removeEventListener');
-      media.detach();
+      media.target = null;
 
       expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
     });
@@ -279,7 +308,7 @@ describe('SimpleHlsMediaElement', () => {
     it('removes the pending loadstart listener on destroy', async () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.src = 'https://example.com/v.m3u8';
 
       el.play = () => Promise.reject(new Error('no supported sources'));
@@ -339,7 +368,7 @@ describe('SimpleHlsMediaElement', () => {
     it('explicit preload is re-applied before owners.patch on src change so syncPreload preserves it', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
-      media.attach(el);
+      media.target = el;
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
       // syncPreload fires when context.mediaElement is set on the new engine.
@@ -350,7 +379,7 @@ describe('SimpleHlsMediaElement', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // destroy() — explicit teardown (separate from detach)
+  // destroy()
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
     it('destroys the underlying engine', () => {
@@ -358,6 +387,13 @@ describe('SimpleHlsMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it('clears the target', () => {
+      const media = new SimpleHlsMediaElement();
+      media.target = document.createElement('video');
+      media.destroy();
+      expect(media.target).toBeNull();
     });
   });
 });

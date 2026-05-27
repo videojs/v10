@@ -1,6 +1,5 @@
 import * as dashjs from 'dashjs';
-import type { MediaEngineHost } from '../../../core/media/types';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLVideoElementHost } from '../html-video-element-host';
 
 export interface DashMediaProps {
   src: string;
@@ -10,17 +9,25 @@ export const dashMediaDefaultProps: DashMediaProps = {
   src: '',
 };
 
-export class DashMedia
-  extends HTMLVideoElementHost
-  implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
-{
+export class DashMedia extends HTMLVideoElementHost implements DashMediaProps {
   #engine: dashjs.MediaPlayerClass;
   #src = dashMediaDefaultProps.src;
+  #pendingLoad: Promise<void> | null = null;
 
   constructor() {
     super();
     this.#engine = dashjs.MediaPlayer().create();
     this.#engine.initialize(undefined, undefined, false);
+  }
+
+  override get target() {
+    return super.target;
+  }
+
+  override set target(value: HTMLVideoElement | null) {
+    super.target = value;
+    this.#engine.attachView(value as HTMLVideoElement);
+    if (value) this.#requestLoad();
   }
 
   get engine() {
@@ -31,24 +38,26 @@ export class DashMedia
     return this.#src;
   }
 
-  set src(src) {
-    this.#src = src;
-    this.#engine.attachSource(src);
+  set src(value) {
+    this.#src = value;
+    this.#requestLoad();
   }
 
-  attach(target: HTMLVideoElement) {
-    super.attach(target);
-    this.#engine.attachView(target);
-  }
-
-  detach() {
-    super.detach();
-    // dash.js types don't reflect null support, but null is valid for detaching
-    this.#engine.attachView(null as unknown as HTMLVideoElement);
+  load() {
+    this.#pendingLoad = null;
+    this.#engine.attachSource(this.#src);
   }
 
   destroy() {
-    this.detach();
+    super.destroy();
     this.#engine.destroy();
+  }
+
+  async #requestLoad() {
+    if (this.#pendingLoad) return;
+    this.#pendingLoad = Promise.resolve();
+    await this.#pendingLoad;
+    if (this.#pendingLoad === null) return;
+    this.root.load();
   }
 }

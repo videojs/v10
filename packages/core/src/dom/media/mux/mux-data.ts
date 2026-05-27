@@ -1,198 +1,136 @@
-import type { Mixin } from '@videojs/utils/types';
-import Mux from 'mux-embed';
-import type { MediaEngineHost } from '../../../core/media/types';
-import { Hls, type HlsMedia } from '../hls';
+/// <reference path="../../../../node_modules/mux-embed/dist/types/mux-embed.d.ts" preserve="true" />
+
+import Hls from 'hls.js';
+import Mux, { type Options as MuxDataOptions, type Mux as MuxDataSdk } from 'mux-embed';
+import { defineExtension } from '../../../core/media/media-extension';
+import { addLayer } from '../../../core/media/media-layer';
+import type { HTMLMediaElementHost } from '../html-media-element-host';
+import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import { getPlayerVersion } from './env';
-import type { MuxDataOptions, MuxDataSdk } from './types';
 
-export interface MuxDataMediaProps {
-  MuxDataSdk: MuxDataSdk | undefined;
-  beaconCollectionDomain: string | undefined;
-  disableCookies: boolean;
-  envKey: string | undefined;
-  playerSoftwareName: string | undefined;
-  playerSoftwareVersion: string | undefined;
-  playerInitTime: number | undefined;
-  metadata: MuxDataOptions['data'] | undefined;
-}
-
-export const muxDataMediaDefaultProps: MuxDataMediaProps = {
-  MuxDataSdk: undefined,
-  beaconCollectionDomain: undefined,
-  disableCookies: false,
-  envKey: undefined,
-  playerSoftwareName: undefined,
-  playerSoftwareVersion: undefined,
-  playerInitTime: undefined,
-  metadata: undefined,
-};
+export type { MuxDataSdk, MuxDataOptions };
+export type MuxDataMedia = HTMLMediaElementHost<HTMLMediaElement, any> & { engine?: unknown };
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
-  readonly debug: boolean;
-  attach(target: HTMLMediaElement): void;
-  detach(): void;
-  load(): void;
+export interface MuxDataProps {
+  /** Mux Data SDK module. Defaults to `mux-embed`. */
+  MuxDataSdk?: MuxDataSdk | undefined;
+  /** Override the Mux Data beacon collection domain. */
+  beaconCollectionDomain?: string | undefined;
+  /** Forward Mux SDK debug logs to the console. */
+  debug?: boolean | undefined;
+  /** Disable Mux SDK first-party cookies. */
+  disableCookies?: boolean | undefined;
+  /** Mux Data environment key. */
+  envKey?: string | undefined;
+  /** Initial Mux Data metadata payload. */
+  metadata?: MuxDataOptions['data'] | undefined;
+  /** Player software name. Falls back to the media class's static `PLAYER_SOFTWARE_NAME`. */
+  playerSoftwareName?: string | undefined;
+  /** Player software version. Defaults to the build's `__PLAYER_VERSION__`. */
+  playerSoftwareVersion?: string | undefined;
+  /** Player init time (ms). Captured from `MuxDataSdk.utils.now()` at construction when unset. */
+  playerInitTime?: number | undefined;
 }
 
-export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (BaseClass) => {
-  class MuxDataMedia extends BaseClass {
-    #MuxDataSdk: MuxDataSdk | undefined = Mux;
-    #MuxDataSdkInitializedBefore = false;
-    #beaconCollectionDomain: string | undefined;
-    #disableCookies = false;
-    #metadata: MuxDataOptions['data'] | undefined;
-    #envKey: string | undefined;
-    #playerSoftwareName: string | undefined = (this.constructor as { PLAYER_SOFTWARE_NAME?: string })
-      .PLAYER_SOFTWARE_NAME;
-    #playerSoftwareVersion: string | undefined = getPlayerVersion();
-    #playerInitTime: number | undefined = this.#generatePlayerInitTime();
+/**
+ * Mux Data extension. Attaches the Mux Data SDK to the host's underlying media
+ * element on `load()` and tears it down on uninstall.
+ *
+ * @example
+ * muxData({ envKey: 'env-1' }).install(media);
+ */
+export class MuxData implements MuxDataProps {
+  readonly name = 'mux-data';
 
-    get MuxDataSdk() {
-      return this.#MuxDataSdk;
-    }
+  MuxDataSdk: MuxDataSdk | undefined = Mux;
+  beaconCollectionDomain: string | undefined;
+  debug = false;
+  disableCookies = false;
+  envKey: string | undefined;
+  metadata: MuxDataOptions['data'] | undefined;
+  playerSoftwareName: string | undefined;
+  playerSoftwareVersion: string | undefined = getPlayerVersion();
+  playerInitTime: number | undefined;
 
-    set MuxDataSdk(value) {
-      this.#MuxDataSdk = value;
-    }
-
-    get beaconCollectionDomain() {
-      return this.#beaconCollectionDomain;
-    }
-
-    set beaconCollectionDomain(value) {
-      this.#beaconCollectionDomain = value;
-    }
-
-    get disableCookies() {
-      return this.#disableCookies;
-    }
-
-    set disableCookies(value) {
-      this.#disableCookies = value;
-    }
-
-    get envKey() {
-      return this.#envKey;
-    }
-
-    set envKey(value) {
-      this.#envKey = value;
-    }
-
-    get playerSoftwareName() {
-      return this.#playerSoftwareName;
-    }
-
-    set playerSoftwareName(value) {
-      this.#playerSoftwareName = value;
-    }
-
-    get playerSoftwareVersion() {
-      return this.#playerSoftwareVersion;
-    }
-
-    set playerSoftwareVersion(value) {
-      this.#playerSoftwareVersion = value;
-    }
-
-    get playerInitTime() {
-      return this.#playerInitTime;
-    }
-
-    set playerInitTime(value) {
-      this.#playerInitTime = value;
-    }
-
-    get metadata() {
-      return this.#metadata;
-    }
-
-    set metadata(value) {
-      this.#metadata = value;
-    }
-
-    attach(target: HTMLMediaElement) {
-      super.attach(target);
-
-      // Only initialize Mux Data SDK if it was already initialized before in attach;
-      // the first initializeMuxDataSdk call should be done in the deferred load hook
-      // so all the properties are set before the Mux Data SDK is initialized.
-      if (this.#MuxDataSdkInitializedBefore) {
-        this.#initializeMuxDataSdk();
-      }
-    }
-
-    detach() {
-      if (this.target?.mux) {
-        this.target.mux.destroy();
-        delete this.target.mux;
-      }
-      super.detach();
-    }
-
-    load() {
-      super.load();
-      this.#initializeMuxDataSdk();
-    }
-
-    #initializeMuxDataSdk() {
-      const target = this.target as HTMLMediaElement;
-
-      if (!this.MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
-
-      this.#MuxDataSdkInitializedBefore = true;
-
-      const {
-        debug,
-        beaconCollectionDomain,
-        disableCookies,
-        engine: hlsjs,
-        envKey: env_key,
-        playerSoftwareName: player_software_name,
-        playerSoftwareVersion: player_software_version,
-        playerInitTime: player_init_time,
-        metadata = {},
-      } = this;
-
-      const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
-      const video_id = toVideoId(this as unknown as MuxVideoIdProps);
-      metadata.view_session_id = view_session_id;
-      if (video_id) metadata.video_id = video_id;
-
-      this.MuxDataSdk?.monitor(target, {
-        debug,
-        ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
-        ...(disableCookies ? { disableCookies } : {}),
-        ...(hlsjs ? { hlsjs } : {}),
-        Hls,
-        data: {
-          ...(env_key ? { env_key } : {}),
-          ...(player_software_name ? { player_software_name } : {}),
-          // NOTE: Adding this because there appears to be some instability on whether
-          // player_software_name or player_software "wins" for Mux Data (CJP)
-          ...(player_software_name ? { player_software: player_software_name } : {}),
-          ...(player_software_version ? { player_software_version } : {}),
-          ...(player_init_time ? { player_init_time } : {}),
-          // Use any metadata passed in programmatically (which may override the defaults above)
-          ...metadata,
-        },
-      });
-    }
-
-    #generatePlayerInitTime() {
-      if (!this.MuxDataSdk) return undefined;
-      return this.MuxDataSdk.utils.now();
-    }
+  constructor(props: MuxDataProps = {}) {
+    Object.assign(this, props);
+    this.playerInitTime ??= this.MuxDataSdk?.utils.now();
   }
 
-  return MuxDataMedia as any;
-};
+  install(media: MuxDataMedia) {
+    this.playerSoftwareName ??= (media.constructor as { PLAYER_SOFTWARE_NAME?: string }).PLAYER_SOFTWARE_NAME;
+    const removeLayer = addLayer(media, new MuxDataLayer(() => this.#initializeSdk(media)));
+
+    return () => {
+      removeLayer();
+      const { target } = media;
+      if (target?.mux && !target.mux.deleted) {
+        target.mux.destroy();
+        delete target.mux;
+      }
+    };
+  }
+
+  #initializeSdk(media: MuxDataMedia) {
+    const { target } = media;
+    if (!this.MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
+
+    const metadata = { ...this.metadata };
+    metadata.view_session_id ??= this.MuxDataSdk.utils.generateUUID();
+
+    const video_id = toVideoId({ src: media.src, metadata: this.metadata });
+    if (video_id) metadata.video_id = video_id;
+
+    const { engine: hlsjs } = media;
+
+    this.MuxDataSdk.monitor(target, {
+      debug: this.debug,
+      ...(this.beaconCollectionDomain ? { beaconCollectionDomain: this.beaconCollectionDomain } : {}),
+      ...(this.disableCookies ? { disableCookies: this.disableCookies } : {}),
+      ...(hlsjs ? { hlsjs } : {}),
+      Hls,
+      data: {
+        ...(this.envKey ? { env_key: this.envKey } : {}),
+        // Some Mux Data integrations key off `player_software_name` and others off `player_software`;
+        // setting both avoids stability differences across SDK versions.
+        ...(this.playerSoftwareName
+          ? { player_software_name: this.playerSoftwareName, player_software: this.playerSoftwareName }
+          : {}),
+        ...(this.playerSoftwareVersion ? { player_software_version: this.playerSoftwareVersion } : {}),
+        ...(this.playerInitTime ? { player_init_time: this.playerInitTime } : {}),
+        ...metadata,
+      },
+    });
+  }
+}
+
+export const muxData = defineExtension<MuxDataProps, MuxDataMedia, MuxData>((props = {}) => new MuxData(props));
+
+/**
+ * Wraps `load()` to install the Mux Data SDK after super-delegating (so engine
+ * setup in lower layers can start) but before the underlying media element
+ * fires `loadstart`. The SDK installs its own `loadstart` listener inside
+ * `monitor()` and would otherwise miss the first event of every load.
+ */
+class MuxDataLayer extends HTMLMediaElementLayer {
+  #initialize: () => void;
+
+  constructor(initialize: () => void) {
+    super();
+    this.#initialize = initialize;
+  }
+
+  override async load() {
+    await super.load();
+    this.#initialize();
+  }
+}
 
 export type MuxVideoIdProps = {
   src: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 };
 
 export function toVideoId(props: MuxVideoIdProps): string | undefined {

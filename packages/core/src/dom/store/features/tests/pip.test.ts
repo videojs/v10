@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HTMLVideoElementHost } from '../../../media/html-video-element-host';
 import type { PlayerTarget } from '../../../media/types';
-import { HTMLVideoElementHost } from '../../../media/video-host';
 import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
@@ -252,7 +252,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
     it('syncs initial state on attach', () => {
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: host, container: null });
@@ -269,7 +269,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
 
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'pictureInPictureElement', {
         value: video,
@@ -292,7 +292,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
 
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: host, container: null });
@@ -322,7 +322,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: host, container: null });
@@ -346,7 +346,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo();
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: host, container: null });
@@ -361,7 +361,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: host, container: null });
@@ -378,7 +378,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
 
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'pictureInPictureElement', {
         value: video,
@@ -406,7 +406,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'fullscreenElement', {
         value: container,

@@ -1,8 +1,12 @@
 import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
-import type { Constructor } from '@videojs/utils/types';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
-import type { HlsEngineHost } from './types';
+import { defineExtension } from '../../../core/media/media-extension';
+import type { HTMLMediaElementHost } from '../html-media-element-host';
+
+export type HlsJsTextTracksMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
+  engine?: Hls | null;
+};
 
 /**
  * Bridges hls.js non-native text tracks to native `<track>` elements so the
@@ -10,40 +14,32 @@ import type { HlsEngineHost } from './types';
  *
  * When `renderTextTracksNatively: false`, hls.js fires
  * `NON_NATIVE_TEXT_TRACKS_FOUND` with track metadata and `CUES_PARSED` with
- * VTTCues. This mixin creates `<track>` elements on the media target and
+ * VTTCues. This extension creates `<track>` elements on the media target and
  * forwards cues into them. It also syncs user track-mode changes back to
  * hls.js via `engine.subtitleTrack`.
+ *
+ * @example hlsJsTextTracks().install(media);
  */
-export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
-    #disconnect: AbortController | null = null;
+export class HlsJsTextTracks {
+  readonly name = 'hls-js-text-tracks';
 
-    constructor(...args: any[]) {
-      super(...args);
+  install(media: HlsJsTextTracksMedia) {
+    const { engine } = media;
+    if (!engine) return;
 
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
-      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
-      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
-      this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
-    }
+    let sessionAbort: AbortController | null = null;
 
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-    }
+    const init = () => {
+      sessionAbort?.abort();
+      sessionAbort = new AbortController();
 
-    #init(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = new AbortController();
+      const target = media.target;
+      if (!target) return;
 
-      const { signal } = this.#disconnect;
-      const { engine } = this;
-      if (!engine || !this.target) return;
-
-      const media = this.target;
+      const { signal } = sessionAbort;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {
-        this.#clearTracks();
+        clearTracks(target);
 
         for (const trackObj of data.tracks) {
           const baseTrackObj = trackObj.subtitleTrack ?? trackObj.closedCaptions;
@@ -56,33 +52,36 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
           // See: https://github.com/video-dev/hls.js/blob/master/src/controller/timeline-controller.ts#L640
           const id = (trackObj._id ?? trackObj.default) ? 'default' : `${trackObj.kind}${idx}`;
 
-          addTextTrack(media, trackObj.kind as TextTrackKind, trackObj.label, baseTrackObj?.lang, id, trackObj.default);
+          addTextTrack(
+            target,
+            trackObj.kind as TextTrackKind,
+            trackObj.label,
+            baseTrackObj?.lang,
+            id,
+            trackObj.default
+          );
         }
       };
 
       const onCuesParsed = (_event: string, { track, cues }: CuesParsedData) => {
-        const textTrack = media.textTracks.getTrackById(track);
+        const textTrack = target.textTracks.getTrackById(track);
         if (!textTrack) return;
 
         const disabled = textTrack.mode === 'disabled';
-        if (disabled) {
-          textTrack.mode = 'hidden';
-        }
+        if (disabled) textTrack.mode = 'hidden';
 
         cues.forEach((cue: VTTCue) => {
           if (textTrack.cues?.getCueById(cue.id)) return;
           textTrack.addCue(cue);
         });
 
-        if (disabled) {
-          textTrack.mode = 'disabled';
-        }
+        if (disabled) textTrack.mode = 'disabled';
       };
 
       const onTextTrackChange = () => {
         if (!engine.subtitleTracks.length) return;
 
-        const showingTrack = Array.from(media.textTracks).find((textTrack) => {
+        const showingTrack = Array.from(target.textTracks).find((textTrack) => {
           return textTrack.id && textTrack.mode === 'showing' && isCaptionOrSubtitleTrack(textTrack);
         });
 
@@ -110,38 +109,54 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
           engine.subtitleTrack = idx;
         }
 
-        if (showingTrack?.id === hlsTrackId) {
+        if (showingTrack?.id === hlsTrackId && showingTrack.cues) {
           // Refresh the cues after a texttrack mode change to fix a Chrome bug causing the captions not to render.
-          if (showingTrack.cues) {
-            Array.from(showingTrack.cues).forEach((cue) => {
-              showingTrack.addCue(cue);
-            });
-          }
+          Array.from(showingTrack.cues).forEach((cue) => showingTrack.addCue(cue));
         }
       };
 
       engine.on(Hls.Events.NON_NATIVE_TEXT_TRACKS_FOUND, onTracksFound);
       engine.on(Hls.Events.CUES_PARSED, onCuesParsed);
-      listen(media.textTracks, 'change', onTextTrackChange, { signal });
+      listen(target.textTracks, 'change', onTextTrackChange, { signal });
 
       signal.addEventListener(
         'abort',
         () => {
           engine.off(Hls.Events.NON_NATIVE_TEXT_TRACKS_FOUND, onTracksFound);
           engine.off(Hls.Events.CUES_PARSED, onCuesParsed);
-          this.#clearTracks();
+          clearTracks(target);
         },
         { once: true }
       );
-    }
+    };
 
-    #clearTracks(): void {
-      const trackEls = this.target?.querySelectorAll?.('track[data-removeondestroy]') ?? [];
-      trackEls.forEach((trackEl) => trackEl.remove());
-    }
+    const reset = () => {
+      sessionAbort?.abort();
+      sessionAbort = null;
+    };
+
+    engine.on(Hls.Events.MANIFEST_LOADING, init);
+    engine.on(Hls.Events.MEDIA_ATTACHED, init);
+    engine.on(Hls.Events.MEDIA_DETACHED, reset);
+    engine.on(Hls.Events.DESTROYING, reset);
+
+    return () => {
+      reset();
+      engine.off(Hls.Events.MANIFEST_LOADING, init);
+      engine.off(Hls.Events.MEDIA_ATTACHED, init);
+      engine.off(Hls.Events.MEDIA_DETACHED, reset);
+      engine.off(Hls.Events.DESTROYING, reset);
+    };
   }
+}
 
-  return HlsJsMediaTextTracks as unknown as Base;
+export const hlsJsTextTracks = defineExtension<void, HlsJsTextTracksMedia, HlsJsTextTracks>(
+  () => new HlsJsTextTracks()
+);
+
+function clearTracks(target: HTMLMediaElement) {
+  const trackEls = target.querySelectorAll('track[data-removeondestroy]');
+  trackEls.forEach((trackEl) => trackEl.remove());
 }
 
 function addTextTrack(
@@ -155,19 +170,13 @@ function addTextTrack(
   const trackEl = document.createElement('track');
   trackEl.kind = kind;
   trackEl.label = label;
-  if (lang) {
-    // This attribute must be present if the element's kind attribute is in the subtitles state.
-    trackEl.srclang = lang;
-  }
-  if (id) {
-    trackEl.id = id;
-  }
-  if (defaultTrack) {
-    trackEl.default = true;
-  }
+  // This attribute must be present if the element's kind attribute is in the subtitles state.
+  if (lang) trackEl.srclang = lang;
+  if (id) trackEl.id = id;
+  if (defaultTrack) trackEl.default = true;
   trackEl.track.mode = isCaptionOrSubtitleTrack({ kind }) ? 'disabled' : 'hidden';
 
-  // Add data attribute to identify tracks that should be removed when switching sources/destroying hls.js instance.
+  // Identify tracks that should be removed when switching sources / destroying the hls.js instance.
   trackEl.setAttribute('data-removeondestroy', '');
   mediaEl.append(trackEl);
 

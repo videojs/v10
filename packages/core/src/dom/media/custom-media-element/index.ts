@@ -79,19 +79,17 @@ function getCommonTemplateHTML(tag: string) {
   };
 }
 
-const excludedProperties = ['attach', 'detach', 'destroy'];
+const excludedProperties = ['target', 'destroy'];
 
 interface MediaHost extends EventTarget {
-  readonly target: EventTarget | null;
-  attach(target: EventTarget | null): void;
-  detach(): void;
+  target: EventTarget | null;
   destroy(): void;
   /** Index signature for dynamic property forwarding. */
   [key: string]: any;
 }
 
 type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTMLElement & InstanceType<T>> & {
-  properties: Record<string, { type: any; attribute?: string }>;
+  properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
@@ -119,9 +117,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       loading: { type: String },
       loop: { type: Boolean },
       playsInline: { type: Boolean },
-      poster: { type: String },
-      preload: { type: String },
-      src: { type: String },
+      poster: { type: String, empty: '' },
+      preload: { type: String, empty: null },
+      src: { type: String, empty: '' },
     };
 
     static get observedAttributes() {
@@ -182,7 +180,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         }
       }
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string }>;
+      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
       for (const [prop, { type, attribute }] of Object.entries(properties)) {
         if (prop in CustomMedia.prototype) continue;
 
@@ -241,8 +239,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     #attachToTarget(): void {
       const target = this.target;
       if (target === this.#mediaHost.target) return;
-      if (this.#mediaHost.target) this.#mediaHost.detach();
-      this.#mediaHost.attach(target);
+      this.#mediaHost.target = target;
     }
 
     get target(): HTMLVideoElement | HTMLAudioElement | null {
@@ -291,8 +288,14 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
+          const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+          const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
           this.#mediaHost[prop] =
-            valueType === 'boolean' ? newValue !== null : valueType === 'number' ? Number(newValue) : (newValue ?? '');
+            valueType === 'boolean'
+              ? newValue !== null
+              : valueType === 'number'
+                ? Number(newValue)
+                : (newValue ?? emptyValue);
         }
         return;
       }

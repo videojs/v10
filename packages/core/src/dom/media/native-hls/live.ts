@@ -1,113 +1,125 @@
-import type { Constructor } from '@videojs/utils/types';
-import type { NativeMediaHost } from './errors';
+import { defineExtension } from '../../../core/media/media-extension';
+import { addLayer } from '../../../core/media/media-layer';
+import type { HTMLMediaElementHost } from '../html-media-element-host';
+import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
-export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
-  // through a JS API, so we fetch the m3u8 ourselves and parse the relevant
-  // tags to derive `targetLiveWindow` and `liveEdgeStart` — mirroring the
-  // approach in `muxinc/elements`.
-  //
-  // See https://github.com/muxinc/elements/blob/main/packages/playback-core/src/index.ts
-  class NativeHlsMediaLive extends (BaseClass as Constructor<NativeMediaHost>) {
-    #targetLiveWindow = Number.NaN;
-    #liveEdgeStartOffset: number | undefined;
-    #disconnect: AbortController | null = null;
-    #currentSrc = '';
+export type NativeHlsLiveMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
 
-    get targetLiveWindow() {
-      return this.#targetLiveWindow;
-    }
+/**
+ * Tracks live-stream metadata for native HLS playback ({@link MediaLiveCapability}).
+ *
+ * Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
+ * through a JS API, so this extension fetches the m3u8 itself on `loadstart`
+ * and parses the relevant tags to derive `targetLiveWindow` and
+ * `liveEdgeStart` — mirroring the approach in `muxinc/elements`.
+ *
+ * See https://github.com/muxinc/elements/blob/main/packages/playback-core/src/index.ts
+ *
+ * @example nativeHlsLive().install(media);
+ */
+export class NativeHlsLive {
+  readonly name = 'native-hls-live';
 
-    // Derived on each read from the current `seekable.end` and cached offset.
-    get liveEdgeStart() {
-      if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
-      const target = this.target as HTMLMediaElement | null;
-      if (!target) return Number.NaN;
-      const { seekable, buffered } = target;
-      // Native HLS on Chrome doesn't fill the `seekable` property, so we use the `buffered` property instead.
-      const ranges = seekable.length ? seekable : buffered;
-      if (!ranges.length) return Number.NaN;
-      return ranges.end(ranges.length - 1) - this.#liveEdgeStartOffset;
-    }
+  install(media: NativeHlsLiveMedia) {
+    return addLayer(media, new NativeHlsLiveLayer());
+  }
+}
 
-    attach(target: EventTarget) {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
-    }
+export const nativeHlsLive = defineExtension<void, NativeHlsLiveMedia, NativeHlsLive>(() => new NativeHlsLive());
 
-    detach() {
-      this.#destroy();
-      super.detach?.();
-    }
+class NativeHlsLiveLayer extends HTMLMediaElementLayer {
+  #targetLiveWindow = Number.NaN;
+  #liveEdgeStartOffset: number | undefined;
+  #abort: AbortController | null = null;
+  #currentSrc = '';
 
-    destroy() {
-      this.#destroy();
-      super.destroy?.();
-    }
+  override get targetLiveWindow() {
+    return this.#targetLiveWindow;
+  }
 
-    #destroy() {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-      this.#currentSrc = '';
-      this.#liveEdgeStartOffset = undefined;
-      this.#setTargetLiveWindow(Number.NaN);
-    }
+  // Derived from seekable (or buffered) + offset at read time.
+  override get liveEdgeStart() {
+    if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
+    const { target } = this;
+    if (!target) return Number.NaN;
+    const { seekable, buffered } = target;
+    // Native HLS on Chrome doesn't populate `seekable`; fall back to `buffered`.
+    const ranges = seekable.length ? seekable : buffered;
+    if (!ranges.length) return Number.NaN;
+    return ranges.end(ranges.length - 1) - this.#liveEdgeStartOffset;
+  }
 
-    #init(target: HTMLMediaElement) {
-      this.#destroy();
-      this.#disconnect = new AbortController();
-      const { signal } = this.#disconnect;
+  override get target() {
+    return super.target;
+  }
 
-      // `loadstart` fires when the element starts loading a new source — the
-      // right moment to kick off our parallel fetch. If the src has already
-      // been set (e.g. preload='auto' on a prior frame), pick it up now.
-      target.addEventListener('loadstart', () => this.#refresh(target), { signal });
-      target.addEventListener(
-        'emptied',
-        () => {
-          this.#currentSrc = '';
-          this.#liveEdgeStartOffset = undefined;
-          this.#setTargetLiveWindow(Number.NaN);
-        },
-        { signal }
-      );
+  override set target(target: HTMLMediaElement | null) {
+    this.#teardown();
 
-      if (target.currentSrc || target.src) this.#refresh(target);
-    }
+    super.target = target;
+    if (!target) return;
 
-    async #refresh(target: HTMLMediaElement) {
-      const src = target.currentSrc || target.src;
-      // Only inspect HLS sources. `looksLikeM3u8` is permissive: a query
-      // string or path containing `.m3u8` is enough.
-      if (!src || !looksLikeM3u8(src) || src === this.#currentSrc) return;
+    this.#abort = new AbortController();
+    const { signal } = this.#abort;
 
-      this.#currentSrc = src;
-      // Optimistically reset — we're about to compute fresh values.
-      this.#liveEdgeStartOffset = undefined;
-      this.#setTargetLiveWindow(Number.NaN);
+    // `loadstart` fires when the element starts loading a new source — the
+    // right moment to kick off our parallel fetch. If the src is already set,
+    // pick it up now.
+    target.addEventListener('loadstart', () => this.#refresh(target), { signal });
+    target.addEventListener(
+      'emptied',
+      () => {
+        this.#currentSrc = '';
+        this.#liveEdgeStartOffset = undefined;
+        this.#setTargetLiveWindow(Number.NaN);
+      },
+      { signal }
+    );
 
-      const signal = this.#disconnect?.signal;
-      try {
-        const info = await getStreamInfoFromSrc(src, signal);
-        // Bail if we've been torn down or the src changed mid-fetch.
-        if (signal?.aborted) return;
-        if ((target.currentSrc || target.src) !== src) return;
+    if (target.currentSrc || target.src) this.#refresh(target);
+  }
 
-        this.#liveEdgeStartOffset = info.liveEdgeStartOffset;
-        this.#setTargetLiveWindow(info.targetLiveWindow);
-      } catch {
-        // Network / CORS / parse errors leave values at `NaN`.
-      }
-    }
+  destroy() {
+    this.#teardown();
+    super.destroy();
+  }
 
-    #setTargetLiveWindow(value: number) {
-      if (Object.is(this.#targetLiveWindow, value)) return;
-      this.#targetLiveWindow = value;
-      this.dispatchEvent(new Event('targetlivewindowchange'));
+  #teardown() {
+    this.#abort?.abort();
+    this.#abort = null;
+    this.#currentSrc = '';
+    this.#liveEdgeStartOffset = undefined;
+    this.#setTargetLiveWindow(Number.NaN);
+  }
+
+  async #refresh(target: HTMLMediaElement) {
+    const src = target.currentSrc || target.src;
+    // Only inspect HLS sources. `looksLikeM3u8` is permissive: any path or
+    // query string containing `.m3u8` qualifies.
+    if (!src || !looksLikeM3u8(src) || src === this.#currentSrc) return;
+
+    this.#currentSrc = src;
+    this.#liveEdgeStartOffset = undefined;
+    this.#setTargetLiveWindow(Number.NaN);
+
+    const signal = this.#abort?.signal;
+    try {
+      const info = await getStreamInfoFromSrc(src, signal);
+      // Bail if we've been torn down or the src changed mid-fetch.
+      if (signal?.aborted) return;
+      if ((target.currentSrc || target.src) !== src) return;
+
+      this.#liveEdgeStartOffset = info.liveEdgeStartOffset;
+      this.#setTargetLiveWindow(info.targetLiveWindow);
+    } catch {
+      // Network / CORS / parse errors leave values at `NaN`.
     }
   }
 
-  return NativeHlsMediaLive as unknown as Base &
-    Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
+  #setTargetLiveWindow(value: number) {
+    if (Object.is(this.#targetLiveWindow, value)) return;
+    this.#targetLiveWindow = value;
+    this.dispatchEvent(new Event('targetlivewindowchange'));
+  }
 }

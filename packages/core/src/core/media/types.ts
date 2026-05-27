@@ -1,3 +1,7 @@
+// ----------------------------------------
+// Event primitives
+// ----------------------------------------
+
 export interface EventLike<Detail = void> {
   readonly type: string;
   readonly timeStamp: number;
@@ -14,16 +18,19 @@ export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike
   dispatchEvent(event: EventLike): boolean;
 }
 
-export interface RemotePlaybackLike extends EventTarget {
-  readonly state: string;
-  prompt(): Promise<void>;
-  watchAvailability(callback: (available: boolean) => void): Promise<number>;
-  cancelWatchAvailability(id?: number): Promise<void>;
-}
-
 export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
   return EventTarget as unknown as { new (): EventTargetLike<Events> };
 }
+
+// ----------------------------------------
+// Shared value types
+// ----------------------------------------
+
+export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+
+// ----------------------------------------
+// Playback
+// ----------------------------------------
 
 export interface MediaPlaybackEvents {
   play: EventLike;
@@ -34,6 +41,10 @@ export interface MediaPlaybackEvents {
 export interface MediaPlaybackCapability {
   play(): Promise<void>;
 }
+
+// ----------------------------------------
+// Pause
+// ----------------------------------------
 
 export interface MediaPauseEvents {
   pause: EventLike;
@@ -46,6 +57,10 @@ export interface MediaPauseCapability {
   readonly ended: boolean;
 }
 
+// ----------------------------------------
+// Seek
+// ----------------------------------------
+
 export interface MediaSeekEvents {
   timeupdate: EventLike;
   durationchange: EventLike;
@@ -56,9 +71,26 @@ export interface MediaSeekEvents {
 
 export interface MediaSeekCapability {
   currentTime: number;
+  loop: boolean;
   readonly duration: number;
   readonly seeking: boolean;
 }
+
+// ----------------------------------------
+// Source
+// ----------------------------------------
+
+export type MediaPreloadType = '' | 'none' | 'metadata' | 'auto';
+
+const MediaReadyState = {
+  HAVE_NOTHING: 0,
+  HAVE_METADATA: 1,
+  HAVE_CURRENT_DATA: 2,
+  HAVE_FUTURE_DATA: 3,
+  HAVE_ENOUGH_DATA: 4,
+} as const;
+
+export type MediaReadyStateValue = (typeof MediaReadyState)[keyof typeof MediaReadyState];
 
 export interface MediaSourceEvents {
   loadstart: EventLike;
@@ -72,20 +104,13 @@ export interface MediaSourceCapability {
   src: string;
   readonly currentSrc: string;
   readonly readyState: MediaReadyStateValue | number;
-  load(): void;
+  preload: MediaPreloadType;
+  load(): Promise<void> | void;
 }
 
-const MediaReadyState = {
-  HAVE_NOTHING: 0,
-  HAVE_METADATA: 1,
-  HAVE_CURRENT_DATA: 2,
-  HAVE_FUTURE_DATA: 3,
-  HAVE_ENOUGH_DATA: 4,
-} as const;
-
-export type MediaReadyStateValue = (typeof MediaReadyState)[keyof typeof MediaReadyState];
-
-export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+// ----------------------------------------
+// Volume
+// ----------------------------------------
 
 export interface MediaVolumeEvents {
   volumechange: EventLike;
@@ -96,6 +121,10 @@ export interface MediaVolumeCapability {
   muted: boolean;
 }
 
+// ----------------------------------------
+// Playback rate
+// ----------------------------------------
+
 export interface MediaPlaybackRateEvents {
   ratechange: EventLike;
 }
@@ -104,9 +133,9 @@ export interface MediaPlaybackRateCapability {
   playbackRate: number;
 }
 
-export interface MediaBufferEvents {
-  progress: EventLike;
-}
+// ----------------------------------------
+// Buffer
+// ----------------------------------------
 
 export interface TimeRangeLike {
   readonly length: number;
@@ -114,23 +143,35 @@ export interface TimeRangeLike {
   end(index: number): number;
 }
 
+export interface MediaBufferEvents {
+  progress: EventLike;
+}
+
 export interface MediaBufferCapability {
   readonly buffered: TimeRangeLike;
   readonly seekable: TimeRangeLike;
 }
 
-export interface MediaErrorEvents {
-  error: EventLike;
-}
+// ----------------------------------------
+// Error
+// ----------------------------------------
 
 export interface ErrorLike {
   readonly code: number;
   readonly message: string;
 }
 
+export interface MediaErrorEvents {
+  error: EventLike;
+}
+
 export interface MediaErrorCapability {
   readonly error: ErrorLike | null;
 }
+
+// ----------------------------------------
+// Text tracks
+// ----------------------------------------
 
 export interface TextCueLike {
   readonly startTime: number;
@@ -158,11 +199,10 @@ export interface TextTrackLike {
 export interface TextTrackListEvents {
   addtrack: EventLike;
   removetrack: EventLike;
-  changetrack: EventLike;
-  trackmodechange: EventLike;
+  change: EventLike;
 }
 
-export interface TextTrackListLike {
+export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> {
   readonly length: number;
   readonly [index: number]: TextTrackLike;
   [Symbol.iterator](): Iterator<TextTrackLike>;
@@ -173,11 +213,19 @@ export interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
 }
 
+// ----------------------------------------
+// Fullscreen
+// ----------------------------------------
+
 export interface MediaFullscreenCapability {
   readonly isFullscreen: boolean;
   requestFullscreen(): Promise<unknown>;
   exitFullscreen(): Promise<unknown>;
 }
+
+// ----------------------------------------
+// Picture-in-picture
+// ----------------------------------------
 
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
@@ -185,13 +233,9 @@ export interface MediaPictureInPictureCapability {
   exitPictureInPicture(): Promise<unknown>;
 }
 
-export interface MediaRemotePlaybackCapability {
-  readonly remote: RemotePlaybackLike;
-}
-
-export interface MediaStreamTypeEvents {
-  streamtypechange: EventLike;
-}
+// ----------------------------------------
+// Stream type
+// ----------------------------------------
 
 /**
  * Canonical values for {@link MediaStreamType}.
@@ -211,8 +255,12 @@ export const MediaStreamTypes = {
 
 export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
 
+export interface MediaStreamTypeEvents {
+  streamtypechange: EventLike;
+}
+
 export interface MediaStreamTypeCapability {
-  readonly streamType: MediaStreamType;
+  streamType: MediaStreamType;
 }
 
 export interface MediaLiveEvents {
@@ -239,12 +287,83 @@ export interface MediaLiveCapability {
   readonly targetLiveWindow: number;
 }
 
-interface MediaEvents extends MediaPlaybackEvents {}
+// ----------------------------------------
+// Remote playback
+// ----------------------------------------
 
-export interface Media extends MediaPlaybackCapability, EventTargetLike<MediaEvents> {
+export interface RemotePlaybackEvents {
+  connecting: EventLike;
+  connect: EventLike;
+  disconnect: EventLike;
+}
+
+export interface RemotePlaybackLike extends EventTargetLike<RemotePlaybackEvents> {
+  readonly state: string;
+  prompt(): Promise<void>;
+  watchAvailability(callback: (available: boolean) => void): Promise<number>;
+  cancelWatchAvailability(id?: number): Promise<void>;
+}
+
+export interface MediaRemotePlaybackCapability {
+  readonly remote: RemotePlaybackLike;
+  disableRemotePlayback: boolean;
+}
+
+// ----------------------------------------
+// Config
+// ----------------------------------------
+
+export interface MediaConfigCapability {
+  config: Record<string, unknown>;
+}
+
+// ----------------------------------------
+// Base Media
+// ----------------------------------------
+
+export interface MediaEvents extends MediaPlaybackEvents {}
+
+export interface Media<Events extends { [K in keyof Events]: EventLike } = MediaEvents>
+  extends MediaPlaybackCapability,
+    EventTargetLike<Events> {
   readonly engine?: unknown;
   readonly target?: unknown;
+  readonly next?: Media | null;
+  readonly root?: Media | null;
+  destroy?(): Promise<void> | void;
 }
+
+// ----------------------------------------
+// Composed shapes
+// ----------------------------------------
+
+export interface MediaFullEvents
+  extends MediaPlaybackEvents,
+    MediaPauseEvents,
+    MediaSeekEvents,
+    MediaSourceEvents,
+    MediaVolumeEvents,
+    MediaPlaybackRateEvents,
+    MediaBufferEvents,
+    MediaErrorEvents,
+    TextTrackListEvents,
+    MediaStreamTypeEvents,
+    MediaLiveEvents {}
+
+export interface MediaFull
+  extends Media<MediaFullEvents>,
+    MediaPauseCapability,
+    MediaSeekCapability,
+    MediaSourceCapability,
+    MediaVolumeCapability,
+    MediaPlaybackRateCapability,
+    MediaBufferCapability,
+    MediaErrorCapability,
+    MediaTextTrackCapability,
+    MediaStreamTypeCapability,
+    MediaLiveCapability,
+    MediaRemotePlaybackCapability,
+    MediaConfigCapability {}
 
 export interface VideoEvents
   extends MediaPlaybackEvents,
@@ -258,7 +377,7 @@ export interface VideoEvents
     TextTrackListEvents {}
 
 export interface Video
-  extends MediaPlaybackCapability,
+  extends Media<VideoEvents>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -268,11 +387,7 @@ export interface Video
     MediaErrorCapability,
     MediaTextTrackCapability,
     MediaFullscreenCapability,
-    MediaPictureInPictureCapability,
-    EventTargetLike<VideoEvents> {
-  readonly engine?: unknown;
-  readonly target?: unknown;
-}
+    MediaPictureInPictureCapability {}
 
 export interface AudioEvents
   extends MediaPlaybackEvents,
@@ -285,23 +400,11 @@ export interface AudioEvents
     MediaErrorEvents {}
 
 export interface Audio
-  extends MediaPlaybackCapability,
+  extends Media<AudioEvents>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
     MediaVolumeCapability,
     MediaPlaybackRateCapability,
     MediaBufferCapability,
-    MediaErrorCapability,
-    EventTargetLike<AudioEvents> {
-  readonly engine?: unknown;
-  readonly target?: unknown;
-}
-
-export interface MediaEngineHost<Engine = unknown, Target = unknown> {
-  readonly engine: Engine | null;
-  readonly target: Target | null;
-  attach?(target: Target): void;
-  detach?(): void;
-  destroy(): void;
-}
+    MediaErrorCapability {}
