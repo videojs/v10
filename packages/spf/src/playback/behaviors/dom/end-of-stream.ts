@@ -110,6 +110,8 @@ export interface EndOfStreamState {
 
 export interface EndOfStreamContext {
   mediaSource?: MediaSource;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
 type EndOfStreamFsmState = 'preconditions-unmet' | 'eos-ready';
@@ -167,16 +169,7 @@ function endOfStreamSetup({
   };
   context: {
     mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']>;
-    // videoBufferActor / audioBufferActor are read defensively — they are
-    // *not* declared in this behavior's contextKeys. The slots are
-    // contributed by setupVideoBufferActors / setupAudioBufferActors
-    // respectively, which compose conditionally per engine variant (the
-    // audio-only variant in `createHlsAudioOnlyEngine` omits the video
-    // setup; a future video-only variant would omit the audio setup).
-    // Treating each signal as optional lets endOfStream stay uniform
-    // across audio-only / video-only / mixed compositions without leaking
-    // unused slot declarations into variants that don't compose the
-    // contributing behavior.
+    // See behavior definition for details on these optional context signals.
     videoBufferActor?: ReadonlySignal<SourceBufferActor | undefined>;
     audioBufferActor?: ReadonlySignal<SourceBufferActor | undefined>;
   };
