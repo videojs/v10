@@ -607,4 +607,20 @@ describe('MenuContent', () => {
       expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
     });
   });
+
+  it('forwards disabled to a root trigger render prop and prevents opening', () => {
+    render(
+      <MenuRoot>
+        <MenuTrigger disabled render={<button type="button" data-testid="trigger" />} />
+        <MenuContent data-testid="content">Captions</MenuContent>
+      </MenuRoot>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    expect(trigger).toHaveProperty('disabled', true);
+
+    fireEvent.click(trigger);
+
+    expect(screen.queryByTestId('content')).toBeNull();
+  });
 });

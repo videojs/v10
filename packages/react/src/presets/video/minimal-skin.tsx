@@ -125,12 +125,7 @@ function PlaybackRateTrigger(): ReactNode {
     <Menu.Trigger
       disabled={disabled}
       render={
-        <Button
-          className="media-button--playback-rate"
-          disabled={disabled}
-          data-rate={String(rate)}
-          aria-label={`Playback rate ${rate}`}
-        />
+        <Button className="media-button--playback-rate" data-rate={String(rate)} aria-label={`Playback rate ${rate}`} />
       }
     />
   );

@@ -78,3 +78,15 @@ export function useMenuRadioGroupContext(): MenuRadioGroupContextValue {
   if (!ctx) throw new Error('Menu.RadioItem must be used within a Menu.RadioGroup');
   return ctx;
 }
+
+// ---------------------------------------------------------------------------
+// Root trigger render context — provided by Menu.Trigger for render children.
+// ---------------------------------------------------------------------------
+
+const MenuTriggerChildContext = createContext(false);
+
+export const MenuTriggerChildContextProvider = MenuTriggerChildContext.Provider;
+
+export function useOptionalMenuTriggerChildContext(): boolean {
+  return useContext(MenuTriggerChildContext);
+}
