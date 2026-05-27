@@ -4,7 +4,6 @@ import { popup } from './popup';
 
 const panelBase = cn(
   'absolute inset-0 overflow-auto overscroll-none p-1.5 outline-none translate-none',
-  'data-transitioning:overflow-hidden in-data-transitioning:overflow-hidden',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
   'transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate]'
 );
@@ -50,13 +49,13 @@ const menuHostShell = cn(
 
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
-  root: cn(menuHostShell, 'min-w-24 overflow-auto data-transitioning:overflow-hidden'),
+  root: cn(menuHostShell, 'min-w-24 overflow-auto'),
   /** Settings menu viewport host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
     '[--menu-transition-duration:300ms]',
     'relative min-w-44 max-h-64 w-(--media-menu-width) h-(--media-menu-height)',
-    'overflow-hidden data-transitioning:overflow-hidden'
+    'overflow-hidden'
   ),
   group: 'flex flex-col gap-0.5',
   item: cn(

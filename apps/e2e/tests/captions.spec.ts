@@ -11,12 +11,10 @@ test.describe('Captions', () => {
     await player.waitForMediaReady();
   });
 
-  test('captions settings shows off only without subtitle tracks', async ({ page }) => {
+  test('captions settings hidden without subtitle tracks', async () => {
     await player.showControls();
-    await player.openCaptionsSettings();
-
-    const options = page.locator(SELECTORS.activeMenuRadioItems);
-    await expect(options).toHaveCount(1);
+    await player.settingsButton.click();
+    await expect(player.settingsCaptionsItem).toBeHidden();
   });
 
   test('captions settings lists tracks when subtitle track is added', async ({ page }) => {

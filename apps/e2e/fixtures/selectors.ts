@@ -66,6 +66,7 @@ export const SELECTORS = {
     withinControls('button[aria-label="Settings"]'),
   ].join(', '),
   settingsCaptionsItem: [
+    'media-captions-settings-menu-item[commandfor="settings-captions-menu"]',
     'media-menu-item[commandfor="settings-captions-menu"]',
     '[role="menuitem"]:has-text("Captions")',
   ].join(', '),

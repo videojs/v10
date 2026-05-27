@@ -135,10 +135,10 @@ function getTemplateHTML() {
                     <span>Speed</span>
                     ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
                   </media-menu-item>
-                  <media-menu-item commandfor="settings-captions-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                  <media-captions-settings-menu-item commandfor="settings-captions-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     <span>Captions</span>
                     ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
-                  </media-menu-item>
+                  </media-captions-settings-menu-item>
                 </div>
               </media-menu-view>
 

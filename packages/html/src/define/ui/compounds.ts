@@ -1,6 +1,7 @@
 import { AlertDialogCloseElement } from '../../ui/alert-dialog/alert-dialog-close-element';
 import { AlertDialogDescriptionElement } from '../../ui/alert-dialog/alert-dialog-description-element';
 import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-title-element';
+import { CaptionsSettingsMenuItemElement } from '../../ui/captions-settings-menu-item/captions-settings-menu-item-element';
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
@@ -45,6 +46,7 @@ export function defineMenu(): void {
   safeDefine(MenuElement);
   safeDefine(MenuBackElement);
   safeDefine(MenuItemElement);
+  safeDefine(CaptionsSettingsMenuItemElement);
   safeDefine(MenuLabelElement);
   safeDefine(MenuSeparatorElement);
   safeDefine(MenuGroupElement);

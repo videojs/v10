@@ -4,7 +4,6 @@ import { popup } from './popup';
 
 const panelBase = cn(
   'absolute inset-0 overflow-auto overscroll-none p-1 outline-none translate-none',
-  'data-transitioning:overflow-hidden in-data-transitioning:overflow-hidden',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
   'transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate]'
 );
@@ -44,21 +43,21 @@ const menuTokens = cn(
 const menuHostShell = cn(
   popup.popover,
   menuTokens,
-  'bg-(--media-tooltip-background-color) [backdrop-filter:var(--media-tooltip-backdrop-filter)]',
-  'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/10',
+  'bg-(--media-popover-background-color) [backdrop-filter:var(--media-popover-backdrop-filter)]',
+  'shadow-[0_0_0_1px_var(--media-popover-border-color),0_4px_6px_-1px_oklch(0_0_0/0.1),0_2px_4px_-2px_oklch(0_0_0/0.1)]',
   'transition-[transform,scale,opacity,filter,width,height] duration-(--menu-transition-duration) ease-in-out',
   'box-border rounded-xl p-1 overscroll-none'
 );
 
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
-  root: cn(menuHostShell, 'min-w-24 overflow-auto data-transitioning:overflow-hidden'),
+  root: cn(menuHostShell, 'min-w-24 overflow-auto'),
   /** Settings menu viewport host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
     '[--menu-transition-duration:300ms]',
     'relative min-w-44 max-h-64 w-(--media-menu-width) h-(--media-menu-height)',
-    'overflow-hidden data-transitioning:overflow-hidden'
+    'overflow-hidden'
   ),
   group: 'flex flex-col gap-0.5',
   item: cn(

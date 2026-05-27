@@ -21,10 +21,6 @@
     --menu-item-transition-duration: 0ms;
   }
 
-  &[data-transitioning] {
-    overflow: hidden;
-  }
-
   & .media-menu__panel {
     position: absolute;
     inset: 0;
@@ -39,8 +35,6 @@
     will-change: translate;
   }
 
-  &[data-transitioning] .media-menu__panel,
-  & .media-menu__panel[data-transitioning],
   & .media-menu__panel[data-starting-style],
   & .media-menu__panel[data-ending-style] {
     overflow: hidden;
