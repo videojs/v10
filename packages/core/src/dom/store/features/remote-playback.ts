@@ -1,22 +1,10 @@
-import { listen } from '@videojs/utils/dom';
+import { isWebKitAirplayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { isMediaRemotePlaybackCapable } from '../../media/predicate';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
-
-/** WebKit-only addition to HTMLMediaElement exposing the active AirPlay flag. */
-interface WebKitAirplayMedia extends HTMLMediaElement {
-  readonly webkitCurrentPlaybackTargetIsWireless: boolean;
-}
-
-/** WebKit-specific availability event payload (not in lib.dom). */
-type WebkitAvailabilityEvent = Event & { availability: 'available' | 'not-available' };
-
-function isWebKitAirplayCapable(media: EventTarget): media is WebKitAirplayMedia {
-  return 'WebKitPlaybackTargetAvailabilityEvent' in globalThis && 'webkitCurrentPlaybackTargetIsWireless' in media;
-}
 
 export const remotePlaybackFeature = definePlayerFeature({
   name: 'remotePlayback',

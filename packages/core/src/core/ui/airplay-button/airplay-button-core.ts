@@ -1,4 +1,5 @@
 import { createState } from '@videojs/store';
+import { supportsWebKitAirplay } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -70,10 +71,10 @@ export class AirplayButtonCore {
 
   getState(): AirplayButtonState {
     const media = this.#media!;
-    // WebKit (Safari macOS/iOS) is the only platform that surfaces AirPlay
-    // through the W3C Remote Playback API. Mirrors the Chromium gate on
-    // CastButtonCore so each button only shows on its supported platform.
-    const airplaySupported = 'WebKitPlaybackTargetAvailabilityEvent' in globalThis;
+    // WebKit (Safari macOS/iOS) is the only platform that surfaces AirPlay.
+    // Mirrors the Chromium gate on CastButtonCore so each button only shows
+    // on its supported platform.
+    const airplaySupported = supportsWebKitAirplay();
 
     this.state.patch({
       airplayState: media.remotePlaybackState,
