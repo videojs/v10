@@ -20,6 +20,38 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
     if (this.target) this.target.playsInline = value;
   }
 
+  get width() {
+    return this.target?.width ?? 0;
+  }
+
+  set width(value: number) {
+    if (this.target) this.target.width = value;
+  }
+
+  get height() {
+    return this.target?.height ?? 0;
+  }
+
+  set height(value: number) {
+    if (this.target) this.target.height = value;
+  }
+
+  get videoWidth() {
+    return this.target?.videoWidth ?? 0;
+  }
+
+  get videoHeight() {
+    return this.target?.videoHeight ?? 0;
+  }
+
+  get disablePictureInPicture() {
+    return this.target?.disablePictureInPicture ?? false;
+  }
+
+  set disablePictureInPicture(value: boolean) {
+    if (this.target) this.target.disablePictureInPicture = value;
+  }
+
   get webkitPresentationMode() {
     return (this.target as WebKitVideoElement | null)?.webkitPresentationMode;
   }

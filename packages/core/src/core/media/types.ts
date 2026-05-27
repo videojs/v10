@@ -98,14 +98,22 @@ export interface MediaSourceEvents {
   canplay: EventLike;
   canplaythrough: EventLike;
   loadeddata: EventLike;
+  abort: EventLike;
+  stalled: EventLike;
+  suspend: EventLike;
 }
+
+/** Result of {@link MediaSourceCapability.canPlayType}. */
+export type CanPlayTypeResult = '' | 'maybe' | 'probably';
 
 export interface MediaSourceCapability {
   src: string;
   readonly currentSrc: string;
   readonly readyState: MediaReadyStateValue | number;
   preload: MediaPreloadType;
+  crossOrigin: string | null;
   load(): Promise<void> | void;
+  canPlayType(type: string): CanPlayTypeResult;
 }
 
 // ----------------------------------------
@@ -131,6 +139,7 @@ export interface MediaPlaybackRateEvents {
 
 export interface MediaPlaybackRateCapability {
   playbackRate: number;
+  defaultPlaybackRate: number;
 }
 
 // ----------------------------------------
@@ -150,6 +159,14 @@ export interface MediaBufferEvents {
 export interface MediaBufferCapability {
   readonly buffered: TimeRangeLike;
   readonly seekable: TimeRangeLike;
+}
+
+// ----------------------------------------
+// Played
+// ----------------------------------------
+
+export interface MediaPlayedCapability {
+  readonly played: TimeRangeLike;
 }
 
 // ----------------------------------------
@@ -185,6 +202,13 @@ export interface TextCueListLike {
   getCueById?(id: string): TextCueLike | null;
 }
 
+/**
+ * The kind of text track.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
+ */
+export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
+
 export interface TextTrackLike {
   readonly kind: string;
   readonly label: string;
@@ -211,6 +235,7 @@ export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> 
 
 export interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrackLike;
 }
 
 // ----------------------------------------
@@ -227,8 +252,14 @@ export interface MediaFullscreenCapability {
 // Picture-in-picture
 // ----------------------------------------
 
+export interface MediaPictureInPictureEvents {
+  enterpictureinpicture: EventLike;
+  leavepictureinpicture: EventLike;
+}
+
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
+  disablePictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
   exitPictureInPicture(): Promise<unknown>;
 }
@@ -328,6 +359,21 @@ export interface MediaPlaysInlineCapability {
 }
 
 // ----------------------------------------
+// Video dimensions (video-only)
+// ----------------------------------------
+
+export interface MediaVideoDimensionsEvents {
+  resize: EventLike;
+}
+
+export interface MediaVideoDimensionsCapability {
+  width: number;
+  height: number;
+  readonly videoWidth: number;
+  readonly videoHeight: number;
+}
+
+// ----------------------------------------
 // Config
 // ----------------------------------------
 
@@ -376,6 +422,7 @@ export interface MediaFull
     MediaVolumeCapability,
     MediaPlaybackRateCapability,
     MediaBufferCapability,
+    MediaPlayedCapability,
     MediaErrorCapability,
     MediaTextTrackCapability,
     MediaStreamTypeCapability,
@@ -393,7 +440,9 @@ export interface VideoEvents
     MediaPlaybackRateEvents,
     MediaBufferEvents,
     MediaErrorEvents,
-    TextTrackListEvents {}
+    TextTrackListEvents,
+    MediaPictureInPictureEvents,
+    MediaVideoDimensionsEvents {}
 
 export interface Video
   extends Media<VideoEvents>,
@@ -403,11 +452,13 @@ export interface Video
     MediaVolumeCapability,
     MediaPlaybackRateCapability,
     MediaBufferCapability,
+    MediaPlayedCapability,
     MediaErrorCapability,
     MediaTextTrackCapability,
     MediaFullscreenCapability,
     MediaPictureInPictureCapability,
-    MediaPlaysInlineCapability {}
+    MediaPlaysInlineCapability,
+    MediaVideoDimensionsCapability {}
 
 export interface AudioEvents
   extends MediaPlaybackEvents,
@@ -427,4 +478,5 @@ export interface Audio
     MediaVolumeCapability,
     MediaPlaybackRateCapability,
     MediaBufferCapability,
+    MediaPlayedCapability,
     MediaErrorCapability {}

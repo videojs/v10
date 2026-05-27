@@ -1,5 +1,12 @@
 import { MediaLayer } from '../../core/media/media-layer';
-import type { EventLike, MediaFull, MediaFullEvents } from '../../core/media/types';
+import type {
+  CanPlayTypeResult,
+  EventLike,
+  MediaFull,
+  MediaFullEvents,
+  TextTrackKind,
+  TextTrackLike,
+} from '../../core/media/types';
 import { MediaStreamTypes } from '../../core/media/types';
 import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
@@ -119,8 +126,20 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     if (this.next) this.next.preload = value;
   }
 
+  get crossOrigin() {
+    return this.next?.crossOrigin ?? null;
+  }
+
+  set crossOrigin(value) {
+    if (this.next) this.next.crossOrigin = value;
+  }
+
   load() {
     return this.next?.load();
+  }
+
+  canPlayType(type: string): CanPlayTypeResult {
+    return this.next?.canPlayType(type) ?? '';
   }
 
   // -- Volume --
@@ -149,6 +168,14 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
 
   set playbackRate(value) {
     if (this.next) this.next.playbackRate = value;
+  }
+
+  get defaultPlaybackRate() {
+    return this.next?.defaultPlaybackRate ?? 1;
+  }
+
+  set defaultPlaybackRate(value) {
+    if (this.next) this.next.defaultPlaybackRate = value;
   }
 
   // -- Playback options --
@@ -187,6 +214,12 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     return this.next?.seekable ?? EMPTY_TIME_RANGES;
   }
 
+  // -- Played --
+
+  get played() {
+    return this.next?.played ?? EMPTY_TIME_RANGES;
+  }
+
   // -- Error --
 
   get error() {
@@ -197,6 +230,10 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
 
   get textTracks() {
     return this.next?.textTracks ?? EMPTY_TEXT_TRACKS;
+  }
+
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
+    return this.next?.addTextTrack(kind, label, language) as TextTrackLike;
   }
 
   // -- Remote playback --
