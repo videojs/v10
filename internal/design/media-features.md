@@ -8,6 +8,17 @@ date: 2026-05-14
 Compose media behavior by registering host extensions and adding media
 layers at runtime.
 
+## Background
+
+A **media host** (`HTMLMediaElementHost`) is a thin `EventTarget` that
+mirrors `HTMLMediaElement` and forwards to a `target` — usually a real
+`<video>` or `<audio>`. Properties and methods proxy to the target (with
+safe fallbacks when detached), and `addEventListener` lazily wires a
+forwarder on the target so consumers only ever listen on the host.
+
+That indirection is what makes composition possible — extensions and
+layers talk to the host, rarely the `<video>` directly.
+
 ## Problem
 
 Today, behavior on top of the base media classes is layered with class
