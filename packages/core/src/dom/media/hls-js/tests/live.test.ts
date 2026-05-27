@@ -1,8 +1,7 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
-
-import { HlsJsMediaLiveMixin } from '../live';
-import type { HlsEngineHost } from '../types';
+import { HTMLMediaElementHost } from '../../html-media-element-host';
+import { hlsJsLive } from '../live';
 
 function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -22,19 +21,18 @@ function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   } as unknown as Hls;
 }
 
-class FakeHost extends EventTarget implements HlsEngineHost {
-  engine: Hls | null;
-  target: HTMLMediaElement | null = null;
-
-  constructor(engine: Hls | null = null) {
+class FakeHlsJsMedia extends HTMLMediaElementHost<HTMLMediaElement> {
+  #engine: Hls;
+  constructor(engine: Hls) {
     super();
-    this.engine = engine;
+    this.#engine = engine;
+  }
+  override get engine() {
+    return this.#engine;
   }
 }
 
-const HlsJsMediaLive = HlsJsMediaLiveMixin(FakeHost);
-
-// Minimal LevelDetails shape — only the fields the mixin reads.
+// Minimal LevelDetails shape — only the fields the extension reads.
 function levelDetails(overrides: Record<string, unknown>) {
   return {
     live: false,
@@ -53,7 +51,7 @@ function emitLevelLoaded(engine: Hls, details: unknown) {
   (engine as any).emit(Hls.Events.LEVEL_LOADED, { details });
 }
 
-function setTargetSeekable(host: { target: HTMLMediaElement | null }, ranges: [number, number][]) {
+function setTarget(host: FakeHlsJsMedia, ranges: [number, number][]) {
   const video = document.createElement('video');
   Object.defineProperty(video, 'seekable', {
     configurable: true,
@@ -69,11 +67,12 @@ function setTargetSeekable(host: { target: HTMLMediaElement | null }, ranges: [n
   return video;
 }
 
-describe('HlsJsMediaLiveMixin', () => {
+describe('hlsJsLive', () => {
   describe('defaults', () => {
     it('starts with `NaN` for both values and no event', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();
@@ -83,7 +82,8 @@ describe('HlsJsMediaLiveMixin', () => {
   describe('targetLiveWindow derivation', () => {
     it('is `0` for standard live', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       const handler = vi.fn();
       host.addEventListener('targetlivewindowchange', handler);
@@ -96,7 +96,8 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('is `Infinity` for an `EVENT` playlist (DVR)', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       emitLevelLoaded(engine, levelDetails({ live: true, type: 'EVENT', holdBack: 18 }));
 
@@ -105,7 +106,8 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('is `NaN` for non-live playlists', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
 
@@ -114,7 +116,8 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('dedupes `targetlivewindowchange` when the value does not change', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       const handler = vi.fn();
       host.addEventListener('targetlivewindowchange', handler);
@@ -129,8 +132,9 @@ describe('HlsJsMediaLiveMixin', () => {
   describe('liveEdgeStart derivation', () => {
     it('uses `holdBack` for standard live (`seekable.end - holdBack`)', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18, targetduration: 6 }));
 
@@ -139,8 +143,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('falls back to `targetduration * 3` when `holdBack` is absent', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 0, targetduration: 6 }));
 
@@ -149,8 +154,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('uses `partHoldBack` for low-latency live', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
 
@@ -159,8 +165,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('falls back to `partTarget * 2` when `partHoldBack` is absent', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 0, partTarget: 0.5 }));
 
@@ -169,8 +176,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('is `NaN` when no seekable range is available', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, []);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, []);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
@@ -179,8 +187,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('is `NaN` when the stream is not live', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
 
@@ -189,7 +198,8 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('reflects the current `seekable` on every read', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
 
       let end = 60;
       const video = document.createElement('video');
@@ -221,8 +231,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('seeks to `liveEdgeStart` on the first `play` event', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18, targetduration: 6 }));
@@ -234,8 +245,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('does not seek when `autoplay` is set', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
       video.autoplay = true;
 
       emitManifestLoading(engine);
@@ -248,8 +260,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('only seeks on the first play (subsequent plays are ignored)', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
@@ -264,8 +277,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('does not seek backwards when already at or past the live edge', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
@@ -278,8 +292,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('does not seek when stream is on-demand', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
@@ -291,8 +306,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('defers the seek until `liveEdgeStart` becomes finite (preload="none")', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       // Manifest is requested at startup but `LEVEL_LOADED` only arrives after `play`.
       emitManifestLoading(engine);
@@ -306,8 +322,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('re-arms on a subsequent source load', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
@@ -324,8 +341,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('disarms on `DESTROYING`', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      const video = setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      const video = setTarget(host, [[0, 60]]);
 
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
@@ -341,8 +359,9 @@ describe('HlsJsMediaLiveMixin', () => {
   describe('hls.js config updates', () => {
     it('applies low-latency defaults when partList is present', () => {
       const engine = createEngine({ abrBandWidthFactor: 0.95 });
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
 
@@ -353,8 +372,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('applies standard live defaults when partList is absent', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
@@ -363,8 +383,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('respects user-supplied overrides', () => {
       const engine = createEngine({ backBufferLength: 30 });
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
@@ -373,8 +394,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('does not touch config for non-live streams', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
 
@@ -385,8 +407,9 @@ describe('HlsJsMediaLiveMixin', () => {
   describe('reset', () => {
     it('resets on `MANIFEST_LOADING`', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
       expect(host.targetLiveWindow).toBe(0);
@@ -403,8 +426,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
     it('resets on `DESTROYING`', () => {
       const engine = createEngine();
-      const host = new HlsJsMediaLive(engine);
-      setTargetSeekable(host, [[0, 60]]);
+      const host = new FakeHlsJsMedia(engine);
+      hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
       expect(host.targetLiveWindow).toBe(0);
@@ -413,6 +437,25 @@ describe('HlsJsMediaLiveMixin', () => {
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();
+    });
+  });
+
+  describe('uninstall', () => {
+    it('removes engine listeners and the layer when destroyed', () => {
+      const engine = createEngine();
+      const host = new FakeHlsJsMedia(engine);
+      const destroy = hlsJsLive().install(host);
+      setTarget(host, [[0, 60]]);
+
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
+      expect(host.targetLiveWindow).toBe(0);
+
+      destroy();
+
+      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 36 }));
+      // After destroy, the layer is gone, so the host's chain falls through
+      // to the underlying video (which has no live properties → NaN).
+      expect(host.targetLiveWindow).toBeNaN();
     });
   });
 });

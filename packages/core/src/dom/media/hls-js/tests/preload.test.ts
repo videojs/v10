@@ -1,8 +1,11 @@
 import Hls from 'hls.js';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
+import { hlsJsPreload } from '../preload';
 
-import { HlsJsMediaPreloadMixin } from '../preload';
-import type { HlsEngineHost } from '../types';
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -22,46 +25,48 @@ function createEngine(): Hls {
       for (const fn of listeners.get(event) ?? []) fn(event, ...args);
     },
     startLoad: vi.fn(),
+    loadingEnabled: false,
     media: null,
   } as unknown as Hls;
 }
 
-class FakeHost extends EventTarget implements HlsEngineHost {
-  engine: Hls | null;
-  target: HTMLMediaElement | null = null;
-
-  constructor(engine: Hls | null = null) {
+class HlsHost extends HTMLVideoElementHost {
+  #engine: Hls | null;
+  constructor(engine: Hls | null) {
     super();
-    this.engine = engine;
+    this.#engine = engine;
+  }
+  override get engine() {
+    return this.#engine;
   }
 }
 
-const PreloadHost = HlsJsMediaPreloadMixin(FakeHost);
+function setup(engine: Hls = createEngine()) {
+  const host = new HlsHost(engine);
+  const destroy = hlsJsPreload().install(host);
+  const video = document.createElement('video');
+  document.body.appendChild(video);
+  return { engine, host, video, destroy };
+}
 
-describe('HlsJsMediaPreloadMixin', () => {
+describe('hlsJsPreload', () => {
   it('defaults preload to metadata', () => {
-    const host = new PreloadHost(null);
+    const { host } = setup();
     expect(host.preload).toBe('metadata');
   });
 
   it('stores preload value even when target is null', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { host } = setup();
     host.preload = 'none';
-
     expect(host.preload).toBe('none');
     expect(host.target).toBeNull();
   });
 
   it('syncs stored preload to native element on MEDIA_ATTACHED', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'none';
     expect(host.target).toBeNull();
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -69,12 +74,9 @@ describe('HlsJsMediaPreloadMixin', () => {
   });
 
   it('applies preload set before attach when MEDIA_ATTACHED fires', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'auto';
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -83,12 +85,9 @@ describe('HlsJsMediaPreloadMixin', () => {
   });
 
   it('uses stored preload (not native default) for loading strategy on MEDIA_ATTACHED', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'none';
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -96,12 +95,9 @@ describe('HlsJsMediaPreloadMixin', () => {
   });
 
   it('starts metadata-level load for preload=metadata', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'metadata';
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -111,12 +107,9 @@ describe('HlsJsMediaPreloadMixin', () => {
   });
 
   it('defers full load to play event when preload=metadata', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'metadata';
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -130,24 +123,17 @@ describe('HlsJsMediaPreloadMixin', () => {
   });
 
   it('applies preload to native element immediately when target exists', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
-    const video = document.createElement('video');
+    const { host, video } = setup();
     host.target = video;
-
     host.preload = 'auto';
 
     expect(video.preload).toBe('auto');
   });
 
   it('cleans up on MEDIA_DETACHED', () => {
-    const engine = createEngine();
-    const host = new PreloadHost(engine);
-
+    const { engine, host, video } = setup();
     host.preload = 'metadata';
 
-    const video = document.createElement('video');
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -157,5 +143,17 @@ describe('HlsJsMediaPreloadMixin', () => {
 
     video.dispatchEvent(new Event('play'));
     expect(engine.startLoad).not.toHaveBeenCalled();
+  });
+
+  it('removes the preload layer on destroy', () => {
+    const { host, video, destroy } = setup();
+    host.target = video;
+    host.preload = 'auto';
+    expect(host.preload).toBe('auto');
+
+    destroy();
+
+    // After destroy, host.preload falls through to native element default
+    expect(host.preload).toBe(video.preload);
   });
 });

@@ -20,8 +20,7 @@ export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
   readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
-  attach(mediaElement: HTMLMediaElement): void;
-  detach(): void;
+  target: HTMLMediaElement | null;
   destroy(): void;
   play(): Promise<void>;
 }
@@ -29,8 +28,11 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
 /**
  * Mixin that adds SPF playback engine behavior to any base class.
  *
- * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
- * be used anywhere a media element API is expected.
+ * Implements the src/play() contract per the WHATWG HTML spec so SPF can be
+ * used anywhere a media element API is expected. The base class is assumed to
+ * expose a `target` accessor (e.g. `HTMLVideoElementHost`); `target`
+ * assignments are forwarded up the chain so the layer chain continues to
+ * manage event forwarders.
  *
  * A new engine is created on every src assignment — this fully tears down all
  * state, SourceBuffers, and in-flight requests from the previous source before
@@ -41,7 +43,7 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
  * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
  *
  * const media = new SimpleHlsMedia();
- * media.attach(document.querySelector('video'));
+ * media.target = document.querySelector('video');
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
@@ -67,22 +69,24 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
 
     // -------------------------------------------------------------------------
-    // Media element lifecycle
+    // Media element lifecycle — `target` setter (WHATWG §4.8.11.2-style attach)
     // -------------------------------------------------------------------------
 
-    attach(mediaElement: HTMLMediaElement): void {
-      super.attach?.(mediaElement);
-      this.#signals.context.mediaElement.set(mediaElement);
+    get target(): HTMLMediaElement | null {
+      return super.target as HTMLMediaElement | null;
     }
 
-    detach(): void {
+    set target(value: HTMLMediaElement | null) {
+      if (this.target === value) return;
+
       this.#cancelPendingPlay();
-      this.#signals.context.mediaElement.set(undefined);
-      super.detach?.();
+      super.target = value;
+      this.#signals.context.mediaElement.set(value ?? undefined);
     }
 
     destroy(): void {
       this.#cancelPendingPlay();
+      this.target = null;
       this.#engine.destroy();
     }
 
@@ -194,5 +198,17 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI>;
 }
 
+// Minimal base for the standalone adapter — accessors (not a field) so
+// `super.target` in the mixin resolves through the prototype chain.
+class TargetBase {
+  #target: HTMLMediaElement | null = null;
+  get target(): HTMLMediaElement | null {
+    return this.#target;
+  }
+  set target(value: HTMLMediaElement | null) {
+    this.#target = value;
+  }
+}
+
 /** Standalone SPF media adapter with no base class. */
-export class SimpleHlsMediaElement extends SimpleHlsMediaMixin(class {}) {}
+export class SimpleHlsMediaElement extends SimpleHlsMediaMixin(TargetBase) {}

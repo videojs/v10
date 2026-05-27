@@ -44,7 +44,6 @@ function App() {
       >
         <MuxVideo
           src={SOURCES[source].url}
-          debug
           autoPlay={autoplay}
           muted={muted}
           loop={loop}

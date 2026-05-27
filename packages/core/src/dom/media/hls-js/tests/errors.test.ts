@@ -1,28 +1,12 @@
 import Hls from 'hls.js';
-import { describe, expect, it, vi } from 'vitest';
-
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
-import { HlsJsMediaErrorsMixin } from '../errors';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
+import { hlsJsErrors } from '../errors';
 
-class FakeHost extends EventTarget {
-  engine: Hls | null;
-  target: HTMLMediaElement | null = null;
-
-  constructor(engine: Hls | null = null) {
-    super();
-    this.engine = engine;
-  }
-
-  attach(target: EventTarget): void {
-    this.target = target as HTMLMediaElement;
-  }
-
-  detach(): void {
-    this.target = null;
-  }
-}
-
-const HlsJsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -40,19 +24,31 @@ function createEngine(): Hls {
   } as unknown as Hls;
 }
 
-function setup() {
-  const engine = createEngine();
-  const host = new HlsJsMediaErrors(engine);
-  const video = document.createElement('video');
-  host.attach(video);
-  (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-  return { engine, host, video };
+class HlsHost extends HTMLVideoElementHost {
+  #engine: Hls;
+  constructor(engine: Hls) {
+    super();
+    this.#engine = engine;
+  }
+  override get engine() {
+    return this.#engine;
+  }
 }
 
-describe('HlsJsMediaErrorsMixin', () => {
+function setup() {
+  const engine = createEngine();
+  const host = new HlsHost(engine);
+  const video = document.createElement('video');
+  document.body.appendChild(video);
+  host.target = video;
+  const destroy = hlsJsErrors().install(host);
+  (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+  return { engine, host, video, destroy };
+}
+
+describe('hlsJsErrors', () => {
   it('dispatches an error event on the host for fatal errors', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -91,7 +87,6 @@ describe('HlsJsMediaErrorsMixin', () => {
 
   it('ignores non-fatal errors', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -108,7 +103,6 @@ describe('HlsJsMediaErrorsMixin', () => {
 
   it('maps media errors to MEDIA_ERR_DECODE', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -125,7 +119,6 @@ describe('HlsJsMediaErrorsMixin', () => {
 
   it('maps key system errors to MEDIA_ERR_ENCRYPTED', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -142,7 +135,6 @@ describe('HlsJsMediaErrorsMixin', () => {
 
   it('stops listening after MEDIA_DETACHED', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -177,7 +169,6 @@ describe('HlsJsMediaErrorsMixin', () => {
 
   it('preserves the original hls.js error as the message source', () => {
     const { engine, host } = setup();
-
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
@@ -191,5 +182,23 @@ describe('HlsJsMediaErrorsMixin', () => {
     const event = handler.mock.calls[0]![0] as ErrorEvent;
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_CUSTOM);
     expect(event.error.message).toContain('something broke');
+  });
+
+  it('detaches engine listeners and removes the layer on destroy', () => {
+    const { engine, host, destroy } = setup();
+    const handler = vi.fn();
+    host.addEventListener('error', handler);
+
+    destroy();
+
+    (engine as any).emit(Hls.Events.ERROR, {
+      type: Hls.ErrorTypes.NETWORK_ERROR,
+      details: Hls.ErrorDetails.MANIFEST_LOAD_ERROR,
+      fatal: true,
+      error: new Error('post-destroy'),
+    });
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(host.error).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HTMLVideoElementHost } from '../../../media/html-video-element-host';
 import type { PlayerTarget } from '../../../media/types';
-import { HTMLVideoElementHost } from '../../../media/video-host';
 import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { fullscreenFeature } from '../fullscreen';
@@ -426,7 +426,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo();
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container });
@@ -437,7 +437,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
     it('reflects host.isFullscreen when document.fullscreenElement is the underlying video', () => {
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'fullscreenElement', {
         value: video,
@@ -461,7 +461,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo();
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container });
@@ -492,7 +492,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       video.webkitPresentationMode = 'inline';
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container });
@@ -523,7 +523,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container });
@@ -537,7 +537,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo();
       video.requestFullscreen = vi.fn().mockResolvedValue(undefined);
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container: null });
@@ -558,7 +558,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       video.webkitSetPresentationMode = vi.fn();
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container });
@@ -574,7 +574,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
 
       const video = createMockVideo();
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: host, container: null });
@@ -602,7 +602,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'pictureInPictureElement', {
         value: video,

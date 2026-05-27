@@ -1,8 +1,8 @@
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import { HTMLVideoElementHost } from '../video-host';
-import { NativeHlsMediaErrorsMixin } from './errors';
-import { NativeHlsMediaLiveMixin } from './live';
-import { NativeHlsMediaStreamTypeMixin } from './stream-type';
+import { HTMLVideoElementHost } from '../html-video-element-host';
+import { nativeHlsErrors } from './errors';
+import { nativeHlsLive } from './live';
+import { nativeHlsStreamType } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 export type StreamType = MediaStreamType;
@@ -21,21 +21,35 @@ export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
-class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsMediaProps, 'streamType'> {
+export class NativeHlsMedia extends HTMLVideoElementHost implements NativeHlsMediaProps {
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
-  get engine() {
-    return null;
+  constructor() {
+    super();
+    nativeHlsErrors().install(this);
+    nativeHlsStreamType().install(this);
+    nativeHlsLive().install(this);
+  }
+
+  override get target() {
+    return super.target;
+  }
+
+  override set target(value: HTMLVideoElement | null) {
+    super.target = value;
+    if (!value) return;
+    if (this.preload !== value.preload) value.preload = this.preload;
+    if (this.src) value.src = this.src;
   }
 
   get src() {
     return this.#src;
   }
 
-  set src(src: string) {
-    this.#src = src;
-    if (this.target) this.target.src = src;
+  set src(value: string) {
+    this.#src = value;
+    if (this.target) this.target.src = value;
   }
 
   get preload() {
@@ -46,22 +60,4 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
     this.#preload = value;
     if (this.target) this.target.preload = value;
   }
-
-  attach(target: HTMLVideoElement) {
-    super.attach(target);
-    if (this.preload !== target.preload) target.preload = this.preload;
-    if (this.src) target.src = this.src;
-  }
-
-  detach() {
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
-  }
 }
-
-export class NativeHlsMedia extends NativeHlsMediaLiveMixin(
-  NativeHlsMediaStreamTypeMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase))
-) {}

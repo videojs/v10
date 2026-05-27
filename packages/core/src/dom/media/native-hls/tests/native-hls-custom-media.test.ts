@@ -12,7 +12,7 @@ describe('NativeHlsMedia', () => {
     document.body.appendChild(video);
 
     const media = new NativeHlsMedia();
-    media.attach(video);
+    media.target = video;
 
     const handler = vi.fn();
     media.addEventListener('error', handler);

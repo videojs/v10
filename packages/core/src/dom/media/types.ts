@@ -16,6 +16,8 @@ import type {
 } from '../../core/media/state';
 import type { Media } from '../../core/media/types';
 
+export type { MediaFeatureAvailability } from '../../core/media/types';
+
 export type { Media };
 
 export interface MediaContainer extends HTMLElement {}
@@ -24,8 +26,6 @@ export interface PlayerTarget {
   media: Media;
   container: MediaContainer | null;
 }
-
-export type { MediaFeatureAvailability } from '../../core/media/types';
 
 export type PlayerFeature<State> = Slice<PlayerTarget, State>;
 

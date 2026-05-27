@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HTMLAudioElementHost } from '../../audio-host';
-import { HTMLVideoElementHost } from '../../video-host';
+import { HTMLAudioElementHost } from '../../html-audio-element-host';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { CustomMediaElement } from '../index';
 
 afterEach(() => {
@@ -103,12 +103,17 @@ function create(def: { Ctor: new () => any; tag: string }) {
 }
 
 class TrackingVideoHost extends HTMLVideoElementHost {
-  calls: string[] = [];
+  #calls: string[] = [];
   #src = '';
   #volume = 1;
   #muted = false;
   #currentTime = 0;
   #playbackRate = 1;
+  #preload: '' | 'none' | 'metadata' | 'auto' | null = 'metadata';
+
+  get calls() {
+    return this.#calls;
+  }
 
   get src() {
     return this.#src;
@@ -153,6 +158,16 @@ class TrackingVideoHost extends HTMLVideoElementHost {
   override set playbackRate(value: number) {
     this.calls.push(`set:playbackRate:${value}`);
     this.#playbackRate = value;
+  }
+
+  override get preload() {
+    return this.#preload ?? 'metadata';
+  }
+
+  override set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    const preload = value as '' | 'none' | 'metadata' | 'auto' | null;
+    this.calls.push(`set:preload:${preload}`);
+    this.#preload = preload;
   }
 
   destroy() {}
@@ -393,22 +408,22 @@ describe('CustomMediaElement', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      el.setAttribute('preload', 'metadata');
-      expect(target.getAttribute('preload')).toBe('metadata');
+      el.setAttribute('crossorigin', 'anonymous');
+      expect(target.getAttribute('crossorigin')).toBe('anonymous');
 
-      el.removeAttribute('preload');
-      expect(target.hasAttribute('preload')).toBe(false);
+      el.removeAttribute('crossorigin');
+      expect(target.hasAttribute('crossorigin')).toBe(false);
     });
 
     it('updates forwarded attribute value when changed', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      el.setAttribute('preload', 'metadata');
-      expect(target.getAttribute('preload')).toBe('metadata');
+      el.setAttribute('crossorigin', 'anonymous');
+      expect(target.getAttribute('crossorigin')).toBe('anonymous');
 
-      el.setAttribute('preload', 'auto');
-      expect(target.getAttribute('preload')).toBe('auto');
+      el.setAttribute('crossorigin', 'use-credentials');
+      expect(target.getAttribute('crossorigin')).toBe('use-credentials');
     });
   });
 
@@ -448,28 +463,27 @@ describe('CustomMediaElement', () => {
 
     it('string property getter returns the attribute value', () => {
       const el = create(defineVideoElement());
-      el.setAttribute('preload', 'auto');
-      expect(el.preload).toBe('auto');
+      el.setAttribute('controlslist', 'nodownload');
+      expect(el.controlsList).toBe('nodownload');
     });
 
     it('string property getter returns null when attribute is absent', () => {
       const el = create(defineVideoElement());
-      expect(el.preload).toBeNull();
       expect(el.controlsList).toBeNull();
     });
 
     it('string property setter sets the attribute and forwards to target', () => {
       const el = create(defineVideoElement());
-      el.preload = 'metadata';
-      expect(el.getAttribute('preload')).toBe('metadata');
-      expect(el.target!.getAttribute('preload')).toBe('metadata');
+      el.controlsList = 'nodownload';
+      expect(el.getAttribute('controlslist')).toBe('nodownload');
+      expect(el.target!.getAttribute('controlslist')).toBe('nodownload');
     });
 
     it('removing attribute resets string property getter to null', () => {
       const el = create(defineVideoElement());
-      el.preload = 'metadata';
-      el.removeAttribute('preload');
-      expect(el.preload).toBeNull();
+      el.controlsList = 'nodownload';
+      el.removeAttribute('controlslist');
+      expect(el.controlsList).toBeNull();
     });
 
     it('property accessors work for all non-MediaHost video attributes', () => {
@@ -487,9 +501,9 @@ describe('CustomMediaElement', () => {
       expect(el.playsInline).toBe(true);
       expect(el.hasAttribute('playsinline')).toBe(true);
 
-      el.preload = 'metadata';
-      expect(el.preload).toBe('metadata');
-      expect(el.getAttribute('preload')).toBe('metadata');
+      el.controlsList = 'nodownload';
+      expect(el.controlsList).toBe('nodownload');
+      expect(el.getAttribute('controlslist')).toBe('nodownload');
 
       el.crossOrigin = 'anonymous';
       expect(el.crossOrigin).toBe('anonymous');
@@ -583,11 +597,10 @@ describe('CustomMediaElement', () => {
       expect(typeof el.load).toBe('function');
     });
 
-    it('excludes attach, detach, and destroy from delegation', () => {
+    it('excludes destroy from delegation and does not auto-forward the target setter', () => {
       const { Ctor } = defineVideoElement();
-      expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'attach')).toBeUndefined();
-      expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'detach')).toBeUndefined();
       expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'destroy')).toBeUndefined();
+      expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'target')?.set).toBeUndefined();
     });
   });
 
@@ -697,6 +710,27 @@ describe('CustomMediaElement', () => {
       const el = create(defineTrackingVideoElement());
       el.src = 'https://example.com/video.mp4';
       expect(el.src).toBe('https://example.com/video.mp4');
+    });
+
+    it('preload setter delegates through the MediaHost', () => {
+      const el = create(defineTrackingVideoElement());
+      el.preload = 'metadata';
+
+      expect(el.getAttribute('preload')).toBe('metadata');
+      expect(el.preload).toBe('metadata');
+      expect(el.calls).toContain('set:preload:metadata');
+    });
+
+    it('preload attribute removal delegates the empty value to the MediaHost', () => {
+      const el = create(defineTrackingVideoElement());
+      el.preload = 'metadata';
+      el.calls.length = 0;
+
+      el.removeAttribute('preload');
+
+      expect(el.getAttribute('preload')).toBeNull();
+      expect(el.preload).toBe('metadata');
+      expect(el.calls).toEqual(['set:preload:null']);
     });
 
     it('number setter delegates directly to the MediaHost', () => {
