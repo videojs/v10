@@ -159,7 +159,7 @@ function CaptionsTrigger(): ReactNode {
   const captions = useCaptionsOptions();
   if (!captions) return null;
 
-  const { disabled, state } = captions;
+  const { disabled } = captions;
 
   if (!captions.showMenu) {
     return (
@@ -182,16 +182,10 @@ function CaptionsTrigger(): ReactNode {
       <Menu.Trigger
         disabled={disabled}
         render={
-          <Button
-            className={iconState.captions.button}
-            disabled={disabled}
-            data-active={state.subtitlesShowing ? '' : undefined}
-            data-availability="available"
-            aria-label={state.label}
-          >
+          <CaptionsButton className={iconState.captions.button} render={<Button />}>
             <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
             <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-          </Button>
+          </CaptionsButton>
         }
       />
       <Menu.Content className={cn(popup.popover, menu.root)}>

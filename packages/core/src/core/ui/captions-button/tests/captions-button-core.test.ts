@@ -116,5 +116,26 @@ describe('CaptionsButtonCore', () => {
       core.toggle(media);
       expect(media.toggleSubtitles).not.toHaveBeenCalled();
     });
+
+    it('does not toggle when acting as a menu trigger with multiple tracks', () => {
+      const core = new CaptionsButtonCore({ menuTrigger: true });
+      const media = createMediaState({
+        textTrackList: [
+          { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+        ],
+      });
+      core.toggle(media);
+      expect(media.toggleSubtitles).not.toHaveBeenCalled();
+    });
+
+    it('still toggles as a menu trigger with a single track', () => {
+      const core = new CaptionsButtonCore({ menuTrigger: true });
+      const media = createMediaState({
+        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
+      });
+      core.toggle(media);
+      expect(media.toggleSubtitles).toHaveBeenCalled();
+    });
   });
 });

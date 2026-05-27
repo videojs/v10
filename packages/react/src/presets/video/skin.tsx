@@ -153,6 +153,8 @@ function CaptionsTrigger(): ReactNode {
   const captions = useCaptionsOptions();
   if (!captions) return null;
 
+  const { disabled } = captions;
+
   if (!captions.showMenu) {
     return (
       <Tooltip.Root side="top">
@@ -172,6 +174,7 @@ function CaptionsTrigger(): ReactNode {
   return (
     <Menu.Root side="top" align="center">
       <Menu.Trigger
+        disabled={disabled}
         render={
           <CaptionsButton className="media-button--captions" render={<Button />}>
             <CaptionsOffIcon className="media-icon media-icon--captions-off" />
