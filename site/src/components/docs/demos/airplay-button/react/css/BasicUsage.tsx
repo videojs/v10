@@ -20,7 +20,7 @@ export default function BasicUsage() {
             const label =
               state.availability === 'unsupported'
                 ? 'AirPlay not supported'
-                : state.airplayState === 'connected'
+                : state.state === 'connected'
                   ? 'Stop AirPlay'
                   : state.availability === 'unavailable'
                     ? 'No AirPlay devices found'

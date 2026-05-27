@@ -16,7 +16,7 @@ export interface AirplayButtonProps {
 }
 
 export interface AirplayButtonState extends ButtonState {
-  airplayState: RemotePlaybackConnectionState;
+  state: RemotePlaybackConnectionState;
   availability: MediaFeatureAvailability;
 }
 
@@ -27,7 +27,7 @@ export class AirplayButtonCore {
   };
 
   readonly state = createState<AirplayButtonState>({
-    airplayState: 'disconnected',
+    state: 'disconnected',
     availability: 'unsupported',
     label: '',
   });
@@ -53,8 +53,8 @@ export class AirplayButtonCore {
       return label;
     }
 
-    if (state.airplayState === 'connected') return 'Stop AirPlay';
-    if (state.airplayState === 'connecting') return 'Connecting';
+    if (state.state === 'connected') return 'Stop AirPlay';
+    if (state.state === 'connecting') return 'Connecting';
     return 'Start AirPlay';
   }
 
@@ -77,7 +77,7 @@ export class AirplayButtonCore {
     const airplaySupported = supportsWebKitAirplay();
 
     this.state.patch({
-      airplayState: media.remotePlaybackState,
+      state: media.remotePlaybackState,
       availability: airplaySupported ? media.remotePlaybackAvailability : 'unsupported',
     });
     this.state.patch({ label: this.getLabel(this.state.current) });

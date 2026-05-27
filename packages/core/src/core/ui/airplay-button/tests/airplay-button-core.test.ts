@@ -27,7 +27,7 @@ function createMediaState(overrides: Partial<MediaRemotePlaybackState> = {}): Me
 
 function createState(overrides: Partial<AirplayButtonState> = {}): AirplayButtonState {
   return {
-    airplayState: 'disconnected',
+    state: 'disconnected',
     availability: 'available',
     label: '',
     ...overrides,
@@ -39,14 +39,14 @@ describe('AirplayButtonCore', () => {
   afterEach(() => stubWebKit(false));
 
   describe('getState', () => {
-    it('projects airplayState and availability', () => {
+    it('projects state and availability', () => {
       const core = new AirplayButtonCore();
       const media = createMediaState({ remotePlaybackState: 'connected' });
       core.setMedia(media);
-      const state = core.getState();
+      const result = core.getState();
 
-      expect(state.airplayState).toBe('connected');
-      expect(state.availability).toBe('available');
+      expect(result.state).toBe('connected');
+      expect(result.availability).toBe('available');
     });
 
     it('reflects unsupported availability', () => {
@@ -60,9 +60,9 @@ describe('AirplayButtonCore', () => {
     it('reflects connecting state', () => {
       const core = new AirplayButtonCore();
       core.setMedia(createMediaState({ remotePlaybackState: 'connecting' }));
-      const state = core.getState();
+      const result = core.getState();
 
-      expect(state.airplayState).toBe('connecting');
+      expect(result.state).toBe('connecting');
     });
 
     it('reports unsupported outside WebKit', () => {
@@ -78,17 +78,17 @@ describe('AirplayButtonCore', () => {
   describe('getLabel', () => {
     it('returns Start AirPlay when disconnected', () => {
       const core = new AirplayButtonCore();
-      expect(core.getLabel(createState({ airplayState: 'disconnected' }))).toBe('Start AirPlay');
+      expect(core.getLabel(createState({ state: 'disconnected' }))).toBe('Start AirPlay');
     });
 
     it('returns Stop AirPlay when connected', () => {
       const core = new AirplayButtonCore();
-      expect(core.getLabel(createState({ airplayState: 'connected' }))).toBe('Stop AirPlay');
+      expect(core.getLabel(createState({ state: 'connected' }))).toBe('Stop AirPlay');
     });
 
     it('returns Connecting when connecting', () => {
       const core = new AirplayButtonCore();
-      expect(core.getLabel(createState({ airplayState: 'connecting' }))).toBe('Connecting');
+      expect(core.getLabel(createState({ state: 'connecting' }))).toBe('Connecting');
     });
 
     it('returns custom string label', () => {
@@ -98,9 +98,9 @@ describe('AirplayButtonCore', () => {
 
     it('returns custom function label', () => {
       const core = new AirplayButtonCore({
-        label: (state) => (state.airplayState === 'connected' ? 'Disconnect' : 'Connect'),
+        label: (state) => (state.state === 'connected' ? 'Disconnect' : 'Connect'),
       });
-      expect(core.getLabel(createState({ airplayState: 'connected' }))).toBe('Disconnect');
+      expect(core.getLabel(createState({ state: 'connected' }))).toBe('Disconnect');
     });
   });
 
