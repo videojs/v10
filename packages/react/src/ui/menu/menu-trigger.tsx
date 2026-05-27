@@ -125,7 +125,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
           return;
         }
 
-        menu.triggerProps.onKeyDown?.(event);
+        menu.triggerProps.onKeyDown?.(toUIKeyboardEvent(event));
       },
     };
   }, [disabled, menu.triggerProps]);
