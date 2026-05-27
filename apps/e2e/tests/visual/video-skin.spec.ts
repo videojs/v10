@@ -64,15 +64,11 @@ test.describe('Visual — Captions', () => {
   test('captions enabled', async ({ page, browserName }) => {
     // WebKit doesn't render data:text/vtt subtitle tracks in headless mode
     test.skip(browserName === 'webkit', 'WebKit headless does not render data:text/vtt captions');
-    // Captions button should be available (subtitle track is in the HTML)
-    const captionsBtn = page.locator(SELECTORS.captionsButton).first();
-    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'available', {
-      timeout: 5_000,
-    });
 
-    // Enable captions
-    await captionsBtn.click();
-    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.active, '');
+    await player.showControls();
+    await player.openCaptionsSettings();
+    await expect(page.locator(SELECTORS.activeMenuRadioItems)).toHaveCount(2);
+    await page.locator(SELECTORS.activeMenuRadioItems).nth(1).dispatchEvent('click');
 
     // Play briefly so the caption cue at 0:00 activates, then pause
     await player.play();

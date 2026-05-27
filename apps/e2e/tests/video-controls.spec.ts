@@ -4,8 +4,7 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
-  /** Packaged skins use an inline rate control; CDN + site-ejected previews only expose nested settings menus. */
-  const skipsInlinePlaybackRateMenuTest = path.includes('/cdn-video') || path.includes('/ejected');
+  const usesSettingsMenu = !path.includes('/cdn-video') && !path.includes('/ejected');
   test.describe(`Video Controls — ${name}`, () => {
     test.skip(({ browserName }) => {
       return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
@@ -28,7 +27,11 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
       await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
       await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
       await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
-      await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
+      if (usesSettingsMenu) {
+        await expect(player.settingsButton).toBeAttached();
+      } else {
+        await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
+      }
       await expect(player.duration).not.toHaveText('');
       await player.showControls();
       await expect(player.controls).toBeAttached();
@@ -93,13 +96,12 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
 
     // --- Playback Rate ---
 
-    (skipsInlinePlaybackRateMenuTest ? test.skip : test)('playback rate menu changes selected rate', async () => {
-      const rateBtn = player.playbackRateButton;
-      const initialRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
+    (usesSettingsMenu ? test : test.skip)('playback rate menu changes selected rate', async () => {
+      const initialRate = await player.getPlaybackRate();
 
       await player.selectAlternativePlaybackRate();
 
-      await expect.poll(async () => rateBtn.getAttribute(DATA_ATTRS.rate)).not.toBe(initialRate);
+      await expect.poll(async () => player.getPlaybackRate()).not.toBe(initialRate);
     });
 
     // --- Poster ---

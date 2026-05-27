@@ -12,7 +12,6 @@ import {
   inputFeedback,
   menu,
   overlay,
-  playbackRate,
   popup,
   poster,
   preview,
@@ -33,6 +32,7 @@ import {
   ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
+  GearIcon,
   PauseIcon,
   PipEnterIcon,
   PipExitIcon,
@@ -46,7 +46,6 @@ import {
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
@@ -59,7 +58,6 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
@@ -156,6 +154,10 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
+  return <ChevronIcon className={cn(icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+}
+
 function PlaybackRateRadioGroup(): ReactNode {
   const rateState = usePlaybackRateOptions();
   if (!rateState) return null;
@@ -176,21 +178,9 @@ function PlaybackRateRadioGroup(): ReactNode {
   );
 }
 
-function PlaybackRateTrigger(): ReactNode {
-  const rateState = usePlaybackRateOptions();
-  if (!rateState) return null;
-
-  return (
-    <Menu.Trigger
-      disabled={rateState.disabled}
-      render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />}
-    />
-  );
-}
-
 function CaptionsRadioGroup(): ReactNode {
   const captions = useCaptionsOptions();
-  if (!captions?.showMenu) return null;
+  if (!captions) return null;
 
   const { options, setValue, value } = captions;
 
@@ -208,41 +198,93 @@ function CaptionsRadioGroup(): ReactNode {
   );
 }
 
-function CaptionsTrigger(): ReactNode {
+function PlaybackRateSettingsSubmenu(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  if (!rateState) return null;
+
+  const { options, value } = rateState;
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? '';
+
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        className={cn(menu.item, 'media-menu__item--submenu')}
+        render={(props) => (
+          <div {...props}>
+            <span>Speed</span>
+            <span className={menu.hint}>
+              <span className={menu.hintLabel}>{selectedLabel}</span>
+              <MenuChevron />
+            </span>
+          </div>
+        )}
+      />
+      <Menu.Content className={menu.submenuPanel}>
+        <Menu.Back className={menu.back}>
+          <MenuChevron flipped />
+          Speed
+        </Menu.Back>
+        <PlaybackRateRadioGroup />
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
+function CaptionsSettingsSubmenu(): ReactNode {
   const captions = useCaptionsOptions();
-  if (!captions) return null;
+  if (!captions || captions.state.tracks.length === 0) return null;
 
-  const { disabled } = captions;
+  const { options, value } = captions;
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? 'Off';
 
-  if (!captions.showMenu) {
-    return (
-      <Tooltip.Root side="top">
-        <Tooltip.Trigger
-          render={
-            <CaptionsButton className={iconState.captions.button} render={<Button />}>
-              <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-              <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-            </CaptionsButton>
-          }
-        />
-        <Tooltip.Popup className={cn(popup.tooltip)} />
-      </Tooltip.Root>
-    );
-  }
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        className={cn(menu.item, 'media-menu__item--submenu')}
+        render={(props) => (
+          <div {...props}>
+            <span>Captions</span>
+            <span className={menu.hint}>
+              <span className={menu.hintLabel}>{selectedLabel}</span>
+              <MenuChevron />
+            </span>
+          </div>
+        )}
+      />
+      <Menu.Content className={menu.submenuPanel}>
+        <Menu.Back className={menu.back}>
+          <MenuChevron flipped />
+          Captions
+        </Menu.Back>
+        <CaptionsRadioGroup />
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
+function SettingsMenu(): ReactNode {
+  const rateState = usePlaybackRateOptions();
+  const captions = useCaptionsOptions();
+  const hasCaptions = captions !== null && captions.state.tracks.length > 0;
+
+  if (!rateState && !hasCaptions) return null;
 
   return (
     <Menu.Root side="top" align="center">
       <Menu.Trigger
-        disabled={disabled}
-        render={
-          <CaptionsButton className={iconState.captions.button} render={<Button />}>
-            <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-            <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-          </CaptionsButton>
-        }
-      />
-      <Menu.Content className={cn(popup.popover, menu.root)}>
-        <CaptionsRadioGroup />
+        aria-label="Settings"
+        className="media-button--settings"
+        render={<Button className={cn(button.icon, menu.settingsIcon)} />}
+      >
+        <GearIcon className={cn(icon, 'media-icon--settings')} />
+      </Menu.Trigger>
+      <Menu.Content className={menu.settings}>
+        <Menu.View className={menu.rootView}>
+          <div className={menu.group}>
+            <PlaybackRateSettingsSubmenu />
+            <CaptionsSettingsSubmenu />
+          </div>
+        </Menu.View>
       </Menu.Content>
     </Menu.Root>
   );
@@ -355,16 +397,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           </div>
 
           <div className={buttonGroupEnd}>
-            <Menu.Root side="top" align="center">
-              <PlaybackRateTrigger />
-              <Menu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateRadioGroup />
-              </Menu.Content>
-            </Menu.Root>
-
             <VolumePopover />
 
-            <CaptionsTrigger />
+            <SettingsMenu />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

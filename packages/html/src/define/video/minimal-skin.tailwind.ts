@@ -13,7 +13,6 @@ import {
   inputFeedback,
   menu,
   overlay,
-  playbackRate,
   popup,
   poster,
   preview,
@@ -111,21 +110,6 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroupEnd}">
-            <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
-            </media-playback-rate-button>
-            <media-menu id="playback-rate-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
-              <media-playback-rate-radio-group class="${menu.group}">
-                <template>
-                  <media-menu-radio-item class="${menu.item}">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: icon })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-radio-group>
-            </media-menu>
-
             <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
@@ -140,11 +124,46 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
-                ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
-                ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
-              </media-captions-button>
-              <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root, 'media-menu--captions')}">
+
+            <button commandfor="settings-menu" aria-label="Settings" class="${cn(button.base, button.subtle, button.icon, 'media-button--settings')}">
+              ${renderIcon('gear', { class: cn(icon, 'media-icon--settings') })}
+            </button>
+            <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
+              <media-menu-view class="${menu.rootView}">
+                <div class="${menu.group}">
+                  <media-menu-item commandfor="settings-speed-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    <span>Speed</span>
+                    ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                  </media-menu-item>
+                  <media-menu-item commandfor="settings-captions-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    <span>Captions</span>
+                    ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                  </media-menu-item>
+                </div>
+              </media-menu-view>
+
+              <media-menu id="settings-speed-menu" class="${menu.submenuPanel}">
+                <media-menu-back class="${menu.back}">
+                  ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                  Speed
+                </media-menu-back>
+                <media-playback-rate-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: icon })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-playback-rate-radio-group>
+              </media-menu>
+
+              <media-menu id="settings-captions-menu" class="${menu.submenuPanel}">
+                <media-menu-back class="${menu.back}">
+                  ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                  Captions
+                </media-menu-back>
                 <media-captions-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">
@@ -156,7 +175,8 @@ function getTemplateHTML() {
                   </template>
                 </media-captions-radio-group>
               </media-menu>
-              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+            </media-menu>
+
               <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
                 ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
