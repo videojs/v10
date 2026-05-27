@@ -7,7 +7,7 @@
  * not in adapter contract).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleHlsAudioOnlyMediaElement } from '../adapter-audio-only';
+import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter-audio-only';
 
 describe('SimpleHlsAudioOnlyMediaElement', () => {
   beforeEach(() => {
@@ -72,30 +72,30 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // attach / detach
+  // target — media element lifecycle (reuses the same engine)
   // ---------------------------------------------------------------------------
-  describe('attach / detach', () => {
+  describe('target', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       expect(media.engine).not.toBeNull();
     });
 
-    it('reuses the same engine instance across attach calls', () => {
+    it('reuses the same engine instance across target assignments', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el1 = document.createElement('video');
-      const el2 = document.createElement('video');
-      media.attach(el1);
+      const el1 = document.createElement('audio');
+      const el2 = document.createElement('audio');
+      media.target = el1;
       const engineAfterFirstAttach = media.engine;
-      media.attach(el2);
+      media.target = el2;
       expect(media.engine).toBe(engineAfterFirstAttach);
     });
 
-    it('reuses the same engine instance across attach/detach cycles', () => {
+    it('reuses the same engine instance across target attach/detach cycles', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('audio');
       const engine = media.engine;
-      media.detach();
-      media.attach(document.createElement('video'));
+      media.target = null;
+      media.target = document.createElement('audio');
       expect(media.engine).toBe(engine);
     });
 
@@ -116,56 +116,85 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
 
     it('re-attaches the media element to the new engine when src changes', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
+      const el = document.createElement('audio');
+      media.target = el;
       media.src = 'https://example.com/v1.m3u8';
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
-    it('sets mediaElement in owners when attached', () => {
+    it('sets mediaElement on engine context when target is assigned', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
+      const el = document.createElement('audio');
+      media.target = el;
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
-    it('clears mediaElement in owners when detached', () => {
+    it('clears mediaElement on engine context when target is cleared', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      media.attach(document.createElement('video'));
-      media.detach();
+      media.target = document.createElement('audio');
+      media.target = null;
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
     });
 
-    it('updates mediaElement when re-attached to a different element', () => {
+    it('updates mediaElement when target is reassigned to a different element', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el1 = document.createElement('video');
-      const el2 = document.createElement('video');
-      media.attach(el1);
-      media.attach(el2);
+      const el1 = document.createElement('audio');
+      const el2 = document.createElement('audio');
+      media.target = el1;
+      media.target = el2;
       expect(media.engine.context.mediaElement.get()).toBe(el2);
     });
 
-    it('preserves src across attach/detach cycles', () => {
+    it('preserves src across target attach/detach cycles', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      media.attach(document.createElement('video'));
-      media.detach();
+      media.target = document.createElement('audio');
+      media.target = null;
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
-    it('src set before attach is reflected in engine state', () => {
+    it('src set before target is reflected in engine state', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       media.src = 'https://example.com/v.m3u8';
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('audio');
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
-    it('detach does not destroy the engine', () => {
+    it('clearing target does not destroy the engine', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('audio');
       const spy = vi.spyOn(media.engine, 'destroy');
-      media.detach();
+      media.target = null;
       expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('reads back the most recently assigned target', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      const el = document.createElement('audio');
+      media.target = el;
+      expect(media.target).toBe(el);
+    });
+
+    it('forwards target to a base class that defines its own accessor', () => {
+      // Simulate a base like HTMLAudioElementHost / MediaLayer that exposes its
+      // own target accessor — the mixin should delegate to it so the layer
+      // chain stays in sync.
+      class TargetBase {
+        baseTarget: HTMLMediaElement | null = null;
+        get target(): HTMLMediaElement | null {
+          return this.baseTarget;
+        }
+        set target(value: HTMLMediaElement | null) {
+          this.baseTarget = value;
+        }
+      }
+      const Composed = SimpleHlsAudioOnlyMediaMixin(TargetBase);
+      const media = new Composed();
+      const el = document.createElement('audio');
+      media.target = el;
+      expect((media as unknown as TargetBase).baseTarget).toBe(el);
+      expect(media.target).toBe(el);
+      expect(media.engine.context.mediaElement.get()).toBe(el);
     });
   });
 
@@ -175,7 +204,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   describe('play()', () => {
     it('returns a Promise', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('audio');
       const result = media.play();
       expect(result).toBeInstanceOf(Promise);
       result.catch(() => {});
@@ -183,15 +212,15 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
 
     it('sets loadActivated on engine state when called', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      media.attach(document.createElement('video'));
+      media.target = document.createElement('audio');
       media.play().catch(() => {});
       expect(media.engine.state.loadActivated.get()).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
+      const el = document.createElement('audio');
+      media.target = el;
       media.src = 'https://example.com/v.m3u8';
 
       let playCallCount = 0;
@@ -214,8 +243,8 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
 
     it('re-throws when play() rejects and no adapter src is set', async () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
+      const el = document.createElement('audio');
+      media.target = el;
 
       const err = new Error('autoplay policy');
       el.play = () => Promise.reject(err);
@@ -263,6 +292,13 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it('clears the target', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.target = document.createElement('audio');
+      media.destroy();
+      expect(media.target).toBeNull();
     });
   });
 });
