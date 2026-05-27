@@ -1,6 +1,7 @@
-import { MediaTracksMixin } from '../../../core/media/media-tracks';
+import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../html-video-element-host';
+import { MediaTracksLayer } from '../media-tracks-layer';
 import { nativeHlsErrors } from './errors';
 import { nativeHlsLive } from './live';
 import { nativeHlsStreamType } from './stream-type';
@@ -22,13 +23,14 @@ export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
-const NativeHlsMediaBase = MediaTracksMixin(HTMLVideoElementHost);
-export class NativeHlsMedia extends NativeHlsMediaBase implements NativeHlsMediaProps {
+export class NativeHlsMedia extends HTMLVideoElementHost implements NativeHlsMediaProps {
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
   constructor() {
     super();
+    addLayer(this, new MediaTracksLayer());
+
     nativeHlsErrors().install(this);
     nativeHlsStreamType().install(this);
     nativeHlsLive().install(this);

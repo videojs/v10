@@ -1,6 +1,5 @@
 import { shallowEqual } from '@videojs/utils/object';
 import HlsJs from 'hls.js';
-import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import { type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { type HlsJsConfig, HlsJsMedia } from '../hls-js';
@@ -35,8 +34,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
 const M3U8_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
 const MP4_CONTENT_TYPE = 'video/mp4';
 
-const HlsMediaBase = MediaTracksMixin(HTMLVideoElementHost<HlsJs>);
-export class HlsMedia extends HlsMediaBase implements HlsMediaProps {
+export class HlsMedia extends HTMLVideoElementHost<HlsJs> implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #pendingLoad: Promise<void> | null = null;
   #prevEngineKey: EngineKey | null = null;

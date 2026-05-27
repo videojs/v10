@@ -1,6 +1,7 @@
 import HlsJs, { type HlsConfig as HlsJsConfig } from 'hls.js';
-import { MediaTracksMixin } from '../../../core/media/media-tracks';
+import { addLayer } from '../../../core/media/media-layer';
 import { HTMLVideoElementHost } from '../html-video-element-host';
+import { MediaTracksLayer } from '../media-tracks-layer';
 import { hlsJsErrors } from './errors';
 import { hlsJsLive } from './live';
 import { hlsJsMediaTracks } from './media-tracks';
@@ -25,13 +26,14 @@ export interface HlsJsMediaParams {
   config?: Partial<HlsJsConfig>;
 }
 
-const HlsJsMediaBase = MediaTracksMixin(HTMLVideoElementHost<HlsJs>);
-export class HlsJsMedia extends HlsJsMediaBase {
+export class HlsJsMedia extends HTMLVideoElementHost<HlsJs> {
   #engine: HlsJs | null;
 
   constructor(params: HlsJsMediaParams = {}) {
     super();
     this.#engine = new HlsJs({ ...defaultHlsJsConfig, ...params.config });
+
+    addLayer(this, new MediaTracksLayer());
 
     hlsJsErrors().install(this);
     hlsJsStreamType().install(this);

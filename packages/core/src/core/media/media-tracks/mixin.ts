@@ -1,3 +1,4 @@
+import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
 import { AudioRenditionList } from './audio-rendition-list';
 import { AudioTrack } from './audio-track';
 import { AudioTrackList, addAudioTrack, removeAudioTrack } from './audio-track-list';
@@ -18,21 +19,16 @@ interface MediaTracks {
   audioRenditions: AudioRenditionList;
 }
 
-type Constructor<Instance = object> = {
-  new (...args: any[]): Instance;
-  prototype: Instance;
-};
+export type WithMediaTracks<Base extends AnyConstructor<any>> = MixinReturn<Base, MediaTracks>;
 
-export type WithMediaTracks<Base extends Constructor> = Base & Constructor<InstanceType<Base> & MediaTracks>;
-
-const HTMLMediaElementConstructor = (globalThis as { HTMLMediaElement?: Constructor<HTMLMediaElement> })
+const HTMLMediaElementConstructor = (globalThis as { HTMLMediaElement?: AnyConstructor<HTMLMediaElement> })
   .HTMLMediaElement;
 const nativeVideoTracksFn = getBaseMediaTracksFn(HTMLMediaElementConstructor, 'video');
 const nativeAudioTracksFn = getBaseMediaTracksFn(HTMLMediaElementConstructor, 'audio');
 
 // Safari supports native media tracks, but native implementations cannot
 // reliably represent manifest-derived MSE tracks or manually-added tracks.
-export function MediaTracksMixin<Base extends Constructor>(MediaElementClass: Base): WithMediaTracks<Base> {
+export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementClass: Base): WithMediaTracks<Base> {
   if (!MediaElementClass?.prototype) return MediaElementClass as WithMediaTracks<Base>;
 
   const prototype = MediaElementClass.prototype as Record<string, any>;
