@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { WebKitDocument, WebKitVideoElement } from '../../presentation/types';
-import { HTMLVideoElementHost } from '../video-host';
+import { HTMLVideoElementHost } from '../html-video-element-host';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -31,7 +31,7 @@ describe('HTMLVideoElementHost', () => {
     it('returns true when target is the PiP element', () => {
       const video = document.createElement('video');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'pictureInPictureElement', {
         value: video,
@@ -53,11 +53,11 @@ describe('HTMLVideoElementHost', () => {
         configurable: true,
       });
 
-      host.attach(a);
+      host.target = a;
       expect(host.isPictureInPicture).toBe(false);
 
-      host.detach();
-      host.attach(b);
+      host.target = null;
+      host.target = b;
       expect(host.isPictureInPicture).toBe(true);
     });
 
@@ -66,7 +66,7 @@ describe('HTMLVideoElementHost', () => {
       video.webkitPresentationMode = 'picture-in-picture';
 
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       expect(host.isPictureInPicture).toBe(true);
     });
@@ -76,7 +76,7 @@ describe('HTMLVideoElementHost', () => {
       video.webkitPresentationMode = 'inline';
 
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       expect(host.isPictureInPicture).toBe(false);
     });
@@ -91,7 +91,7 @@ describe('HTMLVideoElementHost', () => {
     it('returns true when document.fullscreenElement matches the target', () => {
       const video = document.createElement('video');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'fullscreenElement', {
         value: video,
@@ -105,7 +105,7 @@ describe('HTMLVideoElementHost', () => {
     it('returns true when webkitFullscreenElement matches the target', () => {
       const video = document.createElement('video');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document as WebKitDocument, 'webkitFullscreenElement', {
         value: video,
@@ -120,7 +120,7 @@ describe('HTMLVideoElementHost', () => {
       const video = document.createElement('video');
       const other = document.createElement('div');
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       Object.defineProperty(document, 'fullscreenElement', {
         value: other,
@@ -136,7 +136,7 @@ describe('HTMLVideoElementHost', () => {
       video.webkitPresentationMode = 'fullscreen';
 
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       expect(host.isFullscreen).toBe(true);
     });
@@ -146,7 +146,7 @@ describe('HTMLVideoElementHost', () => {
       video.webkitPresentationMode = 'inline';
 
       const host = new HTMLVideoElementHost();
-      host.attach(video);
+      host.target = video;
 
       expect(host.isFullscreen).toBe(false);
     });

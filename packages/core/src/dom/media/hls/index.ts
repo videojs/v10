@@ -1,250 +1,175 @@
 import { shallowEqual } from '@videojs/utils/object';
-import Hls from 'hls.js';
-import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
+import HlsJs from 'hls.js';
+import { type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
+import { type HlsJsConfig, HlsJsMedia } from '../hls-js';
+import { HTMLVideoElementHost } from '../html-video-element-host';
 import { NativeHlsMedia } from '../native-hls';
-import { HTMLVideoElementHost } from '../video-host';
-import { HlsJsMedia } from './hlsjs';
 
-export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+interface EngineKey {
+  engine: 'mse' | 'native';
+  hlsJs: Partial<HlsJsConfig> | undefined;
+}
 
-export { Hls };
-
-export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
-export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
-export type StreamType = MediaStreamType;
-
-export const PlaybackTypes = {
-  MSE: 'mse',
-  NATIVE: 'native',
-};
-
-export const SourceTypes = {
-  M3U8: 'application/vnd.apple.mpegurl',
-  MP4: 'video/mp4',
-};
-
-export const StreamTypes = MediaStreamTypes;
+export interface HlsMediaConfig {
+  preferPlayback: 'mse' | 'native';
+  contentType?: string;
+  hlsJs?: Partial<HlsJsConfig>;
+  // Keeps the typed config assignable to the base `config: Record<string, unknown>`.
+  [key: string]: unknown;
+}
 
 export interface HlsMediaProps {
   src: string;
-  type: SourceType | undefined;
-  preferPlayback: PlaybackType | undefined;
-  config: Record<string, any>;
-  debug: boolean;
-  preload: PreloadType;
-  streamType: StreamType;
+  preload: MediaPreloadType;
+  config: HlsMediaConfig;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
-  type: undefined,
-  preferPlayback: 'mse',
-  config: {},
-  debug: false,
   preload: 'metadata',
-  streamType: MediaStreamTypes.UNKNOWN,
+  config: { preferPlayback: 'mse' },
 };
+
+const M3U8_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
+const MP4_CONTENT_TYPE = 'video/mp4';
 
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
-  #src = hlsMediaDefaultProps.src;
-  #type = hlsMediaDefaultProps.type;
-  #preferPlayback = hlsMediaDefaultProps.preferPlayback;
-  #config = { ...hlsMediaDefaultProps.config };
-  #debug = hlsMediaDefaultProps.debug;
-  #preload = hlsMediaDefaultProps.preload;
-  #streamType: StreamType = hlsMediaDefaultProps.streamType;
-  #isUserStreamType = false;
-  #loadRequested?: Promise<void> | null;
-  #prevEngineProps?: Record<string, any> | null;
+  #pendingLoad: Promise<void> | null = null;
+  #prevEngineKey: EngineKey | null = null;
 
-  get engine() {
+  #config = { ...hlsMediaDefaultProps.config };
+  #userStreamType: MediaStreamType | null = null;
+  #src = hlsMediaDefaultProps.src;
+  #preload = hlsMediaDefaultProps.preload;
+
+  override get target() {
+    return super.target;
+  }
+
+  override set target(value: HTMLVideoElement | null) {
+    super.target = value;
+    if (this.#delegate) this.#delegate.target = value;
+    if (value) this.#requestLoad();
+  }
+
+  override get engine() {
     return this.#delegate?.engine ?? null;
   }
 
-  get error() {
-    return this.#delegate?.error ?? null;
-  }
-
-  get src() {
-    return this.#src;
-  }
-
-  set src(src: string) {
-    this.#src = src;
-    this.#requestLoad();
-  }
-
-  /** Explicit source type. When unset, inferred from the source URL extension. */
-  get type() {
-    return this.#type ?? inferSourceType(this.src);
-  }
-
-  set type(value: SourceType | undefined) {
-    this.#type = value;
-    this.#requestLoad();
-  }
-
-  /** Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS. */
-  get preferPlayback() {
-    return this.#preferPlayback;
-  }
-
-  set preferPlayback(value) {
-    this.#preferPlayback = value;
-    this.#requestLoad();
-  }
-
-  get config() {
+  override get config() {
     return this.#config;
   }
 
-  set config(config) {
-    this.#config = config;
+  override set config(value: HlsMediaConfig) {
+    this.#config = { ...value };
     this.#requestLoad();
   }
 
-  get debug() {
-    return this.#debug;
+  override get streamType() {
+    return this.#delegate?.streamType ?? this.#userStreamType ?? MediaStreamTypes.UNKNOWN;
   }
 
-  set debug(debug) {
-    this.#debug = debug;
-    this.#requestLoad();
-  }
-
-  /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
-  get preload() {
-    return this.#preload;
-  }
-
-  set preload(value) {
-    this.#preload = value;
-    if (this.#delegate) {
-      this.#delegate.preload = value;
-    }
-  }
-
-  /** Current stream type (`'on-demand'` / `'live'` / `'unknown'`). */
-  get streamType(): StreamType {
-    return this.#delegate?.streamType ?? this.#streamType;
-  }
-
-  set streamType(value: StreamType) {
-    this.#isUserStreamType = value !== StreamTypes.UNKNOWN;
+  override set streamType(value: MediaStreamType) {
+    this.#userStreamType = value === MediaStreamTypes.UNKNOWN ? null : value;
 
     if (this.#delegate) {
       this.#delegate.streamType = value;
-      this.#streamType = this.#delegate.streamType;
       return;
     }
 
-    if (this.#streamType === value) return;
-    this.#streamType = value;
+    // No delegate to bridge `streamtypechange` — dispatch manually.
     this.dispatchEvent(new Event('streamtypechange'));
   }
 
-  /**
-   * Presentation time marking the start of the Live Edge Window.
-   *
-   * Derived from the delegate on every read; `NaN` when no delegate is
-   * attached or the stream is not live.
-   */
-  get liveEdgeStart() {
+  override get liveEdgeStart() {
     return this.#delegate?.liveEdgeStart ?? Number.NaN;
   }
 
-  /**
-   * Seekable range size for live content. `0` for standard live, `Infinity`
-   * for DVR, `NaN` for on-demand or unknown. Fires `targetlivewindowchange`
-   * when the value changes (bridged from the delegate).
-   */
-  get targetLiveWindow() {
+  override get targetLiveWindow() {
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
-  attach(target: HTMLVideoElement) {
-    super.attach(target);
-    this.#delegate?.attach(target);
+  override get src() {
+    return this.#src;
   }
 
-  detach() {
-    this.#delegate?.detach();
-    super.detach();
+  override set src(value: string) {
+    this.#src = value;
+    this.#requestLoad();
   }
 
-  destroy() {
-    this.detach();
-    this.#engineDestroy();
+  override get preload() {
+    return this.#preload;
+  }
+
+  override set preload(value: MediaPreloadType) {
+    this.#preload = value;
+    if (this.#delegate) this.#delegate.preload = value;
+  }
+
+  override get error() {
+    return this.#delegate?.error ?? null;
   }
 
   load() {
-    this.#loadRequested = null;
+    this.#pendingLoad = null;
 
-    if (this.#shouldEngineUpdate(this.#engineProps())) {
-      this.#engineDestroy();
-      this.#prevEngineProps = this.#engineProps();
-
-      const useMse =
-        Hls.isSupported() && this.type === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
-
-      this.#delegate = useMse
-        ? new HlsJsMedia({ config: { ...this.config, debug: this.debug } })
-        : new NativeHlsMedia();
+    const nextKey = this.#engineKey();
+    if (!shallowEqual(this.#prevEngineKey, nextKey)) {
+      this.#destroyDelegate();
+      this.#prevEngineKey = nextKey;
+      this.#delegate =
+        nextKey.engine === 'mse'
+          ? new HlsJsMedia(this.#config.hlsJs ? { config: this.#config.hlsJs } : {})
+          : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
-      // Apply user `streamType` before `attach()` so native delegates do not run
-      // synchronous duration-based detection first and emit a transient value.
-      if (this.#isUserStreamType) {
-        this.#delegate.streamType = this.#streamType;
-      }
+      // Apply the user override before attaching so the delegate's stream-type
+      // extension does not emit a transient detected value first.
+      if (this.#userStreamType) this.#delegate.streamType = this.#userStreamType;
 
-      this.#delegate.preload = this.preload;
-
-      if (this.target) {
-        this.#delegate.attach(this.target);
-      }
+      this.#delegate.preload = this.#preload;
+      if (this.target) this.#delegate.target = this.target;
     }
 
-    if (this.#delegate) {
-      this.#delegate.src = this.#src;
-    }
+    if (this.#delegate) this.#delegate.src = this.#src;
+  }
+
+  destroy() {
+    super.destroy();
+    this.#destroyDelegate();
   }
 
   async #requestLoad() {
-    if (this.#loadRequested) return;
-    await (this.#loadRequested = Promise.resolve());
-    this.#loadRequested = null;
-    this.load();
+    if (this.#pendingLoad) return;
+    this.#pendingLoad = Promise.resolve();
+    await this.#pendingLoad;
+    if (this.#pendingLoad === null) return;
+    // Start from the root so layers above (e.g. MuxDataLayer) run their load() too.
+    this.root.load();
   }
 
-  #shouldEngineUpdate(nextEngineProps: Record<string, any>) {
-    return !shallowEqual(this.#prevEngineProps, nextEngineProps);
-  }
-
-  #engineProps() {
+  #engineKey(): EngineKey {
+    const contentType = this.#config.contentType ?? inferContentType(this.#src);
+    const useMse = this.#config.preferPlayback !== 'native' && contentType === M3U8_CONTENT_TYPE && HlsJs.isSupported();
     return {
-      config: this.config,
-      debug: this.debug,
-      preferPlayback: this.preferPlayback,
-      type: this.type,
+      engine: useMse ? 'mse' : 'native',
+      hlsJs: useMse ? this.#config.hlsJs : undefined,
     };
   }
 
-  #engineDestroy() {
-    this.#delegate?.destroy();
+  #destroyDelegate() {
+    if (!this.#delegate) return;
+    this.#delegate.destroy();
     this.#delegate = null;
-    this.#prevEngineProps = null;
-    this.#loadRequested = null;
-    // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
-    if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
+    this.#prevEngineKey = null;
   }
 }
 
-function inferSourceType(src: string): SourceType {
+function inferContentType(src: string) {
   const path = src.split(/[?#]/)[0] ?? '';
-  if (path.endsWith('.mp4')) return SourceTypes.MP4;
-  return SourceTypes.M3U8;
+  return path.endsWith('.mp4') ? MP4_CONTENT_TYPE : M3U8_CONTENT_TYPE;
 }

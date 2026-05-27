@@ -25,9 +25,6 @@ type NavbarProps = {
   onPreloadChange: (value: PreloadValue) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
-  isSimpleHlsVideo: boolean;
-  isMuxVideo: boolean;
-  isMuxAudio: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -75,9 +72,6 @@ export function Navbar({
   onPreloadChange,
   availableSources,
   isBackgroundVideo,
-  isSimpleHlsVideo,
-  isMuxVideo,
-  isMuxAudio,
   platforms,
   stylings,
   presets,
@@ -129,13 +123,7 @@ export function Navbar({
           label="Source"
           value={source}
           onChange={onSourceChange}
-          options={availableSources
-            .filter((id) => {
-              if (isSimpleHlsVideo) return sources[id].subType === 'mp4';
-              if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
-              return true;
-            })
-            .map((id) => ({ value: id, label: sources[id].label }))}
+          options={availableSources.map((id) => ({ value: id, label: sources[id].label }))}
           disabled={isBackgroundVideo}
         />
       </div>

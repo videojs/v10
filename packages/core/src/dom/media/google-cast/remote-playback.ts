@@ -1,22 +1,42 @@
-import type { GoogleCastProvider } from './google-cast-provider';
+import type { GoogleCastLayer } from './google-cast-layer';
 import { InvalidStateError, NotFoundError } from './utils';
 
 export type RemotePlaybackState = 'disconnected' | 'connecting' | 'connected';
 
 type AvailabilityCallback = (available: boolean) => void;
 
+export type RemotePlaybackHooks = {
+  setState(next: RemotePlaybackState): void;
+  setAvailable(available: boolean): void;
+};
+
 let callbackIdCount = 0;
 
+/**
+ * Implementation of the W3C [`RemotePlayback`](https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback)
+ * interface backed by Google Cast.
+ *
+ * Surfaced via `host.remote` while the {@link GoogleCastLayer} is in the layer
+ * chain. The public API must strictly conform to the W3C spec:
+ *
+ * - Properties: `state`
+ * - Methods: `watchAvailability`, `cancelWatchAvailability`, `prompt`
+ * - Events: `connecting`, `connect`, `disconnect`
+ *
+ * Internal state mutations are pushed by {@link GoogleCastLayer} through
+ * private callbacks registered via `layer.bindHooks(...)` in the constructor —
+ * do not add public methods or properties that aren't part of the spec.
+ */
 export class RemotePlayback extends EventTarget {
-  #provider: GoogleCastProvider;
+  #layer: GoogleCastLayer;
   #state: RemotePlaybackState = 'disconnected';
   #available = false;
   #callbacks = new Map<number, AvailabilityCallback>();
 
-  constructor(provider: GoogleCastProvider) {
+  constructor(layer: GoogleCastLayer) {
     super();
-    this.#provider = provider;
-    provider.bindHooks({
+    this.#layer = layer;
+    layer.bindHooks({
       setState: (next) => this.#setState(next),
       setAvailable: (available) => this.#setAvailable(available),
     });
@@ -30,7 +50,7 @@ export class RemotePlayback extends EventTarget {
     this.#assertEnabled();
     const id = ++callbackIdCount;
     this.#callbacks.set(id, callback);
-    queueMicrotask(() => callback(this.#provider.hasDevicesAvailable()));
+    queueMicrotask(() => callback(this.#layer.hasDevicesAvailable()));
     return id;
   }
 
@@ -49,11 +69,11 @@ export class RemotePlayback extends EventTarget {
 
   async prompt() {
     this.#assertEnabled();
-    await this.#provider.requestCastSession();
+    await this.#layer.requestCastSession();
   }
 
   #assertEnabled() {
-    if (this.#provider.media.disableRemotePlayback) {
+    if (this.#layer.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
   }

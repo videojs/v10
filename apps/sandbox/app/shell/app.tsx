@@ -5,9 +5,11 @@ import {
   DASH_SOURCE_IDS,
   DEFAULT_AUDIO_SOURCE,
   DEFAULT_DASH_SOURCE,
+  DEFAULT_SIMPLE_HLS_SOURCE,
   DEFAULT_SOURCE,
   MP4_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
+  SIMPLE_HLS_SOURCE_IDS,
   SOURCES,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
@@ -92,26 +94,20 @@ export function App() {
     iframeRef.current?.contentWindow?.postMessage({ type: 'preload-change', preload }, '*');
   }, [preload]);
 
-  // Constrain source to MP4 when switching to audio
-  useEffect(() => {
-    if (preset === 'audio' && SOURCES[source].type !== 'mp4') {
-      setSource(DEFAULT_AUDIO_SOURCE);
-    }
-  }, [preset, source, setSource]);
-
-  // Constrain source to DASH when switching to dash-video
-  useEffect(() => {
-    if (preset === 'dash-video' && SOURCES[source].type !== 'dash') {
-      setSource(DEFAULT_DASH_SOURCE);
-    }
-  }, [preset, source, setSource]);
-
-  // Constrain source away from DASH for non-DASH presets
-  useEffect(() => {
-    if (preset !== 'dash-video' && SOURCES[source].type === 'dash') {
-      setSource(DEFAULT_SOURCE);
-    }
-  }, [preset, source, setSource]);
+  // Constrain source to the new preset synchronously so the iframe URL
+  // (captured once on mount) reflects the corrected source.
+  const handlePresetChange = useCallback(
+    (next: Preset) => {
+      setPreset(next);
+      const sourceType = SOURCES[source].type;
+      if (next === 'audio' && sourceType !== 'mp4') setSource(DEFAULT_AUDIO_SOURCE);
+      else if (next === 'dash-video' && sourceType !== 'dash') setSource(DEFAULT_DASH_SOURCE);
+      else if (next === 'simple-hls-video' && !SIMPLE_HLS_SOURCE_IDS.includes(source))
+        setSource(DEFAULT_SIMPLE_HLS_SOURCE);
+      else if (next !== 'dash-video' && sourceType === 'dash') setSource(DEFAULT_SOURCE);
+    },
+    [source]
+  );
 
   // CDN and background video do not have a Tailwind skin variant.
   useEffect(() => {
@@ -121,7 +117,13 @@ export function App() {
   }, [platform, preset, styling]);
 
   const availableSources =
-    preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : NON_DASH_SOURCE_IDS;
+    preset === 'audio'
+      ? MP4_SOURCE_IDS
+      : preset === 'dash-video'
+        ? DASH_SOURCE_IDS
+        : preset === 'simple-hls-video'
+          ? SIMPLE_HLS_SOURCE_IDS
+          : NON_DASH_SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
@@ -133,7 +135,7 @@ export function App() {
         styling={styling}
         onStylingChange={setStyling}
         preset={preset}
-        onPresetChange={setPreset}
+        onPresetChange={handlePresetChange}
         skin={skin}
         onSkinChange={setSkin}
         source={source}
@@ -148,9 +150,6 @@ export function App() {
         onPreloadChange={setPreload}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
-        isSimpleHlsVideo={preset === 'simple-hls-video'}
-        isMuxVideo={preset === 'mux-video'}
-        isMuxAudio={preset === 'mux-audio'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

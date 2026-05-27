@@ -1,25 +1,55 @@
-import { GoogleCastMixin } from '../google-cast';
-import { type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
-import { HlsMedia, type HlsMediaProps, hlsMediaDefaultProps } from '../hls';
-import { MuxDataMediaMixin, type MuxDataMediaProps, muxDataMediaDefaultProps } from './mux-data';
+import { addLayer } from '../../../core/media/media-layer';
+import { googleCast } from '../google-cast';
+import { HlsMedia, type HlsMediaConfig, type HlsMediaProps, hlsMediaDefaultProps } from '../hls';
+import { HTMLAudioElementHost } from '../html-audio-element-host';
+import { HTMLVideoElementHost } from '../html-video-element-host';
+import { muxData } from './mux-data';
 
-export type { GoogleCastMediaProps, HlsMediaProps, MuxDataMediaProps };
+export interface MuxMediaConfig extends HlsMediaConfig {}
 
-export interface MuxMediaProps extends HlsMediaProps, GoogleCastMediaProps, MuxDataMediaProps {}
+export interface MuxMediaProps extends HlsMediaProps {
+  config: MuxMediaConfig;
+}
 
 export const muxMediaDefaultProps: MuxMediaProps = {
   ...hlsMediaDefaultProps,
-  ...googleCastMediaDefaultProps,
-  ...muxDataMediaDefaultProps,
 };
 
-export class MuxVideoMedia extends MuxDataMediaMixin(GoogleCastMixin(HlsMedia)) implements MuxMediaProps {
+export class MuxVideoMedia extends HTMLVideoElementHost implements MuxMediaProps {
   static PLAYER_SOFTWARE_NAME = 'mux-video';
+
+  constructor() {
+    super();
+    addLayer(this, new HlsMedia());
+    googleCast().install(this);
+    // TODO: added debug for testing, remove for production!!
+    muxData({ debug: true }).install(this);
+  }
+
+  override get config(): MuxMediaConfig {
+    return super.config as MuxMediaConfig;
+  }
+
+  override set config(value: MuxMediaConfig) {
+    super.config = value;
+  }
 }
 
-// TODO: HlsMedia extends HTMLVideoElementHost, we should extend
-// HTMLAudioElementHost instead but this would require a HlsMediaMixin,
-// keep it simple for now.
-export class MuxAudioMedia extends MuxDataMediaMixin(GoogleCastMixin(HlsMedia)) implements MuxMediaProps {
+export class MuxAudioMedia extends HTMLAudioElementHost implements MuxMediaProps {
   static PLAYER_SOFTWARE_NAME = 'mux-audio';
+
+  constructor() {
+    super();
+    addLayer(this, new HlsMedia());
+    googleCast().install(this);
+    muxData().install(this);
+  }
+
+  override get config(): MuxMediaConfig {
+    return super.config as MuxMediaConfig;
+  }
+
+  override set config(value: MuxMediaConfig) {
+    super.config = value;
+  }
 }
