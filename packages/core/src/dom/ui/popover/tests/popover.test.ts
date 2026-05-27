@@ -162,6 +162,18 @@ describe('createPopover', () => {
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
 
+    it('does not open on click when trigger is aria-disabled', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const trigger = document.createElement('button');
+      trigger.setAttribute('aria-disabled', 'true');
+      popover.setTriggerElement(trigger);
+
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
+
+      expect(popover.input.current.active).toBe(false);
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
     it('closes on click when open', () => {
       const { popover, onOpenChange } = createTestPopover();
 

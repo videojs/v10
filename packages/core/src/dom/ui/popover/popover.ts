@@ -112,6 +112,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     return canHover();
   }
 
+  function isTriggerDisabled(): boolean {
+    if (!triggerEl) return false;
+    if (triggerEl.hasAttribute('disabled')) return true;
+    return triggerEl.getAttribute('aria-disabled') === 'true';
+  }
+
   // --- Open/close ---
 
   /**
@@ -199,6 +205,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   const triggerProps: PopoverTriggerProps = {
     onClick(event) {
       if (!canToggleOnClick()) return;
+      if (isTriggerDisabled()) return;
 
       // During a close animation (open=true, status=ending), treat
       // the click as a re-open rather than a second close attempt.

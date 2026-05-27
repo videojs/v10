@@ -254,4 +254,14 @@ describe('PlaybackRateButtonElement', () => {
 
     expect(trigger.getAttribute('aria-disabled')).toBe('true');
   });
+
+  it('does not open the linked menu when disabled and clicked', async () => {
+    const { menu, trigger } = setup({ playbackRates: [] });
+
+    await waitForMenu(menu, trigger);
+
+    trigger.click();
+
+    expect(menu.open).toBe(false);
+  });
 });
