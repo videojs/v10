@@ -29,8 +29,17 @@ function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
   });
 }
 
-function createMockTrack(kind: TextTrackKind, mode: TextTrackMode = 'disabled'): TextTrack {
-  return { kind, mode, label: '', language: '' } as TextTrack;
+function createMockTrack(
+  kind: TextTrackKind,
+  mode: TextTrackMode = 'disabled',
+  options: { label?: string; language?: string } = {}
+): TextTrack {
+  return {
+    kind,
+    mode,
+    label: options.label ?? '',
+    language: options.language ?? '',
+  } as TextTrack;
 }
 
 describe('textTrackFeature', () => {
@@ -199,10 +208,8 @@ describe('textTrackFeature', () => {
 
     it('selectSubtitlesTrack() enables one track and disables the others', () => {
       const video = createVideo();
-      const englishTrack = createMockTrack('subtitles', 'disabled');
-      englishTrack.label = 'English';
-      const spanishTrack = createMockTrack('subtitles', 'disabled');
-      spanishTrack.label = 'Spanish';
+      const englishTrack = createMockTrack('subtitles', 'disabled', { label: 'English' });
+      const spanishTrack = createMockTrack('subtitles', 'disabled', { label: 'Spanish' });
       mockTextTracks(video, [englishTrack, spanishTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
