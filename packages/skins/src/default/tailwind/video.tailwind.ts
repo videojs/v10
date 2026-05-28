@@ -18,7 +18,7 @@ import { time as baseTime } from './components/time';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
-    'bg-black',
+    'bg-black overflow-clip',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',

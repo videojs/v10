@@ -55,6 +55,7 @@
   --media-tooltip-boundary-offset: 0.5rem;
   --media-popover-side-offset: 0.5rem;
   --media-popover-boundary-offset: 0.5rem;
+  overflow: clip;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
