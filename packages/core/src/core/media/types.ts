@@ -98,14 +98,22 @@ export interface MediaSourceEvents {
   canplay: EventLike;
   canplaythrough: EventLike;
   loadeddata: EventLike;
+  abort: EventLike;
+  stalled: EventLike;
+  suspend: EventLike;
 }
+
+/** Result of {@link MediaSourceCapability.canPlayType}. */
+export type CanPlayTypeResult = '' | 'maybe' | 'probably';
 
 export interface MediaSourceCapability {
   src: string;
   readonly currentSrc: string;
   readonly readyState: MediaReadyStateValue | number;
   preload: MediaPreloadType;
+  crossOrigin: string | null;
   load(): Promise<void> | void;
+  canPlayType(type: string): CanPlayTypeResult;
 }
 
 // ----------------------------------------
@@ -131,6 +139,7 @@ export interface MediaPlaybackRateEvents {
 
 export interface MediaPlaybackRateCapability {
   playbackRate: number;
+  defaultPlaybackRate: number;
 }
 
 // ----------------------------------------
@@ -150,6 +159,14 @@ export interface MediaBufferEvents {
 export interface MediaBufferCapability {
   readonly buffered: TimeRangeLike;
   readonly seekable: TimeRangeLike;
+}
+
+// ----------------------------------------
+// Played
+// ----------------------------------------
+
+export interface MediaPlayedCapability {
+  readonly played: TimeRangeLike;
 }
 
 // ----------------------------------------
@@ -185,6 +202,13 @@ export interface TextCueListLike {
   getCueById?(id: string): TextCueLike | null;
 }
 
+/**
+ * The kind of text track.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
+ */
+export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
+
 export interface TextTrackLike {
   readonly kind: string;
   readonly label: string;
@@ -211,6 +235,7 @@ export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> 
 
 export interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrackLike;
 }
 
 // ----------------------------------------
@@ -227,8 +252,14 @@ export interface MediaFullscreenCapability {
 // Picture-in-picture
 // ----------------------------------------
 
+export interface MediaPictureInPictureEvents {
+  enterpictureinpicture: EventLike;
+  leavepictureinpicture: EventLike;
+}
+
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
+  disablePictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
   exitPictureInPicture(): Promise<unknown>;
 }
@@ -310,6 +341,45 @@ export interface MediaRemotePlaybackCapability {
 }
 
 // ----------------------------------------
+// Playback options
+// ----------------------------------------
+
+export interface MediaPlaybackOptionsCapability {
+  autoplay: boolean;
+  defaultMuted: boolean;
+  controls: boolean;
+}
+
+// ----------------------------------------
+// Plays inline (video-only)
+// ----------------------------------------
+
+export interface MediaPlaysInlineCapability {
+  playsInline: boolean;
+}
+
+// ----------------------------------------
+// Poster (video-only)
+// ----------------------------------------
+
+export interface MediaPosterCapability {
+  poster: string;
+}
+
+// ----------------------------------------
+// Video dimensions (video-only)
+// ----------------------------------------
+
+export interface MediaVideoDimensionsEvents {
+  resize: EventLike;
+}
+
+export interface MediaVideoDimensionsCapability {
+  readonly videoWidth: number;
+  readonly videoHeight: number;
+}
+
+// ----------------------------------------
 // Config
 // ----------------------------------------
 
@@ -338,7 +408,7 @@ export interface Media<Events extends { [K in keyof Events]: EventLike } = Media
 // ----------------------------------------
 
 export interface MediaFullEvents
-  extends MediaPlaybackEvents,
+  extends MediaEvents,
     MediaPauseEvents,
     MediaSeekEvents,
     MediaSourceEvents,
@@ -350,61 +420,33 @@ export interface MediaFullEvents
     MediaStreamTypeEvents,
     MediaLiveEvents {}
 
-export interface MediaFull
-  extends Media<MediaFullEvents>,
+export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
+  extends Media<Events>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
     MediaVolumeCapability,
     MediaPlaybackRateCapability,
     MediaBufferCapability,
+    MediaPlayedCapability,
     MediaErrorCapability,
     MediaTextTrackCapability,
     MediaStreamTypeCapability,
     MediaLiveCapability,
     MediaRemotePlaybackCapability,
+    MediaPlaybackOptionsCapability,
     MediaConfigCapability {}
 
-export interface VideoEvents
-  extends MediaPlaybackEvents,
-    MediaPauseEvents,
-    MediaSeekEvents,
-    MediaSourceEvents,
-    MediaVolumeEvents,
-    MediaPlaybackRateEvents,
-    MediaBufferEvents,
-    MediaErrorEvents,
-    TextTrackListEvents {}
+export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
-  extends Media<VideoEvents>,
-    MediaPauseCapability,
-    MediaSeekCapability,
-    MediaSourceCapability,
-    MediaVolumeCapability,
-    MediaPlaybackRateCapability,
-    MediaBufferCapability,
-    MediaErrorCapability,
-    MediaTextTrackCapability,
+  extends MediaFull<VideoEvents>,
+    MediaPlaysInlineCapability,
+    MediaPosterCapability,
     MediaFullscreenCapability,
-    MediaPictureInPictureCapability {}
+    MediaPictureInPictureCapability,
+    MediaVideoDimensionsCapability {}
 
-export interface AudioEvents
-  extends MediaPlaybackEvents,
-    MediaPauseEvents,
-    MediaSeekEvents,
-    MediaSourceEvents,
-    MediaVolumeEvents,
-    MediaPlaybackRateEvents,
-    MediaBufferEvents,
-    MediaErrorEvents {}
+export interface AudioEvents extends MediaFullEvents {}
 
-export interface Audio
-  extends Media<AudioEvents>,
-    MediaPauseCapability,
-    MediaSeekCapability,
-    MediaSourceCapability,
-    MediaVolumeCapability,
-    MediaPlaybackRateCapability,
-    MediaBufferCapability,
-    MediaErrorCapability {}
+export interface Audio extends MediaFull<AudioEvents> {}

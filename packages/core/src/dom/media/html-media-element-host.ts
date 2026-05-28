@@ -1,10 +1,11 @@
-import type { EventLike, MediaFullEvents } from '../../core/media/types';
+import type { EventLike, MediaFull, MediaFullEvents } from '../../core/media/types';
 import { HTMLMediaElementLayer } from './html-media-element-layer';
 
 export class HTMLMediaElementHost<
   T extends HTMLMediaElement,
+  Next extends MediaFull = MediaFull,
   Events extends { [K in keyof Events]: EventLike } = MediaFullEvents,
-> extends HTMLMediaElementLayer<Events> {
+> extends HTMLMediaElementLayer<Next, Events> {
   override get target(): T | null {
     return super.target as T | null;
   }
