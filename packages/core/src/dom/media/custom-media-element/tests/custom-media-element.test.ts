@@ -659,18 +659,47 @@ describe('CustomMediaElement', () => {
 
   describe('disconnectedCallback', () => {
     it('calls destroy on the MediaHost when disconnected', () => {
+      const destroySpy = vi.spyOn(TestVideoHost.prototype, 'destroy');
       const el = create(defineVideoElement());
-      expect(el.destroyed).toBe(false);
 
       el.remove();
-      expect(el.destroyed).toBe(true);
+
+      expect(destroySpy).toHaveBeenCalledOnce();
+      destroySpy.mockRestore();
     });
 
     it('does not destroy when keep-alive attribute is set', () => {
+      const destroySpy = vi.spyOn(TestVideoHost.prototype, 'destroy');
       const el = create(defineVideoElement());
       el.setAttribute('keep-alive', '');
 
       el.remove();
+
+      expect(destroySpy).not.toHaveBeenCalled();
+      destroySpy.mockRestore();
+    });
+
+    it('recreates MediaHost when reconnected after disconnect', () => {
+      let hostCount = 0;
+      class ReconnectVideoHost extends TestVideoHost {
+        constructor() {
+          super();
+          hostCount++;
+        }
+      }
+
+      const tag = `test-video-${++tagCounter}`;
+      const Ctor = CustomMediaElement('video', ReconnectVideoHost);
+      customElements.define(tag, Ctor);
+
+      const el = document.createElement(tag) as InstanceType<typeof Ctor> & { destroyed: boolean };
+      document.body.appendChild(el);
+      expect(hostCount).toBe(1);
+
+      el.remove();
+
+      document.body.appendChild(el);
+      expect(hostCount).toBe(2);
       expect(el.destroyed).toBe(false);
     });
   });

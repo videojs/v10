@@ -14,8 +14,10 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
     'dom/media/mux/index': './src/dom/media/mux/index.ts',
     'dom/media/native-hls/index': './src/dom/media/native-hls/index.ts',
+    'dom/media/media-played-ranges/index': './src/dom/media/media-played-ranges/index.ts',
     'dom/media/simple-hls-audio-only/index': './src/dom/media/simple-hls-audio-only/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
+    'dom/media/vimeo/index': './src/dom/media/vimeo/index.ts',
   },
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',

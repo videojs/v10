@@ -23,7 +23,7 @@ export const VideoCSSVars = {
 export const AudioCSSVars = {} as const;
 
 /** Helper function to generate the HTML template for video elements. */
-function getVideoTemplateHTML(attrs: Record<string, string>): string {
+export function getVideoTemplateHTML(attrs: Record<string, string>): string {
   return /*html*/ `
     <style>
       :host {
@@ -95,10 +95,21 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTML
   readonly observedAttributes: string[];
 };
 
+/** Apply a property value that may have been set before custom element upgrade. */
+export function upgradeProperty(element: HTMLElement, prop: string): void {
+  const self = element as unknown as Record<string, unknown>;
+  // biome-ignore lint/suspicious/noPrototypeBuiltins: see comment above
+  if (!Object.prototype.hasOwnProperty.call(self, prop)) return;
+  const value = self[prop];
+  delete self[prop];
+  self[prop] = value;
+}
+
 export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
+  const syncTargetAttributes = tag !== 'iframe';
   const mediaHostAttrToProp = new Map<string, string>();
   let isDefined = false;
 
@@ -159,11 +170,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
           if (typeof descriptor.value === 'function') {
             config.value = function (this: CustomMedia, ...args: any[]) {
-              return this.#mediaHost[prop](...args);
+              return this.#mediaHost?.[prop](...args);
             };
           } else if (descriptor.get) {
             config.get = function (this: CustomMedia) {
-              return this.#mediaHost[prop];
+              return this.#mediaHost?.[prop];
             };
 
             if (descriptor.set) {
@@ -180,7 +191,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
                 };
               } else {
                 config.set = function (this: CustomMedia, val: any) {
-                  this.#mediaHost[prop] = val;
+                  if (this.#mediaHost) this.#mediaHost[prop] = val;
                 };
               }
             }
@@ -211,7 +222,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       }
     }
 
-    #mediaHost: MediaHost;
+    #mediaHost: MediaHost | null = null;
     #bridgedEventTypes = new Set<string>();
     #childMap = new Map<HTMLTrackElement | HTMLSourceElement, HTMLTrackElement | HTMLSourceElement>();
     #childObserver?: MutationObserver;
@@ -225,15 +236,15 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
         const disallowedKeys = [...mediaHostAttrToProp.keys()];
-        const attrs: Record<string, string> = omit(
-          pick(namedNodeMapToObject(this.attributes), allowedKeys),
-          disallowedKeys
-        );
+        const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
+        // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
+        const attrs: Record<string, string> = tag === 'iframe' ? pickedAttrs : omit(pickedAttrs, disallowedKeys);
         if (tag && !attrs.part) attrs.part = tag;
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
-      this.#mediaHost = new MediaHost();
+      this.#createMediaHost();
+      if (tag === 'iframe') this.#syncMediaHostFromAttributes();
       this.#attachToTarget();
 
       this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
@@ -245,13 +256,29 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       this.#syncMediaChildren();
     }
 
+    connectedCallback(): void {
+      this.#createMediaHost();
+      this.#hydrateIframeConfig();
+      if (tag === 'iframe') this.#syncMediaHostFromAttributes();
+      this.#attachToTarget();
+      this.#syncMediaChildren();
+    }
+
+    #createMediaHost(): void {
+      if (this.#mediaHost) return;
+      this.#mediaHost = new MediaHost();
+      for (const type of this.#bridgedEventTypes) {
+        this.#mediaHost.addEventListener(type, this.#bridgeEvent);
+      }
+    }
+
     #attachToTarget(): void {
       const target = this.target;
-      if (target === this.#mediaHost.target) return;
+      if (!this.#mediaHost || target === this.#mediaHost.target) return;
       this.#mediaHost.target = target;
     }
 
-    get target(): HTMLVideoElement | HTMLAudioElement | null {
+    get target(): HTMLElement | null {
       return (
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
@@ -261,8 +288,12 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
 
     disconnectedCallback(): void {
-      if (!this.hasAttribute('keep-alive')) {
+      if (!this.hasAttribute('keep-alive') && this.#mediaHost) {
+        for (const type of this.#bridgedEventTypes) {
+          this.#mediaHost.removeEventListener(type, this.#bridgeEvent);
+        }
         this.#mediaHost.destroy();
+        this.#mediaHost = null;
       }
     }
 
@@ -274,7 +305,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       super.addEventListener(type, listener as EventListener, options);
       if (!this.#bridgedEventTypes.has(type)) {
         this.#bridgedEventTypes.add(type);
-        this.#mediaHost.addEventListener(type, this.#bridgeEvent);
+        this.#createMediaHost();
+        this.#mediaHost!.addEventListener(type, this.#bridgeEvent);
       }
     }
 
@@ -295,16 +327,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
       const prop = mediaHostAttrToProp.get(attrName);
       if (prop) {
+        if (!this.#mediaHost) return;
         if (oldValue !== newValue) {
-          const valueType = typeof this.#mediaHost[prop];
-          const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
-          const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
-          this.#mediaHost[prop] =
-            valueType === 'boolean'
-              ? newValue !== null
-              : valueType === 'number'
-                ? Number(newValue)
-                : (newValue ?? emptyValue);
+          this.#syncMediaHostFromAttributes();
         }
         return;
       }
@@ -316,6 +341,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         return;
       }
 
+      if (!syncTargetAttributes) return;
+
       if (newValue === null) {
         this.target?.removeAttribute(attrName);
       } else if (this.target?.getAttribute(attrName) !== newValue) {
@@ -323,7 +350,44 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       }
     }
 
+    #hydrateIframeConfig(): void {
+      if (tag !== 'iframe' || !this.#mediaHost) return;
+      const iframe = this.target as HTMLIFrameElement | null;
+      if (!iframe?.dataset.config) return;
+
+      const hostConfig = this.#mediaHost.config;
+      if (hostConfig && typeof hostConfig === 'object' && Object.keys(hostConfig).length > 0) return;
+      try {
+        this.#mediaHost.config = JSON.parse(iframe.dataset.config);
+      } catch {
+        // ignore — invalid JSON.
+      }
+    }
+
+    #syncMediaHostFromAttributes(): void {
+      if (!this.#mediaHost) return;
+
+      const ctor = this.constructor as typeof CustomMedia;
+      for (const attrName of ctor.observedAttributes) {
+        const prop = mediaHostAttrToProp.get(attrName);
+        if (!prop) continue;
+        const newValue = this.getAttribute(attrName);
+        const valueType = typeof this.#mediaHost[prop];
+        const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+        const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
+
+        this.#mediaHost[prop] =
+          valueType === 'boolean'
+            ? newValue !== null
+            : valueType === 'number'
+              ? Number(newValue)
+              : (newValue ?? emptyValue);
+      }
+    }
+
     #syncMediaChildren(): void {
+      if (tag === 'iframe') return;
+
       const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
       const mediaChildren = new Set(
         defaultSlot
