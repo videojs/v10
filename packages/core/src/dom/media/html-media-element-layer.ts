@@ -10,14 +10,17 @@ import type {
 import { MediaStreamTypes } from '../../core/media/types';
 import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
-export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
-  extends MediaLayer<MediaFull, Events>
+export abstract class HTMLMediaElementLayer<
+    Next extends MediaFull = MediaFull,
+    Events extends { [K in keyof Events]: EventLike } = MediaFullEvents,
+  >
+  extends MediaLayer<Next, Events>
   implements MediaFull
 {
   // -- Extensions --
 
   override get root() {
-    return super.root as HTMLMediaElementLayer<Events>;
+    return super.root as HTMLMediaElementLayer<Next, Events>;
   }
 
   override get target() {

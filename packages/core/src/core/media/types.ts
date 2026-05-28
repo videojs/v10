@@ -359,6 +359,14 @@ export interface MediaPlaysInlineCapability {
 }
 
 // ----------------------------------------
+// Poster (video-only)
+// ----------------------------------------
+
+export interface MediaPosterCapability {
+  poster: string;
+}
+
+// ----------------------------------------
 // Video dimensions (video-only)
 // ----------------------------------------
 
@@ -367,8 +375,6 @@ export interface MediaVideoDimensionsEvents {
 }
 
 export interface MediaVideoDimensionsCapability {
-  width: number;
-  height: number;
   readonly videoWidth: number;
   readonly videoHeight: number;
 }
@@ -402,7 +408,7 @@ export interface Media<Events extends { [K in keyof Events]: EventLike } = Media
 // ----------------------------------------
 
 export interface MediaFullEvents
-  extends MediaPlaybackEvents,
+  extends MediaEvents,
     MediaPauseEvents,
     MediaSeekEvents,
     MediaSourceEvents,
@@ -414,8 +420,8 @@ export interface MediaFullEvents
     MediaStreamTypeEvents,
     MediaLiveEvents {}
 
-export interface MediaFull
-  extends Media<MediaFullEvents>,
+export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
+  extends Media<Events>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -431,52 +437,16 @@ export interface MediaFull
     MediaPlaybackOptionsCapability,
     MediaConfigCapability {}
 
-export interface VideoEvents
-  extends MediaPlaybackEvents,
-    MediaPauseEvents,
-    MediaSeekEvents,
-    MediaSourceEvents,
-    MediaVolumeEvents,
-    MediaPlaybackRateEvents,
-    MediaBufferEvents,
-    MediaErrorEvents,
-    TextTrackListEvents,
-    MediaPictureInPictureEvents,
-    MediaVideoDimensionsEvents {}
+export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
-  extends Media<VideoEvents>,
-    MediaPauseCapability,
-    MediaSeekCapability,
-    MediaSourceCapability,
-    MediaVolumeCapability,
-    MediaPlaybackRateCapability,
-    MediaBufferCapability,
-    MediaPlayedCapability,
-    MediaErrorCapability,
-    MediaTextTrackCapability,
+  extends MediaFull<VideoEvents>,
+    MediaPlaysInlineCapability,
+    MediaPosterCapability,
     MediaFullscreenCapability,
     MediaPictureInPictureCapability,
-    MediaPlaysInlineCapability,
     MediaVideoDimensionsCapability {}
 
-export interface AudioEvents
-  extends MediaPlaybackEvents,
-    MediaPauseEvents,
-    MediaSeekEvents,
-    MediaSourceEvents,
-    MediaVolumeEvents,
-    MediaPlaybackRateEvents,
-    MediaBufferEvents,
-    MediaErrorEvents {}
+export interface AudioEvents extends MediaFullEvents {}
 
-export interface Audio
-  extends Media<AudioEvents>,
-    MediaPauseCapability,
-    MediaSeekCapability,
-    MediaSourceCapability,
-    MediaVolumeCapability,
-    MediaPlaybackRateCapability,
-    MediaBufferCapability,
-    MediaPlayedCapability,
-    MediaErrorCapability {}
+export interface Audio extends MediaFull<AudioEvents> {}
