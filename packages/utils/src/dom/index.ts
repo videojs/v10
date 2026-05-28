@@ -38,5 +38,9 @@ export {
   isWebKitAirPlayCapable,
   supportsWebKitAirPlay,
   type WebKitAirPlayMedia,
+  type WebKitDocument,
+  type WebKitFullscreenElement,
+  type WebKitPresentationMode,
+  type WebKitVideoElement,
   type WebkitAvailabilityEvent,
 } from './webkit';
