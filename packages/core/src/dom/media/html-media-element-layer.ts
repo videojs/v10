@@ -21,7 +21,7 @@ import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from
  * surface so a missing forwarder does not silently break the chain.
  */
 export abstract class HTMLMediaElementLayer<
-    Target extends HTMLMediaElement,
+    Target extends HTMLMediaElement = HTMLMediaElement,
     Events extends { [K in keyof Events]: EventLike } = VideoEvents,
     Next extends Video = Video,
   >
