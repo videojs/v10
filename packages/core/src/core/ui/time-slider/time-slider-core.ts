@@ -14,6 +14,11 @@ export interface TimeSliderProps extends SliderProps {
   max?: number | undefined;
   /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
   changeThrottle?: number | undefined;
+  /**
+   * When true, pause playback while the user is dragging the thumb,
+   * resuming on release if it was playing before.
+   */
+  pauseWhileDragging?: boolean | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -27,6 +32,7 @@ export class TimeSliderCore extends SliderCore {
     ...SliderCore.defaultProps,
     label: 'Seek',
     changeThrottle: 100,
+    pauseWhileDragging: false,
   };
 
   #props = { ...TimeSliderCore.defaultProps };

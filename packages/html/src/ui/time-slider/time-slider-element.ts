@@ -32,9 +32,7 @@ export class TimeSliderElement extends MediaElement {
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
     pauseWhileDragging: { type: Boolean, attribute: 'pause-while-dragging' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>> & {
-    pauseWhileDragging: { type: BooleanConstructor; attribute: string };
-  };
+  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
   changeThrottle = TimeSliderCore.defaultProps.changeThrottle;
@@ -43,11 +41,7 @@ export class TimeSliderElement extends MediaElement {
   orientation = TimeSliderCore.defaultProps.orientation;
   disabled = TimeSliderCore.defaultProps.disabled;
   thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
-  /**
-   * When true, pause playback while the user is dragging the thumb,
-   * resuming on release if it was playing before. Default `false`.
-   */
-  pauseWhileDragging = false;
+  pauseWhileDragging = TimeSliderCore.defaultProps.pauseWhileDragging;
 
   readonly #core = new TimeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });

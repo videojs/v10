@@ -17,11 +17,6 @@ const noopSeek = (): Promise<number> => Promise.resolve(0);
 export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State>, TimeSliderCore.Props {
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
-  /**
-   * When true, pause playback while the user is dragging the thumb,
-   * resuming on release if it was playing before. Default `false`.
-   */
-  pauseWhileDragging?: boolean | undefined;
 }
 
 export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
@@ -39,7 +34,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       thumbAlignment,
       onDragStart,
       onDragEnd,
-      pauseWhileDragging = false,
+      pauseWhileDragging = TimeSliderCore.defaultProps.pauseWhileDragging,
       ...elementProps
     } = componentProps;
 
@@ -54,26 +49,6 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
     const playbackRef = useLatestRef(playback);
     const wasPlayingRef = useRef(false);
-
-    const handleDragStart = () => {
-      wasPlayingRef.current = false;
-      const playback = playbackRef.current;
-      if (pauseWhileDragging && playback && !playback.paused) {
-        wasPlayingRef.current = true;
-        playback.pause();
-      }
-      onDragStart?.();
-    };
-
-    const handleDragEnd = () => {
-      if (wasPlayingRef.current) {
-        playbackRef.current?.play().catch(() => {
-          // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
-        });
-      }
-      wasPlayingRef.current = false;
-      onDragEnd?.();
-    };
 
     // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
     // does not fire onDragEnd, so without this the player would stay paused.
@@ -119,8 +94,24 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         const media = mediaRef.current;
         if (media) media.seek(core.rawValueFromPercent(percent));
       },
-      onDragStart: handleDragStart,
-      onDragEnd: handleDragEnd,
+      onDragStart: () => {
+        wasPlayingRef.current = false;
+        const playback = playbackRef.current;
+        if (pauseWhileDragging && playback && !playback.paused) {
+          wasPlayingRef.current = true;
+          playback.pause();
+        }
+        onDragStart?.();
+      },
+      onDragEnd: () => {
+        if (wasPlayingRef.current) {
+          playbackRef.current?.play().catch(() => {
+            // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
+          });
+        }
+        wasPlayingRef.current = false;
+        onDragEnd?.();
+      },
     });
 
     if (!time) {

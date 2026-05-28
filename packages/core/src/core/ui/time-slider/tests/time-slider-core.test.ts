@@ -43,6 +43,7 @@ describe('TimeSliderCore', () => {
         min: 0,
         max: 100,
         changeThrottle: 100,
+        pauseWhileDragging: false,
       });
     });
   });
