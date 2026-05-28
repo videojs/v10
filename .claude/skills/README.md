@@ -18,6 +18,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
 | Accessibility audit        | `aria`                             |
 | Committing / creating PRs  | `git` or `/commit-pr`              |
+| Reviewer-oriented PR descriptions (SPF) | `/spf-describe-pr`        |
 | CSS → Tailwind migration   | `css-to-tailwind`                  |
 | Reviewing Tailwind migration | `css-to-tailwind` → `review/workflow.md` |
 | Reviewing branch changes   | `/review-branch`                   |
@@ -48,6 +49,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
 | [rfc](rfc/SKILL.md)                     | Write RFCs — proposals needing buy-in (public API, product, DX)        | No          |
 | [spf-create-behavior](spf-create-behavior/SKILL.md) | Create a new SPF behavior with conventions-aligned shape (stub; grows with use) | No |
+| [spf-describe-pr](spf-describe-pr/SKILL.md) | Draft/revise reviewer-oriented PR descriptions for SPF-area PRs (bucket-calibrated reading order, five-label set, smoke-test discipline) | No |
 | [spf-document-feature](spf-document-feature/SKILL.md) | Produce/update SPF feature registry docs (triangulation, cluster heuristics, cross-cutting checks, cascade) | No |
 | [spf-document-use-case](spf-document-use-case/SKILL.md) | Produce/update SPF use-case-composition registry docs (four-mechanism taxonomy, constituent-feature cascade) | No |
 | [spf-implement-feature](spf-implement-feature/SKILL.md) | Implement an SPF feature from its registry doc (disambiguation, phase scoping, chunk decomposition, downstream-skill routing, doc-as-starting-point) | No |
