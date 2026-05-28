@@ -62,6 +62,18 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.playbackRateButton).first();
   }
 
+  get settingsButton(): Locator {
+    return this.page.locator(SELECTORS.settingsButton).first();
+  }
+
+  get settingsCaptionsItem(): Locator {
+    return this.page.locator(SELECTORS.settingsCaptionsItem).first();
+  }
+
+  get settingsSpeedItem(): Locator {
+    return this.page.locator(SELECTORS.settingsSpeedItem).first();
+  }
+
   get poster(): Locator {
     return this.page.locator(SELECTORS.poster).first();
   }
@@ -149,6 +161,30 @@ export class PlayerPage {
     await expect(this.playButton).toHaveAttribute(DATA_ATTRS.paused, '', { timeout: 5_000 });
   }
 
+  async openPlaybackRateSettings(): Promise<void> {
+    await this.showControls();
+    await this.settingsButton.click();
+    await expect(this.settingsSpeedItem).toBeVisible();
+    await this.settingsSpeedItem.click();
+    await expect(this.page.locator(`${SELECTORS.activeMenuPanel} [role="menuitemradio"]`).first()).toBeVisible();
+  }
+
+  async openCaptionsSettings(): Promise<void> {
+    await this.showControls();
+    await this.settingsButton.click();
+    await expect(this.settingsCaptionsItem).toBeVisible();
+    await this.settingsCaptionsItem.click();
+    await expect(this.page.locator(SELECTORS.activeMenuRadioItems).first()).toBeVisible();
+  }
+
+  async getPlaybackRate(): Promise<number> {
+    return this.page.evaluate((selector) => {
+      const media = document.querySelector(selector) as HTMLMediaElement | null;
+      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      return actual?.playbackRate ?? 1;
+    }, SELECTORS.media);
+  }
+
   /** Click at a percentage position on the time slider. */
   async seekTo(percent: number): Promise<void> {
     // Wait for readyState >= 1 (HAVE_METADATA) and a non-zero duration.
@@ -190,12 +226,32 @@ export class PlayerPage {
    * Skins expose rate via a menu (not cycle-on-trigger).
    */
   async selectAlternativePlaybackRate(): Promise<void> {
-    await this.playbackRateButton.click();
+    const initialRate = await this.getPlaybackRate();
+    const usesSettingsMenu = (await this.settingsButton.count()) > 0;
+
+    if (usesSettingsMenu) {
+      await this.openPlaybackRateSettings();
+    } else {
+      await this.showControls();
+      await this.playbackRateButton.click();
+    }
+
+    const uncheckedPlaybackRateOptions = SELECTORS.openPlaybackRateMenuRadioItems
+      .split(', ')
+      .map((selector) => `${selector.trim()}[aria-checked="false"]`)
+      .join(', ');
     const option = this.page
-      .locator(`${SELECTORS.playbackRateMenuPanel} [role="menuitemradio"][aria-checked="false"]`)
+      .locator(
+        usesSettingsMenu
+          ? `${SELECTORS.activeMenuPanel} [role="menuitemradio"][aria-checked="false"]`
+          : uncheckedPlaybackRateOptions
+      )
       .first();
     await expect(option).toBeVisible({ timeout: 5_000 });
-    await option.click();
+    // Menu popovers can intercept pointer events on nested radio items.
+    await option.dispatchEvent('click');
+
+    await expect.poll(async () => this.getPlaybackRate()).not.toBe(initialRate);
   }
 
   /** Hover over the player area to trigger user-active state and show controls. */
