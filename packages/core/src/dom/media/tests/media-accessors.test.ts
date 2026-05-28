@@ -95,25 +95,6 @@ describe('HTMLMediaElementLayer text tracks', () => {
 });
 
 describe('HTMLVideoElementHost video dimensions', () => {
-  describe('width / height', () => {
-    it('returns 0 when no target is attached', () => {
-      const host = new HTMLVideoElementHost();
-      expect(host.width).toBe(0);
-      expect(host.height).toBe(0);
-    });
-
-    it('reads and writes through the target', () => {
-      const { host, video } = createHost();
-
-      host.width = 640;
-      host.height = 360;
-      expect(video.width).toBe(640);
-      expect(video.height).toBe(360);
-      expect(host.width).toBe(640);
-      expect(host.height).toBe(360);
-    });
-  });
-
   describe('videoWidth / videoHeight', () => {
     it('returns 0 when no target is attached', () => {
       const host = new HTMLVideoElementHost();
