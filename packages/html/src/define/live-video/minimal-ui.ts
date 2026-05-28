@@ -6,6 +6,7 @@ import { AirPlayButtonElement } from '@/ui/airplay-button/airplay-button-element
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
+import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
@@ -23,6 +24,7 @@ import {
   defineControls,
   defineErrorDialog,
   defineInputIndicators,
+  defineMenu,
   defineTime,
   defineTimeSlider,
   defineVolumeSlider,
@@ -43,11 +45,13 @@ defineInputIndicators();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();
+defineMenu();
 
 // Standalone elements.
 safeDefine(AirPlayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
+safeDefine(CaptionsRadioGroupElement);
 safeDefine(CastButtonElement);
 safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);

@@ -11,6 +11,7 @@ import { MenuGroupElement } from '../../ui/menu/menu-group-element';
 import { MenuGroupLabelElement } from '../../ui/menu/menu-group-label-element';
 import { MenuItemElement } from '../../ui/menu/menu-item-element';
 import { MenuItemIndicatorElement } from '../../ui/menu/menu-item-indicator-element';
+import { MenuItemValueElement } from '../../ui/menu/menu-item-value-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
 import { MenuSeparatorElement } from '../../ui/menu/menu-separator-element';
@@ -46,6 +47,7 @@ export function defineMenu(): void {
   safeDefine(MenuBackElement);
   safeDefine(MenuItemElement);
   safeDefine(MenuGroupLabelElement);
+  safeDefine(MenuItemValueElement);
   safeDefine(MenuSeparatorElement);
   safeDefine(MenuGroupElement);
   safeDefine(MenuRadioGroupElement);
