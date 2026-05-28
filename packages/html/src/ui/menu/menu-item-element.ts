@@ -125,13 +125,13 @@ export class MenuItemElement extends MediaElement {
 
   #syncMenuItemSetting(): void {
     if (!this.type || !this.commandfor) {
-      this.#settingProvider.setValue(null);
+      this.#settingProvider.setValue(undefined);
       return;
     }
 
     const media = this.type === 'playback-rate' ? this.#playbackRateMedia.value : this.#captionsMedia.value;
     if (!media) {
-      this.#settingProvider.setValue(null);
+      this.#settingProvider.setValue(undefined);
       return;
     }
 

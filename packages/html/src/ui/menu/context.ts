@@ -30,4 +30,6 @@ const MENU_ITEM_SETTING_CONTEXT_KEY = Symbol('@videojs/menu-item-setting');
 
 export const menuContext = createContext<MenuContextValue>(MENU_CONTEXT_KEY);
 export const menuRadioGroupContext = createContext<MenuRadioGroupContextValue>(MENU_RADIO_GROUP_CONTEXT_KEY);
-export const menuItemSettingContext = createContext<MenuItemSettingContextValue>(MENU_ITEM_SETTING_CONTEXT_KEY);
+export const menuItemSettingContext = createContext<MenuItemSettingContextValue | undefined>(
+  MENU_ITEM_SETTING_CONTEXT_KEY
+);

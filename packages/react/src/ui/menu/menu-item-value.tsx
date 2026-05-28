@@ -5,7 +5,7 @@ import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuItemSettingContext } from './context';
+import { useMenuContext, useMenuItemSettingContext } from './context';
 
 export interface MenuItemValueProps extends UIComponentProps<'span', MenuState> {}
 
@@ -14,12 +14,15 @@ export const MenuItemValue = forwardRef<HTMLSpanElement, MenuItemValueProps>(fun
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
+  const { state, stateAttrMap } = useMenuContext();
   const setting = useMenuItemSettingContext();
 
   return renderElement(
     'span',
     { render, className, style },
     {
+      state,
+      stateAttrMap,
       ref: forwardedRef,
       props: [{ 'aria-live': 'off' as const, children: setting.label }, elementProps],
     }

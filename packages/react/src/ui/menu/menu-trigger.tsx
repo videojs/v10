@@ -18,7 +18,7 @@ import {
 import { MenuItemSettingProvider } from './menu-item-setting-provider';
 import type { MenuItemSettingType } from './menu-item-type';
 
-export interface MenuTriggerProps extends UIComponentProps<'button', MenuState> {
+export interface MenuTriggerProps extends Omit<UIComponentProps<'button', MenuState>, 'type'> {
   /** Disables the trigger. */
   disabled?: boolean;
   /** Setting kind for submenu triggers (`playback-rate` or `captions`). */
@@ -199,7 +199,7 @@ interface MenuTriggerSubmenuProps {
   style: MenuTriggerProps['style'];
   disabled: boolean | undefined;
   elementProps: Record<string, unknown>;
-  forwardedRef: React.ForwardedRef<HTMLDivElement>;
+  forwardedRef: React.ForwardedRef<HTMLButtonElement | HTMLDivElement>;
   elementRef: React.RefObject<HTMLElement | null>;
   triggerId: string;
   parentState: MenuState;
