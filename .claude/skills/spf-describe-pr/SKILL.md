@@ -146,6 +146,16 @@ and avoid framings that claim risk profile ("Where regression bugs
 live") — both overclaim and waste vertical space. The per-file depth
 labels carry per-file risk; the heading carries category.
 
+**When a bucket is empty.** Docs-only or skill-only PRs have no Bucket
+1 — omit the heading entirely rather than naming an empty bucket. With
+only 1–2 buckets populated, drop bucket numbering in favor of
+descriptive headings ("Design doc cascade", "Agent skills"); the
+numbering matters only when all three are present. The PR's load-
+bearing artifact gets `[Skim file]` regardless of which bucket it sits
+in — a precedent-setting skill in an otherwise-cascade PR is
+`[Skim file]`, not the default `[Skim or skip]`. Worked example:
+#1624 (this skill's own PR).
+
 #### The five-label set
 
 A 2D grid: scope of attention × intensity of attention.
@@ -323,10 +333,20 @@ No reviewer-actionable smoke test for this PR — the change is
 runtime surface. Verification lives in *Test plan*.
 ```
 
-The explicit note is preferable when the PR is large, touches runtime
-code paths, but the *user-visible* effect is null (e.g., a refactor that
-preserves behavior). Skipping the section silently makes reviewers
-wonder whether you forgot or whether none exists.
+The explicit note is preferable when one of:
+
+- The PR has runtime impact but the user-visible effect is null (e.g.,
+  a refactor that preserves behavior).
+- The PR is large enough (~10+ files or ~500+ lines) that reviewers may
+  scan for a smoke-test before reading the description top-to-bottom,
+  regardless of whether runtime is touched.
+
+Omit the section entirely for small docs-only / skill-only PRs (< 10
+files, < 500 lines) — the docs-only nature speaks for itself.
+
+Skipping the section silently on a large PR makes reviewers wonder
+whether you forgot or whether none exists; the explicit note resolves
+that ambiguity.
 
 **Human-in-the-loop.** The skill can detect candidates from the diff
 (sandbox templates touched, new behaviors with observable output, demo
@@ -631,6 +651,15 @@ family. Specific items to carry forward:
 If you propose a structural change on one PR (e.g., dropping a section,
 narrowing a callout scope), check whether the same change applies to
 the sibling.
+
+**When the sibling has already shipped (merged or closed).** Don't
+retroactively edit a closed PR's description to backfill a new
+discipline that landed after it shipped. Instead, log the gap as a
+Reviewer callout in the *current* PR (`[Deferred] <discipline> not
+applied to #<n>; backfill if reviewing that PR's history`) and let
+the new discipline land on the next SPF PR description. Retroactive
+edits churn merged context for marginal value; the canonical
+worked-example library lives in *open* PR descriptions.
 
 ## Workflow
 
