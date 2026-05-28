@@ -1,34 +1,57 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { MediaLayer } from '../../core/media/media-layer';
 import type {
   CanPlayTypeResult,
   EventLike,
-  MediaFull,
-  MediaFullEvents,
   TextTrackKind,
   TextTrackLike,
+  Video,
+  VideoEvents,
 } from '../../core/media/types';
 import { MediaStreamTypes } from '../../core/media/types';
+import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
 import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
+/**
+ * IMPORTANT: This class intentionally `implements Video` (not only `MediaFull`) so
+ * the full media API — including video-only props — lives in one place. Every
+ * subclass inherits forwarding getters/setters/methods that pass through `next`
+ * to `target`. Do not trim this to `MediaFull` or split video props onto a
+ * separate base; extension layers and hosts rely on inheriting the complete
+ * surface so a missing forwarder does not silently break the chain.
+ */
 export abstract class HTMLMediaElementLayer<
-    Next extends MediaFull = MediaFull,
-    Events extends { [K in keyof Events]: EventLike } = MediaFullEvents,
+    Target extends HTMLMediaElement,
+    Events extends { [K in keyof Events]: EventLike } = VideoEvents,
+    Next extends Video = Video,
   >
   extends MediaLayer<Next, Events>
-  implements MediaFull
+  implements Video
 {
+  querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelector(selectors: string): Element | null {
+    return this.target?.querySelector(selectors) ?? null;
+  }
+
+  querySelectorAll<K extends keyof HTMLElementTagNameMap>(selectors: K): NodeListOf<HTMLElementTagNameMap[K]> | never[];
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+  querySelectorAll(selectors: string): NodeListOf<Element> | never[] {
+    return this.target?.querySelectorAll(selectors) ?? [];
+  }
+
   // -- Extensions --
 
-  override get root() {
-    return super.root as HTMLMediaElementLayer<Next, Events>;
+  override get target(): Target | null {
+    return super.target as Target | null;
   }
 
-  override get target() {
-    return super.target as HTMLMediaElement | null;
-  }
-
-  override set target(value: HTMLMediaElement | null) {
+  override set target(value: Target | null) {
     super.target = value;
+  }
+
+  override get root() {
+    return super.root as HTMLMediaElementLayer<Target, Events, Next>;
   }
 
   get engine() {
@@ -251,5 +274,85 @@ export abstract class HTMLMediaElementLayer<
 
   set disableRemotePlayback(value) {
     if (this.next) this.next.disableRemotePlayback = value;
+  }
+
+  // -- Video --
+
+  get poster() {
+    return this.next?.poster ?? '';
+  }
+
+  set poster(value: string) {
+    if (this.next) this.next.poster = value;
+  }
+
+  get playsInline() {
+    return this.next?.playsInline ?? false;
+  }
+
+  set playsInline(value: boolean) {
+    if (this.next) this.next.playsInline = value;
+  }
+
+  get videoWidth() {
+    return this.next?.videoWidth ?? 0;
+  }
+
+  get videoHeight() {
+    return this.next?.videoHeight ?? 0;
+  }
+
+  get disablePictureInPicture() {
+    return this.next?.disablePictureInPicture ?? false;
+  }
+
+  set disablePictureInPicture(value: boolean) {
+    if (this.next) this.next.disablePictureInPicture = value;
+  }
+
+  get webkitPresentationMode() {
+    return (this.next as WebKitVideoElement | null)?.webkitPresentationMode;
+  }
+
+  get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
+    const fn = (this.next as WebKitVideoElement | null)?.webkitSetPresentationMode;
+    return isFunction(fn) ? fn.bind(this.next) : undefined;
+  }
+
+  get isPictureInPicture(): boolean {
+    const { target } = this;
+    return (
+      (!!target && globalThis.document?.pictureInPictureElement === target) ||
+      this.webkitPresentationMode === 'picture-in-picture'
+    );
+  }
+
+  get isFullscreen(): boolean {
+    const { target } = this;
+    if (!target) return false;
+    if (this.webkitPresentationMode === 'fullscreen') return true;
+    const doc = globalThis.document;
+    if (!doc) return false;
+    return (
+      doc.fullscreenElement === target || ('webkitFullscreenElement' in doc && doc.webkitFullscreenElement === target)
+    );
+  }
+
+  async requestPictureInPicture() {
+    if (!this.next) return Promise.reject();
+    return this.next.requestPictureInPicture();
+  }
+
+  async exitPictureInPicture() {
+    return globalThis.document?.exitPictureInPicture();
+  }
+
+  requestFullscreen() {
+    if (!this.next) return Promise.reject();
+    return this.next.requestFullscreen();
+  }
+
+  exitFullscreen() {
+    return globalThis.document?.exitFullscreen();
   }
 }
