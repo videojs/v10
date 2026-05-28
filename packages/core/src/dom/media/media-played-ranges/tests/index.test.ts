@@ -9,10 +9,18 @@ class FakeMedia extends MediaLayer {
   paused = true;
 
   get played(): TimeRangeLike {
-    return this.next?.played ?? EMPTY_TIME_RANGES;
+    return (this.next as { played?: TimeRangeLike } | null)?.played ?? EMPTY_TIME_RANGES;
   }
 
-  play(time: number): void {
+  async play(): Promise<void> {
+    this.simulatePlay(this.currentTime);
+  }
+
+  pause(): void {
+    this.simulatePause(this.currentTime);
+  }
+
+  simulatePlay(time: number): void {
     this.paused = false;
     this.currentTime = time;
     this.dispatchEvent(new Event('play'));
@@ -22,7 +30,7 @@ class FakeMedia extends MediaLayer {
     this.currentTime = time;
   }
 
-  pause(time: number): void {
+  simulatePause(time: number): void {
     this.currentTime = time;
     this.paused = true;
     this.dispatchEvent(new Event('pause'));
@@ -57,9 +65,9 @@ describe('mediaPlayedRanges', () => {
 
   it('tracks a contiguous play segment', () => {
     const media = createTrackedMedia();
-    media.play(0);
+    media.simulatePlay(0);
     media.tick(5);
-    media.pause(5);
+    media.simulatePause(5);
 
     const played = media.played;
     expect(played.length).toBe(1);
@@ -69,10 +77,10 @@ describe('mediaPlayedRanges', () => {
 
   it('merges adjacent ranges within the epsilon tolerance', () => {
     const media = createTrackedMedia();
-    media.play(0);
-    media.pause(5);
-    media.play(5.2);
-    media.pause(8);
+    media.simulatePlay(0);
+    media.simulatePause(5);
+    media.simulatePlay(5.2);
+    media.simulatePause(8);
 
     const played = media.played;
     expect(played.length).toBe(1);
@@ -81,11 +89,11 @@ describe('mediaPlayedRanges', () => {
 
   it('keeps non-adjacent ranges separate', () => {
     const media = createTrackedMedia();
-    media.play(0);
-    media.pause(2);
+    media.simulatePlay(0);
+    media.simulatePause(2);
     media.seek(20);
-    media.play(20);
-    media.pause(25);
+    media.simulatePlay(20);
+    media.simulatePause(25);
 
     const played = media.played;
     expect(played.length).toBe(2);
@@ -97,7 +105,7 @@ describe('mediaPlayedRanges', () => {
 
   it('commits a range on ended', () => {
     const media = createTrackedMedia();
-    media.play(0);
+    media.simulatePlay(0);
     media.tick(10);
     media.end(10);
     expect(media.played.end(0)).toBe(10);
