@@ -1,7 +1,8 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import type { ExtensionConfig } from '../../../core/media/media-extension';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
+import type { HTMLAudioElementHost } from '../html-audio-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 import type { GoogleCast } from './index';
 import { RemotePlayback, type RemotePlaybackHooks } from './remote-playback';
 import {
@@ -20,7 +21,7 @@ import {
 } from './utils';
 
 type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
-export type GoogleCastMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
+export type GoogleCastMedia = HTMLVideoElementHost | HTMLAudioElementHost;
 
 type GoogleCastConfig = ExtensionConfig<GoogleCast>;
 

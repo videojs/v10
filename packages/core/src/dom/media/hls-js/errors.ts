@@ -3,12 +3,8 @@ import Hls from 'hls.js';
 import { MediaError } from '../../../core/media/media-error';
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
-
-export type HlsJsErrorsMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
-  engine?: Hls | null;
-};
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 const hlsErrorTypeToCode: Record<string, number> = {
   [Hls.ErrorTypes.NETWORK_ERROR]: MediaError.MEDIA_ERR_NETWORK,
@@ -28,7 +24,7 @@ const hlsErrorTypeToCode: Record<string, number> = {
 export class HlsJsErrors {
   readonly name = 'hls-js-errors';
 
-  install(media: HlsJsErrorsMedia) {
+  install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
@@ -84,7 +80,7 @@ export class HlsJsErrors {
   }
 }
 
-export const hlsJsErrors = defineExtension<void, HlsJsErrorsMedia, HlsJsErrors>(() => new HlsJsErrors());
+export const hlsJsErrors = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsErrors>(() => new HlsJsErrors());
 
 class HlsJsErrorsLayer extends HTMLMediaElementLayer {
   #error: MediaError | null = null;

@@ -1,6 +1,6 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
-import { HTMLMediaElementHost } from '../../html-media-element-host';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { hlsJsLive } from '../live';
 
 function createEngine(userConfig: Record<string, unknown> = {}): Hls {
@@ -21,13 +21,13 @@ function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   } as unknown as Hls;
 }
 
-class FakeHlsJsMedia extends HTMLMediaElementHost<HTMLMediaElement> {
+class FakeHlsJsMedia extends HTMLVideoElementHost<Hls> {
   #engine: Hls;
   constructor(engine: Hls) {
     super();
     this.#engine = engine;
   }
-  override get engine() {
+  override get engine(): Hls | null {
     return this.#engine;
   }
 }

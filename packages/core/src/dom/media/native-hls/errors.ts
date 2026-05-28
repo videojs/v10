@@ -1,10 +1,8 @@
 import { MediaError } from '../../../core/media/media-error';
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
-
-export type NativeHlsErrorsMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
  * Wraps native `error` events on the media element into `MediaError`, exposes
@@ -16,12 +14,12 @@ export type NativeHlsErrorsMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
 export class NativeHlsErrors {
   readonly name = 'native-hls-errors';
 
-  install(media: NativeHlsErrorsMedia) {
+  install(media: HTMLVideoElementHost) {
     return addLayer(media, new NativeHlsErrorsLayer());
   }
 }
 
-export const nativeHlsErrors = defineExtension<void, NativeHlsErrorsMedia, NativeHlsErrors>(
+export const nativeHlsErrors = defineExtension<void, HTMLVideoElementHost, NativeHlsErrors>(
   () => new NativeHlsErrors()
 );
 

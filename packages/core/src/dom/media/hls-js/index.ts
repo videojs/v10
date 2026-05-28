@@ -23,7 +23,7 @@ export interface HlsJsMediaParams {
   config?: Partial<HlsJsConfig>;
 }
 
-export class HlsJsMedia extends HTMLVideoElementHost {
+export class HlsJsMedia extends HTMLVideoElementHost<HlsJs> {
   #engine: HlsJs | null;
 
   constructor(params: HlsJsMediaParams = {}) {
@@ -38,7 +38,7 @@ export class HlsJsMedia extends HTMLVideoElementHost {
     hlsJsTextTracks().install(this);
   }
 
-  get engine() {
+  override get engine(): HlsJs | null {
     return this.#engine;
   }
 

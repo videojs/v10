@@ -1,10 +1,8 @@
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
-
-export type NativeHlsLiveMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
 
 /**
  * Tracks live-stream metadata for native HLS playback ({@link MediaLiveCapability}).
@@ -21,12 +19,12 @@ export type NativeHlsLiveMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
 export class NativeHlsLive {
   readonly name = 'native-hls-live';
 
-  install(media: NativeHlsLiveMedia) {
+  install(media: HTMLVideoElementHost) {
     return addLayer(media, new NativeHlsLiveLayer());
   }
 }
 
-export const nativeHlsLive = defineExtension<void, NativeHlsLiveMedia, NativeHlsLive>(() => new NativeHlsLive());
+export const nativeHlsLive = defineExtension<void, HTMLVideoElementHost, NativeHlsLive>(() => new NativeHlsLive());
 
 class NativeHlsLiveLayer extends HTMLMediaElementLayer {
   #targetLiveWindow = Number.NaN;

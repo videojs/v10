@@ -1,10 +1,8 @@
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
-
-export type NativeHlsStreamTypeMedia = HTMLMediaElementHost<HTMLMediaElement, any>;
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
  * Derives `streamType` from the underlying media element's `duration`:
@@ -19,12 +17,12 @@ export type NativeHlsStreamTypeMedia = HTMLMediaElementHost<HTMLMediaElement, an
 export class NativeHlsStreamType {
   readonly name = 'native-hls-stream-type';
 
-  install(media: NativeHlsStreamTypeMedia) {
+  install(media: HTMLVideoElementHost) {
     return addLayer(media, new NativeHlsStreamTypeLayer());
   }
 }
 
-export const nativeHlsStreamType = defineExtension<void, NativeHlsStreamTypeMedia, NativeHlsStreamType>(
+export const nativeHlsStreamType = defineExtension<void, HTMLVideoElementHost, NativeHlsStreamType>(
   () => new NativeHlsStreamType()
 );
 

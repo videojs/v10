@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HTMLMediaElementHost } from '../../html-media-element-host';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { nativeHlsLive } from '../live';
 
-class FakeNativeHlsMedia extends HTMLMediaElementHost<HTMLMediaElement> {}
+class FakeNativeHlsMedia extends HTMLVideoElementHost {}
 
 function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTMLVideoElement {
   const video = document.createElement('video');

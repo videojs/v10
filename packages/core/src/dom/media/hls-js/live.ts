@@ -3,12 +3,8 @@ import Hls from 'hls.js';
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { MediaStreamTypes } from '../../../core/media/types';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
-
-export type HlsJsLiveMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
-  engine?: Hls | null;
-};
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 type HlsPlaylistType = 'VOD' | 'EVENT' | null | undefined;
 
@@ -28,7 +24,7 @@ type HlsPlaylistType = 'VOD' | 'EVENT' | null | undefined;
 export class HlsJsLive {
   readonly name = 'hls-js-live';
 
-  install(media: HlsJsLiveMedia) {
+  install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
@@ -66,7 +62,7 @@ export class HlsJsLive {
   }
 }
 
-export const hlsJsLive = defineExtension<void, HlsJsLiveMedia, HlsJsLive>(() => new HlsJsLive());
+export const hlsJsLive = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsLive>(() => new HlsJsLive());
 
 class HlsJsLiveLayer extends HTMLMediaElementLayer {
   #targetLiveWindow = Number.NaN;
