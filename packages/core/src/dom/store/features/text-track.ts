@@ -29,6 +29,28 @@ export const textTrackFeature = definePlayerFeature({
 
       return nextShowing;
     },
+    selectSubtitlesTrack(value: string) {
+      const { media } = target();
+      if (!isMediaTextTrackCapable(media)) return;
+
+      const subtitlesTracks = getTextTrackList(media, isCaptionOrSubtitleTrack);
+      if (!subtitlesTracks.length) return;
+
+      if (value === 'off') {
+        for (const track of subtitlesTracks) {
+          track.mode = 'disabled';
+        }
+        return;
+      }
+
+      const index = Number.parseInt(value, 10);
+      const track = subtitlesTracks[index];
+      if (!track) return;
+
+      for (const candidate of subtitlesTracks) {
+        candidate.mode = candidate === track ? 'showing' : 'disabled';
+      }
+    },
   }),
 
   attach({ target, signal, set }) {
