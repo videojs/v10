@@ -1,4 +1,4 @@
-import { isWebKitAirplayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
+import { isWebKitAirPlayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
@@ -36,7 +36,7 @@ export const remotePlaybackFeature = definePlayerFeature({
     // session changes. When WebKit's AirPlay APIs are available, drive both
     // state slices off the WebKit events and skip the W3C listeners entirely
     // so the two paths can't double-write or conflict.
-    if (isWebKitAirplayCapable(media)) {
+    if (isWebKitAirPlayCapable(media)) {
       const syncConnection = () => {
         set({
           remotePlaybackState: media.webkitCurrentPlaybackTargetIsWireless ? 'connected' : 'disconnected',

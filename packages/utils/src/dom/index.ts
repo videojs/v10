@@ -35,8 +35,8 @@ export {
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';
 export {
-  isWebKitAirplayCapable,
-  supportsWebKitAirplay,
-  type WebKitAirplayMedia,
+  isWebKitAirPlayCapable,
+  supportsWebKitAirPlay,
+  type WebKitAirPlayMedia,
   type WebkitAvailabilityEvent,
 } from './webkit';

@@ -1,10 +1,10 @@
-import { AirplayButtonElement } from '../../ui/airplay-button/airplay-button-element';
+import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { safeDefine } from '../safe-define';
 
-safeDefine(AirplayButtonElement);
+safeDefine(AirPlayButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [AirplayButtonElement.tagName]: AirplayButtonElement;
+    [AirPlayButtonElement.tagName]: AirPlayButtonElement;
   }
 }

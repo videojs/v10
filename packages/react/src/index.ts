@@ -29,7 +29,7 @@ export {
   type ProviderProps,
 } from './player/create-player';
 // UI
-export { AirplayButton, type AirplayButtonProps } from './ui/airplay-button/airplay-button';
+export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';

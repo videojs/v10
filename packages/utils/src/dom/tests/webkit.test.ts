@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { isWebKitAirplayCapable, supportsWebKitAirplay } from '../webkit';
+import { isWebKitAirPlayCapable, supportsWebKitAirPlay } from '../webkit';
 
 // jsdom lacks WebKit's AirPlay APIs, so stub the global support flag per test.
 function stubWebKit(present: boolean) {
@@ -15,34 +15,34 @@ function stubWebKit(present: boolean) {
 describe('webkit', () => {
   afterEach(() => stubWebKit(false));
 
-  describe('supportsWebKitAirplay', () => {
+  describe('supportsWebKitAirPlay', () => {
     it('returns true when the WebKit availability event is present', () => {
       stubWebKit(true);
-      expect(supportsWebKitAirplay()).toBe(true);
+      expect(supportsWebKitAirPlay()).toBe(true);
     });
 
     it('returns false when absent', () => {
       stubWebKit(false);
-      expect(supportsWebKitAirplay()).toBe(false);
+      expect(supportsWebKitAirPlay()).toBe(false);
     });
   });
 
-  describe('isWebKitAirplayCapable', () => {
+  describe('isWebKitAirPlayCapable', () => {
     it('returns true when supported and the media exposes the AirPlay flag', () => {
       stubWebKit(true);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
-      expect(isWebKitAirplayCapable(media)).toBe(true);
+      expect(isWebKitAirPlayCapable(media)).toBe(true);
     });
 
     it('returns false when WebKit is unsupported', () => {
       stubWebKit(false);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
-      expect(isWebKitAirplayCapable(media)).toBe(false);
+      expect(isWebKitAirPlayCapable(media)).toBe(false);
     });
 
     it('returns false when the media lacks the AirPlay flag', () => {
       stubWebKit(true);
-      expect(isWebKitAirplayCapable(new EventTarget())).toBe(false);
+      expect(isWebKitAirPlayCapable(new EventTarget())).toBe(false);
     });
   });
 });

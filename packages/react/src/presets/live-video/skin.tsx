@@ -2,8 +2,8 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
-  AirplayEnterIcon,
-  AirplayExitIcon,
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -21,7 +21,7 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
-import { AirplayButton } from '@/ui/airplay-button';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -180,10 +180,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirplayButton className="media-button--airplay" render={<Button />}>
-                    <AirplayEnterIcon className="media-icon media-icon--airplay-enter" />
-                    <AirplayExitIcon className="media-icon media-icon--airplay-exit" />
-                  </AirplayButton>
+                  <AirPlayButton className="media-button--airplay" render={<Button />}>
+                    <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
+                    <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className="media-surface media-tooltip" />
