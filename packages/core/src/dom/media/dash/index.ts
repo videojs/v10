@@ -9,7 +9,7 @@ export const dashMediaDefaultProps: DashMediaProps = {
   src: '',
 };
 
-export class DashMedia extends HTMLVideoElementHost<dashjs.MediaPlayerClass> implements DashMediaProps {
+export class DashMedia extends HTMLVideoElementHost implements DashMediaProps {
   #engine: dashjs.MediaPlayerClass;
   #src = dashMediaDefaultProps.src;
   #pendingLoad: Promise<void> | null = null;

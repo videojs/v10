@@ -24,7 +24,7 @@ function createEngine(): HlsJs {
   } as unknown as HlsJs;
 }
 
-class HlsHost extends HTMLVideoElementHost<HlsJs> {
+class HlsHost extends HTMLVideoElementHost {
   #engine: HlsJs;
   constructor(engine: HlsJs) {
     super();

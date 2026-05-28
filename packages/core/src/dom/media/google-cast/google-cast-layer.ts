@@ -1,4 +1,5 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+import type { TextTrackLike } from '../../../core/media/types';
 import type { HTMLAudioElementHost } from '../html-audio-element-host';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
 import { HTMLVideoElementLayer } from '../html-video-element-layer';
@@ -514,7 +515,7 @@ export class GoogleCastLayer extends HTMLVideoElementLayer {
   async #updateRemoteTextTrack() {
     if (!this.#isCasting || !this.target) return;
 
-    const localSubs = [...this.textTracks].filter(isCaptionOrSubtitleTrack);
+    const localSubs = [...this.textTracks].filter((track): track is TextTrackLike => isCaptionOrSubtitleTrack(track));
 
     const matched = (this.#remotePlayer.mediaInfo?.tracks ?? [])
       .filter(({ type }) => type === chrome.cast.media.TrackType.TEXT)

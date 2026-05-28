@@ -7,6 +7,7 @@ import type {
   EventLike,
   TextTrackKind,
   TextTrackLike,
+  TextTrackListLike,
   Video,
   VideoEvents,
   VideoRenditionListLike,
