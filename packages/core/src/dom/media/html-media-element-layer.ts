@@ -22,11 +22,12 @@ import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from
  */
 export abstract class HTMLMediaElementLayer<
     Target extends HTMLMediaElement = HTMLMediaElement,
+    Engine = unknown,
     Events extends { [K in keyof Events]: EventLike } = VideoEvents,
     Next extends Video = Video,
   >
   extends MediaLayer<Next, Events>
-  implements Video
+  implements Video<Engine>
 {
   querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
   querySelector<E extends Element = Element>(selectors: string): E | null;
@@ -51,11 +52,11 @@ export abstract class HTMLMediaElementLayer<
   }
 
   override get root() {
-    return super.root as HTMLMediaElementLayer<Target, Events, Next>;
+    return super.root as HTMLMediaElementLayer<Target, Engine, Events, Next>;
   }
 
-  get engine() {
-    return this.next?.engine ?? null;
+  get engine(): Engine | null {
+    return (this.next?.engine as Engine | null | undefined) ?? null;
   }
 
   get streamType() {

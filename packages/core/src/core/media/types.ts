@@ -393,10 +393,10 @@ export interface MediaConfigCapability {
 
 export interface MediaEvents extends MediaPlaybackEvents {}
 
-export interface Media<Events extends { [K in keyof Events]: EventLike } = MediaEvents>
+export interface Media<Engine = unknown, Events extends { [K in keyof Events]: EventLike } = MediaEvents>
   extends MediaPlaybackCapability,
     EventTargetLike<Events> {
-  readonly engine?: unknown;
+  readonly engine?: Engine | null;
   readonly target?: unknown;
   readonly next?: Media | null;
   readonly root?: Media | null;
@@ -420,8 +420,8 @@ export interface MediaFullEvents
     MediaStreamTypeEvents,
     MediaLiveEvents {}
 
-export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
-  extends Media<Events>,
+export interface MediaFull<Engine = unknown, Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
+  extends Media<Engine, Events>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -439,8 +439,8 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
 
 export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
-export interface Video
-  extends MediaFull<VideoEvents>,
+export interface Video<Engine = unknown>
+  extends MediaFull<Engine, VideoEvents>,
     MediaPlaysInlineCapability,
     MediaPosterCapability,
     MediaFullscreenCapability,
@@ -449,4 +449,4 @@ export interface Video
 
 export interface AudioEvents extends MediaFullEvents {}
 
-export interface Audio extends MediaFull<AudioEvents> {}
+export interface Audio<Engine = unknown> extends MediaFull<Engine, AudioEvents> {}

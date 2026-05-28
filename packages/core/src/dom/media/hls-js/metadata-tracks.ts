@@ -1,10 +1,6 @@
 import Hls from 'hls.js';
 import { defineExtension } from '../../../core/media/media-extension';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
-
-export type HlsJsMetadataTracksMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
-  engine?: Hls | null;
-};
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
  * Keeps user-authored metadata and chapters `<track>` elements loaded across
@@ -18,7 +14,7 @@ export type HlsJsMetadataTracksMedia = HTMLMediaElementHost<HTMLMediaElement, an
 export class HlsJsMetadataTracks {
   readonly name = 'hls-js-metadata-tracks';
 
-  install(media: HlsJsMetadataTracksMedia) {
+  install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
@@ -35,7 +31,7 @@ export class HlsJsMetadataTracks {
   }
 }
 
-export const hlsJsMetadataTracks = defineExtension<void, HlsJsMetadataTracksMedia, HlsJsMetadataTracks>(
+export const hlsJsMetadataTracks = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsMetadataTracks>(
   () => new HlsJsMetadataTracks()
 );
 

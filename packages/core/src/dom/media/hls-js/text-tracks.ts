@@ -2,11 +2,7 @@ import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
 import { defineExtension } from '../../../core/media/media-extension';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
-
-export type HlsJsTextTracksMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
-  engine?: Hls | null;
-};
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
  * Bridges hls.js non-native text tracks to native `<track>` elements so the
@@ -23,7 +19,7 @@ export type HlsJsTextTracksMedia = HTMLMediaElementHost<HTMLMediaElement, any> &
 export class HlsJsTextTracks {
   readonly name = 'hls-js-text-tracks';
 
-  install(media: HlsJsTextTracksMedia) {
+  install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
@@ -150,7 +146,7 @@ export class HlsJsTextTracks {
   }
 }
 
-export const hlsJsTextTracks = defineExtension<void, HlsJsTextTracksMedia, HlsJsTextTracks>(
+export const hlsJsTextTracks = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsTextTracks>(
   () => new HlsJsTextTracks()
 );
 

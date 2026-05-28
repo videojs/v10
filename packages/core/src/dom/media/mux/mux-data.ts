@@ -4,12 +4,13 @@ import Hls from 'hls.js';
 import Mux, { type Options as MuxDataOptions, type Mux as MuxDataSdk } from 'mux-embed';
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
+import type { HTMLAudioElementHost } from '../html-audio-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 import { getPlayerVersion } from './env';
 
 export type { MuxDataSdk, MuxDataOptions };
-export type MuxDataMedia = HTMLMediaElementHost<HTMLMediaElement, any> & { engine?: unknown };
+export type MuxDataMedia = HTMLVideoElementHost | HTMLAudioElementHost;
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 

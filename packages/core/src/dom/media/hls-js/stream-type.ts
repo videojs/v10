@@ -3,12 +3,8 @@ import Hls from 'hls.js';
 import { defineExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import type { HTMLMediaElementHost } from '../html-media-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
-
-export type HlsJsStreamTypeMedia = HTMLMediaElementHost<HTMLMediaElement, any> & {
-  engine?: Hls | null;
-};
+import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
  * Derives `streamType` from hls.js `LEVEL_LOADED` events: `data.details.live`
@@ -22,7 +18,7 @@ export type HlsJsStreamTypeMedia = HTMLMediaElementHost<HTMLMediaElement, any> &
 export class HlsJsStreamType {
   readonly name = 'hls-js-stream-type';
 
-  install(media: HlsJsStreamTypeMedia) {
+  install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
@@ -47,7 +43,7 @@ export class HlsJsStreamType {
   }
 }
 
-export const hlsJsStreamType = defineExtension<void, HlsJsStreamTypeMedia, HlsJsStreamType>(
+export const hlsJsStreamType = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsStreamType>(
   () => new HlsJsStreamType()
 );
 
