@@ -83,10 +83,15 @@ depth label. The target shape is "Bucket 1 fits in one viewport" —
 prioritize line count over word count. See *Compression discipline*
 below for the line-saving moves.
 
-Open with one short line on the diff shape — `#<num>: X files / +Y / −Z`
-— and note any line-count weirdness only if material (e.g., "~3500 of
-4593 added lines are agent skills with no runtime impact"). Skip the
-intro entirely if the diff shape is unremarkable.
+**Skip a diff-stat opener by default.** GitHub already shows
+`X files / +Y / −Z` prominently above the PR body, and restating it
+adds no signal. Include a diff-shape line only when it carries
+*characterization* GitHub can't show — typically a weight imbalance
+reviewers should know about (e.g., "~3500 of 4593 added lines are
+agent skills with no runtime impact"; "29 files but the bulk of the
+diff is a mass rename"). When you include it, the *characterization*
+is the load-bearing part — the numbers are optional context, not the
+point. Bare numerical recitation always gets cut.
 
 Per-bucket shape:
 
@@ -833,6 +838,10 @@ When revising an existing description, walk this checklist:
 - [ ] **No implementation-history paragraphs** ("commit order on the
       branch is preserved…") or restated scope rationale across
       sections.
+- [ ] **No bare diff-stat opener** ("`#<num>: X files / +Y / −Z`"
+      without characterization) — GitHub already shows the numbers.
+      Include only when paired with a weight-imbalance call-out that
+      GitHub can't show.
 - [ ] **Reviewer callouts have scope-narrowing** when the limitation
       doesn't apply PR-wide.
 - [ ] **No relative file-path links** anywhere in the body.
