@@ -1,12 +1,12 @@
 ---
-name: merge-behaviors
+name: spf-merge-behaviors
 description: >-
   Merge two SPF behaviors into one with cleaned-shape-first discipline.
   Forces per-side standalone analysis and an explicit complexity-driven
   direction declaration before any combining happens — avoids the
   "relocated mess" failure mode where the merge anchors on the current
   merged-file shape rather than the cleaned per-side shapes. Use after
-  /refactor-behavior's decomposition check has concluded "merge," or to
+  /spf-refactor-behavior's decomposition check has concluded "merge," or to
   redo a merge that landed without the discipline. Triggers: "merge
   behaviors", "merge these behaviors", "combine behaviors", "redo merge",
   "merge X into Y".
@@ -26,13 +26,13 @@ direction declared from a complexity inventory, then combine.
 ## Usage
 
 ```
-/merge-behaviors <file-a> <file-b>
+/spf-merge-behaviors <file-a> <file-b>
 ```
 
 Or for a redo case (a merge that already landed without this discipline):
 
 ```
-/merge-behaviors <merged-file>
+/spf-merge-behaviors <merged-file>
 ```
 
 For the redo case, identify the pre-merge inputs from git history (the
@@ -58,17 +58,17 @@ The canonical references — read them first:
   conditional branches around optional state-scoped work).
 - [`internal/design/spf/conventions/signals.md`](../../../internal/design/spf/conventions/signals.md)
   — multi-writer slots, decomposition check.
-- [`.claude/skills/refactor-behavior/SKILL.md`](../refactor-behavior/SKILL.md)
+- [`.claude/skills/spf-refactor-behavior/SKILL.md`](../spf-refactor-behavior/SKILL.md)
   — the per-side analysis (Steps 1–4) is borrowed from here.
 
-## When to use this skill vs. /refactor-behavior
+## When to use this skill vs. /spf-refactor-behavior
 
 | Situation | Skill |
 | --- | --- |
-| Cleaning up a single behavior file | `/refactor-behavior` |
-| Decomposition check (Step 6 of `/refactor-behavior`) concludes "this should merge with X" | `/merge-behaviors` |
-| A merge already landed without per-side analysis (suspected "relocated mess") | `/merge-behaviors` |
-| Splitting one behavior into two | `/refactor-behavior` (or open a design discussion first) |
+| Cleaning up a single behavior file | `/spf-refactor-behavior` |
+| Decomposition check (Step 6 of `/spf-refactor-behavior`) concludes "this should merge with X" | `/spf-merge-behaviors` |
+| A merge already landed without per-side analysis (suspected "relocated mess") | `/spf-merge-behaviors` |
+| Splitting one behavior into two | `/spf-refactor-behavior` (or open a design discussion first) |
 
 ## Steps (do these in order; do not skip)
 
@@ -82,7 +82,7 @@ Confirm with the user before proceeding if the inputs aren't obvious.
 
 ### Step 2 — Per-side standalone analysis
 
-For **each side independently**, run Steps 1–4 of `/refactor-behavior`:
+For **each side independently**, run Steps 1–4 of `/spf-refactor-behavior`:
 
 1. Articulate the purpose (1 sentence). Apply the **purpose-verb
    diagnostic** from `behaviors.md` Step 1 — note whether the verbs are
@@ -92,7 +92,7 @@ For **each side independently**, run Steps 1–4 of `/refactor-behavior`:
    exist).
 4. Pattern selection.
 
-The per-side analysis is exactly what `/refactor-behavior` does up to
+The per-side analysis is exactly what `/spf-refactor-behavior` does up to
 Step 4; you're running it twice in parallel.
 
 **Don't refactor pre-emptively.** If a side's gap analysis is empty or
@@ -100,7 +100,7 @@ trivial — the current code already conforms to current conventions —
 record that finding and move on. The next step (cleaned-shape sketch)
 takes the current shape, not a projected cleaner one. Only when the
 gap analysis turned up real issues do you project a cleaned shape; in
-that case, recommend (don't perform) `/refactor-behavior` on that side
+that case, recommend (don't perform) `/spf-refactor-behavior` on that side
 as an optional standalone exercise the user may opt into.
 
 ### Step 3 — Cleaned-shape sketch per side
@@ -123,7 +123,7 @@ comparable.
 If a side already conforms (Step 2 found no issues), the sketch
 describes the current shape. If the side needed projecting, the sketch
 is the projected post-refactor shape — and the proposal should note
-that landing the standalone refactor first (via `/refactor-behavior`)
+that landing the standalone refactor first (via `/spf-refactor-behavior`)
 is an option the user can choose.
 
 ### Step 4 — Complexity inventory + direction declaration
@@ -163,7 +163,7 @@ in which fields are populated.
 
 ### Step 6 — Convention checks + decomposition note
 
-Same as `/refactor-behavior` Steps 5–6:
+Same as `/spf-refactor-behavior` Steps 5–6:
 
 - Setup-shape helper signature (`({ state, config }) => cleanup`)?
   Helpers parameterized by what *varies between variants* (per-type

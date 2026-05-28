@@ -11,7 +11,7 @@ description: >-
   status), resolves the doc's open questions with the user, maps phases to
   chunks, routes to downstream skills (/spf-implement-feature for
   unimplemented constituents, /spf-create-behavior, /spf-update-behavior,
-  /refactor-behavior), and updates both the use-case doc and constituent
+  /spf-refactor-behavior), and updates both the use-case doc and constituent
   feature docs as code lands. Treats the use-case doc as a starting point for
   planning, not a hardened specification. Triggers: "implement use case",
   "implement SPF use case", "implement use-case composition", "build use
@@ -86,7 +86,7 @@ Downstream skills routed-to:
   discipline).
 - `.claude/skills/spf-update-behavior/SKILL.md` — existing behaviors whose
   purpose changes for the variant.
-- `.claude/skills/refactor-behavior/SKILL.md` — existing behaviors with
+- `.claude/skills/spf-refactor-behavior/SKILL.md` — existing behaviors with
   preserved purpose, improved implementation.
 - `.claude/skills/spf-document-use-case/SKILL.md` — invoked when Step 1
   routing concludes the candidate isn't yet documented as a use case.
@@ -429,7 +429,7 @@ typical for use-case implementations:
 - **Use-case-specific behavior creation** (if any) — route to
   `/spf-create-behavior`.
 - **Existing behavior updates** (if any) — route to
-  `/spf-update-behavior` or `/refactor-behavior`.
+  `/spf-update-behavior` or `/spf-refactor-behavior`.
 - **Engine-level test scaffolding** — engine integration tests for
   the variant; per-behavior tests for any new use-case-specific
   behaviors.
@@ -522,10 +522,10 @@ Iterate per chunk:
    - **Behavior update (purpose changing)** → route to
      `/spf-update-behavior`.
    - **Behavior refactor (purpose preserved)** → route to
-     `/refactor-behavior`.
+     `/spf-refactor-behavior`.
    - **Unimplemented constituent feature** → route to
      `/spf-implement-feature` (per Step 2's readiness strategy).
-   - **Structural (split/merge)** → route via `/refactor-behavior`.
+   - **Structural (split/merge)** → route via `/spf-refactor-behavior`.
    - **Media-layer / network-layer** — handle inline for now; future
      skills will own these.
 3. **Run the test passing.**
@@ -734,8 +734,8 @@ isn't; building a factory twice; silent doc drift).
   `/spf-document-use-case`. Implementation requires a starting-point
   doc.
 - **You want to refactor an existing behavior without feature/use-case
-  scope** → `/refactor-behavior`.
-- **You want to split or merge behaviors** → `/refactor-behavior`'s
+  scope** → `/spf-refactor-behavior`.
+- **You want to split or merge behaviors** → `/spf-refactor-behavior`'s
   decomposition check.
 - **You want to write an architectural design doc** → `design` skill.
 - **You want to write an RFC** → `rfc` skill.

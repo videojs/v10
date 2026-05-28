@@ -310,7 +310,7 @@ Parallel behaviors for video / audio / text with a shared `setup*` helper or `ma
 
 **Where it shows up.** `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` (shared `setupTrackResolution`). `loadVideoSegments` / `loadAudioSegments` / `loadTextTrackSegments`. `setupVideoBufferActors` / `setupAudioBufferActors`.
 
-**Skill action when this pattern is suspected.** When adding a new per-track-type capability, default to the per-type-split shape with a shared `setup*` helper unless a cross-type constraint forbids it. The split-vs-merge decision belongs in `/refactor-behavior` → `/split-behavior` if the feature surfaces during refactor work; for new features, follow precedent. See `conventions/behaviors.md` "Per-type specialization."
+**Skill action when this pattern is suspected.** When adding a new per-track-type capability, default to the per-type-split shape with a shared `setup*` helper unless a cross-type constraint forbids it. The split-vs-merge decision belongs in `/spf-refactor-behavior` → `/spf-split-behavior` if the feature surfaces during refactor work; for new features, follow precedent. See `conventions/behaviors.md` "Per-type specialization."
 
 ---
 

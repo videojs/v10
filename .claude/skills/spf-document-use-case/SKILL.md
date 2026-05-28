@@ -254,7 +254,7 @@ having to surface it themselves.
 
 This is the load-bearing step. Getting it wrong invalidates everything
 downstream — same failure shape as `/spf-document-feature`'s Step 1
-misdiagnosis and `/refactor-behavior`'s Step 1 purpose-articulation.
+misdiagnosis and `/spf-refactor-behavior`'s Step 1 purpose-articulation.
 
 ### Step 2 — Discuss to resolve ambiguities
 
@@ -605,10 +605,10 @@ ambiguities are genuinely resolved by Step 1's gathering.
 - **Your candidate's implementation shape is middle-pattern, not
   composition** → `/spf-document-feature`. Per `clusters.md`: most
   candidates fail this check.
-- **You want to refactor an existing behavior** → `/refactor-behavior`.
-- **You want to split or merge behaviors** → `/refactor-behavior`'s
-  Step 3 / Step 6a may route you to `/split-behavior` or
-  `/merge-behaviors`.
+- **You want to refactor an existing behavior** → `/spf-refactor-behavior`.
+- **You want to split or merge behaviors** → `/spf-refactor-behavior`'s
+  Step 3 / Step 6a may route you to `/spf-split-behavior` or
+  `/spf-merge-behaviors`.
 - **You want to write an architectural design doc** → `design` skill.
   Architectural concerns live in `internal/design/spf/` directly, not
   under `use-cases/`.

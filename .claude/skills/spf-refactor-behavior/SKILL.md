@@ -1,5 +1,5 @@
 ---
-name: refactor-behavior
+name: spf-refactor-behavior
 description: >-
   Refactor an existing SPF behavior using purpose-first discipline. Forces
   articulation of the behavior's purpose and business rules before code
@@ -22,7 +22,7 @@ refactors. Steps 3–6 only make sense once the purpose is named.
 ## Usage
 
 ```
-/refactor-behavior <path>
+/spf-refactor-behavior <path>
 ```
 
 `path` (required): the behavior file to refactor, e.g.
@@ -134,11 +134,11 @@ Three categories:
   conditional branches around optional state-scoped work.
 
 **If this refactor is a merge of two behaviors, stop and use
-`/merge-behaviors` instead.** A merge is two analyses combined, not
+`/spf-merge-behaviors` instead.** A merge is two analyses combined, not
 one — the per-side cleaned-shape sketch + complexity-driven direction
 declaration that merges need don't fit cleanly inside the
 single-behavior workflow. See `behaviors.md` "Merging two behaviors —
-extra discipline" and `.claude/skills/merge-behaviors/SKILL.md`.
+extra discipline" and `.claude/skills/spf-merge-behaviors/SKILL.md`.
 
 ### Step 4 — Pattern selection
 
@@ -292,7 +292,7 @@ Before writing the refactor:
     "Inverse: behaviors that operate uniformly across tracks."
   - **Downstream consumers operate per-type** → this isn't an
     in-place fix; this is a **split candidate**. Defer the resolution
-    to Step 6a — recommend `/split-behavior` rather than rewriting
+    to Step 6a — recommend `/spf-split-behavior` rather than rewriting
     the slot map here.
 
   Diagnostic: would an audio-only or video-only engine be able to
@@ -355,7 +355,7 @@ not split). The distinguishing signals below pull split apart from
 uniform-aggregate.
 
 **Diagnostic — three split-candidate triggers. Any one firing is enough
-to recommend `/split-behavior` as the follow-up.**
+to recommend `/spf-split-behavior` as the follow-up.**
 
 - **Explicit per-type axis declared inline.** A `type FooType =
   'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)`
@@ -363,7 +363,7 @@ to recommend `/split-behavior` as the follow-up.**
   per-type specialization was already in mind when the merged form was
   written — the merged form usually exists because of a *perceived
   cross-type constraint*. Don't pre-decide the constraint here; surface
-  it as the invariant `/split-behavior`'s cross-boundary audit will
+  it as the invariant `/spf-split-behavior`'s cross-boundary audit will
   evaluate.
 - **Sibling precedents at the same engine layer.** If per-type-
   specialized siblings already exist (`resolveVideoTrack`/`Audio`/
@@ -383,7 +383,7 @@ to recommend `/split-behavior` as the follow-up.**
   iterate `mediaSource.sourceBuffers` or similar aggregates, not when
   consumers consume per-type slots.
 
-**If any trigger fires**: recommend `/split-behavior` as the follow-up
+**If any trigger fires**: recommend `/spf-split-behavior` as the follow-up
 (don't perform the split inline, and don't pre-decide the cross-
 boundary constraint — that's the skill's audit step). Per `behaviors.md`
 "Per-type specialization" (destination shape for per-type splits) and
@@ -420,12 +420,12 @@ often slots cleanly into the larger refactor of the *other* writer
 rather than landing as a standalone change.
 
 **If merge is the answer**: don't perform the merge inline. Recommend
-`/merge-behaviors` as the follow-up — it operationalizes the per-side
+`/spf-merge-behaviors` as the follow-up — it operationalizes the per-side
 cleaned-shape sketch + complexity-inventory + direction-declaration
 discipline that merges need. Per `behaviors.md` "Merging two behaviors
 — extra discipline."
 
-(The split path is handled in 6a above. Recommend `/split-behavior` if
+(The split path is handled in 6a above. Recommend `/spf-split-behavior` if
 any of the three triggers fire there.)
 
 ### Step 7 — Final-shape audit (after writing the change)

@@ -224,7 +224,7 @@ This is the load-bearing step. Getting it wrong (misreading historical
 context as current scope, missing a sister feature, conflating with
 another feature, inflating an API primitive into a standalone feature)
 invalidates everything downstream — same failure shape as
-`refactor-behavior`'s Step 1 misdiagnosis.
+`spf-refactor-behavior`'s Step 1 misdiagnosis.
 
 ### Step 2 — Discuss to resolve ambiguities
 
@@ -562,11 +562,11 @@ by Step 1's gathering.
 
 ## When this is the wrong skill
 
-- **You want to refactor an existing behavior** → `/refactor-behavior`.
-- **You want to split a per-type behavior** → `/refactor-behavior`'s
-  Step 6a may route you to `/split-behavior`.
-- **You want to merge two behaviors** → `/refactor-behavior`'s Step 3
-  routes to `/merge-behaviors`.
+- **You want to refactor an existing behavior** → `/spf-refactor-behavior`.
+- **You want to split a per-type behavior** → `/spf-refactor-behavior`'s
+  Step 6a may route you to `/spf-split-behavior`.
+- **You want to merge two behaviors** → `/spf-refactor-behavior`'s Step 3
+  routes to `/spf-merge-behaviors`.
 - **You want to write a design doc for an architecture concern (not a
   feature)** → `design` skill. Architectural concerns live in
   `internal/design/spf/` directly, not under `features/`.
