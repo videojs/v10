@@ -1,0 +1,221 @@
+---
+title: Google Cast
+description: How to add Chromecast support to your Video.js player — lazy SDK loading, session lifecycle, and configuration options
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+Video.js has built-in Google Cast support for Mux media elements. When a Chromecast device is on the same network, a Cast button appears automatically in Chromium browsers. Tapping it starts a session that moves playback to the TV while the browser stays in control.
+
+<Aside type="note">
+Cast is only available in Chromium-based browsers (Chrome, Edge, and others built on Blink). On other browsers, `remotePlaybackAvailability` is `'unsupported'`.
+</Aside>
+
+## How Cast works
+
+Cast uses a **sender / receiver** model:
+
+- **Sender** — the browser tab. It controls playback commands (play, pause, seek, volume) and sends a load request to the receiver with the source URL and metadata.
+- **Receiver** — the Chromecast device running the default media receiver application (or a custom receiver you configure).
+
+### Session lifecycle
+
+A Cast session moves through three states, exposed via the <DocsLink slug="reference/feature-remote-playback">Remote Playback</DocsLink> feature:
+
+| State | Meaning |
+|---|---|
+| `'disconnected'` | No active session |
+| `'connecting'` | User accepted; session negotiating |
+| `'connected'` | Receiver is playing |
+
+While `connected`, the media element's `play`, `pause`, `currentTime`, `volume`, `muted`, and `playbackRate` all proxy to the Cast receiver. Local playback is suspended.
+
+### The lazy-loaded SDK
+
+The Cast SDK (`cast_sender.js`) is injected into the page as a `<script>` tag the first time a Cast-capable media element is created in a Chromium browser. No SDK cost is paid on browsers that don't support Cast.
+
+Set `disableRemotePlayback` on the media element to opt out:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video disableRemotePlayback />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video disableremoteplayback></video>
+```
+</FrameworkCase>
+
+## Minimal setup
+
+Cast works out of the box with the `videoFeatures` preset — no extra configuration needed. Add a `CastButton` to give users a way to start and stop a session:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, CastButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/..." autoPlay muted playsInline loop />
+        <CastButton />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/..." autoplay muted playsinline loop></video>
+    <media-cast-button></media-cast-button>
+  </media-container>
+</video-player>
+```
+</FrameworkCase>
+
+## Configuring Cast
+
+### Custom receiver application ID
+
+By default, Video.js uses Google's [Default Media Receiver](https://developers.google.com/cast/docs/web_sender/integrate#default_media_web_receiver) (`CC1AD845`). To use your own receiver app, set `castReceiver`:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video src="..." castReceiver="YOUR_APP_ID" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video src="..." castreceiver="YOUR_APP_ID"></video>
+```
+</FrameworkCase>
+
+### Custom data on load
+
+Pass arbitrary data to the receiver with each load request via `castCustomData`. The receiver app can read this from the `customData` field of the load request:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video
+  src="..."
+  castCustomData={{ token: 'abc123', userId: 'u_789' }}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+// HTML attributes can only carry strings; set the property in JS instead
+const video = document.querySelector('video');
+video.castCustomData = { token: 'abc123', userId: 'u_789' };
+```
+</FrameworkCase>
+
+### Cast source override
+
+By default the receiver loads the same URL as the browser. Use `castSrc` to send a different URL (for example, a separate manifest or CDN-edge URL accessible from the TV network):
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video
+  src="https://stream.mux.com/.../highest.mp4"
+  castSrc="https://stream.mux.com/.../manifest.m3u8"
+  castContentType="application/x-mpegURL"
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video
+  src="https://stream.mux.com/.../highest.mp4"
+  castsrc="https://stream.mux.com/.../manifest.m3u8"
+  castcontenttype="application/x-mpegURL"
+></video>
+```
+</FrameworkCase>
+
+### HLS on the receiver
+
+When the source (or `castSrc`) is an HLS playlist, Video.js automatically detects the segment format (TS or fMP4) by inspecting the playlist and sets `hlsSegmentFormat` / `hlsVideoSegmentFormat` on the Cast load request. The default media receiver handles HLS natively, so no extra configuration is needed.
+
+Use `castStreamType` to tell the receiver whether the stream is `'on-demand'` or `'live'` (falls back to the player's `streamType` when unset):
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video src="https://stream.mux.com/.../manifest.m3u8" castStreamType="live" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video src="https://stream.mux.com/.../manifest.m3u8" caststreamtype="live"></video>
+```
+</FrameworkCase>
+
+## Cast state and selectors
+
+Cast session state lives in the <DocsLink slug="reference/feature-remote-playback">Remote Playback</DocsLink> feature slice. Use `selectRemotePlayback` to subscribe:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { selectRemotePlayback, usePlayer } from '@videojs/react';
+
+function CastStatus() {
+  const remotePlayback = usePlayer(selectRemotePlayback);
+  if (!remotePlayback) return null;
+
+  return <span>{remotePlayback.remotePlaybackState}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { selectRemotePlayback } from '@videojs/html';
+import { PlayerController } from '@videojs/html';
+
+class CastStatus extends HTMLElement {
+  readonly #remotePlayback = new PlayerController(this, context, selectRemotePlayback);
+}
+```
+</FrameworkCase>
+
+## Browser availability
+
+Cast availability is surfaced as `remotePlaybackAvailability` on the remote playback feature. Hide the button when unsupported:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-cast-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.cast-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+## See also
+
+<DocsLinkCard slug="reference/cast-button">CastButton component reference</DocsLinkCard>
+<DocsLinkCard slug="reference/feature-remote-playback">Remote Playback feature reference</DocsLinkCard>

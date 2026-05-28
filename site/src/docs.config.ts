@@ -35,6 +35,7 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
+      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
       { slug: 'concepts/features' },
       { slug: 'concepts/skins' },
       { slug: 'concepts/presets' },
@@ -58,6 +59,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/airplay-button' },
       { slug: 'reference/buffering-indicator' },
       { slug: 'reference/captions-button' },
+      { slug: 'reference/cast-button' },
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },
