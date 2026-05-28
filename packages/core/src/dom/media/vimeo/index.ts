@@ -521,6 +521,7 @@ export class VimeoMedia extends MediaLayer<VimeoVideoSurface> implements VimeoVi
     this.dispatchEvent(new Event('loadedmetadata'));
     this.dispatchEvent(new Event('durationchange'));
     this.dispatchEvent(new Event('volumechange'));
+    this.dispatchEvent(new Event('loadcomplete'));
     this.#loadComplete.resolve();
   }
 

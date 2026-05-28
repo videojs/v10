@@ -329,7 +329,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (prop) {
         if (!this.#mediaHost) return;
         if (oldValue !== newValue) {
-          this.#syncMediaHostFromAttributes();
+          this.#syncMediaHostAttribute(attrName);
         }
         return;
       }
@@ -365,24 +365,29 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
 
     #syncMediaHostFromAttributes(): void {
-      if (!this.#mediaHost) return;
-
       const ctor = this.constructor as typeof CustomMedia;
       for (const attrName of ctor.observedAttributes) {
-        const prop = mediaHostAttrToProp.get(attrName);
-        if (!prop) continue;
-        const newValue = this.getAttribute(attrName);
-        const valueType = typeof this.#mediaHost[prop];
-        const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
-        const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
-
-        this.#mediaHost[prop] =
-          valueType === 'boolean'
-            ? newValue !== null
-            : valueType === 'number'
-              ? Number(newValue)
-              : (newValue ?? emptyValue);
+        this.#syncMediaHostAttribute(attrName);
       }
+    }
+
+    #syncMediaHostAttribute(attrName: string): void {
+      if (!this.#mediaHost) return;
+
+      const prop = mediaHostAttrToProp.get(attrName);
+      if (!prop) return;
+
+      const newValue = this.getAttribute(attrName);
+      const valueType = typeof this.#mediaHost[prop];
+      const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+      const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
+
+      this.#mediaHost[prop] =
+        valueType === 'boolean'
+          ? newValue !== null
+          : valueType === 'number'
+            ? Number(newValue)
+            : (newValue ?? emptyValue);
     }
 
     #syncMediaChildren(): void {
