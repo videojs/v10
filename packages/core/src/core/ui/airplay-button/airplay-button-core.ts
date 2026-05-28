@@ -8,7 +8,6 @@ import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '..
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
 
-/** Props for the AirPlay button. */
 export interface AirplayButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: AirplayButtonState) => string) | undefined;
@@ -16,21 +15,12 @@ export interface AirplayButtonProps {
   disabled?: boolean | undefined;
 }
 
-/** Reactive state projected for rendering the AirPlay button. */
 export interface AirplayButtonState extends ButtonState {
   /** Current AirPlay connection state. */
   state: RemotePlaybackConnectionState;
   /** Whether AirPlay is available on the active platform and media. */
   availability: MediaFeatureAvailability;
 }
-
-/**
- * Runtime-agnostic logic for a button that toggles AirPlay to a remote device.
- *
- * Projects remote-playback media state into `AirplayButtonState` and gates
- * availability to WebKit (Safari macOS/iOS), the only platform that surfaces
- * AirPlay. HTML and React bindings wrap this core.
- */
 export class AirplayButtonCore {
   static readonly defaultProps: NonNullableObject<AirplayButtonProps> = {
     label: '',
@@ -85,11 +75,11 @@ export class AirplayButtonCore {
     // WebKit (Safari macOS/iOS) is the only platform that surfaces AirPlay.
     // Mirrors the Chromium gate on CastButtonCore so each button only shows
     // on its supported platform.
-    const airplaySupported = supportsWebKitAirplay();
+    const isAirplaySupported = supportsWebKitAirplay();
 
     this.state.patch({
       state: media.remotePlaybackState,
-      availability: airplaySupported ? media.remotePlaybackAvailability : 'unsupported',
+      availability: isAirplaySupported ? media.remotePlaybackAvailability : 'unsupported',
     });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
