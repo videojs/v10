@@ -6,9 +6,15 @@ export const iconState = {
   play: {
     button: 'group',
     restart: 'hidden opacity-0 group-data-ended:block group-data-ended:opacity-100',
-    play: 'hidden opacity-0 group-not-data-ended:group-data-paused:block group-not-data-ended:group-data-paused:opacity-100',
+    play: [
+      'hidden opacity-0',
+      'group-not-data-ended:group-data-paused:block',
+      'group-not-data-ended:group-data-paused:opacity-100',
+      'group-not-data-ended:group-not-data-started:block',
+      'group-not-data-ended:group-not-data-started:opacity-100',
+    ].join(' '),
     pause:
-      'hidden opacity-0 group-not-data-paused:group-not-data-ended:block group-not-data-paused:group-not-data-ended:opacity-100',
+      'hidden opacity-0 group-data-started:group-not-data-paused:group-not-data-ended:block group-data-started:group-not-data-paused:group-not-data-ended:opacity-100',
   },
   mute: {
     button: 'group',
