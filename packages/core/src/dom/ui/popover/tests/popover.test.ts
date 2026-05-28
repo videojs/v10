@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
 
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
@@ -375,6 +379,57 @@ describe('createPopover', () => {
 
       popover.destroy();
       host.remove();
+    });
+  });
+
+  describe('focusout', () => {
+    it('keeps the popover open when blur follows an inside pointerdown', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+      popup.appendChild(child);
+      document.body.appendChild(popup);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+
+      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      popover.destroy();
+      popup.remove();
+    });
+
+    it('closes after focus settles outside the popover', async () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      document.body.appendChild(popup);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+      await nextFrame();
+      await nextFrame();
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
+
+      popover.destroy();
+      popup.remove();
     });
   });
 

@@ -127,14 +127,20 @@ function getTemplateHTML() {
             <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
               <media-menu-view class="${menu.rootView}">
                 <div class="${menu.group}">
-                  <media-menu-item commandfor="settings-speed-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                  <media-menu-item commandfor="settings-speed-menu" type="playback-rate" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     <span>Speed</span>
-                    ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    <span class="${menu.hint}">
+                      <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    </span>
                   </media-menu-item>
-                  <media-captions-settings-menu-item commandfor="settings-captions-menu" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                  <media-menu-item commandfor="settings-captions-menu" type="captions" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     <span>Captions</span>
-                    ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
-                  </media-captions-settings-menu-item>
+                    <span class="${menu.hint}">
+                      <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    </span>
+                  </media-menu-item>
                 </div>
               </media-menu-view>
 

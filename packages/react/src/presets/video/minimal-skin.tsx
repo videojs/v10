@@ -144,18 +144,16 @@ function PlaybackRateSettingsSubmenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
   if (!playbackRate) return null;
 
-  const { options, value } = playbackRate;
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? '';
-
   return (
     <Menu.Root>
       <Menu.Trigger
+        type="playback-rate"
         className="media-menu__item media-menu__item--submenu"
         render={(props) => (
           <div {...props}>
             <span>Speed</span>
             <span className="media-menu__hint">
-              <span className="media-menu__hint-label">{selectedLabel}</span>
+              <Menu.ItemValue className="media-menu__hint-label" />
               <MenuChevron />
             </span>
           </div>
@@ -174,20 +172,18 @@ function PlaybackRateSettingsSubmenu(): ReactNode {
 
 function CaptionsSettingsSubmenu(): ReactNode {
   const captions = useCaptionsOptions();
-  if (!captions || captions.state.tracks.length === 0) return null;
-
-  const { options, value } = captions;
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? 'Off';
+  if (!captions) return null;
 
   return (
     <Menu.Root>
       <Menu.Trigger
+        type="captions"
         className="media-menu__item media-menu__item--submenu"
         render={(props) => (
           <div {...props}>
             <span>Captions</span>
             <span className="media-menu__hint">
-              <span className="media-menu__hint-label">{selectedLabel}</span>
+              <Menu.ItemValue className="media-menu__hint-label" />
               <MenuChevron />
             </span>
           </div>
@@ -207,9 +203,10 @@ function CaptionsSettingsSubmenu(): ReactNode {
 function SettingsMenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
   const captions = useCaptionsOptions();
-  const hasCaptions = captions !== null && captions.state.tracks.length > 0;
+  const hasPlaybackRate = playbackRate?.state.availability === 'available';
+  const hasCaptions = captions?.state.availability === 'available';
 
-  if (!playbackRate && !hasCaptions) return null;
+  if (!hasPlaybackRate && !hasCaptions) return null;
 
   return (
     <Menu.Root side="top" align="center">

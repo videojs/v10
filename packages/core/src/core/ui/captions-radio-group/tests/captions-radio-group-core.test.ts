@@ -22,6 +22,7 @@ function createState(overrides: Partial<CaptionsRadioGroupState> = {}): Captions
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
     disabled: false,
+    availability: 'unavailable',
     label: '',
     ...overrides,
   };
@@ -57,6 +58,23 @@ describe('CaptionsRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().disabled).toBe(true);
+    });
+
+    it('marks availability unavailable when no caption tracks are available', () => {
+      const core = new CaptionsRadioGroupCore();
+      core.setMedia(createMediaState());
+
+      expect(core.getState().availability).toBe('unavailable');
+    });
+
+    it('marks availability available when caption tracks exist', () => {
+      const core = new CaptionsRadioGroupCore();
+      const media = createMediaState({
+        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+      });
+      core.setMedia(media);
+
+      expect(core.getState().availability).toBe('available');
     });
 
     it('uses off when no track is showing', () => {

@@ -4,6 +4,7 @@ import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuGroupElement } from '../../ui/menu/menu-group-element';
 import { MenuItemElement } from '../../ui/menu/menu-item-element';
 import { MenuItemIndicatorElement } from '../../ui/menu/menu-item-indicator-element';
+import { MenuItemValueElement } from '../../ui/menu/menu-item-value-element';
 import { MenuLabelElement } from '../../ui/menu/menu-label-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
@@ -18,6 +19,7 @@ declare global {
     [MenuElement.tagName]: MenuElement;
     [MenuBackElement.tagName]: MenuBackElement;
     [MenuItemElement.tagName]: MenuItemElement;
+    [MenuItemValueElement.tagName]: MenuItemValueElement;
     [MenuLabelElement.tagName]: MenuLabelElement;
     [MenuSeparatorElement.tagName]: MenuSeparatorElement;
     [MenuGroupElement.tagName]: MenuGroupElement;

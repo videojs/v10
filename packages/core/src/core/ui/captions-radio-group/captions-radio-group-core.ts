@@ -25,6 +25,7 @@ export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subt
   tracks: readonly CaptionsRadioGroupTrack[];
   value: string;
   disabled: boolean;
+  availability: 'available' | 'unavailable';
 }
 
 export const CAPTIONS_OFF_VALUE = 'off';
@@ -51,6 +52,7 @@ export class CaptionsRadioGroupCore {
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
     disabled: false,
+    availability: 'unavailable',
     label: '',
   });
 
@@ -106,11 +108,15 @@ export class CaptionsRadioGroupCore {
       label: this.getTrackLabel(track),
     }));
 
+    const availability: CaptionsRadioGroupState['availability'] =
+      captionTracks.length > 0 ? 'available' : 'unavailable';
+
     this.state.patch({
       tracks,
       value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : this.getTrackValue(showingIndex),
       subtitlesShowing: media.subtitlesShowing,
       disabled: this.#props.disabled || captionTracks.length === 0,
+      availability,
     });
     this.state.patch({ label: this.getLabel(this.state.current) });
 

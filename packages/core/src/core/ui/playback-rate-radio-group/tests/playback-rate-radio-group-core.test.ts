@@ -18,6 +18,7 @@ function createState(overrides: Partial<PlaybackRateRadioGroupState> = {}): Play
     rate: 1,
     rates: [0.5, 1, 1.5, 2],
     disabled: false,
+    availability: 'available',
     label: '',
     ...overrides,
   };
@@ -41,6 +42,20 @@ describe('PlaybackRateRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().disabled).toBe(true);
+    });
+
+    it('marks availability unavailable when no rates are available', () => {
+      const core = new PlaybackRateRadioGroupCore();
+      core.setMedia(createMediaState({ playbackRates: [] }));
+
+      expect(core.getState().availability).toBe('unavailable');
+    });
+
+    it('marks availability available when rates exist', () => {
+      const core = new PlaybackRateRadioGroupCore();
+      core.setMedia(createMediaState());
+
+      expect(core.getState().availability).toBe('available');
     });
   });
 

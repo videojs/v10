@@ -105,14 +105,20 @@ function getTemplateHTML() {
             <media-menu id="settings-menu" side="top" align="center" class="media-surface media-popover media-menu media-menu--settings">
               <media-menu-view class="media-menu__panel">
                 <div class="media-menu__group">
-                  <media-menu-item commandfor="settings-speed-menu" class="media-menu__item media-menu__item--submenu">
+                  <media-menu-item commandfor="settings-speed-menu" type="playback-rate" class="media-menu__item media-menu__item--submenu">
                     <span>Speed</span>
-                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                    <span class="media-menu__hint">
+                      <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                    </span>
                   </media-menu-item>
-                  <media-captions-settings-menu-item commandfor="settings-captions-menu" class="media-menu__item media-menu__item--submenu">
+                  <media-menu-item commandfor="settings-captions-menu" type="captions" class="media-menu__item media-menu__item--submenu">
                     <span>Captions</span>
-                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
-                  </media-captions-settings-menu-item>
+                    <span class="media-menu__hint">
+                      <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                    </span>
+                  </media-menu-item>
                 </div>
               </media-menu-view>
 

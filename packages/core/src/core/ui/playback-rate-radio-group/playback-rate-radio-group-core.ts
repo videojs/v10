@@ -19,6 +19,7 @@ export interface PlaybackRateRadioGroupState extends ButtonState {
   rate: number;
   rates: readonly number[];
   disabled: boolean;
+  availability: 'available' | 'unavailable';
 }
 
 function formatPlaybackRate(rate: number): string {
@@ -36,6 +37,7 @@ export class PlaybackRateRadioGroupCore {
     rate: 1,
     rates: [],
     disabled: false,
+    availability: 'unavailable',
     label: '',
   });
 
@@ -85,10 +87,14 @@ export class PlaybackRateRadioGroupCore {
   getState(): PlaybackRateRadioGroupState {
     const media = this.#media!;
 
+    const availability: PlaybackRateRadioGroupState['availability'] =
+      media.playbackRates.length > 0 ? 'available' : 'unavailable';
+
     this.state.patch({
       rate: media.playbackRate,
       rates: media.playbackRates,
       disabled: this.#props.disabled || media.playbackRates.length === 0,
+      availability,
     });
     this.state.patch({ label: this.getLabel(this.state.current) });
 

@@ -8,11 +8,21 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSafeId } from '../../utils/use-safe-id';
-import { MenuTriggerChildContextProvider, useMenuContext, useSubMenuContext } from './context';
+import {
+  type MenuContextValue,
+  MenuTriggerChildContextProvider,
+  useMenuContext,
+  useOptionalMenuItemSettingContext,
+  useSubMenuContext,
+} from './context';
+import { MenuItemSettingProvider } from './menu-item-setting-provider';
+import type { MenuItemSettingType } from './menu-item-type';
 
 export interface MenuTriggerProps extends UIComponentProps<'button', MenuState> {
   /** Disables the trigger. */
   disabled?: boolean;
+  /** Setting kind for submenu triggers (`playback-rate` or `captions`). */
+  type?: MenuItemSettingType | undefined;
 }
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLElement>): UIKeyboardEvent {
@@ -46,7 +56,7 @@ function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLElement>): void {
  * that pushes the submenu on click or ArrowRight.
  */
 export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTriggerProps>(function MenuTrigger(
-  { render, className, style, disabled, onClick, onKeyDown, ...elementProps },
+  { render, className, style, disabled, type, onClick, onKeyDown, ...elementProps },
   forwardedRef
 ) {
   const { core, menu, state, stateAttrMap, anchorName, contentId } = useMenuContext();
@@ -132,30 +142,28 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   // Submenu trigger mode — renders as a div with role="menuitem"
   if (isSubMenuTrigger) {
-    return renderElement(
-      'div',
-      { render, className, style },
-      {
-        state: parentState,
-        stateAttrMap,
-        ref: [forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>],
-        props: [
-          {
-            id: triggerId,
-            role: 'menuitem' as const,
-            'aria-haspopup': 'menu' as const,
-            'aria-expanded': isExpanded,
-            'aria-disabled': disabled ? true : undefined,
-            'data-has-submenu': '',
-            onClick: handleSubMenuClick,
-            onKeyDownCapture: preventMenuKeyDefault,
-            onKeyDown: handleSubMenuKeyDown,
-            onPointerEnter: handlePointerEnter,
-          },
-          elementProps,
-        ],
-      }
+    const trigger = (
+      <MenuTriggerSubmenu
+        render={render}
+        className={className}
+        style={style}
+        disabled={disabled}
+        elementProps={elementProps}
+        forwardedRef={forwardedRef}
+        elementRef={elementRef}
+        triggerId={triggerId}
+        parentState={parentState}
+        stateAttrMap={stateAttrMap}
+        isExpanded={isExpanded}
+        onSubMenuClick={handleSubMenuClick}
+        onSubMenuKeyDown={handleSubMenuKeyDown}
+        onPointerEnter={handlePointerEnter}
+      />
     );
+
+    if (!type) return trigger;
+
+    return <MenuItemSettingProvider type={type}>{trigger}</MenuItemSettingProvider>;
   }
 
   return (
@@ -183,4 +191,67 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 export namespace MenuTrigger {
   export type Props = MenuTriggerProps;
   export type State = MenuState;
+}
+
+interface MenuTriggerSubmenuProps {
+  render: MenuTriggerProps['render'];
+  className: MenuTriggerProps['className'];
+  style: MenuTriggerProps['style'];
+  disabled: boolean | undefined;
+  elementProps: Record<string, unknown>;
+  forwardedRef: React.ForwardedRef<HTMLDivElement>;
+  elementRef: React.RefObject<HTMLElement | null>;
+  triggerId: string;
+  parentState: MenuState;
+  stateAttrMap: MenuContextValue['stateAttrMap'];
+  isExpanded: boolean;
+  onSubMenuClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onSubMenuKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  onPointerEnter: () => void;
+}
+
+function MenuTriggerSubmenu({
+  render,
+  className,
+  style,
+  disabled,
+  elementProps,
+  forwardedRef,
+  elementRef,
+  triggerId,
+  parentState,
+  stateAttrMap,
+  isExpanded,
+  onSubMenuClick,
+  onSubMenuKeyDown,
+  onPointerEnter,
+}: MenuTriggerSubmenuProps) {
+  const setting = useOptionalMenuItemSettingContext();
+  const settingAttrs = setting ? { 'data-availability': setting.availability } : undefined;
+
+  return renderElement(
+    'div',
+    { render, className, style },
+    {
+      state: parentState,
+      stateAttrMap,
+      ref: [forwardedRef, elementRef as React.Ref<HTMLDivElement>],
+      props: [
+        {
+          id: triggerId,
+          role: 'menuitem' as const,
+          'aria-haspopup': 'menu' as const,
+          'aria-expanded': isExpanded,
+          'aria-disabled': disabled ? true : undefined,
+          'data-has-submenu': '',
+          onClick: onSubMenuClick,
+          onKeyDownCapture: preventMenuKeyDefault,
+          onKeyDown: onSubMenuKeyDown,
+          onPointerEnter,
+          ...settingAttrs,
+        },
+        elementProps,
+      ],
+    }
+  );
 }
