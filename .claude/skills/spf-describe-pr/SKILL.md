@@ -238,10 +238,28 @@ nuance lives that the depth label alone can't carry.
   terse-but-obscure prose; that's worse than wordy-but-clear.** A
   reviewer who isn't deep in SPF should still be able to act on each
   item.
-- **Name what's verifiable, not what the file does.** "Only the one
-  internal caller updated" is verifiable; "manages quality selection"
-  is descriptive. *What changed — by surface* carries file-purpose
-  narrative; the Look-for clause carries verification targets.
+- **Name concerns and what's verifiable, not implementation details
+  or file purpose.** "Single-writer invariant on `selectedAudioTrackId`;
+  verify the new caller path doesn't violate it" gives a reviewer a
+  hypothesis to test against the diff. "`selectQuality(tracks, ctx)`
+  packs bandwidth, safetyMargin, upgradeMargin, currentTrack" is a
+  `git diff` summary — it restates the diff instead of naming what
+  makes the change *correct*. Concern-naming serves the human
+  reviewer's comparative advantage (comprehension, architectural fit);
+  impl-naming duplicates the per-line review that Cursor/Bugbot/etc.
+  handle better. File-purpose narrative belongs in *What changed — by
+  surface*, not in *Look for:* prose.
+- **Don't carry over meta-discourse jargon from internal docs.** Labels
+  like "Tier 1", "Phase 2", "Stage A/B", or feature/use-case codenames
+  come from feature-doc phasing taxonomies. Reviewers arriving cold
+  don't share that context. Translate to substance ("Tier 1 + Tier 2"
+  → "default selection + programmatic selection + same-codec
+  mid-stream switching") rather than inline-defining the label.
+  Inline definitions teach the reader a taxonomy they don't need; the
+  gloss table is for *durable code terms* (`ABR`,
+  `single-writer invariant`) that recur across PRs, not for
+  meta-discourse labels that don't survive past the feature doc's
+  current phasing.
 
 **Good shapes:**
 
@@ -372,6 +390,14 @@ of the registry. Examples of good theme labels:
 If a theme's narrative wants to grow beyond 5 sentences, factor a
 *Notable design decisions* bullet out of it.
 
+**Contract to fewer themes when the diff is cohesive.** If the PR is
+one focused change, one paragraph here is enough — don't manufacture
+themes by listing every supporting refactor. *Less is more*: the goal
+is comprehension, not coverage. The point of the section isn't to
+enumerate what changed (the diff and the *Files changed* tab do that);
+it's to give the reviewer the *narrative spine* of the change so the
+diff makes sense.
+
 ### 5. Notable design decisions
 
 Bulleted list. Each item: **choice / alternative / why**. Lead with
@@ -383,9 +409,13 @@ then the rejection rationale. Format:
   <the road not taken>. Rejected because <why>.
 ```
 
-Use this section for decisions a reviewer might reasonably push back
-on. Don't use it for routine implementation details (those belong in
-*What changed* or commit messages).
+**Only for genuine push-back-able forks.** Routine implementation
+choices (renaming a private function for symmetry, packing a context
+object, signature tweaks for ergonomics) don't qualify. The test: can
+you articulate the alternative as a *real road-not-taken* and the
+rejection rationale as *non-obvious*? If not, the decision wasn't a
+fork — drop the bullet. The section can be entirely empty (omit it
+from the body) for many PRs.
 
 End an item with a reviewer-facing question when one exists. Example:
 *"Reviewers: is the filter too broad?"*
@@ -407,15 +437,23 @@ doesn't affect runtime code. The heading should say so:
 ```
 
 For each callout, frame as **<source-tag>** (e.g., `[Cursor Bugbot]`,
-`[Author]`, `[Deferred from Tier 2]`) + the limitation + the
-disposition ("good enough for now," "follow-up issue welcome," "blocker
-if reviewer disagrees").
+`[Author]`, `[Deferred]`) + the limitation + the disposition ("good
+enough for now," "follow-up issue welcome," "blocker if reviewer
+disagrees").
+
+**Omit the section entirely if there are no callouts.** Don't write an
+"None" heading — empty section = noise. Absence of the section IS the
+signal that nothing was flagged.
 
 ### 7. Breaking changes
 
-Single paragraph. If none, say so explicitly with the alpha caveat if
-SPF: *"None. SPF stays alpha; `<config>` surface unchanged. Deleted
-docs are internal-only, not exported API."*
+Single paragraph naming the break and its scope. **Omit the section
+entirely if there's genuinely no break** — "None" boilerplate adds
+nothing. Exception: keep the section when reviewers might *expect* a
+break (rename PR, signature-change PR, deprecation PR) and you want
+to explicitly characterize the non-break. Example:
+*"`switchVideoQuality` → `switchVideoTrack` rename is internal SPF
+only; no external consumers."*
 
 ### 8. Test plan
 
@@ -426,9 +464,27 @@ verification surface lives in *Smoke test* (section 3) — don't duplicate
 it here. Include any manual verification the author did beyond the
 smoke-test (deeper sweeps, environment-specific checks).
 
+**Omit perfunctory entries.** `pnpm typecheck — clean`, `pnpm test —
+pass`, `pnpm check:workspace — clean` are baseline expectations every
+PR runs; enumerating them adds zero signal and signals AI-checklist-
+performance theater. Include only what's *distinctive*: deferred E2E
+sweeps, environment-specific verification, sibling-PR-dependent items,
+manual sandbox runs beyond the smoke-test. If after this filter the
+section would be empty, omit the whole section.
+
 ## Disciplines
 
 ### Compression discipline
+
+**Less is more.** When an AI assistant drafts a PR description, it
+pattern-matches on "be thorough" and enumerates every change it made.
+That's the wrong target. Reviewer time is the budget, and description
+quality is `line-count × signal-density`, not line-count alone.
+**Description should serve what human reviewers do *better* than an
+LLM-driven reviewer — comprehension of the codebase, cross-cutting
+concerns, architectural fit — and skip what an LLM-driven reviewer
+already does line-by-line.** The discipline below is about *cutting*,
+not adding.
 
 The *For reviewers — how to read this PR* section is what reviewers
 will actually use to pace themselves. The target is **"Bucket 1 fits
@@ -471,6 +527,25 @@ more than word count.
   SPF won't be taught by one sentence; one who does is wasting their
   time on it.
 - **The *Look for:* label.** Em-dash is enough.
+- **Function-signature recitation in *Look for:* prose.** `fn(x, y)`
+  signatures, ctx field lists, packed-object enumerations — these are
+  `git diff` summaries, not verification targets. Name the *concern*
+  (single-writer invariant, ordering, contract match), not the
+  signature.
+- **Implementation-history paragraphs.** "The implementation order on
+  the branch (X → Y → Z) is preserved in commit history; the final
+  shape is what's being shipped." That's what every well-managed PR
+  does — saying it adds no signal. Drop unless reviewers asked about
+  a specific non-obvious rebase decision.
+- **Restated scope rationale across sections.** "Internal-only" + "SPF
+  stays alpha" belongs in *one* place (TL;DR). Repeating it in
+  *Breaking changes*, *Reviewer callouts*, *and* *What changed* is
+  over-insurance.
+- **Perfunctory test-plan checklists.** `pnpm typecheck — clean` etc.
+  are baseline expectations. See Section 8.
+- **Performed-but-empty sections.** *Reviewer callouts: None.*
+  *Breaking: None.* *Test plan:* (only baseline commands). Empty
+  sections are noise — omit them entirely (see Sections 6 / 7 / 8).
 
 **What to keep:**
 
@@ -741,8 +816,23 @@ When revising an existing description, walk this checklist:
       the URL + observables before push.
 - [ ] **Every entry has verification content** with contrast pairs or
       glosses for technical terms.
+- [ ] **No meta-discourse jargon** (Tier N, Phase N, Stage A/B,
+      codenames) carried from feature docs without translation to
+      substance.
+- [ ] **No function-signature recitation** in *Look for:* prose;
+      verification names the *concern* (invariant, ordering, contract),
+      not the impl.
 - [ ] **Notable design decisions follow choice/alternative/why** for
-      every bullet.
+      every bullet — *and* only genuine push-back-able forks remain.
+      Section omitted if no real forks exist for this PR.
+- [ ] **Sections 4–8 contracted to what's load-bearing.** Empty
+      *Reviewer callouts* / *Breaking changes* / *Test plan* sections
+      omitted entirely rather than performed as "None" boilerplate.
+      Perfunctory test-plan entries (`pnpm typecheck — clean` etc.)
+      cut.
+- [ ] **No implementation-history paragraphs** ("commit order on the
+      branch is preserved…") or restated scope rationale across
+      sections.
 - [ ] **Reviewer callouts have scope-narrowing** when the limitation
       doesn't apply PR-wide.
 - [ ] **No relative file-path links** anywhere in the body.
@@ -797,3 +887,27 @@ When revising an existing description, walk this checklist:
 - **Skipping the user confirmation on smoke-test values.** The skill
   can't reliably guess the source URL or the observables. Always
   propose + confirm before writing the section.
+- **AI-enthusiasm verbose mode.** When an AI assistant drafts the
+  description, it pattern-matches on "be thorough" and enumerates
+  every change it made. Reviewer time is the budget; description
+  quality is `line-count × signal-density`, not line-count alone. Cut
+  anything the diff already says — the *Files changed* tab is one
+  click away. The description's job is to give the reviewer the
+  *spine* and the *concerns*, not to re-narrate the diff.
+- **Inheriting feature-doc jargon.** Labels like "Tier 1", "Phase 2",
+  "Stage A/B" come from feature-doc phasing taxonomies and don't
+  travel — reviewers don't share that context. Translate to substance
+  ("Tier 1 + Tier 2" → "default selection + mid-stream switching")
+  rather than inline-defining the label. If the label *itself* matters
+  to the reviewer's understanding (rare), give a one-clause gloss; if
+  not (usual case), drop the label entirely.
+- **Performing empty sections.** "Breaking: None." "Reviewer callouts:
+  None." `pnpm typecheck — clean` as the only test-plan entry. These
+  perform-the-checklist rituals add nothing — the *absence* of the
+  section IS the signal. Omit entirely.
+- **Notable design decisions for routine impl choices.** "Renamed
+  `switchVideoQuality` to `switchVideoTrack`" is a rename, not a fork.
+  The section is for decisions a reviewer might push back on, not for
+  documenting every signature change. If the alternative isn't a real
+  road-not-taken with a non-obvious rejection rationale, drop the
+  bullet.
