@@ -1,16 +1,26 @@
 import { MediaLayer } from '../../core/media/media-layer';
-import type { EventLike, MediaFull, MediaFullEvents } from '../../core/media/types';
+import type {
+  CanPlayTypeResult,
+  EventLike,
+  MediaFull,
+  MediaFullEvents,
+  TextTrackKind,
+  TextTrackLike,
+} from '../../core/media/types';
 import { MediaStreamTypes } from '../../core/media/types';
 import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
-export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
-  extends MediaLayer<MediaFull, Events>
+export abstract class HTMLMediaElementLayer<
+    Next extends MediaFull = MediaFull,
+    Events extends { [K in keyof Events]: EventLike } = MediaFullEvents,
+  >
+  extends MediaLayer<Next, Events>
   implements MediaFull
 {
   // -- Extensions --
 
   override get root() {
-    return super.root as HTMLMediaElementLayer<Events>;
+    return super.root as HTMLMediaElementLayer<Next, Events>;
   }
 
   override get target() {
@@ -119,8 +129,20 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     if (this.next) this.next.preload = value;
   }
 
+  get crossOrigin() {
+    return this.next?.crossOrigin ?? null;
+  }
+
+  set crossOrigin(value) {
+    if (this.next) this.next.crossOrigin = value;
+  }
+
   load() {
     return this.next?.load();
+  }
+
+  canPlayType(type: string): CanPlayTypeResult {
+    return this.next?.canPlayType(type) ?? '';
   }
 
   // -- Volume --
@@ -151,6 +173,40 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
     if (this.next) this.next.playbackRate = value;
   }
 
+  get defaultPlaybackRate() {
+    return this.next?.defaultPlaybackRate ?? 1;
+  }
+
+  set defaultPlaybackRate(value) {
+    if (this.next) this.next.defaultPlaybackRate = value;
+  }
+
+  // -- Playback options --
+
+  get autoplay() {
+    return this.next?.autoplay ?? false;
+  }
+
+  set autoplay(value) {
+    if (this.next) this.next.autoplay = value;
+  }
+
+  get defaultMuted() {
+    return this.next?.defaultMuted ?? false;
+  }
+
+  set defaultMuted(value) {
+    if (this.next) this.next.defaultMuted = value;
+  }
+
+  get controls() {
+    return this.next?.controls ?? false;
+  }
+
+  set controls(value) {
+    if (this.next) this.next.controls = value;
+  }
+
   // -- Buffer --
 
   get buffered() {
@@ -159,6 +215,12 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
 
   get seekable() {
     return this.next?.seekable ?? EMPTY_TIME_RANGES;
+  }
+
+  // -- Played --
+
+  get played() {
+    return this.next?.played ?? EMPTY_TIME_RANGES;
   }
 
   // -- Error --
@@ -171,6 +233,10 @@ export abstract class HTMLMediaElementLayer<Events extends { [K in keyof Events]
 
   get textTracks() {
     return this.next?.textTracks ?? EMPTY_TEXT_TRACKS;
+  }
+
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
+    return this.next?.addTextTrack(kind, label, language) as TextTrackLike;
   }
 
   // -- Remote playback --

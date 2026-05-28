@@ -1,58 +1,84 @@
 import { isFunction } from '@videojs/utils/predicate';
 import type { Video, VideoEvents } from '../../core/media/types';
-import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
+import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
 import { HTMLMediaElementHost } from './html-media-element-host';
 
-export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement, VideoEvents> implements Video {
+export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement, Video, VideoEvents> implements Video {
   get poster() {
-    return this.target?.poster ?? '';
+    return this.next?.poster ?? '';
   }
 
   set poster(value: string) {
-    if (this.target) this.target.poster = value;
+    if (this.next) this.next.poster = value;
+  }
+
+  get playsInline() {
+    return this.next?.playsInline ?? false;
+  }
+
+  set playsInline(value: boolean) {
+    if (this.next) this.next.playsInline = value;
+  }
+
+  get videoWidth() {
+    return this.next?.videoWidth ?? 0;
+  }
+
+  get videoHeight() {
+    return this.next?.videoHeight ?? 0;
+  }
+
+  get disablePictureInPicture() {
+    return this.next?.disablePictureInPicture ?? false;
+  }
+
+  set disablePictureInPicture(value: boolean) {
+    if (this.next) this.next.disablePictureInPicture = value;
   }
 
   get webkitPresentationMode() {
-    return (this.target as WebKitVideoElement | null)?.webkitPresentationMode;
+    return (this.next as WebKitVideoElement | null)?.webkitPresentationMode;
   }
 
   get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
-    const target = this.target as unknown as WebKitVideoElement | null;
-    const fn = target?.webkitSetPresentationMode;
-    return isFunction(fn) ? fn.bind(target) : undefined;
+    const fn = (this.next as WebKitVideoElement | null)?.webkitSetPresentationMode;
+    return isFunction(fn) ? fn.bind(this.next) : undefined;
   }
 
   get isPictureInPicture(): boolean {
+    const { target } = this;
     return (
-      (!!this.target && globalThis.document?.pictureInPictureElement === this.target) ||
+      (!!target && globalThis.document?.pictureInPictureElement === target) ||
       this.webkitPresentationMode === 'picture-in-picture'
     );
   }
 
   get isFullscreen(): boolean {
-    if (!this.target) return false;
+    const { target } = this;
+    if (!target) return false;
     if (this.webkitPresentationMode === 'fullscreen') return true;
-    const doc = globalThis.document as WebKitDocument;
-    return doc?.fullscreenElement === this.target || doc?.webkitFullscreenElement === this.target;
+    const doc = globalThis.document;
+    if (!doc) return false;
+    return (
+      doc.fullscreenElement === target || ('webkitFullscreenElement' in doc && doc.webkitFullscreenElement === target)
+    );
   }
 
   async requestPictureInPicture() {
-    if (!this.target) return Promise.reject();
-    return this.target.requestPictureInPicture();
+    if (!this.next) return Promise.reject();
+    return this.next.requestPictureInPicture();
   }
 
   async exitPictureInPicture() {
-    if (!this.target) return Promise.reject();
     return globalThis.document?.exitPictureInPicture();
   }
 
   requestFullscreen() {
-    if (!this.target) return Promise.reject();
-    return this.target.requestFullscreen();
+    if (!this.next) return Promise.reject();
+    return this.next.requestFullscreen();
   }
 
   exitFullscreen() {
-    if (!this.target) return Promise.reject();
     return globalThis.document?.exitFullscreen();
   }
 }
