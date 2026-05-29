@@ -125,12 +125,21 @@ Why this distinction matters: user intent is intent-bearing — honoring it part
 
 The category set is intentionally narrow at the start (two values). New categories can be added if new composer-visible behaviors emerge, without changing the rule output shape itself. Other category-specific concerns (persistence across sources, signal subscription scope, error/debug surfaces) live outside the composer.
 
-**Where the category lives — open.** Two shapes have been discussed:
+**Where the category lives — at the composition-definition level.** Category exists for one reason: to mark which rules get the *honor-if-possible* treatment. The load-bearing invariant is two steps — (1) `forbidden` is an absolute hard floor; (2) `user-intent` preferences are honored whenever they survive (1) — and everything else in the cascade is just how to choose among the survivors. So category encodes a rule's *role* in the composition (privileged user intent vs. plain policy): structural and stable, not data a rule recomputes per invocation.
 
-- **On the rule output** alongside the data fields. Lean shape; composer reads the category in lockstep with the output. Limits the composer to post-invocation policy.
-- **As metadata on the rule itself**, separate from the per-invocation output. Heavier commitment but enables pre-invocation policies — conditional invocation, selective re-evaluation, short-circuiting when a higher-precedence rule has already determined the pick.
+That places it on each **rule entry in the composition definition** — not on per-invocation output (which would restate a constant every tick), and not baked into the rule's own type (so the same rule stays reusable across compositions):
 
-The latter is preferred for the flexibility it enables, but it commits us to rules-as-objects-with-metadata, which is itself an architecture decision that connects to the open rule-attachment question below.
+```ts
+// illustrative — the entry/rule shape is the rule-attachment question, not this one
+defineSelection({
+  rules: [
+    { category: 'user-intent', rule: userVideoSelection },
+    { category: 'system',      rule: videoAbr },
+  ],
+})
+```
+
+Whether each `rule` resolves to a pure function or an object is the [rule-attachment question](#rule-attachment-and-reactivity); either way the category tag lives on the definition's entry. Definition-level category is available both before and after a rule runs, so it neither requires nor forecloses the pre-invocation policies the earlier framing worried about.
 
 ## Composition cascade
 
@@ -301,7 +310,7 @@ Four things this tells us:
 1. **The hard/soft split is the universal pattern**, not our invention. Our `forbidden`-union-before-preferences is its declarative form — what every engine encodes imperatively as "survived the pruning pass." Shaka and rx-player also distinguish *causes* of unplayability (`CONTENT_UNSUPPORTED_BY_BROWSER` vs `RESTRICTIONS_CANNOT_BE_MET`; `noPlayableRepresentation` vs `noPlayableLockedRepresentation`) — useful precedent for the engine error model that consumes our empty-eligible outcome ([out of scope](#out-of-scope)).
 2. **No one uses scoring.** dash.js and OSMF — the two genuine rule systems (and OSMF is dash.js's ancestor) — combine categorical indices by *conservative min*, not a weighted sum; media3 ranks lexicographically and rx-player combines its bandwidth / buffer / guess estimators by precedence — also not sums. Unanimous external support for [Why no cross-rule scoring](#why-no-cross-rule-scoring).
 3. **Lexicographic multi-key merge is proven** — by ExoPlayer. Its `ComparisonChain` over `isWithinConstraints` / `preferredLanguage` / `bitrate` keys, with graceful fallback when constraints over-narrow, is a close cousin of our within-tier lex-by-precedence plus fall-through. So our merge *semantics* aren't exotic. (dash.js / OSMF's conservative-min is a *simpler* policy — a live data point for whether our tiering earns its keep.)
-4. **The novelty is composability — at the right granularity.** Most engines' combination logic is a *central, hardcoded* function — ExoPlayer's comparator, dash.js's `getMinSwitchRequest`, OSMF's `checkRules`, rx-player's `getCurrentEstimate`, hls.js's clamp. VLC is the lone one that's *pluggable* — but at the whole-algorithm level (`adaptive-logic` swaps a single `AbstractAdaptationLogic`), which can't express a concern that must *stack* with ABR rather than replace it (multi-CDN failover isn't "a different ABR algorithm"). None expresses the criteria as **independent, feature-owned rules that compose**. That's fine for them — they're players with a fixed feature set, so one hardcoded chain (or one swappable strategy) suffices. SPF is a composition framework where features arrive *by composition*, so the same proven semantics have to be pluggable per-rule — axis A is exactly why we need as composable rules what they could hardcode or swap wholesale. (Prior art also tends to put the meta-classification *on the output* — dash.js's per-`SwitchRequest` priority, ExoPlayer's per-track keys — a data point for the [category-placement question](#category-placement), which currently leans the other way.)
+4. **The novelty is composability — at the right granularity.** Most engines' combination logic is a *central, hardcoded* function — ExoPlayer's comparator, dash.js's `getMinSwitchRequest`, OSMF's `checkRules`, rx-player's `getCurrentEstimate`, hls.js's clamp. VLC is the lone one that's *pluggable* — but at the whole-algorithm level (`adaptive-logic` swaps a single `AbstractAdaptationLogic`), which can't express a concern that must *stack* with ABR rather than replace it (multi-CDN failover isn't "a different ABR algorithm"). None expresses the criteria as **independent, feature-owned rules that compose**. That's fine for them — they're players with a fixed feature set, so one hardcoded chain (or one swappable strategy) suffices. SPF is a composition framework where features arrive *by composition*, so the same proven semantics have to be pluggable per-rule — axis A is exactly why we need as composable rules what they could hardcode or swap wholesale.
 
 *Scope: surveyed independent JS engines, native mobile (media3), native desktop (VLC), and the Flash-era ancestor (OSMF). Excluded UI wrappers (Vidstack, Plyr, Media Chrome, Mux Player) — they delegate selection to one of these — and native black boxes (AVPlayer / Apple HLS) that aren't inspectable.*
 
@@ -321,10 +330,6 @@ These are coupled. Worth designing together rather than in isolation. **None pin
 ### Tree-shaking the composed pipeline
 
 The ABR-free `selectVideoTrack` keeps ABR (bandwidth estimator, quality-selection) out of the bundle — axis E for free. The #1605 unification already eroded this: `setupTrackSwitching` statically imports the ABR machinery, so composing `switchAudioTrack` pulls it in even though audio ABR isn't implemented. A single composer that every rule flows through generalizes the problem — all rules risk landing in the bundle regardless of which an engine uses. Candidate shapes: rules as à-la-carte composables the engine opts into (composer degrades to a no-op pass when only one rule is present); subpath splitting per rule; or accepting the cost for engines that adopt the substrate while leaving the simple `selectXTrack` path untouched. **Open.**
-
-### Category placement
-
-In the rule output vs. as metadata on the rule itself. Connects directly to the rule-attachment question — if rules are objects with metadata, category lives there; if rules are pure functions, category lives in the output (or in a wrapping registration). Lean: metadata-bearing rules for the composer flexibility. **Open.**
 
 ### Hysteresis location
 
