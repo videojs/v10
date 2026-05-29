@@ -13,6 +13,7 @@ export interface BackgroundLoopingVideoMediaProps {
   preload: '' | 'none' | 'metadata' | 'auto';
   loop: boolean;
   muted: boolean;
+  autoplay: boolean;
 }
 
 export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMediaProps = {
@@ -20,6 +21,7 @@ export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMedi
   preload: 'auto',
   loop: true,
   muted: true,
+  autoplay: true,
 };
 
 export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMediaProps {
@@ -66,6 +68,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     #preload: '' | 'none' | 'metadata' | 'auto' = backgroundLoopingVideoMediaDefaultProps.preload;
     #loop: boolean = backgroundLoopingVideoMediaDefaultProps.loop;
     #muted: boolean = backgroundLoopingVideoMediaDefaultProps.muted;
+    #autoplay: boolean = backgroundLoopingVideoMediaDefaultProps.autoplay;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -93,8 +96,9 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       // autoplay-looping semantics.
       mediaElement.loop = this.#loop;
       mediaElement.muted = this.#muted;
+      mediaElement.autoplay = this.#autoplay;
+
       this.#signals.context.mediaElement.set(mediaElement);
-      this.play();
     }
 
     detach(): void {
@@ -141,6 +145,14 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       // Noop for this phase
     }
 
+    get autoplay(): boolean {
+      return this.#autoplay;
+    }
+
+    set autoplay(_value: boolean) {
+      // Noop for this phase
+    }
+
     // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
     // Each assignment destroys the current engine and starts a fresh one,
@@ -167,6 +179,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
         // the new engine attaches — same shape as `attach()`.
         prevMediaElement.loop = this.#loop;
         prevMediaElement.muted = this.#muted;
+        prevMediaElement.autoplay = this.#autoplay;
         this.#signals.context.mediaElement.set(prevMediaElement);
       }
 
@@ -185,10 +198,6 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       if (!mediaElement) {
         return Promise.reject(new Error('BackgroundLoopingVideoMediaElement: no media element attached'));
       }
-
-      // TODO: (To be resolved for the PR).
-      // This could be needed since one could modify loadActivated
-      // this.#signals.state.loadActivated.set(true);
 
       try {
         return await mediaElement.play();
