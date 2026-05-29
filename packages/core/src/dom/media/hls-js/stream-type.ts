@@ -59,11 +59,11 @@ class HlsJsStreamTypeLayer extends HTMLMediaElementLayer {
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
   #userOverride = false;
 
-  override get streamType(): MediaStreamType {
+  get streamType(): MediaStreamType {
     return this.#streamType;
   }
 
-  override set streamType(value: MediaStreamType) {
+  set streamType(value: MediaStreamType) {
     if (value === MediaStreamTypes.UNKNOWN) {
       this.#userOverride = false;
       this.#update(MediaStreamTypes.UNKNOWN);

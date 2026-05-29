@@ -71,11 +71,11 @@ class HlsJsPreloadLayer extends HTMLMediaElementLayer {
     this.#media = media;
   }
 
-  override get preload(): MediaPreloadType {
+  get preload(): MediaPreloadType {
     return this.#preload;
   }
 
-  override set preload(value: MediaPreloadType) {
+  set preload(value: MediaPreloadType) {
     this.#preload = value;
     this.init();
   }

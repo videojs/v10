@@ -2,7 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { nativeHlsLive } from '../live';
 
-class FakeNativeHlsMedia extends HTMLVideoElementHost {}
+class FakeNativeHlsMedia extends HTMLVideoElementHost {
+  get liveEdgeStart() {
+    return this.next?.liveEdgeStart ?? Number.NaN;
+  }
+
+  get targetLiveWindow() {
+    return this.next?.targetLiveWindow ?? Number.NaN;
+  }
+}
 
 function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTMLVideoElement {
   const video = document.createElement('video');

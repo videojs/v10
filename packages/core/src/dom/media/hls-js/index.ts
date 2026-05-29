@@ -1,4 +1,5 @@
 import HlsJs, { type HlsConfig as HlsJsConfig } from 'hls.js';
+import { type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 import { hlsJsErrors } from './errors';
 import { hlsJsLive } from './live';
@@ -48,6 +49,30 @@ export class HlsJsMedia extends HTMLVideoElementHost<HlsJs> {
 
   override set src(value: string) {
     this.#engine?.loadSource(value);
+  }
+
+  get preload(): MediaPreloadType {
+    return this.next?.preload ?? 'metadata';
+  }
+
+  set preload(value: MediaPreloadType) {
+    if (this.next) this.next.preload = value;
+  }
+
+  get streamType(): MediaStreamType {
+    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
+  }
+
+  set streamType(value: MediaStreamType) {
+    if (this.next) this.next.streamType = value;
+  }
+
+  get liveEdgeStart() {
+    return this.next?.liveEdgeStart ?? Number.NaN;
+  }
+
+  get targetLiveWindow() {
+    return this.next?.targetLiveWindow ?? Number.NaN;
   }
 
   override get target() {

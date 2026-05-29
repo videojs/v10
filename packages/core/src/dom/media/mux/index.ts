@@ -26,12 +26,28 @@ export class MuxVideoMedia extends HTMLVideoElementHost implements MuxMediaProps
     muxData({ debug: true }).install(this);
   }
 
-  override get config(): MuxMediaConfig {
-    return super.config as MuxMediaConfig;
+  get src() {
+    return this.next?.src ?? muxMediaDefaultProps.src;
   }
 
-  override set config(value: MuxMediaConfig) {
-    super.config = value;
+  set src(value: string) {
+    if (this.next) this.next.src = value;
+  }
+
+  get preload() {
+    return this.next?.preload ?? muxMediaDefaultProps.preload;
+  }
+
+  set preload(value: MuxMediaProps['preload']) {
+    if (this.next) this.next.preload = value;
+  }
+
+  get config(): MuxMediaConfig {
+    return (this.next?.config as MuxMediaConfig | undefined) ?? muxMediaDefaultProps.config;
+  }
+
+  set config(value: MuxMediaConfig) {
+    if (this.next) this.next.config = value;
   }
 }
 
@@ -45,11 +61,27 @@ export class MuxAudioMedia extends HTMLAudioElementHost implements MuxMediaProps
     muxData().install(this);
   }
 
-  override get config(): MuxMediaConfig {
-    return super.config as MuxMediaConfig;
+  get src() {
+    return this.next?.src ?? muxMediaDefaultProps.src;
   }
 
-  override set config(value: MuxMediaConfig) {
-    super.config = value;
+  set src(value: string) {
+    if (this.next) this.next.src = value;
+  }
+
+  get preload() {
+    return this.next?.preload ?? muxMediaDefaultProps.preload;
+  }
+
+  set preload(value: MuxMediaProps['preload']) {
+    if (this.next) this.next.preload = value;
+  }
+
+  get config(): MuxMediaConfig {
+    return (this.next?.config as MuxMediaConfig | undefined) ?? muxMediaDefaultProps.config;
+  }
+
+  set config(value: MuxMediaConfig) {
+    if (this.next) this.next.config = value;
   }
 }
