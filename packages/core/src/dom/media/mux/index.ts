@@ -22,8 +22,7 @@ export class MuxVideoMedia extends HTMLVideoElementHost implements MuxMediaProps
     super();
     addLayer(this, new HlsMedia());
     googleCast().install(this);
-    // TODO: added debug for testing, remove for production!!
-    muxData({ debug: true }).install(this);
+    muxData().install(this);
   }
 
   get config(): MuxMediaConfig {
