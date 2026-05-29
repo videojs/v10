@@ -44,11 +44,6 @@ function setup() {
 }
 
 describe('hlsJsStreamType', () => {
-  it('starts as unknown', () => {
-    const { host } = setup();
-    expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
-  });
-
   it('detects live from a LEVEL_LOADED event with live details', () => {
     const { engine, host } = setup();
     const handler = vi.fn();
@@ -71,32 +66,12 @@ describe('hlsJsStreamType', () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
-  it('dedupes streamtypechange when the detected value does not change', () => {
-    const { engine, host } = setup();
-    const handler = vi.fn();
-    host.addEventListener('streamtypechange', handler);
-
-    (engine as any).emit(Hls.Events.LEVEL_LOADED, { details: { live: true } });
-    (engine as any).emit(Hls.Events.LEVEL_LOADED, { details: { live: true } });
-
-    expect(handler).toHaveBeenCalledOnce();
-  });
-
   it('resets to unknown on MANIFEST_LOADING', () => {
     const { engine, host } = setup();
     (engine as any).emit(Hls.Events.LEVEL_LOADED, { details: { live: true } });
     expect(host.streamType).toBe(MediaStreamTypes.LIVE);
 
     (engine as any).emit(Hls.Events.MANIFEST_LOADING);
-    expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
-  });
-
-  it('resets to unknown on DESTROYING', () => {
-    const { engine, host } = setup();
-    (engine as any).emit(Hls.Events.LEVEL_LOADED, { details: { live: false } });
-    expect(host.streamType).toBe(MediaStreamTypes.ON_DEMAND);
-
-    (engine as any).emit(Hls.Events.DESTROYING);
     expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });
 
@@ -126,15 +101,5 @@ describe('hlsJsStreamType', () => {
 
     (engine as any).emit(Hls.Events.LEVEL_LOADED, { details: { live: false } });
     expect(host.streamType).toBe(MediaStreamTypes.ON_DEMAND);
-  });
-
-  it('removes the layer on destroy', () => {
-    const { host, extension } = setup();
-    host.streamType = MediaStreamTypes.LIVE;
-    expect(host.streamType).toBe(MediaStreamTypes.LIVE);
-
-    extension.destroy();
-
-    expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });
 });

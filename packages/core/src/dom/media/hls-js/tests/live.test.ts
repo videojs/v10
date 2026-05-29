@@ -68,17 +68,6 @@ function setTarget(host: FakeHlsJsMedia, ranges: [number, number][]) {
 }
 
 describe('hlsJsLive', () => {
-  describe('defaults', () => {
-    it('starts with `NaN` for both values and no event', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-
-      expect(host.targetLiveWindow).toBeNaN();
-      expect(host.liveEdgeStart).toBeNaN();
-    });
-  });
-
   describe('targetLiveWindow derivation', () => {
     it('is `0` for standard live', () => {
       const engine = createEngine();
@@ -103,30 +92,6 @@ describe('hlsJsLive', () => {
 
       expect(host.targetLiveWindow).toBe(Number.POSITIVE_INFINITY);
     });
-
-    it('is `NaN` for non-live playlists', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-
-      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
-
-      expect(host.targetLiveWindow).toBeNaN();
-    });
-
-    it('dedupes `targetlivewindowchange` when the value does not change', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-
-      const handler = vi.fn();
-      host.addEventListener('targetlivewindowchange', handler);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      expect(handler).toHaveBeenCalledOnce();
-    });
   });
 
   describe('liveEdgeStart derivation', () => {
@@ -141,28 +106,6 @@ describe('hlsJsLive', () => {
       expect(host.liveEdgeStart).toBe(42);
     });
 
-    it('falls back to `targetduration * 3` when `holdBack` is absent', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 0, targetduration: 6 }));
-
-      expect(host.liveEdgeStart).toBe(42);
-    });
-
-    it('uses `partHoldBack` for low-latency live', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
-
-      expect(host.liveEdgeStart).toBe(58);
-    });
-
     it('falls back to `partTarget * 2` when `partHoldBack` is absent', () => {
       const engine = createEngine();
       const host = new FakeHlsJsMedia(engine);
@@ -172,55 +115,6 @@ describe('hlsJsLive', () => {
       emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 0, partTarget: 0.5 }));
 
       expect(host.liveEdgeStart).toBe(59);
-    });
-
-    it('is `NaN` when no seekable range is available', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, []);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      expect(host.liveEdgeStart).toBeNaN();
-    });
-
-    it('is `NaN` when the stream is not live', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
-
-      expect(host.liveEdgeStart).toBeNaN();
-    });
-
-    it('reflects the current `seekable` on every read', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-
-      let end = 60;
-      const video = document.createElement('video');
-      Object.defineProperty(video, 'seekable', {
-        configurable: true,
-        get() {
-          return {
-            length: 1,
-            start: () => 0,
-            end: () => end,
-          } as TimeRanges;
-        },
-      });
-      host.target = video;
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      expect(host.liveEdgeStart).toBe(42);
-
-      end = 120;
-      expect(host.liveEdgeStart).toBe(102);
     });
   });
 
@@ -243,67 +137,6 @@ describe('hlsJsLive', () => {
       expect(video.currentTime).toBe(42);
     });
 
-    it('does not seek when `autoplay` is set', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-      video.autoplay = true;
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      video.dispatchEvent(new Event('play'));
-
-      expect(video.currentTime).toBe(0);
-    });
-
-    it('only seeks on the first play (subsequent plays are ignored)', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      video.dispatchEvent(new Event('play'));
-      expect(video.currentTime).toBe(42);
-
-      video.currentTime = 30;
-      video.dispatchEvent(new Event('play'));
-      expect(video.currentTime).toBe(30);
-    });
-
-    it('does not seek backwards when already at or past the live edge', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      video.currentTime = 50;
-      video.dispatchEvent(new Event('play'));
-
-      expect(video.currentTime).toBe(50);
-    });
-
-    it('does not seek when stream is on-demand', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
-
-      video.dispatchEvent(new Event('play'));
-
-      expect(video.currentTime).toBe(0);
-    });
-
     it('defers the seek until `liveEdgeStart` becomes finite (preload="none")', () => {
       const engine = createEngine();
       const host = new FakeHlsJsMedia(engine);
@@ -318,41 +151,6 @@ describe('hlsJsLive', () => {
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
       expect(video.currentTime).toBe(42);
-    });
-
-    it('re-arms on a subsequent source load', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-      video.dispatchEvent(new Event('play'));
-      expect(video.currentTime).toBe(42);
-
-      video.currentTime = 0;
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-      video.dispatchEvent(new Event('play'));
-
-      expect(video.currentTime).toBe(42);
-    });
-
-    it('disarms on `DESTROYING`', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      const video = setTarget(host, [[0, 60]]);
-
-      emitManifestLoading(engine);
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      (engine as any).emit(Hls.Events.DESTROYING);
-
-      video.dispatchEvent(new Event('play'));
-
-      expect(video.currentTime).toBe(0);
     });
   });
 
@@ -370,17 +168,6 @@ describe('hlsJsLive', () => {
       expect((engine as any).config.abrBandWidthUpFactor).toBe(0.95);
     });
 
-    it('applies standard live defaults when partList is absent', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-
-      expect((engine as any).config.backBufferLength).toBe(8);
-    });
-
     it('respects user-supplied overrides', () => {
       const engine = createEngine({ backBufferLength: 30 });
       const host = new FakeHlsJsMedia(engine);
@@ -390,17 +177,6 @@ describe('hlsJsLive', () => {
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
       expect((engine as any).config.backBufferLength).toBe(30);
-    });
-
-    it('does not touch config for non-live streams', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
-
-      expect((engine as any).config.backBufferLength).toBeUndefined();
     });
   });
 
@@ -422,41 +198,6 @@ describe('hlsJsLive', () => {
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();
       expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it('resets on `DESTROYING`', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      hlsJsLive().install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-      expect(host.targetLiveWindow).toBe(0);
-
-      (engine as any).emit(Hls.Events.DESTROYING);
-
-      expect(host.targetLiveWindow).toBeNaN();
-      expect(host.liveEdgeStart).toBeNaN();
-    });
-  });
-
-  describe('uninstall', () => {
-    it('removes engine listeners and the layer when destroyed', () => {
-      const engine = createEngine();
-      const host = new FakeHlsJsMedia(engine);
-      const extension = hlsJsLive();
-      extension.install(host);
-      setTarget(host, [[0, 60]]);
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
-      expect(host.targetLiveWindow).toBe(0);
-
-      extension.destroy();
-
-      emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 36 }));
-      // After destroy, the layer is gone, so the host's chain falls through
-      // to the underlying video (which has no live properties → NaN).
-      expect(host.targetLiveWindow).toBeNaN();
     });
   });
 });

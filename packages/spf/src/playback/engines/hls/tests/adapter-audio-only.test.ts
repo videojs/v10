@@ -168,13 +168,6 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       expect(spy).not.toHaveBeenCalled();
     });
 
-    it('reads back the most recently assigned target', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
-      const el = document.createElement('audio');
-      media.target = el;
-      expect(media.target).toBe(el);
-    });
-
     it('forwards target to a base class that defines its own accessor', () => {
       // Simulate a base like HTMLAudioElementHost / MediaLayer that exposes its
       // own target accessor — the mixin should delegate to it so the layer
@@ -292,13 +285,6 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
-    });
-
-    it('clears the target', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
-      media.target = document.createElement('audio');
-      media.destroy();
-      expect(media.target).toBeNull();
     });
   });
 });

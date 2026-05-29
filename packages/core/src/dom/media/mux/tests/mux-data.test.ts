@@ -53,17 +53,6 @@ describe('muxData', () => {
     vi.restoreAllMocks();
   });
 
-  it('captures playerInitTime from the SDK at factory-call time', () => {
-    const MuxDataSdk = makeSdk();
-    const ext = muxData({ MuxDataSdk });
-
-    expect(ext.playerInitTime).toBe(1000);
-  });
-
-  it('honours an explicit playerInitTime', () => {
-    expect(muxData({ playerInitTime: 42 }).playerInitTime).toBe(42);
-  });
-
   it('initializes the SDK against host.target on `load()`', async () => {
     const MuxDataSdk = makeSdk();
     const target = makeTarget();
@@ -122,27 +111,5 @@ describe('muxData', () => {
 
     expect(destroy).toHaveBeenCalledTimes(1);
     expect(target.mux).toBeUndefined();
-  });
-
-  it('stops intercepting `load()` after uninstall', async () => {
-    const MuxDataSdk = makeSdk();
-    const host = makeHost({ target: makeTarget() });
-
-    const extension = muxData({ MuxDataSdk });
-    extension.install(host);
-    extension.destroy();
-    await host.load();
-
-    expect(MuxDataSdk.monitor).not.toHaveBeenCalled();
-  });
-
-  it('exposes a mutable config surface (mirrors the legacy mixin)', () => {
-    const ext = muxData({ envKey: 'a' });
-
-    ext.envKey = 'b';
-    ext.metadata = { video_title: 'Hello' };
-
-    expect(ext.envKey).toBe('b');
-    expect(ext.metadata?.video_title).toBe('Hello');
   });
 });

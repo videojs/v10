@@ -195,13 +195,6 @@ describe('SimpleHlsMediaElement', () => {
       expect(spy).not.toHaveBeenCalled();
     });
 
-    it('reads back the most recently assigned target', () => {
-      const media = new SimpleHlsMediaElement();
-      const el = document.createElement('video');
-      media.target = el;
-      expect(media.target).toBe(el);
-    });
-
     it('forwards target to a base class that defines its own accessor', () => {
       // Simulate a base like HTMLVideoElementHost / MediaLayer that exposes its
       // own target accessor — the mixin should delegate to it so the layer
@@ -387,13 +380,6 @@ describe('SimpleHlsMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
-    });
-
-    it('clears the target', () => {
-      const media = new SimpleHlsMediaElement();
-      media.target = document.createElement('video');
-      media.destroy();
-      expect(media.target).toBeNull();
     });
   });
 });

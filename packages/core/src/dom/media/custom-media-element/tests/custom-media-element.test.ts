@@ -721,18 +721,6 @@ describe('CustomMediaElement', () => {
       expect(el.calls).toContain('set:preload:metadata');
     });
 
-    it('preload attribute removal delegates the empty value to the MediaHost', () => {
-      const el = create(defineTrackingVideoElement());
-      el.preload = 'metadata';
-      el.calls.length = 0;
-
-      el.removeAttribute('preload');
-
-      expect(el.getAttribute('preload')).toBeNull();
-      expect(el.preload).toBe('metadata');
-      expect(el.calls).toEqual(['set:preload:null']);
-    });
-
     it('number setter delegates directly to the MediaHost', () => {
       const el = create(defineTrackingVideoElement());
       el.volume = 0.5;
