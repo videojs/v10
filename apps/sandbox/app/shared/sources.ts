@@ -61,15 +61,9 @@ export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
-// simple-hls only supports HLS streams with fMP4 segments (no TS).
-export const SIMPLE_HLS_SOURCE_IDS = SOURCE_IDS.filter((id) => {
-  const source = SOURCES[id];
-  return 'subType' in source && source.subType === 'mp4';
-});
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
-export const DEFAULT_SIMPLE_HLS_SOURCE: SourceId = 'hls-3';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
