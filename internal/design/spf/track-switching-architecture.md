@@ -29,6 +29,7 @@ This doc proposes the shared substrate: track selection as a **filter/sort pipel
 - Bandwidth-state sampling and multi-writer slot semantics. Orthogonal to selection.
 - Source-replacement lifecycle. Already handled by reactor state-exit.
 - Text-track selection. Text uses a DOM-driven multi-writer shape (see [`text-track-architecture.md`](./text-track-architecture.md)) not currently folded into this substrate. May be incorporated later.
+- Engine error-handling. How an empty eligible set (cascade step 2) and other failures surface — error state, cause attribution, recoverability, whether a given empty slot is even fatal — is owned by the engine error model. The substrate only detects the outcome and hands it off.
 
 ## Solution
 
@@ -138,7 +139,7 @@ The composer's job: take rule outputs (with their categories), produce a single 
 Working policy:
 
 1. **Forbidden union.** Any rule's `forbidden` set removes from the candidate set. Hard exclusion. Composes by union across all rules — no other rule's preference can rescue a forbidden track.
-2. **Eligible-set check.** If forbidden union covers every track, the engine has no playable track. **Hard failure** — surface as an unplayable-source error. The cascade does not attempt to recover.
+2. **Eligible-set check.** If forbidden union covers every track, the slot has no eligible track; the cascade stops and the substrate reports this empty-eligible outcome. How it surfaces — and whether it's even fatal (a video slot is empty by design in audio-only) — is engine error-handling ([out of scope](#out-of-scope)).
 3. **Tier classification (pessimistic).** For each non-forbidden track, the composite tier is the worst classification any rule made. If any rule emits `allowed` for the track, composite tier is allowed. If all rules with opinions emit `preferred`, composite tier is preferred. Tracks no rule has opinions on land in implicit no-opinion / acceptable.
 4. **Within-tier ordering (lex by precedence).** Rules are ordered (rule-list array order = precedence). Among tracks in the same composite tier, the earliest rule with a ranked opinion about a track wins. Ties break to the next rule with an opinion. Unranked-preferred rules don't contribute ordering — only filtering — so they're transparent to within-tier ordering.
 5. **Fall-through cascade.** If composite preferred is empty but composite allowed is non-empty, the writer picks from composite allowed. If composite allowed is also empty, the writer picks from no-opinion / eligible-set tracks. Cascade applies automatically; soft preferences yield gracefully when they over-narrow.
@@ -150,7 +151,7 @@ The cascade gives: hard failure when nothing is playable, graceful degradation w
 
 The pipeline can narrow to empty in two qualitatively different ways:
 
-- **Eligible-set empty** (forbidden union covers everything): the engine can't play anything. Cascade can't recover — every track is hard-excluded for a real reason. Surfaces as unplayable-source error.
+- **Eligible-set empty** (forbidden union covers everything): every track is hard-excluded for a real reason, so the cascade can't recover. The substrate reports the empty-eligible outcome; the engine error model takes it from there ([out of scope](#out-of-scope)).
 - **Preferred / allowed empty but eligible set non-empty:** soft preferences over-narrowed; there are still pickable tracks. Cascade falls through gracefully; engine plays. User intent dropped along the way biases the fall-through tier.
 
 The model encodes the distinction structurally: `forbidden` is explicit and binding; `preferred` and `allowed` yield. Composition just has to honor it.
@@ -297,7 +298,7 @@ Every major HTTP-adaptive-streaming engine separates **hard constraints (a pruni
 
 Four things this tells us:
 
-1. **The hard/soft split is the universal pattern**, not our invention. Our `forbidden`-union-before-preferences is its declarative form — what every engine encodes imperatively as "survived the pruning pass." Shaka's two typed errors (`CONTENT_UNSUPPORTED_BY_BROWSER` vs `RESTRICTIONS_CANNOT_BE_MET`) are a concrete candidate answer to the [error-surface question](#error-surface-for-unplayable-source-case); rx-player similarly emits distinct `noPlayableRepresentation` vs `noPlayableLockedRepresentation` events, separating *nothing playable* from *nothing playable within the user's lock* — our eligible-set-empty vs user-intent-over-narrow distinction.
+1. **The hard/soft split is the universal pattern**, not our invention. Our `forbidden`-union-before-preferences is its declarative form — what every engine encodes imperatively as "survived the pruning pass." Shaka and rx-player also distinguish *causes* of unplayability (`CONTENT_UNSUPPORTED_BY_BROWSER` vs `RESTRICTIONS_CANNOT_BE_MET`; `noPlayableRepresentation` vs `noPlayableLockedRepresentation`) — useful precedent for the engine error model that consumes our empty-eligible outcome ([out of scope](#out-of-scope)).
 2. **No one uses scoring.** dash.js and OSMF — the two genuine rule systems (and OSMF is dash.js's ancestor) — combine categorical indices by *conservative min*, not a weighted sum; media3 ranks lexicographically and rx-player combines its bandwidth / buffer / guess estimators by precedence — also not sums. Unanimous external support for [Why no cross-rule scoring](#why-no-cross-rule-scoring).
 3. **Lexicographic multi-key merge is proven** — by ExoPlayer. Its `ComparisonChain` over `isWithinConstraints` / `preferredLanguage` / `bitrate` keys, with graceful fallback when constraints over-narrow, is a close cousin of our within-tier lex-by-precedence plus fall-through. So our merge *semantics* aren't exotic. (dash.js / OSMF's conservative-min is a *simpler* policy — a live data point for whether our tiering earns its keep.)
 4. **The novelty is composability — at the right granularity.** Most engines' combination logic is a *central, hardcoded* function — ExoPlayer's comparator, dash.js's `getMinSwitchRequest`, OSMF's `checkRules`, rx-player's `getCurrentEstimate`, hls.js's clamp. VLC is the lone one that's *pluggable* — but at the whole-algorithm level (`adaptive-logic` swaps a single `AbstractAdaptationLogic`), which can't express a concern that must *stack* with ABR rather than replace it (multi-CDN failover isn't "a different ABR algorithm"). None expresses the criteria as **independent, feature-owned rules that compose**. That's fine for them — they're players with a fixed feature set, so one hardcoded chain (or one swappable strategy) suffices. SPF is a composition framework where features arrive *by composition*, so the same proven semantics have to be pluggable per-rule — axis A is exactly why we need as composable rules what they could hardcode or swap wholesale. (Prior art also tends to put the meta-classification *on the output* — dash.js's per-`SwitchRequest` priority, ExoPlayer's per-track keys — a data point for the [category-placement question](#category-placement), which currently leans the other way.)
@@ -333,10 +334,6 @@ In the rule output vs. as metadata on the rule itself. Connects directly to the 
 - **Rule-internal**: ABR contributes a hysteresis-aware preferred tier that already favors the current track.
 
 Probably composer-side; the prior-pick concern is general (not ABR-specific) and rule-internal hysteresis would have to be duplicated by every ranking rule. **Open.**
-
-### Error surface for unplayable-source case
-
-When forbidden union covers every track, how does the failure surface? Engine state slot, observable signal, derived from the empty-eligible-set itself? Cross-cuts with broader engine error-handling design. **Open.**
 
 ### Cross-source preferences
 
