@@ -33,7 +33,7 @@ class GoogleCast implements GoogleCastProps, MediaExtension {
   #receiverApplicationId: string | undefined;
   #customData: Record<string, unknown> | null | undefined;
   #media: GoogleCastMedia | null = null;
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   constructor(props: GoogleCastProps = {}) {
     Object.assign(this, props);
@@ -60,8 +60,8 @@ class GoogleCast implements GoogleCastProps, MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 
   /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */

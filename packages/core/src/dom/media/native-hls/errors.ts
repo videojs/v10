@@ -12,7 +12,7 @@ import { HTMLVideoElementLayer } from '../html-video-element-layer';
  * @example nativeHlsErrors().install(media);
  */
 class NativeHlsErrors implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost) {
     const uninstall = installExtension(nativeHlsErrors, media, this);
@@ -24,8 +24,8 @@ class NativeHlsErrors implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 

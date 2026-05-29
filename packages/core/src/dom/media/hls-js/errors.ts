@@ -23,7 +23,7 @@ const hlsErrorTypeToCode: Record<string, number> = {
  */
 class HlsJsErrors implements MediaExtension {
   #sessionAbort: AbortController | null = null;
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
@@ -82,8 +82,8 @@ class HlsJsErrors implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 

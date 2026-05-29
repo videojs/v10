@@ -17,7 +17,7 @@ import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
  * @example nativeHlsLive().install(media);
  */
 class NativeHlsLive implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost) {
     const uninstall = installExtension(nativeHlsLive, media, this);
@@ -29,8 +29,8 @@ class NativeHlsLive implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 
