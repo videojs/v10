@@ -11,10 +11,7 @@ import type { MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
-import {
-  calculatePresentationDuration,
-  type PresentationDurationResolver,
-} from '../../behaviors/calculate-presentation-duration';
+import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -92,7 +89,6 @@ export interface BackgroundLoopingVideoEngineConfig
    * multivariant-playlist parser.
    */
   parsePresentation?: ParsePresentation;
-  resolveDuration?: PresentationDurationResolver;
 }
 
 // ============================================================================
@@ -137,8 +133,8 @@ export function createBackgroundLoopingVideoEngine(
   const finalConfig = {
     ...config,
     picker: config.picker ?? pickMaxResolutionVideoTrack,
-    resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
+    resolveDuration: getResolvedSelectedTrackDuration,
   };
 
   return createComposition(
