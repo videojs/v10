@@ -1,10 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MediaStreamTypes } from '../../../../core/media/types';
+import { type MediaStreamType, MediaStreamTypes } from '../../../../core/media/types';
 import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { nativeHlsStreamType } from '../stream-type';
 
+class TestNativeHlsMedia extends HTMLVideoElementHost {
+  get streamType(): MediaStreamType {
+    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
+  }
+
+  set streamType(value: MediaStreamType) {
+    if (this.next) this.next.streamType = value;
+  }
+}
+
 function setup(duration: number = Number.NaN) {
-  const host = new HTMLVideoElementHost();
+  const host = new TestNativeHlsMedia();
   const extension = nativeHlsStreamType();
   extension.install(host);
   const video = document.createElement('video');
@@ -19,7 +29,7 @@ function setDuration(video: HTMLVideoElement, duration: number) {
 
 describe('nativeHlsStreamType', () => {
   it('starts as UNKNOWN before any signal', () => {
-    const host = new HTMLVideoElementHost();
+    const host = new TestNativeHlsMedia();
     nativeHlsStreamType().install(host);
     expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });

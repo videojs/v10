@@ -8,27 +8,15 @@ import type {
   Video,
   VideoEvents,
 } from '../../core/media/types';
-import { MediaStreamTypes } from '../../core/media/types';
 import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
-import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
-/**
- * IMPORTANT: This class intentionally `implements Video` (not only `MediaFull`) so
- * the full media API — including video-only props — lives in one place. Every
- * subclass inherits forwarding getters/setters/methods that pass through `next`
- * to `target`. Do not trim this to `MediaFull` or split video props onto a
- * separate base; extension layers and hosts rely on inheriting the complete
- * surface so a missing forwarder does not silently break the chain.
- */
 export abstract class HTMLMediaElementLayer<
-    Target extends HTMLMediaElement = HTMLMediaElement,
-    Engine = unknown,
-    Events extends { [K in keyof Events]: EventLike } = VideoEvents,
-    Next extends Video = Video,
-  >
-  extends MediaLayer<Next, Events>
-  implements Video<Engine>
-{
+  Target extends HTMLMediaElement = HTMLMediaElement,
+  Engine = unknown,
+  Events extends { [K in keyof Events]: EventLike } = VideoEvents,
+  Next extends Video = Video,
+> extends MediaLayer<Next, Events> {
   querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
   querySelector<E extends Element = Element>(selectors: string): E | null;
   querySelector(selectors: string): Element | null {
@@ -57,30 +45,6 @@ export abstract class HTMLMediaElementLayer<
 
   get engine(): Engine | null {
     return (this.next?.engine as Engine | null | undefined) ?? null;
-  }
-
-  get streamType() {
-    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
-  }
-
-  set streamType(value) {
-    if (this.next) this.next.streamType = value;
-  }
-
-  get liveEdgeStart() {
-    return this.next?.liveEdgeStart ?? Number.NaN;
-  }
-
-  get targetLiveWindow() {
-    return this.next?.targetLiveWindow ?? Number.NaN;
-  }
-
-  get config() {
-    return this.next?.config ?? EMPTY_CONFIG;
-  }
-
-  set config(value) {
-    if (this.next) this.next.config = value;
   }
 
   // -- Playback --
@@ -145,22 +109,6 @@ export abstract class HTMLMediaElementLayer<
     return this.next?.readyState ?? 0;
   }
 
-  get preload() {
-    return this.next?.preload ?? 'metadata';
-  }
-
-  set preload(value) {
-    if (this.next) this.next.preload = value;
-  }
-
-  get crossOrigin() {
-    return this.next?.crossOrigin ?? null;
-  }
-
-  set crossOrigin(value) {
-    if (this.next) this.next.crossOrigin = value;
-  }
-
   load() {
     return this.next?.load();
   }
@@ -197,40 +145,6 @@ export abstract class HTMLMediaElementLayer<
     if (this.next) this.next.playbackRate = value;
   }
 
-  get defaultPlaybackRate() {
-    return this.next?.defaultPlaybackRate ?? 1;
-  }
-
-  set defaultPlaybackRate(value) {
-    if (this.next) this.next.defaultPlaybackRate = value;
-  }
-
-  // -- Playback options --
-
-  get autoplay() {
-    return this.next?.autoplay ?? false;
-  }
-
-  set autoplay(value) {
-    if (this.next) this.next.autoplay = value;
-  }
-
-  get defaultMuted() {
-    return this.next?.defaultMuted ?? false;
-  }
-
-  set defaultMuted(value) {
-    if (this.next) this.next.defaultMuted = value;
-  }
-
-  get controls() {
-    return this.next?.controls ?? false;
-  }
-
-  set controls(value) {
-    if (this.next) this.next.controls = value;
-  }
-
   // -- Buffer --
 
   get buffered() {
@@ -239,12 +153,6 @@ export abstract class HTMLMediaElementLayer<
 
   get seekable() {
     return this.next?.seekable ?? EMPTY_TIME_RANGES;
-  }
-
-  // -- Played --
-
-  get played() {
-    return this.next?.played ?? EMPTY_TIME_RANGES;
   }
 
   // -- Error --
@@ -285,30 +193,6 @@ export abstract class HTMLMediaElementLayer<
 
   set poster(value: string) {
     if (this.next) this.next.poster = value;
-  }
-
-  get playsInline() {
-    return this.next?.playsInline ?? false;
-  }
-
-  set playsInline(value: boolean) {
-    if (this.next) this.next.playsInline = value;
-  }
-
-  get videoWidth() {
-    return this.next?.videoWidth ?? 0;
-  }
-
-  get videoHeight() {
-    return this.next?.videoHeight ?? 0;
-  }
-
-  get disablePictureInPicture() {
-    return this.next?.disablePictureInPicture ?? false;
-  }
-
-  set disablePictureInPicture(value: boolean) {
-    if (this.next) this.next.disablePictureInPicture = value;
   }
 
   get webkitPresentationMode() {

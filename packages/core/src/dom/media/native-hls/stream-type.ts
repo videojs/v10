@@ -41,11 +41,11 @@ class NativeHlsStreamTypeLayer extends HTMLMediaElementLayer {
   #userOverride = false;
   #abort: AbortController | null = null;
 
-  override get streamType(): MediaStreamType {
+  get streamType(): MediaStreamType {
     return this.#streamType;
   }
 
-  override set streamType(streamType: MediaStreamType) {
+  set streamType(streamType: MediaStreamType) {
     if (streamType === MediaStreamTypes.UNKNOWN) {
       this.#userOverride = false;
       this.#detect();

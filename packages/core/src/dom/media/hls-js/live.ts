@@ -80,12 +80,12 @@ class HlsJsLiveLayer extends HTMLMediaElementLayer {
   #seekToLiveAbort: AbortController | null = null;
   #seekToLivePending = false;
 
-  override get targetLiveWindow() {
+  get targetLiveWindow() {
     return this.#targetLiveWindow;
   }
 
   // Derived from seekable + offset at read time. No cached state, no event.
-  override get liveEdgeStart() {
+  get liveEdgeStart() {
     if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
     const { seekable } = this;
     if (!seekable.length) return Number.NaN;
