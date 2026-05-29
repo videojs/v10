@@ -125,7 +125,7 @@ export function App() {
           ? SIMPLE_HLS_SOURCE_IDS
           : NON_DASH_SOURCE_IDS;
 
-  const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
+  const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
