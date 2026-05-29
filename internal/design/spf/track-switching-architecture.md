@@ -96,6 +96,17 @@ And hard constraints aren't low scores — a forbidden track is a *gate*, not a 
 
 Rules can still score *internally* (ABR's bandwidth math, multi-signal-abr's signal fusion) — they just don't expose scores as the composition currency. Scores stay private; outputs are categorical (preferred / allowed / forbidden) plus optional within-set ordering.
 
+### Why a distinct `allowed` tier
+
+Folding `allowed` into a single sorted `preferred` collapses two orthogonal axes into one: the **tier** (safety / eligibility — composed pessimistically, so a track is composite-`preferred` only if every opining rule prefers it) and the **order** (within a tier — composed by precedence). A full-ranking rule like ABR then becomes greedy: its only lever is rank-position, so at low precedence a soft preference (a height pick, say) can override ABR's safety verdict and force a below-margin track. The distinct tier keeps ABR's safety *veto* (the tier) separate from its quality *ranking* (the order) — the veto always binds; the ranking composes as one voice among peers. That separation is irreducible in a composed model, and it's the whole reason `allowed` exists.
+
+So reach for `allowed` deliberately, and expect it to be rare:
+
+- **Threshold rules** — ABR-family (throughput, BOLA/buffer, dropped-frames): partition tracks into safe (`preferred`) and risky-but-usable (`allowed`, ranked).
+- **Ordered-fallback rules** — content-steering's pathway priorities: top pathway `preferred`, lower pathways `allowed` as a ranked fallback tier.
+
+Everything else wants `preferred` + `forbidden` + implicit leftover. A soft set-preference with no ordered fallback — caps-soft, language, basic multi-CDN's active-CDN set — never needs `allowed`; its non-preferred tracks fall through as implicit-eligible.
+
 ### Why `preferred` has a rank flag but `allowed` doesn't
 
 `preferred` has both ranked and unranked use cases. Unranked: `userAudioTrackSelection: { language: 'es' }` prefers Spanish but has no opinion among Spanish tracks. Ranked: `multi-language-audio`'s default picker prefers `preferredLang` → `DEFAULT=YES` → first, an ordered preference. Both are real.
@@ -217,13 +228,15 @@ Each in-scope feature's rule output:
   preferredRanked: true,
   allowed: [...below margin, ascending bitrate w/ resolution tiebreak] }
 
-// multi-cdn-failover (category: system)
-{ preferred: [...primary-CDN], preferredRanked: false,
-  allowed: [...alt-CDN ordered by pathway priority or health],
+// multi-cdn-failover (category: system) — active-CDN as a preferred set;
+// other CDNs' tracks fall through as implicit-eligible (no allowed needed)
+{ preferred: [...active-CDN], preferredRanked: false,
   forbidden: [...failed-CDN during cooldown] }
 
-// content-steering (category: system)
-{ preferred: [...ordered by pathway priority], preferredRanked: true }
+// content-steering (category: system) — ordered pathway priorities;
+// lower pathways are an explicit ranked fallback tier
+{ preferred: [...top-priority pathway], preferredRanked: false,
+  allowed: [...lower-priority pathways ordered by steering priority] }
 
 // hevc-variant-selection (category: system, force-AVC, hard)
 { preferred: [...avc], preferredRanked: false, forbidden: [...hevc] }
