@@ -1,6 +1,5 @@
 import Hls from 'hls.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MediaPreloadType } from '../../../../core/media/types';
 import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { hlsJsPreload } from '../preload';
 
@@ -39,14 +38,6 @@ class HlsHost extends HTMLVideoElementHost<Hls> {
   }
   override get engine() {
     return this.#engine;
-  }
-
-  get preload(): MediaPreloadType {
-    return this.next?.preload ?? 'metadata';
-  }
-
-  set preload(value: MediaPreloadType) {
-    if (this.next) this.next.preload = value;
   }
 }
 

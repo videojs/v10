@@ -8,6 +8,7 @@ import type {
   Video,
   VideoEvents,
 } from '../../core/media/types';
+import { MediaStreamTypes } from '../../core/media/types';
 import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
@@ -45,6 +46,22 @@ export abstract class HTMLMediaElementLayer<
 
   get engine(): Engine | null {
     return (this.next?.engine as Engine | null | undefined) ?? null;
+  }
+
+  get streamType() {
+    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
+  }
+
+  set streamType(value) {
+    if (this.next) this.next.streamType = value;
+  }
+
+  get liveEdgeStart() {
+    return this.next?.liveEdgeStart ?? Number.NaN;
+  }
+
+  get targetLiveWindow() {
+    return this.next?.targetLiveWindow ?? Number.NaN;
   }
 
   // -- Playback --
@@ -107,6 +124,14 @@ export abstract class HTMLMediaElementLayer<
 
   get readyState() {
     return this.next?.readyState ?? 0;
+  }
+
+  get preload() {
+    return this.next?.preload ?? 'metadata';
+  }
+
+  set preload(value) {
+    if (this.next) this.next.preload = value;
   }
 
   load() {

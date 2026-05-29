@@ -1,6 +1,6 @@
 import Hls from 'hls.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { type MediaStreamType, MediaStreamTypes } from '../../../../core/media/types';
+import { MediaStreamTypes } from '../../../../core/media/types';
 import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { hlsJsStreamType } from '../stream-type';
 
@@ -32,14 +32,6 @@ class HlsHost extends HTMLVideoElementHost<Hls> {
   }
   override get engine() {
     return this.#engine;
-  }
-
-  get streamType(): MediaStreamType {
-    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
-  }
-
-  set streamType(value: MediaStreamType) {
-    if (this.next) this.next.streamType = value;
   }
 }
 

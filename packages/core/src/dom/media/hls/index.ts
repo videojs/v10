@@ -67,11 +67,11 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
-  get streamType() {
+  override get streamType() {
     return this.#delegate?.streamType ?? this.#userStreamType ?? MediaStreamTypes.UNKNOWN;
   }
 
-  set streamType(value: MediaStreamType) {
+  override set streamType(value: MediaStreamType) {
     this.#userStreamType = value === MediaStreamTypes.UNKNOWN ? null : value;
 
     if (this.#delegate) {
@@ -83,11 +83,11 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.dispatchEvent(new Event('streamtypechange'));
   }
 
-  get liveEdgeStart() {
+  override get liveEdgeStart() {
     return this.#delegate?.liveEdgeStart ?? Number.NaN;
   }
 
-  get targetLiveWindow() {
+  override get targetLiveWindow() {
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
@@ -100,11 +100,11 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
-  get preload() {
+  override get preload() {
     return this.#preload;
   }
 
-  set preload(value: MediaPreloadType) {
+  override set preload(value: MediaPreloadType) {
     this.#preload = value;
     if (this.#delegate) this.#delegate.preload = value;
   }
