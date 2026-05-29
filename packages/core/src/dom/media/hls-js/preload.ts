@@ -1,5 +1,5 @@
 import Hls from 'hls.js';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import type { MediaPreloadType } from '../../../core/media/types';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
@@ -18,25 +18,28 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example hlsJsPreload().install(media);
  */
-export class HlsJsPreload {
-  readonly name = 'hls-js-preload';
+class HlsJsPreload implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
-    const mediaLayer = new HlsJsPreloadLayer(media);
-    const removeLayer = addLayer(media, mediaLayer);
+    const uninstall = installExtension(hlsJsPreload, media, this);
 
-    const init = () => mediaLayer.init();
-    const reset = () => mediaLayer.reset();
+    const layer = new HlsJsPreloadLayer(media);
+    const removeLayer = addLayer(media, layer);
+
+    const init = () => layer.init();
+    const reset = () => layer.reset();
 
     engine.on(Hls.Events.MANIFEST_LOADING, init);
     engine.on(Hls.Events.MEDIA_ATTACHED, init);
     engine.on(Hls.Events.MEDIA_DETACHED, reset);
     engine.on(Hls.Events.DESTROYING, reset);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       reset();
       engine.off(Hls.Events.MANIFEST_LOADING, init);
       engine.off(Hls.Events.MEDIA_ATTACHED, init);
@@ -45,9 +48,16 @@ export class HlsJsPreload {
       removeLayer();
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsPreload = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsPreload>(() => new HlsJsPreload());
+export function hlsJsPreload() {
+  return new HlsJsPreload();
+}
 
 class HlsJsPreloadLayer extends HTMLMediaElementLayer {
   #media: HTMLVideoElementHost<Hls>;

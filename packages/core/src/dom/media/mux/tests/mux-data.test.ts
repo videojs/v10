@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HlsMedia } from '../../hls';
+import { HTMLVideoElementHost } from '../../html-video-element-host';
 import { type MuxDataSdk, muxData } from '../mux-data';
 
 // Minimal stub of the mux-embed SDK surface that the extension touches.
@@ -13,36 +14,43 @@ function makeSdk(): MuxDataSdk {
   } as unknown as MuxDataSdk;
 }
 
-// Minimal `HlsMedia`-shaped host with a layer chain: `next` is writable so
-// `addLayer` can push the mux-data layer onto it, and `load()` walks the chain
-// (so the test can drive SDK initialization via `host.load()`).
+class FakeMuxDataMedia extends HTMLVideoElementHost {
+  #engine: HlsMedia['engine'];
+  #src: string;
+
+  constructor(overrides: Partial<HlsMedia> = {}) {
+    super();
+    this.#engine = overrides.engine ?? null;
+    this.#src = overrides.src ?? '';
+    if (overrides.target) this.target = overrides.target as HTMLVideoElement;
+  }
+
+  override get engine() {
+    return this.#engine;
+  }
+
+  override get src() {
+    return this.#src;
+  }
+
+  override load() {
+    return this.next?.load?.();
+  }
+}
+
 function makeHost(overrides: Partial<HlsMedia> = {}) {
-  const host = new EventTarget() as unknown as HlsMedia & EventTarget;
-  Object.assign(host, {
-    next: null,
-    load(this: { next: { load?: () => Promise<void> | void } | null }) {
-      return this.next?.load?.();
-    },
-    target: null,
-    engine: null,
-    debug: false,
-    src: '',
-    ...overrides,
-  });
-  return host;
+  return new FakeMuxDataMedia(overrides);
 }
 
 function makeTarget(): HTMLVideoElement {
-  return document.createElement('video');
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'load', { configurable: true, value: vi.fn() });
+  return video;
 }
 
 describe('muxData', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-  });
-
-  it('returns an extension named `mux-data`', () => {
-    expect(muxData().name).toBe('mux-data');
   });
 
   it('captures playerInitTime from the SDK at factory-call time', () => {
@@ -62,7 +70,7 @@ describe('muxData', () => {
     const host = makeHost({ target, src: 'https://example.com/v.m3u8' });
     const ext = muxData({ MuxDataSdk, envKey: 'env-1' });
 
-    ext.install?.(host);
+    ext.install(host);
     await host.load();
 
     expect(MuxDataSdk.monitor).toHaveBeenCalledTimes(1);
@@ -81,7 +89,7 @@ describe('muxData', () => {
     Object.assign(target, { mux: { destroy: vi.fn(), deleted: false } });
     const host = makeHost({ target });
 
-    muxData({ MuxDataSdk }).install?.(host);
+    muxData({ MuxDataSdk }).install(host);
     await host.load();
 
     expect(MuxDataSdk.monitor).not.toHaveBeenCalled();
@@ -93,7 +101,7 @@ describe('muxData', () => {
     const engine = { fake: 'engine' };
     const host = makeHost({ target, engine: engine as unknown as HlsMedia['engine'] });
 
-    muxData({ MuxDataSdk }).install?.(host);
+    muxData({ MuxDataSdk }).install(host);
     await host.load();
 
     expect(MuxDataSdk.monitor).toHaveBeenCalledWith(target, expect.objectContaining({ hlsjs: engine }));
@@ -105,11 +113,12 @@ describe('muxData', () => {
     const host = makeHost({ target });
     const destroy = vi.fn();
 
-    const dispose = muxData({ MuxDataSdk }).install?.(host);
+    const extension = muxData({ MuxDataSdk });
+    extension.install(host);
     // Simulate the SDK installing its handle on the element after monitor().
     Object.assign(target, { mux: { destroy, deleted: false } });
 
-    dispose?.();
+    extension.destroy();
 
     expect(destroy).toHaveBeenCalledTimes(1);
     expect(target.mux).toBeUndefined();
@@ -119,8 +128,9 @@ describe('muxData', () => {
     const MuxDataSdk = makeSdk();
     const host = makeHost({ target: makeTarget() });
 
-    const dispose = muxData({ MuxDataSdk }).install?.(host);
-    dispose?.();
+    const extension = muxData({ MuxDataSdk });
+    extension.install(host);
+    extension.destroy();
     await host.load();
 
     expect(MuxDataSdk.monitor).not.toHaveBeenCalled();

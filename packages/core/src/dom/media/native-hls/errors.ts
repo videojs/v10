@@ -1,5 +1,5 @@
 import { MediaError } from '../../../core/media/media-error';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
@@ -11,17 +11,27 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example nativeHlsErrors().install(media);
  */
-export class NativeHlsErrors {
-  readonly name = 'native-hls-errors';
+class NativeHlsErrors implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost) {
-    return addLayer(media, new NativeHlsErrorsLayer());
+    const uninstall = installExtension(nativeHlsErrors, media, this);
+    const removeLayer = addLayer(media, new NativeHlsErrorsLayer());
+    this.#destroy = () => {
+      uninstall();
+      removeLayer();
+    };
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
   }
 }
 
-export const nativeHlsErrors = defineExtension<void, HTMLVideoElementHost, NativeHlsErrors>(
-  () => new NativeHlsErrors()
-);
+export function nativeHlsErrors() {
+  return new NativeHlsErrors();
+}
 
 class NativeHlsErrorsLayer extends HTMLMediaElementLayer {
   #error: MediaError | null = null;

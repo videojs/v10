@@ -5,11 +5,12 @@ import { nativeHlsStreamType } from '../stream-type';
 
 function setup(duration: number = Number.NaN) {
   const host = new HTMLVideoElementHost();
-  const dispose = nativeHlsStreamType().install(host);
+  const extension = nativeHlsStreamType();
+  extension.install(host);
   const video = document.createElement('video');
   Object.defineProperty(video, 'duration', { value: duration, configurable: true });
   host.target = video;
-  return { host, video, dispose };
+  return { host, video, extension };
 }
 
 function setDuration(video: HTMLVideoElement, duration: number) {
@@ -106,10 +107,10 @@ describe('nativeHlsStreamType', () => {
     expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });
 
-  it('stops detecting after dispose', () => {
-    const { host, video, dispose } = setup();
+  it('stops detecting after destroy', () => {
+    const { host, video, extension } = setup();
 
-    dispose();
+    extension.destroy();
 
     setDuration(video, 30);
     video.dispatchEvent(new Event('durationchange'));

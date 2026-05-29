@@ -1,4 +1,4 @@
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
@@ -16,15 +16,27 @@ import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
  *
  * @example nativeHlsLive().install(media);
  */
-export class NativeHlsLive {
-  readonly name = 'native-hls-live';
+class NativeHlsLive implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost) {
-    return addLayer(media, new NativeHlsLiveLayer());
+    const uninstall = installExtension(nativeHlsLive, media, this);
+    const removeLayer = addLayer(media, new NativeHlsLiveLayer());
+    this.#destroy = () => {
+      uninstall();
+      removeLayer();
+    };
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
   }
 }
 
-export const nativeHlsLive = defineExtension<void, HTMLVideoElementHost, NativeHlsLive>(() => new NativeHlsLive());
+export function nativeHlsLive() {
+  return new NativeHlsLive();
+}
 
 class NativeHlsLiveLayer extends HTMLMediaElementLayer {
   #targetLiveWindow = Number.NaN;

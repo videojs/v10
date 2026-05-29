@@ -1,7 +1,7 @@
 import type { ErrorData } from 'hls.js';
 import Hls from 'hls.js';
 import { MediaError } from '../../../core/media/media-error';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
@@ -21,21 +21,22 @@ const hlsErrorTypeToCode: Record<string, number> = {
  *
  * @example hlsJsErrors().install(media);
  */
-export class HlsJsErrors {
-  readonly name = 'hls-js-errors';
+class HlsJsErrors implements MediaExtension {
+  #sessionAbort: AbortController | null = null;
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
-    const mediaLayer = new HlsJsErrorsLayer();
-    const removeLayer = addLayer(media, mediaLayer);
+    const uninstall = installExtension(hlsJsErrors, media, this);
 
-    let sessionAbort: AbortController | null = null;
+    const layer = new HlsJsErrorsLayer();
+    const removeLayer = addLayer(media, layer);
 
     const init = () => {
-      sessionAbort?.abort();
-      sessionAbort = new AbortController();
+      this.#sessionAbort?.abort();
+      this.#sessionAbort = new AbortController();
 
       const onError = (_event: string, data: ErrorData) => {
         if (!data.fatal) return;
@@ -44,24 +45,24 @@ export class HlsJsErrors {
         const error = new MediaError(data.error?.message, code, true, data.details);
         error.data = data;
 
-        mediaLayer.setError(error);
+        layer.setError(error);
         media.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
       };
 
       engine.on(Hls.Events.ERROR, onError);
-      sessionAbort.signal.addEventListener(
+      this.#sessionAbort.signal.addEventListener(
         'abort',
         () => {
           engine.off(Hls.Events.ERROR, onError);
-          mediaLayer.setError(null);
+          layer.setError(null);
         },
         { once: true }
       );
     };
 
     const reset = () => {
-      sessionAbort?.abort();
-      sessionAbort = null;
+      this.#sessionAbort?.abort();
+      this.#sessionAbort = null;
     };
 
     engine.on(Hls.Events.MANIFEST_LOADING, init);
@@ -69,7 +70,8 @@ export class HlsJsErrors {
     engine.on(Hls.Events.MEDIA_DETACHED, reset);
     engine.on(Hls.Events.DESTROYING, reset);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       reset();
       engine.off(Hls.Events.MANIFEST_LOADING, init);
       engine.off(Hls.Events.MEDIA_ATTACHED, init);
@@ -78,9 +80,16 @@ export class HlsJsErrors {
       removeLayer();
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsErrors = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsErrors>(() => new HlsJsErrors());
+export function hlsJsErrors() {
+  return new HlsJsErrors();
+}
 
 class HlsJsErrorsLayer extends HTMLMediaElementLayer {
   #error: MediaError | null = null;

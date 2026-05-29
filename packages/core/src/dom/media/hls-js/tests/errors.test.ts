@@ -41,9 +41,10 @@ function setup() {
   const video = document.createElement('video');
   document.body.appendChild(video);
   host.target = video;
-  const destroy = hlsJsErrors().install(host);
+  const extension = hlsJsErrors();
+  extension.install(host);
   (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-  return { engine, host, video, destroy };
+  return { engine, host, video, extension };
 }
 
 describe('hlsJsErrors', () => {
@@ -185,11 +186,11 @@ describe('hlsJsErrors', () => {
   });
 
   it('detaches engine listeners and removes the layer on destroy', () => {
-    const { engine, host, destroy } = setup();
+    const { engine, host, extension } = setup();
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    destroy();
+    extension.destroy();
 
     (engine as any).emit(Hls.Events.ERROR, {
       type: Hls.ErrorTypes.NETWORK_ERROR,

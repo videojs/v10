@@ -1,6 +1,6 @@
 import type { LevelLoadedData } from 'hls.js';
 import Hls from 'hls.js';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { MediaStreamTypes } from '../../../core/media/types';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
@@ -21,12 +21,14 @@ type HlsPlaylistType = 'VOD' | 'EVENT' | null | undefined;
  *
  * @example hlsJsLive().install(media);
  */
-export class HlsJsLive {
-  readonly name = 'hls-js-live';
+class HlsJsLive implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
+
+    const uninstall = installExtension(hlsJsLive, media, this);
 
     const layer = new HlsJsLiveLayer();
     const removeLayer = addLayer(media, layer);
@@ -51,7 +53,8 @@ export class HlsJsLive {
     engine.on(Hls.Events.DESTROYING, onDestroying);
     engine.on(Hls.Events.LEVEL_LOADED, onLevelLoaded);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       engine.off(Hls.Events.MANIFEST_LOADING, onManifestLoading);
       engine.off(Hls.Events.MEDIA_ATTACHED, onMediaAttached);
       engine.off(Hls.Events.MEDIA_DETACHED, onMediaDetached);
@@ -60,9 +63,16 @@ export class HlsJsLive {
       removeLayer();
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsLive = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsLive>(() => new HlsJsLive());
+export function hlsJsLive() {
+  return new HlsJsLive();
+}
 
 class HlsJsLiveLayer extends HTMLMediaElementLayer {
   #targetLiveWindow = Number.NaN;

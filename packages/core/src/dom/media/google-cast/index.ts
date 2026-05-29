@@ -1,4 +1,4 @@
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import type { MediaStreamType } from '../../../core/media/types';
 import { GoogleCastLayer, type GoogleCastMedia } from './google-cast-layer';
@@ -26,15 +26,14 @@ export interface GoogleCastProps {
  * @example
  * googleCast({ receiverApplicationId: 'CC1AD845' }).install(media);
  */
-export class GoogleCast implements GoogleCastProps {
-  readonly name = 'google-cast';
-
+class GoogleCast implements GoogleCastProps, MediaExtension {
   #src: string | undefined;
   #contentType: string | undefined;
   #streamType: MediaStreamType | undefined;
   #receiverApplicationId: string | undefined;
   #customData: Record<string, unknown> | null | undefined;
   #media: GoogleCastMedia | null = null;
+  #destroy: () => void = () => {};
 
   constructor(props: GoogleCastProps = {}) {
     Object.assign(this, props);
@@ -43,6 +42,8 @@ export class GoogleCast implements GoogleCastProps {
   install(media: GoogleCastMedia) {
     if (!requiresCastFramework()) return;
 
+    const uninstall = installExtension(googleCast, media, this);
+
     this.#media = media;
 
     if (!media.disableRemotePlayback) loadCastFramework();
@@ -50,11 +51,17 @@ export class GoogleCast implements GoogleCastProps {
     const googleCastLayer = new GoogleCastLayer(this);
     const removeGoogleCastLayer = addLayer(media, googleCastLayer);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       removeGoogleCastLayer();
       googleCastLayer.destroy();
       this.#media = null;
     };
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
   }
 
   /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
@@ -113,4 +120,6 @@ export class GoogleCast implements GoogleCastProps {
   }
 }
 
-export const googleCast = defineExtension<GoogleCastProps, GoogleCastMedia>((props = {}) => new GoogleCast(props));
+export function googleCast(props: GoogleCastProps = {}) {
+  return new GoogleCast(props);
+}

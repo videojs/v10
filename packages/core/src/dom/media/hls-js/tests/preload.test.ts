@@ -43,10 +43,11 @@ class HlsHost extends HTMLVideoElementHost<Hls> {
 
 function setup(engine: Hls = createEngine()) {
   const host = new HlsHost(engine);
-  const destroy = hlsJsPreload().install(host);
+  const extension = hlsJsPreload();
+  extension.install(host);
   const video = document.createElement('video');
   document.body.appendChild(video);
-  return { engine, host, video, destroy };
+  return { engine, host, video, extension };
 }
 
 describe('hlsJsPreload', () => {
@@ -146,12 +147,12 @@ describe('hlsJsPreload', () => {
   });
 
   it('removes the preload layer on destroy', () => {
-    const { host, video, destroy } = setup();
+    const { host, video, extension } = setup();
     host.target = video;
     host.preload = 'auto';
     expect(host.preload).toBe('auto');
 
-    destroy();
+    extension.destroy();
 
     // After destroy, host.preload falls through to native element default
     expect(host.preload).toBe(video.preload);

@@ -2,7 +2,7 @@
 
 import Hls from 'hls.js';
 import Mux, { type Options as MuxDataOptions, type Mux as MuxDataSdk } from 'mux-embed';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import type { HTMLAudioElementHost } from '../html-audio-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
@@ -42,8 +42,8 @@ export interface MuxDataProps {
  * @example
  * muxData({ envKey: 'env-1' }).install(media);
  */
-export class MuxData implements MuxDataProps {
-  readonly name = 'mux-data';
+class MuxData implements MuxDataProps, MediaExtension {
+  #destroy: () => void = () => {};
 
   MuxDataSdk: MuxDataSdk | undefined = Mux;
   beaconCollectionDomain: string | undefined;
@@ -61,10 +61,13 @@ export class MuxData implements MuxDataProps {
   }
 
   install(media: MuxDataMedia) {
+    const uninstall = installExtension(muxData, media, this);
+
     this.playerSoftwareName ??= (media.constructor as { PLAYER_SOFTWARE_NAME?: string }).PLAYER_SOFTWARE_NAME;
     const removeLayer = addLayer(media, new MuxDataLayer(() => this.#initializeSdk(media)));
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       removeLayer();
       const { target } = media;
       if (target?.mux && !target.mux.deleted) {
@@ -72,6 +75,11 @@ export class MuxData implements MuxDataProps {
         delete target.mux;
       }
     };
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
   }
 
   #initializeSdk(media: MuxDataMedia) {
@@ -107,7 +115,9 @@ export class MuxData implements MuxDataProps {
   }
 }
 
-export const muxData = defineExtension<MuxDataProps, MuxDataMedia, MuxData>((props = {}) => new MuxData(props));
+export function muxData(props: MuxDataProps = {}) {
+  return new MuxData(props);
+}
 
 /**
  * Wraps `load()` to install the Mux Data SDK after super-delegating (so engine
