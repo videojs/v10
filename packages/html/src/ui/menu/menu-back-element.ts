@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -57,7 +57,5 @@ export class MenuBackElement extends MediaElement {
       role: 'button',
       'aria-label': this.label,
     });
-
-    if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

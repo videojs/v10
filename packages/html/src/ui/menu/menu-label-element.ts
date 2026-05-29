@@ -1,11 +1,5 @@
-import type { MenuState } from '@videojs/core';
-import { ContextConsumer } from '@videojs/element/context';
+import { MediaElement } from '../media-element';
 
-import { ContextPartElement } from '../context-part-element';
-import { menuContext } from './context';
-
-export class MenuLabelElement extends ContextPartElement<MenuState> {
+export class MenuLabelElement extends MediaElement {
   static readonly tagName = 'media-menu-label';
-
-  protected readonly consumer = new ContextConsumer(this, { context: menuContext, subscribe: true });
 }

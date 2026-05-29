@@ -332,7 +332,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       { render, className, style },
       {
         state,
-        stateAttrMap,
         ref: menuViewComposedRef,
         props: [
           {

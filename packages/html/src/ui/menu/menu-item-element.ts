@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs, completeMenuItemSelection } from '@videojs/core/dom';
+import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -100,7 +100,5 @@ export class MenuItemElement extends MediaElement {
         'data-has-submenu': '',
       }),
     });
-
-    applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

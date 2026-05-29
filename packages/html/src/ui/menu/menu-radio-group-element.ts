@@ -1,9 +1,9 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-import { ContextConsumer, ContextProvider } from '@videojs/element/context';
+import { ContextProvider } from '@videojs/element/context';
 
 import { MediaElement } from '../media-element';
-import { menuContext, menuRadioGroupContext } from './context';
+import { menuRadioGroupContext } from './context';
 
 export class MenuRadioGroupElement extends MediaElement {
   static readonly tagName: string = 'media-menu-radio-group';
@@ -16,7 +16,6 @@ export class MenuRadioGroupElement extends MediaElement {
   value = '';
   label: string | undefined = undefined;
 
-  readonly #menuCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #provider = new ContextProvider(this, { context: menuRadioGroupContext });
 
   protected override update(_changed: PropertyValues): void {
@@ -26,10 +25,6 @@ export class MenuRadioGroupElement extends MediaElement {
       role: 'group',
       'aria-label': this.label,
     });
-
-    const ctx = this.#menuCtx.value;
-    if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
-
     this.#provider.setValue({
       value: this.value,
       onValueChange: (next: string) => {

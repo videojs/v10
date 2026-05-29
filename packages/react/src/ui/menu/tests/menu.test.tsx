@@ -6,8 +6,14 @@ import { ControlsContextProvider } from '../../controls/context';
 import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
+import { MenuGroup } from '../menu-group';
 import { MenuItem } from '../menu-item';
+import { MenuItemIndicator } from '../menu-item-indicator';
+import { MenuLabel } from '../menu-label';
+import { MenuRadioGroup } from '../menu-radio-group';
+import { MenuRadioItem } from '../menu-radio-item';
 import { MenuRoot } from '../menu-root';
+import { MenuSeparator } from '../menu-separator';
 import { MenuTrigger } from '../menu-trigger';
 import { MenuView } from '../menu-view';
 
@@ -263,7 +269,93 @@ function FocusOutFixture({ onRootOpenChange }: { onRootOpenChange: NonNullable<M
   );
 }
 
+const menuStateAttrs = ['data-open', 'data-side', 'data-align', 'data-starting-style', 'data-ending-style'] as const;
+
+function expectNoMenuStateAttrs(element: HTMLElement): void {
+  for (const attr of menuStateAttrs) {
+    expect(element.hasAttribute(attr), `${element.dataset.testid ?? element.tagName} should not have ${attr}`).toBe(
+      false
+    );
+  }
+}
+
 describe('MenuContent', () => {
+  it('scopes menu state data attributes to content elements', async () => {
+    render(
+      <MenuRoot defaultOpen side="top" align="end">
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="root-content">
+          <MenuLabel data-testid="label">Playback</MenuLabel>
+          <MenuGroup data-testid="group" label="Playback">
+            <MenuItem data-testid="item">Copy link</MenuItem>
+            <MenuCheckboxItem data-testid="checkbox-item" checked={false} onCheckedChange={vi.fn()}>
+              Autoplay
+            </MenuCheckboxItem>
+            <MenuRadioGroup data-testid="radio-group" value="auto" onValueChange={vi.fn()} label="Quality">
+              <MenuRadioItem data-testid="radio-item" value="auto">
+                Auto
+                <MenuItemIndicator data-testid="indicator" checked>
+                  Checked
+                </MenuItemIndicator>
+              </MenuRadioItem>
+            </MenuRadioGroup>
+          </MenuGroup>
+          <MenuSeparator data-testid="separator" />
+          <MenuView data-testid="root-view">
+            <MenuRoot>
+              <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+              <MenuContent data-testid="submenu-content">
+                <MenuBack data-testid="back">Back</MenuBack>
+                <MenuItem data-testid="submenu-item">Auto</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </MenuView>
+        </MenuContent>
+      </MenuRoot>
+    );
+
+    const rootContent = screen.getByTestId('root-content');
+
+    expect(rootContent.hasAttribute('data-open')).toBe(true);
+    expect(rootContent.getAttribute('data-side')).toBe('top');
+    expect(rootContent.getAttribute('data-align')).toBe('end');
+
+    for (const testId of [
+      'trigger',
+      'label',
+      'group',
+      'separator',
+      'item',
+      'checkbox-item',
+      'radio-group',
+      'radio-item',
+      'indicator',
+      'submenu-trigger',
+    ]) {
+      expectNoMenuStateAttrs(screen.getByTestId(testId));
+    }
+
+    expect(screen.getByTestId('item').hasAttribute('data-item')).toBe(true);
+    expect(screen.getByTestId('radio-item').hasAttribute('data-item')).toBe(true);
+    expect(screen.getByTestId('checkbox-item').hasAttribute('data-item')).toBe(true);
+    expect(screen.getByTestId('submenu-trigger').hasAttribute('data-item')).toBe(true);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-content').getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    const submenuContent = screen.getByTestId('submenu-content');
+
+    expect(submenuContent.hasAttribute('data-submenu')).toBe(true);
+    expect(submenuContent.hasAttribute('data-menu-view')).toBe(true);
+    expect(submenuContent.hasAttribute('data-open')).toBe(true);
+    expect(submenuContent.hasAttribute('data-side')).toBe(false);
+    expect(submenuContent.hasAttribute('data-align')).toBe(false);
+    expectNoMenuStateAttrs(screen.getByTestId('back'));
+  });
+
   it('marks the root view inactive while a submenu view is active', async () => {
     render(<SubmenuFixture />);
 

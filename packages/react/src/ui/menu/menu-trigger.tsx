@@ -49,7 +49,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   { render, className, style, disabled, onClick, onKeyDown, ...elementProps },
   forwardedRef
 ) {
-  const { core, menu, state, stateAttrMap, anchorName, contentId } = useMenuContext();
+  const { core, menu, state, anchorName, contentId } = useMenuContext();
   const subMenuCtx = useSubMenuContext();
   const isSubMenuTrigger = subMenuCtx !== null;
 
@@ -119,7 +119,6 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
       { render, className, style },
       {
         state: parentState,
-        stateAttrMap,
         ref: [forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>],
         props: [
           {
@@ -145,7 +144,6 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
     { render, className, style },
     {
       state,
-      stateAttrMap,
       ref: [forwardedRef as React.Ref<HTMLButtonElement>, triggerRef],
       props: [
         { type: 'button' as const, ...core.getTriggerAttrs(state, contentId) },
