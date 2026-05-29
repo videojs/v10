@@ -1,8 +1,8 @@
 import { MediaError } from '../../../core/media/media-error';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 /**
  * Wraps native `error` events on the media element into `MediaError`, exposes
@@ -33,7 +33,7 @@ export function nativeHlsErrors() {
   return new NativeHlsErrors();
 }
 
-class NativeHlsErrorsLayer extends HTMLMediaElementLayer {
+class NativeHlsErrorsLayer extends HTMLVideoElementLayer {
   #error: MediaError | null = null;
   #abort: AbortController | null = null;
 
@@ -45,7 +45,7 @@ class NativeHlsErrorsLayer extends HTMLMediaElementLayer {
     return super.target;
   }
 
-  override set target(target: HTMLMediaElement | null) {
+  override set target(target: HTMLVideoElement | null) {
     this.#abort?.abort();
     this.#abort = null;
     this.#error = null;

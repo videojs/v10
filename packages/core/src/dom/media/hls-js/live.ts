@@ -3,8 +3,8 @@ import Hls from 'hls.js';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { MediaStreamTypes } from '../../../core/media/types';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 type HlsPlaylistType = 'VOD' | 'EVENT' | null | undefined;
 
@@ -74,7 +74,7 @@ export function hlsJsLive() {
   return new HlsJsLive();
 }
 
-class HlsJsLiveLayer extends HTMLMediaElementLayer {
+class HlsJsLiveLayer extends HTMLVideoElementLayer {
   #targetLiveWindow = Number.NaN;
   #liveEdgeStartOffset: number | undefined;
   #seekToLiveAbort: AbortController | null = null;

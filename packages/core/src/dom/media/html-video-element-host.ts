@@ -1,7 +1,11 @@
 import type { VideoEvents } from '../../core/media/types';
-import { HTMLMediaElementHost } from './html-media-element-host';
+import { HTMLVideoElementLayer } from './html-video-element-layer';
 
 export class HTMLVideoElementHost<
   Engine = unknown,
   Target extends HTMLVideoElement = HTMLVideoElement,
-> extends HTMLMediaElementHost<Target, Engine, VideoEvents> {}
+> extends HTMLVideoElementLayer<Target, Engine, VideoEvents> {
+  override get engine(): Engine | null {
+    return super.engine;
+  }
+}

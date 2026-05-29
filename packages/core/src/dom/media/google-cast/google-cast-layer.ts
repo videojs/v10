@@ -1,7 +1,7 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import type { HTMLAudioElementHost } from '../html-audio-element-host';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 import type { GoogleCastProps } from './index';
 import { RemotePlayback, type RemotePlaybackHooks } from './remote-playback';
 import {
@@ -57,7 +57,7 @@ onCastApiAvailable(() => {
  * instance exposed via {@link GoogleCastLayer.remote}, and dispatches media
  * events on the host while casting.
  */
-export class GoogleCastLayer extends HTMLMediaElementLayer {
+export class GoogleCastLayer extends HTMLVideoElementLayer {
   #googleCast: GoogleCastConfig;
   #hooks: Partial<RemotePlaybackHooks> = {};
   #remotePlayback: RemotePlayback;

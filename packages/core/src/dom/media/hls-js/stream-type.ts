@@ -3,8 +3,8 @@ import Hls from 'hls.js';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 /**
  * Derives `streamType` from hls.js `LEVEL_LOADED` events: `data.details.live`
@@ -55,7 +55,7 @@ export function hlsJsStreamType() {
   return new HlsJsStreamType();
 }
 
-class HlsJsStreamTypeLayer extends HTMLMediaElementLayer {
+class HlsJsStreamTypeLayer extends HTMLVideoElementLayer {
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
   #userOverride = false;
 
