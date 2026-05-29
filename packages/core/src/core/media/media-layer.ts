@@ -123,8 +123,8 @@ export abstract class MediaLayer<
  * @public
  */
 export function addLayer(media: MediaLayer<any, any>, layer: MediaLayer<any, any>): () => void {
-  if (layer.next != null) {
-    // Layer was already added, return a noop destroy.
+  if (media === layer || layer.root !== layer) {
+    // Self-add or a layer already in a chain; return a noop destroy.
     return () => {};
   }
 
