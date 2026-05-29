@@ -44,12 +44,12 @@ class NativeHlsLiveLayer extends HTMLMediaElementLayer {
   #abort: AbortController | null = null;
   #currentSrc = '';
 
-  get targetLiveWindow() {
+  override get targetLiveWindow() {
     return this.#targetLiveWindow;
   }
 
   // Derived from seekable (or buffered) + offset at read time.
-  get liveEdgeStart() {
+  override get liveEdgeStart() {
     if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
     const { target } = this;
     if (!target) return Number.NaN;

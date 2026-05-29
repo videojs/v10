@@ -26,22 +26,6 @@ export class MuxVideoMedia extends HTMLVideoElementHost implements MuxMediaProps
     muxData({ debug: true }).install(this);
   }
 
-  get src() {
-    return this.next?.src ?? muxMediaDefaultProps.src;
-  }
-
-  set src(value: string) {
-    if (this.next) this.next.src = value;
-  }
-
-  get preload() {
-    return this.next?.preload ?? muxMediaDefaultProps.preload;
-  }
-
-  set preload(value: MuxMediaProps['preload']) {
-    if (this.next) this.next.preload = value;
-  }
-
   get config(): MuxMediaConfig {
     return (this.next?.config as MuxMediaConfig | undefined) ?? muxMediaDefaultProps.config;
   }
@@ -59,22 +43,6 @@ export class MuxAudioMedia extends HTMLAudioElementHost implements MuxMediaProps
     addLayer(this, new HlsMedia());
     googleCast().install(this);
     muxData().install(this);
-  }
-
-  get src() {
-    return this.next?.src ?? muxMediaDefaultProps.src;
-  }
-
-  set src(value: string) {
-    if (this.next) this.next.src = value;
-  }
-
-  get preload() {
-    return this.next?.preload ?? muxMediaDefaultProps.preload;
-  }
-
-  set preload(value: MuxMediaProps['preload']) {
-    if (this.next) this.next.preload = value;
   }
 
   get config(): MuxMediaConfig {

@@ -52,28 +52,12 @@ export class NativeHlsMedia extends HTMLVideoElementHost implements NativeHlsMed
     if (this.target) this.target.src = value;
   }
 
-  get preload() {
+  override get preload() {
     return this.#preload;
   }
 
-  set preload(value: PreloadType) {
+  override set preload(value: PreloadType) {
     this.#preload = value;
     if (this.target) this.target.preload = value;
-  }
-
-  get streamType(): StreamType {
-    return this.next?.streamType ?? MediaStreamTypes.UNKNOWN;
-  }
-
-  set streamType(value: StreamType) {
-    if (this.next) this.next.streamType = value;
-  }
-
-  get liveEdgeStart() {
-    return this.next?.liveEdgeStart ?? Number.NaN;
-  }
-
-  get targetLiveWindow() {
-    return this.next?.targetLiveWindow ?? Number.NaN;
   }
 }

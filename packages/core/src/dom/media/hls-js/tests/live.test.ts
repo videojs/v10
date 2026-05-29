@@ -30,14 +30,6 @@ class FakeHlsJsMedia extends HTMLVideoElementHost<Hls> {
   override get engine(): Hls | null {
     return this.#engine;
   }
-
-  get liveEdgeStart() {
-    return this.next?.liveEdgeStart ?? Number.NaN;
-  }
-
-  get targetLiveWindow() {
-    return this.next?.targetLiveWindow ?? Number.NaN;
-  }
 }
 
 // Minimal LevelDetails shape — only the fields the extension reads.

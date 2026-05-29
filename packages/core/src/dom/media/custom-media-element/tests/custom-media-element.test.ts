@@ -160,11 +160,11 @@ class TrackingVideoHost extends HTMLVideoElementHost {
     this.#playbackRate = value;
   }
 
-  get preload() {
+  override get preload() {
     return this.#preload ?? 'metadata';
   }
 
-  set preload(value: '' | 'none' | 'metadata' | 'auto') {
+  override set preload(value: '' | 'none' | 'metadata' | 'auto') {
     const preload = value as '' | 'none' | 'metadata' | 'auto' | null;
     this.calls.push(`set:preload:${preload}`);
     this.#preload = preload;
