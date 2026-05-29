@@ -136,16 +136,20 @@ import { addLayer } from '@videojs/core/media/media-layer';
 import type { GoogleCastMedia } from './google-cast-layer';
 
 class GoogleCast implements GoogleCastProps, MediaExtension {
-  #destroy = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: GoogleCastMedia) {
-    installExtension(googleCast, media, this);
-    this.#destroy = addLayer(media, new GoogleCastLayer(this));
+    const uninstall = installExtension(googleCast, media, this);
+    const removeLayer = addLayer(media, new GoogleCastLayer(this));
+    this.#destroy = () => {
+      uninstall();
+      removeLayer();
+    };
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 
@@ -166,9 +170,11 @@ cast.destroy();
 ```
 
 `getExtensions(media)` is the registry for that host. Extensions register
-themselves by factory during `install()`, consumers look them up with the same
-factory, and teardown is explicit through `extension.destroy()` or host
-destruction.
+themselves by factory during `install()` — `installExtension` returns an
+uninstall callback that removes the entry from the registry, which the
+extension pairs with its layer cleanup in `destroy()`. Consumers look them up
+with the same factory, and teardown is explicit through `extension.destroy()`
+or host destruction.
 
 ### Media Layer
 
