@@ -2,8 +2,8 @@ import Hls from 'hls.js';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import type { MediaPreloadType } from '../../../core/media/types';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 /**
  * Maps the host's `preload` value to hls.js `startLoad` / buffer-limit
@@ -59,7 +59,7 @@ export function hlsJsPreload() {
   return new HlsJsPreload();
 }
 
-class HlsJsPreloadLayer extends HTMLMediaElementLayer {
+class HlsJsPreloadLayer extends HTMLVideoElementLayer {
   #media: HTMLVideoElementHost<Hls>;
   #preload: MediaPreloadType = 'metadata';
   #preloadAbort: AbortController | null = null;

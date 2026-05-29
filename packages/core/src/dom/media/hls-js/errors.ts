@@ -3,8 +3,8 @@ import Hls from 'hls.js';
 import { MediaError } from '../../../core/media/media-error';
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 const hlsErrorTypeToCode: Record<string, number> = {
   [Hls.ErrorTypes.NETWORK_ERROR]: MediaError.MEDIA_ERR_NETWORK,
@@ -91,7 +91,7 @@ export function hlsJsErrors() {
   return new HlsJsErrors();
 }
 
-class HlsJsErrorsLayer extends HTMLMediaElementLayer {
+class HlsJsErrorsLayer extends HTMLVideoElementLayer {
   #error: MediaError | null = null;
 
   override get error() {

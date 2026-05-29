@@ -1,8 +1,8 @@
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 /**
  * Derives `streamType` from the underlying media element's `duration`:
@@ -36,7 +36,7 @@ export function nativeHlsStreamType() {
   return new NativeHlsStreamType();
 }
 
-class NativeHlsStreamTypeLayer extends HTMLMediaElementLayer {
+class NativeHlsStreamTypeLayer extends HTMLVideoElementLayer {
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
   #userOverride = false;
   #abort: AbortController | null = null;
@@ -59,7 +59,7 @@ class NativeHlsStreamTypeLayer extends HTMLMediaElementLayer {
     return super.target;
   }
 
-  override set target(target: HTMLMediaElement | null) {
+  override set target(target: HTMLVideoElement | null) {
     this.#abort?.abort();
     this.#abort = null;
 

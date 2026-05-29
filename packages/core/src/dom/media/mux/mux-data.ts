@@ -5,8 +5,8 @@ import Mux, { type Options as MuxDataOptions, type Mux as MuxDataSdk } from 'mux
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import type { HTMLAudioElementHost } from '../html-audio-element-host';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 import { getPlayerVersion } from './env';
 
 export type { MuxDataSdk, MuxDataOptions };
@@ -125,7 +125,7 @@ export function muxData(props: MuxDataProps = {}) {
  * fires `loadstart`. The SDK installs its own `loadstart` listener inside
  * `monitor()` and would otherwise miss the first event of every load.
  */
-class MuxDataLayer extends HTMLMediaElementLayer {
+class MuxDataLayer extends HTMLVideoElementLayer {
   #initialize: () => void;
 
   constructor(initialize: () => void) {

@@ -1,7 +1,7 @@
 import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
-import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
+import { HTMLVideoElementLayer } from '../html-video-element-layer';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
 /**
@@ -38,7 +38,7 @@ export function nativeHlsLive() {
   return new NativeHlsLive();
 }
 
-class NativeHlsLiveLayer extends HTMLMediaElementLayer {
+class NativeHlsLiveLayer extends HTMLVideoElementLayer {
   #targetLiveWindow = Number.NaN;
   #liveEdgeStartOffset: number | undefined;
   #abort: AbortController | null = null;
@@ -64,7 +64,7 @@ class NativeHlsLiveLayer extends HTMLMediaElementLayer {
     return super.target;
   }
 
-  override set target(target: HTMLMediaElement | null) {
+  override set target(target: HTMLVideoElement | null) {
     this.#teardown();
 
     super.target = target;
