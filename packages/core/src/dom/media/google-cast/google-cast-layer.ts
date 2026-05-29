@@ -101,6 +101,7 @@ export class GoogleCastLayer extends HTMLVideoElementLayer {
     this.#detachRemoteListeners();
     this.#isCasting = false;
     this.#isInit = false;
+    super.destroy();
   }
 
   async requestCastSession() {
