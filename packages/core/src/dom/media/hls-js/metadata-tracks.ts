@@ -3,11 +3,10 @@ import { installExtension, type MediaExtension } from '../../../core/media/media
 import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
- * Keeps user-authored metadata and chapters `<track>` elements loaded across
- * hls.js manifest loads and media attaches. hls.js clears cues from text
- * tracks on those events; this extension forces affected default tracks back
- * to `mode = 'hidden'` and re-clones the `<track>` element when its cues are
- * wiped.
+ * Keeps default metadata/chapters `<track>` elements alive across hls.js
+ * manifest loads and media attaches, which clear text-track cues: forces
+ * affected tracks back to `mode = 'hidden'` and re-clones the `<track>` when
+ * its cues are wiped.
  *
  * @example hlsJsMetadataTracks().install(media);
  */
@@ -22,7 +21,7 @@ class HlsJsMetadataTracks implements MediaExtension {
 
     const onReload = () => forceHiddenTracks(media.target);
 
-    // Watch out here, AFTER the manifest is loaded!
+    // Re-apply once the manifest has finished loading (and on attach).
     engine.on(Hls.Events.MANIFEST_LOADED, onReload);
     engine.on(Hls.Events.MEDIA_ATTACHED, onReload);
 
