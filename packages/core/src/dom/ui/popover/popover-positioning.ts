@@ -36,6 +36,7 @@ export interface PopoverPositionStyle {
   alignSelf?: string;
   marginInlineStart?: string;
   marginBlockStart?: string;
+  translate?: string;
   top?: string;
   bottom?: string;
   left?: string;
@@ -71,6 +72,33 @@ function getCrossAxisAvailable(
   return Math.min(center - boundaryStart, boundaryEnd - center) * 2;
 }
 
+function shiftCrossAxis(value: number, boundaryStart: number, boundaryEnd: number, size: number): number {
+  const max = boundaryEnd - size;
+  return max < boundaryStart ? boundaryStart : clamp(value, boundaryStart, max);
+}
+
+function getAnchorCrossAxisShift(
+  start: number,
+  end: number,
+  size: number,
+  boundaryStart: number,
+  boundaryEnd: number,
+  align: PopoverAlign,
+  alignOffset: number,
+  boundaryOffset: number
+): { base: string; translate: string } {
+  const base =
+    align === 'start' ? start + alignOffset : align === 'end' ? end + alignOffset : start + size / 2 + alignOffset;
+  const desiredTranslate = align === 'start' ? '0px' : align === 'end' ? '-100%' : '-50%';
+
+  return {
+    base: `${base}px`,
+    translate: `clamp(${boundaryStart + boundaryOffset - base}px, ${desiredTranslate}, calc(${
+      boundaryEnd - boundaryOffset - base
+    }px - 100%))`,
+  };
+}
+
 /**
  * Get positioning styles for the popup element.
  *
@@ -97,7 +125,7 @@ export function getAnchorPositionStyle(
 ): PopoverPositionStyle & Record<string, string | undefined> {
   if (supportsAnchorPositioning()) {
     return {
-      ...getAnchorPositionCSS(anchorName, opts, cssVars),
+      ...getAnchorPositionCSS(anchorName, opts, cssVars, triggerRect, boundaryRect, offsets),
       ...(triggerRect && boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts, offsets, cssVars) : {}),
     };
   }
@@ -106,7 +134,7 @@ export function getAnchorPositionStyle(
   if (triggerRect && popupRect) {
     const resolved: ManualOffsets = offsets ?? ZERO_OFFSETS;
     return {
-      ...getManualPositionStyle(triggerRect, popupRect, opts, resolved),
+      ...getManualPositionStyle(triggerRect, popupRect, opts, resolved, boundaryRect),
       ...(boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts, resolved, cssVars) : {}),
       position: 'fixed',
       // Reset UA [popover] defaults (inset: 0; margin: auto) which would
@@ -128,11 +156,15 @@ export function getAnchorNameStyle(anchorName: string) {
 function getAnchorPositionCSS(
   anchorName: string,
   opts: PositioningOptions,
-  cssVars: PositioningCSSVars = PopoverCSSVars
+  cssVars: PositioningCSSVars = PopoverCSSVars,
+  triggerRect?: DOMRect,
+  boundaryRect?: DOMRect,
+  offsets: ManualOffsets = ZERO_OFFSETS
 ): PopoverPositionStyle {
   const SIDE_OFFSET_VAR = `var(${cssVars.sideOffset}, 0px)`;
   const ALIGN_OFFSET_VAR = `var(${cssVars.alignOffset}, 0px)`;
   const { side, align } = opts;
+  const boundaryOffset = offsets.boundaryOffset ?? 0;
   const style: PopoverPositionStyle = {
     positionAnchor: `--${anchorName}`,
     position: 'fixed',
@@ -146,6 +178,7 @@ function getAnchorPositionCSS(
     alignSelf: 'normal',
     marginInlineStart: '0',
     marginBlockStart: '0',
+    translate: 'none',
   };
 
   // The CSS inset property is the OPPOSITE of the desired side.
@@ -158,6 +191,24 @@ function getAnchorPositionCSS(
   if (side === 'top' || side === 'bottom') {
     style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
 
+    if (triggerRect && boundaryRect) {
+      const { base, translate } = getAnchorCrossAxisShift(
+        triggerRect.left,
+        triggerRect.right,
+        triggerRect.width,
+        boundaryRect.left,
+        boundaryRect.right,
+        align,
+        offsets.alignOffset,
+        boundaryOffset
+      );
+
+      style.left = base;
+      style.translate = `${translate} 0`;
+
+      return style;
+    }
+
     // Alignment along the cross axis
     if (align === 'start') {
       style.left = `calc(anchor(left) + ${ALIGN_OFFSET_VAR})`;
@@ -169,6 +220,24 @@ function getAnchorPositionCSS(
     }
   } else {
     style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
+
+    if (triggerRect && boundaryRect) {
+      const { base, translate } = getAnchorCrossAxisShift(
+        triggerRect.top,
+        triggerRect.bottom,
+        triggerRect.height,
+        boundaryRect.top,
+        boundaryRect.bottom,
+        align,
+        offsets.alignOffset,
+        boundaryOffset
+      );
+
+      style.top = base;
+      style.translate = `0 ${translate}`;
+
+      return style;
+    }
 
     if (align === 'start') {
       style.top = `calc(anchor(top) + ${ALIGN_OFFSET_VAR})`;
@@ -280,7 +349,8 @@ export function getManualPositionStyle(
   triggerRect: DOMRect,
   popupRect: DOMRect,
   opts: PositioningOptions,
-  offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0 }
+  offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0 },
+  boundaryRect?: DOMRect
 ) {
   const { side, align } = opts;
   const { sideOffset, alignOffset } = offsets;
@@ -315,6 +385,26 @@ export function getManualPositionStyle(
       top = triggerRect.bottom - popupRect.height + alignOffset;
     } else {
       top = triggerRect.top + (triggerRect.height - popupRect.height) / 2 + alignOffset;
+    }
+  }
+
+  if (boundaryRect) {
+    const boundaryOffset = offsets.boundaryOffset ?? 0;
+
+    if (side === 'top' || side === 'bottom') {
+      left = shiftCrossAxis(
+        left,
+        boundaryRect.left + boundaryOffset,
+        boundaryRect.right - boundaryOffset,
+        popupRect.width
+      );
+    } else {
+      top = shiftCrossAxis(
+        top,
+        boundaryRect.top + boundaryOffset,
+        boundaryRect.bottom - boundaryOffset,
+        popupRect.height
+      );
     }
   }
 
