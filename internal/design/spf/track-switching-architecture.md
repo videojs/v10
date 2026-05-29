@@ -30,6 +30,7 @@ This doc proposes the shared substrate: track selection as a **filter/sort pipel
 - Source-replacement lifecycle. Already handled by reactor state-exit.
 - Text-track selection. Text uses a DOM-driven multi-writer shape (see [`text-track-architecture.md`](./text-track-architecture.md)) not currently folded into this substrate. May be incorporated later.
 - Engine error-handling. How an empty eligible set (cascade step 2) and other failures surface — error state, cause attribution, recoverability, whether a given empty slot is even fatal — is owned by the engine error model. The substrate only detects the outcome and hands it off.
+- User-intent persistence and conflict *policy* — whether/how remembered preferences carry across sources (in-session vs. durable), and any conflict resolution among multiple user-intent inputs. The substrate stays resilient to these (see [User-intent inputs](#user-intent-inputs)); the policies are consumer/feature decisions.
 
 ## Solution
 
@@ -340,13 +341,18 @@ The ABR-free `selectVideoTrack` keeps ABR (bandwidth estimator, quality-selectio
 
 Probably composer-side; the prior-pick concern is general (not ABR-specific) and rule-internal hysteresis would have to be duplicated by every ranking rule. **Open.**
 
-### Cross-source preferences
+### User-intent inputs
 
-"Remembered user preferences" carry across source changes. If a remembered preference doesn't match any track in the new source, the rule's preferred set becomes empty and the cascade handles it gracefully (the rule no-ops; other rules drive selection). Lean: handled at the layer that persists / restores `userXTrackSelection`, not inside the rule itself. **Open for confirmation.**
+The substrate stays resilient to both *remembered preferences across sources* and *multiple user-intent inputs* without committing to either, via four invariants the design already satisfies:
 
-### Multiple user-intent inputs
+1. User intent is expressed as partial-track **descriptors**, never resolved track ids — so it re-matches against each new source (ids can't carry across sources).
+2. The intent input is **separate from the resolved slot and isn't cleared on source change** — resolution is ephemeral; intent persists and is re-matched.
+3. `user-intent` is a **category any number of rules may carry**; the composer never special-cases a single user-intent rule, so N inputs compose like one.
+4. Competing intents — and their fall-through biases — **resolve by precedence**, the same mechanism as one rule. Precedence already honors *both* when a track satisfies both; it drops the lower only when they genuinely conflict.
 
-Today's `userXTrackSelection` is one slot per type. The future may add others (remembered language, accessibility preference, persisted bitrate pin, etc.). Do they compose as separate user-intent rules each contributing bias on fall-through, or merge into a single user-intent input the composer sees once? **Open.**
+Given these, multiple inputs compose like any rules, and both a multi-field descriptor (`{language, height}`) and several precedence-ordered descriptors are supported. The actual *policies* — in-session vs. durable persistence, sticky-through-unsatisfiable behavior, which descriptor shape a consumer reaches for — are [out of scope](#out-of-scope).
+
+**Residual open:** whether competing intents ever need resolution *beyond* precedence — a "maximize-satisfied" / count-the-matches policy. That's count-based and in tension with [no cross-rule scoring](#why-no-cross-rule-scoring); flagged for separate resolution, not assumed either way.
 
 ## Status
 
