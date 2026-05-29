@@ -257,7 +257,8 @@ describe('nativeHlsLive', () => {
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
       const host = new FakeNativeHlsMedia();
-      const destroy = nativeHlsLive().install(host);
+      const extension = nativeHlsLive();
+      extension.install(host);
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       host.target = video;
@@ -266,7 +267,7 @@ describe('nativeHlsLive', () => {
 
       expect(host.targetLiveWindow).toBe(0);
 
-      destroy();
+      extension.destroy();
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();

@@ -1,6 +1,6 @@
 import type { LevelLoadedData } from 'hls.js';
 import Hls from 'hls.js';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
@@ -15,37 +15,45 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example hlsJsStreamType().install(media);
  */
-export class HlsJsStreamType {
-  readonly name = 'hls-js-stream-type';
+class HlsJsStreamType implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
 
-    const mediaLayer = new HlsJsStreamTypeLayer();
-    const removeLayer = addLayer(media, mediaLayer);
+    const uninstall = installExtension(hlsJsStreamType, media, this);
+
+    const layer = new HlsJsStreamTypeLayer();
+    const removeLayer = addLayer(media, layer);
 
     const onLevelLoaded = (_event: string, data: LevelLoadedData) => {
-      mediaLayer.setDetected(data.details.live ? MediaStreamTypes.LIVE : MediaStreamTypes.ON_DEMAND);
+      layer.setDetected(data.details.live ? MediaStreamTypes.LIVE : MediaStreamTypes.ON_DEMAND);
     };
-    const onReset = () => mediaLayer.setDetected(MediaStreamTypes.UNKNOWN);
+    const onReset = () => layer.setDetected(MediaStreamTypes.UNKNOWN);
 
     engine.on(Hls.Events.MANIFEST_LOADING, onReset);
     engine.on(Hls.Events.DESTROYING, onReset);
     engine.on(Hls.Events.LEVEL_LOADED, onLevelLoaded);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       engine.off(Hls.Events.MANIFEST_LOADING, onReset);
       engine.off(Hls.Events.DESTROYING, onReset);
       engine.off(Hls.Events.LEVEL_LOADED, onLevelLoaded);
       removeLayer();
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsStreamType = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsStreamType>(
-  () => new HlsJsStreamType()
-);
+export function hlsJsStreamType() {
+  return new HlsJsStreamType();
+}
 
 class HlsJsStreamTypeLayer extends HTMLMediaElementLayer {
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;

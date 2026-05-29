@@ -163,14 +163,14 @@ export abstract class MediaLayer<
   destroy() {
     // 1. Extensions first — each one's teardown may pop a layer it owns,
     //    which trims the chain before we recurse below.
-    getExtensions(this as MediaLayer<any, any>).destroy();
+    getExtensions(this).forEach((extension) => extension.destroy());
 
-    // 2. Snapshot `#next` before detach; `target = null` propagates through
+    // 1. Snapshot `#next` before detach; `target = null` propagates through
     //    the setter and may rewrite the slot.
     const next = this.#next;
     this.target = null;
 
-    // 3. Recurse — typically a delegate engine added via `addLayer` rather
+    // 2. Recurse — typically a delegate engine added via `addLayer` rather
     //    than via an extension.
     if (next instanceof MediaLayer) next.destroy();
   }

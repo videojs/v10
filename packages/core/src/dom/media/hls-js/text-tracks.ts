@@ -1,7 +1,7 @@
 import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
@@ -16,12 +16,14 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example hlsJsTextTracks().install(media);
  */
-export class HlsJsTextTracks {
-  readonly name = 'hls-js-text-tracks';
+class HlsJsTextTracks implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
+
+    const uninstall = installExtension(hlsJsTextTracks, media, this);
 
     let sessionAbort: AbortController | null = null;
 
@@ -136,7 +138,8 @@ export class HlsJsTextTracks {
     engine.on(Hls.Events.MEDIA_DETACHED, reset);
     engine.on(Hls.Events.DESTROYING, reset);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       reset();
       engine.off(Hls.Events.MANIFEST_LOADING, init);
       engine.off(Hls.Events.MEDIA_ATTACHED, init);
@@ -144,11 +147,16 @@ export class HlsJsTextTracks {
       engine.off(Hls.Events.DESTROYING, reset);
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsTextTracks = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsTextTracks>(
-  () => new HlsJsTextTracks()
-);
+export function hlsJsTextTracks() {
+  return new HlsJsTextTracks();
+}
 
 function clearTracks(target: HTMLMediaElement) {
   const trackEls = target.querySelectorAll('track[data-removeondestroy]');

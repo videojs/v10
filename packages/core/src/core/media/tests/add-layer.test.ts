@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defineExtension, getExtensions } from '../media-extension';
+import { getExtensions, installExtension, type MediaExtension } from '../media-extension';
 import { addLayer, MediaLayer } from '../media-layer';
 import type { Media } from '../types';
 
@@ -220,14 +220,32 @@ describe('addLayer', () => {
 describe('MediaLayer.destroy', () => {
   it('tears down installed extensions', () => {
     const teardown = vi.fn();
-    const ext = defineExtension(() => ({ install: () => teardown }));
+    class TestExtension implements MediaExtension {
+      #destroy = () => {};
+
+      install(host: TestLayer) {
+        const uninstall = installExtension(testExtension, host, this);
+        this.#destroy = () => {
+          uninstall();
+          teardown();
+        };
+      }
+
+      destroy() {
+        this.#destroy();
+        this.#destroy = () => {};
+      }
+    }
+    function testExtension() {
+      return new TestExtension();
+    }
     const host = new TestLayer();
-    getExtensions(host).install(ext());
+    testExtension().install(host);
 
     host.destroy();
 
     expect(teardown).toHaveBeenCalledTimes(1);
-    expect(getExtensions(host).length).toBe(0);
+    expect(getExtensions(host).size).toBe(0);
   });
 
   it('detaches the target', () => {
@@ -256,15 +274,27 @@ describe('MediaLayer.destroy', () => {
 
   it('destroys nested chains in order: extensions → manually added layers', () => {
     const order: string[] = [];
-    const ext = defineExtension(() => ({
-      install(host) {
+    class TestExtension implements MediaExtension {
+      #destroy = () => {};
+
+      install(host: TestLayer) {
+        const uninstall = installExtension(testExtension, host, this);
         const remove = addLayer(host, new TestLayer());
-        return () => {
+        this.#destroy = () => {
+          uninstall();
           order.push('ext-teardown');
           remove();
         };
-      },
-    }));
+      }
+
+      destroy() {
+        this.#destroy();
+        this.#destroy = () => {};
+      }
+    }
+    function testExtension() {
+      return new TestExtension();
+    }
 
     class ChildLayer extends MediaLayer {
       override destroy() {
@@ -275,7 +305,7 @@ describe('MediaLayer.destroy', () => {
 
     const host = new TestLayer();
     addLayer(host, new ChildLayer());
-    getExtensions(host).install(ext());
+    testExtension().install(host);
 
     host.destroy();
 

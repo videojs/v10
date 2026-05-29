@@ -1,4 +1,4 @@
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer } from '../../../core/media/media-layer';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
@@ -14,17 +14,27 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example nativeHlsStreamType().install(media);
  */
-export class NativeHlsStreamType {
-  readonly name = 'native-hls-stream-type';
+class NativeHlsStreamType implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost) {
-    return addLayer(media, new NativeHlsStreamTypeLayer());
+    const uninstall = installExtension(nativeHlsStreamType, media, this);
+    const removeLayer = addLayer(media, new NativeHlsStreamTypeLayer());
+    this.#destroy = () => {
+      uninstall();
+      removeLayer();
+    };
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
   }
 }
 
-export const nativeHlsStreamType = defineExtension<void, HTMLVideoElementHost, NativeHlsStreamType>(
-  () => new NativeHlsStreamType()
-);
+export function nativeHlsStreamType() {
+  return new NativeHlsStreamType();
+}
 
 class NativeHlsStreamTypeLayer extends HTMLMediaElementLayer {
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;

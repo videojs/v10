@@ -1,5 +1,5 @@
 import Hls from 'hls.js';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
 
 /**
@@ -11,12 +11,14 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  *
  * @example hlsJsMetadataTracks().install(media);
  */
-export class HlsJsMetadataTracks {
-  readonly name = 'hls-js-metadata-tracks';
+class HlsJsMetadataTracks implements MediaExtension {
+  #destroy: () => void = () => {};
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
     if (!engine) return;
+
+    const uninstall = installExtension(hlsJsMetadataTracks, media, this);
 
     const onReload = () => forceHiddenTracks(media.target);
 
@@ -24,16 +26,22 @@ export class HlsJsMetadataTracks {
     engine.on(Hls.Events.MANIFEST_LOADED, onReload);
     engine.on(Hls.Events.MEDIA_ATTACHED, onReload);
 
-    return () => {
+    this.#destroy = () => {
+      uninstall();
       engine.off(Hls.Events.MANIFEST_LOADED, onReload);
       engine.off(Hls.Events.MEDIA_ATTACHED, onReload);
     };
   }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
 }
 
-export const hlsJsMetadataTracks = defineExtension<void, HTMLVideoElementHost<Hls>, HlsJsMetadataTracks>(
-  () => new HlsJsMetadataTracks()
-);
+export function hlsJsMetadataTracks() {
+  return new HlsJsMetadataTracks();
+}
 
 const TRACK_LOADED = 2;
 

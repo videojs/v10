@@ -38,8 +38,9 @@ class HlsHost extends HTMLVideoElementHost<Hls> {
 function setup() {
   const engine = createEngine();
   const host = new HlsHost(engine);
-  const destroy = hlsJsStreamType().install(host);
-  return { engine, host, destroy };
+  const extension = hlsJsStreamType();
+  extension.install(host);
+  return { engine, host, extension };
 }
 
 describe('hlsJsStreamType', () => {
@@ -128,11 +129,11 @@ describe('hlsJsStreamType', () => {
   });
 
   it('removes the layer on destroy', () => {
-    const { host, destroy } = setup();
+    const { host, extension } = setup();
     host.streamType = MediaStreamTypes.LIVE;
     expect(host.streamType).toBe(MediaStreamTypes.LIVE);
 
-    destroy();
+    extension.destroy();
 
     expect(host.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });

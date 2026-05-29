@@ -1,9 +1,8 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
-import type { ExtensionConfig } from '../../../core/media/media-extension';
 import type { HTMLAudioElementHost } from '../html-audio-element-host';
 import { HTMLMediaElementLayer } from '../html-media-element-layer';
 import type { HTMLVideoElementHost } from '../html-video-element-host';
-import type { GoogleCast } from './index';
+import type { GoogleCastProps } from './index';
 import { RemotePlayback, type RemotePlaybackHooks } from './remote-playback';
 import {
   castContext,
@@ -23,7 +22,7 @@ import {
 type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
 export type GoogleCastMedia = HTMLVideoElementHost | HTMLAudioElementHost;
 
-type GoogleCastConfig = ExtensionConfig<GoogleCast>;
+type GoogleCastConfig = GoogleCastProps;
 
 const layerInstances = new IterableWeakSet<GoogleCastLayer>();
 

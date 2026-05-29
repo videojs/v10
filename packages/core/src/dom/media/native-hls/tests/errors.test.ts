@@ -5,10 +5,11 @@ import { nativeHlsErrors } from '../errors';
 
 function setup() {
   const host = new HTMLVideoElementHost();
-  const dispose = nativeHlsErrors().install(host);
+  const extension = nativeHlsErrors();
+  extension.install(host);
   const video = document.createElement('video');
   host.target = video;
-  return { host, video, dispose };
+  return { host, video, extension };
 }
 
 function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
@@ -122,12 +123,12 @@ describe('nativeHlsErrors', () => {
   });
 
   it('stops wrapping errors after dispose', () => {
-    const { host, video, dispose } = setup();
+    const { host, video, extension } = setup();
 
     const handler = vi.fn();
     host.addEventListener('error', handler);
 
-    dispose();
+    extension.destroy();
 
     fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'after dispose');
 
@@ -137,9 +138,9 @@ describe('nativeHlsErrors', () => {
   });
 
   it('no longer stops propagation after dispose', () => {
-    const { video, dispose } = setup();
+    const { video, extension } = setup();
 
-    dispose();
+    extension.destroy();
 
     const nativeHandler = vi.fn();
     video.addEventListener('error', nativeHandler);

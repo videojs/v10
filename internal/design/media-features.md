@@ -45,7 +45,7 @@ Two roles, one host:
 
 - **Media Extension** — installs itself on a media host, owns its lifecycle
   and state, and may push one or more layers (or only observe). Usually
-  produced by a factory like `googleCast({ … })`.
+  constructed through a factory like `googleCast({ … })`.
 - **Media Layer** — anything pushed onto the layer stack via
   `addLayer(media, layer)`.
 
@@ -131,39 +131,44 @@ export default function HlsVideoWithExtensions() {
 ### Media Extension
 
 ```ts
-import { defineExtension, getExtensions } from '@videojs/core/media/media-extension';
+import { getExtensions, installExtension, type MediaExtension } from '@videojs/core/media/media-extension';
 import { addLayer } from '@videojs/core/media/media-layer';
+import type { GoogleCastMedia } from './google-cast-layer';
 
-const googleCast = defineExtension((props: GoogleCastProps) => ({
-  install(media, { signal }) {
-    // Target-bound state belongs on a layer — override `set target` to react.
-    const layer = addLayer(media, new GoogleCastLayer(props));
-    // `signal` aborts on destroy — pass it to anything signal-aware.
-    return layer;
-  },
-}));
+class GoogleCast implements GoogleCastProps, MediaExtension {
+  #destroy = () => {};
+
+  install(media: GoogleCastMedia) {
+    installExtension(googleCast, media, this);
+    this.#destroy = addLayer(media, new GoogleCastLayer(this));
+  }
+
+  destroy() {
+    this.#destroy();
+    this.#destroy = () => {};
+  }
+}
+
+export function googleCast(props: GoogleCastProps = {}) {
+  return new GoogleCast(props);
+}
 
 const cast = googleCast({ receiverApplicationId: '…' });
-const destroy = cast.install(media);
+cast.install(media);
 
 // lookup + mutate from anywhere with the media reference
-getExtensions(media).get(googleCast)?.receiverApplicationId = 'new-id';
+getExtensions(media).get(googleCast)!.receiverApplicationId = 'new-id';
 
 // iterate every installed extension
 for (const ext of getExtensions(media)) console.log(ext);
 
-destroy();
+cast.destroy();
 ```
 
-`getExtensions(media)` returns a `MediaExtensionList` bound to that host —
-the single entry point for installing, looking up, and iterating extensions.
-`defineExtension` brands each instance so that `ext.install(media)` and
-`getExtensions(media).install(ext)` share the same dedup state.
-
-The framework creates one `AbortController` per install and passes its
-signal to `install(media, { signal })`. The returned destroy aborts that
-signal, then runs any teardown the extension returned — so most extensions
-never need to manage their own controller.
+`getExtensions(media)` is the registry for that host. Extensions register
+themselves by factory during `install()`, consumers look them up with the same
+factory, and teardown is explicit through `extension.destroy()` or host
+destruction.
 
 ### Media Layer
 
