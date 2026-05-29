@@ -334,12 +334,12 @@ The ABR-free `selectVideoTrack` keeps ABR (bandwidth estimator, quality-selectio
 
 ### Hysteresis location
 
-"Don't switch tracks for small bandwidth changes" was collapsed earlier into "stay with current unless a strictly-higher tier opens." Where does that logic live?
+"Don't switch tracks for small changes" — collapsed earlier into "stay with current unless a strictly-higher tier opens." The substrate stays resilient to either placement via one requirement: **prior selection state is available in the evaluation context** — at minimum the current selected track, more generally whatever prior state a hysteresis policy reads (e.g. time-since-last-switch for a temporal variant). Given that, both placements work:
 
-- **Composer post-stage** that takes the prior pick alongside the composite tiers and applies a sticky-current bias.
-- **Rule-internal**: ABR contributes a hysteresis-aware preferred tier that already favors the current track.
+- **Rule-internal** (lean): ABR-family rules own the up-switch margin/interval and shape their own `preferred`/`allowed` partition so the current track stays preferred until a higher one clears margin. Matches every incumbent (hls.js, dash.js, ExoPlayer, rx-player) and today's `setupTrackSwitching`. The "duplicated by every rule" worry doesn't bite — ABR is the only continuously-churning rule; episodic rules (user intent, capability, caps, CDN, steering) should propagate promptly, not be damped.
+- **Composer post-stage**: a tier-aware sticky-current bias reading the prior pick — available as a fallback if a non-ABR continuous-churn source ever emerges.
 
-Probably composer-side; the prior-pick concern is general (not ABR-specific) and rule-internal hysteresis would have to be duplicated by every ranking rule. **Open.**
+Placement is an out-of-scope implementation choice; the only architectural requirement — prior selection in the evaluation context — is a constraint the [rule-attachment context contract](#rule-attachment-and-reactivity) must honor. **Resolved (resilience-stated); placement deferred.**
 
 ### User-intent inputs
 
