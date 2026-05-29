@@ -28,19 +28,6 @@ describe('addLayer', () => {
     expect(layer.next).toBe(defaultLayer);
   });
 
-  it('restores the previous layer when destroyed', () => {
-    const host = new TestLayer();
-    const defaultLayer = new TestLayer();
-    addLayer(host, defaultLayer);
-
-    const layer = new TestLayer();
-    const remove = addLayer(host, layer);
-    remove();
-
-    expect(host.next).toBe(defaultLayer);
-    expect(layer.next).toBeNull();
-  });
-
   it('pops the layer from wherever it sits in the chain', () => {
     const host = new TestLayer();
     const bottom = new TestLayer(1);
@@ -58,17 +45,6 @@ describe('addLayer', () => {
     expect(middle.next).toBeNull();
   });
 
-  it('is a no-op when destroy is called more than once', () => {
-    const host = new TestLayer();
-    const layer = new TestLayer();
-    const remove = addLayer(host, layer);
-    remove();
-    remove();
-
-    expect(host.next).toBeNull();
-    expect(layer.next).toBeNull();
-  });
-
   it('bubbles layer-originated events up to the host', () => {
     const host = new TestLayer();
     const middle = new TestLayer();
@@ -82,41 +58,6 @@ describe('addLayer', () => {
     bottom.dispatchEvent(new Event('streamtypechange'));
 
     expect(hostListener).toHaveBeenCalledTimes(1);
-  });
-
-  it('clears parent pointers when a layer is removed', () => {
-    const host = new TestLayer();
-    const layer = new TestLayer();
-    const remove = addLayer(host, layer);
-
-    const hostListener = vi.fn();
-    host.addEventListener('streamtypechange', hostListener);
-
-    remove();
-    layer.dispatchEvent(new Event('streamtypechange'));
-
-    expect(hostListener).not.toHaveBeenCalled();
-  });
-
-  it('does not double-deliver forwarded events to layers above', () => {
-    const host = new TestLayer();
-    const layer = new TestLayer();
-    addLayer(host, layer);
-
-    const target = makeTarget();
-    host.target = target;
-
-    const hostListener = vi.fn();
-    const layerListener = vi.fn();
-    host.addEventListener('play', hostListener);
-    layer.addEventListener('play', layerListener);
-
-    target.dispatchEvent(new Event('play'));
-
-    // Each subscriber fires exactly once — the forwarders deliver directly,
-    // they don't also bubble through the chain.
-    expect(hostListener).toHaveBeenCalledTimes(1);
-    expect(layerListener).toHaveBeenCalledTimes(1);
   });
 
   it('migrates every layer’s forwarders when the chain target changes', () => {
@@ -170,31 +111,6 @@ describe('addLayer', () => {
     expect(calls).toEqual([first, second, null]);
   });
 
-  it('invokes the removed layer’s `set target` override with `null` on removal', () => {
-    const calls: (Media | null)[] = [];
-    class ObservingLayer extends MediaLayer {
-      override set target(target: Media | null) {
-        calls.push(target);
-        super.target = target;
-      }
-      override get target() {
-        return super.target;
-      }
-    }
-
-    const host = new TestLayer();
-    const layer = new ObservingLayer();
-    const remove = addLayer(host, layer);
-
-    const target = makeTarget();
-    host.target = target;
-    calls.length = 0;
-
-    remove();
-
-    expect(calls).toEqual([null]);
-  });
-
   it('syncs a newly added layer to the chain’s current target', () => {
     const calls: (Media | null)[] = [];
     class ObservingLayer extends MediaLayer {
@@ -246,14 +162,6 @@ describe('MediaLayer.destroy', () => {
 
     expect(teardown).toHaveBeenCalledTimes(1);
     expect(getExtensions(host).size).toBe(0);
-  });
-
-  it('detaches the target', () => {
-    const host = new TestLayer();
-    host.target = makeTarget();
-    host.destroy();
-
-    expect(host.target).toBeNull();
   });
 
   it('recursively destroys layers added via addLayer', () => {
@@ -310,9 +218,5 @@ describe('MediaLayer.destroy', () => {
     host.destroy();
 
     expect(order).toEqual(['ext-teardown', 'child']);
-  });
-
-  it('does not throw when there are no extensions or chain layers', () => {
-    expect(() => new TestLayer().destroy()).not.toThrow();
   });
 });

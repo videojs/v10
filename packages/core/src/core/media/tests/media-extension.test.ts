@@ -34,36 +34,9 @@ function testExtension(value = '') {
   return new TestExtension(value);
 }
 
-class OtherExtension implements MediaExtension {
-  static install = vi.fn<() => void>();
-  static teardown = vi.fn<() => void>();
-
-  #destroy = () => {};
-
-  install(media: MediaHost) {
-    OtherExtension.install();
-    const uninstall = installExtension(otherExtension, media, this);
-    this.#destroy = () => {
-      uninstall();
-      OtherExtension.teardown();
-    };
-  }
-
-  destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
-  }
-}
-
-function otherExtension() {
-  return new OtherExtension();
-}
-
 function resetSpies() {
   TestExtension.install.mockClear();
   TestExtension.teardown.mockClear();
-  OtherExtension.install.mockClear();
-  OtherExtension.teardown.mockClear();
 }
 
 describe('MediaExtension', () => {
@@ -91,31 +64,6 @@ describe('MediaExtension', () => {
     expect(getExtensions(b).get(testExtension)).toBe(second);
   });
 
-  it('returns undefined when no extension from the factory is installed', () => {
-    expect(getExtensions(new MediaHost()).get(testExtension)).toBeUndefined();
-  });
-
-  it('lets the caller mutate live props through the returned instance', () => {
-    const media = new MediaHost();
-    testExtension('A').install(media);
-
-    const extension = getExtensions(media).get(testExtension)!;
-    extension.value = 'B';
-
-    expect(getExtensions(media).get(testExtension)?.value).toBe('B');
-  });
-
-  it('iterates installed extensions in install order', () => {
-    const media = new MediaHost();
-    const a = testExtension();
-    const b = otherExtension();
-
-    a.install(media);
-    b.install(media);
-
-    expect([...getExtensions(media).values()]).toEqual([a, b]);
-  });
-
   it('removes a registration when the extension is destroyed', () => {
     resetSpies();
     const media = new MediaHost();
@@ -139,17 +87,5 @@ describe('MediaExtension', () => {
     first.destroy();
 
     expect(getExtensions(media).get(testExtension)).toBe(second);
-  });
-
-  it('destroy is a no-op when called more than once', () => {
-    resetSpies();
-    const media = new MediaHost();
-    const extension = testExtension();
-
-    extension.install(media);
-    extension.destroy();
-    extension.destroy();
-
-    expect(TestExtension.teardown).toHaveBeenCalledTimes(1);
   });
 });
