@@ -22,7 +22,7 @@ type HlsPlaylistType = 'VOD' | 'EVENT' | null | undefined;
  * @example hlsJsLive().install(media);
  */
 class HlsJsLive implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
@@ -65,8 +65,8 @@ class HlsJsLive implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 

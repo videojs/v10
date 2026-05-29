@@ -43,7 +43,7 @@ export interface MuxDataProps {
  * muxData({ envKey: 'env-1' }).install(media);
  */
 class MuxData implements MuxDataProps, MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   MuxDataSdk: MuxDataSdk | undefined = Mux;
   beaconCollectionDomain: string | undefined;
@@ -78,8 +78,8 @@ class MuxData implements MuxDataProps, MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 
   #initializeSdk(media: MuxDataMedia) {

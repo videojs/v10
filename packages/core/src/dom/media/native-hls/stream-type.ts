@@ -15,7 +15,7 @@ import { HTMLVideoElementLayer } from '../html-video-element-layer';
  * @example nativeHlsStreamType().install(media);
  */
 class NativeHlsStreamType implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost) {
     const uninstall = installExtension(nativeHlsStreamType, media, this);
@@ -27,8 +27,8 @@ class NativeHlsStreamType implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 

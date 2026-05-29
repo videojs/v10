@@ -17,7 +17,7 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
  * @example hlsJsTextTracks().install(media);
  */
 class HlsJsTextTracks implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
@@ -149,8 +149,8 @@ class HlsJsTextTracks implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 

@@ -19,7 +19,7 @@ import { HTMLVideoElementLayer } from '../html-video-element-layer';
  * @example hlsJsPreload().install(media);
  */
 class HlsJsPreload implements MediaExtension {
-  #destroy: () => void = () => {};
+  #destroy: (() => void) | null = null;
 
   install(media: HTMLVideoElementHost<Hls>) {
     const { engine } = media;
@@ -50,8 +50,8 @@ class HlsJsPreload implements MediaExtension {
   }
 
   destroy() {
-    this.#destroy();
-    this.#destroy = () => {};
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 
