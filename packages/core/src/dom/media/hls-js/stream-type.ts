@@ -7,11 +7,10 @@ import type { HTMLVideoElementHost } from '../html-video-element-host';
 import { HTMLVideoElementLayer } from '../html-video-element-layer';
 
 /**
- * Derives `streamType` from hls.js `LEVEL_LOADED` events: `data.details.live`
- * → `LIVE`, otherwise `ON_DEMAND`. Resets to `UNKNOWN` on `MANIFEST_LOADING`
- * and `DESTROYING`. Setting `streamType` to anything other than `UNKNOWN`
- * locks in the user override; setting it to `UNKNOWN` returns control to
- * detection.
+ * Derives `streamType` from hls.js `LEVEL_LOADED` (`live` → `LIVE`, else
+ * `ON_DEMAND`); resets to `UNKNOWN` on `MANIFEST_LOADING` / `DESTROYING`.
+ * Setting a value other than `UNKNOWN` locks in a user override; `UNKNOWN`
+ * returns control to detection.
  *
  * @example hlsJsStreamType().install(media);
  */
