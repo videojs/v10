@@ -22,9 +22,7 @@ export abstract class HTMLMediaElementLayer<
   Engine = unknown,
   Events extends { [K in keyof Events]: EventLike } = VideoEvents,
   Next extends Video<Engine> = Video<Engine>,
-> extends MediaLayer<Next, Events>
-  implements Video<Engine>
-{
+> extends MediaLayer<Next, Events> {
   querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
   querySelector<E extends Element = Element>(selectors: string): E | null;
   querySelector(selectors: string): Element | null {

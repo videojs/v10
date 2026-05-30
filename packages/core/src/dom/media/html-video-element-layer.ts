@@ -7,7 +7,7 @@ export abstract class HTMLVideoElementLayer<
   Target extends HTMLVideoElement = HTMLVideoElement,
   Engine = unknown,
   Events extends { [K in keyof Events]: EventLike } = VideoEvents,
-  Next extends Video = Video,
+  Next extends Video<Engine> = Video<Engine>,
 > extends HTMLMediaElementLayer<Target, Engine, Events, Next> {
   // -- Video --
 

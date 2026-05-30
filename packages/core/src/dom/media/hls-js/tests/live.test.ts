@@ -444,13 +444,14 @@ describe('hlsJsLive', () => {
     it('removes engine listeners and the layer when destroyed', () => {
       const engine = createEngine();
       const host = new FakeHlsJsMedia(engine);
-      const destroy = hlsJsLive().install(host);
+      const extension = hlsJsLive();
+      extension.install(host);
       setTarget(host, [[0, 60]]);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
       expect(host.targetLiveWindow).toBe(0);
 
-      destroy();
+      extension.destroy();
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 36 }));
       // After destroy, the layer is gone, so the host's chain falls through
