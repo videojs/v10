@@ -5,7 +5,7 @@
 // License: MIT
 
 import { isNumber } from '@videojs/utils/predicate';
-import { defineExtension } from '../../../core/media/media-extension';
+import { installExtension, type MediaExtension } from '../../../core/media/media-extension';
 import { addLayer, MediaLayer } from '../../../core/media/media-layer';
 import type { TimeRangeLike } from '../../../core/media/types';
 
@@ -31,27 +31,40 @@ export type MediaPlayedRangesMedia = MediaLayer & {
  *
  * @example mediaPlayedRanges().install(media);
  */
-export class MediaPlayedRanges {
+export class MediaPlayedRanges implements MediaExtension {
+  #destroy: (() => void) | null = null;
+
   readonly name = 'media-played-ranges';
 
-  install(media: MediaPlayedRangesMedia, { signal }: { signal: AbortSignal }) {
+  install(media: MediaPlayedRangesMedia) {
+    const uninstall = installExtension(mediaPlayedRanges, media, this);
     const layer = new MediaPlayedRangesLayer();
     const removeLayer = addLayer(media, layer);
+    const abort = new AbortController();
 
-    const options = { signal };
+    const options = { signal: abort.signal };
     media.addEventListener('play', () => layer.onPlaybackStart({ time: media.currentTime }), options);
     media.addEventListener('pause', () => layer.onPlaybackStop({ time: media.currentTime }), options);
     media.addEventListener('ended', () => layer.onPlaybackStop({ time: media.currentTime }), options);
     media.addEventListener('seeking', () => layer.onSeeking(), options);
     media.addEventListener('seeked', () => layer.onSeeked({ time: media.currentTime }), options);
 
-    return removeLayer;
+    this.#destroy = () => {
+      uninstall();
+      abort.abort();
+      removeLayer();
+    };
+  }
+
+  destroy() {
+    this.#destroy?.();
+    this.#destroy = null;
   }
 }
 
-export const mediaPlayedRanges = defineExtension<void, MediaPlayedRangesMedia, MediaPlayedRanges>(
-  () => new MediaPlayedRanges()
-);
+export function mediaPlayedRanges() {
+  return new MediaPlayedRanges();
+}
 
 class MediaPlayedRangesLayer extends MediaLayer {
   #playedRanges: PlayedRange[] = [];
