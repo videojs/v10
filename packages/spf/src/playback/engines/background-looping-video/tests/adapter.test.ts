@@ -61,13 +61,6 @@ describe('BackgroundLoopingVideoMediaElement', () => {
       expect(media.engine).toBe(engineBefore);
     });
 
-    it('creates a new engine when src is set', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
-      const initial = media.engine;
-      media.src = 'https://example.com/v1.m3u8';
-      expect(media.engine).not.toBe(initial);
-    });
-
     it('re-attaches the media element to the new engine when src changes', () => {
       const media = new BackgroundLoopingVideoMediaElement();
       const el = document.createElement('video');
@@ -121,15 +114,16 @@ describe('BackgroundLoopingVideoMediaElement', () => {
       expect(el.muted).toBe(true);
     });
 
-    it('re-applies loop / muted to the preserved element on src change', () => {
+    // attach modifies native props; changing src doesn't
+    it('preserves loop / muted to the preserved element on src change', () => {
       const media = new BackgroundLoopingVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       el.loop = false;
       el.muted = false;
       media.src = 'https://example.com/v.m3u8';
-      expect(el.loop).toBe(true);
-      expect(el.muted).toBe(true);
+      expect(el.loop).toBe(false);
+      expect(el.muted).toBe(false);
     });
 
     // Skipped: `set loop` / `set muted` are noops in Phase 1 (the adapter

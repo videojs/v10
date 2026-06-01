@@ -167,27 +167,12 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     }
 
     set src(value: string) {
-      const prevMediaElement = this.#signals.context.mediaElement.get();
-
       this.#cancelPendingPlay();
-      this.#engine.destroy();
-      this.#engine = this.#createEngine();
-
-      if (this.#preload) {
-        this.#signals.state.preload.set(this.#preload);
-      }
-
-      if (prevMediaElement) {
-        // Re-apply adapter-owned props onto the preserved element before
-        // the new engine attaches — same shape as `attach()`.
-        prevMediaElement.loop = this.#loop;
-        prevMediaElement.muted = this.#muted;
-        prevMediaElement.autoplay = this.#autoplay;
-        this.#signals.context.mediaElement.set(prevMediaElement);
-      }
 
       if (value) {
         this.#signals.state.presentation.set({ url: value });
+      } else {
+        this.#signals.state.presentation.set(undefined);
       }
     }
 
