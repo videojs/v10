@@ -31,6 +31,37 @@
   border-radius: inherit;
 }
 
+/* HTML path: blurred placeholder via ::before on media-poster */
+.media-default-skin media-poster::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: var(--media-poster-placeholder, none);
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+}
+
+/* React path: blurred placeholder via ::before on the skin container */
+.media-default-skin::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: var(--media-poster-placeholder, none);
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  opacity: 0;
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+  transition: opacity 0.25s;
+}
+.media-default-skin:has(> img[data-visible])::before {
+  opacity: 1;
+}
+
 .media-default-skin:fullscreen media-poster ::slotted(img),
 .media-default-skin:fullscreen media-poster img,
 .media-default-skin:fullscreen > img {

@@ -9,7 +9,10 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
-export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
+export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {
+  /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
+  placeholder?: string | undefined;
+}
 
 /**
  * Displays the video poster image. Shows before playback starts, hides after.
@@ -29,7 +32,7 @@ export const Poster = forwardRef(function Poster(
   componentProps: PosterProps,
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
-  const { render, className, style, ...elementProps } = componentProps;
+  const { render, className, style, placeholder: _, ...elementProps } = componentProps;
 
   const playback = usePlayer(selectPlayback);
 

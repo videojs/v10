@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 date: 2026-05-28
 ---
 
@@ -11,31 +11,44 @@ Low-resolution placeholder image shown before the full poster loads, enabling bl
 
 The poster image is often the first visual users see. On slow connections it may take several hundred milliseconds to load, leaving a blank area. A blurred low-resolution placeholder — typically a [blurhash](https://blurha.sh/) or [palette-based data URI](https://github.com/muxinc/blurup) — can fill that space immediately from an inline data URI, then transition to the full image as it loads.
 
-The existing `Poster` component (React) and `PosterElement` (HTML) expose no mechanism for this. Users who need it today have to compose their own layering solution.
+The existing `Poster` component (React) and `PosterElement` (HTML) exposed no mechanism for this. Users who needed it had to compose their own layering solution.
 
 ## Solution
 
-Extend both the React `Poster` component and the HTML `PosterElement` to accept a placeholder URL or data URI. When provided, the placeholder renders as the `background-image` of the same `<img>` element that displays the main poster. The browser shows the background behind the element's painted content — until the `src` image finishes loading and paints over it. No JS transitions, no second element, no layout change.
+Both the React `Poster` component and the HTML `PosterElement` accept a placeholder URL or data URI. When provided, the placeholder renders as the `background-image` of a `::before` pseudo-element positioned behind the poster. A `filter: blur()` is applied to create the blur-up effect.
 
-This matches how [Media Chrome implements `placeholdersrc`](#media-chrome) internally.
+This matches how Media Chrome implements `placeholdersrc` and Mux Player implements `placeholder`.
 
 ### React
 
 ```tsx
-<Poster src="poster.jpg" alt="Video title" placeholder={blurDataURL} />
+<VideoPlayer poster="poster.jpg" placeholder={blurDataURL} />
 ```
 
-`placeholder` is stripped from the forwarded img props and merged into the element's inline `style` as `backgroundImage`:
+The `placeholder` prop is accepted on `BaseVideoSkinProps` and all skin variants (`VideoSkin`, `LiveVideoSkin`, and their minimal equivalents). When provided, the skin sets `--media-poster-placeholder` as an inline CSS custom property on the container element:
 
 ```tsx
-// Rendered output
-<img
-  src="poster.jpg"
-  alt="Video title"
-  data-visible
-  style="background-image: url('data:image/jpeg;base64,...');"
-/>
+const containerStyle = placeholder
+  ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+  : style;
 ```
+
+The skin CSS then renders the placeholder via `::before` on the container, with an `opacity` fade-in triggered by `:has(> img[data-visible])` once the full poster is loaded:
+
+```css
+.media-default-skin::before {
+  /* positioned layer behind the poster */
+  background-image: var(--media-poster-placeholder, none);
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.media-default-skin:has(> img[data-visible])::before {
+  opacity: 1;
+}
+```
+
+The placeholder is intentionally hidden until the skin detects a visible poster (`data-visible`). This avoids a flash of the blurred image when no poster is shown (e.g. after playback starts).
 
 ### HTML
 
@@ -45,7 +58,7 @@ This matches how [Media Chrome implements `placeholdersrc`](#media-chrome) inter
 </media-poster>
 ```
 
-`PosterElement` observes the `placeholdersrc` attribute and sets a CSS custom property on itself. The skin propagates it as `background-image` to the slotted `<img>` via `::slotted()`:
+`PosterElement` observes the `placeholdersrc` attribute and sets `--media-poster-placeholder` as an inline CSS custom property on itself:
 
 ```ts
 // In PosterElement.attributeChangedCallback
@@ -56,69 +69,95 @@ if (newValue) {
 }
 ```
 
-The CSS variable cascades into slotted content via normal custom property inheritance.
-
-## How It Works
-
-The `<img>` element renders two visual layers:
-
-1. **`background-image`** — placeholder data URI, decoded synchronously in-memory, visible immediately.
-2. **`src` image** — main poster, loads asynchronously, paints on top of the background when ready.
-
-Once the `src` image loads, the browser replaces the background with the decoded bitmap. No JS `load` listener or CSS transition is needed for the basic effect. The placeholder simply disappears as the main image paints over it.
-
-## CSS Custom Properties
-
-`background-size` and `background-position` must match `object-fit` and `object-position` so the placeholder and the poster align exactly. The skins apply these:
-
-| Property | Value |
-|---|---|
-| `background-image` | `var(--media-poster-placeholder, none)` |
-| `background-size` | `var(--media-object-fit, contain)` |
-| `background-position` | `var(--media-object-position, center)` |
-| `background-repeat` | `no-repeat` |
-
-For **React**, `background-image` is set as an inline style by the component. `background-size`, `background-position`, and `background-repeat` come from the skin.
-
-For **HTML**, all four properties are applied via the skin's `::slotted(img)` rule using the `--media-poster-placeholder` CSS variable set by the element.
-
-## Skin Integration
-
-### CSS skins (`packages/skins/src/*/css/components/poster.css`)
-
-Add to the slotted img and direct img rules:
+The skin picks up the variable via `::before` on `media-poster`. No opacity transition is needed on the HTML path — the `media-poster` element itself transitions in via its existing `opacity` rule keyed on `[data-visible]`, so the `::before` appears and disappears with it.
 
 ```css
-/* HTML: slotted img inherits the CSS variable */
-.media-default-skin media-poster ::slotted(img),
-.media-default-skin media-poster img {
+.media-default-skin media-poster::before {
   background-image: var(--media-poster-placeholder, none);
-  background-size: var(--media-object-fit, contain);
-  background-position: var(--media-object-position, center);
-  background-repeat: no-repeat;
-}
-
-/* React: direct img — background-image set inline by component */
-.media-default-skin > img {
-  background-size: var(--media-object-fit, contain);
-  background-position: var(--media-object-position, center);
-  background-repeat: no-repeat;
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
 }
 ```
 
-### Tailwind skins (`packages/skins/src/*/tailwind/components/poster.ts`)
+## How It Works
 
-Add the background equivalents to the slotted and direct img branches using the same CSS variables.
+The placeholder is a separate absolutely-positioned layer rendered via CSS `::before`, not part of the `<img>` element itself. This avoids interfering with the poster's `object-fit`/`object-position` or `src` loading.
+
+**React path:**
+
+1. Skin container gets `--media-poster-placeholder` via inline style.
+2. `::before` on the container renders the blurred placeholder at `opacity: 0`.
+3. When the `<img>` inside gets `data-visible`, `:has()` flips `::before` to `opacity: 1` — the placeholder fades in.
+4. When the poster hides (after playback starts), the container's `opacity` transitions to `0`, taking `::before` with it.
+
+**HTML path:**
+
+1. `PosterElement` sets `--media-poster-placeholder` on itself via `attributeChangedCallback`.
+2. `::before` on `media-poster` renders the blurred placeholder, always visible while the element is visible.
+3. `media-poster[data-visible]` / `media-poster:not([data-visible])` control the element's own opacity, so placeholder visibility is tied to the element's lifecycle.
+
+## CSS Custom Properties
+
+| Property | Value |
+| --- | --- |
+| `--media-poster-placeholder` | Set by the component/element to `url(...)` |
+| `--media-poster-placeholder-blur` | Controls blur radius; defaults to `20px` |
+| `--media-object-position` | Aligns placeholder to match poster position |
+| `--media-object-fit` | Sizes placeholder to match poster fit |
+
+`background-size` and `background-position` use `--media-object-fit` and `--media-object-position` so the placeholder aligns exactly with the poster.
+
+## Skin Integration
+
+Both `default` and `minimal` CSS skins implement both paths identically.
+
+**HTML path** — `::before` on `media-poster`:
+
+```css
+.media-default-skin media-poster::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: var(--media-poster-placeholder, none);
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+}
+```
+
+**React path** — `::before` on the skin container with fade-in:
+
+```css
+.media-default-skin::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: var(--media-poster-placeholder, none);
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  opacity: 0;
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+  transition: opacity 0.25s;
+}
+.media-default-skin:has(> img[data-visible])::before {
+  opacity: 1;
+}
+```
+
+Tailwind skin variants wire `--media-poster-placeholder` the same way as the CSS skins — via inline style on the container — and rely on the same `::before` rules.
 
 ## Accessibility
 
-The placeholder is purely decorative — it is a blurred or low-resolution version of the poster that exists only to fill space during loading. It requires no `alt` text and no ARIA attributes. Rendering it as a CSS `background-image` is semantically correct: it carries no meaning for assistive technology.
+The placeholder is purely decorative — a blurred version of the poster that exists only to fill space during loading. Rendering it as a CSS `background-image` on a `::before` pseudo-element is semantically correct: it carries no meaning for assistive technology and requires no `alt` text or ARIA attributes.
 
 User-provided `alt` text on the main `<img>` is unaffected.
 
 ## Naming
 
 | Platform | Attribute / Prop | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | HTML | `placeholdersrc` | Lowercase HTML attribute convention; matches Media Chrome |
-| React | `placeholder` | Camelcase React prop convention; matches Mux Player |
+| React | `placeholder` | CamelCase React prop convention; matches Mux Player |

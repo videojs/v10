@@ -1,6 +1,6 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirplayEnterIcon,
   AirplayExitIcon,
@@ -95,10 +95,18 @@ function VolumePopover(): ReactNode {
  * sit at opposite edges of the control bar.
  */
 export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
-  const { children, className, poster, ...rest } = props;
+  const { children, className, poster, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
+    <Container
+      className={cn('media-default-skin media-default-skin--video', className)}
+      style={containerStyle}
+      {...rest}
+    >
       {children}
 
       {poster && (

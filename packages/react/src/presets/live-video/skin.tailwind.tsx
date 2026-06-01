@@ -16,7 +16,7 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirplayEnterIcon,
   AirplayExitIcon,
@@ -135,10 +135,14 @@ function VolumePopover(): ReactNode {
 }
 
 export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, ...rest } = props;
+  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
