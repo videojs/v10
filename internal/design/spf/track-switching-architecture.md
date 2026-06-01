@@ -373,9 +373,18 @@ Given these, multiple inputs compose like any rules, and both a multi-field desc
 - [`text-track-architecture.md`](./text-track-architecture.md) — parallel architectural deep-dive; text uses an intent+default multi-writer model not yet folded in here
 - [`packages/spf/src/playback/behaviors/track-switching.ts`](../../../packages/spf/src/playback/behaviors/track-switching.ts) — current `setupTrackSwitching` + `switchVideoTrack` / `switchAudioTrack`
 
-## Appendix A: Why a filter isn't enough — a worked example
+## Appendix A: Why a filter + sort pipeline isn't enough
 
-A concrete illustration of [Why not a flat filter+sort chain](#why-not-a-flat-filtersort-chain). A plain keep/drop filter records *that* a track was excluded but not *why* — so it can't tell "do not play" (a binding exclusion) from "prefer not to play" (a soft preference). When excluded sets overlap, that loss forces it to either fail on playable content or play unplayable content.
+Two worked examples illustrating [Why not a flat filter+sort chain](#why-not-a-flat-filtersort-chain) and [Why a distinct `allowed` tier](#why-a-distinct-allowed-tier). The leanest possible design is a `filter` that drops tracks and a `sort` that orders the rest. The catch is what `filter` is allowed to *mean* — and there are exactly two ways to define it, each losing something the composer needs:
+
+- **[Option 1](#option-1--filter-means-forbidden-or-not-preferred)** — `filter` is overloaded: dropping a track can mean *forbidden* (can't play it) or merely *not-preferred* (would rather not). The filter can't tell the two apart, so an over-narrowed result can't relax soft preferences without also discarding hard exclusions.
+- **[Option 2](#option-2--filter-means-forbidden-sort-encodes-preferred-vs-allowed)** — `filter` always means *forbidden*, and the *preferred*-vs-*allowed* distinction is pushed onto sort position. This fixes Option 1's ambiguity but reintroduces the same loss one axis over: a single position can't separate a rule's *tier* (which tracks it prefers vs merely tolerates — composed pessimistically) from its *ranking* (composed by precedence), so two rules whose tiers cut the list at different places can't both be honored.
+
+Both motivate the same fix — a categorical output (`{ preferred, allowed, forbidden, preferredRanked }`) that records *why* each track sits where it does.
+
+### Option 1 — filter means "forbidden or not-preferred"
+
+A plain keep/drop filter records *that* a track was excluded but not *why* — so it can't tell "do not play" (a binding exclusion) from "prefer not to play" (a soft preference). When excluded sets overlap, that loss forces it to either fail on playable content or play unplayable content.
 
 Audio renditions for one source, across three info dimensions (language, codec, bitrate):
 
@@ -391,7 +400,7 @@ const tracks = {
 
 Three rules, one per dimension: `languagePref` (user wants Spanish), `codecSupport` (what the browser decodes), `abr` (what bandwidth sustains).
 
-### A plain filter — keep/drop only
+#### A plain filter — keep/drop only
 
 Each rule in isolation returns the tracks it keeps; the "why" lives only in the comments, not the data:
 
@@ -405,9 +414,9 @@ Composing = chain the filters, each narrowing what's left:
 
 ```ts
 let kept = [es, enLo, enHi, enMax];
-kept = abr(kept);           // → [enHi, es, enLo]  drops enMax (over throughput)
 kept = languagePref(kept);  // → [es]              drops English
 kept = codecSupport(kept);  // → []                drops es
+kept = abr(kept);           // → []                nothing left to rank
 
 // kept is empty. English was discarded back at languagePref, with no record it was only
 // "prefer not to play" (safe to relax) while es was "do not play" — so we can't recover it:
@@ -415,7 +424,7 @@ kept = codecSupport(kept);  // → []                drops es
 //   • undo all  → may play es → DECODE ERROR  ❌
 ```
 
-### The structured output — the reason survives
+#### The structured output — the reason survives
 
 ```ts
 languagePref(tracks)  // → { preferred: [es] }                                 prefer Spanish; English just "prefer not to play"
@@ -429,3 +438,86 @@ pick = first preferred → enHi                      // ✅ Spanish undecodable 
 ```
 
 **Takeaway:** the plain filter keeps only *what survived* and discards *why each track didn't*, so an empty result can't relax "prefer not to play" (language → fall back to English) while still respecting "do not play" (codec). Recording that reason — `forbidden` ("do not play") vs. merely-not-`preferred` ("prefer not to play"), with `allowed` ("prefer not to play, but usable") as the ranked middle — is what lets composition fall back to English instead of failing or playing something undecodable.
+
+### Option 2 — filter means "forbidden"; sort encodes preferred-vs-allowed
+
+Option 1 conflated two kinds of *exclusion*. The obvious repair: make `filter` *always* mean `forbidden` (hard, binding), and carry the softer "prefer / tolerate" distinction in **sort order** — each rule sorts the tracks it doesn't forbid, putting the ones it prefers up front and the ones it merely tolerates at the back. Filtering is unambiguous again, and *preferred*-vs-*allowed* becomes simply "front vs back."
+
+Same rules as Option 1, with two changes to the tracks: **assume the browser can decode E-AC-3**, and give Spanish a realistic multi-bitrate ladder. E-AC-3 (surround) runs hotter than AAC, so the Spanish ladder sits high — `es` (192) is its floor, and the rungs above it are over throughput here. `codecSupport` now forbids nothing; all three Spanish renditions are playable:
+
+```ts
+const tracks = {
+  // Spanish — all E-AC-3, now decodable
+  es:    { lang: 'es', codec: 'eac3', bitrate: 192 },  // lowest Spanish — fits
+  esMid: { lang: 'es', codec: 'eac3', bitrate: 384 },  // over throughput
+  esHi:  { lang: 'es', codec: 'eac3', bitrate: 640 },  // over throughput
+  // English — AAC
+  enLo:  { lang: 'en', codec: 'aac',  bitrate: 64  },  // fits
+  enHi:  { lang: 'en', codec: 'aac',  bitrate: 256 },  // fits — ABR's best-quality fitting rendition
+  enMax: { lang: 'en', codec: 'aac',  bitrate: 512 },  // over throughput
+};
+// throughput sustains ~300 kbps: es, enLo, enHi fit; esMid, esHi, enMax are over.
+```
+
+Same three rules as Option 1, in the same order:
+
+- `languagePref` *(user-intent)* — user wants Spanish: the three Spanish renditions preferred, English a tolerable fallback. Spanish ≫ English, but **no opinion on bitrate order** — not among the Spanish tracks, nor among the English.
+- `codecSupport` *(system)* — every track is decodable now, so it forbids nothing and voices no preference. A no-op here, applied for parity with Option 1.
+- `abr` *(system)* — fitting renditions preferred, ranked by quality (`enHi` > `es` > `enLo`); the over-throughput ones (`esMid`, `enMax`, `esHi`) tolerable only as last resorts.
+
+The two rules that *do* carry an opinion split the list at **different places**: `languagePref` wants every Spanish track ahead of every English one; `abr` wants `enHi` ahead of `es` — because the only Spanish rendition that fits, `es` (192), is lower-bitrate than the best fitting English, `enHi` (256). Both are right — about *different axes*. The correct pick is `es` (the user's language, and the one Spanish rendition that fits), with the rest as fallback.
+
+#### A filter + sort — tier via sort position
+
+Each rule sorts the tracks it tolerates; "preferred" is just "nearer the front":
+
+```ts
+languagePref(tracks)  // sorts → [es, esMid, esHi, enLo, enHi, enMax]   Spanish first; bitrate order arbitrary (no opinion)
+codecSupport(tracks)  // keeps → [es, esMid, esHi, enLo, enHi, enMax]   forbids nothing (all decodable); no sort opinion
+abr(tracks)           // sorts → [enHi, es, enLo, esMid, enMax, esHi]   fitting by quality (enHi>es>enLo), then over-throughput
+```
+
+Composing = chain the sorts, each re-sorting the running list — and because a sort returns a *total* order, the last rule's sort wins outright:
+
+```ts
+let order = [es, esMid, esHi, enLo, enHi, enMax];
+order = languagePref(order);  // → [es, esMid, esHi, enLo, enHi, enMax]   Spanish to front; bitrate order arbitrary
+order = codecSupport(order);  // → [es, esMid, esHi, enLo, enHi, enMax]   forbids nothing; no change
+order = abr(order);           // → [enHi, es, enLo, esMid, enMax, esHi]   re-sorts by fit → enHi to front
+
+// pick = order[0] = enHi ❌ — abr sorted last and clobbered languagePref's "Spanish first": the user asked for
+// Spanish and got English, because a flat sort can't mark "Spanish is a scope, not a rankable position." The
+// Spanish ladder doesn't save it — the best FITTING track is still English (enHi 256 > es 192). Reordering the
+// chain just moves the damage:
+//   • abr last (above)  → picks enHi                          ❌  (switched Spanish → English)
+//   • languagePref last → picks es, but buries abr's ranking  ❌  (Spanish bitrate order arbitrary; abr ignored)
+```
+
+One sorted list has a single front-to-back axis, but there are *two* tier-cuts to honor — Spanish-≫-English (language) and fitting-≫-over-throughput (ABR) — and a flat order holds only one. (Pessimistic worst-position merge picks `es` but scrambles the fallback — `esMid` ties `enLo`, `esHi` ties `enMax` — again discarding abr's ranking.)
+
+#### The structured output — the tiers survive
+
+A rule emits `preferred` (and `forbidden` where it applies); its leftover — every track neither preferred nor forbidden — is implicitly `allowed`, **unsorted**. A rule spells `allowed` out explicitly only when it *does* have an ordering opinion about that leftover, as `abr` does for its over-throughput tracks. The composer keeps the **tier** (composed pessimistically) separate from the **order** (which comes from the rules' rankings):
+
+```ts
+languagePref  // { preferred: [es, esMid, esHi] }                → English implicitly allowed (no bitrate ranking)
+codecSupport  // { }                                             → forbids nothing; no preference → transparent to tiering
+abr           // { preferred: [enHi, es, enLo], preferredRanked: true,
+              //   allowed: [esMid, enMax, esHi] }               → over-throughput tier, ranked ascending
+
+// composite TIER — pessimistic (preferred only if every rule that voices a preference prefers it):
+//   es           → preferred   (languagePref ✓ and abr ✓; codecSupport voices none)
+//   enHi, enLo   → allowed     (abr prefers them, but languagePref only allows English)
+//   esMid, esHi  → allowed     (languagePref prefers them, but abr only allows the over-throughput rungs)
+//   enMax        → allowed     (both rules only allow it)
+preferred = [es]
+allowed   = [enHi, enLo, esMid, enMax, esHi]   // ORDER from abr: fitting (enHi>enLo), then over-throughput (esMid<enMax<esHi)
+
+pick = first preferred → es       // ✅ Spanish & fitting — the one rendition both rules prefer
+```
+
+Pessimism now cuts both ways: a track is composite-`preferred` only if *every* rule that voices a preference prefers it. `enHi` is demoted (ABR prefers it, but `languagePref` only allows English); `esMid`/`esHi` are demoted too (`languagePref` prefers them, but ABR only allows the over-throughput rungs). Only `es` — Spanish *and* fitting — is preferred by both, so it's the pick. The cross-language switch never happens: `es` beats `enHi` by **tier**, even though ABR ranks `enHi` higher by **order**.
+
+But the ladder surfaces a question the single-track example couldn't — the likely **pushback**: in the `allowed` fallback, the over-throughput *Spanish* rungs (`esMid`, `esHi`) sit *below* fitting English (`enHi`, `enLo`), because ABR's throughput verdict demoted them across the language boundary. If `es` drops out, this model switches to English rather than rebuffering to stay in Spanish. Whether that's right — or whether language should scope *absolutely* (all Spanish above all English, ABR ranking only within) — is a genuine `user-intent`-vs-`system` tension, not settled here.
+
+**Takeaway:** making `filter` mean only `forbidden` fixes Option 1's hard/soft conflation, but a single sort position still can't carry preferred-vs-allowed. Two rules' tier-cuts (language's Spanish-≫-English, ABR's fitting-≫-over-throughput) fall in different places, and a flat order holds only one boundary. Worse, a sort forces every rule to *totally order* even tracks it has no opinion on, so chaining is last-writer-wins — either ABR clobbers the language scope (picks English) or `languagePref`'s phantom bitrate order clobbers ABR's ranking. The structured model sidesteps both: `allowed` is the leftover (implicit and unsorted, or spelled out when a rule ranks it, as ABR ranks its over-throughput tier), the **tier** composes pessimistically (preferred only if every preferring rule prefers), and the **order** comes from the rules' rankings — so language scopes the tier while ABR ranks within it.
