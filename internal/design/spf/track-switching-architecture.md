@@ -372,3 +372,60 @@ Given these, multiple inputs compose like any rules, and both a multi-field desc
 - [`conventions/behaviors.md`](./conventions/behaviors.md) — behavior shape and per-type specialization patterns
 - [`text-track-architecture.md`](./text-track-architecture.md) — parallel architectural deep-dive; text uses an intent+default multi-writer model not yet folded in here
 - [`packages/spf/src/playback/behaviors/track-switching.ts`](../../../packages/spf/src/playback/behaviors/track-switching.ts) — current `setupTrackSwitching` + `switchVideoTrack` / `switchAudioTrack`
+
+## Appendix A: Why a filter isn't enough — a worked example
+
+A concrete illustration of [Why not a flat filter+sort chain](#why-not-a-flat-filtersort-chain). A plain keep/drop filter records *that* a track was excluded but not *why* — so it can't tell "do not play" (a binding exclusion) from "prefer not to play" (a soft preference). When excluded sets overlap, that loss forces it to either fail on playable content or play unplayable content.
+
+Audio renditions for one source, across three info dimensions (language, codec, bitrate):
+
+```ts
+const tracks = {
+  es:    { lang: 'es', codec: 'eac3', bitrate: 192 },  // preferred language — browser CAN'T decode E-AC-3
+  enLo:  { lang: 'en', codec: 'aac',  bitrate: 64  },  // decodable, fits
+  enHi:  { lang: 'en', codec: 'aac',  bitrate: 256 },  // decodable, fits
+  enMax: { lang: 'en', codec: 'aac',  bitrate: 512 },  // decodable, but over throughput
+};
+// throughput fits everything except enMax.
+```
+
+Three rules, one per dimension: `languagePref` (user wants Spanish), `codecSupport` (what the browser decodes), `abr` (what bandwidth sustains).
+
+### A plain filter — keep/drop only
+
+Each rule in isolation returns the tracks it keeps; the "why" lives only in the comments, not the data:
+
+```ts
+languagePref(tracks)  // → [es]                   drop the English tracks (user prefers Spanish)
+codecSupport(tracks)  // → [enLo, enHi, enMax]    drop es — the E-AC-3 / Spanish track (browser can't decode it)
+abr(tracks)           // → [enHi, es, enLo]       drop enMax (over throughput); sort the rest by bitrate
+```
+
+Composing = chain the filters, each narrowing what's left:
+
+```ts
+let kept = [es, enLo, enHi, enMax];
+kept = abr(kept);           // → [enHi, es, enLo]  drops enMax (over throughput)
+kept = languagePref(kept);  // → [es]              drops English
+kept = codecSupport(kept);  // → []                drops es
+
+// kept is empty. English was discarded back at languagePref, with no record it was only
+// "prefer not to play" (safe to relax) while es was "do not play" — so we can't recover it:
+//   • give up   → "no playable audio"        ❌  (English was fine)
+//   • undo all  → may play es → DECODE ERROR  ❌
+```
+
+### The structured output — the reason survives
+
+```ts
+languagePref(tracks)  // → { preferred: [es] }                                 prefer Spanish; English just "prefer not to play"
+codecSupport(tracks)  // → { forbidden: [es] }                                 "do not play" — can't decode
+abr(tracks)           // → { preferred: [enHi, es, enLo], allowed: [enMax] }   fitting ranked; enMax over throughput → "prefer not to play"
+
+forbidden = [es]                                   // "do not play"
+eligible  = [enLo, enHi, enMax]                    // minus forbidden
+preferred (eligible, abr order) = [enHi, enLo]     // es forbidden; enMax is only "allowed"
+pick = first preferred → enHi                      // ✅ Spanish undecodable → fall back to English, ABR's best fitting rendition
+```
+
+**Takeaway:** the plain filter keeps only *what survived* and discards *why each track didn't*, so an empty result can't relax "prefer not to play" (language → fall back to English) while still respecting "do not play" (codec). Recording that reason — `forbidden` ("do not play") vs. merely-not-`preferred` ("prefer not to play"), with `allowed` ("prefer not to play, but usable") as the ranked middle — is what lets composition fall back to English instead of failing or playing something undecodable.
