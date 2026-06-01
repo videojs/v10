@@ -37,12 +37,14 @@ export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMe
  * base class.
  *
  * Implements the WHATWG HTML media element contract (`src`, `preload`,
- * `loop`, `muted`, `play()`) so it can be dropped in anywhere a media
- * element API is expected. Compared to `SimpleHlsMediaMixin`, this variant:
+ * `loop`, `muted`, `autoplay`, `play()`) so it can be dropped in anywhere a
+ * media element API is expected. Compared to `SimpleHlsMediaMixin`, this
+ * variant:
  *
- * - exposes `loop` and `muted` as adapter-owned native passthroughs, with
- *   defaults of `true` (browser autoplay policies require muted-for-autoplay,
- *   and looping is the use case's defining behavior);
+ * - exposes `loop`, `muted`, and `autoplay` as adapter-owned native
+ *   passthroughs, all defaulting to `true` — the use case is silent
+ *   autoplay-looping video, so muted + autoplay satisfy browser autoplay
+ *   policies and loop is the defining behavior;
  * - drives the underlying engine with the background-looping-video
  *   composition (single-rendition, video-only, autoplay-from-construction).
  *
@@ -92,8 +94,8 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
       // Apply adapter-owned native props before the engine takes over —
-      // the underlying element needs `loop` / `muted` set for the use case's
-      // autoplay-looping semantics.
+      // the underlying element needs `loop` / `muted` / `autoplay` set for
+      // the use case's autoplay-looping semantics.
       mediaElement.loop = this.#loop;
       mediaElement.muted = this.#muted;
       mediaElement.autoplay = this.#autoplay;
@@ -125,8 +127,9 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     }
 
     // -------------------------------------------------------------------------
-    // loop / muted — adapter-owned IDL attributes mirrored onto the attached
-    // media element. The engine itself has no opinion on either.
+    // loop / muted / autoplay — adapter-owned IDL attributes mirrored onto
+    // the attached media element. The engine itself has no opinion on any
+    // of them.
     // -------------------------------------------------------------------------
 
     get loop(): boolean {
