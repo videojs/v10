@@ -210,12 +210,10 @@ Spanish *and* fitting — is preferred by both, so it's the pick. The cross-lang
 happens: `esLowEac` beats `enHighAac` by **tier**, even though abr ranks `enHighAac` higher by
 **order**.
 
-But the ladder surfaces the likely **pushback**: in the `allowed` fallback, the over-throughput
-Spanish rungs (`esHighEac`, `esMaxEac`) sit *below* fitting English (`enHighAac`, `enLowAac`), because
-abr's throughput verdict demoted them across the language boundary. If `esLowEac` drops out, this
-model switches to English rather than rebuffering to stay in Spanish. Whether that's right — or
-whether language should scope *absolutely* (all Spanish above all English, abr ranking only within) —
-is a genuine `user-intent`-vs-`system` tension, not settled here.
+In the `allowed` fallback the over-throughput Spanish (`esHighEac`, `esMaxEac`) appears demoted below
+fitting English — seemingly a switch to English rather than a rebuffer. But the fall-through still
+favors the language: with no Spanish rung fitting, it takes an over-throughput Spanish over English.
+Spanish wins whether or not one of its rungs fits.
 
 **Takeaway:** making `filter` mean only `forbidden` fixes Option 1's hard/soft conflation, but a
 single sort position still can't carry preferred-vs-allowed. The two opinionated rules' tier-cuts
