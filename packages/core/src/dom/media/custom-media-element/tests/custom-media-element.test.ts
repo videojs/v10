@@ -726,6 +726,34 @@ describe('CustomMediaElement', () => {
       expect(el.debug).toBe(true);
       expect(el.hasAttribute('debug')).toBe(false);
     });
+
+    it('upgrades pre-defined MediaHost properties when the custom element is defined', () => {
+      const tag = `test-video-${++tagCounter}`;
+      const Ctor = CustomMediaElement('video', TestVideoHostWithObjects);
+      const config = { startLevel: 3, maxBufferLength: 60 };
+      const el = document.createElement(tag) as InstanceType<typeof Ctor> & { config: typeof config };
+
+      el.config = config;
+      document.body.appendChild(el);
+      customElements.define(tag, Ctor);
+
+      expect(el.config).toBe(config);
+      expect(Object.hasOwn(el, 'config')).toBe(false);
+    });
+
+    it('upgrades pre-defined attribute-backed MediaHost properties when the custom element is defined', () => {
+      const tag = `test-video-${++tagCounter}`;
+      const Ctor = CustomMediaElement('video', TestVideoHost);
+      const el = document.createElement(tag) as InstanceType<typeof Ctor>;
+
+      el.src = 'video.mp4';
+      document.body.appendChild(el);
+      customElements.define(tag, Ctor);
+
+      expect(el.src).toBe('video.mp4');
+      expect(el.getAttribute('src')).toBe('video.mp4');
+      expect(Object.hasOwn(el, 'src')).toBe(false);
+    });
   });
 
   describe('property setters set attribute and delegate to MediaHost', () => {

@@ -385,22 +385,6 @@ export class VimeoMedia extends MediaLayer<VimeoVideoSurface> implements VimeoVi
 
   // -- Dimensions --
 
-  get width() {
-    return this.#target?.clientWidth ?? 0;
-  }
-
-  set width(_value) {
-    // Layout-owned on the iframe host; no-op for embeds.
-  }
-
-  get height() {
-    return this.#target?.clientHeight ?? 0;
-  }
-
-  set height(_value) {
-    // Layout-owned on the iframe host; no-op for embeds.
-  }
-
   get videoWidth() {
     return this.#videoWidth;
   }
@@ -722,55 +706,6 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
   }
 
   return `${EMBED_VIDEO_BASE}/${parsed.id}?${serialize(params)}`;
-}
-
-function templateAttrsToEmbedProps(attrs: Record<string, string>) {
-  return {
-    autoplay: attrs.autoplay !== undefined,
-    defaultMuted: attrs.muted !== undefined,
-    loop: attrs.loop !== undefined,
-    controls: attrs.controls !== undefined,
-    playsInline: attrs.playsinline !== undefined,
-    preload: (attrs.preload as VimeoPreload | undefined) ?? vimeoMediaDefaultProps.preload,
-  };
-}
-
-function escapeHtml(str: string) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/`/g, '&#96;');
-}
-
-/** Shadow DOM template for `<vimeo-video>` (iframe embed). */
-export function getVimeoIframeTemplateHTML(attrs: Record<string, string>) {
-  const initialSrc = buildVimeoIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
-  const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
-
-  return /*html*/ `
-<style>
-  :host {
-    display: inline-block;
-    min-width: 300px;
-    min-height: 150px;
-    position: relative;
-  }
-  iframe {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-  :host(:not([controls])) {
-    pointer-events: none;
-  }
-</style>
-<iframe part="iframe" allow="accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" width="100%" height="100%"${srcAttr}></iframe>
-`;
 }
 
 // ----------------------------------------------------------------------------

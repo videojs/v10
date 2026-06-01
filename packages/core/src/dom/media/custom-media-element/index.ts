@@ -111,6 +111,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 ): CustomMediaConstructor<T> {
   const syncTargetAttributes = tag !== 'iframe';
   const mediaHostAttrToProp = new Map<string, string>();
+  const mediaHostPropToAttr = new Map<string, string>();
+  const mediaHostPropsToUpgrade = new Set<string>();
   let isDefined = false;
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
@@ -178,9 +180,12 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
             };
 
             if (descriptor.set) {
+              mediaHostPropsToUpgrade.add(prop);
+
               const attr = kebabCase(prop);
               if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
+                mediaHostPropToAttr.set(prop, attr);
 
                 config.set = function (this: CustomMedia, val: any) {
                   if (val === true || val === false || val == null) {
@@ -244,6 +249,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       }
 
       this.#createMediaHost();
+      this.#upgradeMediaHostProperties();
       if (tag === 'iframe') this.#syncMediaHostFromAttributes();
       this.#attachToTarget();
 
@@ -269,6 +275,18 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       this.#mediaHost = new MediaHost();
       for (const type of this.#bridgedEventTypes) {
         this.#mediaHost.addEventListener(type, this.#bridgeEvent);
+      }
+    }
+
+    #upgradeMediaHostProperties(): void {
+      for (const prop of mediaHostPropsToUpgrade) {
+        const hadOwnProperty = Object.hasOwn(this, prop);
+        upgradeProperty(this, prop);
+
+        if (hadOwnProperty) {
+          const attr = mediaHostPropToAttr.get(prop);
+          if (attr) this.#syncMediaHostAttribute(attr);
+        }
       }
     }
 
