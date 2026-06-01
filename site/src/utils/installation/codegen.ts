@@ -164,7 +164,7 @@ import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 function replaceEjectedSrc(html: string, url: string): string {
   // The ejected skin HTML bakes in the demo stream URL. Swap it out for the
   // resolved source URL so that user-chosen media URLs appear in the example.
-  return html.replace(/(<(?:video|audio|hls-video)\b[^>]*)src="[^"]*"/, `$1src="${url}"`);
+  return html.replace(/(<(?:video|audio|hls-video)\b[^>]*)src="[^"]*"/, (_, prefix) => `${prefix}src="${url}"`);
 }
 
 export function generateHTMLUsageCode(

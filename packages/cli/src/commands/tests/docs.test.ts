@@ -186,6 +186,7 @@ describe('handleDocs', () => {
       media: 'html5-video',
       'source-url': '',
       'install-method': 'npm',
+      'embed-method': 'packaged',
       ...overrides,
     });
 
@@ -196,6 +197,7 @@ describe('handleDocs', () => {
       media: 'html5-video',
       'source-url': '',
       'install-method': 'npm',
+      'embed-method': 'packaged',
       ...overrides,
     });
 
