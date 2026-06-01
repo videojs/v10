@@ -317,6 +317,8 @@ Four things this tells us:
 
 ## Open questions
 
+One cluster remains genuinely unresolved. Tree-shaking largely resolves as a consequence of rule attachment — how rules are wired determines what an engine bundles.
+
 ### Rule attachment and reactivity
 
 The shape and location of "a rule" as a runtime entity. Several plausible decompositions; the choice cuts across:
@@ -331,6 +333,10 @@ These are coupled. Worth designing together rather than in isolation. **None pin
 ### Tree-shaking the composed pipeline
 
 The ABR-free `selectVideoTrack` keeps ABR (bandwidth estimator, quality-selection) out of the bundle — axis E for free. The #1605 unification already eroded this: `setupTrackSwitching` statically imports the ABR machinery, so composing `switchAudioTrack` pulls it in even though audio ABR isn't implemented. A single composer that every rule flows through generalizes the problem — all rules risk landing in the bundle regardless of which an engine uses. Candidate shapes: rules as à-la-carte composables the engine opts into (composer degrades to a no-op pass when only one rule is present); subpath splitting per rule; or accepting the cost for engines that adopt the substrate while leaving the simple `selectXTrack` path untouched. **Open.**
+
+## Resolved boundaries
+
+Resolved by pinning the architectural requirement that keeps the substrate resilient, then deferring the actual policy or placement as out of scope (or as an implementation detail of rule attachment).
 
 ### Hysteresis location
 
@@ -352,12 +358,12 @@ The substrate stays resilient to both *remembered preferences across sources* an
 
 Given these, multiple inputs compose like any rules, and both a multi-field descriptor (`{language, height}`) and several precedence-ordered descriptors are supported. The actual *policies* — in-session vs. durable persistence, sticky-through-unsatisfiable behavior, which descriptor shape a consumer reaches for — are [out of scope](#out-of-scope).
 
-**Residual open:** whether competing intents ever need resolution *beyond* precedence — a "maximize-satisfied" / count-the-matches policy. That's count-based and in tension with [no cross-rule scoring](#why-no-cross-rule-scoring); flagged for separate resolution, not assumed either way.
+**Conflict policy (out of scope).** Whether competing intents resolve by precedence alone or by a "maximize-satisfied" / count-the-matches policy is a consumer choice. Counting *honored user wishes* is within-category and commensurable — every user-intent descriptor reduces to the same "honored? yes/no" — so it's distinct from the incommensurable cross-rule scoring we [rejected](#why-no-cross-rule-scoring), not a non-goal. The substrate stays resilient because user-intent resolution is already a group policy (precedence-lex over the ordered group); maximize-satisfied is just a different group-resolution function.
 
 ## Status
 
 - **Composition:** Not implemented. Today's `setupTrackSwitching` reads one filter slot per variant; the rule-pipeline substrate proposed here generalizes that pattern across more features.
-- **Definition depth:** Draft — output shape and composition cascade pinned; rule attachment, framework boundary, and several composer-adjacent concerns still open.
+- **Definition depth:** Draft — output shape, composition cascade, categorization, and the `allowed`-tier discipline pinned; category placement, error surface, hysteresis, and user-intent inputs (cross-source + multiple) resolved as out-of-scope or resilience-stated. One open cluster remains: **rule attachment + reactivity** (and tree-shaking, which falls out of it).
 
 ## See also
 
