@@ -1,4 +1,4 @@
-.media-title {
+.media-default-skin .media-title {
   position: absolute;
   inset-inline: 0;
   top: 0;
@@ -16,14 +16,14 @@
   transition-property: opacity;
 }
 
-.media-title:not([data-has-title]) {
+.media-default-skin .media-title:not([data-has-title]) {
   display: none;
 }
 
-.media-controls[data-visible] ~ .media-title {
+.media-default-skin .media-controls[data-visible] ~ .media-title {
   opacity: 1;
 }
 
-.media-error[data-open] ~ .media-title {
+.media-default-skin .media-error[data-open] ~ .media-title {
   display: none;
 }
