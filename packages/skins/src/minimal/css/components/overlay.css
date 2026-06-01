@@ -6,15 +6,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(to bottom, oklch(0 0 0 / 0.3), oklch(0 0 0 / 0.15), oklch(0 0 0 / 0)),
-    linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3) 25%, oklch(0 0 0 / 0));
   border-radius: inherit;
   opacity: 0;
   backdrop-filter: blur(0) saturate(1);
   transition-timing-function: ease-out;
   transition-duration: var(--media-controls-transition-duration);
   transition-property: opacity, backdrop-filter;
+}
+
+.media-minimal-skin:has([data-has-title]) .media-overlay {
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0), oklch(0 0 0 / 0.5));
 }
 
 .media-minimal-skin .media-error ~ .media-overlay {
