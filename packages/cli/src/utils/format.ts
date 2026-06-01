@@ -62,11 +62,6 @@ function formatReactInstallation(opts: InstallationOptions): string {
     sections.push(`\`\`\`tsx\n${create['MyPlayer.tsx']}\n\`\`\``);
   }
 
-  if (create['Skin.tsx']) {
-    sections.push('\nAdd to `./components/player/Skin.tsx`:\n');
-    sections.push(`\`\`\`tsx\n${create['Skin.tsx']}\n\`\`\``);
-  }
-
   if (create['skin.css']) {
     sections.push('\nAdd to `./components/player/skin.css`:\n');
     sections.push(`\`\`\`css\n${create['skin.css']}\n\`\`\``);

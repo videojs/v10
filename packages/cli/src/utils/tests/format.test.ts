@@ -69,7 +69,6 @@ describe('formatInstallationCode', () => {
     expect(result).toContain('npm install @videojs/react');
     expect(result).toContain('## Create your player');
     expect(result).toContain('index.tsx');
-    expect(result).toContain('Skin.tsx');
     expect(result).toContain('skin.css');
     expect(result).toContain('## Use your player');
     expect(result).not.toContain('## Your skin');

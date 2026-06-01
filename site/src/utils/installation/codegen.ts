@@ -233,7 +233,7 @@ function getEjectedReactExport(useCase: UseCase): string {
 
 export function generateReactCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'embedMethod'>
-): { 'MyPlayer.tsx': string; 'Skin.tsx'?: string; 'skin.css'?: string } {
+): { 'MyPlayer.tsx': string; 'skin.css'?: string } {
   const { useCase, skin, renderer, embedMethod } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const featureType = getUseCaseFeatures(useCase);
