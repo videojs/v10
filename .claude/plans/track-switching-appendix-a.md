@@ -225,6 +225,100 @@ both: `allowed` is the implicit, unsorted leftover (or spelled out when a rule r
 composes pessimistically, and the **order** comes from the rules' rankings — so language scopes the
 tier while abr ranks within it.
 
-<!-- NEXT: review/refine Option 2, then fold both options back into the design doc as Appendix A. -->
+## Pressure test: can a reordered filter + sort actually cover every rule?
+
+This complicates the Takeaway above. The reorder sub-section showed that, with **stable** sorts in the
+right order, a plain filter + sort produces the correct pick for the language example — the "phantom
+order clobbers abr" failure only happens with the *wrong* order (abr last). So: does the *same* model
+cover **all** the rules in the design doc's Audit, not just the one example? **Tentative verdict: it
+appears to — pending review and iteration.** If that holds, filter + sort (done right) is a legitimate
+alternative to the categorical `{ preferred, allowed, forbidden }` model, not the strawman Appendix A
+set it up to be.
+
+### The model
+
+- A **hard filter** removes tracks permanently (a `forbidden` union, applied before sorting).
+- Every other rule is a **stable sort**.
+- Sorts chain in priority order; chaining stable sorts is **last-writer-wins**, so the rule applied
+  **last** is the primary key (the winner) and the rule applied **first** is the weakest tiebreaker.
+- The pick is the head of the final list.
+
+### Two litmus tests
+
+**May it be a hard filter?** Only if it's "can't play in this environment" — *un-playable*, not
+*un-preferred-by-policy*. Test: *if this exclusion emptied the set, is failing the right outcome?* Only
+`capability-probing` and `multi-cdn-failover` (the failed-CDN-during-cooldown part) pass. Everything
+the Audit marked "hard" by policy (`caps`-hard, `userX`-hard, `force-AVC`) fails — those exclude
+*playable* tracks, so they're sorts that rank the disfavored last and always fall back.
+
+**Where does a sort go in the order?** *Would we play an over-throughput (rebuffering) track to honor
+it?* Yes → applied after ABR (it beats ABR). No → applied before ABR (ABR overrides it; it only breaks
+ties among already-fitting tracks).
+
+### The two chains
+
+Each chain is in application order (first = weakest, last = winner). Tiers: **1** playback-quality
+base, **2** system policy (beats ABR), **3** explicit user selection (winner).
+
+```
+AUDIO chain → selectedAudioTrackId
+
+FILTERS:  capability-probing (audio codec/DRM) · multi-cdn-failover (failed)
+SORT (first/weakest → last/winner):
+  T1  audio-abr                   fitting > over-throughput
+  T2  5.1-surround                prefer 5.1 / stereo  (channel scope — rebuffer to honor; abr ranks within)
+  T2  content-steering            top pathway                                   [shared] ⚠️
+  T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
+  T2  multi-language-audio        default language
+  T3  userAudioTrackSelection     chosen language        ← winner
+```
+
+```
+VIDEO chain → selectedVideoTrackId
+
+FILTERS:  capability-probing (video codec/DRM) · multi-cdn-failover (failed)
+          · (future) dropped-frames filter
+SORT (first/weakest → last/winner):
+  T1  video-abr                   fitting > over-throughput
+  T1  multi-signal-abr            fusion score
+  T1  (future) dropped-frames     smoothest first
+  T2  hevc / force-AVC            prefer AVC  (codec scope — rebuffer to honor; abr ranks within)
+  T2  rendition-selection-caps    within-cap first
+  T2  content-steering            top pathway                                   [shared] ⚠️
+  T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
+  T3  userVideoTrackSelection     chosen rendition       ← winner
+```
+
+### Non-goal: a "prefer-among-fitting, don't-rebuffer" preference
+
+One shape this model deliberately does **not** handle: a channel/codec preference that applies *only
+within the already-fitting set* and must **not** rebuffer to honor it — e.g. "output is stereo, so
+prefer stereo over (downmixed) 5.1 to save bandwidth, but if only 5.1 fits, just play it." The optimal
+order there is `fitting-stereo > fitting-5.1 > over-throughput-anything`, which needs the preference to
+sit *between* ABR's fitting/over **tier** and its bitrate **ranking** — i.e. you'd have to split `abr`
+into two sorts and interleave. Out of scope. (Channel/codec preferences we *do* support are **scopes** —
+"prefer this layout/codec, rebuffer to honor it" — which sort cleanly after `abr`, as in the chains
+above.) This is also the one place the categorical `{preferred, allowed}` model has an edge: its
+tier/order split expresses this case natively.
+
+### Still open (the review-and-iterate part)
+
+- **This rebuts the Takeaway above.** A reordered, stable filter + sort *does* carry
+  preferred-vs-allowed for these rules. Appendix A's "filter + sort isn't enough" needs reframing — the
+  live question is categorical-vs-lexicographic **ergonomics/extensibility**, not capability.
+- **`content-steering` / `multi-cdn` (active) vs ABR** (⚠️ above): parked in Tier 2 (rebuffer on the
+  chosen pathway) — real argument for Tier 1 (switch pathway to avoid rebuffering). Policy call.
+- **Pathway is likely a session-level decision** shared by both chains, not an independent per-chain
+  sort (else audio and video could pick different CDNs).
+- **A single multi-criteria user rule** (`{language, height}`) can't straddle ABR within one rule
+  (language above, height below) — needs splitting into separate rules. The categorical model has the
+  same limitation.
+- **Apparent equivalence (with one exception):** on every *in-scope* documented rule, this order seems
+  to produce the same pick as the categorical cascade (pessimistic tier + precedence + user-intent
+  fall-through bias). The one thing the categorical model can express that this can't is the Kind-B
+  non-goal above. So setting that aside, the choice between the two models is ergonomics, not correctness.
+
+<!-- NEXT: settle the steering/CDN policy call + session-level pathway; then decide categorical-vs-lexicographic and fold the resolved story into the design doc as Appendix A. -->
+
 
 
