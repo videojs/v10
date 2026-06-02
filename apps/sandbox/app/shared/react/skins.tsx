@@ -36,6 +36,24 @@ async function loadLiveVideoSkinComponent(skin: Skin, styling: Styling): Promise
   return module.MinimalLiveVideoSkin;
 }
 
+async function loadLiveDvrSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<VideoSkinProps>> {
+  const module = await import('./live-dvr');
+
+  if (styling === 'tailwind') {
+    return skin === 'default' ? module.LiveDvrSkinTailwind : module.MinimalLiveDvrSkinTailwind;
+  }
+
+  // The DVR skin reuses the shared live-video skin stylesheet — it includes the
+  // time slider / time display styles the variant adds back in.
+  if (skin === 'default') {
+    await import('@videojs/react/live-video/skin.css');
+    return module.LiveDvrSkin;
+  }
+
+  await import('@videojs/react/live-video/minimal-skin.css');
+  return module.MinimalLiveDvrSkin;
+}
+
 async function loadAudioSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<AudioSkinProps>> {
   const module = await import('@videojs/react/audio');
 
@@ -82,17 +100,18 @@ function useLoadedComponent<Props>(
   return component;
 }
 
-type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
+type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean; dvr?: boolean } & VideoSkinProps;
 
 /**
- * Loads the video skin for the given skin/styling. When `live` is true,
- * the `live-video` skin variant is used instead.
+ * Loads the video skin for the given skin/styling. When `dvr` is true, the
+ * sandbox-only live DVR skin variant is used; otherwise when `live` is true,
+ * the `live-video` skin variant is used.
  */
-export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
-  const Component = useLoadedComponent(
-    () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),
-    [skin, styling, live]
-  );
+export function VideoSkinComponent({ skin, styling, live = false, dvr = false, ...props }: VideoSkinComponentProps) {
+  const Component = useLoadedComponent(() => {
+    if (dvr) return loadLiveDvrSkinComponent(skin, styling);
+    return live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling);
+  }, [skin, styling, live, dvr]);
 
   if (!Component) return null;
 

@@ -23,6 +23,13 @@ export const { Provider: LiveVideoProvider } = createPlayer({
   features: liveVideoFeatures,
 });
 
+// Live DVR reuses the live feature set — `liveVideoFeatures` already includes
+// `timeFeature` and `bufferFeature`, which the DVR skin's time slider and time
+// displays read to scrub within the seekable DVR window.
+export const { Provider: LiveDvrVideoProvider } = createPlayer({
+  features: liveVideoFeatures,
+});
+
 export const { Provider: LiveAudioProvider } = createPlayer({
   features: liveAudioFeatures,
 });

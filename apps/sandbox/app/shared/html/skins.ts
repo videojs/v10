@@ -1,6 +1,8 @@
 import type { Skin, Styling } from '@app/types';
 import {
   CSS_SKIN_TAGS,
+  LIVE_DVR_CSS_SKIN_TAGS,
+  LIVE_DVR_TAILWIND_SKIN_TAGS,
   LIVE_VIDEO_CSS_SKIN_TAGS,
   LIVE_VIDEO_TAILWIND_SKIN_TAGS,
   TAILWIND_SKIN_TAGS,
@@ -91,18 +93,51 @@ async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
   return LIVE_VIDEO_TAILWIND_SKIN_TAGS[skin];
 }
 
-type VideoSkinOptions = { live?: boolean };
+async function loadLiveDvrCssSkin(skin: Skin): Promise<string> {
+  if (skin === 'default') {
+    await import('./live-dvr/skin');
+  } else {
+    await import('./live-dvr/minimal-skin');
+  }
+
+  loadVideoStylesheets(skin);
+
+  return LIVE_DVR_CSS_SKIN_TAGS[skin];
+}
+
+async function loadLiveDvrTailwindSkin(skin: Skin): Promise<string> {
+  if (skin === 'default') {
+    const { LiveDvrSkinTailwindElement } = await import('./live-dvr/skin.tailwind');
+    const { getTailwindStyles } = await import('./tailwind-setup');
+
+    LiveDvrSkinTailwindElement.styles = getTailwindStyles();
+  } else {
+    const { MinimalLiveDvrSkinTailwindElement } = await import('./live-dvr/minimal-skin.tailwind');
+    const { getTailwindStyles } = await import('./tailwind-setup');
+
+    MinimalLiveDvrSkinTailwindElement.styles = getTailwindStyles();
+  }
+
+  return LIVE_DVR_TAILWIND_SKIN_TAGS[skin];
+}
+
+type VideoSkinOptions = { live?: boolean; dvr?: boolean };
 
 /**
  * Loads and registers the video skin for the given skin / styling combination
- * and returns its custom element tag name. Pass `live: true` to swap in the
- * `live-video` skin variant (same feature set, trimmed time UI).
+ * and returns its custom element tag name. Pass `dvr: true` to swap in the
+ * sandbox-only live DVR skin (live skin + time slider / time display), or
+ * `live: true` for the `live-video` skin variant (trimmed time UI).
  */
 export function loadVideoSkinTag(
   skin: Skin,
   styling: Styling,
-  { live = false }: VideoSkinOptions = {}
+  { live = false, dvr = false }: VideoSkinOptions = {}
 ): Promise<string> {
+  if (dvr) {
+    return styling === 'tailwind' ? loadLiveDvrTailwindSkin(skin) : loadLiveDvrCssSkin(skin);
+  }
+
   if (live) {
     return styling === 'tailwind' ? loadLiveVideoTailwindSkin(skin) : loadLiveVideoCssSkin(skin);
   }

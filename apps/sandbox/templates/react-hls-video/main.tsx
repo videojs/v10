@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
+import { LiveDvrVideoProvider, LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -10,7 +10,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { isLiveSource, SOURCES } from '@app/shared/sources';
+import { isDvrSource, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { HlsVideo } from '@videojs/react/media/hls-video';
 import { useMemo } from 'react';
@@ -26,12 +26,13 @@ function App() {
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
   const storyboard = useStoryboard();
+  const dvr = isDvrSource(source);
   const live = isLiveSource(source);
   const autoplay = useAutoplay();
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
-  const Provider = live ? LiveVideoProvider : VideoProvider;
+  const Provider = dvr ? LiveDvrVideoProvider : live ? LiveVideoProvider : VideoProvider;
 
   return (
     <Provider>
@@ -40,6 +41,7 @@ function App() {
         skin={skin}
         styling={styling}
         live={live}
+        dvr={dvr}
         className="aspect-video max-w-4xl mx-auto"
       >
         <HlsVideo

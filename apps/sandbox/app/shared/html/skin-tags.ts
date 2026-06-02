@@ -22,3 +22,14 @@ export const LIVE_VIDEO_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
   default: 'live-video-skin-tailwind',
   minimal: 'live-video-minimal-skin-tailwind',
 };
+
+/** Custom element tag names for the sandbox-only live DVR skins. */
+export const LIVE_DVR_CSS_SKIN_TAGS: Record<Skin, string> = {
+  default: 'live-dvr-skin',
+  minimal: 'live-dvr-minimal-skin',
+};
+
+export const LIVE_DVR_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
+  default: 'live-dvr-skin-tailwind',
+  minimal: 'live-dvr-minimal-skin-tailwind',
+};

@@ -38,6 +38,14 @@ export const SOURCES = {
     subType: 'mp4',
     live: true,
   },
+  'hls-dvr': {
+    label: 'HLS - Live DVR Big Buck Bunny',
+    url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+    live: true,
+    dvr: true,
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
@@ -70,6 +78,14 @@ export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02n
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return (SOURCES[id] as { live?: boolean }).live === true;
+}
+
+/**
+ * Returns true when the given source represents a live DVR stream and should
+ * use the sandbox-only live DVR skin (live skin + time slider / time display).
+ */
+export function isDvrSource(id: SourceId): boolean {
+  return (SOURCES[id] as { dvr?: boolean }).dvr === true;
 }
 
 export function getPosterSrc(source: SourceId): string | undefined {

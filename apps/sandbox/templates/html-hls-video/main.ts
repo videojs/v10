@@ -12,7 +12,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getPosterSrc, getStoryboardSrc, isDvrSource, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -20,8 +20,9 @@ const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
+  const dvr = isDvrSource(state.source);
   const live = isLiveSource(state.source);
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live, dvr }));
   if (!tag) return;
 
   const storyboard = getStoryboardSrc(state.source);
