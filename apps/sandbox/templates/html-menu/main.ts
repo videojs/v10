@@ -21,7 +21,7 @@ const menuContentPlacementClass = [
 
 const menuContentClass = [
   menuContentSurfaceClass,
-  'transition-[opacity,scale,translate,filter] duration-150',
+  'transition-[opacity,scale,translate,filter] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -68,7 +68,7 @@ const menuNavPopupClass = [
   'group relative',
   menuNavSurfaceClass,
   'w-(--media-menu-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,width,height] duration-300 ease-in-out',
+  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -87,7 +87,7 @@ root.innerHTML = `
     <div class="flex gap-4 flex-wrap justify-center">
 
       <!-- Radio group -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Radio group</span>
         <button
           commandfor="quality-menu"
@@ -110,7 +110,7 @@ root.innerHTML = `
       </div>
 
       <!-- Mixed items -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Mixed items</span>
         <button
           commandfor="settings-menu"
@@ -133,7 +133,7 @@ root.innerHTML = `
       </div>
 
       <!-- Submenu navigation -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Submenu</span>
         <button
           commandfor="nav-menu"
