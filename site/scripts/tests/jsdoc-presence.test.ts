@@ -15,28 +15,93 @@ function flaggedSymbols(): string[] {
 
 describe('collectPackageViolations', () => {
   it('flags exactly the undocumented public exports', () => {
-    expect(flaggedSymbols().sort()).toEqual(['GroupMemberUndocumented', 'TagsOnly', 'Undocumented', 'WithMembers']);
+    expect(flaggedSymbols().sort()).toEqual([
+      'ExtendsAddsMembers',
+      'GenericAlias',
+      'GroupMemberUndocumented',
+      'ObjectLiteralAlias',
+      'TagOnlySee',
+      'TagsOnly',
+      'Undocumented',
+      'UndocumentedClass',
+      'UnionAlias',
+      'WithMembers',
+    ]);
   });
 
-  it('passes documented exports and documented re-exports', () => {
-    const names = flaggedSymbols();
-    expect(names).not.toContain('Documented');
-    expect(names).not.toContain('GroupMemberDocumented');
+  // ─── Passing cases ──────────────────────────────────────────────
+
+  it('passes a documented function with a plain summary', () => {
+    expect(flaggedSymbols()).not.toContain('Documented');
   });
 
-  it('skips leaf-wrapper interfaces and pure type aliases', () => {
-    const names = flaggedSymbols();
-    expect(names).not.toContain('LeafWrapper');
-    expect(names).not.toContain('PureAlias');
+  it('passes a documented class — undocumented members are NOT checked (Ring 1 only)', () => {
+    expect(flaggedSymbols()).not.toContain('DocumentedClass');
   });
 
-  it('skips @internal exports', () => {
+  it('passes a JSDoc summary that also carries tags', () => {
+    expect(flaggedSymbols()).not.toContain('SummaryWithTags');
+  });
+
+  it('passes a documented re-export resolved through a namespace', () => {
+    expect(flaggedSymbols()).not.toContain('GroupMemberDocumented');
+  });
+
+  // ─── JSDoc shape: tags without prose count as missing ───────────
+
+  it('flags tag-only JSDoc with @deprecated', () => {
+    expect(flaggedSymbols()).toContain('TagsOnly');
+  });
+
+  it('flags tag-only JSDoc with @see', () => {
+    expect(flaggedSymbols()).toContain('TagOnlySee');
+  });
+
+  // ─── Leaf-wrapper carve-out ─────────────────────────────────────
+
+  it('skips empty-body extends interface', () => {
+    expect(flaggedSymbols()).not.toContain('LeafWrapper');
+  });
+
+  it('skips pure type alias (bare reference: type X = Bar)', () => {
+    expect(flaggedSymbols()).not.toContain('PureAlias');
+  });
+
+  it('skips pure type alias to a qualified name (type X = A.B)', () => {
+    expect(flaggedSymbols()).not.toContain('QualifiedAlias');
+  });
+
+  it('does NOT skip type alias with type arguments (type X = Bar<Foo>)', () => {
+    expect(flaggedSymbols()).toContain('GenericAlias');
+  });
+
+  it('does NOT skip union type alias', () => {
+    expect(flaggedSymbols()).toContain('UnionAlias');
+  });
+
+  it('does NOT skip object-literal type alias', () => {
+    expect(flaggedSymbols()).toContain('ObjectLiteralAlias');
+  });
+
+  it('does NOT skip interface that extends and adds members', () => {
+    expect(flaggedSymbols()).toContain('ExtendsAddsMembers');
+  });
+
+  it('flags an undocumented class itself', () => {
+    expect(flaggedSymbols()).toContain('UndocumentedClass');
+  });
+
+  // ─── @internal carve-out ────────────────────────────────────────
+
+  it('skips @internal-tagged exports', () => {
     expect(flaggedSymbols()).not.toContain('Internal');
   });
 
-  it('flags JSDoc that has only tags (no prose summary)', () => {
-    expect(flaggedSymbols()).toContain('TagsOnly');
+  it('skips @internal even when the export also has a summary', () => {
+    expect(flaggedSymbols()).not.toContain('InternalWithSummary');
   });
+
+  // ─── Cross-package gate ─────────────────────────────────────────
 
   it('skips cross-package re-exports declared outside the package src', () => {
     expect(flaggedSymbols()).not.toContain('External');
