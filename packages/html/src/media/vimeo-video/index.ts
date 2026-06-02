@@ -1,10 +1,5 @@
 import { CustomMediaElement } from '@videojs/core/dom/media/custom-media-element';
-import {
-  buildVimeoIframeSrc,
-  VimeoMedia,
-  type VimeoPreload,
-  vimeoMediaDefaultProps,
-} from '@videojs/core/dom/media/vimeo';
+import { buildVimeoIframeSrc, VimeoMedia } from '@videojs/core/dom/media/vimeo';
 import { escapeHtml } from '@videojs/utils/string';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
@@ -43,7 +38,7 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
     playsInline: attrs.playsinline !== undefined,
-    preload: (attrs.preload as VimeoPreload | undefined) ?? vimeoMediaDefaultProps.preload,
+    preload: (attrs.preload as 'none' | 'metadata' | 'auto' | undefined) ?? 'metadata',
   };
 }
 
