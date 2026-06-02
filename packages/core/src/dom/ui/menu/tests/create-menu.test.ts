@@ -144,13 +144,15 @@ describe('createMenu', () => {
       vi.useRealTimers();
     });
 
-    it('highlights the checked item when opening', () => {
+    it('focuses the checked radio item when opening', () => {
       vi.useFakeTimers();
 
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+      b.setAttribute('role', 'menuitemradio');
       b.setAttribute('aria-checked', 'true');
+      const focus = vi.spyOn(b, 'focus');
 
       menu.registerItem(a);
       menu.registerItem(b);
@@ -160,17 +162,20 @@ describe('createMenu', () => {
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(focus).toHaveBeenCalledOnce();
 
       vi.useRealTimers();
     });
 
-    it('highlights the checked item when items register after opening', () => {
+    it('focuses the checked radio item when items register after opening', () => {
       vi.useFakeTimers();
 
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+      b.setAttribute('role', 'menuitemradio');
       b.setAttribute('aria-checked', 'true');
+      const focus = vi.spyOn(b, 'focus');
 
       menu.open();
       menu.registerItem(a);
@@ -180,6 +185,30 @@ describe('createMenu', () => {
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(focus).toHaveBeenCalledOnce();
+
+      vi.useRealTimers();
+    });
+
+    it('does not initially focus a checked checkbox item over a checked radio item', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const checkbox = addItem('Loop');
+      const radio = addItem('Auto');
+      checkbox.setAttribute('role', 'menuitemcheckbox');
+      checkbox.setAttribute('aria-checked', 'true');
+      radio.setAttribute('role', 'menuitemradio');
+      radio.setAttribute('aria-checked', 'true');
+
+      menu.registerItem(checkbox);
+      menu.registerItem(radio);
+      menu.open();
+
+      vi.runAllTimers();
+
+      expect(radio.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(checkbox.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
 
       vi.useRealTimers();
     });
