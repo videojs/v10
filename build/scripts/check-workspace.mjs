@@ -11,7 +11,10 @@
  * 4. Package metadata — non-private packages have required fields
  * 5. Release-please config — every versioned package is registered
  * 6. Define imports — no bare side-effect imports from relative paths
+ * 7. Bundled docs publishing — html/react ship per-framework docs
+ * 8. JSDoc presence — every public-API export carries a JSDoc summary
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -324,6 +327,38 @@ function checkDefineImports() {
   return { ok: warnings.length === 0, warnings };
 }
 
+// ── Check 8: JSDoc presence on public exports ────────────────────────────────
+
+/**
+ * Every public-API export in @videojs/react, @videojs/html, and @videojs/core
+ * must carry a JSDoc summary. The checker parses source with the TypeScript
+ * Compiler API and lives under site/ (the only workspace with a usable
+ * `typescript` + tsx). See site/scripts/jsdoc-presence/.
+ */
+function checkJsdocPresence() {
+  const cli = join(ROOT, 'site/scripts/jsdoc-presence/cli.ts');
+  try {
+    execFileSync('node', ['--import', 'tsx', cli], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return { ok: true, warnings: [] };
+  } catch (error) {
+    const stdout = String(error.stdout ?? '');
+    // Exit 1 = violations on stdout; anything else = the checker failed to run.
+    if (error.status === 1) {
+      const warnings = stdout
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+      return { ok: warnings.length === 0, warnings };
+    }
+    const stderr = String(error.stderr ?? '');
+    return { ok: false, warnings: [`JSDoc presence check failed to run: ${stderr.trim() || error.message}`] };
+  }
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
@@ -334,6 +369,7 @@ const checks = [
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
   { name: 'Bundled docs publishing', fn: checkBundledDocs },
   { name: 'Define imports', fn: checkDefineImports },
+  { name: 'JSDoc presence', fn: checkJsdocPresence },
 ];
 
 let failed = 0;

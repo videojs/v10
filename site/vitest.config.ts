@@ -11,7 +11,13 @@ export default getViteConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/utils/**', 'src/components/**', 'src/types/**', 'scripts/api-docs-builder/src/**'],
+      include: [
+        'src/utils/**',
+        'src/components/**',
+        'src/types/**',
+        'scripts/api-docs-builder/src/**',
+        'scripts/jsdoc-presence/**',
+      ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**'],
     },
   },
