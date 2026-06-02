@@ -387,7 +387,7 @@ convention suffices?
 ### Categorical vs lexicographic — what the extra structure buys
 
 Both models are equivalent on every in-scope rule (Kind B aside), and both need a precedence order.
-They differ in *how much rides on that order* and *what a new rule costs*. Three points:
+They differ in *how much rides on that order* and *what a new rule costs*. Four points:
 
 1. **Order only bites categorical when *rankers* conflict.** The tier composes by set operations
    (`preferred` = intersection of the preferring rules, `forbidden` = union) — commutative, so the tier
@@ -412,9 +412,20 @@ They differ in *how much rides on that order* and *what a new rule costs*. Three
    lexicographic defers it and pays it ad hoc as rewrites. The categorical machinery *is* the amortized
    form of those rewrites.
 
+4. **Early-bail is natural in categorical; in the documented chain it isn't.** Categorical's composition
+   *is* set narrowing (`forbidden`-union, then `preferred`-intersection), so "apply the cheap scopes
+   first; if the surviving in-scope set is a singleton, that's the pick — stop, never run the expensive
+   `abr` throughput estimate" is the obvious operation. The documented lexicographic model — *chain
+   stable sorts, weakest-first* — applies `abr` (the weakest) *first*, over the whole list; it recovers
+   the bail only by re-expressing the chain as a *lazy find-max over per-track keys* (same semantics,
+   different evaluation). And that recovery is fragile exactly where the rule set gets richer: a Kind-B
+   floor lifts `abr-tier` to a *high* key, which find-max then evaluates *early* (throughput up front)
+   anyway.
+
 **Net:** lexicographic is simpler in primitives and fine for a small, stable rule set with Kind B carved
-out. Categorical's extra structure buys order-robustness, an unbreakable safety floor, and rewrite-free
-extensibility — which matter more as the rule set grows (and the pressure list is long).
+out. Categorical's extra structure buys order-robustness, an unbreakable safety floor, rewrite-free
+extensibility, and natural early-bail — which matter more as the rule set grows (and the pressure list
+is long).
 
 ### Still open (the review-and-iterate part)
 
