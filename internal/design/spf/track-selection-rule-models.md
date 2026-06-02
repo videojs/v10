@@ -39,7 +39,9 @@ of combining rules, and the composition strategy is where the models differ most
   some preference (a sort). The composer drops the filtered-out tracks, then applies the sorts in
   priority order; the last sort applied decides the winner.
 - **Preference Tiers** — a rule emits a per-track verdict (`preferred` / `allowed` / `forbidden`); the
-  composer combines the verdicts into a tier, then orders within it.
+  composer combines those verdicts across rules by category — roughly, forbidden out, preferred ahead of
+  allowed, ordered within a tier. (Exactly how the categories combine is itself part of what this model
+  has to settle.)
 
 The headline: **on every rule we currently have, the two produce the same picks.** This is not a
 correctness contest. The choice is about how rules get authored, how robust composition is to an
