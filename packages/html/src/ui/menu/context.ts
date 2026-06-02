@@ -16,8 +16,14 @@ export interface MenuRadioGroupContextValue {
   onValueChange: (value: string) => void;
 }
 
+export interface MenuGroupContextValue {
+  registerLabel: (id: string) => () => void;
+}
+
 const MENU_CONTEXT_KEY = Symbol('@videojs/menu');
 const MENU_RADIO_GROUP_CONTEXT_KEY = Symbol('@videojs/menu-radio-group');
+const MENU_GROUP_CONTEXT_KEY = Symbol('@videojs/menu-group');
 
 export const menuContext = createContext<MenuContextValue>(MENU_CONTEXT_KEY);
 export const menuRadioGroupContext = createContext<MenuRadioGroupContextValue>(MENU_RADIO_GROUP_CONTEXT_KEY);
+export const menuGroupContext = createContext<MenuGroupContextValue>(MENU_GROUP_CONTEXT_KEY);

@@ -49,17 +49,19 @@ export * from './ui/media-element';
 export { MediaUIElement } from './ui/media-ui-element';
 export {
   type MenuContextValue,
+  type MenuGroupContextValue,
   type MenuRadioGroupContextValue,
   menuContext,
+  menuGroupContext,
   menuRadioGroupContext,
 } from './ui/menu/context';
 export { MenuBackElement } from './ui/menu/menu-back-element';
 export { MenuCheckboxItemElement } from './ui/menu/menu-checkbox-item-element';
 export { MenuElement } from './ui/menu/menu-element';
 export { MenuGroupElement } from './ui/menu/menu-group-element';
+export { MenuGroupLabelElement } from './ui/menu/menu-group-label-element';
 export { MenuItemElement } from './ui/menu/menu-item-element';
 export { MenuItemIndicatorElement } from './ui/menu/menu-item-indicator-element';
-export { MenuLabelElement } from './ui/menu/menu-label-element';
 export { MenuRadioGroupElement } from './ui/menu/menu-radio-group-element';
 export { MenuRadioItemElement } from './ui/menu/menu-radio-item-element';
 export { MenuSeparatorElement } from './ui/menu/menu-separator-element';

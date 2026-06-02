@@ -179,8 +179,8 @@ function App() {
           <Menu.Root>
             <TriggerButton>Quality</TriggerButton>
             <Menu.Content className={menuContentClass}>
-              <Menu.Label className={menuLabelClass}>Resolution</Menu.Label>
               <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+                <Menu.GroupLabel className={menuLabelClass}>Resolution</Menu.GroupLabel>
                 {['auto', '1080p', '720p', '480p'].map((value) => (
                   <Menu.RadioItem key={value} value={value} className={radioItemClass}>
                     {quality === value && <RadioDot />}
@@ -204,15 +204,17 @@ function App() {
           <Menu.Root>
             <TriggerButton>Settings</TriggerButton>
             <Menu.Content className={menuContentClass}>
-              <Menu.Label className={menuLabelClass}>Playback</Menu.Label>
-              <Menu.CheckboxItem checked={loop} onCheckedChange={setLoop} className={checkboxItemClass}>
-                {loop && <Checkmark />}
-                Loop
-              </Menu.CheckboxItem>
-              <Menu.CheckboxItem checked={autoplay} onCheckedChange={setAutoplay} className={checkboxItemClass}>
-                {autoplay && <Checkmark />}
-                Autoplay
-              </Menu.CheckboxItem>
+              <Menu.Group>
+                <Menu.GroupLabel className={menuLabelClass}>Playback</Menu.GroupLabel>
+                <Menu.CheckboxItem checked={loop} onCheckedChange={setLoop} className={checkboxItemClass}>
+                  {loop && <Checkmark />}
+                  Loop
+                </Menu.CheckboxItem>
+                <Menu.CheckboxItem checked={autoplay} onCheckedChange={setAutoplay} className={checkboxItemClass}>
+                  {autoplay && <Checkmark />}
+                  Autoplay
+                </Menu.CheckboxItem>
+              </Menu.Group>
               <Menu.Separator className={menuSeparatorClass} />
               <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
                 Copy link
@@ -248,7 +250,7 @@ function App() {
                       <ChevronLeft />
                       Quality
                     </Menu.Back>
-                    <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+                    <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
                       {['auto', '1080p', '720p', '480p'].map((v) => (
                         <Menu.RadioItem key={v} value={v} className={radioItemClass}>
                           {quality === v && <RadioDot />}
@@ -273,7 +275,7 @@ function App() {
                       <ChevronLeft />
                       Speed
                     </Menu.Back>
-                    <Menu.RadioGroup value={speed} onValueChange={setSpeed}>
+                    <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
                       {[
                         { value: '0.5', label: '0.5x' },
                         { value: '0.75', label: '0.75x' },

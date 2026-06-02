@@ -38,7 +38,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
           {option.label}
