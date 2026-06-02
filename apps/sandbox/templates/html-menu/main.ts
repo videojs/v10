@@ -21,7 +21,7 @@ const menuContentPlacementClass = [
 
 const menuContentClass = [
   menuContentSurfaceClass,
-  'transition-[opacity,scale,translate,filter] duration-150',
+  'transition-[opacity,scale,translate,filter] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -68,7 +68,7 @@ const menuNavPopupClass = [
   'group relative',
   menuNavSurfaceClass,
   'w-(--media-menu-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,width,height] duration-300 ease-in-out',
+  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -87,7 +87,7 @@ root.innerHTML = `
     <div class="flex gap-4 flex-wrap justify-center">
 
       <!-- Radio group -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Radio group</span>
         <button
           commandfor="quality-menu"
@@ -97,12 +97,12 @@ root.innerHTML = `
           <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <media-menu id="quality-menu" class="${menuContentClass}">
-          <media-menu-label class="${menuLabelClass}">Resolution</media-menu-label>
           <media-menu-radio-group id="quality-group" value="auto">
-            <media-menu-radio-item value="auto"   class="${radioItemClass}">Auto</media-menu-radio-item>
-            <media-menu-radio-item value="1080p"  class="${radioItemClass}">1080p</media-menu-radio-item>
-            <media-menu-radio-item value="720p"   class="${radioItemClass}">720p</media-menu-radio-item>
-            <media-menu-radio-item value="480p"   class="${radioItemClass}">480p</media-menu-radio-item>
+            <media-menu-label class="${menuLabelClass}">Resolution</media-menu-label>
+            <media-menu-radio-item value="auto" class="${radioItemClass}">Auto</media-menu-radio-item>
+            <media-menu-radio-item value="1080p" class="${radioItemClass}">1080p</media-menu-radio-item>
+            <media-menu-radio-item value="720p" class="${radioItemClass}">720p</media-menu-radio-item>
+            <media-menu-radio-item value="480p" class="${radioItemClass}">480p</media-menu-radio-item>
             <media-menu-radio-item value="360p" disabled class="${radioItemClass}">360p (unavailable)</media-menu-radio-item>
           </media-menu-radio-group>
         </media-menu>
@@ -110,7 +110,7 @@ root.innerHTML = `
       </div>
 
       <!-- Mixed items -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Mixed items</span>
         <button
           commandfor="settings-menu"
@@ -120,18 +120,20 @@ root.innerHTML = `
           <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <media-menu id="settings-menu" class="${menuContentClass}">
-          <media-menu-label class="${menuLabelClass}">Playback</media-menu-label>
-          <media-menu-checkbox-item id="loop-item"     class="${checkboxItemClass}">Loop</media-menu-checkbox-item>
-          <media-menu-checkbox-item id="autoplay-item" class="${checkboxItemClass}">Autoplay</media-menu-checkbox-item>
+          <media-menu-group>
+            <media-menu-label class="${menuLabelClass}">Playback</media-menu-label>
+            <media-menu-checkbox-item id="loop-item" class="${checkboxItemClass}">Loop</media-menu-checkbox-item>
+            <media-menu-checkbox-item id="autoplay-item" class="${checkboxItemClass}">Autoplay</media-menu-checkbox-item>
+          </media-menu-group>
           <media-menu-separator class="${menuSeparatorClass}"></media-menu-separator>
-          <media-menu-item id="copy-item"   class="${menuItemClass}">Copy link</media-menu-item>
+          <media-menu-item id="copy-item" class="${menuItemClass}">Copy link</media-menu-item>
           <media-menu-item id="report-item" class="${menuItemClass}">Report issue</media-menu-item>
         </media-menu>
         <p class="text-[0.8125rem] text-slate-500">Loop: <strong id="loop-output" class="text-slate-900 font-medium">off</strong></p>
       </div>
 
       <!-- Submenu navigation -->
-      <div class="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+      <div class="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
         <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Submenu</span>
         <button
           commandfor="nav-menu"
@@ -173,11 +175,11 @@ root.innerHTML = `
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Quality
             </media-menu-back>
-            <media-menu-radio-group id="nav-quality-group" value="auto">
-              <media-menu-radio-item value="auto"  class="${radioItemClass}">Auto</media-menu-radio-item>
+            <media-menu-radio-group id="nav-quality-group" aria-label="Resolution" value="auto">
+              <media-menu-radio-item value="auto" class="${radioItemClass}">Auto</media-menu-radio-item>
               <media-menu-radio-item value="1080p" class="${radioItemClass}">1080p</media-menu-radio-item>
-              <media-menu-radio-item value="720p"  class="${radioItemClass}">720p</media-menu-radio-item>
-              <media-menu-radio-item value="480p"  class="${radioItemClass}">480p</media-menu-radio-item>
+              <media-menu-radio-item value="720p" class="${radioItemClass}">720p</media-menu-radio-item>
+              <media-menu-radio-item value="480p" class="${radioItemClass}">480p</media-menu-radio-item>
             </media-menu-radio-group>
           </media-menu>
 
@@ -186,13 +188,13 @@ root.innerHTML = `
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Speed
             </media-menu-back>
-            <media-menu-radio-group id="nav-speed-group" value="1">
-              <media-menu-radio-item value="0.5"  class="${radioItemClass}">0.5x</media-menu-radio-item>
+            <media-menu-radio-group id="nav-speed-group" aria-label="Speed" value="1">
+              <media-menu-radio-item value="0.5" class="${radioItemClass}">0.5x</media-menu-radio-item>
               <media-menu-radio-item value="0.75" class="${radioItemClass}">0.75x</media-menu-radio-item>
-              <media-menu-radio-item value="1"    class="${radioItemClass}">Normal</media-menu-radio-item>
+              <media-menu-radio-item value="1" class="${radioItemClass}">Normal</media-menu-radio-item>
               <media-menu-radio-item value="1.25" class="${radioItemClass}">1.25x</media-menu-radio-item>
-              <media-menu-radio-item value="1.5"  class="${radioItemClass}">1.5x</media-menu-radio-item>
-              <media-menu-radio-item value="2"    class="${radioItemClass}">2x</media-menu-radio-item>
+              <media-menu-radio-item value="1.5" class="${radioItemClass}">1.5x</media-menu-radio-item>
+              <media-menu-radio-item value="2" class="${radioItemClass}">2x</media-menu-radio-item>
             </media-menu-radio-group>
           </media-menu>
         </media-menu>

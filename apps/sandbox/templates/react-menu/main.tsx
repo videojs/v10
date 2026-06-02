@@ -15,15 +15,15 @@ const menuNavSurfaceClass =
   'bg-white border-none ring-1 ring-black/10 shadow-sm rounded-md min-w-[10rem] overflow-hidden outline-none';
 
 const menuContentPlacementClass = [
-  'data-side=bottom:origin-top data-side=top:origin-bottom',
-  'data-side=left:origin-right data-side=right:origin-left',
+  'data-[side=bottom]:origin-top data-[side=top]:origin-bottom',
+  'data-[side=left]:origin-right data-[side=right]:origin-left',
   'data-starting-style:opacity-0 data-starting-style:scale-95 data-starting-style:-translate-y-1 data-starting-style:blur-sm',
   'data-ending-style:opacity-0 data-ending-style:scale-95 data-ending-style:-translate-y-1 data-ending-style:blur-sm',
 ].join(' ');
 
 const menuContentClass = [
   menuContentSurfaceClass,
-  'transition-[opacity,scale,translate,filter] duration-150',
+  'transition-[opacity,scale,translate,filter] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -70,19 +70,19 @@ const menuNavPopupClass = [
   'group relative',
   menuNavSurfaceClass,
   'w-(--media-menu-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,width,height] duration-300 ease-in-out',
+  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
 // ── Indicators ────────────────────────────────────────────────────────────────
 
 function RadioDot() {
-  return <span className="absolute left-[0.5625rem] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-current" />;
+  return <span className="absolute left-2.25 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-current" />;
 }
 
 function Checkmark() {
   return (
-    <span className="absolute left-[0.4375rem] top-1/2 -translate-y-1/2 w-3 h-3 flex items-center justify-center">
+    <span className="absolute left-1.75 top-1/2 -translate-y-1/2 w-3 h-3 flex items-center justify-center">
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
@@ -174,13 +174,13 @@ function App() {
 
       <div className="flex gap-4 flex-wrap justify-center">
         {/* Radio group */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+        <div className="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
           <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Radio group</span>
           <Menu.Root>
             <TriggerButton>Quality</TriggerButton>
             <Menu.Content className={menuContentClass}>
-              <Menu.Label className={menuLabelClass}>Resolution</Menu.Label>
               <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+                <Menu.Label className={menuLabelClass}>Resolution</Menu.Label>
                 {['auto', '1080p', '720p', '480p'].map((value) => (
                   <Menu.RadioItem key={value} value={value} className={radioItemClass}>
                     {quality === value && <RadioDot />}
@@ -199,20 +199,22 @@ function App() {
         </div>
 
         {/* Mixed items */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+        <div className="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
           <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Mixed items</span>
           <Menu.Root>
             <TriggerButton>Settings</TriggerButton>
             <Menu.Content className={menuContentClass}>
-              <Menu.Label className={menuLabelClass}>Playback</Menu.Label>
-              <Menu.CheckboxItem checked={loop} onCheckedChange={setLoop} className={checkboxItemClass}>
-                {loop && <Checkmark />}
-                Loop
-              </Menu.CheckboxItem>
-              <Menu.CheckboxItem checked={autoplay} onCheckedChange={setAutoplay} className={checkboxItemClass}>
-                {autoplay && <Checkmark />}
-                Autoplay
-              </Menu.CheckboxItem>
+              <Menu.Group>
+                <Menu.Label className={menuLabelClass}>Playback</Menu.Label>
+                <Menu.CheckboxItem checked={loop} onCheckedChange={setLoop} className={checkboxItemClass}>
+                  {loop && <Checkmark />}
+                  Loop
+                </Menu.CheckboxItem>
+                <Menu.CheckboxItem checked={autoplay} onCheckedChange={setAutoplay} className={checkboxItemClass}>
+                  {autoplay && <Checkmark />}
+                  Autoplay
+                </Menu.CheckboxItem>
+              </Menu.Group>
               <Menu.Separator className={menuSeparatorClass} />
               <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
                 Copy link
@@ -228,7 +230,7 @@ function App() {
         </div>
 
         {/* Submenu navigation */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-[0_1px_3px_0_rgb(0_0_0/.05)]">
+        <div className="bg-white ring-1 ring-slate-700/10 rounded-xl p-6 flex flex-col items-start gap-3.5 min-w-[200px] shadow-sm">
           <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Submenu</span>
           <Menu.Root>
             <TriggerButton>Settings</TriggerButton>
@@ -248,7 +250,7 @@ function App() {
                       <ChevronLeft />
                       Quality
                     </Menu.Back>
-                    <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+                    <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
                       {['auto', '1080p', '720p', '480p'].map((v) => (
                         <Menu.RadioItem key={v} value={v} className={radioItemClass}>
                           {quality === v && <RadioDot />}
@@ -273,7 +275,7 @@ function App() {
                       <ChevronLeft />
                       Speed
                     </Menu.Back>
-                    <Menu.RadioGroup value={speed} onValueChange={setSpeed}>
+                    <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
                       {[
                         { value: '0.5', label: '0.5x' },
                         { value: '0.75', label: '0.75x' },
