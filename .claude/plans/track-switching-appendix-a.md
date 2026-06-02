@@ -351,6 +351,39 @@ cases natively. And it is **not a rare corner** — "don't drop below 360p, but 
 an ordinary product ask — so it's a real factor in the categorical-vs-lexicographic decision, not a
 negligible gap.
 
+### The ABR split — Kind B *is* placeable, but only by rebuilding the categorical model
+
+Kind B is unplaceable only because ABR is **one** sort whose key fuses two independent things:
+
+- **`abr-rank`** — order by bitrate. Generic and **data-free**: needs no runtime input beyond the
+  tracks' own bitrates.
+- **`abr-tier`** — a plain over/under partition by the **throughput** estimate (fitting before
+  over-throughput). The only part that consumes runtime data.
+
+Split them, and a Kind-B rule slots cleanly *between* them — `abr-tier` applied last (primary, so we
+never rebuffer), the in-tier preference (e.g. the resolution floor) in the middle, `abr-rank` first
+(final tiebreak):
+
+```
+abr-rank   by bitrate (no extra input)     ← weakest
+floor      ≥360p first
+abr-tier   fits > over (from throughput)   ← strongest / primary
+```
+
+→ `fitting-≥360p > fitting-<360p > over-throughput` — which the fused sort couldn't express.
+
+But "compute a tier first, then order within it" *is* what the categorical composer does —
+`preferred`/`allowed` **is** the tier, ordered after. So the split isn't a third design; it's the
+categorical model **rebuilt by hand in the chain.** That makes the model choice concrete:
+
+- **First-class (categorical):** every rule emits a tier + an order; the composer composes tiers and
+  orders within — Kind B is free.
+- **Manual (lexicographic):** keep plain filter + sort, but split each tier-bearing rule (ABR, …) into
+  a tier-sort + a ranking-sort and hand-order the interleaving wherever a straddle appears.
+
+The call: is tier/order separation common enough to be built-in, or rare enough that the hand-split
+convention suffices?
+
 ### Still open (the review-and-iterate part)
 
 - **This rebuts the Takeaway above.** A reordered, stable filter + sort *does* carry
