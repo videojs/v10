@@ -230,10 +230,11 @@ tier while abr ranks within it.
 This complicates the Takeaway above. The reorder sub-section showed that, with **stable** sorts in the
 right order, a plain filter + sort produces the correct pick for the language example — the "phantom
 order clobbers abr" failure only happens with the *wrong* order (abr last). So: does the *same* model
-cover **all** the rules in the design doc's Audit, not just the one example? **Tentative verdict: it
-appears to — pending review and iteration.** If that holds, filter + sort (done right) is a legitimate
-alternative to the categorical `{ preferred, allowed, forbidden }` model, not the strawman Appendix A
-set it up to be.
+cover **all** the rules in the design doc's Audit, not just the one example? **Tentative verdict: yes
+for the in-scope rules — with one carve-out (the "Kind B" straddle, below) that turns out to be more
+ordinary than a corner case.** So filter + sort (done right) is a legitimate alternative to the
+categorical `{ preferred, allowed, forbidden }` model — not the strawman Appendix A set it up to be —
+but the carve-out is a real factor in choosing between them.
 
 ### The model
 
@@ -283,23 +284,53 @@ SORT (first/weakest → last/winner):
   T1  multi-signal-abr            fusion score
   T1  (future) dropped-frames     smoothest first
   T2  hevc / force-AVC            prefer AVC  (codec scope — rebuffer to honor; abr ranks within)
-  T2  rendition-selection-caps    within-cap first
+  T2  rendition cap (upper)       within-cap first  (player/screen size, cost tiers — clean)
+  T2  rendition floor (lower,hard) ≥floor first      (Kind A scope — rebuffer rather than show too-low)
   T2  content-steering            top pathway                                   [shared] ⚠️
   T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
   T3  userVideoTrackSelection     chosen rendition       ← winner
+   ── not placeable in the chain ──
+   ✗  rendition floor (lower,soft) "prefer ≥Y but don't rebuffer" under a data-saver baseline → Kind B
 ```
 
-### Non-goal: a "prefer-among-fitting, don't-rebuffer" preference
+**`rendition-selection-caps` is a family** — and only part of it fits the chain cleanly:
 
-One shape this model deliberately does **not** handle: a channel/codec preference that applies *only
-within the already-fitting set* and must **not** rebuffer to honor it — e.g. "output is stereo, so
-prefer stereo over (downmixed) 5.1 to save bandwidth, but if only 5.1 fits, just play it." The optimal
-order there is `fitting-stereo > fitting-5.1 > over-throughput-anything`, which needs the preference to
-sit *between* ABR's fitting/over **tier** and its bitrate **ranking** — i.e. you'd have to split `abr`
-into two sorts and interleave. Out of scope. (Channel/codec preferences we *do* support are **scopes** —
-"prefer this layout/codec, rebuffer to honor it" — which sort cleanly after `abr`, as in the chains
-above.) This is also the one place the categorical `{preferred, allowed}` model has an edge: its
-tier/order split expresses this case natively.
+- **Upper cap** — don't exceed X (player size, screen-size detection, cost/delivery tiers like avoiding
+  1080p/4k). Clean: sorts after ABR as "within-cap first." It runs *with* ABR's own ceiling — above-cap
+  renditions are higher-bitrate, so honoring the cap never forces a rebuffer.
+- **Lower floor, hard** — "rebuffer rather than ever show below Y." A **Kind A scope** (prefer ≥Y,
+  rebuffer to honor); sorts after ABR like any scope.
+- **Lower floor, soft** — "prefer ≥Y, but don't rebuffer for it," under a data-saver / lowest-adequate
+  baseline. **Kind B → non-goal** (the resolution-floor straddle below): it must push the pick *up
+  within the fitting set* yet yield to throughput — straddling ABR's tier and ranking — so the chain
+  can't place it.
+
+### Non-goal: "prefer-among-fitting, don't-rebuffer" preferences (the straddle)
+
+This model deliberately does **not** handle a preference that must **reorder *within* the fitting set,
+against the baseline ranking** yet **must not rebuffer** to honor it. Optimal handling needs the rule
+to sit *between* ABR's fitting/over **tier** and its **ranking** — and since ABR is a single sort key,
+it can't be straddled. Two examples, same shape:
+
+- **Resolution floor under a data-saver baseline.** A small/thumbnail player picks the *lowest adequate*
+  rendition to save bandwidth, but not *too* low — "prefer ≥360p, but don't rebuffer for it." Ladder
+  240p / 360p / 480p, desired picks across throughput = `360p, 360p, 240p`. The floor must push
+  240p→360p *among the fitting tracks* (beat the lowest-first ranking) **and** drop to 240p when only
+  240p fits (yield to the tier). No single floor position does both: *after* ABR it rebuffers when only
+  240p fits; *before* ABR it can't override the baseline's 240p when 360p fits.
+- **Stereo on a stereo-only output.** "Prefer stereo over (downmixed) 5.1 to save bandwidth, but if
+  only 5.1 fits, just play it" — `fitting-stereo > fitting-5.1 > over-anything`. Same straddle.
+
+What *avoids* the straddle: a **scope** ("rebuffer to honor it") sorts cleanly after ABR because it's
+allowed to breach the tier; and a bound that runs *with* the baseline (an upper cap, or a floor when
+the baseline already maximizes) is clean or redundant. The straddle appears precisely when a rule must
+fight the baseline's ranking *and* respect the tier at the same time.
+
+This is the one capability the categorical `{preferred, allowed}` model has that the chain doesn't: its
+tier is composed pessimistically and kept *separate* from the within-tier order, so it expresses these
+cases natively. And it is **not a rare corner** — "don't drop below 360p, but don't rebuffer for it" is
+an ordinary product ask — so it's a real factor in the categorical-vs-lexicographic decision, not a
+negligible gap.
 
 ### Still open (the review-and-iterate part)
 
@@ -313,10 +344,12 @@ tier/order split expresses this case natively.
 - **A single multi-criteria user rule** (`{language, height}`) can't straddle ABR within one rule
   (language above, height below) — needs splitting into separate rules. The categorical model has the
   same limitation.
-- **Apparent equivalence (with one exception):** on every *in-scope* documented rule, this order seems
-  to produce the same pick as the categorical cascade (pessimistic tier + precedence + user-intent
-  fall-through bias). The one thing the categorical model can express that this can't is the Kind-B
-  non-goal above. So setting that aside, the choice between the two models is ergonomics, not correctness.
+- **Apparent equivalence, minus Kind B:** on every *in-scope* documented rule, this order seems to
+  produce the same pick as the categorical cascade (pessimistic tier + precedence + user-intent
+  fall-through bias). The one thing the categorical model expresses that this can't is the Kind-B
+  straddle above — which now looks common enough (ordinary quality-floor / stereo-output asks) that
+  it's **not purely ergonomics**: there's a real, if bounded, correctness gap the categorical model
+  closes.
 
 <!-- NEXT: settle the steering/CDN policy call + session-level pathway; then decide categorical-vs-lexicographic and fold the resolved story into the design doc as Appendix A. -->
 
