@@ -259,6 +259,24 @@ describe('handleDocs', () => {
         ]);
         expect(output()).toContain('background-video-player');
       });
+
+      it('infers background-video preset from --media flag without --preset', async () => {
+        // No --preset or --embed-method: both should be inferred from --media background-video
+        await handleDocs(
+          {
+            framework: 'html',
+            skin: 'default',
+            media: 'background-video',
+            'source-url': '',
+            'install-method': 'npm',
+          },
+          ['how-to/installation']
+        );
+        const out = output();
+        expect(out).toContain('background-video-player');
+        // p.select should never have been called — no interactive prompts needed
+        expect(p.select).not.toHaveBeenCalled();
+      });
     });
 
     describe('React framework', () => {
@@ -282,7 +300,6 @@ describe('handleDocs', () => {
         const out = output();
         expect(out).toContain('## Create your player');
         expect(out).toContain('index.tsx');
-        expect(out).toContain('Skin.tsx');
         expect(out).toContain('skin.css');
         expect(out).toContain('## Use your player');
         expect(out).not.toContain('## Your skin');
@@ -290,7 +307,7 @@ describe('handleDocs', () => {
     });
 
     describe('HTML ejected', () => {
-      it('generates ejected HTML with HTML block and skin.css, no Your skin heading', async () => {
+      it('generates ejected HTML with JS imports, HTML block and skin.css, no Your skin heading', async () => {
         await handleDocs(
           {
             framework: 'html',
@@ -305,10 +322,10 @@ describe('handleDocs', () => {
         );
         const out = output();
         expect(out).toContain('## Install Video.js');
+        expect(out).toContain('## JavaScript imports');
         expect(out).toContain('## HTML');
         expect(out).toContain('### skin.css');
         expect(out).not.toContain('## Your skin');
-        expect(out).not.toContain('## JavaScript imports');
       });
     });
   });

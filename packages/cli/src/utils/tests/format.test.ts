@@ -52,15 +52,14 @@ describe('formatInstallationCode', () => {
     expect(result).toContain('pnpm add @videojs/react');
   });
 
-  it('formats ejected HTML with install, HTML block, and skin.css sub-section', () => {
+  it('formats ejected HTML with install, JS imports, HTML block, and skin.css sub-section', () => {
     const result = formatInstallationCode({ ...baseHTML, embedMethod: 'ejected' });
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('npm install @videojs/html');
+    expect(result).toContain('## JavaScript imports');
     expect(result).toContain('## HTML');
     expect(result).toContain('### skin.css');
     expect(result).not.toContain('## Your skin');
-    // Ejected has no separate JS imports section (CDN scripts are embedded in the HTML)
-    expect(result).not.toContain('## JavaScript imports');
   });
 
   it('formats ejected React with install, multi-file create, and use sections', () => {

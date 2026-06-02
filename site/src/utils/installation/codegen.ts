@@ -167,13 +167,42 @@ function replaceEjectedSrc(html: string, url: string): string {
   return html.replace(/(<(?:video|audio|hls-video)\b[^>]*)src="[^"]*"/, (_, prefix) => `${prefix}src="${url}"`);
 }
 
+function stripEjectedHtmlPreamble(html: string): string {
+  // Remove the CDN <script> and <link rel="stylesheet"> lines baked into ejected HTML
+  // so they don't conflict with npm-style install instructions shown above the snippet.
+  return html
+    .replace(/^<script\b[^>]*><\/script>\n/, '')
+    .replace(/^<link\b[^>]*rel="stylesheet"[^>]*>\n/, '')
+    .replace(/^\n/, '');
+}
+
+function applyEjectedRenderer(html: string, renderer: Renderer): string {
+  // Ejected HTML bakes in <video> as the media element. Swap to <hls-video> for HLS.
+  if (renderer !== 'hls') return html;
+  return html.replace(/<video(?=[\s>])/g, '<hls-video').replace(/<\/video>/g, '</hls-video>');
+}
+
 export function generateHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod' | 'embedMethod'>
 ): { html: string; js?: string; css?: string } {
   if (opts.embedMethod === 'ejected' && opts.useCase !== 'background-video') {
     const ejectedSkin = generateEjectedSkinCode({ skin: opts.skin, framework: 'html' });
     const src = resolveSourceUrl(opts.sourceUrl, opts.renderer);
-    const html = replaceEjectedSrc(ejectedSkin.html ?? '', src);
+    let html = ejectedSkin.html ?? '';
+    html = applyEjectedRenderer(html, opts.renderer);
+    html = replaceEjectedSrc(html, src);
+
+    if (opts.installMethod !== 'cdn') {
+      html = stripEjectedHtmlPreamble(html);
+      return { html, js: generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer), css: ejectedSkin.css };
+    }
+
+    html = html.replace('href="./player.css"', 'href="./skin.css"');
+    if (opts.renderer === 'hls') {
+      const hlsScript =
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hls-video.js"></script>';
+      html = html.replace(/(<script\b[^>]*><\/script>)/, (match) => `${match}\n${hlsScript}`);
+    }
     return { html, css: ejectedSkin.css };
   }
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);

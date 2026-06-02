@@ -83,12 +83,33 @@ describe('generateReactInstallCode', () => {
 });
 
 describe('generateHTMLUsageCode', () => {
-  it('returns ejected HTML and CSS when embedMethod is ejected', () => {
+  it('returns ejected HTML, JS imports, and CSS for npm install', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, embedMethod: 'ejected' });
-    // No separate JS imports — the ejected skin HTML contains its own script/link tags
-    expect(result.js).toBeUndefined();
+    expect(result.js).toBeDefined();
+    expect(result.js).toContain("import '@videojs/html/video/player'");
     expect(result.css).toBeDefined();
     expect(result.html).toBeTruthy();
+    expect(result.html).not.toContain('<script');
+    expect(result.html).not.toContain('<link rel="stylesheet"');
+  });
+
+  it('returns ejected HTML with CDN scripts and no JS section for CDN install', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, installMethod: 'cdn', embedMethod: 'ejected' });
+    expect(result.js).toBeUndefined();
+    expect(result.css).toBeDefined();
+    expect(result.html).toContain('cdn.jsdelivr.net');
+    expect(result.html).not.toContain('./player.css');
+    expect(result.html).toContain('./skin.css');
+  });
+
+  it('adds HLS media script to ejected CDN HTML for HLS renderer', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      installMethod: 'cdn',
+      embedMethod: 'ejected',
+      renderer: 'hls',
+    });
+    expect(result.html).toContain('media/hls-video.js');
   });
 
   it('injects custom sourceUrl into ejected HTML media element', () => {
@@ -105,7 +126,7 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('stream.mux.com');
   });
 
-  it('uses HLS demo URL in ejected HTML for HLS renderer', () => {
+  it('uses HLS demo URL and hls-video element in ejected HTML for HLS renderer', () => {
     const result = generateHTMLUsageCode({
       ...baseHTML,
       embedMethod: 'ejected',
@@ -113,6 +134,8 @@ describe('generateHTMLUsageCode', () => {
       sourceUrl: '',
     });
     expect(result.html).toContain('.m3u8');
+    expect(result.html).toContain('<hls-video');
+    expect(result.html).not.toContain('<video ');
   });
 
   it('falls back to packaged for background-video even when ejected is requested', () => {

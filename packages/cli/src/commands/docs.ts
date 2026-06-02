@@ -165,9 +165,9 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
   // Installation page: generate code and replace markers
   if (slug === 'how-to/installation') {
     const partial = buildPartialFlags(flags, framework);
-    const isBackgroundVideo = partial.preset === 'background-video';
+    const isBackgroundVideo = partial.preset === 'background-video' || partial.media === 'background-video';
     const needsPrompting =
-      !partial.preset ||
+      (!partial.preset && !isBackgroundVideo) ||
       (!partial.skin && !partial.rawSkin) ||
       partial.sourceUrl === undefined ||
       !partial.media ||

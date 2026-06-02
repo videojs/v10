@@ -100,15 +100,16 @@ export async function promptInstallOptions(
   framework: Framework,
   flags: PartialInstallFlags
 ): Promise<InstallationOptions> {
-  const useCase =
+  const useCase: UseCase =
     flags.preset ??
+    (flags.media === 'background-video' ? 'background-video' : undefined) ??
     (await (async () => {
       const value = await p.select({
         message: 'Preset',
         options: PRESET_OPTIONS,
       });
       if (p.isCancel(value)) process.exit(0);
-      return value;
+      return value as UseCase;
     })());
 
   // Resolve raw --skin flag now that useCase is known
