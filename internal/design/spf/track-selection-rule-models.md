@@ -31,12 +31,15 @@ candidate tracks → [rule] → [rule] → … → composer → picked track id
 This document takes that pipeline shape as a working assumption — not the only conceivable substrate,
 but the one assumed throughout here, and a well-grounded one: every major adaptive-streaming engine
 separates a hard pruning pass from soft ranking (surveyed in [Appendix A](#appendix-a-prior-art)). The
-open question — and the subject of this doc — is the shape of a single *rule*. Two shapes are on the
-table:
+open question — and the subject of this doc — is the **rule model**: both the shape of an individual
+*rule* and how rules **compose** into a final pick. The two are a package — a rule shape implies a way
+of combining rules, and the composition strategy is where the models differ most. Two are on the table:
 
-- **Filter + Sort** — a rule is either a hard filter or a stable sort; the composer chains them.
+- **Filter + Sort** — a rule either removes tracks that can't play (a filter) or reorders the rest by
+  some preference (a sort). The composer drops the filtered-out tracks, then applies the sorts in
+  priority order; the last sort applied decides the winner.
 - **Preference Tiers** — a rule emits a per-track verdict (`preferred` / `allowed` / `forbidden`); the
-  composer composes the verdicts into a tier, then orders within it.
+  composer combines the verdicts into a tier, then orders within it.
 
 The headline: **on every rule we currently have, the two produce the same picks.** This is not a
 correctness contest. The choice is about how rules get authored, how robust composition is to an
