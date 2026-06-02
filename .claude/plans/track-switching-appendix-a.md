@@ -384,6 +384,38 @@ categorical model **rebuilt by hand in the chain.** That makes the model choice 
 The call: is tier/order separation common enough to be built-in, or rare enough that the hand-split
 convention suffices?
 
+### Categorical vs lexicographic — what the extra structure buys
+
+Both models are equivalent on every in-scope rule (Kind B aside), and both need a precedence order.
+They differ in *how much rides on that order* and *what a new rule costs*. Three points:
+
+1. **Order only bites categorical when *rankers* conflict.** The tier composes by set operations
+   (`preferred` = intersection of the preferring rules, `forbidden` = union) — commutative, so the tier
+   never depends on order; and *unranked* preferences are transparent to within-tier ordering. So with
+   one ranker (`abr`) plus unranked set-preferences (`caps`, `content-steering` / `multi-cdn`,
+   `language`), **order is irrelevant** — even `language` vs `abr`, the pair that was order-critical in
+   the chain. Categorical order matters only when *two or more rankers* disagree (`abr` vs
+   `multi-signal-abr`). Lexicographic makes every one of those pairs order-critical (the cap must follow
+   `abr` or it's ignored; `language` must follow `abr` or it's clobbered).
+
+2. **The safety floor is unbreakable in categorical; in lexicographic it lives in the order.** With
+   `filter` always meaning `forbidden` (union pre-pass), hard exclusion is robust in both. But
+   lexicographic fuses the fitting/over *tier* with the bitrate *ranking* in one sort key, so a
+   mis-order there can be *unsafe* (an unwanted rebuffer). Categorical's pessimistic tier keeps "never
+   rebuffer" order-independent — a mis-order is at worst suboptimal.
+
+3. **New tier-straddling cases cost a rule *rewrite* in lexicographic, not in categorical.** Supporting
+   a min-resolution floor forced splitting `abr` into `abr-tier` + `abr-rank` (rethinking an existing
+   rule). Categorical leaves `abr` untouched and just *adds* `preferred: [≥360p]`; composite `preferred`
+   = fitting ∩ ≥360p, with fall-through ranked by `abr` → `360, 360, 240`, no `abr` change. So
+   categorical pays the tier/order split once, upfront, and tier-shaping rules compose for free;
+   lexicographic defers it and pays it ad hoc as rewrites. The categorical machinery *is* the amortized
+   form of those rewrites.
+
+**Net:** lexicographic is simpler in primitives and fine for a small, stable rule set with Kind B carved
+out. Categorical's extra structure buys order-robustness, an unbreakable safety floor, and rewrite-free
+extensibility — which matter more as the rule set grows (and the pressure list is long).
+
 ### Still open (the review-and-iterate part)
 
 - **This rebuts the Takeaway above.** A reordered, stable filter + sort *does* carry
@@ -395,12 +427,9 @@ convention suffices?
 - **A single multi-criteria user rule** (`{language, height}`) can't straddle ABR within one rule
   (language above, height below) — needs splitting into separate rules. The categorical model has the
   same limitation.
-- **Apparent equivalence, minus Kind B:** on every *in-scope* documented rule, this order seems to
-  produce the same pick as the categorical cascade (pessimistic tier + precedence + user-intent
-  fall-through bias). The one thing the categorical model expresses that this can't is the Kind-B
-  straddle above — which now looks common enough (ordinary quality-floor / stereo-output asks) that
-  it's **not purely ergonomics**: there's a real, if bounded, correctness gap the categorical model
-  closes.
+- **Categorical vs lexicographic — undecided** (see the comparison above): equivalent on every in-scope
+  rule; the call is lexicographic's simplicity vs. the categorical model's order-robustness, unbreakable
+  safety floor, and rewrite-free extensibility, plus the bounded Kind-B correctness gap.
 
 <!-- NEXT: settle the steering/CDN policy call + session-level pathway; then decide categorical-vs-lexicographic and fold the resolved story into the design doc as Appendix A. -->
 
