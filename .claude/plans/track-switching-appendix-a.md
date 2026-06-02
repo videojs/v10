@@ -268,8 +268,8 @@ FILTERS:  capability-probing (audio codec/DRM) · multi-cdn-failover (failed)
 SORT (first/weakest → last/winner):
   T1  audio-abr                   fitting > over-throughput
   T2  5.1-surround                prefer stereo / 5.1  (user/system channel preference — scope; rebuffer to honor, abr ranks within)
-  T2  content-steering            top pathway                                   [shared] ⚠️
-  T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
+  T2  content-steering            active pathway   (reflects upstream pick; scope)   [shared]
+  T2  multi-cdn-failover (active) active CDN        (reflects upstream pick; scope)   [shared]
   T2  multi-language-audio        default language
   T3  userAudioTrackSelection     chosen language        ← winner
 ```
@@ -286,8 +286,8 @@ SORT (first/weakest → last/winner):
   T2  hevc / force-AVC            prefer AVC  (codec scope — rebuffer to honor; abr ranks within)
   T2  rendition cap (upper)       within-cap first  (player/screen size, cost tiers — clean)
   T2  rendition floor (lower,hard) ≥floor first      (Kind A scope — rebuffer rather than show too-low)
-  T2  content-steering            top pathway                                   [shared] ⚠️
-  T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
+  T2  content-steering            active pathway   (reflects upstream pick; scope)   [shared]
+  T2  multi-cdn-failover (active) active CDN        (reflects upstream pick; scope)   [shared]
   T3  userVideoTrackSelection     chosen rendition       ← winner
    ── not placeable in the chain ──
    ✗  rendition floor (lower,soft) "prefer ≥Y but don't rebuffer" under a data-saver baseline → Kind B
@@ -304,6 +304,20 @@ SORT (first/weakest → last/winner):
   baseline. **Kind B → non-goal** (the resolution-floor straddle below): it must push the pick *up
   within the fitting set* yet yield to throughput — straddling ABR's tier and ranking — so the chain
   can't place it.
+
+**`content-steering` / `multi-cdn` (pathway rules) reflect an upstream pick.** A separate,
+session-level behavior owns *which* CDN/pathway — identify the CDNs from the playlist URLs, pick one
+(sticky), fail over on enough 4xx/5xx and mark the failing one unavailable. The track rule only
+*reflects* that state: prefer the active pathway's tracks (scope sort — ABR ranks renditions within)
+and forbid a failed pathway's tracks (filter). It does not choose the pathway. Two consequences:
+
+- **Cross-chain consistency is a composition convention:** include the *same* pathway rule definition
+  in both the audio and video rule sets, so both reflect the same upstream pick and stay on one
+  pathway. (Mis-wiring different pathway rules per type is the only failure mode — a "holding it wrong"
+  risk a convention tolerates.)
+- **Throughput shifts from a pathway switch are downstream:** ABR just reads the current throughput
+  each tick; the pathway rule and ABR never form a loop in the rule layer. The rule reads "pathway X is
+  active," ABR reads "throughput is N," independently.
 
 ### Non-goal: "prefer-among-fitting, don't-rebuffer" preferences (the straddle)
 
@@ -342,10 +356,9 @@ negligible gap.
 - **This rebuts the Takeaway above.** A reordered, stable filter + sort *does* carry
   preferred-vs-allowed for these rules. Appendix A's "filter + sort isn't enough" needs reframing — the
   live question is categorical-vs-lexicographic **ergonomics/extensibility**, not capability.
-- **`content-steering` / `multi-cdn` (active) vs ABR** (⚠️ above): parked in Tier 2 (rebuffer on the
-  chosen pathway) — real argument for Tier 1 (switch pathway to avoid rebuffering). Policy call.
-- **Pathway is likely a session-level decision** shared by both chains, not an independent per-chain
-  sort (else audio and video could pick different CDNs).
+- **Pathway (`content-steering` / `multi-cdn`) — resolved** (see note above): the rules *reflect* an
+  upstream pick (scope + filter); cross-chain consistency is a composition convention; throughput
+  shifts are downstream. Not a chain-ordering concern.
 - **A single multi-criteria user rule** (`{language, height}`) can't straddle ABR within one rule
   (language above, height below) — needs splitting into separate rules. The categorical model has the
   same limitation.
