@@ -1,27 +1,33 @@
-export interface EventLike<Detail = void> {
+export interface EventLike<Detail = unknown> {
   readonly type: string;
   readonly timeStamp: number;
   readonly detail?: Detail;
 }
 
-export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike }> {
-  addEventListener<K extends keyof Events & string>(
+export type EventType<Events> = Extract<keyof Events, string>;
+
+export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike<unknown> }> {
+  addEventListener<K extends EventType<Events>>(
     type: K,
     listener: (event: Events[K]) => void,
     options?: { signal?: AbortSignal }
   ): void;
-  removeEventListener<K extends keyof Events & string>(type: K, listener: (event: Events[K]) => void): void;
+  removeEventListener<K extends EventType<Events>>(type: K, listener: (event: Events[K]) => void): void;
   dispatchEvent(event: EventLike): boolean;
 }
 
+export type RemotePlaybackState = 'disconnected' | 'connecting' | 'connected';
+
 export interface RemotePlaybackLike extends EventTarget {
-  readonly state: string;
+  readonly state: RemotePlaybackState;
   prompt(): Promise<void>;
   watchAvailability(callback: (available: boolean) => void): Promise<number>;
   cancelWatchAvailability(id?: number): Promise<void>;
 }
 
-export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
+export function TypedEventTarget<
+  Events extends { [K in keyof Events]: EventLike<unknown> } = Record<string, EventLike<unknown>>,
+>() {
   return EventTarget as unknown as { new (): EventTargetLike<Events> };
 }
 
@@ -186,7 +192,27 @@ export interface MediaPictureInPictureCapability {
 }
 
 export interface MediaRemotePlaybackCapability {
-  readonly remote: RemotePlaybackLike;
+  readonly remote: RemotePlaybackLike | null;
+}
+
+export interface MediaRemotePlaybackHost extends MediaRemotePlaybackCapability {
+  readonly remoteTarget: MediaRemotePlaybackTarget | null;
+  setRemoteMedia(media: MediaRemotePlaybackTarget | null): void;
+}
+
+export interface MediaRemotePlaybackHostEvents {
+  remotetargetchange: EventLike<MediaRemotePlaybackTargetChangeDetail>;
+}
+
+export interface MediaRemotePlaybackTarget extends Media {
+  readonly supported: boolean;
+  readonly active: boolean;
+  setLocalMedia?(media: Media | null): void;
+}
+
+export interface MediaRemotePlaybackTargetChangeDetail {
+  readonly remoteTarget: MediaRemotePlaybackTarget | null;
+  readonly remote: RemotePlaybackLike | null;
 }
 
 export interface MediaStreamTypeEvents {
@@ -255,7 +281,9 @@ export interface VideoEvents
     MediaPlaybackRateEvents,
     MediaBufferEvents,
     MediaErrorEvents,
-    TextTrackListEvents {}
+    TextTrackListEvents,
+    MediaStreamTypeEvents,
+    MediaRemotePlaybackHostEvents {}
 
 export interface Video
   extends MediaPlaybackCapability,
@@ -282,7 +310,9 @@ export interface AudioEvents
     MediaVolumeEvents,
     MediaPlaybackRateEvents,
     MediaBufferEvents,
-    MediaErrorEvents {}
+    MediaErrorEvents,
+    MediaStreamTypeEvents,
+    MediaRemotePlaybackHostEvents {}
 
 export interface Audio
   extends MediaPlaybackCapability,

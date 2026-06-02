@@ -6,8 +6,10 @@ export default defineConfig({
   entry: {
     array: './src/array/index.ts',
     dom: './src/dom/index.ts',
+    errors: './src/errors/index.ts',
     events: './src/events/index.ts',
     function: './src/function/index.ts',
+    media: './src/media/index.ts',
     number: './src/number/index.ts',
     object: './src/object/index.ts',
     predicate: './src/predicate/index.ts',

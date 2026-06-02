@@ -2,9 +2,8 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaRemotePlaybackCapable } from '../../media/predicate';
+import { isMediaRemotePlaybackCapable, isMediaRemotePlaybackHost } from '../../media/predicate';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
-import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
 /** WebKit-only addition to HTMLMediaElement exposing the active AirPlay flag. */
 interface WebKitAirplayMedia extends HTMLMediaElement {
@@ -27,15 +26,21 @@ export const remotePlaybackFeature = definePlayerFeature({
     async toggleRemotePlayback() {
       const { media, container } = target();
 
-      if (isRemotePlaybackConnected(media)) {
-        return requestRemotePlayback(media);
+      const remote = isMediaRemotePlaybackCapable(media) ? media.remote : null;
+
+      if (!remote) {
+        throw new DOMException('Remote playback not supported', 'NotSupportedError');
+      }
+
+      if (remote.state === 'connected') {
+        return remote.prompt();
       }
 
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);
       }
 
-      return await requestRemotePlayback(media);
+      return await remote.prompt();
     },
   }),
 
@@ -44,14 +49,30 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     if (!isMediaRemotePlaybackCapable(media)) return;
 
-    // Safari's W3C `media.remote` events don't fire reliably for AirPlay
-    // session changes. When WebKit's AirPlay APIs are available, drive both
-    // state slices off the WebKit events and skip the W3C listeners entirely
-    // so the two paths can't double-write or conflict.
-    if (isWebKitAirplayCapable(media)) {
+    let abort: AbortController | null = null;
+    let watchId: number | undefined;
+    let watchedRemote: typeof media.remote | null = null;
+
+    const cleanup = () => {
+      abort?.abort();
+      abort = null;
+
+      if (watchedRemote && watchId !== undefined) {
+        watchedRemote.cancelWatchAvailability(watchId).catch(() => {});
+      }
+
+      watchedRemote = null;
+      watchId = undefined;
+    };
+
+    const attachWebKitAirPlay = () => {
+      const airplayMedia = media as unknown as WebKitAirplayMedia;
+
+      abort = new AbortController();
+
       const syncConnection = () => {
         set({
-          remotePlaybackState: media.webkitCurrentPlaybackTargetIsWireless ? 'connected' : 'disconnected',
+          remotePlaybackState: airplayMedia.webkitCurrentPlaybackTargetIsWireless ? 'connected' : 'disconnected',
         });
       };
 
@@ -60,33 +81,73 @@ export const remotePlaybackFeature = definePlayerFeature({
         set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
       };
 
-      listen(media, 'webkitplaybacktargetavailabilitychanged', syncAvailability, { signal });
-      listen(media, 'webkitcurrentplaybacktargetiswirelesschanged', syncConnection, { signal });
+      listen(airplayMedia, 'webkitplaybacktargetavailabilitychanged', syncAvailability, { signal: abort.signal });
+      listen(airplayMedia, 'webkitcurrentplaybacktargetiswirelesschanged', syncConnection, { signal: abort.signal });
 
-      // Sync initial connection state in case AirPlay was already active.
       syncConnection();
-      return;
+    };
+
+    const attachRemote = (remote: typeof media.remote) => {
+      if (!remote) {
+        set({
+          remotePlaybackState: 'disconnected',
+          remotePlaybackAvailability: 'unsupported',
+        });
+        return;
+      }
+
+      abort = new AbortController();
+      watchedRemote = remote;
+
+      const syncState = () => set({ remotePlaybackState: remote.state as RemotePlaybackConnectionState });
+
+      syncState();
+
+      listen(remote, 'connect', syncState, { signal: abort.signal });
+      listen(remote, 'connecting', syncState, { signal: abort.signal });
+      listen(remote, 'disconnect', syncState, { signal: abort.signal });
+
+      remote
+        .watchAvailability((available: boolean) => {
+          set({ remotePlaybackAvailability: available ? 'available' : 'unavailable' });
+        })
+        .then((id) => {
+          if (watchedRemote !== remote || abort?.signal.aborted) {
+            remote.cancelWatchAvailability(id).catch(() => {});
+            return;
+          }
+
+          watchId = id;
+        })
+        .catch(() => {
+          set({ remotePlaybackAvailability: 'unsupported' });
+        });
+    };
+
+    const attachRemotePlayback = () => {
+      cleanup();
+
+      if (isMediaRemotePlaybackHost(media) && media.remoteTarget?.supported) {
+        attachRemote(media.remote);
+        return;
+      }
+
+      // Safari's W3C `media.remote` events don't fire reliably for AirPlay
+      // session changes, so use WebKit events unless a custom remote target is active.
+      if (isWebKitAirplayCapable(media)) {
+        attachWebKitAirPlay();
+        return;
+      }
+
+      attachRemote(media.remote);
+    };
+
+    attachRemotePlayback();
+
+    if (isMediaRemotePlaybackHost(media)) {
+      listen(media, 'remotetargetchange', attachRemotePlayback, { signal });
     }
 
-    // W3C Remote Playback path (Chromium / Edge with the cast extension).
-    const syncState = () => set({ remotePlaybackState: media.remote.state as RemotePlaybackConnectionState });
-
-    syncState();
-
-    listen(media.remote, 'connect', syncState, { signal });
-    listen(media.remote, 'connecting', syncState, { signal });
-    listen(media.remote, 'disconnect', syncState, { signal });
-
-    media.remote
-      .watchAvailability((available: boolean) => {
-        set({ remotePlaybackAvailability: available ? 'available' : 'unavailable' });
-      })
-      .catch(() => {
-        set({ remotePlaybackAvailability: 'unsupported' });
-      });
-
-    signal.addEventListener('abort', () => {
-      media.remote?.cancelWatchAvailability().catch(() => {});
-    });
+    signal.addEventListener('abort', () => cleanup(), { once: true });
   },
 });

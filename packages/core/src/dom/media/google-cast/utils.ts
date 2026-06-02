@@ -1,39 +1,16 @@
-export class InvalidStateError extends Error {}
-export class NotSupportedError extends Error {}
-export class NotFoundError extends Error {}
+import { getChromeVersion, isAndroid, loadScript } from '@videojs/utils/dom';
 
-const HLS_RESPONSE_HEADERS = ['application/x-mpegURL', 'application/vnd.apple.mpegurl', 'audio/mpegurl'];
-
-export class IterableWeakSet<T extends WeakKey> {
-  readonly #refs = new Set<WeakRef<T>>();
-  readonly #seen = new WeakMap<T, WeakRef<T>>();
-
-  add(value: T): this {
-    if (this.#seen.has(value)) return this;
-    const ref = new WeakRef(value);
-    this.#seen.set(value, ref);
-    this.#refs.add(ref);
-    return this;
-  }
-
-  delete(value: T): boolean {
-    const ref = this.#seen.get(value);
-    if (!ref) return false;
-    this.#seen.delete(value);
-    return this.#refs.delete(ref);
-  }
-
-  forEach(fn: (value: T) => void): void {
-    for (const ref of this.#refs) {
-      const value = ref.deref();
-      if (value) fn(value);
-      else this.#refs.delete(ref);
-    }
-  }
-}
+export const GOOGLE_CAST_FRAMEWORK_URL = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
 
 export function onCastApiAvailable(callback: () => void) {
-  const whenDefined = () => customElements.whenDefined('google-cast-button').then(callback);
+  const whenDefined = () => {
+    if (typeof customElements === 'undefined') {
+      callback();
+      return;
+    }
+
+    customElements.whenDefined('google-cast-launcher').then(callback);
+  };
 
   if (!globalThis.chrome?.cast?.isAvailable) {
     (globalThis as { __onGCastApiAvailable?: () => void }).__onGCastApiAvailable = whenDefined;
@@ -45,25 +22,25 @@ export function onCastApiAvailable(callback: () => void) {
 }
 
 export function requiresCastFramework() {
-  // todo: exclude for Android>=56 which supports the Remote Playback API natively.
-  return Boolean(globalThis.chrome);
+  const chromeVersion = getChromeVersion();
+
+  // Android>=56 supports the Remote Playback API natively
+  const isAtLeastAndroid56 = isAndroid() && chromeVersion !== null && chromeVersion >= 56;
+
+  return Boolean(globalThis.chrome) && !isAtLeastAndroid56;
 }
 
-export function loadCastFramework() {
-  const sdkUrl = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
-  if (globalThis.chrome?.cast || document.querySelector(`script[src="${sdkUrl}"]`)) return;
-
-  const script = document.createElement('script');
-  script.src = sdkUrl;
-  document.head.append(script);
+export async function loadCastFramework() {
+  if (globalThis.chrome?.cast) return;
+  await loadScript(GOOGLE_CAST_FRAMEWORK_URL);
 }
 
-export function castContext() {
+export function getCastContext() {
   return typeof cast === 'undefined' ? undefined : cast.framework?.CastContext.getInstance();
 }
 
 export function currentSession() {
-  return castContext()?.getCurrentSession();
+  return getCastContext()?.getCurrentSession();
 }
 
 export function currentMedia() {
@@ -85,7 +62,7 @@ export function getMediaStatus(request: chrome.cast.media.GetStatusRequest) {
 const MEDIA_NAMESPACE = 'urn:x-cast:com.google.cast.media';
 let requestId = 0;
 
-export function setPlaybackRate(rate: number) {
+export function setCastPlaybackRate(rate: number) {
   const media = currentMedia();
   return currentSession()!.sendMessage(MEDIA_NAMESPACE, {
     type: 'SET_PLAYBACK_RATE',
@@ -98,7 +75,7 @@ export function setPlaybackRate(rate: number) {
 export type CastOptions = cast.framework.CastOptions;
 
 export function setCastOptions(options: Partial<CastOptions>) {
-  castContext()!.setOptions({
+  getCastContext()!.setOptions({
     ...getDefaultCastOptions(),
     ...options,
   });
@@ -107,12 +84,31 @@ export function setCastOptions(options: Partial<CastOptions>) {
 export function getDefaultCastOptions(): CastOptions {
   return {
     receiverApplicationId: 'CC1AD845',
-    autoJoinPolicy:
-      globalThis.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? ('origin_scoped' as chrome.cast.AutoJoinPolicy),
+    autoJoinPolicy: globalThis.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped',
     androidReceiverCompatible: false,
     language: 'en-US',
     resumeSavedSession: true,
   };
+}
+
+export async function getCastPlaylistSegmentFormat(url: string) {
+  try {
+    const mainManifestContent = await (await fetch(url)).text();
+    let availableChunksContent = mainManifestContent;
+
+    const playlists = parsePlaylistUrls(mainManifestContent);
+    if (playlists.length > 0) {
+      const chosenPlaylistUrl = new URL(playlists[0]!, url).toString();
+      availableChunksContent = await (await fetch(chosenPlaylistUrl)).text();
+    }
+
+    const segment = parseSegment(availableChunksContent);
+    const format = getFormat(segment);
+    return format;
+  } catch (err) {
+    console.error('Error while trying to parse the manifest playlist', err);
+    return undefined;
+  }
 }
 
 function getFormat(segment: string | undefined) {
@@ -144,41 +140,4 @@ function parsePlaylistUrls(playlistContent: string) {
 function parseSegment(playlistContent: string) {
   const lines = playlistContent.split('\n');
   return lines.find((line) => !line.trim().startsWith('#') && line.trim() !== '');
-}
-
-export async function isHls(url: string) {
-  if (!url) return false;
-  if (/\.m3u8?(\?.*)?$/i.test(url)) return true;
-  if (url.startsWith('blob:')) return false;
-
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    const contentType = response.headers.get('Content-Type');
-    if (!contentType) return false;
-    const normalizedContentType = contentType.toLowerCase().split(';')[0]!.trim();
-    return HLS_RESPONSE_HEADERS.some((header) => normalizedContentType === header.toLowerCase());
-  } catch (err) {
-    console.error('Error while trying to get the Content-Type of the manifest', err);
-    return false;
-  }
-}
-
-export async function getPlaylistSegmentFormat(url: string) {
-  try {
-    const mainManifestContent = await (await fetch(url)).text();
-    let availableChunksContent = mainManifestContent;
-
-    const playlists = parsePlaylistUrls(mainManifestContent);
-    if (playlists.length > 0) {
-      const chosenPlaylistUrl = new URL(playlists[0]!, url).toString();
-      availableChunksContent = await (await fetch(chosenPlaylistUrl)).text();
-    }
-
-    const segment = parseSegment(availableChunksContent);
-    const format = getFormat(segment);
-    return format;
-  } catch (err) {
-    console.error('Error while trying to parse the manifest playlist', err);
-    return undefined;
-  }
 }

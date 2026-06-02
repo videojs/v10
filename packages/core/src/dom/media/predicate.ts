@@ -1,12 +1,15 @@
-import { isFunction, isObject } from '@videojs/utils/predicate';
+import { isBoolean, isFunction, isNull, isObject } from '@videojs/utils/predicate';
 
 import type {
   MediaBufferCapability,
   MediaErrorCapability,
   MediaLiveCapability,
   MediaPauseCapability,
+  MediaPlaybackCapability,
   MediaPlaybackRateCapability,
   MediaRemotePlaybackCapability,
+  MediaRemotePlaybackHost,
+  MediaRemotePlaybackTarget,
   MediaSeekCapability,
   MediaSourceCapability,
   MediaStreamTypeCapability,
@@ -19,9 +22,11 @@ export function hasMetadata(media: MediaSourceCapability): boolean {
 }
 
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
-  return (
-    isObject(value) && 'paused' in value && 'ended' in value && isFunction((value as Record<string, unknown>).pause)
-  );
+  return isObject(value) && 'paused' in value && 'ended' in value && 'pause' in value && isFunction(value.pause);
+}
+
+export function isMediaPlaybackCapable(value: unknown): value is MediaPlaybackCapability {
+  return isObject(value) && isFunction((value as Record<string, unknown>).play);
 }
 
 export function isMediaSeekCapable(value: unknown): value is MediaSeekCapability {
@@ -59,7 +64,27 @@ export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrack
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
-  return isObject(value) && 'remote' in value && isObject((value as Record<string, unknown>).remote);
+  return isObject(value) && 'remote' in value && (isObject(value.remote) || isNull(value.remote));
+}
+
+export function isMediaRemotePlaybackHost(value: unknown): value is MediaRemotePlaybackHost {
+  return (
+    isMediaRemotePlaybackCapable(value) &&
+    'remoteTarget' in value &&
+    'setRemoteMedia' in value &&
+    isFunction(value.setRemoteMedia)
+  );
+}
+
+export function isMediaRemoteTarget(value: unknown): value is MediaRemotePlaybackTarget {
+  return (
+    isObject(value) &&
+    'supported' in value &&
+    isBoolean(value.supported) &&
+    'active' in value &&
+    isBoolean(value.active) &&
+    isMediaPlaybackCapable(value)
+  );
 }
 
 export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
@@ -68,14 +93,4 @@ export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTy
 
 export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {
   return isObject(value) && 'liveEdgeStart' in value && 'targetLiveWindow' in value;
-}
-
-export function isQuerySelectorAllCapable<T extends string>(
-  value: unknown
-): value is {
-  querySelectorAll: (selectors: T) => NodeListOf<HTMLElementTagNameMap[Extract<T, keyof HTMLElementTagNameMap>]>;
-} {
-  return (
-    isObject(value) && 'querySelectorAll' in value && isFunction((value as Record<string, unknown>).querySelectorAll)
-  );
 }

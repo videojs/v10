@@ -3,7 +3,8 @@ import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
+import { isMediaTextTrackCapable } from '../../media/predicate';
+import { getHTMLMediaElementTarget } from '../../media/utils';
 
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
@@ -74,24 +75,34 @@ export const textTrackFeature = definePlayerFeature({
         : [];
 
       let thumbnailTrackSrc: string | null = null;
-      if (thumbnailTrack) {
-        const el = findTrackElement(media, thumbnailTrack);
-        thumbnailTrackSrc = el?.src ?? null;
-      }
 
-      // Listen for <track> load events on tracks that don't have cues yet.
-      // `addtrack` fires before cues are parsed — we need the `load` event
-      // on the <track> element to know when cues are ready.
-      const tracks = (isQuerySelectorAllCapable<'track'>(media) && media.querySelectorAll('track')) || [];
-      const shadowTracks = (media instanceof HTMLElement && media.shadowRoot?.querySelectorAll('track')) || [];
+      const mediaEl = getHTMLMediaElementTarget(media);
 
-      for (const trackEl of [...tracks, ...shadowTracks]) {
-        if (!trackEl.track?.cues?.length) {
-          listen(trackEl, 'load', sync, { signal: trackCleanup.signal });
+      if (mediaEl) {
+        if (thumbnailTrack) {
+          const trackEl = findTrackElement(mediaEl, thumbnailTrack);
+          thumbnailTrackSrc = trackEl?.src ?? null;
+        }
+
+        // Listen for <track> load events on tracks that don't have cues yet.
+        // `addtrack` fires before cues are parsed — we need the `load` event
+        // on the <track> element to know when cues are ready.
+        const tracks = mediaEl.querySelectorAll('track') ?? [];
+        const shadowTracks = mediaEl.shadowRoot?.querySelectorAll('track') ?? [];
+        for (const trackEl of [...tracks, ...shadowTracks]) {
+          if (!trackEl.track?.cues?.length) {
+            listen(trackEl, 'load', sync, { signal: trackCleanup.signal });
+          }
         }
       }
 
-      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
+      set({
+        chaptersCues,
+        thumbnailCues,
+        thumbnailTrackSrc,
+        textTrackList,
+        subtitlesShowing,
+      });
     };
 
     sync();

@@ -175,7 +175,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   destroy() {
-    this.detach();
+    super.destroy();
     this.#engineDestroy();
   }
 

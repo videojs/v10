@@ -10,9 +10,6 @@ export class MuxVideo extends MediaAttachMixin(CustomMediaElement('video', MuxVi
       'type',
       'prefer-playback',
       'debug',
-      'cast-src',
-      'cast-receiver',
-      'cast-content-type',
     ];
   }
 }

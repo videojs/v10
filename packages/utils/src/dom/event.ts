@@ -4,6 +4,10 @@ export function resolveEventTarget(event: Event): EventTarget | null {
   return path.length > 0 ? path[0]! : event.target;
 }
 
+export function isEventTarget(value: unknown): value is EventTarget {
+  return value instanceof EventTarget;
+}
+
 export interface OnEventOptions extends AddEventListenerOptions {
   /**
    * An AbortSignal to cancel waiting for the event.

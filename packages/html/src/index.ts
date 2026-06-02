@@ -14,8 +14,9 @@ export { DestroyMixin, ReactiveElement } from '@videojs/element';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
-// Media
 export { MediaContainerElement } from './media/container-element';
+// Media
+export { GoogleCastElement } from './media/google-cast';
 // Player
 export * from './player/context';
 export * from './player/create-player';

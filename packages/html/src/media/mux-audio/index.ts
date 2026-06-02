@@ -10,9 +10,6 @@ export class MuxAudio extends MediaAttachMixin(CustomMediaElement('audio', MuxAu
       'type',
       'prefer-playback',
       'debug',
-      'cast-src',
-      'cast-receiver',
-      'cast-content-type',
     ];
   }
 }

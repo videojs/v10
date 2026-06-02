@@ -7,6 +7,7 @@ export * from '@videojs/core/dom';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
+export { GoogleCast, type GoogleCastProps } from './media/google-cast';
 // Media primitives
 export {
   Container,

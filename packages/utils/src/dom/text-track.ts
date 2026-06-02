@@ -6,11 +6,11 @@ export function isCaptionOrSubtitleTrack(track: { kind: string }): track is { ki
 }
 
 /** Find the `<track>` element that owns the given `TextTrack`. */
-export function findTrackElement(media: EventTarget, track: unknown): HTMLTrackElement | null {
-  if (!(media instanceof HTMLElement)) return null;
+export function findTrackElement(media: HTMLMediaElement, track: unknown): HTMLTrackElement | null {
   for (const el of media.querySelectorAll('track')) {
     if (el.track === track) return el;
   }
+
   return null;
 }
 

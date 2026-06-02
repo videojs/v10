@@ -58,7 +58,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   }
 
   destroy() {
-    this.detach();
+    super.destroy();
   }
 }
 
