@@ -267,7 +267,7 @@ AUDIO chain → selectedAudioTrackId
 FILTERS:  capability-probing (audio codec/DRM) · multi-cdn-failover (failed)
 SORT (first/weakest → last/winner):
   T1  audio-abr                   fitting > over-throughput
-  T2  5.1-surround                prefer 5.1 / stereo  (channel scope — rebuffer to honor; abr ranks within)
+  T2  5.1-surround                prefer stereo / 5.1  (user/system channel preference — scope; rebuffer to honor, abr ranks within)
   T2  content-steering            top pathway                                   [shared] ⚠️
   T2  multi-cdn-failover (active) active CDN first                              [shared] ⚠️
   T2  multi-language-audio        default language
@@ -310,7 +310,7 @@ SORT (first/weakest → last/winner):
 This model deliberately does **not** handle a preference that must **reorder *within* the fitting set,
 against the baseline ranking** yet **must not rebuffer** to honor it. Optimal handling needs the rule
 to sit *between* ABR's fitting/over **tier** and its **ranking** — and since ABR is a single sort key,
-it can't be straddled. Two examples, same shape:
+it can't be straddled. The canonical case — a quality **floor** under a baseline that pulls *lower*:
 
 - **Resolution floor under a data-saver baseline.** A small/thumbnail player picks the *lowest adequate*
   rendition to save bandwidth, but not *too* low — "prefer ≥360p, but don't rebuffer for it." Ladder
@@ -318,8 +318,13 @@ it can't be straddled. Two examples, same shape:
   240p→360p *among the fitting tracks* (beat the lowest-first ranking) **and** drop to 240p when only
   240p fits (yield to the tier). No single floor position does both: *after* ABR it rebuffers when only
   240p fits; *before* ABR it can't override the baseline's 240p when 360p fits.
-- **Stereo on a stereo-only output.** "Prefer stereo over (downmixed) 5.1 to save bandwidth, but if
-  only 5.1 fits, just play it" — `fitting-stereo > fitting-5.1 > over-anything`. Same straddle.
+
+The shape generalizes to any "prefer the *higher-bandwidth* option among the fitting set, but don't
+rebuffer for it, against a baseline that prefers lower" — e.g. `prefer 5.1` under a stereo-default /
+data-saver baseline. (Note: a channel-layout *preference* — "prefer stereo/5.1" as user/system intent —
+is **not** this; it's a scope that rebuffers to honor, so it lands cleanly after ABR. And "prefer the
+*lower*-bandwidth option" never rebuffers, so it's clean too. Only "prefer higher, don't rebuffer,
+against a lower-pulling baseline" straddles.)
 
 What *avoids* the straddle: a **scope** ("rebuffer to honor it") sorts cleanly after ABR because it's
 allowed to breach the tier; and a bound that runs *with* the baseline (an upper cap, or a floor when
