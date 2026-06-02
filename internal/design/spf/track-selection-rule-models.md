@@ -43,10 +43,14 @@ of combining rules, and the composition strategy is where the models differ most
   allowed, ordered within a tier. (Exactly how the categories combine is itself part of what this model
   has to settle.)
 
-The headline: **on every rule we currently have, the two produce the same picks.** This is not a
-correctness contest. The choice is about how rules get authored, how robust composition is to an
-author's mistake (and how bad the mistake is), what a *new* rule costs, and one capability one model
-has that the other doesn't.
+The headline: **on every rule we currently have, the two produce the same picks** — with one qualifier
+worth flagging up front. Matching a *new* rule that straddles a tier (e.g. a soft min-resolution floor)
+forces Filter + Sort to split `abr` into separate steps — a bitrate/resolution ordering and an
+above/below-throughput threshold — a rewrite Preference Tiers doesn't need (see §3 and §5). So the picks
+match for the rules *as currently shaped*; some not-yet-needed rules cost Filter + Sort a rewrite to keep
+that parity. This is not a correctness contest. The choice is about how rules get authored, how robust
+composition is to an author's mistake (and how bad the mistake is), what a *new* rule costs, and one
+capability one model has that the other doesn't.
 
 ## The rule set we're designing for
 
@@ -70,7 +74,7 @@ tracks), a **scope** (a preference we'd rebuffer to honor), or a **ranker** (ord
 | `content-steering` | scope | Prefer the active pathway's tracks. |
 | `video-abr` / `audio-abr` | ranker | Of the fitting tracks, highest quality; over-throughput as fallback. |
 | `multi-signal-abr` | ranker | Order by a fused quality/throughput signal. |
-| `userVideoTrackSelection` / `userAudioTrackSelection` | scope | Honor an explicit user pick above all policy. |
+| `userVideoTrackSelection` / `userAudioTrackSelection` | scope | Honor an explicit user choice above all policy — usually of a track *feature* (a video resolution, an audio language), so it prefers every track matching that feature, not one specific track. (The names imply a single-track pick; that's an artifact of today's naive implementation.) |
 | `multi-language-audio` | scope | Prefer the default/selected language. |
 | `5.1-surround-selection` | scope | Prefer the requested channel layout. |
 | `hevc-variant-selection` | scope | Prefer (or force) a codec, e.g. AVC over HEVC. |
@@ -218,7 +222,7 @@ SORT (weakest → winner):
   policy    rendition floor (hard)    ≥floor first     (rebuffer rather than show too-low)
   policy    content-steering          active pathway   (reflects upstream pick)   [shared]
   policy    multi-cdn-failover        active CDN        (reflects upstream pick)   [shared]
-  user      userVideoTrackSelection   chosen rendition ← winner
+  user      userVideoTrackSelection   chosen resolution ← winner
   ── not placeable ──
   ✗ rendition floor (soft)            "prefer ≥Y but don't rebuffer" → a tier straddle (see §5)
 ```
