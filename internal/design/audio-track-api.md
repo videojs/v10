@@ -11,27 +11,19 @@ A consumer-facing API for discovering and switching audio tracks in Video.js 10,
 
 SPF already parses audio renditions from HLS multivariant playlists and manages `selectedAudioTrackId` internally. The segment loading, buffer management, and track resolution behaviors are all in place. None of this is surfaced to the outside world in a stable, typed way. Building a language-switcher UI today means reaching directly into `media.engine.state` — an internal SPF primitive with no stability contract.
 
-## Why the Text Track Pattern Doesn't Transfer Directly
+## Architecture
 
-The `textTrack` feature reads from the native browser `textTracks` API on the media element. This works because SPF's `syncTextTracks` behavior creates real `<track>` DOM elements, which the browser automatically registers in `mediaElement.textTracks`. When SPF adds a track, the browser fires a native `addtrack` event that the core feature listens to.
+Audio track exposure uses the same `media-tracks` polyfill layer already in the codebase — no custom properties or events are needed on the adapter. PR [#1609](https://github.com/videojs/v10/pull/1609) establishes the pattern for `HlsJsMedia` and `NativeHlsMedia`.
 
-Audio tracks work differently. SPF manages audio rendition switching entirely at the MSE byte-stream level — it selects which HLS rendition's segments feed the audio `SourceBuffer`. There is no `<track>`-element equivalent for audio. The native `mediaElement.audioTracks` list remains empty even during multi-language HLS playback. Reading from it yields nothing.
+**Media-tracks layer.** `MediaTracksLayer` (see `packages/core/src/dom/media/media-tracks-layer.ts`) wraps `HTMLMediaElementLayer` with `MediaTracksMixin`, introduced in PR [#1609](https://github.com/videojs/v10/pull/1609). This gives any host that adds the layer a conformant `audioTracks` (and `videoTracks`) property, along with `addAudioTrack()` / `addVideoTrack()` / `addRendition()` helpers and standard `change` events — the same shape the browser provides natively on `mediaElement.audioTracks`.
 
-The Mux media-tracks polyfill extends `HTMLMediaElement` with a conformant `audioTracks` property, but unlike text tracks where the browser populates the list from `<track>` elements SPF creates, audio tracks would require actively pushing SPF's internal state into the polyfill on every change. That is a synchronization layer with a new external dependency and no reduction in complexity. It is a separate, independent decision from surfacing the API.
+**Adapter (`SimpleHlsMedia`).** Call `addLayer(this, new MediaTracksLayer())` in the constructor, matching what `NativeHlsMedia` already does. No custom property or event is needed — the layer owns `audioTracks`.
 
-The right pattern for audio tracks is therefore: the adapter exposes a custom property and event, the core feature reads from that, the store surfaces it through a selector. This is the same approach used by `streamType`, which also has no native DOM equivalent.
+**Extension (`SimpleHlsMediaTracks`).** A `MediaExtension` (following `HlsJsMediaTracks` in `packages/core/src/dom/media/hls-js/media-tracks.ts`) installs onto `SimpleHlsMedia`. It uses SPF's `effect()` to watch `presentation` and `selectedAudioTrackId` signals, calls `removeAudioTracks(media)` + `media.addAudioTrack(kind, name, lang)` when the track list changes, and sets `audioTrack.enabled` to reflect the active selection. When `media.audioTracks` fires `change` (user or programmatic), the extension writes the new selection back to `engine.state.selectedAudioTrackId`.
 
-## Proposed Architecture
+**Core feature (`audioTrackFeature`).** A new feature in `packages/core/src/dom/store/features/` follows the exact structure of `textTrackFeature`. The predicate (`isMediaAudioTrackCapable`) checks whether the media object exposes `audioTracks` — using the same shape as `isMediaStreamTypeCapable`. Because `MediaTracksLayer` provides the standard `AudioTrackList` (including `addtrack`, `removetrack`, and `change` events), the feature can sync via `audioTracks.onchange` the same way `textTrackFeature` syncs via `textTracks`. The state type (`MediaAudioTrackState`) and capability interface (`MediaAudioTrackCapability`) live next to their text track equivalents.
 
-**Adapter (`SimpleHlsMedia`, in core).** `SimpleHlsMedia` is the boundary where SPF internals meet the rest of the stack. It gains an `audioTracks` read-only property (returning a list of track objects with `id`, `label`, `language`, `kind`, and `enabled`), a `selectAudioTrack(id)` method, and fires an `audiotrackschange` event whenever the track list or active selection changes.
-
-Internally it uses SPF's `effect()` to watch `presentation` and `selectedAudioTrackId` signals and dispatch the event when either changes. The effect is created fresh on each `src` assignment and torn down on `destroy()`, matching the engine lifecycle.
-
-The track shape maps SPF's `AudioTrack` fields to a clean public surface: `name` becomes `label`, `language` carries over, and `enabled` is derived by comparing each track's `id` to `selectedAudioTrackId`. SPF's `AudioTrack` has no `kind` field — the property defaults to `'main'`, appropriate for HLS audio renditions today.
-
-**Core feature (`audioTrackFeature`).** A new feature in `packages/core/src/dom/store/features/` follows the exact structure of `textTrackFeature`. A predicate (`isMediaAudioTrackCapable`) checks whether the media object exposes `audioTracks` and `selectAudioTrack`, using the same shape as `isMediaStreamTypeCapable`. If capable, the feature syncs on `audiotrackschange` and stores the result. The state type (`MediaAudioTrackState`) and capability interface (`MediaAudioTrackCapability`) live next to their text track equivalents in `core/media/state.ts` and `core/media/types.ts`.
-
-**Selector.** `selectAudioTrack` is added to the selectors file parallel to `selectTextTrack`. UI components subscribe to track list changes and invoke switching through this selector.
+**Selector.** `selectAudioTrack` is added to the selectors file parallel to `selectTextTrack`. UI components subscribe to track list changes; switching is done by setting `audioTrack.enabled = true` on the desired track.
 
 **Feature presets.** `audioTrackFeature` is added to all four presets — video, audio, live-video, live-audio. Multi-language audio applies to every stream type, including audio-only.
 
