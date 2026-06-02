@@ -5,6 +5,7 @@ import {
   type VimeoPreload,
   vimeoMediaDefaultProps,
 } from '@videojs/core/dom/media/vimeo';
+import { escapeHtml } from '@videojs/utils/string';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class VimeoCustomMediaElement extends CustomMediaElement('iframe', VimeoMedia) {
@@ -44,16 +45,6 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
     playsInline: attrs.playsinline !== undefined,
     preload: (attrs.preload as VimeoPreload | undefined) ?? vimeoMediaDefaultProps.preload,
   };
-}
-
-function escapeHtml(str: string) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/`/g, '&#96;');
 }
 
 /**
