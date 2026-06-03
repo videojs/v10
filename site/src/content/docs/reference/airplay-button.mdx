@@ -1,5 +1,5 @@
 ---
-title: AirplayButton
+title: AirPlayButton
 frameworkTitle:
   html: media-airplay-button
 description: Accessible AirPlay toggle button that opens the WebKit playback target picker and reflects session state
@@ -26,7 +26,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/Ba
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<AirplayButton />
+<AirPlayButton />
 ```
 </FrameworkCase>
 
@@ -44,7 +44,7 @@ The toggle is a no-op unless `availability` is `"available"` — clicking the bu
 
 The component consumes the unified <DocsLink slug="reference/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
 
-WebKit does not expose a `"connecting"` intermediate state — `airplayState` flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. When connected, the picker itself acts as the disconnect UI.
+WebKit does not expose a `"connecting"` intermediate state — the `state` slice flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. When connected, the picker itself acts as the disconnect UI.
 
 ## Styling
 
@@ -124,4 +124,4 @@ Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when discon
   </StyleCase>
 </FrameworkCase>
 
-<ComponentReference component="AirplayButton" />
+<ComponentReference component="AirPlayButton" />

@@ -1,5 +1,5 @@
+import type { WebKitDocument, WebKitVideoElement } from '@videojs/utils/dom';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { WebKitDocument, WebKitVideoElement } from '../../presentation/types';
 import { EMPTY_CONFIG, EMPTY_TIME_RANGES } from '../constants';
 import { HTMLVideoElementHost } from '../html-video-element-host';
 

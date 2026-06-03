@@ -1,8 +1,8 @@
 import { createStore } from '@videojs/store';
+import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HTMLVideoElementHost } from '../../../media/html-video-element-host';
 import type { PlayerTarget } from '../../../media/types';
-import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { fullscreenFeature } from '../fullscreen';
 

@@ -25,7 +25,7 @@ export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 // UI Components
-export { AirplayButtonElement } from './ui/airplay-button/airplay-button-element';
+export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';
 export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
 export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
 export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';

@@ -34,3 +34,13 @@ export {
 } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';
+export {
+  isWebKitAirPlayCapable,
+  supportsWebKitAirPlay,
+  type WebKitAirPlayMedia,
+  type WebKitDocument,
+  type WebKitFullscreenElement,
+  type WebKitPresentationMode,
+  type WebKitVideoElement,
+  type WebkitAvailabilityEvent,
+} from './webkit';

@@ -25,8 +25,8 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
-  AirplayEnterIcon,
-  AirplayExitIcon,
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -47,7 +47,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
-import { AirplayButton } from '@/ui/airplay-button';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -324,10 +324,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirplayButton className={iconState.airplay.button} render={<Button />}>
-                    <AirplayEnterIcon className={cn(icon, iconState.airplay.enter)} />
-                    <AirplayExitIcon className={cn(icon, iconState.airplay.exit)} />
-                  </AirplayButton>
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)} />

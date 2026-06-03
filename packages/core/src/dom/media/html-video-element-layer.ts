@@ -1,6 +1,6 @@
+import type { WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { EventLike, Video, VideoEvents } from '../../core/media/types';
-import type { WebKitPresentationMode, WebKitVideoElement } from '../presentation/types';
 import { HTMLMediaElementLayer } from './html-media-element-layer';
 
 export abstract class HTMLVideoElementLayer<
