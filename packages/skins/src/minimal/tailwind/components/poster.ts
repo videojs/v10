@@ -9,6 +9,13 @@ export const poster = (isShadowDOM: boolean) =>
     // In the shadow DOM, the class applies to the parent so we have to set styles on the slotted img.
     isShadowDOM
       ? [
+          // Placeholder (blur-up) — rides on media-poster opacity/transition
+          'before:absolute before:inset-0 before:pointer-events-none before:content-[""]',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
           '[&_::slotted(img)]:absolute',
           '[&_::slotted(img)]:inset-0',
           '[&_::slotted(img)]:w-full',

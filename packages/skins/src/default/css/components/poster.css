@@ -58,7 +58,7 @@
   filter: blur(var(--media-poster-placeholder-blur, 20px));
   transition: opacity 0.25s;
 }
-.media-default-skin:has(> img[data-visible])::before {
+.media-default-skin:has(img[data-visible])::before {
   opacity: 1;
 }
 
