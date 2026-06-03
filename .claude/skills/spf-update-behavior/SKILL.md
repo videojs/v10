@@ -2,10 +2,10 @@
 name: spf-update-behavior
 description: >-
   Update an existing SPF behavior whose purpose is changing or expanding.
-  Distinct from /refactor-behavior, which preserves purpose — this skill
+  Distinct from /spf-refactor-behavior, which preserves purpose — this skill
   handles cases where the behavior gains new responsibility (new state slot
   to react to, new lifecycle phase, new constraint, new code path). Carries
-  /refactor-behavior's purpose-first discipline applied to the *purpose
+  /spf-refactor-behavior's purpose-first discipline applied to the *purpose
   change*. Triggers: "update behavior", "extend behavior", "modify behavior",
   "change behavior purpose", "expand behavior responsibility".
 ---
@@ -14,7 +14,7 @@ description: >-
 
 Modify an existing SPF behavior whose purpose is **changing or expanding**.
 The canonical failure mode without this discipline is treating
-purpose-changes as refactors — applying `/refactor-behavior`'s
+purpose-changes as refactors — applying `/spf-refactor-behavior`'s
 preserve-purpose lens to a change that's actually adding responsibility. The
 discipline distinction matters because:
 
@@ -44,7 +44,7 @@ directly when the user has identified the behavior to update.
   update must continue to satisfy
 - `internal/design/spf/conventions/signals.md` — multi-writer characterization
   when adding writers to a slot another behavior writes
-- `.claude/skills/refactor-behavior/SKILL.md` — the purpose-first discipline
+- `.claude/skills/spf-refactor-behavior/SKILL.md` — the purpose-first discipline
   shape this skill mirrors (applied to *purpose change* instead of
   *preserved purpose*)
 - The feature doc driving the update (if invoked from
@@ -74,9 +74,9 @@ directly when the user has identified the behavior to update.
   canonical leak shape; reorganizing cleanup without preserving order is
   the canonical lifecycle bug.
 
-- **Conflating with refactor-behavior territory.** If the purpose isn't
+- **Conflating with spf-refactor-behavior territory.** If the purpose isn't
   actually changing — the behavior's contract stays the same, just the
-  implementation improves — route to `/refactor-behavior`. The discipline
+  implementation improves — route to `/spf-refactor-behavior`. The discipline
   for purpose-preservation vs purpose-evolution differs; using the wrong
   skill produces drift in either direction (refactor-as-update bloats the
   behavior; update-as-refactor silently changes contracts).
@@ -97,7 +97,7 @@ The load-bearing setup step. Before any code:
   observable interface.
 - **Why is this an *update*, not a *refactor*?** If the answer is "the
   behavior does the same thing, just differently," **stop and route to
-  `/refactor-behavior`**.
+  `/spf-refactor-behavior`**.
 
 **Stop and report to user** with the purpose-change articulation. The user
 confirms before proceeding.
@@ -159,10 +159,10 @@ Audit checklist:
 
 ## When this is the wrong skill
 
-- **Behavior's purpose stays the same, just code improves** → `/refactor-behavior`
+- **Behavior's purpose stays the same, just code improves** → `/spf-refactor-behavior`
 - **Creating a new behavior** → `/spf-create-behavior`
-- **Major restructuring (split or merge)** → `/refactor-behavior` (which
-  may route to `/split-behavior` or `/merge-behaviors`)
+- **Major restructuring (split or merge)** → `/spf-refactor-behavior` (which
+  may route to `/spf-split-behavior` or `/spf-merge-behaviors`)
 - **Pure config-driven change with no behavior code change** → handle in
   the feature implementation directly; no behavior-update needed
 
@@ -175,14 +175,14 @@ it.
 
 ## Open framing question
 
-The boundary between `/spf-update-behavior` and `/refactor-behavior`-with-
+The boundary between `/spf-update-behavior` and `/spf-refactor-behavior`-with-
 extension is genuinely open. Per `project_spf_implementation_skills_next`
 memory: *"`spf-update-behavior` OR non-trivial updates to `spf-refactor-
 behavior` — when an existing behavior needs a feature-implementation change
-that isn't a pure refactor. Open which framing — extend refactor-behavior
+that isn't a pure refactor. Open which framing — extend spf-refactor-behavior
 or add a new skill."*
 
-This skill ships as a separate skill (rather than a refactor-behavior
+This skill ships as a separate skill (rather than a spf-refactor-behavior
 extension) because the **purposes differ** — refactor preserves; update
 changes. If usage reveals the discipline is mostly shared, the skills may
 later merge. For now, the separation is intentional: route by

@@ -8,7 +8,7 @@ description: >-
   /spf-document-feature (which produces the doc; this consumes it). Walks
   through resolving the doc's open questions before coding, maps phases to
   discrete chunks, applies the SPF conventions catalog, routes to downstream
-  skills (/spf-create-behavior, /spf-update-behavior, /refactor-behavior) per
+  skills (/spf-create-behavior, /spf-update-behavior, /spf-refactor-behavior) per
   chunk shape, and updates the feature doc's Status / Implementation surface
   / Verification sections as code lands. Triggers: "implement feature",
   "implement SPF feature", "build feature", "code feature", "scope feature
@@ -105,9 +105,9 @@ Downstream skills routed-to:
 - `.claude/skills/spf-create-behavior/SKILL.md` — new behaviors.
 - `.claude/skills/spf-update-behavior/SKILL.md` — existing behaviors whose
   purpose is changing.
-- `.claude/skills/refactor-behavior/SKILL.md` — existing behaviors whose
+- `.claude/skills/spf-refactor-behavior/SKILL.md` — existing behaviors whose
   purpose is preserved but implementation improves.
-- `.claude/skills/split-behavior/SKILL.md`, `.claude/skills/merge-behaviors/SKILL.md`
+- `.claude/skills/spf-split-behavior/SKILL.md`, `.claude/skills/spf-merge-behaviors/SKILL.md`
   — structural changes.
 - *(future)* media-layer / network-layer skills for `packages/spf/src/media/`
   and `packages/spf/src/network/` changes.
@@ -293,7 +293,7 @@ Step 1's report:
   code), (ii) config-driven (existing behavior gains a knob), (iii)
   new behavior (route to `/spf-create-behavior`), (iv) behavior update
   with purpose change (route to `/spf-update-behavior`), (v) behavior
-  refactor with preserved purpose (route to `/refactor-behavior`), (vi)
+  refactor with preserved purpose (route to `/spf-refactor-behavior`), (vi)
   media-layer / network-layer change (handle inline or defer per the
   downstream-skill-missing branch).
 - **Resolve open questions the implementation needs.** Per the
@@ -372,8 +372,8 @@ Iterate per chunk:
    - **Config-driven** — handle inline.
    - **New behavior** — route to `/spf-create-behavior` for this chunk.
    - **Behavior update (purpose changing)** — route to `/spf-update-behavior`.
-   - **Behavior refactor (purpose preserved)** — route to `/refactor-behavior`.
-   - **Structural (split/merge)** — route via `/refactor-behavior`'s
+   - **Behavior refactor (purpose preserved)** — route to `/spf-refactor-behavior`.
+   - **Structural (split/merge)** — route via `/spf-refactor-behavior`'s
      decomposition check.
    - **Media-layer / network-layer** — handle inline for now; future
      skills will own these.
@@ -532,8 +532,8 @@ in the open, with the user making the call.
   *(future)* `/spf-implement-use-case`. For now, this skill can be invoked
   per-constituent-feature of a use case.
 - **You want to refactor an existing behavior without feature scope** →
-  `/refactor-behavior`.
-- **You want to split or merge behaviors** → `/refactor-behavior`'s
+  `/spf-refactor-behavior`.
+- **You want to split or merge behaviors** → `/spf-refactor-behavior`'s
   decomposition check.
 - **You want to write an architectural design doc** → `design` skill.
 - **You want to write an RFC** → `rfc` skill.

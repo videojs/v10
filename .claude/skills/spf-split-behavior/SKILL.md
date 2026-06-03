@@ -1,5 +1,5 @@
 ---
-name: split-behavior
+name: spf-split-behavior
 description: >-
   Split one SPF behavior into N with axis-declared, constraints-audited
   discipline. Forces explicit axis declaration (per-type horizontal vs.
@@ -7,7 +7,7 @@ description: >-
   the split lands — avoids the failure mode where an apparent
   per-type-friendly behavior ships a split that quietly drops a
   cross-type ordering invariant the merged code was enforcing. Use after
-  /refactor-behavior's decomposition check has concluded "split," or
+  /spf-refactor-behavior's decomposition check has concluded "split," or
   when you've already noticed a behavior wants splitting. Triggers:
   "split this behavior", "split into per-type", "extract per-type
   behaviors", "convert to per-type variants", "split behavior".
@@ -32,7 +32,7 @@ shape is right) and a cross-boundary constraint audit *before* code
 ## Usage
 
 ```
-/split-behavior <file>
+/spf-split-behavior <file>
 ```
 
 Where `<file>` is the single behavior file you're splitting. The skill
@@ -60,18 +60,18 @@ The canonical references — read them first:
   with conditional branches around optional state-scoped work — the
   setup-shape helper for a per-type split must not carry per-variant
   conditionals).
-- [`.claude/skills/refactor-behavior/SKILL.md`](../refactor-behavior/SKILL.md)
+- [`.claude/skills/spf-refactor-behavior/SKILL.md`](../spf-refactor-behavior/SKILL.md)
   — the per-side analysis (Steps 1–4) is borrowed from here.
 
-## When to use this skill vs. /refactor-behavior, /merge-behaviors
+## When to use this skill vs. /spf-refactor-behavior, /spf-merge-behaviors
 
 | Situation | Skill |
 | --- | --- |
-| Cleaning up a single behavior file (same shape, same boundaries) | `/refactor-behavior` |
-| `/refactor-behavior`'s decomposition check concludes "this should split" | `/split-behavior` |
-| Splitting one behavior into per-type variants (video/audio/text) | `/split-behavior` (per-type axis) |
-| Splitting one behavior into per-concern behaviors (two disjoint slot clusters) | `/split-behavior` (per-concern axis) |
-| Merging two behaviors into one | `/merge-behaviors` |
+| Cleaning up a single behavior file (same shape, same boundaries) | `/spf-refactor-behavior` |
+| `/spf-refactor-behavior`'s decomposition check concludes "this should split" | `/spf-split-behavior` |
+| Splitting one behavior into per-type variants (video/audio/text) | `/spf-split-behavior` (per-type axis) |
+| Splitting one behavior into per-concern behaviors (two disjoint slot clusters) | `/spf-split-behavior` (per-concern axis) |
+| Merging two behaviors into one | `/spf-merge-behaviors` |
 
 ## Steps (do these in order; do not skip)
 
@@ -83,12 +83,12 @@ Confirm with the user if it's not obvious.
 ### Step 2 — Articulate the current behavior's purpose
 
 In one sentence: what is this behavior **for**? Same as
-[`refactor-behavior`](../refactor-behavior/SKILL.md) Step 1.
+[`spf-refactor-behavior`](../spf-refactor-behavior/SKILL.md) Step 1.
 
 The purpose establishes the basis for evaluating the split. If the
 purpose is one coherent thing that doesn't decompose into a per-type
 or per-concern shape, that's a finding ("the split doesn't earn its
-keep — keep as-is or apply `/refactor-behavior` instead").
+keep — keep as-is or apply `/spf-refactor-behavior` instead").
 
 Pull from the file-level JSDoc if present; if not, that's a doc gap
 to flag.
@@ -153,12 +153,12 @@ may be wrong.
 post-split unit *would* look like extracted from the current code, not
 a projected refactored version. If a unit's sketch reveals real issues
 (closure-mutable state, fight-the-shape sniffs), note them as
-follow-up `/refactor-behavior` candidates *for that variant after the
+follow-up `/spf-refactor-behavior` candidates *for that variant after the
 split lands* — don't bundle the refactor into the split.
 
 ### Step 5 — Cross-boundary constraint audit (load-bearing)
 
-This is the discipline that distinguishes `/split-behavior` from the
+This is the discipline that distinguishes `/spf-split-behavior` from the
 pre-existing decomposition guidance. Skipping it is how splits ship
 latent races.
 
@@ -238,7 +238,7 @@ Based on the axis:
 
 ### Step 7 — Convention checks
 
-Same as `/refactor-behavior` Step 5 applied to each post-split unit
+Same as `/spf-refactor-behavior` Step 5 applied to each post-split unit
 independently:
 
 - File placement (DOM-free vs. DOM-bound) per unit.
@@ -308,4 +308,4 @@ Three failure modes the order prevents:
 
 A side benefit: the per-side sketches double as the design for each
 post-split unit's standalone refactor (if the user later opts to land
-the split as separate `/refactor-behavior` runs on each variant).
+the split as separate `/spf-refactor-behavior` runs on each variant).

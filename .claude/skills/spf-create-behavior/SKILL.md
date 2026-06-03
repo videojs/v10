@@ -2,10 +2,10 @@
 name: spf-create-behavior
 description: >-
   Create a new SPF behavior with conventions-aligned shape. Walks through
-  purpose articulation (carries /refactor-behavior's purpose-first discipline),
+  purpose articulation (carries /spf-refactor-behavior's purpose-first discipline),
   signal type choice, slot map design, composition placement, cleanup pattern
   selection, test placement, and engine wiring. Distinct from
-  /refactor-behavior (which modifies an existing behavior preserving its
+  /spf-refactor-behavior (which modifies an existing behavior preserving its
   purpose) and /spf-update-behavior (which modifies an existing behavior whose
   purpose is changing). Triggers: "create behavior", "new behavior", "create
   SPF behavior", "add behavior", "scaffold behavior", "new SPF behavior".
@@ -58,7 +58,7 @@ Required reading before drafting:
 
 ## Failure-mode catalog (seeded; grows with use)
 
-- **Purpose-articulation skipped.** Same failure mode as `/refactor-behavior`:
+- **Purpose-articulation skipped.** Same failure mode as `/spf-refactor-behavior`:
   jumping from "we need a behavior" to `defineBehavior` without naming what
   the behavior *does* in business terms. Carries the purpose-first
   discipline. The articulation should answer: what business rule does this
@@ -94,7 +94,7 @@ Required reading before drafting:
 
 ### Step 1 — Articulate purpose
 
-Carry `/refactor-behavior`'s purpose-first discipline forward to new
+Carry `/spf-refactor-behavior`'s purpose-first discipline forward to new
 behaviors. Before any code:
 
 - **What business rule does this behavior implement?** Name it in plain
@@ -170,10 +170,10 @@ Audit checklist:
 
 ## When this is the wrong skill
 
-- **Refactoring an existing behavior, purpose preserved** → `/refactor-behavior`
+- **Refactoring an existing behavior, purpose preserved** → `/spf-refactor-behavior`
 - **Updating an existing behavior, purpose changing** → `/spf-update-behavior`
-- **Splitting / merging existing behaviors** → `/split-behavior` /
-  `/merge-behaviors` (often routed through `/refactor-behavior`)
+- **Splitting / merging existing behaviors** → `/spf-split-behavior` /
+  `/spf-merge-behaviors` (often routed through `/spf-refactor-behavior`)
 - **Creating a media-layer or network-layer helper (not a behavior)** →
   manual for now; future media-layer / network-layer skills will own this
 

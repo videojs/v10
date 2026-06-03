@@ -58,7 +58,7 @@ The decomposition question. The default leans toward **split until merging is re
 - Two concerns happen to be wired together but don't share state — one reads a slot, another writes a different slot, and the only connection is "we set them up at the same time."
 - The body has multiple lifecycle phases with different cleanup timing.
 - Some keys in `stateKeys` / `contextKeys` are read only by some code paths in the body, never together.
-- **Explicit per-type axis declared inline.** A `type FooType = 'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)` loop that writes per-type slots. The axis being declared inline is itself a sniff: per-type specialization was already in mind when the merged form was written, and the merged form usually exists because of a perceived cross-type constraint (atomicity, ordering, shared lifecycle). Surface the constraint as the invariant `/split-behavior`'s cross-boundary audit will evaluate, rather than treating it as foreclosing the split. The audit's possible outcomes include "split is fine, the invariant survives in registration order" and "keep merged, the invariant doesn't survive cleanly" — pre-deciding short-circuits both. Distinguishing this from the [uniform-across-tracks foil](#inverse-behaviors-that-operate-uniformly-across-tracks) is the *downstream consumer interface*: if consumers consume per-type, the per-type interface is the destination shape; if consumers iterate the aggregating resource, the aggregate is the destination shape.
+- **Explicit per-type axis declared inline.** A `type FooType = 'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)` loop that writes per-type slots. The axis being declared inline is itself a sniff: per-type specialization was already in mind when the merged form was written, and the merged form usually exists because of a perceived cross-type constraint (atomicity, ordering, shared lifecycle). Surface the constraint as the invariant `/spf-split-behavior`'s cross-boundary audit will evaluate, rather than treating it as foreclosing the split. The audit's possible outcomes include "split is fine, the invariant survives in registration order" and "keep merged, the invariant doesn't survive cleanly" — pre-deciding short-circuits both. Distinguishing this from the [uniform-across-tracks foil](#inverse-behaviors-that-operate-uniformly-across-tracks) is the *downstream consumer interface*: if consumers consume per-type, the per-type interface is the destination shape; if consumers iterate the aggregating resource, the aggregate is the destination shape.
 
 ### Sniffs that say "merge"
 
@@ -186,7 +186,7 @@ This matters for single refactors (a "continuously … gated by … resetting on
 | "Atomically X all Y" / "X every Z" / "X all needed Y" | Atomic-aggregate framing. Often hides a per-type axis under a cross-cutting constraint. |
 | "Per available track type, X the Y for that type" / "For each type, X" | Explicit per-type structure. Each type is a unit; cross-type concerns are constraints linking the units, not the headline operation. |
 
-If the file declares an inline per-type axis (`type FooType = 'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)` loop), the purpose statement should match. Atomic-aggregate framing on per-type-structured work hides the axis and propagates the miss through downstream steps — `/refactor-behavior`'s split-candidate check (Step 6a) is unlikely to recover the axis from body-iteration sniffs alone if Step 1's framing already collapsed it. The per-type axis is a Step-1 concern, not a Step-6 discovery.
+If the file declares an inline per-type axis (`type FooType = 'video' | 'audio'`, a `KeyByType` map, a `for (const type of types)` loop), the purpose statement should match. Atomic-aggregate framing on per-type-structured work hides the axis and propagates the miss through downstream steps — `/spf-refactor-behavior`'s split-candidate check (Step 6a) is unlikely to recover the axis from body-iteration sniffs alone if Step 1's framing already collapsed it. The per-type axis is a Step-1 concern, not a Step-6 discovery.
 
 Cross-type constraints (atomicity, ordering, shared-lifecycle) are *secondary* to the per-type axis in the purpose statement — they describe how the per-type units interact, not what the behavior does. Demoting atomicity from headline verb ("atomically X") to constraint clause ("…in one synchronous block") is what surfaces the per-type axis as primary.
 
@@ -305,7 +305,7 @@ A sketch is not a refactor commitment. If a side already conforms to current con
 
 ### Merging two behaviors — extra discipline
 
-> This section is the canonical reference for the merge workflow. The [`merge-behaviors`](../../../.claude/skills/merge-behaviors/SKILL.md) skill operationalizes it; either reach for that skill or follow the steps below directly.
+> This section is the canonical reference for the merge workflow. The [`spf-merge-behaviors`](../../../.claude/skills/spf-merge-behaviors/SKILL.md) skill operationalizes it; either reach for that skill or follow the steps below directly.
 
 When the decomposition check says merge, the refactor is **two separate analyses combined**, not one:
 
@@ -504,7 +504,7 @@ Why: each `listen` / `subscribe` call already returns its own removal function �
 
 ## Per-type specialization
 
-> This section codifies the *destination shape* for per-type behaviors. The [`split-behavior`](../../../.claude/skills/split-behavior/SKILL.md) skill operationalizes the *refactor moment* — converting a single behavior into per-type variants — with an explicit axis declaration + cross-boundary constraint audit so implicit ordering invariants in the merged code aren't silently dropped.
+> This section codifies the *destination shape* for per-type behaviors. The [`spf-split-behavior`](../../../.claude/skills/spf-split-behavior/SKILL.md) skill operationalizes the *refactor moment* — converting a single behavior into per-type variants — with an explicit axis declaration + cross-boundary constraint audit so implicit ordering invariants in the merged code aren't silently dropped.
 
 When a behavior's logic varies by media type (video / audio / text), prefer **separate exports per type** over a single behavior with a `config.type` discriminant.
 
@@ -526,9 +526,9 @@ Per-type specialization addresses behaviors whose *logic varies* by type. The du
 > **Disambiguator — body-shape isn't enough; the downstream consumer interface is.** A body that iterates a per-type pair via `KeyByType[type]` looks identical between "uniform-across-tracks → aggregate" and "per-type-split candidate." The distinguishing question is *what shape downstream consumers consume*:
 >
 > - **Consumers operate uniformly** (e.g., `endOfStream` calls `endOfStream` on every actor; a hypothetical `updateMediaSourceDuration` iterates `mediaSource.sourceBuffers`) → this section's prescription: compose against the aggregating resource.
-> - **Consumers operate per-type** (e.g., `loadVideoSegments` reads `videoBufferActor`, `loadAudioSegments` reads `audioBufferActor`) → the per-type interface is the destination shape; the writer should split per type with a shared setup-shape helper. See [Per-type specialization](#per-type-specialization) and `/split-behavior` for the audit workflow (atomicity / ordering / shared-lifecycle constraints are exactly what the cross-boundary audit evaluates).
+> - **Consumers operate per-type** (e.g., `loadVideoSegments` reads `videoBufferActor`, `loadAudioSegments` reads `audioBufferActor`) → the per-type interface is the destination shape; the writer should split per type with a shared setup-shape helper. See [Per-type specialization](#per-type-specialization) and `/spf-split-behavior` for the audit workflow (atomicity / ordering / shared-lifecycle constraints are exactly what the cross-boundary audit evaluates).
 >
-> A behavior whose body iterates a per-type pair *and whose downstream consumers split per-type* is a `/split-behavior` candidate, not a `/refactor-behavior` in-place fix. `setup-sourcebuffer.ts` is the worked example: explicit `MediaTrackType` axis, per-type write loop, per-type consumers (`loadVideoSegments` / `loadAudioSegments`) — per-type split with a shared `setupSourceBuffer` helper is the destination shape, with the Firefox `mozHasAudio` atomicity invariant as the cross-boundary audit's headline item.
+> A behavior whose body iterates a per-type pair *and whose downstream consumers split per-type* is a `/spf-split-behavior` candidate, not a `/spf-refactor-behavior` in-place fix. `setup-sourcebuffer.ts` is the worked example: explicit `MediaTrackType` axis, per-type write loop, per-type consumers (`loadVideoSegments` / `loadAudioSegments`) — per-type split with a shared `setupSourceBuffer` helper is the destination shape, with the Firefox `mozHasAudio` atomicity invariant as the cross-boundary audit's headline item.
 
 **Sniff** (for the aggregate-composition path, given the disambiguator above): `contextKeys` (or `stateKeys`) enumerates a per-type slot pair (`videoBuffer` + `audioBuffer`, `videoSegmentLoaderActor` + `audioSegmentLoaderActor`, etc.) and the behavior's body treats them interchangeably — filtering both into a single collection, iterating both with identical logic, or referencing them only to forward into helpers that operate uniformly — **and** the downstream consumers also operate uniformly.
 
