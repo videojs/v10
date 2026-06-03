@@ -153,6 +153,7 @@ bun.lockb
 .claude/settings.local.json
 .claude/worktrees/
 .opencode
+.agents
 AGENTS.md
 agents
 
