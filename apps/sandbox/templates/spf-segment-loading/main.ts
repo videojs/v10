@@ -215,8 +215,14 @@ function renderAudioTrackPicker() {
     btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
     const lang = track.language ?? '—';
     const name = 'name' in track && track.name ? track.name : track.id;
+    // Distinguish same-language renditions (multiple audio variants per language).
+    // Prefer bitrate; many HLS audio renditions report bandwidth=0 and signal the
+    // tier via groupId instead (e.g. Mux's audio-hi/med/lo-0), so fall back to it.
+    const groupId = 'groupId' in track ? track.groupId : undefined;
+    const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
+    const suffix = tier ? ` · ${tier}` : '';
     const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
-    btn.textContent = `${lang} · ${name}${badge}`;
+    btn.textContent = `${lang} · ${name}${suffix}${badge}`;
     btn.title = `id: ${track.id}${track.language ? ` · lang: ${track.language}` : ''}`;
     btn.addEventListener('click', () => {
       // Prefer pinning by language (the multi-language-audio Tier 2 case);
