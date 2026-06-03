@@ -1,11 +1,5 @@
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import type {
-  AudioSelectionSet,
-  MaybeResolvedPresentation,
-  Presentation,
-  TrackType,
-  VideoSelectionSet,
-} from '../types';
+import type { AudioSelectionSet, MaybeResolvedPresentation, TrackType, VideoSelectionSet } from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
 /**
@@ -37,18 +31,9 @@ export type TrackSelectionContext = Record<string, never>;
 export type TrackSelectionAction = { type: 'presentation-loaded' };
 
 /**
- * Base configuration for track selection.
- * Generic over track type with discriminant `type` field.
- */
-export interface TrackSelectionConfig<T extends TrackType = TrackType> {
-  type: T;
-}
-
-/**
  * Configuration for video track selection.
- * Generic with default to 'video' for convenience.
  */
-export interface VideoSelectionConfig<T extends TrackType = 'video'> extends TrackSelectionConfig<T> {
+export interface VideoSelectionConfig {
   /**
    * Initial bandwidth estimate for cold start (bits per second).
    * Used to select video quality before we have real measurements.
@@ -65,9 +50,8 @@ export interface VideoSelectionConfig<T extends TrackType = 'video'> extends Tra
 
 /**
  * Configuration for audio track selection.
- * Generic with default to 'audio' for convenience.
  */
-export interface AudioSelectionConfig<T extends TrackType = 'audio'> extends TrackSelectionConfig<T> {
+export interface AudioSelectionConfig {
   /**
    * Preferred audio language (ISO 639 code, e.g., "en", "es").
    * If not specified, selects first audio track.
@@ -77,11 +61,6 @@ export interface AudioSelectionConfig<T extends TrackType = 'audio'> extends Tra
 
 /**
  * Configuration for text track selection.
- *
- * Standalone (not extending `TrackSelectionConfig<'text'>`) because
- * `pickTextTrack` hardcodes the `'text'` type lookup internally — the
- * discriminant field carries no information at runtime, so we don't
- * require callers to pass it.
  */
 export interface TextSelectionConfig {
   /**
@@ -156,8 +135,11 @@ export function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: 
  * @param config - Selection configuration (bandwidth, safety margin)
  * @returns Selected video track ID, or undefined if no video tracks
  */
-export function pickVideoTrack(presentation: Presentation, config: VideoSelectionConfig): string | undefined {
-  const videoSet = presentation.selectionSets.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
+export function pickVideoTrack(
+  presentation: MaybeResolvedPresentation,
+  config?: VideoSelectionConfig
+): string | undefined {
+  const videoSet = presentation.selectionSets?.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
 
   if (!videoSet || videoSet.switchingSets.length === 0) {
     return undefined;
@@ -169,8 +151,8 @@ export function pickVideoTrack(presentation: Presentation, config: VideoSelectio
     return undefined;
   }
 
-  const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
-  const safetyMargin = config.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+  const initialBandwidth = config?.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
+  const safetyMargin = config?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
 
   // selectQuality works with both partially resolved and resolved tracks
   const selected = selectQuality(switchingSet.tracks as any, { bandwidth: initialBandwidth, safetyMargin });
@@ -218,8 +200,11 @@ export function pickMaxResolutionVideoTrack(presentation: MaybeResolvedPresentat
  * @param config - Selection configuration (preferred language)
  * @returns Selected audio track ID, or undefined if no audio tracks
  */
-export function pickAudioTrack(presentation: Presentation, config: AudioSelectionConfig): string | undefined {
-  const audioSet = presentation.selectionSets.find((set) => set.type === 'audio') as AudioSelectionSet | undefined;
+export function pickAudioTrack(
+  presentation: MaybeResolvedPresentation,
+  config?: AudioSelectionConfig
+): string | undefined {
+  const audioSet = presentation.selectionSets?.find((set) => set.type === 'audio') as AudioSelectionSet | undefined;
 
   if (!audioSet || audioSet.switchingSets.length === 0) {
     return undefined;
@@ -234,7 +219,7 @@ export function pickAudioTrack(presentation: Presentation, config: AudioSelectio
   const tracks = switchingSet.tracks;
 
   // Try preferred language first
-  if (config.preferredAudioLanguage) {
+  if (config?.preferredAudioLanguage) {
     const languageMatch = tracks.find((track) => track.language === config.preferredAudioLanguage);
     if (languageMatch) {
       return languageMatch.id;
@@ -306,12 +291,8 @@ export function pickTextTrack(
  *
  * Generic over track type - works for video, audio, or text.
  */
-export function canSelectTrack<T extends TrackType>(
-  state: TrackSelectionState,
-  config: TrackSelectionConfig<T>
-): boolean {
-  return !!state?.presentation?.selectionSets?.find(({ type }) => type === config.type)?.switchingSets?.[0]?.tracks
-    .length;
+export function canSelectTrack(state: TrackSelectionState, type: TrackType): boolean {
+  return !!state?.presentation?.selectionSets?.find((set) => set.type === type)?.switchingSets?.[0]?.tracks.length;
 }
 
 /**
@@ -325,9 +306,6 @@ export function canSelectTrack<T extends TrackType>(
  * @TODO figure out reactive model for ABR cases - right now we're only selecting
  * if we have nothing selected (CJP)
  */
-export function shouldSelectTrack<T extends TrackType>(
-  state: TrackSelectionState,
-  config: TrackSelectionConfig<T>
-): boolean {
-  return !state[SelectedTrackIdKeyByType[config.type]];
+export function shouldSelectTrack(state: TrackSelectionState, type: TrackType): boolean {
+  return !state[SelectedTrackIdKeyByType[type]];
 }

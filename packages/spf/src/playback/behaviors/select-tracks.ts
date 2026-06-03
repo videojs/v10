@@ -43,7 +43,7 @@ import {
   type TrackSelectionState,
   type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
-import { isResolvedPresentation, type Presentation } from '../../media/types';
+import { isResolvedPresentation } from '../../media/types';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -116,42 +116,17 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
 }
 
 // ============================================================================
-// Per-helper-per-type configs — defaults that variants spread engine config over
+// Default pickers
 //
-// The engine-facing config carries `picker?` (optional override) plus
-// fields the default picker consults (preferred language, etc.). The
-// variant resolves the final picker (engine override or default) and
-// forwards the whole engine config as `pickerConfig` so rich pickers can
-// read their options.
+// Each variant resolves its picker as `config?.picker ?? <default>` and
+// forwards the whole engine config as `pickerConfig`, so rich pickers
+// (`pickAudioTrack`, `pickTextTrack`) read their options directly. Audio
+// and text use their primitive pickers as-is; video adapts
+// `pickFirstTrackId` (positional `type` arg) into the `TrackPicker` shape.
 // ============================================================================
 
 /** Default video picker: first track in the video selection set. */
 const defaultVideoPicker: TrackPicker = (presentation) => pickFirstTrackId(presentation, 'video');
-
-const VIDEO_TRACK_SELECTION_CONFIG = {
-  ...VIDEO_TYPE_CONFIG,
-  picker: defaultVideoPicker,
-} as const;
-
-/**
- * Default audio picker: three-tier per the multi-language-audio Tier 1
- * default-selection contract — `preferredAudioLanguage` → `DEFAULT=YES` →
- * first track. Honored only when the picker is invoked; the picker is only
- * called from inside `'presentation-resolved'`, which gates on
- * `isResolvedPresentation`, so the cast to `Presentation` is safe.
- */
-const defaultAudioPicker: TrackPicker<SelectAudioTrackConfig> = (presentation, config) =>
-  pickAudioTrack(presentation as Presentation, { ...config, type: 'audio' });
-
-const AUDIO_TRACK_SELECTION_CONFIG = {
-  ...AUDIO_TYPE_CONFIG,
-  picker: defaultAudioPicker,
-} as const;
-
-const TEXT_TRACK_SELECTION_CONFIG = {
-  ...TEXT_TYPE_CONFIG,
-  picker: pickTextTrack,
-} as const;
 
 // ============================================================================
 // Specialized exports — one per track type
@@ -161,7 +136,7 @@ const TEXT_TRACK_SELECTION_CONFIG = {
  * Config for `selectVideoTrack`. Pass `picker` to fully override selection
  * logic; otherwise the default `pickFirstTrackId` is used.
  */
-export interface SelectVideoTrackConfig extends Omit<VideoSelectionConfig, 'type'> {
+export interface SelectVideoTrackConfig extends VideoSelectionConfig {
   picker?: TrackPicker<SelectVideoTrackConfig>;
 }
 
@@ -186,8 +161,8 @@ export const selectVideoTrack = defineBehavior({
     setupTrackSelection({
       state,
       config: {
-        ...VIDEO_TRACK_SELECTION_CONFIG,
-        picker: config?.picker ?? VIDEO_TRACK_SELECTION_CONFIG.picker,
+        selectedKey: VIDEO_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? defaultVideoPicker,
         pickerConfig: config,
       },
     }),
@@ -198,7 +173,7 @@ export const selectVideoTrack = defineBehavior({
  * logic; otherwise the default `pickAudioTrack` is used (three-tier:
  * `preferredAudioLanguage` → `DEFAULT=YES` → first track).
  */
-export interface SelectAudioTrackConfig extends Omit<AudioSelectionConfig, 'type'> {
+export interface SelectAudioTrackConfig extends AudioSelectionConfig {
   picker?: TrackPicker<SelectAudioTrackConfig>;
 }
 
@@ -232,8 +207,8 @@ export const selectAudioTrack = defineBehavior({
     setupTrackSelection({
       state,
       config: {
-        ...AUDIO_TRACK_SELECTION_CONFIG,
-        picker: config?.picker ?? AUDIO_TRACK_SELECTION_CONFIG.picker,
+        selectedKey: AUDIO_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? pickAudioTrack,
         pickerConfig: config,
       },
     }),
@@ -267,8 +242,8 @@ export const selectTextTrack = defineBehavior({
     setupTrackSelection({
       state,
       config: {
-        ...TEXT_TRACK_SELECTION_CONFIG,
-        picker: config?.picker ?? TEXT_TRACK_SELECTION_CONFIG.picker,
+        selectedKey: TEXT_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? pickTextTrack,
         pickerConfig: config,
       },
     }),

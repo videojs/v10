@@ -50,7 +50,6 @@ import {
   type MaybeResolvedPresentation,
   type PartiallyResolvedAudioTrack,
   type PartiallyResolvedVideoTrack,
-  type Presentation,
   type VideoTrack,
 } from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
@@ -391,15 +390,6 @@ export const switchVideoTrack = defineBehavior({
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
 
 /**
- * Default audio picker. Three-tier per multi-language-audio Tier 1:
- * `preferredAudioLanguage` → `DEFAULT=YES` → first track. Called only
- * inside `'presentation-resolved'`, where `isResolvedPresentation` gated
- * entry — the cast to `Presentation` is safe.
- */
-const defaultAudioPicker: TrackPicker<TrackSwitchingConfig> = (presentation, config) =>
-  pickAudioTrack(presentation as Presentation, { ...config, type: 'audio' });
-
-/**
  * Audio's `selectOptimal` — pin-to-current variant. Returns the current
  * track if it's in the candidate set; otherwise the first candidate. No
  * bandwidth-driven re-evaluation today (audio is not ABR-driven yet); the
@@ -442,7 +432,7 @@ export const switchAudioTrack = defineBehavior({
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
         selectOptimal: selectAudioCurrent,
-        picker: config?.picker ?? defaultAudioPicker,
+        picker: config?.picker ?? pickAudioTrack,
       },
     }),
 });
