@@ -155,6 +155,7 @@ bun.lockb
 .opencode
 AGENTS.md
 .agents
+agents
 
 # Playwright
 test-results/
