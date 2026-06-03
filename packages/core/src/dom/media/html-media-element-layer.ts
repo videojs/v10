@@ -8,7 +8,7 @@ import type {
   VideoEvents,
 } from '../../core/media/types';
 import { MediaStreamTypes } from '../../core/media/types';
-import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import { EMPTY_CONFIG, EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
 export abstract class HTMLMediaElementLayer<
   Target extends HTMLMediaElement = HTMLMediaElement,
@@ -132,6 +132,14 @@ export abstract class HTMLMediaElementLayer<
     if (this.next) this.next.preload = value;
   }
 
+  get crossOrigin() {
+    return this.next?.crossOrigin ?? null;
+  }
+
+  set crossOrigin(value) {
+    if (this.next) this.next.crossOrigin = value;
+  }
+
   load() {
     return this.next?.load();
   }
@@ -168,6 +176,14 @@ export abstract class HTMLMediaElementLayer<
     if (this.next) this.next.playbackRate = value;
   }
 
+  get defaultPlaybackRate() {
+    return this.next?.defaultPlaybackRate ?? 1;
+  }
+
+  set defaultPlaybackRate(value) {
+    if (this.next) this.next.defaultPlaybackRate = value;
+  }
+
   // -- Buffer --
 
   get buffered() {
@@ -176,6 +192,12 @@ export abstract class HTMLMediaElementLayer<
 
   get seekable() {
     return this.next?.seekable ?? EMPTY_TIME_RANGES;
+  }
+
+  // -- Played --
+
+  get played() {
+    return this.next?.played ?? EMPTY_TIME_RANGES;
   }
 
   // -- Error --
@@ -206,5 +228,41 @@ export abstract class HTMLMediaElementLayer<
 
   set disableRemotePlayback(value) {
     if (this.next) this.next.disableRemotePlayback = value;
+  }
+
+  // -- Playback options --
+
+  get autoplay() {
+    return this.next?.autoplay ?? false;
+  }
+
+  set autoplay(value) {
+    if (this.next) this.next.autoplay = value;
+  }
+
+  get defaultMuted() {
+    return this.next?.defaultMuted ?? false;
+  }
+
+  set defaultMuted(value) {
+    if (this.next) this.next.defaultMuted = value;
+  }
+
+  get controls() {
+    return this.next?.controls ?? false;
+  }
+
+  set controls(value) {
+    if (this.next) this.next.controls = value;
+  }
+
+  // -- Config --
+
+  get config() {
+    return this.next?.config ?? EMPTY_CONFIG;
+  }
+
+  set config(value) {
+    if (this.next) this.next.config = value;
   }
 }

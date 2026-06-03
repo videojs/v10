@@ -19,6 +19,22 @@ export abstract class HTMLVideoElementLayer<
     if (this.next) this.next.poster = value;
   }
 
+  get playsInline() {
+    return this.next?.playsInline ?? false;
+  }
+
+  set playsInline(value: boolean) {
+    if (this.next) this.next.playsInline = value;
+  }
+
+  get videoWidth() {
+    return this.next?.videoWidth ?? 0;
+  }
+
+  get videoHeight() {
+    return this.next?.videoHeight ?? 0;
+  }
+
   get webkitPresentationMode() {
     return (this.next as WebKitVideoElement | null)?.webkitPresentationMode;
   }
@@ -26,6 +42,14 @@ export abstract class HTMLVideoElementLayer<
   get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
     const fn = (this.next as WebKitVideoElement | null)?.webkitSetPresentationMode;
     return isFunction(fn) ? fn.bind(this.next) : undefined;
+  }
+
+  get disablePictureInPicture() {
+    return this.next?.disablePictureInPicture ?? false;
+  }
+
+  set disablePictureInPicture(value: boolean) {
+    if (this.next) this.next.disablePictureInPicture = value;
   }
 
   get isPictureInPicture(): boolean {
