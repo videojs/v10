@@ -61,7 +61,7 @@ export const SELECTORS = {
   duration: 'media-time[type="duration"], [data-type="duration"].media-time',
   poster: 'media-poster, img[data-visible]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
-  thumbnail: 'media-slider-thumbnail, .media-preview__thumbnail',
+  thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
 
   // Popover & tooltip
   tooltip: 'media-tooltip, .media-tooltip',
