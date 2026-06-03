@@ -11,6 +11,7 @@ import type {
   MediaSourceCapability,
   MediaStreamTypeCapability,
   MediaTextTrackCapability,
+  MediaVideoDimensionsCapability,
   MediaVolumeCapability,
 } from '../../core/media/types';
 
@@ -40,6 +41,10 @@ export function isMediaSourceCapable(value: unknown): value is MediaSourceCapabi
 
 export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapability {
   return isObject(value) && 'volume' in value && 'muted' in value;
+}
+
+export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVideoDimensionsCapability {
+  return isObject(value) && 'videoWidth' in value && 'videoHeight' in value;
 }
 
 export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlaybackRateCapability {
