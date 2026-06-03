@@ -7,7 +7,13 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../types';
-import { pickAudioTrack, pickMaxResolutionVideoTrack, pickTextTrack, pickVideoTrack } from '../select-tracks';
+import {
+  parseResolutionHeight,
+  pickAudioTrack,
+  pickMaxResolutionVideoTrack,
+  pickTextTrack,
+  pickVideoTrack,
+} from '../select-tracks';
 
 // Helper to create a minimal presentation
 function createPresentation(config: {
@@ -212,7 +218,7 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p');
+    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('1080p');
   });
 
   it('falls back to bandwidth when resolution metadata is missing', () => {
@@ -236,7 +242,7 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack(presentation)).toBe('high');
+    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('high');
   });
 
   it('breaks ties on equal resolution by bandwidth', () => {
@@ -264,12 +270,128 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p-high');
+    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('1080p-high');
   });
 
   it('returns undefined when no video tracks exist', () => {
     const presentation = createPresentation({ audio: [] });
-    expect(pickMaxResolutionVideoTrack(presentation)).toBeUndefined();
+    expect(pickMaxResolutionVideoTrack()(presentation)).toBeUndefined();
+  });
+
+  describe('with maxResolution cap', () => {
+    const fourTrackPresentation = () =>
+      createPresentation({
+        video: [
+          {
+            type: 'video',
+            id: '360p',
+            url: 'http://example.com/360p.m3u8',
+            bandwidth: 500_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 640,
+            height: 360,
+          },
+          {
+            type: 'video',
+            id: '720p',
+            url: 'http://example.com/720p.m3u8',
+            bandwidth: 2_000_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 1280,
+            height: 720,
+          },
+          {
+            type: 'video',
+            id: '1080p',
+            url: 'http://example.com/1080p.m3u8',
+            bandwidth: 4_000_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 1920,
+            height: 1080,
+          },
+          {
+            type: 'video',
+            id: '1440p',
+            url: 'http://example.com/1440p.m3u8',
+            bandwidth: 8_000_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 2560,
+            height: 1440,
+          },
+        ],
+      });
+
+    it('picks the highest track at or below the cap', () => {
+      expect(pickMaxResolutionVideoTrack({ maxResolution: '720p' })(fourTrackPresentation())).toBe('720p');
+      expect(pickMaxResolutionVideoTrack({ maxResolution: '1080p' })(fourTrackPresentation())).toBe('1080p');
+    });
+
+    it('accepts a bare number for maxResolution', () => {
+      expect(pickMaxResolutionVideoTrack({ maxResolution: 720 })(fourTrackPresentation())).toBe('720p');
+    });
+
+    it('accepts an unsuffixed string for maxResolution', () => {
+      expect(pickMaxResolutionVideoTrack({ maxResolution: '1080' })(fourTrackPresentation())).toBe('1080p');
+    });
+
+    it('falls back to the lowest available track when the cap excludes every track', () => {
+      const onlyHighPresentation = createPresentation({
+        video: [
+          {
+            type: 'video',
+            id: '1080p',
+            url: 'http://example.com/1080p.m3u8',
+            bandwidth: 4_000_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 1920,
+            height: 1080,
+          },
+          {
+            type: 'video',
+            id: '1440p',
+            url: 'http://example.com/1440p.m3u8',
+            bandwidth: 8_000_000,
+            mimeType: 'video/mp4',
+            codecs: ['avc1.42E01E'],
+            width: 2560,
+            height: 1440,
+          },
+        ],
+      });
+      expect(pickMaxResolutionVideoTrack({ maxResolution: '720p' })(onlyHighPresentation)).toBe('1080p');
+    });
+
+    it('ignores an unparseable cap (treats as unset)', () => {
+      expect(pickMaxResolutionVideoTrack({ maxResolution: 'garbage' })(fourTrackPresentation())).toBe('1440p');
+    });
+  });
+});
+
+describe('parseResolutionHeight', () => {
+  it('parses "<n>p" strings', () => {
+    expect(parseResolutionHeight('720p')).toBe(720);
+    expect(parseResolutionHeight('1080P')).toBe(1080);
+  });
+
+  it('parses bare numeric strings', () => {
+    expect(parseResolutionHeight('720')).toBe(720);
+  });
+
+  it('passes through positive numbers', () => {
+    expect(parseResolutionHeight(720)).toBe(720);
+  });
+
+  it('returns undefined for unrecognized inputs', () => {
+    expect(parseResolutionHeight(undefined)).toBeUndefined();
+    expect(parseResolutionHeight('garbage')).toBeUndefined();
+    expect(parseResolutionHeight('-720')).toBeUndefined();
+    expect(parseResolutionHeight(0)).toBeUndefined();
+    expect(parseResolutionHeight(-1)).toBeUndefined();
   });
 });
 

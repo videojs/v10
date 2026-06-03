@@ -179,4 +179,74 @@ describe('createBackgroundLoopingVideoEngine', () => {
     expect(engine.state.selectedVideoTrackId.get()).toBe('forced-pick');
     engine.destroy();
   });
+
+  it('threads maxResolution through to the default picker', async () => {
+    const presentation: MaybeResolvedPresentation = {
+      id: 'p',
+      url: 'https://example.com/manifest.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '480p',
+                  url: 'https://example.com/480p.m3u8',
+                  bandwidth: 1_000_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.42E01E'],
+                  initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+                  segments: [],
+                  startTime: 0,
+                  duration: 0,
+                  width: 854,
+                  height: 480,
+                } as never,
+                {
+                  type: 'video',
+                  id: '720p',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_000_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.42E01E'],
+                  initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+                  segments: [],
+                  startTime: 0,
+                  duration: 0,
+                  width: 1280,
+                  height: 720,
+                } as never,
+                {
+                  type: 'video',
+                  id: '1080p',
+                  url: 'https://example.com/1080p.m3u8',
+                  bandwidth: 4_000_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.640028'],
+                  initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+                  segments: [],
+                  startTime: 0,
+                  duration: 0,
+                  width: 1920,
+                  height: 1080,
+                } as never,
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const cappedEngine = createBackgroundLoopingVideoEngine({ maxResolution: '720p' });
+    cappedEngine.state.presentation.set(presentation);
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(cappedEngine.state.selectedVideoTrackId.get()).toBe('720p');
+    cappedEngine.destroy();
+  });
 });

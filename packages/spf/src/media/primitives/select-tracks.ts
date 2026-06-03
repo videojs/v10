@@ -179,25 +179,77 @@ export function pickVideoTrack(presentation: Presentation, config: VideoSelectio
 }
 
 /**
- * Pick the video track with the highest resolution (width x height).
- *
- * Falls back to `bandwidth` when resolution metadata is missing.
- *
- * Pair with `selectVideoTrack`; compose `switchVideoQuality` instead
- * for runtime-adapted quality.
+ * Config consumed by `pickMaxResolutionVideoTrack`.
  */
-export function pickMaxResolutionVideoTrack(presentation: MaybeResolvedPresentation): string | undefined {
-  const videoSet = presentation.selectionSets?.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
-  const tracks = videoSet?.switchingSets[0]?.tracks;
-  if (!tracks?.length) return undefined;
+export interface MaxResolutionPickerConfig {
+  /**
+   * Upper bound on the picked track's height.
+   * Accepts `"720p"` / "720" / a bare number.
+   * When set, the picker considers only tracks at or below this height.
+   */
+  maxResolution?: string | number;
+}
+
+/**
+ * Parse `"720p"` / `"1080"` / `720` into a height number. Returns
+ * `undefined` for unrecognized inputs.
+ */
+export function parseResolutionHeight(value: string | number | undefined): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : undefined;
+  const match = value.trim().match(/^(\d+)p?$/i);
+  if (!match) return undefined;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+/**
+ * Pick the video track with the highest resolution (width x height) at
+ * or below `maxResolution` (height). Falls back to `bandwidth` when
+ * resolution metadata is missing.
+ *
+ * When `maxResolution` excludes every track, falls back to the lowest
+ * track available. Pair with `selectVideoTrack`; compose
+ * `switchVideoQuality` instead for runtime-adapted quality.
+ */
+export function pickMaxResolutionVideoTrack(
+  config?: MaxResolutionPickerConfig
+): (presentation: MaybeResolvedPresentation) => string | undefined {
+  return (presentation: MaybeResolvedPresentation) => {
+    const videoSet = presentation.selectionSets?.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
+    const tracks = videoSet?.switchingSets[0]?.tracks;
+    if (!tracks?.length) return undefined;
+
+    const maxHeight = parseResolutionHeight(config?.maxResolution);
+    const eligible =
+      maxHeight === undefined ? tracks : tracks.filter((t) => t.height !== undefined && t.height <= maxHeight);
+
+    if (eligible.length > 0) return pickTrack(eligible, 'highest');
+    return pickTrack(tracks, 'lowest');
+  };
+}
+
+type RankableTrack = { id: string; width?: number; height?: number; bandwidth?: number };
+
+/**
+ * Rank tracks by area (width × height), tiebreak on bandwidth, in the
+ * direction given by `order`. Missing-resolution / missing-bandwidth
+ * tracks adopt the order's sentinel so they rank last among real tracks
+ * (and so the initial best is beaten by the first real value).
+ */
+function pickTrack(tracks: readonly RankableTrack[], order: 'highest' | 'lowest'): string | undefined {
+  const sentinel = order === 'highest' ? -1 : Number.POSITIVE_INFINITY;
+  // Standard comparator: negative when `a` is preferred over `b`.
+  // 'highest' is descending (`b - a`); 'lowest' is ascending (`a - b`).
+  const compare = order === 'highest' ? (a: number, b: number) => b - a : (a: number, b: number) => a - b;
 
   let bestId: string | undefined;
-  let bestArea = -1;
-  let bestBandwidth = -1;
+  let bestArea = sentinel;
+  let bestBandwidth = sentinel;
   for (const track of tracks) {
-    const area = track.width && track.height ? track.width * track.height : 0;
-    const bandwidth = track.bandwidth ?? 0;
-    if (area > bestArea || (area === bestArea && bandwidth > bestBandwidth)) {
+    const area = track.width && track.height ? track.width * track.height : sentinel;
+    const bandwidth = track.bandwidth ?? sentinel;
+    if (compare(area, bestArea) < 0 || (area === bestArea && compare(bandwidth, bestBandwidth) < 0)) {
       bestArea = area;
       bestBandwidth = bandwidth;
       bestId = track.id;
