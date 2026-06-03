@@ -181,4 +181,48 @@ describe('BackgroundLoopingVideoMediaElement', () => {
       expect(spy).toHaveBeenCalledOnce();
     });
   });
+
+  describe('maxResolution', () => {
+    it('defaults to undefined', () => {
+      const media = new BackgroundLoopingVideoMediaElement();
+      expect(media.maxResolution).toBeUndefined();
+    });
+
+    it('reflects the value passed via constructor config', () => {
+      const media = new BackgroundLoopingVideoMediaElement({
+        config: { maxResolution: '720p' },
+      });
+      expect(media.maxResolution).toBe('720p');
+    });
+
+    it('reflects setter writes', () => {
+      const media = new BackgroundLoopingVideoMediaElement();
+      media.maxResolution = '1080p';
+      expect(media.maxResolution).toBe('1080p');
+    });
+
+    it('rebuilds the engine on a non-no-op setter write', () => {
+      const media = new BackgroundLoopingVideoMediaElement();
+      const firstEngine = media.engine;
+      media.maxResolution = '720p';
+      expect(media.engine).not.toBe(firstEngine);
+    });
+
+    it('does not rebuild the engine when the value is unchanged', () => {
+      const media = new BackgroundLoopingVideoMediaElement({ config: { maxResolution: '720p' } });
+      const firstEngine = media.engine;
+      media.maxResolution = '720p';
+      expect(media.engine).toBe(firstEngine);
+    });
+
+    it('preserves src and attached media element across rebuild', () => {
+      const media = new BackgroundLoopingVideoMediaElement();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v.m3u8';
+      media.maxResolution = '720p';
+      expect(media.src).toBe('https://example.com/v.m3u8');
+      expect(media.engine.context.mediaElement.get()).toBe(el);
+    });
+  });
 });

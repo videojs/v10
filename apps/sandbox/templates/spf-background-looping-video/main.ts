@@ -27,6 +27,7 @@ import { BackgroundLoopingVideoMediaElement } from '@videojs/spf/background-loop
 const video = document.getElementById('bg-video') as HTMLVideoElement;
 const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
 const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
+const maxResolutionSelect = document.getElementById('max-resolution-select') as HTMLSelectElement;
 const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
 const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
 const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
@@ -76,6 +77,7 @@ type PickerMode = { kind: 'auto' } | { kind: 'manual'; stableId: string };
 
 let currentSourceId: keyof typeof SOURCES = DEFAULT_ID;
 let pickerMode: PickerMode = { kind: 'auto' };
+let currentMaxResolution: string | undefined;
 let adapter!: BackgroundLoopingVideoMediaElement;
 let stopDiag: () => void = () => {};
 
@@ -86,13 +88,19 @@ function rebuildAdapter(): void {
   adapter?.destroy();
 
   // Manual: a picker that maps our stable id to the fresh engine id in the
-  // newly-parsed presentation. Auto: no picker → engine default (max-res).
+  // newly-parsed presentation. Auto: no picker → engine default (max-res +
+  // maxResolution from config).
   const stableId = pickerMode.kind === 'manual' ? pickerMode.stableId : undefined;
   const picker = stableId
     ? (presentation: MaybePresentation) => videoTracksOf(presentation).find((t) => stableTrackId(t) === stableId)?.id
     : undefined;
 
-  adapter = new BackgroundLoopingVideoMediaElement(picker ? { config: { picker } } : undefined);
+  const config = {
+    ...(picker ? { picker } : {}),
+    maxResolution: currentMaxResolution,
+  };
+
+  adapter = new BackgroundLoopingVideoMediaElement({ config });
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
   adapter.src = SOURCES[currentSourceId].url;
@@ -121,6 +129,13 @@ sourceSelect.addEventListener('change', () => {
   // Renditions differ across sources — reset to auto.
   pickerMode = { kind: 'auto' };
   rebuildAdapter();
+});
+
+maxResolutionSelect.addEventListener('change', () => {
+  currentMaxResolution = maxResolutionSelect.value || undefined;
+  // Use the adapter setter — it rebuilds the engine internally without
+  // tearing down the adapter or the attached <video> element.
+  adapter.maxResolution = currentMaxResolution;
 });
 
 function setPickerMode(mode: PickerMode): void {

@@ -14,6 +14,7 @@ export interface BackgroundLoopingVideoMediaProps {
   loop: boolean;
   muted: boolean;
   autoplay: boolean;
+  maxResolution: string | number | undefined;
 }
 
 export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMediaProps = {
@@ -22,6 +23,7 @@ export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMedi
   loop: true,
   muted: true,
   autoplay: true,
+  maxResolution: undefined,
 };
 
 export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMediaProps {
@@ -71,6 +73,10 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     #loop: boolean = backgroundLoopingVideoMediaDefaultProps.loop;
     #muted: boolean = backgroundLoopingVideoMediaDefaultProps.muted;
     #autoplay: boolean = backgroundLoopingVideoMediaDefaultProps.autoplay;
+    #maxResolution: string | number | undefined;
+
+    /** Attached media element preserved across engine rebuilds (e.g. maxResolution setter). */
+    #attachedMediaElement: HTMLMediaElement | null = null;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -80,6 +86,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
+      this.#maxResolution = config?.maxResolution;
       this.#engine = this.#createEngine();
     }
 
@@ -100,11 +107,13 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       mediaElement.muted = this.#muted;
       mediaElement.autoplay = this.#autoplay;
 
+      this.#attachedMediaElement = mediaElement;
       this.#signals.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
+      this.#attachedMediaElement = null;
       this.#signals.context.mediaElement.set(undefined);
       super.detach?.();
     }
@@ -154,6 +163,22 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
 
     set autoplay(_value: boolean) {
       // Noop for this phase
+    }
+
+    // -------------------------------------------------------------------------
+    // maxResolution — engine-config passthrough to the default picker. The
+    // picker bakes config into a closure at engine creation, so changes
+    // after construction require an engine rebuild.
+    // -------------------------------------------------------------------------
+
+    get maxResolution(): string | number | undefined {
+      return this.#maxResolution;
+    }
+
+    set maxResolution(value: string | number | undefined) {
+      if (value === this.#maxResolution) return;
+      this.#maxResolution = value;
+      this.#rebuildEngine();
     }
 
     // -------------------------------------------------------------------------
@@ -214,10 +239,24 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     #createEngine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
       return createBackgroundLoopingVideoEngine({
         ...this.#config,
+        maxResolution: this.#maxResolution,
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
       });
+    }
+
+    // Rebuild the engine when a config field baked into a picker closure
+    // changes (maxResolution). Preserves src and the
+    // attached media element across the swap.
+    #rebuildEngine(): void {
+      const currentSrc = this.src;
+      const mediaElement = this.#attachedMediaElement;
+      this.#cancelPendingPlay();
+      this.#engine.destroy();
+      this.#engine = this.#createEngine();
+      if (currentSrc) this.#signals.state.presentation.set({ url: currentSrc });
+      if (mediaElement) this.#signals.context.mediaElement.set(mediaElement);
     }
 
     #cancelPendingPlay(): void {
