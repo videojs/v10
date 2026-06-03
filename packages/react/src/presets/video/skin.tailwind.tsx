@@ -15,10 +15,10 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
@@ -271,11 +271,14 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <Slider.Thumbnail className={preview.thumbnail} />
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+              <div className={thumbnail.root}>
+                <Slider.Thumbnail className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={cn(time.current, thumbnail.time)} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={cn(slider.value, time.current)} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
           </div>

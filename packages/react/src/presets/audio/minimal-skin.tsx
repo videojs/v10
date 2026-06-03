@@ -134,7 +134,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -148,7 +148,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className="media-tooltip" />
             </Tooltip.Root>
           </div>
 
@@ -165,6 +165,9 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 <TimeSlider.Buffer className="media-slider__buffer" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
+              <TimeSlider.Preview className="media-slider__preview">
+                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 

@@ -3,9 +3,9 @@ import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
-import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
+import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* ==========================================================================
@@ -139,28 +139,29 @@ export const error = {
 };
 
 /* ==========================================================================
-   Preview
+   Thumbnail
    ========================================================================== */
 
-export const preview = {
-  ...basePreview,
+export const thumbnail = {
+  ...baseThumbnail,
   root: cn(
-    '[--media-preview-max-width:11rem] [--media-preview-padding:-0.5rem] [--media-preview-inset:calc(100cqi-100%)]',
-    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-full -translate-x-1/2',
-    '@2xl/media-root:bottom-[calc(100%+0.25rem)] @2xl/media-root:[left:var(--media-slider-pointer)]',
+    baseThumbnail.root,
+    '[--media-slider-thumbnail-max-width:11rem] [--media-slider-thumbnail-padding:-0.5rem] [--media-slider-thumbnail-inset:calc(100cqi-100%)]',
+    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-full -translate-x-1/2',
+    '@2xl/media-root:[left:var(--media-slider-pointer)]',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
-    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    'has-[[role=img][data-hidden]]:opacity-0 has-[[role=img][data-hidden]]:scale-80 has-[[role=img][data-hidden]]:blur-sm',
-    'has-[[role=img][data-loading]]:max-h-24',
-    basePreview.root
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none',
+    'has-[[role=img][data-loading]]:max-h-24'
   ),
-  thumbnailWrapper: cn(
-    basePreview.thumbnailWrapper,
+  imageWrapper: cn(
+    baseThumbnail.imageWrapper,
     'after:absolute after:inset-0 after:rounded-[inherit]',
     'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
+  image: cn(baseThumbnail.image, 'max-w-(--media-slider-thumbnail-max-width)'),
 };
 
 /* ==========================================================================

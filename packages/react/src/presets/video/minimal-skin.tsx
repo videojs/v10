@@ -207,13 +207,17 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
 
-              <div className="media-preview media-slider__preview">
-                <div className="media-preview__thumbnail-wrapper">
-                  <Slider.Thumbnail className="media-preview__thumbnail" />
+              <div className="media-thumbnail media-slider__thumbnail">
+                <div className="media-thumbnail__image-wrapper">
+                  <Slider.Thumbnail className="media-thumbnail__image" />
                 </div>
-                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
-                <SpinnerIcon className="media-preview__spinner media-icon" />
+                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
+                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
               </div>
+
+              <TimeSlider.Preview className="media-slider__preview">
+                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 

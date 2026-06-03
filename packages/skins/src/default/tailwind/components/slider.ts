@@ -40,11 +40,11 @@ export const slider = {
     base: cn(
       'z-10 absolute -translate-x-1/2 -translate-y-1/2',
       'bg-current rounded-full',
-      'shadow-[0_0_0_1px_var(--media-current-shadow-color-subtle,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.15),0_1px_2px_-1px_oklch(0_0_0/0.15)]',
+      'shadow-[0_0_0_1px_var(--media-current-shadow-color,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.35),0_1px_2px_-1px_oklch(0_0_0/0.35)]',
       'transition-[opacity,height,width,outline-offset] duration-150 ease-out select-none',
       'outline-4 outline-transparent -outline-offset-4',
-      'hover:outline-current/25 hover:outline-offset-0',
-      'focus-visible:outline-current/25 focus-visible:outline-offset-0',
+      'hover:outline-current/15 hover:outline-offset-0',
+      'focus-visible:outline-current/15 focus-visible:outline-offset-0',
       // Horizontal
       'data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:left-(--media-slider-fill)',
       // Vertical
@@ -57,4 +57,20 @@ export const slider = {
       'group-active/slider:size-3'
     ),
   },
+  preview: cn(
+    'group/preview',
+    'before:block before:min-w-1 before:h-1 before:bg-current before:rounded-full before:opacity-0 before:scale-50',
+    'before:shadow-[0_0_0_1px_var(--media-current-shadow-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
+    'before:transition-[opacity,scale] before:duration-200 before:ease-out',
+    'data-pointing:not-data-dragging:before:opacity-100 data-pointing:not-data-dragging:before:scale-100',
+    'peer-has-[[role=img]:not([data-hidden])]/thumbnail:*:hidden'
+  ),
+  value: cn(
+    'absolute bottom-9 tabular-nums',
+    '-translate-x-1/2 translate-y-2 scale-50 opacity-0 blur-lg',
+    'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
+    'transition-[filter,opacity,scale,translate] duration-200 ease-out',
+    'group-data-pointing/preview:translate-y-0 group-data-pointing/preview:scale-100',
+    'group-data-pointing/preview:opacity-100 group-data-pointing/preview:blur-none'
+  ),
 };

@@ -16,10 +16,10 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
@@ -97,11 +97,14 @@ function getTemplateHTML() {
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
 
-              <div class="${preview.root}">
-                <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
-                <media-slider-value type="pointer" class="${preview.time}"></media-slider-value>
-                ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
+              <div class="${thumbnail.root}">
+                <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
+                <media-slider-value type="pointer" class="${cn(time.current, thumbnail.time)}"></media-slider-value>
+                ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
               </div>
+              <media-slider-preview class="${slider.preview}">
+                <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
+              </media-slider-preview>
             </media-time-slider>
             <media-time type="duration" class="${time.duration}"></media-time>
           </div>

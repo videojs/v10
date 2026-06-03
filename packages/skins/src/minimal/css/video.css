@@ -10,7 +10,7 @@
 @import "./components/button-group.css";
 @import "./components/icons.css";
 @import "./components/poster.css";
-@import "./components/preview.css";
+@import "./components/thumbnail.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/menus.css";
@@ -261,21 +261,27 @@
    Slider preview
    ========================================================================== */
 
-.media-minimal-skin--video .media-slider__preview {
-  --media-preview-max-width: 11rem;
-  --media-preview-padding: -0.5rem;
+.media-minimal-skin--video .media-slider__thumbnail {
+  --media-slider-thumbnail-max-width: 11rem;
+  --media-slider-thumbnail-padding: -0.5rem;
   /**
     Inset is the difference between the container width and the slider (100%) width.
     We only add to the end as we render the time there.
   */
-  --media-preview-inset: calc(100cqi - 100%);
+  --media-slider-thumbnail-inset: calc(100cqi - 100%);
 
   position: absolute;
   bottom: 100%;
   left: clamp(
-    calc(var(--media-preview-max-width) / 2 + var(--media-preview-padding)),
+    calc(var(--media-slider-thumbnail-max-width) / 2 + var(--media-slider-thumbnail-padding)),
     var(--media-slider-pointer),
-    calc(100% - var(--media-preview-max-width) / 2 - var(--media-preview-padding) + var(--media-preview-inset))
+    calc(
+      100% -
+      var(--media-slider-thumbnail-max-width) /
+      2 -
+      var(--media-slider-thumbnail-padding) +
+      var(--media-slider-thumbnail-inset)
+    )
   );
   opacity: 0;
   filter: blur(8px);
@@ -287,11 +293,10 @@
   transition-property: scale, opacity, filter;
 
   @container media-root (width > 42rem) {
-    bottom: calc(100% + 0.25rem);
     left: var(--media-slider-pointer);
   }
 
-  & .media-preview__thumbnail-wrapper {
+  & .media-thumbnail__image-wrapper {
     position: relative;
 
     &::after {
@@ -306,16 +311,22 @@
     }
   }
 
-  & .media-preview__thumbnail {
-    max-width: var(--media-preview-max-width);
+  & .media-thumbnail__image {
+    max-width: var(--media-slider-thumbnail-max-width);
   }
 
-  &:has(.media-preview__thumbnail[data-loading]) {
+  &:has(.media-thumbnail__image[data-loading]) {
     max-height: 6rem;
   }
 }
-.media-minimal-skin--video .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+.media-minimal-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
   opacity: 1;
   filter: blur(0);
   scale: 1;
+}
+.media-minimal-skin--video
+  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
+  + .media-slider__preview
+  .media-slider__value {
+  display: none;
 }

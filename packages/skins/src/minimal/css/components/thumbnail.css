@@ -1,20 +1,21 @@
 /* ==========================================================================
-   Media preview
+   Media thumbnail
    ========================================================================== */
-.media-minimal-skin .media-preview {
+
+.media-minimal-skin .media-thumbnail {
   pointer-events: none;
 
-  & .media-preview__thumbnail-wrapper {
+  & .media-thumbnail__image-wrapper {
     position: relative;
     background-color: oklch(0 0 0 / 0.9);
     border-radius: 0.5rem;
   }
-  & .media-preview__thumbnail {
+  & .media-thumbnail__image {
     display: block;
     border-radius: inherit;
   }
 
-  & .media-preview__time {
+  & .media-thumbnail__time {
     display: block;
     margin-top: 0.5rem;
     text-align: center;
@@ -24,7 +25,7 @@
     opacity: 1;
   }
 
-  & .media-preview__spinner {
+  & .media-thumbnail__spinner {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -32,22 +33,22 @@
     translate: -50% -50%;
   }
 
-  & .media-preview__thumbnail,
-  & .media-preview__spinner {
+  & .media-thumbnail__image,
+  & .media-thumbnail__spinner {
     transition: opacity 150ms ease-out;
   }
 
-  &:not(:has(.media-preview__thumbnail[data-loading])) {
-    & .media-preview__spinner {
+  &:not(:has(.media-thumbnail__image[data-loading])) {
+    & .media-thumbnail__spinner {
       --media-spinner-animation: none;
     }
   }
 
-  &:has(.media-preview__thumbnail[data-loading]) {
-    & .media-preview__thumbnail {
+  &:has(.media-thumbnail__image[data-loading]) {
+    & .media-thumbnail__image {
       opacity: 0;
     }
-    & .media-preview__spinner {
+    & .media-thumbnail__spinner {
       opacity: 1;
     }
   }

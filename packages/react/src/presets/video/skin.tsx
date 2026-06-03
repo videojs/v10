@@ -204,11 +204,15 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
 
-              <div className="media-surface media-preview media-slider__preview">
-                <Slider.Thumbnail className="media-preview__thumbnail" />
-                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
-                <SpinnerIcon className="media-preview__spinner media-icon" />
+              <div className="media-surface media-thumbnail media-slider__thumbnail">
+                <Slider.Thumbnail className="media-thumbnail__image" />
+                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
+                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
               </div>
+
+              <TimeSlider.Preview className="media-slider__preview">
+                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className="media-time" />
           </div>

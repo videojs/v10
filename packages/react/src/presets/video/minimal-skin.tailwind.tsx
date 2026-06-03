@@ -15,10 +15,10 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
@@ -274,13 +274,16 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <div className={preview.thumbnailWrapper}>
-                  <Slider.Thumbnail className={preview.thumbnail} />
+              <div className={thumbnail.root}>
+                <div className={thumbnail.imageWrapper}>
+                  <Slider.Thumbnail className={thumbnail.image} />
                 </div>
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+                <TimeSlider.Value type="pointer" className={cn(time.current, thumbnail.time)} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={cn(slider.value, time.current)} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 

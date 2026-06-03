@@ -12,7 +12,7 @@
 @import "./components/icons.css";
 @import "./components/menus.css";
 @import "./components/poster.css";
-@import "./components/preview.css";
+@import "./components/thumbnail.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/captions.css";
@@ -245,21 +245,32 @@
   box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
 }
 
-.media-default-skin--video .media-slider__preview {
-  --media-preview-max-width: 11rem;
-  --media-preview-padding: -1.125rem;
+.media-default-skin--video .media-slider__thumbnail {
+  --media-slider-thumbnail-max-width: 11rem;
+  --media-slider-thumbnail-padding: -1.125rem;
   /**
     Inset is the difference between the container width and the slider (100%) width.
     Divided by 2 as we render the time on both sides.
   */
-  --media-preview-inset: calc((100cqi - 100%) / 2);
+  --media-slider-thumbnail-inset: calc((100cqi - 100%) / 2);
 
   position: absolute;
   bottom: calc(100% + 1.2rem);
   left: clamp(
-    calc(var(--media-preview-max-width) / 2 + var(--media-preview-padding) - var(--media-preview-inset)),
+    calc(
+      var(--media-slider-thumbnail-max-width) /
+      2 +
+      var(--media-slider-thumbnail-padding) -
+      var(--media-slider-thumbnail-inset)
+    ),
     var(--media-slider-pointer),
-    calc(100% - var(--media-preview-max-width) / 2 - var(--media-preview-padding) + var(--media-preview-inset))
+    calc(
+      100% -
+      var(--media-slider-thumbnail-max-width) /
+      2 -
+      var(--media-slider-thumbnail-padding) +
+      var(--media-slider-thumbnail-inset)
+    )
   );
   pointer-events: none;
   opacity: 0;
@@ -271,16 +282,22 @@
   transition-duration: 150ms;
   transition-property: scale, opacity, filter;
 
-  & .media-preview__thumbnail {
-    max-width: var(--media-preview-max-width);
+  & .media-thumbnail__image {
+    max-width: var(--media-slider-thumbnail-max-width);
   }
 
-  &:has(.media-preview__thumbnail[data-loading]) {
+  &:has(.media-thumbnail__image[data-loading]) {
     max-height: 6rem;
   }
 }
-.media-default-skin--video .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+.media-default-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
   opacity: 1;
   filter: blur(0);
   scale: 1;
+}
+.media-default-skin--video
+  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
+  + .media-slider__preview
+  .media-slider__value {
+  display: none;
 }
