@@ -185,27 +185,42 @@
       gap: 4px;
     }
 
-    .rendition-buttons button {
+    .rendition-buttons .rendition {
       width: 100%;
       padding: 6px 8px;
       font: inherit;
       font-size: 12px;
       color: inherit;
       text-align: left;
-      cursor: pointer;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 4px;
     }
 
-    .rendition-buttons button:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .rendition-buttons button.selected {
+    .rendition-buttons .rendition.selected {
       color: #7ee787;
       background: rgba(126, 231, 135, 0.12);
       border-color: rgba(126, 231, 135, 0.4);
+    }
+
+    .controls .load-btn {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      background: rgba(126, 231, 135, 0.16);
+      border: 1px solid rgba(126, 231, 135, 0.4);
+      border-radius: 4px;
+    }
+
+    .controls .load-btn:hover {
+      background: rgba(126, 231, 135, 0.24);
     }
 
     .controls .roadmap {
@@ -269,11 +284,6 @@
       <select id="source-select"></select>
 
       <div class="picker-section">
-        <label>Rendition</label>
-        <div id="rendition-buttons" class="rendition-buttons"></div>
-      </div>
-
-      <div class="picker-section">
         <label for="max-resolution-select">maxResolution</label>
         <select id="max-resolution-select">
           <option value="">— none —</option>
@@ -285,6 +295,12 @@
           <option value="1440p">1440p</option>
           <option value="2160p">2160p</option>
         </select>
+        <button type="button" id="load-btn" class="load-btn">Load</button>
+      </div>
+
+      <div class="picker-section">
+        <label>Rendition</label>
+        <div id="rendition-buttons" class="rendition-buttons"></div>
       </div>
 
       <div class="roadmap">

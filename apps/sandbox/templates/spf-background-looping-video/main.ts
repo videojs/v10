@@ -10,13 +10,13 @@ import '@app/styles.css';
 //   - the picker selects the highest-resolution rendition by default
 //   - audio-side actors are absent from the engine context (subtraction proof)
 //
-// Rendition switching: the engine's own track ids come from generateId() and
-// are regenerated on every manifest parse, so they don't survive the engine
-// rebuild a switch triggers. This demo identifies renditions by a stable id
-// derived from dimensions + bandwidth, and maps it back to the fresh engine
-// id via a config `picker` on each rebuild. "Auto" passes no picker (engine
-// default = max-resolution). The video is paused before teardown and `src` is
-// set before `attach` so the in-flight play() doesn't reject with AbortError.
+// Rendition selection is driven by `maxResolution` on the adapter. The
+// rendition list is read-only; it shows the available tracks and
+// highlights the one the picker chose. Changing `maxResolution` just
+// stashes the new value — clicking Load reassigns `src`, which cycles
+// the presentation through `unresolved → resolved` and re-fires the
+// closure picker (so the new cap takes effect on the live engine,
+// without a rebuild).
 
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
@@ -28,6 +28,7 @@ const video = document.getElementById('bg-video') as HTMLVideoElement;
 const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
 const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
 const maxResolutionSelect = document.getElementById('max-resolution-select') as HTMLSelectElement;
+const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
 const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
 const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
 const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
@@ -73,10 +74,7 @@ function trackDimensions(track: VideoTrack): { w: number; h: number } {
 }
 
 // ── Adapter lifecycle ─────────────────────────────────────────────────────────
-type PickerMode = { kind: 'auto' } | { kind: 'manual'; stableId: string };
-
 let currentSourceId: keyof typeof SOURCES = DEFAULT_ID;
-let pickerMode: PickerMode = { kind: 'auto' };
 let currentMaxResolution: string | undefined;
 let adapter!: BackgroundLoopingVideoMediaElement;
 let stopDiag: () => void = () => {};
@@ -87,20 +85,7 @@ function rebuildAdapter(): void {
   video.pause();
   adapter?.destroy();
 
-  // Manual: a picker that maps our stable id to the fresh engine id in the
-  // newly-parsed presentation. Auto: no picker → engine default (max-res +
-  // maxResolution from config).
-  const stableId = pickerMode.kind === 'manual' ? pickerMode.stableId : undefined;
-  const picker = stableId
-    ? (presentation: MaybePresentation) => videoTracksOf(presentation).find((t) => stableTrackId(t) === stableId)?.id
-    : undefined;
-
-  const config = {
-    ...(picker ? { picker } : {}),
-    maxResolution: currentMaxResolution,
-  };
-
-  adapter = new BackgroundLoopingVideoMediaElement({ config });
+  adapter = new BackgroundLoopingVideoMediaElement({ config: { maxResolution: currentMaxResolution } });
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
   adapter.src = SOURCES[currentSourceId].url;
@@ -117,31 +102,31 @@ function rebuildAdapter(): void {
 (window as any).context = () => snapshot(adapter.engine.context);
 
 // The diagnostic effect re-fires on every state change (currentTime ticks,
-// segment loads), but the button list only depends on the track set and the
-// selected mode. Skip the DOM rebuild when neither changed — otherwise every
-// tick wipes hover/focus and churns nodes.
+// segment loads), but the list only depends on the track set + the
+// current selection. Skip DOM rebuild when neither changed.
 let lastRenditionSignature = '';
 
 rebuildAdapter();
 
 sourceSelect.addEventListener('change', () => {
   currentSourceId = sourceSelect.value as keyof typeof SOURCES;
-  // Renditions differ across sources — reset to auto.
-  pickerMode = { kind: 'auto' };
   rebuildAdapter();
 });
 
 maxResolutionSelect.addEventListener('change', () => {
   currentMaxResolution = maxResolutionSelect.value || undefined;
-  // Use the adapter setter — it rebuilds the engine internally without
-  // tearing down the adapter or the attached <video> element.
+  // Closure picker reads `#maxResolution` at pick time, so the setter
+  // just stashes the value. Use the Load button to reassign src and
+  // force a re-pick.
   adapter.maxResolution = currentMaxResolution;
 });
 
-function setPickerMode(mode: PickerMode): void {
-  pickerMode = mode;
-  rebuildAdapter();
-}
+loadBtn.addEventListener('click', () => {
+  // Reassign src to cycle the presentation through
+  // `unresolved → resolved`. That re-fires the picker, which reads the
+  // current `maxResolution` via the adapter's closure.
+  adapter.src = SOURCES[currentSourceId].url;
+});
 
 // ── Diagnostic strip + rendition picker ──────────────────────────────────────
 function formatBandwidth(bps: number): string {
@@ -174,32 +159,23 @@ function attachDiagnostic(): () => void {
     const keys = Object.keys(context).filter((k) => (context as Record<string, unknown>)[k] !== undefined);
     diagContext.textContent = keys.length ? keys.join(', ') : '—';
 
-    renderRenditionButtons(tracks);
+    renderRenditionList(tracks, state.selectedVideoTrackId);
   });
 }
 
-function renditionSignature(tracks: VideoTrack[]): string {
-  const mode = pickerMode.kind === 'manual' ? `manual:${pickerMode.stableId}` : 'auto';
-  return `${mode}#${tracks.map(stableTrackId).join(',')}`;
+function renditionSignature(tracks: VideoTrack[], selectedId: string | undefined): string {
+  return `${selectedId ?? '—'}#${tracks.map(stableTrackId).join(',')}`;
 }
 
-function renderRenditionButtons(tracks: VideoTrack[]): void {
-  const signature = renditionSignature(tracks);
+function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefined): void {
+  const signature = renditionSignature(tracks, selectedId);
   if (signature === lastRenditionSignature) return;
   lastRenditionSignature = signature;
 
   renditionButtons.innerHTML = '';
-
-  const autoBtn = document.createElement('button');
-  autoBtn.type = 'button';
-  autoBtn.textContent = 'Auto · max resolution';
-  if (pickerMode.kind === 'auto') autoBtn.classList.add('selected');
-  autoBtn.addEventListener('click', () => setPickerMode({ kind: 'auto' }));
-  renditionButtons.appendChild(autoBtn);
-
   if (tracks.length === 0) return;
 
-  // Sort by area desc so the picker reads top-down high-to-low.
+  // Sort by area desc so the list reads top-down high-to-low.
   const sorted = [...tracks].sort((a, b) => {
     const da = trackDimensions(a);
     const db = trackDimensions(b);
@@ -210,17 +186,14 @@ function renderRenditionButtons(tracks: VideoTrack[]): void {
   });
 
   for (const track of sorted) {
-    const id = stableTrackId(track);
     const { w, h } = trackDimensions(track);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    const res = w && h ? `${w}x${h} · ` : '';
-    btn.textContent = `${res}${formatBandwidth(track.bandwidth)}`;
-    btn.title = id;
-    if (pickerMode.kind === 'manual' && pickerMode.stableId === id) {
-      btn.classList.add('selected');
-    }
-    btn.addEventListener('click', () => setPickerMode({ kind: 'manual', stableId: id }));
-    renditionButtons.appendChild(btn);
+    const row = document.createElement('div');
+    row.className = 'rendition';
+    const tier = h ? `${h}p` : '—';
+    const dims = w && h ? ` · ${w}x${h}` : '';
+    row.textContent = `${tier} - ${formatBandwidth(track.bandwidth)}${dims}`;
+    row.title = stableTrackId(track);
+    if (track.id === selectedId) row.classList.add('selected');
+    renditionButtons.appendChild(row);
   }
 }
