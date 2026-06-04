@@ -1,69 +1,122 @@
 import { listen } from '@videojs/utils/dom';
 
 import type { MediaFullscreenState } from '../../../core/media/state';
-import { definePlayerFeature } from '../../feature';
+import { type ConfigurablePlayerFeature, definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen, isFullscreenEnabled, requestFullscreen } from '../../presentation/fullscreen';
+import {
+  createScreenOrientationLock,
+  type ScreenOrientationLock,
+  type ScreenOrientationLockType,
+} from '../../presentation/orientation';
 import { exitPictureInPicture, isPictureInPicture } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
-export const fullscreenFeature = definePlayerFeature({
-  name: 'fullscreen',
-  state: ({ target }): MediaFullscreenState => ({
-    fullscreen: false,
-    fullscreenAvailability: 'unavailable',
+const ORIENTATION_LOCK_SYMBOL = Symbol('@videojs/fullscreen-orientation-lock');
 
-    async requestFullscreen() {
-      const { media, container } = target();
+type FullscreenState = MediaFullscreenState & {
+  [ORIENTATION_LOCK_SYMBOL]: ScreenOrientationLock;
+};
 
-      // Exit PiP first if active (browser behavior is inconsistent)
-      if (isPictureInPicture(media)) {
-        await exitPictureInPicture(media);
-      }
+export type FullscreenOrientationLock = ScreenOrientationLockType;
 
-      return requestFullscreen(container, media);
+export interface FullscreenFeatureConfig {
+  /** Lock the screen orientation while fullscreen is active. Pass `false` to disable. */
+  orientationLock?: FullscreenOrientationLock | undefined;
+}
+
+export type ConfigurableFullscreenFeature = ConfigurablePlayerFeature<FullscreenFeatureConfig, MediaFullscreenState>;
+
+function getOrientationLock(state: Readonly<MediaFullscreenState>) {
+  return (state as Readonly<Partial<FullscreenState>>)[ORIENTATION_LOCK_SYMBOL];
+}
+
+export const fullscreenFeature: ConfigurableFullscreenFeature = definePlayerFeature(
+  {
+    name: 'fullscreen',
+    state: ({ target }, config: FullscreenFeatureConfig): MediaFullscreenState => {
+      const orientationLock = createScreenOrientationLock({ type: config.orientationLock });
+
+      const enterFullscreen = async () => {
+        const { media, container } = target();
+
+        // Exit PiP first if active (browser behavior is inconsistent)
+        if (isPictureInPicture(media)) {
+          await exitPictureInPicture(media);
+        }
+
+        await requestFullscreen(container, media);
+        await orientationLock.lock();
+      };
+
+      const leaveFullscreen = async () => {
+        const { media } = target();
+
+        try {
+          return await exitFullscreen(media);
+        } finally {
+          orientationLock.unlock();
+        }
+      };
+
+      const state: FullscreenState = {
+        [ORIENTATION_LOCK_SYMBOL]: orientationLock,
+        fullscreen: false,
+        fullscreenAvailability: 'unavailable',
+        requestFullscreen: enterFullscreen,
+        exitFullscreen: leaveFullscreen,
+
+        async toggleFullscreen() {
+          const { media, container } = target();
+
+          if (isFullscreen(container, media)) {
+            return leaveFullscreen();
+          }
+
+          return enterFullscreen();
+        },
+      };
+
+      return state;
     },
 
-    async exitFullscreen() {
-      const { media } = target();
-      return exitFullscreen(media);
-    },
+    attach({ target, signal, set, get }) {
+      const { media, container } = target;
 
-    async toggleFullscreen() {
-      const { media, container } = target();
-
-      if (isFullscreen(container, media)) {
-        return exitFullscreen(media);
-      }
-
-      if (isPictureInPicture(media)) {
-        await exitPictureInPicture(media);
-      }
-
-      return requestFullscreen(container, media);
-    },
-  }),
-
-  attach({ target, signal, set }) {
-    const { media, container } = target;
-
-    set({
-      fullscreenAvailability: isFullscreenEnabled() ? 'available' : 'unsupported',
-    });
-
-    const sync = () =>
       set({
-        fullscreen: isFullscreen(container, media),
+        fullscreenAvailability: isFullscreenEnabled() ? 'available' : 'unsupported',
       });
 
-    sync();
+      let wasFullscreen = false;
+      const sync = () => {
+        const fullscreen = isFullscreen(container, media);
 
-    listen(document, 'fullscreenchange', sync, { signal });
-    listen(document, 'webkitfullscreenchange', sync, { signal });
+        if (wasFullscreen && !fullscreen) {
+          getOrientationLock(get())?.unlock();
+        }
 
-    // iOS Safari presentation mode change (covers fullscreen)
-    const video = media as WebKitVideoElement;
-    if ('webkitPresentationMode' in video) {
-      listen(media, 'webkitpresentationmodechanged', sync, { signal });
-    }
+        wasFullscreen = fullscreen;
+        set({ fullscreen });
+      };
+
+      sync();
+
+      listen(document, 'fullscreenchange', sync, { signal });
+      listen(document, 'webkitfullscreenchange', sync, { signal });
+
+      // iOS Safari presentation mode change (covers fullscreen)
+      const video = media as WebKitVideoElement;
+      if ('webkitPresentationMode' in video) {
+        listen(media, 'webkitpresentationmodechanged', sync, { signal });
+      }
+
+      signal.addEventListener(
+        'abort',
+        () => {
+          getOrientationLock(get())?.unlock();
+        },
+        { once: true }
+      );
+    },
   },
-});
+  {}
+);

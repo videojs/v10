@@ -1,5 +1,5 @@
 import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
-import { audioFeatures, definePlayerFeature, videoFeatures } from '@videojs/core/dom';
+import { audioFeatures, definePlayerFeature, features, videoFeatures } from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
@@ -36,6 +36,16 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: [customFeature] });
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+  });
+
+  it('accepts the fullscreen feature alias with and without config', () => {
+    const configuredFullscreen = features.fullscreen({ orientationLock: false });
+
+    const defaultResult = createPlayer({ features: [features.fullscreen] });
+    const configuredResult = createPlayer({ features: [configuredFullscreen] });
+
+    assertType<CreatePlayerResult<PlayerStore<[typeof features.fullscreen]>>>(defaultResult);
+    assertType<CreatePlayerResult<PlayerStore<[typeof configuredFullscreen]>>>(configuredResult);
   });
 
   it('resolves extended video features to generic PlayerStore', () => {
