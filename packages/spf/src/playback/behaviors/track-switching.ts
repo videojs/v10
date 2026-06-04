@@ -151,10 +151,12 @@ export function applyRules<T, State, Context, Config>(
 //
 // `setupTrackSwitching` has the same shape as a Behavior `setup` function:
 // `({ state, config }) => Reactor`. Each `switchXTrack` export below calls
-// it from inside its own `defineBehavior` setup, passing the per-type slot
-// keys, candidate track type, and rule chain via three generic parameters —
-// `S` (selection slot key), `U` (user-selection slot key), `T` (candidate
-// track type).
+// it from inside its own `defineBehavior` setup. Its generics — `S` (selection
+// slot key), `T` (candidate track type), `C` (the concrete config the variant
+// builds) — all infer from the passed `state` + `config`, so the variants need
+// no explicit type arguments. `C extends TrackSwitchingConfig<S, T>` lets the
+// variant's richer config (rule-specific fields included) flow through the
+// helper untouched; the rules read those fields off their own config views.
 //
 // -- Design note: why narrow `SelectionKey` / `UserSelectionKey` unions ----
 // Goal we did not reach: have callers "fully pass in" the slot keys, with
@@ -183,7 +185,7 @@ type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 
 // Each mapped value references `P` so TS keeps the per-key dependency and
 // resolves `state[selectionKey]` to the right arm. `T` (track type) stays out
-// of the state map (it flows through `TrackSwitchingSetupConfig` instead).
+// of the state map (it flows through `TrackSwitchingConfig` instead).
 //
 // Only the behavior's own lifecycle signals are required here: the presentation
 // gate and the selection slot it writes. Signals a *rule* reads but the
@@ -198,19 +200,19 @@ type TrackSwitchingStateMap<S extends SelectionKey> = {
 } & { [P in S]: Signal<TrackSwitchingState[P]> };
 
 /**
- * Config `setupTrackSwitching` receives — the per-variant wiring: which slots
- * to read/write (`selectionKey` / `userSelectionKey`), how to enumerate the
- * candidate tracks (`getTracks`), and the **rule chain** to run. ABR tuning is
- * optional and read only by the bandwidth ranker rule (`rankByBandwidth`).
+ * Config `setupTrackSwitching` itself reads — its own wiring: which selection
+ * slot to write and clear (`selectionKey`), how to enumerate candidate tracks
+ * (`getTracks`), and the **rule chain** to run (`rules`). Rule-specific config
+ * is deliberately absent — each rule declares the fields it reads as *optional*
+ * on its own config view (`UserSelectionConfig`, `BandwidthRankerConfig`), so
+ * the behavior never enumerates a rule's config. The variant builds the
+ * concrete config as this base plus whatever its chain's rules consult; it
+ * flows through untouched as the `C` type param on `setupTrackSwitching`.
  */
-interface TrackSwitchingSetupConfig<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack> {
+interface TrackSwitchingConfig<S extends SelectionKey, T extends SwitchableTrack> {
   selectionKey: S;
-  userSelectionKey: U;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
-  rules: readonly SelectionRule<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>[];
-  quality?: Partial<QualityConfig>;
-  bandwidth?: Partial<BandwidthConfig>;
-  initialBandwidth?: number;
+  rules: readonly SelectionRule<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>[];
 }
 
 /**
@@ -230,6 +232,18 @@ type UserSelectionStateMap<
 };
 
 /**
+ * Config the user-selection filter reads: `userSelectionKey` names the state
+ * slot holding the user's selection. *Optional* on the rule's view — the base
+ * config doesn't carry it, so an unwired key means "no user selection" and the
+ * filter passes through. The variants always supply it.
+ */
+type UserSelectionConfig<
+  S extends SelectionKey,
+  U extends UserSelectionKey,
+  T extends SwitchableTrack,
+> = TrackSwitchingConfig<S, T> & { userSelectionKey?: U };
+
+/**
  * State the bandwidth ranker reads: the lifecycle map plus an *optional*
  * `bandwidthState`. The signal exists only when the composition includes a
  * bandwidth sampler; the ranker reads it defensively and falls back to
@@ -238,6 +252,13 @@ type UserSelectionStateMap<
 type BandwidthRankerStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
   bandwidthState?: ReadonlySignal<BandwidthState | undefined>;
 };
+
+/**
+ * Config the bandwidth ranker reads: the ABR tuning in `SwitchVideoTrackConfig`
+ * (`quality` / `bandwidth` / `initialBandwidth`), all optional with defaults.
+ */
+type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> &
+  SwitchVideoTrackConfig;
 
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
@@ -256,9 +277,11 @@ type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
  */
 function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U, T>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
+  { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U, T>, AnySlotMap, UserSelectionConfig<S, U, T>>
 ): readonly T[] {
-  const filter = state[config.userSelectionKey]?.get();
+  const key = config.userSelectionKey;
+  if (!key) return tracks;
+  const filter = state[key]?.get();
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
 }
 
@@ -279,9 +302,9 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * rule when a prior one narrowed to a single track, so the estimate is neither
  * read nor subscribed while that holds.
  */
-function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
+function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: SelectionRuleDeps<BandwidthRankerStateMap<S>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
+  { state, config }: SelectionRuleDeps<BandwidthRankerStateMap<S>, AnySlotMap, BandwidthRankerConfig<S, T>>
 ): readonly T[] {
   const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
   const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
@@ -309,11 +332,11 @@ function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T e
 // to its constraint and forcing the slot required, so the variants forward it
 // untyped via the rest and it lands here — absent on direct setup calls, and
 // passed straight through to the rules (which don't read it yet).
-function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(deps: {
-  state: TrackSwitchingStateMap<S>;
-  context?: AnySlotMap;
-  config: TrackSwitchingSetupConfig<S, U, T>;
-}) {
+function setupTrackSwitching<
+  S extends SelectionKey,
+  T extends SwitchableTrack,
+  C extends TrackSwitchingConfig<S, T>,
+>(deps: { state: TrackSwitchingStateMap<S>; context?: AnySlotMap; config: C }) {
   const { state, config } = deps;
   const { selectionKey, getTracks, rules } = config;
 
@@ -343,8 +366,14 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
 
             // The whole deps object passes straight through to every rule in the
             // variant-supplied chain (state + config from the behavior; context
-            // threaded in by the variant's rest-spread).
-            const candidates = applyRules(rules, allTracks, deps);
+            // threaded in by the variant's rest-spread). Typed against the base
+            // config — each rule re-declares the extra fields it reads as
+            // optional, and the concrete `C` is assignable to the base.
+            const candidates = applyRules<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>(
+              rules,
+              allTracks,
+              deps
+            );
 
             // applyRules early-bails to a single survivor and never narrows to
             // nothing (a soft filter that would empty the set falls through), so
@@ -388,7 +417,7 @@ export const switchVideoTrack = defineBehavior({
     state: TrackSwitchingStateMap<'selectedVideoTrackId'>;
     config?: SwitchVideoTrackConfig;
   }) =>
-    setupTrackSwitching<'selectedVideoTrackId', 'userVideoTrackSelection', VideoTrackCandidate>({
+    setupTrackSwitching({
       ...otherProps,
       state,
       config: {
@@ -422,7 +451,7 @@ export const switchAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({ state, ...otherProps }: { state: TrackSwitchingStateMap<'selectedAudioTrackId'> }) =>
-    setupTrackSwitching<'selectedAudioTrackId', 'userAudioTrackSelection', AudioTrackCandidate>({
+    setupTrackSwitching({
       ...otherProps,
       state,
       config: {
