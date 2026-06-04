@@ -113,11 +113,13 @@ export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 
 /**
  * Deps handed to each rule and to `applyRules`, mirroring a behavior's setup
- * deps so a rule reads from the same surfaces a behavior does.
+ * deps so a rule reads from the same surfaces a behavior does. `context` is
+ * optional — it's threaded through but absent on direct setup calls (and
+ * unread by today's rules), so the whole deps object can pass straight through.
  */
 export interface SelectionRuleDeps<State = unknown, Context = unknown, Config = unknown> {
   state: State;
-  context: Context;
+  context?: Context;
   config: Config;
 }
 
@@ -300,17 +302,14 @@ function pinToCurrentTrack<S extends SelectionKey, U extends UserSelectionKey, T
 // rest-spread and typed as the generic slot-map shape (`AnySlotMap`). It can't
 // be a typed param on the `defineBehavior` setup without widening `ContextMap`
 // to its constraint and forcing the slot required, so the variants forward it
-// untyped via the rest and it lands here; the `{}` default covers direct setup
-// calls (tests) that omit it.
-function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>({
-  state,
-  context = {},
-  config,
-}: {
+// untyped via the rest and it lands here — absent on direct setup calls, and
+// passed straight through to the rules (which don't read it yet).
+function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(deps: {
   state: TrackSwitchingStateMap<S, U>;
   context?: AnySlotMap;
   config: TrackSwitchingSetupConfig<S, U, T>;
 }) {
+  const { state, config } = deps;
   const { selectionKey, getTracks, rules } = config;
 
   const derivedStateSignal = computed(() =>
@@ -337,10 +336,10 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             const allTracks = getTracks(presentation);
             if (!allTracks.length) return;
 
-            // state + config come from the behavior's deps; context arrives from
-            // the composition (threaded in by the variant's rest-spread). Each is
-            // passed to every rule in the variant-supplied chain.
-            const candidates = applyRules(rules, allTracks, { state, context, config });
+            // The whole deps object passes straight through to every rule in the
+            // variant-supplied chain (state + config from the behavior; context
+            // threaded in by the variant's rest-spread).
+            const candidates = applyRules(rules, allTracks, deps);
 
             // applyRules early-bails to a single survivor and never narrows to
             // nothing (a soft filter that would empty the set falls through), so
