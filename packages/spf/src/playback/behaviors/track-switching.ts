@@ -88,7 +88,7 @@ export interface TrackSwitchingState {
 
 /**
  * Config for `switchVideoTrack` — the ABR tuning read by its ranker rule
- * (`rankByQuality`). `quality.safetyMargin` is the bandwidth-headroom
+ * (`rankByBandwidth`). `quality.safetyMargin` is the bandwidth-headroom
  * multiplier; `quality.upgradeMargin` the hysteresis ratio gating upgrades;
  * `bandwidth` tunes the estimator; `initialBandwidth` is the pre-sample
  * fallback. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15),
@@ -201,9 +201,14 @@ type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 // it in detaches the user-selection mapped value from `P` and TS collapses
 // the intersection. T flows through `TrackSwitchingSetupConfig` instead;
 // the user-filter access casts at the read site (see below).
+//
+// `bandwidthState` is intentionally absent: only the bandwidth ranker rule
+// reads it, not the behavior's lifecycle. A rule needing a signal the behavior
+// doesn't use declares it *optional* on its own deps and reads it defensively
+// (see `BandwidthRankerStateMap`), so the behavior never assumes a rule-only
+// signal exists.
 type TrackSwitchingStateMap<S extends SelectionKey, U extends UserSelectionKey> = {
   presentation: ReadonlySignal<TrackSwitchingState['presentation']>;
-  bandwidthState: ReadonlySignal<TrackSwitchingState['bandwidthState']>;
 } & { [P in S]: Signal<TrackSwitchingState[P]> } & { [P in U]: ReadonlySignal<TrackSwitchingState[P]> };
 
 /**
@@ -233,6 +238,18 @@ type TrackSwitchingRuleDeps<
   U extends UserSelectionKey,
   T extends SwitchableTrack,
 > = SelectionRuleDeps<TrackSwitchingStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>;
+
+/**
+ * State a bandwidth ranker reads: the behavior's lifecycle map plus an
+ * *optional* `bandwidthState`. The signal exists only when the composition
+ * includes a bandwidth sampler; the ranker reads it defensively and falls back
+ * to `initialBandwidth` (with a debug note) when it's absent. A behavior state
+ * map without `bandwidthState` is assignable here (the slot is optional), so a
+ * ranker drops into a chain whose behavior never declared the signal.
+ */
+type BandwidthRankerStateMap<S extends SelectionKey, U extends UserSelectionKey> = TrackSwitchingStateMap<S, U> & {
+  bandwidthState?: ReadonlySignal<TrackSwitchingState['bandwidthState']>;
+};
 
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
@@ -276,13 +293,18 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  */
 function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: TrackSwitchingRuleDeps<S, U, T>
+  { state, config }: SelectionRuleDeps<BandwidthRankerStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
 ): readonly T[] {
   const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
   const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
   const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
-  const threshold = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig) * safetyMargin;
+  if (!state.bandwidthState) {
+    console.debug(
+      '[track-switching] rankByBandwidth: no bandwidthState signal in composition; ranking on initialBandwidth'
+    );
+  }
+  const threshold = getBandwidthEstimate(state.bandwidthState?.get(), initialBandwidth, bandwidthConfig) * safetyMargin;
   const currentId = state[config.selectionKey].get();
   const bitrate = (track: T) => track.bandwidth ?? 0;
   // Boost the current track's sort weight by upgradeMargin (fitting set only) so
@@ -368,7 +390,7 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
  * const reactor = switchVideoTrack.setup({ state });
  */
 export const switchVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'bandwidthState', 'selectedVideoTrackId', 'userVideoTrackSelection'],
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'userVideoTrackSelection'],
   contextKeys: [],
   setup: ({
     state,
@@ -409,7 +431,7 @@ export const switchVideoTrack = defineBehavior({
  * const reactor = switchAudioTrack.setup({ state });
  */
 export const switchAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'bandwidthState', 'selectedAudioTrackId', 'userAudioTrackSelection'],
+  stateKeys: ['presentation', 'selectedAudioTrackId', 'userAudioTrackSelection'],
   contextKeys: [],
   setup: ({
     state,
