@@ -1,37 +1,38 @@
 /**
- * **Per-type track-selection slot management with optional ABR.** While a
- * presentation is resolved, owns the selection slot's lifecycle: pick a
- * default, react to user intent (partial-track filter), re-evaluate
- * algorithmically (today: bandwidth via `selectQuality` for video; pin-to-
- * current for audio), and clear on src unload.
+ * **Per-type track selection as a rule chain.** While a presentation is
+ * resolved, owns that type's `selected{Video,Audio}TrackId` signal: pick a
+ * default, react to user intent and algorithmic ranking, and clear it on src
+ * unload.
  *
- * User intent is expressed as a partial-track description in a sibling slot
- * (e.g. `userVideoTrackSelection`, `userAudioTrackSelection`) which
- * constrains the candidate set for selection — when the constraint narrows
- * candidates to exactly one, the choice is fully determined and the
- * selection algorithm is short-circuited (no bandwidth read, no effect
- * re-fire on bandwidth changes).
+ * Selection runs a small ordered chain of rules over the candidate tracks
+ * (`applyRules`). Each rule narrows or reorders the list and reads the signals
+ * it needs at apply time, so the effect subscribes to exactly what the applied
+ * rules consult. Today the chain is two rules, most authoritative first:
+ *
+ *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
+ *      partial-track match; an empty match falls through to the full set.
+ *   2. **ranking** — the terminal sort: the per-variant `selectOptimal` over
+ *      the bandwidth estimate (video ABR with hysteresis — downgrades immediate,
+ *      upgrades gated by `upgradeMargin`; audio pin-to-current).
+ *
+ * The composer's early-bail (one survivor → stop) is load-bearing: a user
+ * selection that narrows to a single track is the pick without the ranker
+ * running, so the bandwidth estimate is never read and the effect doesn't
+ * re-fire on bandwidth while that choice holds.
  *
  * Lifecycle: `'presentation-unresolved'` ↔ `'presentation-resolved'`. The
- * `'presentation-resolved'` state owns the selection slot; its
- * entry-returned cleanup clears the slot on exit (canonical
- * cleanup-binds-to-setup per `reactors.md`).
+ * resolved state owns the signal; its entry-returned cleanup clears it on exit
+ * (canonical cleanup-binds-to-setup per `reactors.md`).
  *
- * Hysteresis (video ABR today, audio ABR when added): downgrades apply
- * immediately; upgrades require the optimal track's bandwidth to exceed
- * the current track's by `upgradeMargin`. No temporal state — short-term
- * smoothing is the bandwidth estimator's job.
+ * `config.picker` provides the empty-slot initial default (e.g. audio's
+ * language-aware pick) ahead of the ranker's head. Variants: `switchVideoTrack`
+ * (bandwidth-driven ranker), `switchAudioTrack` (pin-to-current ranker,
+ * ABR-ready for when audio-ABR lands); both share `setupTrackSwitching`, with
+ * the candidate type and `selectOptimal` as the variation points.
  *
- * Initial pick is configurable via `config.picker` — pass any `TrackPicker`
- * to override the default-pick for the empty-slot case. Algorithmic
- * re-evaluation (`selectOptimal`) is unaffected.
- *
- * Variants: `switchVideoTrack` (bandwidth-driven `selectOptimal`),
- * `switchAudioTrack` (pin-to-current `selectOptimal`, ABR-ready shape for
- * a future bandwidth-driven variant once audio-ABR lands). Both variants
- * share this helper; the only point of variation is the per-variant
- * `selectOptimal` and the candidate-track type. Future track-switching
- * axes (text tracks, etc.) plug in the same way.
+ * Deferred (not yet in the chain): a hard-constraints pre-pass (capability
+ * probing, CDN failover) gating the candidate set, and promoting the picker's
+ * preferred-language / default-track logic to standing soft-filter rules.
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -40,10 +41,10 @@ import { computed, peek, type ReadonlySignal, type Signal } from '../../core/sig
 import {
   DEFAULT_QUALITY_CONFIG,
   type QualityConfig,
-  selectLowestQuality,
+  selectLowestQualityWithBandwidth,
   selectQuality,
 } from '../../media/abr/quality-selection';
-import { pickAudioTrack, type TrackPicker } from '../../media/primitives/select-tracks';
+import { matchesPartialTrack, pickAudioTrack, type TrackPicker } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
   isResolvedPresentation,
@@ -136,6 +137,54 @@ export interface TrackSwitchingConfig {
 export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 
 // ============================================================================
+// Rule chain
+// ============================================================================
+
+/**
+ * A selection rule narrows or reorders the candidate list. It reads the state
+ * and context signals it needs at apply time (tightly-coupled reads), so a
+ * rule's `.get()`s subscribe the running effect to exactly what it consulted.
+ * Returning an empty list means "no match" — the composer skips it, so a soft
+ * filter never narrows the set to nothing. A ranker returns the list with its
+ * pick at the head.
+ */
+export type SelectionRule<T, State = unknown, Context = unknown> = (
+  tracks: readonly T[],
+  state: State,
+  context: Context
+) => readonly T[];
+
+/**
+ * Apply rules to a candidate list in order; the pick is the first survivor.
+ * Two responsibilities the rules don't carry: a rule that returns nothing is
+ * skipped (fall-through — a preference never empties the set), and once one
+ * survivor remains the chain stops (early-bail — later rules, including the
+ * bandwidth ranker, never run, so the effect doesn't subscribe to their
+ * signals while the choice is fixed).
+ *
+ * @param rules - Rules to apply, most authoritative first
+ * @param tracks - Candidate tracks
+ * @param state - The behavior's state signal map, passed through to each rule
+ * @param context - The behavior's context signal map, passed through to each rule
+ * @returns The surviving candidates, pick first
+ */
+export function applyRules<T, State, Context>(
+  rules: readonly SelectionRule<T, State, Context>[],
+  tracks: readonly T[],
+  state: State,
+  context: Context
+): readonly T[] {
+  let current = tracks;
+  for (const rule of rules) {
+    const remaining = rule(current, state, context);
+    if (remaining.length === 0) continue;
+    current = remaining;
+    if (current.length === 1) break;
+  }
+  return current;
+}
+
+// ============================================================================
 // Specialization helper
 //
 // `setupTrackSwitching` has the same shape as a Behavior `setup` function:
@@ -219,6 +268,32 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
   const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
   const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
 
+  // The selection chain, most authoritative first. Each rule reads the signals
+  // it needs from the state passed at apply time, so the effect subscribes to
+  // exactly what the applied rules consult.
+  const rules: SelectionRule<T, TrackSwitchingStateMap<S, U>>[] = [
+    // User intent — a soft filter. Narrows to tracks matching the partial-track
+    // selection; an empty match falls through (the composer skips it) to the
+    // unfiltered set — e.g. a stale id from a previous source.
+    (tracks, ruleState) => {
+      const filter = ruleState[userSelectionKey].get() as Partial<T> | undefined;
+      return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
+    },
+    // Ranking — the terminal sort. Reads the bandwidth estimate, runs the
+    // per-variant `selectOptimal` (video ABR with hysteresis; audio
+    // pin-to-current), and returns the list with the pick at the head. Early-
+    // bail skips this rule when a prior one narrowed to a single track, so the
+    // bandwidth estimate is neither read nor subscribed while that choice holds.
+    (tracks, ruleState) => {
+      const bandwidth = getBandwidthEstimate(ruleState.bandwidthState.get(), initialBandwidth, bandwidthConfig);
+      const currentTrack = tracks.find((track) => track.id === ruleState[selectionKey].get());
+      const optimal =
+        selectOptimal(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
+        selectLowestQualityWithBandwidth(tracks);
+      return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
+    },
+  ];
+
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
       ? ('presentation-resolved' as const)
@@ -242,108 +317,34 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             if (!presentation) return;
 
             const allTracks = getTracks(presentation);
-            const [firstAllTrack] = allTracks;
-            if (!firstAllTrack) return;
+            if (!allTracks.length) return;
 
-            // State stores the filter as `Partial<XTrack>` (user-facing
-            // shape — includes per-type fields like `height` or
-            // `language`); the helper works against `Partial<T>` so
-            // filter and track access share one index type. Filter keys
-            // absent on a partially-resolved track read as `undefined`
-            // and just exclude that track.
-            const userFilter = state[userSelectionKey].get() as Partial<T> | undefined;
-            const matching = userFilter
-              ? allTracks.filter((track) => {
-                  for (const key in userFilter) {
-                    const filterValue = userFilter[key as keyof T];
-                    if (filterValue !== undefined && track[key as keyof T] !== filterValue) return false;
-                  }
-                  return true;
-                })
-              : allTracks;
-            // Fall back to all tracks when the filter excludes everything
-            // (e.g., user-picked id doesn't exist in the current source).
-            const candidates = matching.length > 0 ? matching : allTracks;
-            if (!candidates.length) return;
-
+            // Context is unused by today's rules; the chain reads only state
+            // signals. Real engine context threads here when a context-reading
+            // rule lands (e.g. CDN pathway).
+            const candidates = applyRules(rules, allTracks, state, {});
             const selectedId = state[selectionKey].get();
 
-            // Common case: user has fully constrained the choice (e.g.,
-            // `{ id: 'specific-720p' }` or `{ language: 'es' }` when only
-            // one Spanish track exists). Skip the algorithm path — and
-            // crucially, don't read `bandwidthState` so the effect
-            // doesn't re-fire on bandwidth changes while the user's
-            // selection holds.
-            if (candidates.length === 1) {
-              if (candidates[0]!.id !== selectedId) state[selectionKey].set(candidates[0]!.id);
-              return;
-            }
+            // A single survivor — an early-bail from the chain, or a single-
+            // track source — is the pick outright, decided before the picker
+            // (matching the prior short-circuit, including never reading
+            // bandwidth). Otherwise an empty slot defers to the optional
+            // initial-pick picker (e.g. audio's language-aware default),
+            // falling back to the ranker's head; a populated slot takes the
+            // ranker's head.
+            const pickId =
+              candidates.length === 1
+                ? candidates[0]!.id
+                : !selectedId && config.picker
+                  ? (config.picker(presentation, config) ?? candidates[0]?.id)
+                  : candidates[0]?.id;
 
-            // Read bandwidth up front to establish the signal subscription —
-            // future bandwidth changes must re-fire this effect even when
-            // the picker branch below takes the early-return path. (If the
-            // picker bails out without ever touching `bandwidthState`,
-            // bandwidth-driven `selectOptimal` would otherwise be deaf to
-            // subsequent bandwidth changes.) Pin-to-current variants read
-            // the field but ignore it — the subscription cost is fixed
-            // per effect run regardless.
-            //
-            // Single path for pre-trust and post-trust: `getBandwidthEstimate`
-            // returns `initialBandwidth` when state is undefined or bytes
-            // sampled hasn't crossed `minTotalBytes`, so the initial pick
-            // and early-ABR window run the same `selectOptimal` path as a
-            // fully-trusted measurement.
-            const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig);
-
-            // Picker-driven initial pick: when the slot is empty and the
-            // caller supplied a `picker`, defer to it instead of the
-            // algorithmic default. The picker sees the full presentation
-            // (not narrowed by the user-selection filter) — honoring the
-            // filter is the picker's responsibility when overridden.
-            // Returning `undefined` falls through to the algorithmic
-            // default pick (graceful fallback).
-            //
-            // Algorithmic re-evaluation runs as usual on subsequent
-            // effect re-runs once the slot is set.
-            if (!selectedId && config.picker) {
-              const id = config.picker(presentation, config);
-              if (id) {
-                state[selectionKey].set(id);
-                return;
-              }
-            }
-            // `selectOptimal` decides the track to apply now given current
-            // selection + context. Returns:
-            //   - the optimal when no current track or on a downgrade
-            //   - the optimal when an upgrade clears `upgradeMargin`
-            //   - the current track itself when an upgrade doesn't clear
-            //     margin (caller's id-compare below no-ops in that case)
-            // Outer `?? selectLowestQuality` is defensive — `selectQuality`
-            // falls back to lowest internally; pin-to-current variants
-            // return `currentTrack ?? tracks[0]` so they never produce
-            // `undefined` for a non-empty `candidates`. The fallback
-            // catches future variants that don't return a definitive pick.
-            const currentTrack = candidates.find((t) => t.id === selectedId);
-            const ctx: SelectionCtx<T> = { bandwidth, safetyMargin, upgradeMargin, currentTrack };
-            const optimal = selectOptimal(candidates, ctx) ?? selectLowestQualityWithBandwidth(candidates);
-            if (optimal && optimal.id !== selectedId) state[selectionKey].set(optimal.id);
+            if (pickId && pickId !== selectedId) state[selectionKey].set(pickId);
           },
         ],
       },
     },
   });
-}
-
-/**
- * Adapter for `selectLowestQuality` that tolerates tracks whose `bandwidth`
- * field is optional (audio's candidate shape). Falls back to the first
- * candidate when no bandwidth info is available.
- */
-function selectLowestQualityWithBandwidth<T extends SwitchableTrack>(tracks: readonly T[]): T | undefined {
-  if (tracks.length === 0) return undefined;
-  const withBandwidth = tracks.filter((t): t is T & { bandwidth: number } => typeof t.bandwidth === 'number');
-  if (withBandwidth.length === 0) return tracks[0];
-  return selectLowestQuality(withBandwidth);
 }
 
 // ============================================================================

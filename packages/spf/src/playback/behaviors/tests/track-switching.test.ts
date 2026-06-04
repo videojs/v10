@@ -12,6 +12,8 @@ import type {
 } from '../../../media/types';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
+  applyRules,
+  type SelectionRule,
   switchAudioTrack,
   switchVideoTrack,
   type TrackSwitchingConfig,
@@ -667,5 +669,51 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
+  });
+});
+
+// ============================================================================
+// applyRules — the rule-chain composer (pure; no signals)
+// ============================================================================
+
+describe('applyRules', () => {
+  const track = (id: string) => ({ id });
+  const all = [track('a'), track('b'), track('c')];
+
+  it('applies rules in order; the pick is the first survivor', () => {
+    const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
+    const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
+    const result = applyRules([dropA, reverse], all, {}, {});
+    expect(result.map((t) => t.id)).toEqual(['c', 'b']);
+  });
+
+  it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
+    const matchNone: SelectionRule<{ id: string }> = () => [];
+    const result = applyRules([matchNone], all, {}, {});
+    expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('stops at one survivor and does not run later rules (early-bail)', () => {
+    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
+    let laterCalled = false;
+    const later: SelectionRule<{ id: string }> = (tracks) => {
+      laterCalled = true;
+      return tracks;
+    };
+    const result = applyRules([toA, later], all, {}, {});
+    expect(result.map((t) => t.id)).toEqual(['a']);
+    expect(laterCalled).toBe(false);
+  });
+
+  it('passes the candidate list, state, and context through to each rule', () => {
+    const state = { marker: 1 };
+    const context = { other: 2 };
+    let received: unknown[] = [];
+    const rule: SelectionRule<{ id: string }, typeof state, typeof context> = (tracks, s, c) => {
+      received = [tracks, s, c];
+      return tracks;
+    };
+    applyRules([rule], all, state, context);
+    expect(received).toEqual([all, state, context]);
   });
 });
