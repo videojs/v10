@@ -299,6 +299,45 @@ set we anticipate, the simpler two-kind model covers everything but the one shap
 robustly under author error, and keeps both the rules and the engine that combines them small. Status
 stays `draft` pending that call.
 
+## Fitting the model to the track-switching behavior
+
+This is a sketch of how the model lands in the running engine, grounded in the track-switching behavior
+as it stands today — *not* a settled wiring. Like the chain-order heuristic above, expect it to firm up
+as the rule set does.
+
+The behavior already runs a miniature of this model. While a presentation is resolved, it reacts: it
+takes the tracks of its type, narrows them by a single user-selection preference (falling back to all of
+them if that preference matches nothing), and — if the narrowing leaves exactly one track — sets that as
+the pick and stops, *without ever reading the bandwidth estimate*; otherwise it runs the bandwidth-driven
+ranker. That is one soft filter, the early-bail, and one ranker, hardcoded. The model generalizes it in
+two places: it adds the constraints pass, and it replaces the single fixed filter-then-rank with the
+open-ended chain. Rules, like the behavior's existing picker and tuning, arrive by configuration — a
+feature contributes its rule without reopening the behavior.
+
+Three things the model implies about where each piece lives:
+
+- **Constraints gate; rules run in the reaction.** Constraints are a derived value computed *outside* the
+  reaction — they answer "what's playable here at all," the same kind of question that already decides
+  whether the behavior is in its selecting state. So they feed the gate: while the playable set is still
+  unknown the behavior isn't ready to select; once it's known, the behavior enters its selecting state and
+  hands the pruned set in as the candidate list. The rules, by contrast, run *inside* the reaction, over
+  those candidates.
+
+- **An empty playable set is its own outcome.** A non-empty playable set is the candidate list; the
+  still-unknown case gates as above. The case worth calling out — and still open — is when constraints
+  leave *nothing* playable. That is not a fall-back-to-everything (that's the *soft* filter's job;
+  constraints are hard): "nothing decodable here" is a terminal condition the engine surfaces, a distinct
+  not-ready state rather than a pick. Exactly how that state is modeled is open.
+
+- **Rules are reactive, and early-bail prunes what they react to.** Almost every rule reads more than the
+  track list — a ranker reads the throughput estimate, a pathway scope reads which CDN is active. Those
+  reads happen inside the reaction, so the reaction subscribes to exactly the signals the rules consulted
+  and re-runs when any of them change. This is why early-bail is more than skipping the throughput
+  estimate once: a rule that narrows the field to a single track ends the chain *before* later rules read
+  their signals at all, so the reaction never subscribes to them and never re-fires on their changes while
+  that narrowing holds. The behavior already does exactly this by hand for the bandwidth estimate; the
+  chain makes it the general rule.
+
 ## Appendix A: prior art
 
 Every major HTTP-adaptive-streaming engine separates **hard constraints (a pruning pass) from soft
