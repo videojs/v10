@@ -24,15 +24,16 @@
  * resolved state owns the signal; its entry-returned cleanup clears it on exit
  * (canonical cleanup-binds-to-setup per `reactors.md`).
  *
- * `config.picker` provides the empty-slot initial default (e.g. audio's
- * language-aware pick) ahead of the ranker's head. Variants: `switchVideoTrack`
- * (bandwidth-driven ranker), `switchAudioTrack` (pin-to-current ranker,
- * ABR-ready for when audio-ABR lands); both share `setupTrackSwitching`, with
- * the candidate type and `selectOptimal` as the variation points.
+ * The pick is the head of the chain's result (`applyRules(...)[0]`). Variants:
+ * `switchVideoTrack` (bandwidth-driven ranker), `switchAudioTrack` (pin-to-
+ * current ranker, ABR-ready for when audio-ABR lands); both share
+ * `setupTrackSwitching`, with the candidate type and `selectOptimal` as the
+ * variation points.
  *
  * Deferred (not yet in the chain): a hard-constraints pre-pass (capability
- * probing, CDN failover) gating the candidate set, and promoting the picker's
- * preferred-language / default-track logic to standing soft-filter rules.
+ * probing, CDN failover) gating the candidate set, and audio's preferred-
+ * language / default-track selection as standing soft-filter rules — previously
+ * the empty-slot picker, dropped in the move to the rule chain.
  */
 
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
@@ -44,7 +45,7 @@ import {
   selectLowestQualityWithBandwidth,
   selectQuality,
 } from '../../media/abr/quality-selection';
-import { matchesPartialTrack, pickAudioTrack, type TrackPicker } from '../../media/primitives/select-tracks';
+import { matchesPartialTrack } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
   isResolvedPresentation,
@@ -114,21 +115,10 @@ export interface TrackSwitchingConfig {
   initialBandwidth?: number;
 
   /**
-   * Override the initial-pick algorithm. When set, the picker is called
-   * the first time the slot is empty in the `'presentation-resolved'`
-   * state; its returned id is set verbatim (no algorithmic logic).
-   * Subsequent re-evaluation via the variant's `selectOptimal` is
-   * unaffected.
-   *
-   * Honors of the user-selection filter are the picker's responsibility
-   * when overridden. If the picker returns `undefined`, the variant's
-   * default initial pick fires (graceful fallback).
-   */
-  picker?: TrackPicker<TrackSwitchingConfig>;
-
-  /**
-   * Audio-variant config — preferred language consumed by the default
-   * audio picker (`pickAudioTrack`). Ignored by other variants.
+   * Audio-variant config — preferred audio language. Currently **unconsumed**:
+   * its previous consumer (the default audio picker) was removed when the
+   * initial pick became the rule chain's head; it returns when preferred-
+   * language lands as a standing soft-filter rule. Engines still surface it.
    */
   preferredAudioLanguage?: string;
 }
@@ -371,23 +361,18 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             // today's rules don't consult it, but it's in place for one that
             // will (e.g. a CDN-pathway rule reading context).
             const candidates = applyRules(rules, allTracks, { state, context, config });
-            const selectedId = state[selectionKey].get();
 
-            // A single survivor — an early-bail from the chain, or a single-
-            // track source — is the pick outright, decided before the picker
-            // (matching the prior short-circuit, including never reading
-            // bandwidth). Otherwise an empty slot defers to the optional
-            // initial-pick picker (e.g. audio's language-aware default),
-            // falling back to the ranker's head; a populated slot takes the
-            // ranker's head.
-            const pickId =
-              candidates.length === 1
-                ? candidates[0]!.id
-                : !selectedId && config.picker
-                  ? (config.picker(presentation, config) ?? candidates[0]?.id)
-                  : candidates[0]?.id;
-
-            if (pickId && pickId !== selectedId) state[selectionKey].set(pickId);
+            // applyRules early-bails to a single survivor and never narrows to
+            // nothing (a soft filter that would empty the set falls through), so
+            // the pick is just the head. An empty result means a rule misbehaved
+            // — applyRules is supposed to account for those cases, so surface it.
+            if (!candidates.length) {
+              console.error('[track-switching] applyRules returned no candidates');
+              return;
+            }
+            // No change-guard needed: the slot uses default (Object.is) equality,
+            // so re-setting the same id is a no-op (no notify, no re-fire).
+            state[selectionKey].set(candidates[0]!.id);
           },
         ],
       },
@@ -485,7 +470,6 @@ export const switchAudioTrack = defineBehavior({
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
         selectOptimal: selectAudioCurrent,
-        picker: config?.picker ?? pickAudioTrack,
       },
     }),
 });

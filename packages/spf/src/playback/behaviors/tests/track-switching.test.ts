@@ -410,45 +410,6 @@ describe('switchVideoTrack', () => {
       reactor.destroy();
     });
 
-    it('uses custom picker for initial pick; ABR adjusts from there', async () => {
-      // Picker pins the initial pick to 360p (lowest, regardless of bandwidth).
-      // At 6 Mbps, ABR would default-pick 1080p; the picker overrides for
-      // the initial pick. Subsequent ABR upgrade applies normally.
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(6_000_000),
-      });
-
-      const config: TrackSwitchingConfig = { picker: () => '360p' };
-      const reactor = switchVideoTrack.setup({ state, config });
-      await flush();
-      // Picker drives the initial selection.
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
-
-      // Bumping bandwidth re-fires the effect; the slot is no longer empty,
-      // so ABR runs and upgrades to 1080p (at 6 Mbps with default margins).
-      state.bandwidthState.set(createBandwidthState(6_000_001));
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('1080p');
-
-      reactor.destroy();
-    });
-
-    it('picker returning undefined falls back to bandwidth-aware default', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-      });
-
-      const config: TrackSwitchingConfig = { picker: () => undefined };
-      const reactor = switchVideoTrack.setup({ state, config });
-      await flush();
-      // 3 Mbps with default safetyMargin 0.85 → 720p (1080p needs 5.65 Mbps).
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      reactor.destroy();
-    });
-
     it('uses custom minTotalBytes threshold to trust the measured estimate sooner', async () => {
       // 800 kbps measured, only 50 KB sampled — below the default 128 KB
       // threshold (would fall back to initialBandwidth) but above our
@@ -486,11 +447,12 @@ describe('switchVideoTrack', () => {
 // switchAudioTrack
 //
 // The audio variant shares `setupTrackSwitching` with `switchVideoTrack` —
-// these tests cover the audio-specific surface: default picker, language
-// pinning, filter reactivity, single-candidate short-circuit. The
-// bandwidth-driven re-evaluation tests live above under `switchVideoTrack`
-// and don't need duplicating; audio's `selectAudioCurrent` pins to the
-// current track and is exercised here by the steady-state assertions.
+// these tests cover the audio-specific surface: default pick (first track),
+// language pinning via the user-selection filter, filter reactivity, and the
+// single-candidate early-bail. The bandwidth-driven re-evaluation tests live
+// above under `switchVideoTrack` and don't need duplicating; audio's
+// `selectAudioCurrent` pins to the current track and is exercised here by the
+// steady-state assertions.
 // ============================================================================
 
 interface SwitchAudioTrackState {
@@ -568,22 +530,6 @@ describe('switchAudioTrack', () => {
     reactor.destroy();
   });
 
-  it('picks track matching preferredAudioLanguage when supplied', async () => {
-    const state = makeAudioState({
-      presentation: createAudioPresentation([
-        makeAudioTrack('audio-en', { language: 'en' }),
-        makeAudioTrack('audio-es', { language: 'es' }),
-      ]),
-    });
-
-    const reactor = switchAudioTrack.setup({ state, config: { preferredAudioLanguage: 'es' } });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
   it('clears selectedAudioTrackId on src unload', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
@@ -642,7 +588,7 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
     reactor.destroy();
   });
 
-  it('filter narrowing to a single track short-circuits the picker', async () => {
+  it('filter narrowing to a single track early-bails to that track', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([
         makeAudioTrack('audio-en', { language: 'en' }),
