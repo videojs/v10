@@ -11,9 +11,10 @@
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   2. **ranking** — the terminal sort: a per-variant ranker rule (video
- *      `rankByQuality` — ABR with hysteresis, downgrades immediate, upgrades
- *      gated by `upgradeMargin`; audio `pinToCurrentTrack`).
+ *   2. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
+ *      audio. Fitting tracks (within the throughput threshold) first, highest
+ *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
+ *      via boosting the current track's sort weight by `upgradeMargin`.
  *
  * The composer's early-bail (one survivor → stop) is load-bearing: a user
  * selection that narrows to a single track is the pick without the ranker
@@ -26,9 +27,9 @@
  *
  * The pick is the head of the chain's result (`applyRules(...)[0]`). Each
  * variant supplies its **rule chain** via config; `setupTrackSwitching` owns
- * only the lifecycle and runs whatever chain it's given. Variants:
- * `switchVideoTrack` (bandwidth-driven ranker, ABR tuning config),
- * `switchAudioTrack` (pin-to-current ranker, no config yet).
+ * only the lifecycle and runs whatever chain it's given. Both variants today run
+ * `[filterByUserSelection, rankByBandwidth]`; `switchVideoTrack` also accepts ABR
+ * tuning config, `switchAudioTrack` takes none.
  *
  * Deferred (not yet in the chain): a hard-constraints pre-pass (capability
  * probing, CDN failover) gating the candidate set, and audio's preferred-
@@ -39,12 +40,7 @@
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import {
-  DEFAULT_QUALITY_CONFIG,
-  type QualityConfig,
-  selectLowestQualityWithBandwidth,
-  selectQuality,
-} from '../../media/abr/quality-selection';
+import { DEFAULT_QUALITY_CONFIG, type QualityConfig } from '../../media/abr/quality-selection';
 import { matchesPartialTrack } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
@@ -262,40 +258,39 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
 }
 
 /**
- * Video ranking — the terminal sort. Reads the bandwidth estimate + ABR tuning
- * from config, runs `selectQuality` (hysteresis: downgrades immediate, upgrades
- * gated by `upgradeMargin`), and returns the list with the pick at the head.
- * Early-bail skips this rule when a prior one narrowed to a single track, so the
- * bandwidth estimate is neither read nor subscribed while that choice holds.
+ * Bandwidth ranking — the terminal sort, shared by video and audio. Orders by
+ * the throughput estimate: tracks within the bandwidth threshold first
+ * (fitting), highest bitrate first; then over-threshold tracks, least-over
+ * first. The head is the best-quality track that fits, falling back to the
+ * smallest over-throughput track when nothing fits.
+ *
+ * Hysteresis without temporal state: the current track's effective bitrate is
+ * boosted by `upgradeMargin` in the fitting sort, so a higher track only
+ * outranks it once it clears `current.bitrate * upgradeMargin` (no flapping on
+ * marginal bandwidth gains). Downgrades fall out for free — a current track
+ * over the threshold isn't in the fitting set to be boosted, so the best fit (a
+ * downgrade) wins immediately. A stable sort, so equal-bitrate tracks (e.g.
+ * same-bitrate language variants) keep candidate order. Early-bail skips this
+ * rule when a prior one narrowed to a single track, so the estimate is neither
+ * read nor subscribed while that holds.
  */
-function rankByQuality<S extends SelectionKey, U extends UserSelectionKey>(
-  tracks: readonly VideoTrackCandidate[],
-  { state, config }: TrackSwitchingRuleDeps<S, U, VideoTrackCandidate>
-): readonly VideoTrackCandidate[] {
+function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
+  tracks: readonly T[],
+  { state, config }: TrackSwitchingRuleDeps<S, U, T>
+): readonly T[] {
   const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
   const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
   const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
-  const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig);
-  const currentTrack = tracks.find((track) => track.id === state[config.selectionKey].get());
-  const optimal =
-    selectQuality(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
-    selectLowestQualityWithBandwidth(tracks);
-  return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
-}
-
-/**
- * Pin-to-current ranking — keeps the currently-selected track if it's still a
- * candidate, otherwise takes the first. The non-ABR ranker (audio today); reads
- * no bandwidth, so it never subscribes the effect to bandwidth changes.
- */
-function pinToCurrentTrack<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
-  tracks: readonly T[],
-  { state, config }: TrackSwitchingRuleDeps<S, U, T>
-): readonly T[] {
-  const currentTrack = tracks.find((track) => track.id === state[config.selectionKey].get());
-  const pick = currentTrack ?? tracks[0];
-  return pick ? [pick, ...tracks.filter((track) => track !== pick)] : tracks;
+  const threshold = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig) * safetyMargin;
+  const currentId = state[config.selectionKey].get();
+  const bitrate = (track: T) => track.bandwidth ?? 0;
+  // Boost the current track's sort weight by upgradeMargin (fitting set only) so
+  // an upgrade must clear current.bitrate * upgradeMargin to outrank it.
+  const rank = (track: T) => (track.id === currentId ? bitrate(track) * upgradeMargin : bitrate(track));
+  const fitting = tracks.filter((track) => bitrate(track) <= threshold).sort((a, b) => rank(b) - rank(a));
+  const over = tracks.filter((track) => bitrate(track) > threshold).sort((a, b) => bitrate(a) - bitrate(b));
+  return [...fitting, ...over];
 }
 
 // `context` is the composition's context map, threaded in by each variant's
@@ -391,13 +386,13 @@ export const switchVideoTrack = defineBehavior({
         selectionKey: 'selectedVideoTrackId',
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        rules: [filterByUserSelection, rankByQuality],
+        rules: [filterByUserSelection, rankByBandwidth],
       },
     }),
 });
 
 // ============================================================================
-// Variant: switchAudioTrack — pin-to-current (ABR-ready shape)
+// Variant: switchAudioTrack — bandwidth-ranked (shared ranker)
 // ============================================================================
 
 /**
@@ -429,7 +424,7 @@ export const switchAudioTrack = defineBehavior({
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        rules: [filterByUserSelection, pinToCurrentTrack],
+        rules: [filterByUserSelection, rankByBandwidth],
       },
     }),
 });
