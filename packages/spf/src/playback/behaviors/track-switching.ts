@@ -39,7 +39,7 @@
 
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig } from '../../media/abr/quality-selection';
 import { matchesPartialTrack } from '../../media/primitives/select-tracks';
 import {
@@ -346,6 +346,32 @@ function setupTrackSwitching<
       : ('presentation-unresolved' as const)
   );
 
+  // The playable candidate set — the tracks the rule chain gets to pick from,
+  // derived *outside* the reaction. This is the seam a future hard-constraints
+  // pre-pass (capability probing, CDN failover) occupies: it would narrow these
+  // tracks before the chain runs —
+  //   isResolvedPresentation(p) ? applyConstraints(constraints, getTracks(p), deps) : []
+  // — and because it's a `computed`, the constraints' own signal reads are
+  // tracked here. The effect reads it with `.get()`, so when the playable set
+  // changes — a new source, or a *dynamic* constraint like a CDN entering
+  // cooldown — the effect re-picks. Today it's just the type's tracks while a
+  // presentation is resolved.
+  //
+  // The `equals` gates notification on the *set of track ids*, not array
+  // identity: a live playlist refresh swaps in a new presentation object with
+  // the same variant tracks, and a constraint's inputs can churn without
+  // changing which tracks survive. In both cases the playable set is unchanged,
+  // so the reaction must not re-fire (the rule chain still re-runs on its own
+  // inputs — bandwidth, user selection). Same intent as `equalsById`, for the
+  // track list.
+  const candidateSet = computed<readonly T[]>(
+    () => {
+      const presentation = state.presentation.get();
+      return isResolvedPresentation(presentation) ? getTracks(presentation) : [];
+    },
+    { equals: (a, b) => a.length === b.length && a.every((track) => b.some((other) => other.id === track.id)) }
+  );
+
   return createMachineReactor({
     initial: 'presentation-unresolved',
     monitor: () => derivedStateSignal.get(),
@@ -358,11 +384,15 @@ function setupTrackSwitching<
         entry: () => () => state[selectionKey].set(undefined),
         effects: [
           () => {
-            const presentation = peek(state.presentation);
-            if (!presentation) return;
-
-            const allTracks = getTracks(presentation);
-            if (!allTracks.length) return;
+            // Reactive read: subscribes the reaction to the candidate set, so a
+            // new presentation — or a future constraint pruning it — re-fires
+            // this and re-picks.
+            const tracks = candidateSet.get();
+            // No playable tracks: no tracks of this type, or (once constraints
+            // exist) everything pruned. Nothing to pick. Surfacing "nothing
+            // playable" as a distinct not-ready state is left to the constraints
+            // work; for now it's a silent no-op, leaving any prior pick in place.
+            if (!tracks.length) return;
 
             // The whole deps object passes straight through to every rule in the
             // variant-supplied chain (state + config from the behavior; context
@@ -371,7 +401,7 @@ function setupTrackSwitching<
             // optional, and the concrete `C` is assignable to the base.
             const candidates = applyRules<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>(
               rules,
-              allTracks,
+              tracks,
               deps
             );
 

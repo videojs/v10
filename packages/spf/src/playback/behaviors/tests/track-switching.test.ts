@@ -150,6 +150,28 @@ describe('switchVideoTrack', () => {
 
       reactor.destroy();
     });
+
+    it('re-picks when the candidate set changes while staying resolved (constraint-readiness seam)', async () => {
+      // The playable candidate set is derived in a `computed` the effect reads
+      // reactively, so the pick updates whenever that set changes — not only on
+      // an unresolved→resolved gate transition. This is what readies the
+      // behavior for dynamic constraints (e.g. CDN failover) that re-prune the
+      // set while a presentation stays resolved.
+      const state = makeState({ presentation: createPresentation(tracks) });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      // Swap directly to a different resolved presentation (no undefined gap, so
+      // the gate state stays 'presentation-resolved' and never re-enters).
+      const narrowed = [createVideoTrack('480p', 1_200_000), createVideoTrack('540p', 1_500_000)];
+      state.presentation.set({ ...createPresentation(narrowed), id: 'pres-2' });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('540p');
+
+      reactor.destroy();
+    });
   });
 
   describe('default-pick (no bandwidthState yet)', () => {
