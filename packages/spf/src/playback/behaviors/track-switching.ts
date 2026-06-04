@@ -316,6 +316,12 @@ function rankByOptimal<S extends SelectionKey, U extends UserSelectionKey, T ext
   return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
 }
 
+// `context` is the composition's context map, threaded in by each variant's
+// rest-spread and typed as the generic slot-map shape (`AnySlotMap`). It can't
+// be a typed param on the `defineBehavior` setup without widening `ContextMap`
+// to its constraint and forcing the slot required, so the variants forward it
+// untyped via the rest and it lands here; the `{}` default covers direct setup
+// calls (tests) that omit it.
 function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>({
   state,
   context = {},
@@ -360,10 +366,10 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             const allTracks = getTracks(presentation);
             if (!allTracks.length) return;
 
-            // state + config come from the behavior's deps; context is typed as
-            // the generic slot-map shape and passed to every rule, but sourced
-            // empty for now — wiring it from composition waits until a rule (and
-            // the behavior's contextKeys) declares real context keys.
+            // state, context, and config all flow to every rule. context comes
+            // from the composition (threaded in by the variant's rest-spread);
+            // today's rules don't consult it, but it's in place for one that
+            // will (e.g. a CDN-pathway rule reading context).
             const candidates = applyRules(rules, allTracks, { state, context, config });
             const selectedId = state[selectionKey].get();
 
@@ -410,11 +416,13 @@ export const switchVideoTrack = defineBehavior({
   setup: ({
     state,
     config,
+    ...otherProps
   }: {
     state: TrackSwitchingStateMap<'selectedVideoTrackId', 'userVideoTrackSelection'>;
     config?: TrackSwitchingConfig;
   }) =>
     setupTrackSwitching<'selectedVideoTrackId', 'userVideoTrackSelection', VideoTrackCandidate>({
+      ...otherProps,
       state,
       config: {
         ...config,
@@ -463,11 +471,13 @@ export const switchAudioTrack = defineBehavior({
   setup: ({
     state,
     config,
+    ...otherProps
   }: {
     state: TrackSwitchingStateMap<'selectedAudioTrackId', 'userAudioTrackSelection'>;
     config?: TrackSwitchingConfig;
   }) =>
     setupTrackSwitching<'selectedAudioTrackId', 'userAudioTrackSelection', AudioTrackCandidate>({
+      ...otherProps,
       state,
       config: {
         ...config,
