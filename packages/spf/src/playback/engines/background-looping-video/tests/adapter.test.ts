@@ -201,28 +201,11 @@ describe('BackgroundLoopingVideoMediaElement', () => {
       expect(media.maxResolution).toBe('1080p');
     });
 
-    it('rebuilds the engine on a non-no-op setter write', () => {
+    it('does not rebuild the engine on setter writes — closure picker reads the field live', () => {
       const media = new BackgroundLoopingVideoMediaElement();
-      const firstEngine = media.engine;
-      media.maxResolution = '720p';
-      expect(media.engine).not.toBe(firstEngine);
-    });
-
-    it('does not rebuild the engine when the value is unchanged', () => {
-      const media = new BackgroundLoopingVideoMediaElement({ config: { maxResolution: '720p' } });
       const firstEngine = media.engine;
       media.maxResolution = '720p';
       expect(media.engine).toBe(firstEngine);
-    });
-
-    it('preserves src and attached media element across rebuild', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
-      media.src = 'https://example.com/v.m3u8';
-      media.maxResolution = '720p';
-      expect(media.src).toBe('https://example.com/v.m3u8');
-      expect(media.engine.context.mediaElement.get()).toBe(el);
     });
   });
 });

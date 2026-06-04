@@ -1,5 +1,6 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
+import { pickMaxResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import {
   type BackgroundLoopingVideoEngineConfig,
   type BackgroundLoopingVideoEngineContext,
@@ -75,9 +76,6 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     #autoplay: boolean = backgroundLoopingVideoMediaDefaultProps.autoplay;
     #maxResolution: string | number | undefined;
 
-    /** Attached media element preserved across engine rebuilds (e.g. maxResolution setter). */
-    #attachedMediaElement: HTMLMediaElement | null = null;
-
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
 
@@ -86,6 +84,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
+
       this.#maxResolution = config?.maxResolution;
       this.#engine = this.#createEngine();
     }
@@ -107,13 +106,11 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       mediaElement.muted = this.#muted;
       mediaElement.autoplay = this.#autoplay;
 
-      this.#attachedMediaElement = mediaElement;
       this.#signals.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
-      this.#attachedMediaElement = null;
       this.#signals.context.mediaElement.set(undefined);
       super.detach?.();
     }
@@ -178,7 +175,6 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     set maxResolution(value: string | number | undefined) {
       if (value === this.#maxResolution) return;
       this.#maxResolution = value;
-      this.#rebuildEngine();
     }
 
     // -------------------------------------------------------------------------
@@ -237,26 +233,16 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     // -------------------------------------------------------------------------
 
     #createEngine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+      const adapterPicker: TrackPicker = (presentation) =>
+        pickMaxResolutionVideoTrack({ maxResolution: this.#maxResolution })(presentation);
+
       return createBackgroundLoopingVideoEngine({
+        picker: adapterPicker,
         ...this.#config,
-        maxResolution: this.#maxResolution,
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
       });
-    }
-
-    // Rebuild the engine when a config field baked into a picker closure
-    // changes (maxResolution). Preserves src and the
-    // attached media element across the swap.
-    #rebuildEngine(): void {
-      const currentSrc = this.src;
-      const mediaElement = this.#attachedMediaElement;
-      this.#cancelPendingPlay();
-      this.#engine.destroy();
-      this.#engine = this.#createEngine();
-      if (currentSrc) this.#signals.state.presentation.set({ url: currentSrc });
-      if (mediaElement) this.#signals.context.mediaElement.set(mediaElement);
     }
 
     #cancelPendingPlay(): void {

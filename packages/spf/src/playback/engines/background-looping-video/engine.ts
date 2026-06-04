@@ -85,12 +85,6 @@ export interface BackgroundLoopingVideoEngineConfig
    */
   picker?: TrackPicker<SelectVideoTrackConfig>;
   /**
-   * Upper bound on the picked track's height (e.g. `"720p"`, `1080`).
-   * Forwarded to the default picker.
-   * Ignored by custom pickers unless they opt in.
-   */
-  maxResolution?: string | number;
-  /**
    * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
    * multivariant-playlist parser.
    */
@@ -138,7 +132,7 @@ export function createBackgroundLoopingVideoEngine(
 ): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
   const finalConfig = {
     ...config,
-    picker: config.picker ?? pickMaxResolutionVideoTrack(config),
+    picker: config.picker ?? pickMaxResolutionVideoTrack(),
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
   };
