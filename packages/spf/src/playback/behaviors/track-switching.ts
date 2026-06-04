@@ -269,21 +269,19 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
   state: TrackSwitchingStateMap<S, U>;
   config: TrackSwitchingSetupConfig<S, U, T>;
 }) {
-  const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
-  const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
-  const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
-  const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
-  const { selectionKey, userSelectionKey, getTracks, selectOptimal } = config;
+  const { selectionKey, getTracks } = config;
 
-  // The selection chain, most authoritative first. Each rule reads the signals
-  // it needs from the state passed at apply time, so the effect subscribes to
-  // exactly what the applied rules consult.
-  const rules: SelectionRule<T, TrackSwitchingStateMap<S, U>>[] = [
+  // The selection chain, most authoritative first. Each rule reads the state
+  // signals and config values it needs from the deps passed at apply time —
+  // nothing grabbed from this closure — so the effect subscribes to exactly
+  // what the applied rules consult and a rule stays relocatable.
+  type RuleConfig = TrackSwitchingSetupConfig<S, U, T>;
+  const rules: SelectionRule<T, TrackSwitchingStateMap<S, U>, Record<never, never>, RuleConfig>[] = [
     // User intent — a soft filter. Narrows to tracks matching the partial-track
     // selection; an empty match falls through (the composer skips it) to the
     // unfiltered set — e.g. a stale id from a previous source.
-    (tracks, { state: ruleState }) => {
-      const filter = ruleState[userSelectionKey].get() as Partial<T> | undefined;
+    (tracks, { state: ruleState, config: ruleConfig }) => {
+      const filter = ruleState[ruleConfig.userSelectionKey].get() as Partial<T> | undefined;
       return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
     },
     // Ranking — the terminal sort. Reads the bandwidth estimate, runs the
@@ -291,11 +289,15 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
     // pin-to-current), and returns the list with the pick at the head. Early-
     // bail skips this rule when a prior one narrowed to a single track, so the
     // bandwidth estimate is neither read nor subscribed while that choice holds.
-    (tracks, { state: ruleState }) => {
+    (tracks, { state: ruleState, config: ruleConfig }) => {
+      const safetyMargin = ruleConfig.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+      const upgradeMargin = ruleConfig.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
+      const initialBandwidth = ruleConfig.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
+      const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...ruleConfig.bandwidth };
       const bandwidth = getBandwidthEstimate(ruleState.bandwidthState.get(), initialBandwidth, bandwidthConfig);
-      const currentTrack = tracks.find((track) => track.id === ruleState[selectionKey].get());
+      const currentTrack = tracks.find((track) => track.id === ruleState[ruleConfig.selectionKey].get());
       const optimal =
-        selectOptimal(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
+        ruleConfig.selectOptimal(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
         selectLowestQualityWithBandwidth(tracks);
       return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
     },
