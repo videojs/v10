@@ -35,7 +35,7 @@
  * preferred-language / default-track logic to standing soft-filter rules.
  */
 
-import { defineBehavior } from '../../core/composition/create-composition';
+import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
@@ -262,45 +262,77 @@ interface TrackSwitchingSetupConfig<S extends SelectionKey, U extends UserSelect
   selectOptimal: (tracks: readonly T[], ctx: SelectionCtx<T>) => T | undefined;
 }
 
+/**
+ * Deps shape every track-switching rule consumes. Context conforms to the
+ * generic slot-map shape (`AnySlotMap`) — threaded through but with no keys
+ * read today, ready for a rule that consults context (e.g. CDN pathway).
+ */
+type TrackSwitchingRuleDeps<
+  S extends SelectionKey,
+  U extends UserSelectionKey,
+  T extends SwitchableTrack,
+> = SelectionRuleDeps<TrackSwitchingStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>;
+
+// ----------------------------------------------------------------------------
+// Rules — defined outside the behavior closure, parameterized only by their
+// deps. Each is generic over the slot keys + track type; the variant's
+// concrete keys instantiate it where the chain is assembled.
+// ----------------------------------------------------------------------------
+
+/**
+ * User intent — a soft filter. Narrows to tracks matching the partial-track
+ * selection in `user*TrackSelection`; an empty match falls through (the
+ * composer skips it) to the unfiltered set — e.g. a stale id from a previous
+ * source.
+ */
+function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
+  tracks: readonly T[],
+  { state, config }: TrackSwitchingRuleDeps<S, U, T>
+): readonly T[] {
+  const filter = state[config.userSelectionKey].get() as Partial<T> | undefined;
+  return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
+}
+
+/**
+ * Ranking — the terminal sort. Reads the bandwidth estimate, runs the
+ * per-variant `selectOptimal` (video ABR with hysteresis; audio pin-to-
+ * current), and returns the list with the pick at the head. Early-bail skips
+ * this rule when a prior one narrowed to a single track, so the bandwidth
+ * estimate is neither read nor subscribed while that choice holds.
+ */
+function rankByOptimal<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
+  tracks: readonly T[],
+  { state, config }: TrackSwitchingRuleDeps<S, U, T>
+): readonly T[] {
+  const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+  const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
+  const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
+  const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
+  const bandwidth = getBandwidthEstimate(state.bandwidthState.get(), initialBandwidth, bandwidthConfig);
+  const currentTrack = tracks.find((track) => track.id === state[config.selectionKey].get());
+  const optimal =
+    config.selectOptimal(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
+    selectLowestQualityWithBandwidth(tracks);
+  return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
+}
+
 function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>({
   state,
+  context = {},
   config,
 }: {
   state: TrackSwitchingStateMap<S, U>;
+  context?: AnySlotMap;
   config: TrackSwitchingSetupConfig<S, U, T>;
 }) {
   const { selectionKey, getTracks } = config;
 
-  // The selection chain, most authoritative first. Each rule reads the state
-  // signals and config values it needs from the deps passed at apply time —
-  // nothing grabbed from this closure — so the effect subscribes to exactly
-  // what the applied rules consult and a rule stays relocatable.
-  type RuleConfig = TrackSwitchingSetupConfig<S, U, T>;
-  const rules: SelectionRule<T, TrackSwitchingStateMap<S, U>, Record<never, never>, RuleConfig>[] = [
-    // User intent — a soft filter. Narrows to tracks matching the partial-track
-    // selection; an empty match falls through (the composer skips it) to the
-    // unfiltered set — e.g. a stale id from a previous source.
-    (tracks, { state: ruleState, config: ruleConfig }) => {
-      const filter = ruleState[ruleConfig.userSelectionKey].get() as Partial<T> | undefined;
-      return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
-    },
-    // Ranking — the terminal sort. Reads the bandwidth estimate, runs the
-    // per-variant `selectOptimal` (video ABR with hysteresis; audio
-    // pin-to-current), and returns the list with the pick at the head. Early-
-    // bail skips this rule when a prior one narrowed to a single track, so the
-    // bandwidth estimate is neither read nor subscribed while that choice holds.
-    (tracks, { state: ruleState, config: ruleConfig }) => {
-      const safetyMargin = ruleConfig.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
-      const upgradeMargin = ruleConfig.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
-      const initialBandwidth = ruleConfig.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
-      const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...ruleConfig.bandwidth };
-      const bandwidth = getBandwidthEstimate(ruleState.bandwidthState.get(), initialBandwidth, bandwidthConfig);
-      const currentTrack = tracks.find((track) => track.id === ruleState[ruleConfig.selectionKey].get());
-      const optimal =
-        ruleConfig.selectOptimal(tracks, { bandwidth, safetyMargin, upgradeMargin, currentTrack }) ??
-        selectLowestQualityWithBandwidth(tracks);
-      return optimal ? [optimal, ...tracks.filter((track) => track !== optimal)] : tracks;
-    },
+  // Selection chain, most authoritative first. The rules live at module scope
+  // (closure-free — they read only their deps); the variant's concrete keys
+  // instantiate them here.
+  const rules: SelectionRule<T, TrackSwitchingStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>[] = [
+    filterByUserSelection,
+    rankByOptimal,
   ];
 
   const derivedStateSignal = computed(() =>
@@ -328,10 +360,11 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             const allTracks = getTracks(presentation);
             if (!allTracks.length) return;
 
-            // Rules read only state signals today; context and config thread
-            // through unused for rules that will need them (a CDN-pathway rule
-            // reading context, a rule reading engine config).
-            const candidates = applyRules(rules, allTracks, { state, context: {}, config });
+            // state + config come from the behavior's deps; context is typed as
+            // the generic slot-map shape and passed to every rule, but sourced
+            // empty for now — wiring it from composition waits until a rule (and
+            // the behavior's contextKeys) declares real context keys.
+            const candidates = applyRules(rules, allTracks, { state, context, config });
             const selectedId = state[selectionKey].get();
 
             // A single survivor — an early-bail from the chain, or a single-
