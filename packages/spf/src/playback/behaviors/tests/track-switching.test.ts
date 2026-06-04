@@ -17,7 +17,6 @@ import {
   type SwitchVideoTrackConfig,
   switchAudioTrack,
   switchVideoTrack,
-  type TrackSwitchingState,
 } from '../track-switching';
 
 // ============================================================================
@@ -31,7 +30,7 @@ interface SwitchVideoTrackState {
   userVideoTrackSelection?: Partial<VideoTrack>;
 }
 
-function makeState(initial: Partial<TrackSwitchingState> = {}): StateSignals<SwitchVideoTrackState> {
+function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),

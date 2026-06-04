@@ -58,32 +58,18 @@ import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/ba
 // State + Config
 // ============================================================================
 
+/**
+ * The slots `setupTrackSwitching` itself owns: the `presentation` gate it reads
+ * and the per-type `selected*TrackId` it writes. Rule-only inputs are
+ * deliberately absent — `user*TrackSelection` and `bandwidthState` belong to
+ * whoever materializes them (the embedder via `shareSignals`, the buffer-actor
+ * sampler), and each rule declares the signal it consults as an optional slot
+ * on its own deps map, so the behavior never assumes a rule's signal exists.
+ */
 export interface TrackSwitchingState {
   presentation?: MaybeResolvedPresentation;
-  bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
-  /**
-   * Partial-track description expressing user intent for video. When set,
-   * narrows candidates to tracks matching every present field. Common case
-   * is `{ id: 'specific-track-id' }` for "manual quality"; other shapes
-   * work (e.g., `{ height: 720 }` constrains to 720p tracks — ABR
-   * continues to pick among them).
-   *
-   * When narrowed candidates contain exactly one track, ABR is
-   * short-circuited entirely (no bandwidth read, no effect re-fire).
-   *
-   * Falls back to the unfiltered set when the filter matches no tracks
-   * (e.g., user-picked id from a previous source doesn't exist here).
-   */
-  userVideoTrackSelection?: Partial<VideoTrack>;
-  /**
-   * Partial-track description expressing user intent for audio. Common
-   * case is `{ language: 'es' }` for language-pinning, `{ id: 'X' }` for
-   * absolute pinning. Same narrowing + short-circuit + fallback semantics
-   * as `userVideoTrackSelection`.
-   */
-  userAudioTrackSelection?: Partial<AudioTrack>;
 }
 
 /**
@@ -176,8 +162,8 @@ export function applyRules<T, State, Context, Config>(
 // What blocks it: indexing a mapped-type intersection by a generic key.
 // When `S extends keyof TrackSwitchingState` (or `string`), TS conservatively
 // treats `state[selectionKey]` as the union of every possible match across
-// the intersected mapped portions — including the fixed-key signals
-// (`presentation`, `bandwidthState`) — and widens to their value-type union.
+// the intersected mapped portions — including the fixed-key signal
+// (`presentation`) — and widens to their value-type union.
 // The sibling pattern hits the same constraint and answers it the same way:
 // `SelectedTrackKey` in `select-tracks.ts` is a hardcoded narrow union for
 // the same reason.
@@ -229,12 +215,18 @@ interface TrackSwitchingSetupConfig<S extends SelectionKey, U extends UserSelect
 
 /**
  * State the user-selection filter reads: the lifecycle map plus an *optional*
- * user-selection slot (keyed by `U`). The slot exists only when the composition
- * provides it (materialized by `shareSignals`); the filter reads it defensively
- * and no-ops when it's absent (no user override).
+ * user-selection slot (keyed by `U`), holding a partial-track description to
+ * match against the candidates (`Partial<T>` — `{ id }`, `{ language }`,
+ * `{ height }`, …). The slot exists only when the composition provides it
+ * (materialized by `shareSignals`); the filter reads it defensively and no-ops
+ * when it's absent (no user override).
  */
-type UserSelectionStateMap<S extends SelectionKey, U extends UserSelectionKey> = TrackSwitchingStateMap<S> & {
-  [P in U]?: ReadonlySignal<TrackSwitchingState[P]>;
+type UserSelectionStateMap<
+  S extends SelectionKey,
+  U extends UserSelectionKey,
+  T extends SwitchableTrack,
+> = TrackSwitchingStateMap<S> & {
+  [P in U]?: ReadonlySignal<Partial<T> | undefined>;
 };
 
 /**
@@ -244,7 +236,7 @@ type UserSelectionStateMap<S extends SelectionKey, U extends UserSelectionKey> =
  * `initialBandwidth` (with a debug note) when it's absent.
  */
 type BandwidthRankerStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
-  bandwidthState?: ReadonlySignal<TrackSwitchingState['bandwidthState']>;
+  bandwidthState?: ReadonlySignal<BandwidthState | undefined>;
 };
 
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
@@ -264,9 +256,9 @@ type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
  */
 function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
+  { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U, T>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
 ): readonly T[] {
-  const filter = state[config.userSelectionKey]?.get() as Partial<T> | undefined;
+  const filter = state[config.userSelectionKey]?.get();
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
 }
 
