@@ -174,45 +174,46 @@ function renderRenditionPicker() {
   }
 }
 
+// Signature of the currently-rendered audio track set. Lets the picker rebuild
+// its buttons only when the track set actually changes — selection and pin
+// changes update existing buttons in place (see renderAudioTrackPicker) so a
+// click or hover isn't interrupted by a full DOM teardown.
+let audioTrackSetKey = '';
+
 function renderAudioTrackPicker() {
   if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
   const selectedAudioTrackId = engine.state.selectedAudioTrackId.get();
   const userFilter = engine.state.userAudioTrackSelection.get();
-  const isPinned = userFilter !== undefined;
   const tracks = getAudioTracks(presentation);
 
   if (tracks.length === 0) {
     audioTrackButtonsDiv.textContent = presentation ? 'No audio tracks found' : 'Waiting for presentation…';
+    audioTrackSetKey = '';
     return;
   }
 
+  const setKey = tracks.map((track) => track.id).join('|');
+  if (setKey !== audioTrackSetKey) {
+    audioTrackSetKey = setKey;
+    buildAudioTrackButtons(tracks);
+  }
+  updateAudioTrackSelection(tracks, selectedAudioTrackId, userFilter);
+}
+
+/** (Re)build the static button list — one per track, tagged with its id. */
+function buildAudioTrackButtons(tracks: ReturnType<typeof getAudioTracks>) {
   audioTrackButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
+  statusRow.id = 'audio-status-row';
   statusRow.className = 'audio-status';
-  const modeLabel = document.createElement('span');
-  modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
-  modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
-  statusRow.appendChild(modeLabel);
-  if (isPinned) {
-    const clearBtn = document.createElement('button');
-    clearBtn.type = 'button';
-    clearBtn.className = 'clear-filter-btn';
-    clearBtn.textContent = 'Clear filter';
-    clearBtn.addEventListener('click', () => {
-      log('Cleared userAudioTrackSelection (back to default picker)', 'success');
-      signals.state.userAudioTrackSelection.set(undefined);
-    });
-    statusRow.appendChild(clearBtn);
-  }
   audioTrackButtonsDiv.appendChild(statusRow);
 
   for (const track of tracks) {
-    const isSelected = track.id === selectedAudioTrackId;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    btn.dataset.trackId = track.id;
     const lang = track.language ?? '—';
     const name = 'name' in track && track.name ? track.name : track.id;
     // Distinguish same-language renditions (multiple audio variants per language).
@@ -221,8 +222,8 @@ function renderAudioTrackPicker() {
     const groupId = 'groupId' in track ? track.groupId : undefined;
     const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
     const suffix = tier ? ` · ${tier}` : '';
-    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
-    btn.textContent = `${lang} · ${name}${suffix}${badge}`;
+    // Base label minus the selection badge; the badge is toggled in place.
+    btn.dataset.label = `${lang} · ${name}${suffix}`;
     btn.title = `id: ${track.id}${track.language ? ` · lang: ${track.language}` : ''}`;
     btn.addEventListener('click', () => {
       // Prefer pinning by language (the multi-language-audio Tier 2 case);
@@ -235,6 +236,44 @@ function renderAudioTrackPicker() {
       signals.state.userAudioTrackSelection.set(filter);
     });
     audioTrackButtonsDiv.appendChild(btn);
+  }
+}
+
+/** Update the status row and per-button selected state without tearing down. */
+function updateAudioTrackSelection(
+  tracks: ReturnType<typeof getAudioTracks>,
+  selectedAudioTrackId: string | undefined,
+  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+) {
+  const isPinned = userFilter !== undefined;
+
+  const statusRow = document.getElementById('audio-status-row');
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
+    modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
+    statusRow.appendChild(modeLabel);
+    if (isPinned) {
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'clear-filter-btn';
+      clearBtn.textContent = 'Clear filter';
+      clearBtn.addEventListener('click', () => {
+        log('Cleared userAudioTrackSelection (back to default picker)', 'success');
+        signals!.state.userAudioTrackSelection.set(undefined);
+      });
+      statusRow.appendChild(clearBtn);
+    }
+  }
+
+  for (const track of tracks) {
+    const btn = audioTrackButtonsDiv.querySelector<HTMLButtonElement>(`button[data-track-id="${track.id}"]`);
+    if (!btn) continue;
+    const isSelected = track.id === selectedAudioTrackId;
+    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+    btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
   }
 }
 
@@ -402,15 +441,16 @@ function startEngine(src: string) {
     }
   });
 
-  // Throughput + rendition picker + audio-track picker + resolution status —
-  // re-render on any state change
-  const stopStateUI = effect(() => {
-    snapshot(engine.state); // track all state changes
-    updateThroughputDisplay();
-    renderRenditionPicker();
-    renderAudioTrackPicker();
-    renderResolutionStatus();
-  });
+  // One effect per UI region, each auto-tracking only the signals its renderer
+  // reads. The previous single effect snapshotted *all* of engine.state, so
+  // high-frequency fields (currentTime, bandwidthState) re-fired every renderer
+  // many times a second — and the picker's full innerHTML rebuild interrupted
+  // clicks/hover. Now the audio picker re-runs only on presentation /
+  // selectedAudioTrackId / userAudioTrackSelection changes.
+  const stopThroughputUI = effect(() => updateThroughputDisplay());
+  const stopRenditionUI = effect(() => renderRenditionPicker());
+  const stopAudioPickerUI = effect(() => renderAudioTrackPicker());
+  const stopResolutionUI = effect(() => renderResolutionStatus());
 
   // Context logger
   const stopContextLogger = effect(() => {
@@ -470,7 +510,10 @@ function startEngine(src: string) {
 
   cleanupEffects = () => {
     stopStateLogger();
-    stopStateUI();
+    stopThroughputUI();
+    stopRenditionUI();
+    stopAudioPickerUI();
+    stopResolutionUI();
     stopContextLogger();
   };
 
