@@ -193,16 +193,54 @@ function renderAudioTrackPicker() {
     return;
   }
 
-  const setKey = tracks.map((track) => track.id).join('|');
+  // The picker pins by language (see the click handler / track-switching
+  // behavior), so multiple same-language renditions are NOT independently
+  // selectable — clicking the "med" variant still just pins the language.
+  // Collapse to one button per selection identity so the UI matches what
+  // selection actually guarantees.
+  const groups = getAudioSelectionGroups(tracks);
+  const setKey = groups.map((group) => group.key).join('|');
   if (setKey !== audioTrackSetKey) {
     audioTrackSetKey = setKey;
-    buildAudioTrackButtons(tracks);
+    buildAudioTrackButtons(groups);
   }
   updateAudioTrackSelection(tracks, selectedAudioTrackId, userFilter);
 }
 
-/** (Re)build the static button list — one per track, tagged with its id. */
-function buildAudioTrackButtons(tracks: ReturnType<typeof getAudioTracks>) {
+// One selectable audio identity: a language (when present) or a single track id.
+// `key` is exactly what the click handler pins on, so highlighting and dedupe
+// share one notion of identity.
+interface AudioSelectionGroup {
+  key: string;
+  byLanguage: boolean;
+  language?: string | undefined;
+  label: string;
+  members: string[];
+}
+
+/** Collapse audio tracks to one entry per selection identity (language, else id). */
+function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): AudioSelectionGroup[] {
+  const groups = new Map<string, AudioSelectionGroup>();
+  for (const track of tracks) {
+    const language = track.language || undefined;
+    const key = language ?? track.id;
+    let group = groups.get(key);
+    if (!group) {
+      const name = 'name' in track && track.name ? track.name : track.id;
+      group = { key, byLanguage: !!language, language, label: `${language ?? '—'} · ${name}`, members: [] };
+      groups.set(key, group);
+    }
+    // Member labels (bitrate, else groupId tier) are surfaced in the tooltip so
+    // the collapsed renditions are still inspectable.
+    const groupId = 'groupId' in track ? track.groupId : undefined;
+    const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
+    group.members.push(tier ?? track.id);
+  }
+  return [...groups.values()];
+}
+
+/** (Re)build the static button list — one per selection group, tagged with its key. */
+function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
   audioTrackButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
@@ -210,25 +248,17 @@ function buildAudioTrackButtons(tracks: ReturnType<typeof getAudioTracks>) {
   statusRow.className = 'audio-status';
   audioTrackButtonsDiv.appendChild(statusRow);
 
-  for (const track of tracks) {
+  for (const group of groups) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.dataset.trackId = track.id;
-    const lang = track.language ?? '—';
-    const name = 'name' in track && track.name ? track.name : track.id;
-    // Distinguish same-language renditions (multiple audio variants per language).
-    // Prefer bitrate; many HLS audio renditions report bandwidth=0 and signal the
-    // tier via groupId instead (e.g. Mux's audio-hi/med/lo-0), so fall back to it.
-    const groupId = 'groupId' in track ? track.groupId : undefined;
-    const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
-    const suffix = tier ? ` · ${tier}` : '';
+    btn.dataset.selectionKey = group.key;
     // Base label minus the selection badge; the badge is toggled in place.
-    btn.dataset.label = `${lang} · ${name}${suffix}`;
-    btn.title = `id: ${track.id}${track.language ? ` · lang: ${track.language}` : ''}`;
+    btn.dataset.label = group.label;
+    btn.title = group.byLanguage
+      ? `language: ${group.language} · ${group.members.length} rendition(s): ${group.members.join(', ')}`
+      : `id: ${group.key}`;
     btn.addEventListener('click', () => {
-      // Prefer pinning by language (the multi-language-audio Tier 2 case);
-      // fall back to id-pin if the track has no language attribute.
-      const filter = track.language ? { language: track.language } : { id: track.id };
+      const filter = group.byLanguage ? { language: group.language } : { id: group.key };
       log(
         `Audio track filter: ${JSON.stringify(filter)} — mid-stream flush will fire if language differs from buffered`,
         'warning'
@@ -267,10 +297,12 @@ function updateAudioTrackSelection(
     }
   }
 
-  for (const track of tracks) {
-    const btn = audioTrackButtonsDiv.querySelector<HTMLButtonElement>(`button[data-track-id="${track.id}"]`);
-    if (!btn) continue;
-    const isSelected = track.id === selectedAudioTrackId;
+  // The selected track belongs to a group keyed by its language (else its id);
+  // highlight that group's button.
+  const selectedTrack = tracks.find((track) => track.id === selectedAudioTrackId);
+  const selectedKey = selectedTrack ? selectedTrack.language || selectedTrack.id : undefined;
+  for (const btn of audioTrackButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
+    const isSelected = btn.dataset.selectionKey === selectedKey;
     btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
     const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
     btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
