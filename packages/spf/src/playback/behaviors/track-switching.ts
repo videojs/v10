@@ -141,17 +141,26 @@ export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 // ============================================================================
 
 /**
- * A selection rule narrows or reorders the candidate list. It reads the state
- * and context signals it needs at apply time (tightly-coupled reads), so a
+ * Deps handed to each rule and to `applyRules`, mirroring a behavior's setup
+ * deps so a rule reads from the same surfaces a behavior does.
+ */
+export interface SelectionRuleDeps<State = unknown, Context = unknown, Config = unknown> {
+  state: State;
+  context: Context;
+  config: Config;
+}
+
+/**
+ * A selection rule narrows or reorders the candidate list. It reads the state,
+ * context, and config it needs at apply time (tightly-coupled reads), so a
  * rule's `.get()`s subscribe the running effect to exactly what it consulted.
  * Returning an empty list means "no match" — the composer skips it, so a soft
  * filter never narrows the set to nothing. A ranker returns the list with its
  * pick at the head.
  */
-export type SelectionRule<T, State = unknown, Context = unknown> = (
+export type SelectionRule<T, State = unknown, Context = unknown, Config = unknown> = (
   tracks: readonly T[],
-  state: State,
-  context: Context
+  deps: SelectionRuleDeps<State, Context, Config>
 ) => readonly T[];
 
 /**
@@ -164,19 +173,17 @@ export type SelectionRule<T, State = unknown, Context = unknown> = (
  *
  * @param rules - Rules to apply, most authoritative first
  * @param tracks - Candidate tracks
- * @param state - The behavior's state signal map, passed through to each rule
- * @param context - The behavior's context signal map, passed through to each rule
+ * @param deps - The behavior's `{ state, context, config }`, passed through to each rule
  * @returns The surviving candidates, pick first
  */
-export function applyRules<T, State, Context>(
-  rules: readonly SelectionRule<T, State, Context>[],
+export function applyRules<T, State, Context, Config>(
+  rules: readonly SelectionRule<T, State, Context, Config>[],
   tracks: readonly T[],
-  state: State,
-  context: Context
+  deps: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
   let current = tracks;
   for (const rule of rules) {
-    const remaining = rule(current, state, context);
+    const remaining = rule(current, deps);
     if (remaining.length === 0) continue;
     current = remaining;
     if (current.length === 1) break;
@@ -275,7 +282,7 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
     // User intent — a soft filter. Narrows to tracks matching the partial-track
     // selection; an empty match falls through (the composer skips it) to the
     // unfiltered set — e.g. a stale id from a previous source.
-    (tracks, ruleState) => {
+    (tracks, { state: ruleState }) => {
       const filter = ruleState[userSelectionKey].get() as Partial<T> | undefined;
       return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
     },
@@ -284,7 +291,7 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
     // pin-to-current), and returns the list with the pick at the head. Early-
     // bail skips this rule when a prior one narrowed to a single track, so the
     // bandwidth estimate is neither read nor subscribed while that choice holds.
-    (tracks, ruleState) => {
+    (tracks, { state: ruleState }) => {
       const bandwidth = getBandwidthEstimate(ruleState.bandwidthState.get(), initialBandwidth, bandwidthConfig);
       const currentTrack = tracks.find((track) => track.id === ruleState[selectionKey].get());
       const optimal =
@@ -319,10 +326,10 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
             const allTracks = getTracks(presentation);
             if (!allTracks.length) return;
 
-            // Context is unused by today's rules; the chain reads only state
-            // signals. Real engine context threads here when a context-reading
-            // rule lands (e.g. CDN pathway).
-            const candidates = applyRules(rules, allTracks, state, {});
+            // Rules read only state signals today; context and config thread
+            // through unused for rules that will need them (a CDN-pathway rule
+            // reading context, a rule reading engine config).
+            const candidates = applyRules(rules, allTracks, { state, context: {}, config });
             const selectedId = state[selectionKey].get();
 
             // A single survivor — an early-bail from the chain, or a single-

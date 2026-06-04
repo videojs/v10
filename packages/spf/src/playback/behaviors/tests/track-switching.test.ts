@@ -680,16 +680,18 @@ describe('applyRules', () => {
   const track = (id: string) => ({ id });
   const all = [track('a'), track('b'), track('c')];
 
+  const noDeps = { state: {}, context: {}, config: {} };
+
   it('applies rules in order; the pick is the first survivor', () => {
     const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
     const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
-    const result = applyRules([dropA, reverse], all, {}, {});
+    const result = applyRules([dropA, reverse], all, noDeps);
     expect(result.map((t) => t.id)).toEqual(['c', 'b']);
   });
 
   it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
     const matchNone: SelectionRule<{ id: string }> = () => [];
-    const result = applyRules([matchNone], all, {}, {});
+    const result = applyRules([matchNone], all, noDeps);
     expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
   });
 
@@ -700,20 +702,22 @@ describe('applyRules', () => {
       laterCalled = true;
       return tracks;
     };
-    const result = applyRules([toA, later], all, {}, {});
+    const result = applyRules([toA, later], all, noDeps);
     expect(result.map((t) => t.id)).toEqual(['a']);
     expect(laterCalled).toBe(false);
   });
 
-  it('passes the candidate list, state, and context through to each rule', () => {
-    const state = { marker: 1 };
-    const context = { other: 2 };
+  it('passes the candidate list and deps (state, context, config) through to each rule', () => {
+    const deps = { state: { marker: 1 }, context: { other: 2 }, config: { tuning: 3 } };
     let received: unknown[] = [];
-    const rule: SelectionRule<{ id: string }, typeof state, typeof context> = (tracks, s, c) => {
-      received = [tracks, s, c];
+    const rule: SelectionRule<{ id: string }, typeof deps.state, typeof deps.context, typeof deps.config> = (
+      tracks,
+      ruleDeps
+    ) => {
+      received = [tracks, ruleDeps];
       return tracks;
     };
-    applyRules([rule], all, state, context);
-    expect(received).toEqual([all, state, context]);
+    applyRules([rule], all, deps);
+    expect(received).toEqual([all, deps]);
   });
 });
