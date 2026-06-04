@@ -196,58 +196,54 @@ type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 
 // Each mapped value references `P` so TS keeps the per-key dependency and
-// resolves `state[selectionKey]` / `state[userSelectionKey]` to the right
-// arm. `T` (track type) deliberately stays out of the state map — pulling
-// it in detaches the user-selection mapped value from `P` and TS collapses
-// the intersection. T flows through `TrackSwitchingSetupConfig` instead;
-// the user-filter access casts at the read site (see below).
+// resolves `state[selectionKey]` to the right arm. `T` (track type) stays out
+// of the state map (it flows through `TrackSwitchingSetupConfig` instead).
 //
-// `bandwidthState` is intentionally absent: only the bandwidth ranker rule
-// reads it, not the behavior's lifecycle. A rule needing a signal the behavior
-// doesn't use declares it *optional* on its own deps and reads it defensively
-// (see `BandwidthRankerStateMap`), so the behavior never assumes a rule-only
-// signal exists.
-type TrackSwitchingStateMap<S extends SelectionKey, U extends UserSelectionKey> = {
+// Only the behavior's own lifecycle signals are required here: the presentation
+// gate and the selection slot it writes. Signals a *rule* reads but the
+// behavior doesn't — `user*TrackSelection` (the user-selection filter) and
+// `bandwidthState` (the bandwidth ranker) — are NOT here; each rule declares
+// the signal it needs as *optional* on its own deps and reads it defensively,
+// so the behavior never assumes a rule-only signal exists. Those slots are
+// materialized by whoever owns them: `shareSignals` for the consumer-input
+// `user*TrackSelection`, the buffer-actor sampler for `bandwidthState`.
+type TrackSwitchingStateMap<S extends SelectionKey> = {
   presentation: ReadonlySignal<TrackSwitchingState['presentation']>;
-} & { [P in S]: Signal<TrackSwitchingState[P]> } & { [P in U]: ReadonlySignal<TrackSwitchingState[P]> };
+} & { [P in S]: Signal<TrackSwitchingState[P]> };
 
 /**
  * Config `setupTrackSwitching` receives — the per-variant wiring: which slots
  * to read/write (`selectionKey` / `userSelectionKey`), how to enumerate the
  * candidate tracks (`getTracks`), and the **rule chain** to run. ABR tuning is
- * optional and read only by the video ranker rule (`rankByQuality`); audio
- * leaves it unset.
+ * optional and read only by the bandwidth ranker rule (`rankByBandwidth`).
  */
 interface TrackSwitchingSetupConfig<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack> {
   selectionKey: S;
   userSelectionKey: U;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
-  rules: readonly SelectionRule<T, TrackSwitchingStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>[];
+  rules: readonly SelectionRule<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>[];
   quality?: Partial<QualityConfig>;
   bandwidth?: Partial<BandwidthConfig>;
   initialBandwidth?: number;
 }
 
 /**
- * Deps shape every track-switching rule consumes. Context conforms to the
- * generic slot-map shape (`AnySlotMap`) — threaded through but with no keys
- * read today, ready for a rule that consults context (e.g. CDN pathway).
+ * State the user-selection filter reads: the lifecycle map plus an *optional*
+ * user-selection slot (keyed by `U`). The slot exists only when the composition
+ * provides it (materialized by `shareSignals`); the filter reads it defensively
+ * and no-ops when it's absent (no user override).
  */
-type TrackSwitchingRuleDeps<
-  S extends SelectionKey,
-  U extends UserSelectionKey,
-  T extends SwitchableTrack,
-> = SelectionRuleDeps<TrackSwitchingStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>;
+type UserSelectionStateMap<S extends SelectionKey, U extends UserSelectionKey> = TrackSwitchingStateMap<S> & {
+  [P in U]?: ReadonlySignal<TrackSwitchingState[P]>;
+};
 
 /**
- * State a bandwidth ranker reads: the behavior's lifecycle map plus an
- * *optional* `bandwidthState`. The signal exists only when the composition
- * includes a bandwidth sampler; the ranker reads it defensively and falls back
- * to `initialBandwidth` (with a debug note) when it's absent. A behavior state
- * map without `bandwidthState` is assignable here (the slot is optional), so a
- * ranker drops into a chain whose behavior never declared the signal.
+ * State the bandwidth ranker reads: the lifecycle map plus an *optional*
+ * `bandwidthState`. The signal exists only when the composition includes a
+ * bandwidth sampler; the ranker reads it defensively and falls back to
+ * `initialBandwidth` (with a debug note) when it's absent.
  */
-type BandwidthRankerStateMap<S extends SelectionKey, U extends UserSelectionKey> = TrackSwitchingStateMap<S, U> & {
+type BandwidthRankerStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
   bandwidthState?: ReadonlySignal<TrackSwitchingState['bandwidthState']>;
 };
 
@@ -268,9 +264,9 @@ type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
  */
 function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: TrackSwitchingRuleDeps<S, U, T>
+  { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
 ): readonly T[] {
-  const filter = state[config.userSelectionKey].get() as Partial<T> | undefined;
+  const filter = state[config.userSelectionKey]?.get() as Partial<T> | undefined;
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
 }
 
@@ -293,7 +289,7 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  */
 function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: SelectionRuleDeps<BandwidthRankerStateMap<S, U>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
+  { state, config }: SelectionRuleDeps<BandwidthRankerStateMap<S>, AnySlotMap, TrackSwitchingSetupConfig<S, U, T>>
 ): readonly T[] {
   const safetyMargin = config.quality?.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
   const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
@@ -322,7 +318,7 @@ function rankByBandwidth<S extends SelectionKey, U extends UserSelectionKey, T e
 // untyped via the rest and it lands here — absent on direct setup calls, and
 // passed straight through to the rules (which don't read it yet).
 function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey, T extends SwitchableTrack>(deps: {
-  state: TrackSwitchingStateMap<S, U>;
+  state: TrackSwitchingStateMap<S>;
   context?: AnySlotMap;
   config: TrackSwitchingSetupConfig<S, U, T>;
 }) {
@@ -390,14 +386,14 @@ function setupTrackSwitching<S extends SelectionKey, U extends UserSelectionKey,
  * const reactor = switchVideoTrack.setup({ state });
  */
 export const switchVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'userVideoTrackSelection'],
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config,
     ...otherProps
   }: {
-    state: TrackSwitchingStateMap<'selectedVideoTrackId', 'userVideoTrackSelection'>;
+    state: TrackSwitchingStateMap<'selectedVideoTrackId'>;
     config?: SwitchVideoTrackConfig;
   }) =>
     setupTrackSwitching<'selectedVideoTrackId', 'userVideoTrackSelection', VideoTrackCandidate>({
@@ -431,14 +427,9 @@ export const switchVideoTrack = defineBehavior({
  * const reactor = switchAudioTrack.setup({ state });
  */
 export const switchAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId', 'userAudioTrackSelection'],
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({
-    state,
-    ...otherProps
-  }: {
-    state: TrackSwitchingStateMap<'selectedAudioTrackId', 'userAudioTrackSelection'>;
-  }) =>
+  setup: ({ state, ...otherProps }: { state: TrackSwitchingStateMap<'selectedAudioTrackId'> }) =>
     setupTrackSwitching<'selectedAudioTrackId', 'userAudioTrackSelection', AudioTrackCandidate>({
       ...otherProps,
       state,

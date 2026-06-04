@@ -92,7 +92,11 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // Audio-Only HLS Playback Engine
 // ============================================================================
 
-const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>();
+// Materializes the consumer-input slot `userAudioTrackSelection` (only read by
+// switchAudioTrack, produced by no behavior) in addition to forwarding refs.
+const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
+  'userAudioTrackSelection',
+]);
 
 /**
  * Create an audio-only HLS playback engine.
