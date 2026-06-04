@@ -338,6 +338,28 @@ Three things the model implies about where each piece lives:
   that narrowing holds. The behavior already does exactly this by hand for the bandwidth estimate; the
   chain makes it the general rule.
 
+- **How a rule expresses its signal dependencies is an open contract question.** Because a rule reads more
+  than the track list, it has to surface *which* state and context signals it consults so the reaction can
+  subscribe to them — and because the behavior declares its dependencies up front while rules arrive by
+  configuration, how a rule's dependencies reach that declaration isn't settled. Some coarse options, not
+  yet chosen:
+
+  - **Declared, like a behavior** — a rule is an object (or a type) that names the signals it requires, or
+    might use, the way a behavior declares its own; composition aggregates those into the behavior's
+    declared set. Most explicit, composes cleanly, most up-front machinery.
+  - **Tightly coupled reads** *(the likely starting point)* — the rule handed in via configuration is a
+    small closure that reads its signals directly, and the behavior's declared set is just what those rules
+    read. The selection logic itself can still live decoupled in the media layer as a plain function tied
+    to no signals; only the thin rule wrapper that does the reading is coupled. Simplest to start; defers
+    the general contract.
+  - **A prebuilt selection context** — the behavior reads a fixed surface of signals once per run and hands
+    each rule a plain context value, so rules stay pure and never touch signals. Keeps the behavior's
+    declaration static, but bounds a rule to whatever that fixed surface carries.
+
+  This also interacts with early-bail, which wants per-run lazy reads in chain order rather than an
+  up-front union of every rule's signals. Out of scope here; noted because it likely shapes the eventual
+  rule contract.
+
 ## Appendix A: prior art
 
 Every major HTTP-adaptive-streaming engine separates **hard constraints (a pruning pass) from soft
