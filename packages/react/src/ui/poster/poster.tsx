@@ -2,7 +2,8 @@
 
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import type { ForwardedRef } from 'react';
+import { isFunction } from '@videojs/utils/predicate';
+import type { CSSProperties, ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
@@ -32,7 +33,7 @@ export const Poster = forwardRef(function Poster(
   componentProps: PosterProps,
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
-  const { render, className, style, placeholder: _, ...elementProps } = componentProps;
+  const { render, className, style, placeholder, ...elementProps } = componentProps;
 
   const playback = usePlayer(selectPlayback);
 
@@ -45,9 +46,17 @@ export const Poster = forwardRef(function Poster(
 
   core.setMedia(playback);
 
+  const resolvedStyle: typeof style = placeholder
+    ? (state) =>
+        ({
+          '--media-poster-placeholder': `url(${placeholder})`,
+          ...(isFunction(style) ? style(state) : style),
+        }) as CSSProperties
+    : style;
+
   return renderElement(
     'img',
-    { render, className, style },
+    { render, className, style: resolvedStyle },
     {
       state: core.getState(),
       stateAttrMap: PosterDataAttrs,
