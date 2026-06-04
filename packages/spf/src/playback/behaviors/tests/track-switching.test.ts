@@ -14,9 +14,9 @@ import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
   applyRules,
   type SelectionRule,
+  type SwitchVideoTrackConfig,
   switchAudioTrack,
   switchVideoTrack,
-  type TrackSwitchingConfig,
   type TrackSwitchingState,
 } from '../track-switching';
 
@@ -365,7 +365,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: TrackSwitchingConfig = { quality: { safetyMargin: 1.0 } };
+      const config: SwitchVideoTrackConfig = { quality: { safetyMargin: 1.0 } };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -380,7 +380,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: 'low',
       });
 
-      const config: TrackSwitchingConfig = { quality: { upgradeMargin: 1.05 } };
+      const config: SwitchVideoTrackConfig = { quality: { upgradeMargin: 1.05 } };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('high');
@@ -403,7 +403,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: TrackSwitchingConfig = { initialBandwidth: 5_000_000 };
+      const config: SwitchVideoTrackConfig = { initialBandwidth: 5_000_000 };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -428,7 +428,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const config: TrackSwitchingConfig = {
+      const config: SwitchVideoTrackConfig = {
         bandwidth: { minTotalBytes: 40_000 },
         initialBandwidth: 5_000_000,
       };
