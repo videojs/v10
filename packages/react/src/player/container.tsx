@@ -3,7 +3,7 @@
 import { DEFAULT_CONTAINER_LABEL, DEFAULT_CONTAINER_ROLE, DEFAULT_CONTAINER_TAB_INDEX } from '@videojs/core/dom';
 import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 import { forwardRef, type HTMLAttributes, type PointerEventHandler, type ReactNode, useEffect, useRef } from 'react';
-import { useComposedRefs } from '@/utils/use-composed-refs';
+import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {

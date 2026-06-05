@@ -138,24 +138,6 @@ describe('input indicators', () => {
     }
   });
 
-  it('uses StatusAnnouncer suppression props without passing them to the DOM', async () => {
-    vi.useFakeTimers();
-    const { store, setState } = createTestStore({ volume: 0.5, muted: false });
-    const shouldAnnounceVolume = vi.fn(() => false);
-    const { getByRole } = renderWithPlayer(<StatusAnnouncer shouldAnnounceVolume={shouldAnnounceVolume} />, store);
-    await act(async () => {});
-
-    setState({ volume: 0.75 });
-    await act(async () => {});
-    act(() => vi.advanceTimersByTime(200));
-
-    expect(shouldAnnounceVolume).toHaveBeenCalled();
-    expect(getByRole('status').textContent).toBe('');
-    expect(getByRole('status').hasAttribute('shouldAnnounceVolume')).toBe(false);
-
-    vi.useRealTimers();
-  });
-
   it('scopes the volume CSS variable to VolumeIndicator.Fill', () => {
     const state: VolumeIndicatorCore.State = {
       open: true,
