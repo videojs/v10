@@ -84,6 +84,35 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBeNull();
   });
 
+  it('clears pending volume announcements when an immediate snapshot announcement wins', () => {
+    const core = new StatusAnnouncerCore();
+
+    core.processSnapshot({ paused: true, volume: 0.5, muted: false });
+    core.processSnapshot({ paused: true, volume: 0.75, muted: false });
+    core.processSnapshot({ paused: false, volume: 0.75, muted: false });
+
+    expect(core.state.current.label).toBe('Playing');
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBe('Playing');
+  });
+
+  it('clears pending seek announcements when an immediate snapshot announcement wins', () => {
+    const core = new StatusAnnouncerCore();
+
+    core.processSnapshot({ playbackRate: 1, currentTime: 10, duration: 120, seeking: false });
+    core.processSnapshot({ playbackRate: 1, currentTime: 45, duration: 120, seeking: true });
+    core.processSnapshot({ playbackRate: 1, currentTime: 45, duration: 120, seeking: false });
+    core.processSnapshot({ playbackRate: 1.25, currentTime: 45, duration: 120, seeking: false });
+
+    expect(core.state.current.label).toBe('Playback rate 1.25x');
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBe('Playback rate 1.25x');
+  });
+
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
     const core = new StatusAnnouncerCore();
     let snapshot = {
