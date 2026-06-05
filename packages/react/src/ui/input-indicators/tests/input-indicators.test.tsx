@@ -83,14 +83,16 @@ describe('input indicators', () => {
 
   it('does not announce completed seeks while a time slider is focused', async () => {
     vi.useFakeTimers();
+    const container = document.createElement('div');
     const slider = document.createElement('button');
     slider.setAttribute('role', 'slider');
-    document.body.append(slider);
+    container.append(slider);
+    document.body.append(container);
     slider.focus();
 
     try {
       const { store, setState } = createTestStore({ currentTime: 10, duration: 120, seeking: false });
-      const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store);
+      const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store, container);
       await act(async () => {});
 
       setState({ currentTime: 45, seeking: true });
@@ -101,12 +103,37 @@ describe('input indicators', () => {
 
       expect(getByRole('status').textContent).toBe('');
     } finally {
-      slider.remove();
+      container.remove();
       vi.useRealTimers();
     }
   });
 
   it('does not announce volume changes while a volume slider is focused', async () => {
+    vi.useFakeTimers();
+    const container = document.createElement('div');
+    const slider = document.createElement('button');
+    slider.setAttribute('role', 'slider');
+    container.append(slider);
+    document.body.append(container);
+    slider.focus();
+
+    try {
+      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+      const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store, container);
+      await act(async () => {});
+
+      setState({ volume: 0.75 });
+      await act(async () => {});
+      act(() => vi.advanceTimersByTime(200));
+
+      expect(getByRole('status').textContent).toBe('');
+    } finally {
+      container.remove();
+      vi.useRealTimers();
+    }
+  });
+
+  it('announces volume changes when a slider outside the player is focused', async () => {
     vi.useFakeTimers();
     const slider = document.createElement('button');
     slider.setAttribute('role', 'slider');
@@ -120,13 +147,31 @@ describe('input indicators', () => {
 
       setState({ volume: 0.75 });
       await act(async () => {});
-      act(() => vi.advanceTimersByTime(200));
+      await act(async () => vi.advanceTimersByTime(200));
 
-      expect(getByRole('status').textContent).toBe('');
+      expect(getByRole('status').textContent).toBe('Volume 75%');
     } finally {
       slider.remove();
       vi.useRealTimers();
     }
+  });
+
+  it('uses StatusAnnouncer suppression props without passing them to the DOM', async () => {
+    vi.useFakeTimers();
+    const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+    const shouldAnnounceVolume = vi.fn(() => false);
+    const { getByRole } = renderWithPlayer(<StatusAnnouncer shouldAnnounceVolume={shouldAnnounceVolume} />, store);
+    await act(async () => {});
+
+    setState({ volume: 0.75 });
+    await act(async () => {});
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(shouldAnnounceVolume).toHaveBeenCalled();
+    expect(getByRole('status').textContent).toBe('');
+    expect(getByRole('status').hasAttribute('shouldAnnounceVolume')).toBe(false);
+
+    vi.useRealTimers();
   });
 
   it('scopes the volume CSS variable to VolumeIndicator.Fill', () => {
@@ -228,8 +273,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
   return { store, setState };
 }
 
-function createPlayerContextValue(store: UnknownStore): PlayerContextValue {
-  const container = document.createElement('div');
+function createPlayerContextValue(store: UnknownStore, container = document.createElement('div')): PlayerContextValue {
   return {
     store,
     media: null,
@@ -239,6 +283,6 @@ function createPlayerContextValue(store: UnknownStore): PlayerContextValue {
   } as unknown as PlayerContextValue;
 }
 
-function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store) {
-  return render(<PlayerContextProvider value={createPlayerContextValue(store)}>{ui}</PlayerContextProvider>);
+function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store, container?: HTMLElement) {
+  return render(<PlayerContextProvider value={createPlayerContextValue(store, container)}>{ui}</PlayerContextProvider>);
 }

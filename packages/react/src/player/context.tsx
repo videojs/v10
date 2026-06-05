@@ -10,6 +10,7 @@ import {
 } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
+import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
 
@@ -147,8 +148,10 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     props.onPointerUp?.(event);
     const el = internalRef.current;
     if (!el) return;
+    const active = getDeepActiveElement(el.ownerDocument);
+
     // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
-    if (!el.contains(document.activeElement) || document.activeElement === document.body) {
+    if (!active || active === el.ownerDocument.body || !containsComposed(el, active)) {
       el.focus({ preventScroll: true });
     }
   };

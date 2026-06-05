@@ -5,7 +5,7 @@ import { getMediaSnapshot, isSliderFocused, visuallyHiddenStyle } from '@videojs
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
 
-import { usePlayer } from '../../player/context';
+import { useContainer, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
@@ -18,15 +18,19 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   componentProps: StatusAnnouncerProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { render, className, style, closeDelay, labels, ...elementProps } = componentProps;
+  const { render, className, style, closeDelay, labels, shouldAnnounceSeek, shouldAnnounceVolume, ...elementProps } =
+    componentProps;
   const [core] = useState(() => new StatusAnnouncerCore());
   const store = usePlayer();
+  const container = useContainer();
   useDestroy(core);
   core.setProps({
     closeDelay,
     labels,
-    shouldAnnounceSeek: () => !isSliderFocused(),
-    shouldAnnounceVolume: () => !isSliderFocused(),
+    shouldAnnounceSeek: (snapshot) =>
+      shouldAnnounceSeek?.(snapshot) !== false && (!container || !isSliderFocused(container)),
+    shouldAnnounceVolume: (snapshot) =>
+      shouldAnnounceVolume?.(snapshot) !== false && (!container || !isSliderFocused(container)),
   });
 
   useEffect(() => {

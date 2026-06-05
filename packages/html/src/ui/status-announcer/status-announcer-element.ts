@@ -3,7 +3,7 @@ import { applyVisuallyHiddenStyle, getMediaSnapshot, isSliderFocused } from '@vi
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { playerContext } from '../../player/context';
+import { containerContext, playerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 
 export class StatusAnnouncerElement extends MediaElement {
@@ -21,6 +21,7 @@ export class StatusAnnouncerElement extends MediaElement {
     callback: () => this.#reconnect(),
     subscribe: true,
   });
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
 
   #disconnect: AbortController | null = null;
   #storeUnsubscribe: (() => void) | null = null;
@@ -56,8 +57,14 @@ export class StatusAnnouncerElement extends MediaElement {
     super.willUpdate(changed);
     this.#core.setProps({
       closeDelay: this.closeDelay,
-      shouldAnnounceSeek: () => !isSliderFocused(this.ownerDocument),
-      shouldAnnounceVolume: () => !isSliderFocused(this.ownerDocument),
+      shouldAnnounceSeek: () => {
+        const container = this.#container.value?.container;
+        return !container || !isSliderFocused(container);
+      },
+      shouldAnnounceVolume: () => {
+        const container = this.#container.value?.container;
+        return !container || !isSliderFocused(container);
+      },
     });
   }
 
