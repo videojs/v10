@@ -1,4 +1,4 @@
-import { isFunction, isObject } from '@videojs/utils/predicate';
+import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
 import type {
   MediaBufferCapability,
@@ -13,61 +13,86 @@ import type {
   MediaTextTrackCapability,
   MediaVolumeCapability,
 } from '../../core/media/types';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
 export function hasMetadata(media: MediaSourceCapability): boolean {
   return media.readyState >= 1;
 }
 
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
-  return (
-    isObject(value) && 'paused' in value && 'ended' in value && isFunction((value as Record<string, unknown>).pause)
-  );
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.paused) && !isUndefined(media.ended) && isFunction(media.pause);
 }
 
 export function isMediaSeekCapable(value: unknown): value is MediaSeekCapability {
-  return isObject(value) && 'currentTime' in value && 'duration' in value && 'seeking' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.currentTime) && !isUndefined(media.duration) && !isUndefined(media.seeking);
 }
 
 export function isMediaSourceCapable(value: unknown): value is MediaSourceCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
   return (
-    isObject(value) &&
-    'src' in value &&
-    'currentSrc' in value &&
-    'readyState' in value &&
-    isFunction((value as Record<string, unknown>).load)
+    !isUndefined(media.src) &&
+    !isUndefined(media.currentSrc) &&
+    !isUndefined(media.readyState) &&
+    isFunction(media.load)
   );
 }
 
 export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapability {
-  return isObject(value) && 'volume' in value && 'muted' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.volume) && !isUndefined(media.muted);
 }
 
 export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlaybackRateCapability {
-  return isObject(value) && 'playbackRate' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.playbackRate);
 }
 
 export function isMediaBufferCapable(value: unknown): value is MediaBufferCapability {
-  return isObject(value) && 'buffered' in value && 'seekable' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return (
+    !isUndefined(media.buffered) &&
+    media.buffered !== EMPTY_TIME_RANGES &&
+    !isUndefined(media.seekable) &&
+    media.seekable !== EMPTY_TIME_RANGES
+  );
 }
 
 export function isMediaErrorCapable(value: unknown): value is MediaErrorCapability {
-  return isObject(value) && 'error' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.error);
 }
 
 export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrackCapability {
-  return isObject(value) && 'textTracks' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.textTracks) && media.textTracks !== EMPTY_TEXT_TRACKS;
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
-  return isObject(value) && 'remote' in value && isObject((value as Record<string, unknown>).remote);
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return isObject(media.remote) && media.remote !== EMPTY_REMOTE;
 }
 
 export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
-  return isObject(value) && 'streamType' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.streamType);
 }
 
 export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {
-  return isObject(value) && 'liveEdgeStart' in value && 'targetLiveWindow' in value;
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.liveEdgeStart) && !isUndefined(media.targetLiveWindow);
 }
 
 export function isQuerySelectorAllCapable<T extends string>(
