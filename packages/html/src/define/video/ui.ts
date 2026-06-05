@@ -28,9 +28,8 @@ import {
   defineErrorDialog,
   defineInputIndicators,
   defineMenu,
+  defineSliders,
   defineTime,
-  defineTimeSlider,
-  defineVolumeSlider,
 } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
@@ -45,8 +44,7 @@ safeDefine(MediaContainerElement);
 defineControls();
 defineErrorDialog();
 defineInputIndicators();
-defineTimeSlider();
-defineVolumeSlider();
+defineSliders();
 defineTime();
 defineMenu();
 

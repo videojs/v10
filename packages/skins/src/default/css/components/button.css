@@ -78,6 +78,10 @@
     scale: 0.9;
   }
 
+  & .media-icon__container {
+    display: grid;
+  }
+
   & .media-icon {
     grid-area: 1 / 1;
     transition-behavior: allow-discrete;
@@ -95,8 +99,9 @@
     right: -1px;
     bottom: -3px;
     font-size: 10px;
-    font-weight: 480;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
   }
 
   &:has(.media-icon--flipped) .media-icon__label {

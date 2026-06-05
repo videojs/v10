@@ -110,3 +110,11 @@ export function defineVolumeSlider(): void {
   safeDefine(VolumeSliderElement);
   defineSliderParts();
 }
+
+export function defineSliders(): void {
+  safeDefine(TimeSliderElement);
+  safeDefine(VolumeSliderElement);
+  defineSliderParts();
+  safeDefine(SliderBufferElement);
+  safeDefine(SliderThumbnailElement);
+}

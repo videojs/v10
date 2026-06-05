@@ -16,7 +16,7 @@ import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineMenu, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import { defineErrorDialog, defineMenu, defineSliders, defineTime } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { AudioPlayerElement } from './player';
@@ -28,8 +28,7 @@ safeDefine(MediaContainerElement);
 
 // Compound groups.
 defineErrorDialog();
-defineTimeSlider();
-defineVolumeSlider();
+defineSliders();
 defineTime();
 defineMenu();
 
