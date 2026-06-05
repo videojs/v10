@@ -1,3 +1,4 @@
+import { applyContainerAttrs } from '@videojs/core/dom';
 import { listen } from '@videojs/utils/dom';
 
 import { containerContext, playerContext } from '../player/context';
@@ -14,10 +15,7 @@ export class MediaContainerElement extends ContainerMixin(MediaElement) {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    // Make focusable so keyboard events reach hotkey listeners.
-    if (!this.hasAttribute('tabindex')) {
-      this.setAttribute('tabindex', '0');
-    }
+    applyContainerAttrs(this);
 
     this.#disconnect = new AbortController();
     listen(this, 'pointerup', this.#onPointerUp, { signal: this.#disconnect.signal });

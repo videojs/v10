@@ -4,8 +4,11 @@ import {
   VolumeIndicatorCSSVars,
   VolumeIndicatorDataAttrs,
 } from '@videojs/core';
-import { getIndicatorVisibilityCoordinator } from '@videojs/core/dom';
+import { type AnyPlayerStore, getIndicatorVisibilityCoordinator } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { playerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
 import { SeekIndicatorElement } from '../../seek-indicator/seek-indicator-element';
 import { SeekIndicatorValueElement } from '../../seek-indicator/seek-indicator-value-element';
 import { StatusAnnouncerElement } from '../../status-announcer/status-announcer-element';
@@ -19,6 +22,45 @@ import { LiveIndicator } from '../live-indicator';
 afterEach(() => {
   document.body.replaceChildren();
 });
+
+function defineElement(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) customElements.define(tagName, Base);
+}
+
+function createTestStore(initialState: Record<string, unknown> = {}) {
+  let state = initialState;
+  const listeners = new Set<() => void>();
+  const store = {
+    get state() {
+      return state;
+    },
+    subscribe(callback: () => void) {
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
+  } as unknown as AnyPlayerStore;
+
+  const setState = (partial: Record<string, unknown>) => {
+    state = { ...state, ...partial };
+    for (const listener of listeners) listener();
+  };
+
+  return { store, setState };
+}
+
+class TestStatusAnnouncerPlayerElement extends MediaElement {
+  store = createTestStore().store;
+
+  readonly #provider = new ContextProvider(this, { context: playerContext });
+
+  override connectedCallback(): void {
+    this.#provider.setValue(this.store);
+    super.connectedCallback();
+  }
+}
+
+defineElement(StatusAnnouncerElement.tagName, StatusAnnouncerElement);
+defineElement('test-status-announcer-player', TestStatusAnnouncerPlayerElement);
 
 describe('input indicators', () => {
   it('exposes standalone indicator tag names', () => {
@@ -82,6 +124,80 @@ describe('input indicators', () => {
     expect(document.body.querySelectorAll('media-volume-indicator')).toHaveLength(1);
     expect(host.hasAttribute('data-open')).toBe(false);
     expect(host.hasAttribute('data-level')).toBe(false);
+  });
+
+  it('updates StatusAnnouncerElement live text from store snapshots', async () => {
+    const { store, setState } = createTestStore({ paused: true });
+    const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+    provider.store = store;
+    provider.innerHTML = '<media-status-announcer></media-status-announcer>';
+    document.body.append(provider);
+    await provider.updateComplete;
+
+    const announcer = provider.querySelector('media-status-announcer')!;
+    expect(announcer.textContent).toBe('');
+
+    setState({ paused: false });
+    await Promise.resolve();
+    await (announcer as StatusAnnouncerElement).updateComplete;
+
+    expect(announcer.textContent).toBe('Playing');
+  });
+
+  it('does not announce completed seeks while a time slider is focused', async () => {
+    vi.useFakeTimers();
+    const slider = document.createElement('button');
+    slider.setAttribute('role', 'slider');
+    document.body.append(slider);
+    slider.focus();
+
+    try {
+      const { store, setState } = createTestStore({ currentTime: 10, duration: 120, seeking: false });
+      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+      provider.store = store;
+      provider.innerHTML = '<media-status-announcer></media-status-announcer>';
+      document.body.append(provider);
+      await provider.updateComplete;
+
+      const announcer = provider.querySelector('media-status-announcer')!;
+      setState({ currentTime: 45, seeking: true });
+      await Promise.resolve();
+      setState({ seeking: false });
+      await Promise.resolve();
+      vi.advanceTimersByTime(200);
+      await (announcer as StatusAnnouncerElement).updateComplete;
+
+      expect(announcer.textContent).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not announce volume changes while a volume slider is focused', async () => {
+    vi.useFakeTimers();
+    const slider = document.createElement('button');
+    slider.setAttribute('role', 'slider');
+    document.body.append(slider);
+    slider.focus();
+
+    try {
+      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+      provider.store = store;
+      provider.innerHTML = '<media-status-announcer></media-status-announcer>';
+      document.body.append(provider);
+      await provider.updateComplete;
+
+      const announcer = provider.querySelector('media-status-announcer')!;
+      setState({ volume: 0.75 });
+      await Promise.resolve();
+      vi.advanceTimersByTime(200);
+      await (announcer as StatusAnnouncerElement).updateComplete;
+
+      expect(announcer.textContent).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shares a visibility coordinator per container', () => {
