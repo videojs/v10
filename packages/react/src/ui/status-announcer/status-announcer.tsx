@@ -36,6 +36,7 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   });
 
   useEffect(() => {
+    core.resetSnapshot();
     core.processSnapshot(getMediaSnapshot(store));
     return store.subscribe(() => core.processSnapshot(getMediaSnapshot(store)));
   }, [core, store]);
