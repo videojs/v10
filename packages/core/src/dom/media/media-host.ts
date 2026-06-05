@@ -1,21 +1,25 @@
-import type { ErrorLike, EventLike, EventTargetLike } from '../../core/media/types';
-
-const EMPTY_TIME_RANGES: Readonly<TimeRanges> = Object.freeze({
-  length: 0,
-  start() {
-    return 0;
-  },
-  end() {
-    return 0;
-  },
-} as TimeRanges);
+import {
+  type CanPlayTypeResult,
+  type ErrorLike,
+  type EventLike,
+  type MediaFull,
+  type MediaPreloadType,
+  type MediaStreamType,
+  MediaStreamTypes,
+  type RemotePlaybackLike,
+  type TextTrackKind,
+  type TextTrackLike,
+} from '../../core/media/types';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 
 export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
-  implements EventTargetLike<Events>
+  implements MediaFull
 {
   #target: T | null = null;
   #types = new Set<string>();
+  #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
+  #config: Record<string, unknown> = {};
 
   get target() {
     return this.#target;
@@ -35,6 +39,11 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
       this.#target.removeEventListener(type, this.#forwardEvent);
     }
     this.#target = null;
+  }
+
+  destroy(): void {
+    this.detach();
+    this.#types.clear();
   }
 
   querySelectorAll<K extends keyof HTMLElementTagNameMap>(selectors: K): NodeListOf<HTMLElementTagNameMap[K]> | never[];
@@ -92,6 +101,38 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
   #forwardEvent = (event: Event) => {
     this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
   };
+
+  // -- Stream type --
+
+  get streamType(): MediaStreamType {
+    return this.#streamType;
+  }
+
+  set streamType(value: MediaStreamType) {
+    if (this.#streamType === value) return;
+    this.#streamType = value;
+    this.dispatchEvent(new Event('streamtypechange'));
+  }
+
+  // -- Live --
+
+  get liveEdgeStart() {
+    return Number.NaN;
+  }
+
+  get targetLiveWindow() {
+    return Number.NaN;
+  }
+
+  // -- Config --
+
+  get config(): Record<string, unknown> {
+    return this.#config;
+  }
+
+  set config(value: Record<string, unknown>) {
+    this.#config = value;
+  }
 
   // -- Metadata --
 
@@ -165,8 +206,28 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     return this.target?.readyState ?? 0;
   }
 
+  get preload(): MediaPreloadType {
+    return (this.target?.preload as MediaPreloadType) ?? 'metadata';
+  }
+
+  set preload(value: MediaPreloadType) {
+    if (this.target) this.target.preload = value;
+  }
+
+  get crossOrigin() {
+    return this.target?.crossOrigin ?? null;
+  }
+
+  set crossOrigin(value: string | null) {
+    if (this.target) this.target.crossOrigin = value;
+  }
+
   load() {
     this.target?.load();
+  }
+
+  canPlayType(type: string): CanPlayTypeResult {
+    return this.target?.canPlayType(type) ?? '';
   }
 
   // -- Volume --
@@ -197,6 +258,14 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     if (this.target) this.target.playbackRate = value;
   }
 
+  get defaultPlaybackRate() {
+    return this.target?.defaultPlaybackRate ?? 1;
+  }
+
+  set defaultPlaybackRate(value: number) {
+    if (this.target) this.target.defaultPlaybackRate = value;
+  }
+
   // -- Buffer --
 
   get buffered(): TimeRanges {
@@ -205,6 +274,12 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
 
   get seekable(): TimeRanges {
     return this.target?.seekable ?? EMPTY_TIME_RANGES;
+  }
+
+  // -- Played --
+
+  get played(): TimeRanges {
+    return this.target?.played ?? EMPTY_TIME_RANGES;
   }
 
   // -- Error --
@@ -216,13 +291,17 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
   // -- Text tracks --
 
   get textTracks() {
-    return (this.target?.textTracks as TextTrackList) ?? [];
+    return (this.target?.textTracks as TextTrackList) ?? EMPTY_TEXT_TRACKS;
+  }
+
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrackLike {
+    return this.target?.addTextTrack(kind, label, language) as TextTrackLike;
   }
 
   // -- Remote playback --
 
-  get remote(): RemotePlayback | undefined {
-    return this.target?.remote;
+  get remote(): RemotePlaybackLike {
+    return this.target?.remote ?? EMPTY_REMOTE;
   }
 
   get disableRemotePlayback() {
@@ -231,5 +310,31 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
 
   set disableRemotePlayback(value: boolean) {
     if (this.target) this.target.disableRemotePlayback = value;
+  }
+
+  // -- Playback options --
+
+  get autoplay() {
+    return this.target?.autoplay ?? false;
+  }
+
+  set autoplay(value: boolean) {
+    if (this.target) this.target.autoplay = value;
+  }
+
+  get defaultMuted() {
+    return this.target?.defaultMuted ?? false;
+  }
+
+  set defaultMuted(value: boolean) {
+    if (this.target) this.target.defaultMuted = value;
+  }
+
+  get controls() {
+    return this.target?.controls ?? false;
+  }
+
+  set controls(value: boolean) {
+    if (this.target) this.target.controls = value;
   }
 }
