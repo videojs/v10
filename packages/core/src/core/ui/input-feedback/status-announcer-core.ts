@@ -100,7 +100,7 @@ export class StatusAnnouncerCore {
     }
 
     if (queue.length > 0) {
-      handled = this.#announce(formatAnnouncementQueue(queue));
+      handled = this.#announce(queue.join('. '));
     }
 
     if (this.#processSeekSnapshot(previous, snapshot, labels, handled)) {
@@ -220,8 +220,4 @@ export namespace StatusAnnouncerCore {
 
 function hasChanged<Value>(previous: Value | undefined, next: Value | undefined): next is Value {
   return previous !== undefined && next !== undefined && !Object.is(previous, next);
-}
-
-function formatAnnouncementQueue(queue: string[]): string {
-  return queue.join('. ');
 }

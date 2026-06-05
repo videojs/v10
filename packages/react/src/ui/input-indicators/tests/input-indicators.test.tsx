@@ -81,64 +81,46 @@ describe('input indicators', () => {
     expect(getByRole('status').textContent).toBe('');
   });
 
-  it('does not announce completed seeks while a time slider is focused', async () => {
+  it.each([
+    {
+      name: 'completed seeks',
+      initialState: { currentTime: 10, duration: 120, seeking: false },
+      update: async (setState: (partial: Record<string, unknown>) => void) => {
+        setState({ currentTime: 45, seeking: true });
+        await act(async () => {});
+        setState({ seeking: false });
+      },
+    },
+    {
+      name: 'volume changes',
+      initialState: { volume: 0.5, muted: false },
+      update: async (setState: (partial: Record<string, unknown>) => void) => {
+        setState({ volume: 0.75 });
+      },
+    },
+  ])('does not announce $name while a slider inside the player is focused', async ({ initialState, update }) => {
     vi.useFakeTimers();
-    const container = document.createElement('div');
-    const slider = document.createElement('button');
-    slider.setAttribute('role', 'slider');
-    container.append(slider);
-    document.body.append(container);
-    slider.focus();
+    const { container, cleanup: cleanupSlider } = focusSliderInContainer();
 
     try {
-      const { store, setState } = createTestStore({ currentTime: 10, duration: 120, seeking: false });
+      const { store, setState } = createTestStore(initialState);
       const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store, container);
       await act(async () => {});
 
-      setState({ currentTime: 45, seeking: true });
-      await act(async () => {});
-      setState({ seeking: false });
+      await update(setState);
       await act(async () => {});
       act(() => vi.advanceTimersByTime(200));
 
       expect(getByRole('status').textContent).toBe('');
     } finally {
-      container.remove();
-      vi.useRealTimers();
-    }
-  });
-
-  it('does not announce volume changes while a volume slider is focused', async () => {
-    vi.useFakeTimers();
-    const container = document.createElement('div');
-    const slider = document.createElement('button');
-    slider.setAttribute('role', 'slider');
-    container.append(slider);
-    document.body.append(container);
-    slider.focus();
-
-    try {
-      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
-      const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store, container);
-      await act(async () => {});
-
-      setState({ volume: 0.75 });
-      await act(async () => {});
-      act(() => vi.advanceTimersByTime(200));
-
-      expect(getByRole('status').textContent).toBe('');
-    } finally {
-      container.remove();
+      cleanupSlider();
       vi.useRealTimers();
     }
   });
 
   it('announces volume changes when a slider outside the player is focused', async () => {
     vi.useFakeTimers();
-    const slider = document.createElement('button');
-    slider.setAttribute('role', 'slider');
-    document.body.append(slider);
-    slider.focus();
+    const { cleanup: cleanupSlider } = focusSliderInContainer();
 
     try {
       const { store, setState } = createTestStore({ volume: 0.5, muted: false });
@@ -151,7 +133,7 @@ describe('input indicators', () => {
 
       expect(getByRole('status').textContent).toBe('Volume 75%');
     } finally {
-      slider.remove();
+      cleanupSlider();
       vi.useRealTimers();
     }
   });
@@ -288,4 +270,17 @@ function createPlayerContextValue(
 
 function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store, container?: HTMLElement) {
   return render(<PlayerContextProvider value={createPlayerContextValue(store, container)}>{ui}</PlayerContextProvider>);
+}
+
+function focusSliderInContainer(container = document.createElement('div')) {
+  const slider = document.createElement('button');
+  slider.setAttribute('role', 'slider');
+  container.append(slider);
+  document.body.append(container);
+  slider.focus();
+
+  return {
+    container,
+    cleanup: () => container.remove(),
+  };
 }
