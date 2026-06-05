@@ -35,9 +35,9 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectActiveCdn } from '../../behaviors/select-active-cdn';
 import { selectTextTrack } from '../../behaviors/select-tracks';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
@@ -73,12 +73,15 @@ export interface SimpleHlsEngineState {
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
-   * The CDN the source is currently served from (origin of the chosen
-   * variant URLs). Owned by `selectActiveCdn`, read by `track-switching`'s
-   * `preferActiveCdn` scope so video / audio / text stay on one CDN. Only
-   * meaningful for redundant-stream sources; a single-CDN source has one value.
+   * The CDNs the source is served from (track-URL origins), in manifest
+   * priority order — most-preferred first (mirrors HLS content steering's
+   * `PATHWAY-PRIORITY`). Owned by `resolveCdnPriority`, read by
+   * `track-switching`'s `preferActiveCdn` scope, which narrows to the
+   * highest-priority CDN with surviving tracks so video / audio / text stay on
+   * one host. Only meaningful for redundant-stream sources; a single-CDN source
+   * has one entry.
    */
-  activeCdn?: string;
+  cdnPriority?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -256,10 +259,10 @@ export function createSimpleHlsEngine(
       trackLoadTriggers,
       resolvePresentation,
 
-      // Session-level CDN pick for redundant-stream sources. Owns `activeCdn`;
-      // `track-switching`'s preferActiveCdn scope reads it so every type stays
-      // on one CDN. No-op for single-CDN sources.
-      selectActiveCdn,
+      // Session-level CDN priority for redundant-stream sources. Owns
+      // `cdnPriority`; `track-switching`'s preferActiveCdn scope reads it so
+      // every type stays on one CDN. No-op for single-CDN sources.
+      resolveCdnPriority,
 
       // Track selection (reads config for initial preferences).
       // Video selection lives in switchVideoTrack (composed below);

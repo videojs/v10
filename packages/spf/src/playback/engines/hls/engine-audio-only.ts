@@ -23,9 +23,9 @@ import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
-import { selectActiveCdn } from '../../behaviors/select-active-cdn';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 
@@ -53,11 +53,12 @@ export interface SimpleHlsAudioOnlyEngineState {
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
-   * The CDN the source is currently served from. Owned by `selectActiveCdn`,
+   * The CDNs the source is served from, in manifest priority order (mirrors
+   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `resolveCdnPriority`,
    * read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
-   * redundant-stream sources; a single-CDN source has one value.
+   * redundant-stream sources; a single-CDN source has one entry.
    */
-  activeCdn?: string;
+  cdnPriority?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -150,9 +151,10 @@ export function createHlsAudioOnlyEngine(
       trackLoadTriggers,
       resolvePresentation,
 
-      // Session-level CDN pick for redundant-stream sources. Owns `activeCdn`;
-      // switchAudioTrack's preferActiveCdn scope reads it. No-op for single-CDN.
-      selectActiveCdn,
+      // Session-level CDN priority for redundant-stream sources. Owns
+      // `cdnPriority`; switchAudioTrack's preferActiveCdn scope reads it. No-op
+      // for single-CDN.
+      resolveCdnPriority,
 
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's

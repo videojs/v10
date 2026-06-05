@@ -11,10 +11,10 @@
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   2. **active CDN** — a soft filter on `activeCdn` (`preferActiveCdn`): narrow
- *      to tracks served from the session's active CDN; an empty match falls
- *      through. Shared by video and audio, so every type stays on one CDN
- *      (`selectActiveCdn` owns the choice). No-op for non-redundant sources.
+ *   2. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
+ *      narrow to the highest-priority CDN that still has tracks; an empty match
+ *      falls through. Shared by video and audio, so every type stays on one CDN
+ *      (`resolveCdnPriority` owns the list). No-op for non-redundant sources.
  *   3. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
@@ -276,12 +276,13 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
 
 /**
  * State the active-CDN scope reads: the lifecycle map plus an *optional*
- * `activeCdn`. The signal exists only when the composition includes
- * `selectActiveCdn` (which materializes + owns it); the scope reads it
- * defensively and passes through when it's absent (no CDN preference).
+ * `cdnPriority` — the manifest-ordered CDN list (most-preferred first). The
+ * signal exists only when the composition includes `resolveCdnPriority` (which
+ * materializes + owns it); the scope reads it defensively and passes through
+ * when it's absent (no CDN preference).
  */
 type CdnScopeStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
-  activeCdn?: ReadonlySignal<string | undefined>;
+  cdnPriority?: ReadonlySignal<string[] | undefined>;
 };
 
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
@@ -311,14 +312,20 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
 
 /**
  * Active-CDN scope — a soft filter, shared by video and audio. Narrows to the
- * tracks served from the session's active CDN (`activeCdn`, owned by
- * `selectActiveCdn`), so every track type stays on one CDN. A redundant-streams
- * source lists the same renditions on multiple hosts; this keeps the pick on the
- * sticky CDN rather than letting the ranker drift across hosts.
+ * highest-priority CDN in `cdnPriority` (owned by `resolveCdnPriority`) that
+ * still has tracks, so every track type stays on one CDN. A redundant-streams
+ * source lists the same renditions on multiple hosts; this keeps the pick on one
+ * host rather than letting the ranker drift across them.
  *
- * Soft-filter semantics: passes through when there's no `activeCdn` signal/value
- * (no preference) or when nothing matches it (`applyRules` skips an empty
- * result). Non-redundant sources have one CDN, so the narrow is a no-op.
+ * "Active" is derived, not stored: constraints run before the rule chain, so a
+ * failed CDN's tracks are already pruned by the time this runs — "first CDN with
+ * survivors" *is* the active CDN, and it falls through to the next on failover
+ * (and snaps back to the primary when it recovers). Content steering reorders
+ * `cdnPriority`; this rule just honors the order.
+ *
+ * Soft-filter semantics: passes through when there's no `cdnPriority` signal/value
+ * (no preference) or when nothing matches (`applyRules` skips an empty result).
+ * Non-redundant sources have one CDN, so the narrow is a no-op.
  *
  * The CDN-id derivation (`getCdnId`, origin-based) is hardcoded for now; a
  * consumer-configurable derivation can move onto a rule config view later.
@@ -327,9 +334,13 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
   { state }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
-  const activeCdn = state.activeCdn?.get();
-  if (!activeCdn) return tracks;
-  return tracks.filter((track) => getCdnId(track.url) === activeCdn);
+  const cdnPriority = state.cdnPriority?.get();
+  if (!cdnPriority?.length) return tracks;
+  for (const cdn of cdnPriority) {
+    const onCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
+    if (onCdn.length) return onCdn;
+  }
+  return tracks;
 }
 
 /**

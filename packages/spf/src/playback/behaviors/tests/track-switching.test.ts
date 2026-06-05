@@ -760,40 +760,51 @@ describe('preferActiveCdn (active-CDN scope)', () => {
 
   // Bandwidth high enough that 1080p fits, so the pick is the highest rendition
   // on whichever CDN the scope leaves standing.
-  const makeCdnState = (activeCdn?: string) => ({
+  const makeCdnState = (cdnPriority?: string[]) => ({
     presentation: signal<MaybeResolvedPresentation | undefined>(multiCdn()),
     bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
     selectedVideoTrackId: signal<string | undefined>(undefined),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
-    activeCdn: signal<string | undefined>(activeCdn),
+    cdnPriority: signal<string[] | undefined>(cdnPriority),
   });
 
-  it('narrows the pick to the active CDN, overriding manifest order', async () => {
-    // cdn-a's 1080p is listed first, so without the scope abr would pick 1080p-a.
-    const state = makeCdnState('https://cdn-b.example.com');
+  it('narrows the pick to the highest-priority CDN, overriding manifest track order', async () => {
+    // cdn-a's 1080p is listed first in the tracks, but cdn-b is first in `cdnPriority`,
+    // so the scope picks cdn-b. (Without the scope abr would pick 1080p-a.)
+    const state = makeCdnState(['https://cdn-b.example.com', 'https://cdn-a.example.com']);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
     reactor.destroy();
   });
 
-  it('keeps the pick on the active CDN when it is the manifest head', async () => {
-    const state = makeCdnState('https://cdn-a.example.com');
+  it('keeps the pick on the primary CDN when it is first in the list', async () => {
+    const state = makeCdnState(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
     reactor.destroy();
   });
 
-  it('falls through to all CDNs when activeCdn matches nothing', async () => {
-    const state = makeCdnState('https://cdn-z.example.com');
+  it('falls through to the next CDN when the first has no surviving tracks', async () => {
+    // cdn-z has no tracks (as if pruned by a failover constraint), so the scope
+    // skips it and narrows to cdn-a.
+    const state = makeCdnState(['https://cdn-z.example.com', 'https://cdn-a.example.com']);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
     reactor.destroy();
   });
 
-  it('is a no-op when no activeCdn value is present', async () => {
+  it('falls through to all CDNs when no list entry matches any track', async () => {
+    const state = makeCdnState(['https://cdn-z.example.com']);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('is a no-op when no cdnPriority list is present', async () => {
     const state = makeCdnState(undefined);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
@@ -801,13 +812,13 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     reactor.destroy();
   });
 
-  it('re-picks when activeCdn changes while staying resolved (failover-ready seam)', async () => {
-    const state = makeCdnState('https://cdn-a.example.com');
+  it('re-picks when the CDN order changes while staying resolved (steering/failover seam)', async () => {
+    const state = makeCdnState(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
 
-    state.activeCdn.set('https://cdn-b.example.com');
+    state.cdnPriority.set(['https://cdn-b.example.com', 'https://cdn-a.example.com']);
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
 
@@ -825,7 +836,7 @@ describe('preferActiveCdn (active-CDN scope)', () => {
       bandwidthState: signal<BandwidthState | undefined>(undefined),
       selectedAudioTrackId: signal<string | undefined>(undefined),
       userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(undefined),
-      activeCdn: signal<string | undefined>('https://cdn-b.example.com'),
+      cdnPriority: signal<string[] | undefined>(['https://cdn-b.example.com', 'https://cdn-a.example.com']),
     };
     const reactor = switchAudioTrack.setup({ state });
     await flush();

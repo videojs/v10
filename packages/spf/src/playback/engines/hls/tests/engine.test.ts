@@ -60,7 +60,7 @@ describe('createSimpleHlsEngine', () => {
     // Everything else starts as `undefined` and behaviors write their
     // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
-      activeCdn: undefined,
+      cdnPriority: undefined,
       userVideoTrackSelection: undefined,
       bandwidthState: {
         fastEstimate: 0,
@@ -84,7 +84,7 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('picks the active CDN and keeps the video selection on it (redundant-stream source)', async () => {
+  it('publishes the CDN list and keeps the video selection on the primary (redundant-stream source)', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     const engine = createSimpleHlsEngine();
 
@@ -118,14 +118,14 @@ describe('createSimpleHlsEngine', () => {
     } as Presentation);
     await flush();
 
-    // selectActiveCdn picks the manifest-head CDN; preferActiveCdn keeps the
-    // video pick on it.
-    expect(engine.state.activeCdn.get()).toBe('https://cdn-a.example.com');
+    // resolveCdns publishes the manifest-ordered list; preferActiveCdn narrows
+    // the video pick to the primary (first-with-survivors) CDN.
+    expect(engine.state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     expect(engine.state.selectedVideoTrackId.get()).toBe('720p-a');
 
-    // Simulate an external/failover CDN change: the scope re-narrows and the
+    // Reorder the CDN list (steering/override seam): the scope re-narrows and the
     // selection follows to the other CDN's matching rendition.
-    engine.state.activeCdn.set('https://cdn-b.example.com');
+    engine.state.cdnPriority.set(['https://cdn-b.example.com', 'https://cdn-a.example.com']);
     await flush();
     expect(engine.state.selectedVideoTrackId.get()).toBe('720p-b');
 
