@@ -72,6 +72,22 @@ class TestStatusAnnouncerPlayerElement extends MediaElement {
 defineElement(StatusAnnouncerElement.tagName, StatusAnnouncerElement);
 defineElement('test-status-announcer-player', TestStatusAnnouncerPlayerElement);
 
+async function renderStatusAnnouncerElement(
+  store: AnyPlayerStore,
+  markup = '<media-status-announcer></media-status-announcer>'
+) {
+  const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+  provider.store = store;
+  provider.innerHTML = markup;
+  document.body.append(provider);
+  await provider.updateComplete;
+
+  return {
+    provider,
+    announcer: provider.querySelector('media-status-announcer')!,
+  };
+}
+
 describe('input indicators', () => {
   it('exposes standalone indicator tag names', () => {
     expect(StatusIndicatorElement.tagName).toBe('media-status-indicator');
@@ -138,13 +154,7 @@ describe('input indicators', () => {
 
   it('updates StatusAnnouncerElement live text from store snapshots', async () => {
     const { store, setState } = createTestStore({ paused: true });
-    const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
-    provider.store = store;
-    provider.innerHTML = '<media-status-announcer></media-status-announcer>';
-    document.body.append(provider);
-    await provider.updateComplete;
-
-    const announcer = provider.querySelector('media-status-announcer')!;
+    const { announcer } = await renderStatusAnnouncerElement(store);
     expect(announcer.textContent).toBe('');
 
     setState({ paused: false });
@@ -157,13 +167,7 @@ describe('input indicators', () => {
   it('uses the next store snapshot as baseline when StatusAnnouncerElement store changes', async () => {
     const first = createTestStore({ paused: false });
     const second = createTestStore({ paused: false });
-    const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
-    provider.store = first.store;
-    provider.innerHTML = '<media-status-announcer></media-status-announcer>';
-    document.body.append(provider);
-    await provider.updateComplete;
-
-    const announcer = provider.querySelector('media-status-announcer')!;
+    const { announcer, provider } = await renderStatusAnnouncerElement(first.store);
     first.setState({ paused: true });
     await Promise.resolve();
     await (announcer as StatusAnnouncerElement).updateComplete;
@@ -176,47 +180,35 @@ describe('input indicators', () => {
     expect(announcer.textContent).toBe('');
   });
 
-  it('does not announce completed seeks while a time slider is focused', async () => {
+  it.each([
+    {
+      name: 'completed seeks',
+      initialState: { currentTime: 10, duration: 120, seeking: false },
+      update: async (setState: (partial: Record<string, unknown>) => void) => {
+        setState({ currentTime: 45, seeking: true });
+        await Promise.resolve();
+        setState({ seeking: false });
+      },
+    },
+    {
+      name: 'volume changes',
+      initialState: { volume: 0.5, muted: false },
+      update: async (setState: (partial: Record<string, unknown>) => void) => {
+        setState({ volume: 0.75 });
+      },
+    },
+  ])('does not announce $name while a slider inside the player is focused', async ({ initialState, update }) => {
     vi.useFakeTimers();
 
     try {
-      const { store, setState } = createTestStore({ currentTime: 10, duration: 120, seeking: false });
-      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
-      provider.store = store;
-      provider.innerHTML = '<button role="slider"></button><media-status-announcer></media-status-announcer>';
-      document.body.append(provider);
-      await provider.updateComplete;
+      const { store, setState } = createTestStore(initialState);
+      const { announcer, provider } = await renderStatusAnnouncerElement(
+        store,
+        '<button role="slider"></button><media-status-announcer></media-status-announcer>'
+      );
 
-      provider.querySelector('button')?.focus();
-      const announcer = provider.querySelector('media-status-announcer')!;
-      setState({ currentTime: 45, seeking: true });
-      await Promise.resolve();
-      setState({ seeking: false });
-      await Promise.resolve();
-      vi.advanceTimersByTime(200);
-      await (announcer as StatusAnnouncerElement).updateComplete;
-
-      expect(announcer.textContent).toBe('');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('does not announce volume changes while a volume slider is focused', async () => {
-    vi.useFakeTimers();
-
-    try {
-      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
-      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
-      provider.store = store;
-      provider.innerHTML = '<button role="slider"></button><media-status-announcer></media-status-announcer>';
-      document.body.append(provider);
-      await provider.updateComplete;
-
-      provider.querySelector('button')?.focus();
-      const announcer = provider.querySelector('media-status-announcer')!;
-      setState({ volume: 0.75 });
-      await Promise.resolve();
+      provider.querySelector<HTMLElement>('[role="slider"]')?.focus();
+      await update(setState);
       vi.advanceTimersByTime(200);
       await (announcer as StatusAnnouncerElement).updateComplete;
 
@@ -235,13 +227,7 @@ describe('input indicators', () => {
 
     try {
       const { store, setState } = createTestStore({ volume: 0.5, muted: false });
-      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
-      provider.store = store;
-      provider.innerHTML = '<media-status-announcer></media-status-announcer>';
-      document.body.append(provider);
-      await provider.updateComplete;
-
-      const announcer = provider.querySelector('media-status-announcer')!;
+      const { announcer } = await renderStatusAnnouncerElement(store);
       setState({ volume: 0.75 });
       await Promise.resolve();
       vi.advanceTimersByTime(200);
