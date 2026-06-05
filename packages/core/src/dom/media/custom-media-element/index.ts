@@ -91,7 +91,7 @@ interface MediaHost extends EventTarget {
 }
 
 type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTMLElement & InstanceType<T>> & {
-  properties: Record<string, { type: any; attribute?: string }>;
+  properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
@@ -119,9 +119,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       loading: { type: String },
       loop: { type: Boolean },
       playsInline: { type: Boolean },
-      poster: { type: String },
-      preload: { type: String },
-      src: { type: String },
+      poster: { type: String, empty: '' },
+      preload: { type: String, empty: null },
+      src: { type: String, empty: '' },
     };
 
     static get observedAttributes() {
@@ -137,9 +137,19 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (isDefined) return;
       isDefined = true;
 
+      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
+
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
+          // Defer to the explicit `ctor.properties` loop when its attribute
+          // mapping diverges from `kebabCase(prop)`. Covers multi-word camelCase
+          // props (`playsInline` → `'playsinline'`) and explicit overrides
+          // (`defaultMuted` → `attribute: 'muted'`). Single-word props in
+          // `properties` (like `loop`, `preload`) keep their legacy proto-walk
+          // path so the mediaHost still receives the setter call.
+          const propConfig = properties[prop];
+          if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -182,7 +192,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         }
       }
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string }>;
       for (const [prop, { type, attribute }] of Object.entries(properties)) {
         if (prop in CustomMedia.prototype) continue;
 
@@ -291,8 +300,14 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
+          const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+          const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
           this.#mediaHost[prop] =
-            valueType === 'boolean' ? newValue !== null : valueType === 'number' ? Number(newValue) : (newValue ?? '');
+            valueType === 'boolean'
+              ? newValue !== null
+              : valueType === 'number'
+                ? Number(newValue)
+                : (newValue ?? emptyValue);
         }
         return;
       }
