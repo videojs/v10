@@ -1,4 +1,6 @@
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
+import { GoogleCastMixin } from '../google-cast';
+import { type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaErrorsMixin } from './errors';
 import { NativeHlsMediaLiveMixin } from './live';
@@ -9,7 +11,7 @@ export type StreamType = MediaStreamType;
 
 export const StreamTypes = MediaStreamTypes;
 
-export interface NativeHlsMediaProps {
+export interface NativeHlsMediaProps extends GoogleCastMediaProps {
   src: string;
   preload: PreloadType;
   streamType: StreamType;
@@ -19,9 +21,13 @@ export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   src: '',
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
+  ...googleCastMediaDefaultProps,
 };
 
-class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsMediaProps, 'streamType'> {
+class NativeHlsMediaBase
+  extends GoogleCastMixin(HTMLVideoElementHost)
+  implements Omit<NativeHlsMediaProps, 'streamType'>
+{
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
@@ -59,6 +65,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   destroy() {
     this.detach();
+    super.destroy();
   }
 }
 

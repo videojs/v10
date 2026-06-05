@@ -1,5 +1,5 @@
 import { shallowEqual } from '@videojs/utils/object';
-import Hls from 'hls.js';
+import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { GoogleCastMixin } from '../google-cast';
@@ -13,7 +13,7 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 export { Hls };
 
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
-export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+export type SourceType = (typeof ContentTypes)[keyof typeof ContentTypes];
 export type StreamType = MediaStreamType;
 
 export const PlaybackTypes = {
@@ -21,30 +21,32 @@ export const PlaybackTypes = {
   NATIVE: 'native',
 };
 
-export const SourceTypes = {
+export const ContentTypes = {
   M3U8: 'application/vnd.apple.mpegurl',
   MP4: 'video/mp4',
 };
 
 export const StreamTypes = MediaStreamTypes;
 
+export interface HlsMediaConfig {
+  preferPlayback: PlaybackType | undefined;
+  contentType?: SourceType | undefined;
+  hlsJs?: Partial<HlsJsConfig>;
+}
+
 export interface HlsMediaProps extends GoogleCastMediaProps {
   src: string;
-  contentType: SourceType | undefined;
-  preferPlayback: PlaybackType | undefined;
-  config: Record<string, any>;
-  debug: boolean;
   preload: PreloadType;
+  config: HlsMediaConfig;
   streamType: StreamType;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
-  contentType: undefined,
-  preferPlayback: 'mse',
-  config: {},
-  debug: false,
   preload: 'metadata',
+  config: {
+    preferPlayback: 'mse',
+  },
   streamType: MediaStreamTypes.UNKNOWN,
   ...googleCastMediaDefaultProps,
 };
@@ -52,10 +54,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
 export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = hlsMediaDefaultProps.src;
-  #contentType = hlsMediaDefaultProps.contentType;
-  #preferPlayback = hlsMediaDefaultProps.preferPlayback;
   #config = { ...hlsMediaDefaultProps.config };
-  #debug = hlsMediaDefaultProps.debug;
   #preload = hlsMediaDefaultProps.preload;
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
   #isUserStreamType = false;
@@ -79,41 +78,12 @@ export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements H
     this.#requestLoad();
   }
 
-  /** Explicit source content type. When unset, inferred from the source URL extension. */
-  get contentType() {
-    return this.#contentType ?? inferSourceType(this.src);
-  }
-
-  set contentType(value: SourceType | undefined) {
-    this.#contentType = value;
-    this.#requestLoad();
-  }
-
-  /** Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS. */
-  get preferPlayback() {
-    return this.#preferPlayback;
-  }
-
-  set preferPlayback(value) {
-    this.#preferPlayback = value;
-    this.#requestLoad();
-  }
-
   get config() {
     return this.#config;
   }
 
   set config(config) {
     this.#config = config;
-    this.#requestLoad();
-  }
-
-  get debug() {
-    return this.#debug;
-  }
-
-  set debug(debug) {
-    this.#debug = debug;
     this.#requestLoad();
   }
 
@@ -190,12 +160,11 @@ export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements H
       this.#engineDestroy();
       this.#prevEngineProps = this.#engineProps();
 
+      const contentType = this.config.contentType ?? inferContentType(this.#src);
       const useMse =
-        Hls.isSupported() && this.contentType === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
+        Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
-      this.#delegate = useMse
-        ? new HlsJsMedia({ config: { ...this.config, debug: this.debug } })
-        : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
@@ -231,9 +200,9 @@ export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements H
   #engineProps() {
     return {
       config: this.config,
-      debug: this.debug,
-      preferPlayback: this.preferPlayback,
-      contentType: this.contentType,
+      preferPlayback: this.config.preferPlayback,
+      contentType: this.config.contentType,
+      debug: this.config.hlsJs?.debug,
     };
   }
 
@@ -247,8 +216,8 @@ export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements H
   }
 }
 
-function inferSourceType(src: string): SourceType {
+function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';
-  if (path.endsWith('.mp4')) return SourceTypes.MP4;
-  return SourceTypes.M3U8;
+  if (path.endsWith('.mp4')) return ContentTypes.MP4;
+  return ContentTypes.M3U8;
 }

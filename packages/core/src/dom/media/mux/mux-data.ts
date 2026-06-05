@@ -1,4 +1,4 @@
-import type { Mixin } from '@videojs/utils/types';
+import type { MixinReturn } from '@videojs/utils/types';
 import Mux from 'mux-embed';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { Hls, type HlsMedia } from '../hls';
@@ -8,6 +8,7 @@ import type { MuxDataOptions, MuxDataSdk } from './types';
 export interface MuxDataMediaProps {
   MuxDataSdk: MuxDataSdk | undefined;
   beaconCollectionDomain: string | undefined;
+  debug: boolean;
   disableCookies: boolean;
   envKey: string | undefined;
   playerSoftwareName: string | undefined;
@@ -19,6 +20,7 @@ export interface MuxDataMediaProps {
 export const muxDataMediaDefaultProps: MuxDataMediaProps = {
   MuxDataSdk: undefined,
   beaconCollectionDomain: undefined,
+  debug: false,
   disableCookies: false,
   envKey: undefined,
   playerSoftwareName: undefined,
@@ -29,18 +31,24 @@ export const muxDataMediaDefaultProps: MuxDataMediaProps = {
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export interface MuxDataMediaHost extends MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
-  readonly debug: boolean;
+export interface MuxDataMediaHost extends EventTarget, MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
   attach(target: HTMLMediaElement): void;
   detach(): void;
   load(): void;
 }
 
-export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (BaseClass) => {
+export interface MuxDataMediaHostConstructor {
+  new (...args: any[]): MuxDataMediaHost;
+}
+
+export const MuxDataMediaMixin = <Base extends MuxDataMediaHostConstructor>(
+  BaseClass: Base
+): MixinReturn<Base, MuxDataMediaProps> => {
   class MuxDataMedia extends BaseClass {
     #MuxDataSdk: MuxDataSdk | undefined = Mux;
     #MuxDataSdkInitializedBefore = false;
     #beaconCollectionDomain: string | undefined;
+    #debug = false;
     #disableCookies = false;
     #metadata: MuxDataOptions['data'] | undefined;
     #envKey: string | undefined;
@@ -63,6 +71,14 @@ export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (Ba
 
     set beaconCollectionDomain(value) {
       this.#beaconCollectionDomain = value;
+    }
+
+    get debug() {
+      return this.#debug;
+    }
+
+    set debug(value) {
+      this.#debug = value;
     }
 
     get disableCookies() {
@@ -187,7 +203,7 @@ export const MuxDataMediaMixin: Mixin<MuxDataMediaHost, MuxDataMediaProps> = (Ba
     }
   }
 
-  return MuxDataMedia as any;
+  return MuxDataMedia as unknown as MixinReturn<Base, MuxDataMediaProps>;
 };
 
 export type MuxVideoIdProps = {

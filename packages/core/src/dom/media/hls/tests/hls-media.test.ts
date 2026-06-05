@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
 import { NativeHlsMedia } from '../../native-hls';
-import { HlsMedia, SourceTypes } from '../index';
+import { ContentTypes, HlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -30,8 +30,7 @@ function setup() {
   const handler = vi.fn();
   media.addEventListener('error', handler);
 
-  media.preferPlayback = 'native';
-  media.contentType = SourceTypes.M3U8;
+  media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
   media.load();
 
   return { media, video, handler };
@@ -86,8 +85,7 @@ describe('HlsMedia', () => {
       const pauseHandler = vi.fn();
       media.addEventListener('pause', pauseHandler);
 
-      media.preferPlayback = 'native';
-      media.contentType = SourceTypes.M3U8;
+      media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
       media.load();
 
       video.dispatchEvent(new Event('pause'));
@@ -179,9 +177,9 @@ describe('HlsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `debug` is part of `HlsMedia`'s engine props — toggling it recreates the
-      // native delegate without switching playback engines.
-      media.debug = true;
+      // `config.hlsJs.debug` is part of `HlsMedia`'s engine props — toggling it
+      // recreates the native delegate without switching playback engines.
+      media.config = { ...media.config, hlsJs: { debug: true } };
       media.load();
 
       // Teardown: a single `live` → `unknown`, then the new delegate re-detects
@@ -203,7 +201,7 @@ describe('HlsMedia', () => {
       });
 
       // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.debug = true;
+      media.config = { ...media.config, hlsJs: { debug: true } };
       media.load();
 
       expect(seen).not.toContain('on-demand');
@@ -272,7 +270,7 @@ describe('HlsMedia', () => {
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
 
-      media.preferPlayback = 'mse';
+      media.config = { ...media.config, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('live');
@@ -284,7 +282,7 @@ describe('HlsMedia', () => {
       media.streamType = 'live';
       media.streamType = 'unknown';
 
-      media.preferPlayback = 'mse';
+      media.config = { ...media.config, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('unknown');

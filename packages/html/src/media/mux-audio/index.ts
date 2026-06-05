@@ -7,9 +7,7 @@ export class MuxAudio extends MediaAttachMixin(CustomMediaElement('audio', MuxAu
     return [
       // biome-ignore lint/complexity/noThisInStatic: intentional use of super
       ...super.observedAttributes,
-      'content-type',
-      'prefer-playback',
-      'debug',
+      'stream-type',
       'cast-src',
       'cast-receiver',
       'cast-content-type',

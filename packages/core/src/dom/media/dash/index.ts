@@ -1,17 +1,20 @@
 import * as dashjs from 'dashjs';
 import type { MediaEngineHost } from '../../../core/media/types';
+import { GoogleCastMixin } from '../google-cast';
+import { type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
 import { HTMLVideoElementHost } from '../video-host';
 
-export interface DashMediaProps {
+export interface DashMediaProps extends GoogleCastMediaProps {
   src: string;
 }
 
 export const dashMediaDefaultProps: DashMediaProps = {
   src: '',
+  ...googleCastMediaDefaultProps,
 };
 
 export class DashMedia
-  extends HTMLVideoElementHost
+  extends GoogleCastMixin(HTMLVideoElementHost)
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
@@ -50,5 +53,6 @@ export class DashMedia
   destroy() {
     this.detach();
     this.#engine.destroy();
+    super.destroy();
   }
 }

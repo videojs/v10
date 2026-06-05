@@ -4,7 +4,13 @@ import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 export class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsMedia)) {
   static get observedAttributes() {
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return [...super.observedAttributes, 'content-type', 'prefer-playback', 'debug'];
+    return [
+      // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+      ...super.observedAttributes,
+      'stream-type',
+      'cast-src',
+      'cast-receiver',
+      'cast-content-type',
+    ];
   }
 }
