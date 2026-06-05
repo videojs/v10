@@ -98,11 +98,11 @@ export class StatusAnnouncerCore {
       accepted = this.#announce(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
     }
 
-    if (this.#processVolumeSnapshot(previous, snapshot, labels)) {
+    if (this.#processVolumeSnapshot(previous, snapshot, labels, accepted)) {
       accepted = true;
     }
 
-    if (this.#processSeekSnapshot(previous, snapshot, labels)) {
+    if (this.#processSeekSnapshot(previous, snapshot, labels, accepted)) {
       accepted = true;
     }
 
@@ -117,14 +117,22 @@ export class StatusAnnouncerCore {
   }
 
   #announce(label: string): boolean {
+    this.#clearSeekTimer();
+    this.#clearVolumeTimer();
     this.state.patch({ label });
     this.#close.arm();
     return true;
   }
 
-  #processVolumeSnapshot(previous: MediaSnapshot, snapshot: MediaSnapshot, labels: StatusAnnouncerLabels): boolean {
+  #processVolumeSnapshot(
+    previous: MediaSnapshot,
+    snapshot: MediaSnapshot,
+    labels: StatusAnnouncerLabels,
+    suppress: boolean
+  ): boolean {
     if (!hasChanged(previous.volume, snapshot.volume) && !hasChanged(previous.muted, snapshot.muted)) return false;
     if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return false;
+    if (suppress) return false;
 
     const volume = snapshot.volume ?? previous.volume;
     const muted = snapshot.muted ?? previous.muted;
@@ -136,7 +144,12 @@ export class StatusAnnouncerCore {
     return true;
   }
 
-  #processSeekSnapshot(previous: MediaSnapshot, snapshot: MediaSnapshot, labels: StatusAnnouncerLabels): boolean {
+  #processSeekSnapshot(
+    previous: MediaSnapshot,
+    snapshot: MediaSnapshot,
+    labels: StatusAnnouncerLabels,
+    suppress: boolean
+  ): boolean {
     if (previous.seeking !== true && snapshot.seeking === true) {
       this.#seekStartTime = previous.currentTime ?? null;
       this.#seekTargetTime = snapshot.currentTime ?? null;
@@ -158,6 +171,7 @@ export class StatusAnnouncerCore {
 
     if (targetTime === undefined || targetTime === null || Object.is(targetTime, startTime)) return false;
     if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return false;
+    if (suppress) return false;
 
     this.#scheduleSeekAnnouncement(formatSeekAnnouncerLabel(targetTime, labels));
     return true;
