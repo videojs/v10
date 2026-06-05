@@ -812,6 +812,25 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     reactor.destroy();
   });
 
+  it('applies the scope when cdnPriority arrives after the first pick (composition-order independence)', async () => {
+    // Guards against the pick depending on `resolveCdnPriority` being composed
+    // *before* `switchVideoTrack`. The worst case — resolveCdnPriority last — is
+    // equivalent to cdnPriority being written after switch*'s first pick. The
+    // scope subscribes to cdnPriority even while it's undefined, so a late write
+    // must re-fire and correct the pick.
+    const state = makeCdnState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // No cdnPriority yet → scope is a no-op → ranker picks the manifest head.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    state.cdnPriority.set(['https://cdn-b.example.com', 'https://cdn-a.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+
+    reactor.destroy();
+  });
+
   it('re-picks when the CDN order changes while staying resolved (steering/failover seam)', async () => {
     const state = makeCdnState(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     const reactor = switchVideoTrack.setup({ state });
