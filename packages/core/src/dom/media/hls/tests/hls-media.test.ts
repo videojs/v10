@@ -31,7 +31,7 @@ function setup() {
   media.addEventListener('error', handler);
 
   media.preferPlayback = 'native';
-  media.type = SourceTypes.M3U8;
+  media.contentType = SourceTypes.M3U8;
   media.load();
 
   return { media, video, handler };
@@ -87,7 +87,7 @@ describe('HlsMedia', () => {
       media.addEventListener('pause', pauseHandler);
 
       media.preferPlayback = 'native';
-      media.type = SourceTypes.M3U8;
+      media.contentType = SourceTypes.M3U8;
       media.load();
 
       video.dispatchEvent(new Event('pause'));

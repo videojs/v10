@@ -5,6 +5,6 @@ import { MediaAttachMixin } from '../../store/media-attach-mixin';
 export class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsMedia)) {
   static get observedAttributes() {
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return [...super.observedAttributes, 'type', 'prefer-playback', 'debug'];
+    return [...super.observedAttributes, 'content-type', 'prefer-playback', 'debug'];
   }
 }

@@ -7,7 +7,7 @@ export class MuxVideo extends MediaAttachMixin(CustomMediaElement('video', MuxVi
     return [
       // biome-ignore lint/complexity/noThisInStatic: intentional use of super
       ...super.observedAttributes,
-      'type',
+      'content-type',
       'prefer-playback',
       'debug',
       'cast-src',

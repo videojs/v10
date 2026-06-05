@@ -2,6 +2,8 @@ import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
+import { GoogleCastMixin } from '../google-cast';
+import { type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
@@ -26,9 +28,9 @@ export const SourceTypes = {
 
 export const StreamTypes = MediaStreamTypes;
 
-export interface HlsMediaProps {
+export interface HlsMediaProps extends GoogleCastMediaProps {
   src: string;
-  type: SourceType | undefined;
+  contentType: SourceType | undefined;
   preferPlayback: PlaybackType | undefined;
   config: Record<string, any>;
   debug: boolean;
@@ -38,18 +40,19 @@ export interface HlsMediaProps {
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
-  type: undefined,
+  contentType: undefined,
   preferPlayback: 'mse',
   config: {},
   debug: false,
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
+  ...googleCastMediaDefaultProps,
 };
 
-export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
+export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = hlsMediaDefaultProps.src;
-  #type = hlsMediaDefaultProps.type;
+  #contentType = hlsMediaDefaultProps.contentType;
   #preferPlayback = hlsMediaDefaultProps.preferPlayback;
   #config = { ...hlsMediaDefaultProps.config };
   #debug = hlsMediaDefaultProps.debug;
@@ -76,13 +79,13 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#requestLoad();
   }
 
-  /** Explicit source type. When unset, inferred from the source URL extension. */
-  get type() {
-    return this.#type ?? inferSourceType(this.src);
+  /** Explicit source content type. When unset, inferred from the source URL extension. */
+  get contentType() {
+    return this.#contentType ?? inferSourceType(this.src);
   }
 
-  set type(value: SourceType | undefined) {
-    this.#type = value;
+  set contentType(value: SourceType | undefined) {
+    this.#contentType = value;
     this.#requestLoad();
   }
 
@@ -177,6 +180,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   destroy() {
     this.detach();
     this.#engineDestroy();
+    super.destroy();
   }
 
   load() {
@@ -187,7 +191,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       this.#prevEngineProps = this.#engineProps();
 
       const useMse =
-        Hls.isSupported() && this.type === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
+        Hls.isSupported() && this.contentType === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
 
       this.#delegate = useMse
         ? new HlsJsMedia({ config: { ...this.config, debug: this.debug } })
@@ -229,7 +233,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       config: this.config,
       debug: this.debug,
       preferPlayback: this.preferPlayback,
-      type: this.type,
+      contentType: this.contentType,
     };
   }
 
