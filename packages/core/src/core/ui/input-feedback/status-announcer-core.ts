@@ -77,25 +77,30 @@ export class StatusAnnouncerCore {
 
     const labels = this.#getLabels();
     let accepted = false;
+    const immediateLabels: string[] = [];
 
     if (hasChanged(previous.paused, snapshot.paused)) {
-      accepted = this.#announce(snapshot.paused ? labels.paused : labels.playing);
+      immediateLabels.push(snapshot.paused ? labels.paused : labels.playing);
     }
 
     if (hasChanged(previous.subtitlesShowing, snapshot.subtitlesShowing) && snapshot.subtitlesAvailable !== false) {
-      accepted = this.#announce(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
+      immediateLabels.push(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
     }
 
     if (hasChanged(previous.fullscreen, snapshot.fullscreen)) {
-      accepted = this.#announce(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
+      immediateLabels.push(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
     }
 
     if (hasChanged(previous.pip, snapshot.pip)) {
-      accepted = this.#announce(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
+      immediateLabels.push(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
     }
 
     if (hasChanged(previous.playbackRate, snapshot.playbackRate)) {
-      accepted = this.#announce(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
+      immediateLabels.push(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
+    }
+
+    if (immediateLabels.length > 0) {
+      accepted = this.#announce(formatAnnouncementLabels(immediateLabels));
     }
 
     if (this.#processVolumeSnapshot(previous, snapshot, labels, accepted)) {
@@ -140,7 +145,7 @@ export class StatusAnnouncerCore {
     if (volume === undefined && muted === undefined) return false;
 
     const label = muted || (volume ?? 0) <= 0 ? labels.muted : `${labels.volume} ${formatVolumeValue(volume ?? 0)}`;
-    this.#scheduleVolumeAnnouncement(label);
+    this.#scheduleVolumeAnnouncement(label, snapshot);
     return true;
   }
 
@@ -173,22 +178,24 @@ export class StatusAnnouncerCore {
     if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return false;
     if (suppress) return false;
 
-    this.#scheduleSeekAnnouncement(formatSeekAnnouncerLabel(targetTime, labels));
+    this.#scheduleSeekAnnouncement(formatSeekAnnouncerLabel(targetTime, labels), snapshot);
     return true;
   }
 
-  #scheduleVolumeAnnouncement(label: string): void {
+  #scheduleVolumeAnnouncement(label: string, snapshot: MediaSnapshot): void {
     this.#clearVolumeTimer();
     this.#volumeTimer = setTimeout(() => {
       this.#volumeTimer = null;
+      if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return;
       this.#announce(label);
     }, SNAPSHOT_ANNOUNCER_DEBOUNCE);
   }
 
-  #scheduleSeekAnnouncement(label: string): void {
+  #scheduleSeekAnnouncement(label: string, snapshot: MediaSnapshot): void {
     this.#clearSeekTimer();
     this.#seekTimer = setTimeout(() => {
       this.#seekTimer = null;
+      if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return;
       this.#announce(label);
     }, SNAPSHOT_ANNOUNCER_DEBOUNCE);
   }
@@ -213,4 +220,8 @@ export namespace StatusAnnouncerCore {
 
 function hasChanged<Value>(previous: Value | undefined, next: Value | undefined): next is Value {
   return previous !== undefined && next !== undefined && !Object.is(previous, next);
+}
+
+function formatAnnouncementLabels(labels: string[]): string {
+  return labels.join('. ');
 }

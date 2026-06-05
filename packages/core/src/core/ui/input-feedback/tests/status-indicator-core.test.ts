@@ -113,6 +113,59 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBe('Playback rate 1.25x');
   });
 
+  it('rechecks volume suppression when the debounced announcement fires', () => {
+    let shouldAnnounce = true;
+    const core = new StatusAnnouncerCore();
+    core.setProps({ shouldAnnounceVolume: () => shouldAnnounce });
+
+    core.processSnapshot({ volume: 0.5, muted: false });
+    expect(core.processSnapshot({ volume: 0.75, muted: false })).toBe(true);
+    shouldAnnounce = false;
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBeNull();
+  });
+
+  it('rechecks seek suppression when the debounced announcement fires', () => {
+    let shouldAnnounce = true;
+    const core = new StatusAnnouncerCore();
+    core.setProps({ shouldAnnounceSeek: () => shouldAnnounce });
+
+    core.processSnapshot({ currentTime: 10, duration: 120, seeking: false });
+    core.processSnapshot({ currentTime: 45, duration: 120, seeking: true });
+    expect(core.processSnapshot({ currentTime: 45, duration: 120, seeking: false })).toBe(true);
+    shouldAnnounce = false;
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBeNull();
+  });
+
+  it('combines multiple immediate snapshot announcements', () => {
+    const core = new StatusAnnouncerCore();
+
+    core.processSnapshot({
+      paused: true,
+      subtitlesShowing: false,
+      subtitlesAvailable: true,
+      fullscreen: false,
+      playbackRate: 1,
+    });
+
+    expect(
+      core.processSnapshot({
+        paused: false,
+        subtitlesShowing: true,
+        subtitlesAvailable: true,
+        fullscreen: true,
+        playbackRate: 1.25,
+      })
+    ).toBe(true);
+
+    expect(core.state.current.label).toBe('Playing. Captions on. Fullscreen. Playback rate 1.25x');
+  });
+
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
     const core = new StatusAnnouncerCore();
     let snapshot = {
