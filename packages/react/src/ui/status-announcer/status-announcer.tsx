@@ -12,14 +12,13 @@ import { renderElement } from '../../utils/use-render';
 
 export interface StatusAnnouncerProps
   extends UIComponentProps<'div', StatusAnnouncerCore.State>,
-    StatusAnnouncerCore.Props {}
+    Pick<StatusAnnouncerCore.Props, 'closeDelay' | 'labels'> {}
 
 export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   componentProps: StatusAnnouncerProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { render, className, style, closeDelay, labels, shouldAnnounceSeek, shouldAnnounceVolume, ...elementProps } =
-    componentProps;
+  const { render, className, style, closeDelay, labels, ...elementProps } = componentProps;
   const [core] = useState(() => new StatusAnnouncerCore());
   const store = usePlayer();
   const container = useContainer();
@@ -27,10 +26,8 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   core.setProps({
     closeDelay,
     labels,
-    shouldAnnounceSeek: (snapshot) =>
-      shouldAnnounceSeek?.(snapshot) !== false && (!container || !isSliderFocused(container)),
-    shouldAnnounceVolume: (snapshot) =>
-      shouldAnnounceVolume?.(snapshot) !== false && (!container || !isSliderFocused(container)),
+    shouldAnnounceSeek: () => !container || !isSliderFocused(container),
+    shouldAnnounceVolume: () => !container || !isSliderFocused(container),
   });
 
   useEffect(() => {
