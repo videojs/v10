@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { MediaSnapshot } from '../status';
 import { StatusAnnouncerCore } from '../status-announcer-core';
 import { StatusIndicatorCore } from '../status-indicator-core';
 
@@ -168,35 +169,25 @@ describe('StatusAnnouncerCore', () => {
 
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
     const core = new StatusAnnouncerCore();
-    let snapshot = {
+    const process = createSnapshotProcessor(core, {
       paused: true,
       subtitlesShowing: false,
       subtitlesAvailable: true,
       fullscreen: false,
       pip: false,
       playbackRate: 1,
-    };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
+    });
 
-    core.processSnapshot(snapshot);
-
-    expect(process({ paused: false })).toBe(true);
-    expect(core.state.current.label).toBe('Playing');
-
-    expect(process({ subtitlesShowing: true })).toBe(true);
-    expect(core.state.current.label).toBe('Captions on');
-
-    expect(process({ fullscreen: true })).toBe(true);
-    expect(core.state.current.label).toBe('Fullscreen');
-
-    expect(process({ pip: true })).toBe(true);
-    expect(core.state.current.label).toBe('Picture in picture');
-
-    expect(process({ playbackRate: 1.5 })).toBe(true);
-    expect(core.state.current.label).toBe('Playback rate 1.5x');
+    for (const [partial, label] of [
+      [{ paused: false }, 'Playing'],
+      [{ subtitlesShowing: true }, 'Captions on'],
+      [{ fullscreen: true }, 'Fullscreen'],
+      [{ pip: true }, 'Picture in picture'],
+      [{ playbackRate: 1.5 }, 'Playback rate 1.5x'],
+    ] as const) {
+      expect(process(partial)).toBe(true);
+      expect(core.state.current.label).toBe(label);
+    }
   });
 
   it('does not announce captions when captions are unavailable', () => {
@@ -210,13 +201,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('debounces volume snapshot announcements to the final value', () => {
     const core = new StatusAnnouncerCore();
-    let snapshot = { volume: 0.5, muted: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
-
-    core.processSnapshot(snapshot);
+    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
 
     expect(process({ volume: 0.55 })).toBe(true);
     expect(process({ volume: 0.6 })).toBe(true);
@@ -231,13 +216,8 @@ describe('StatusAnnouncerCore', () => {
 
   it('announces muted volume snapshots', () => {
     const core = new StatusAnnouncerCore();
-    let snapshot = { volume: 0.5, muted: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
+    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
 
-    core.processSnapshot(snapshot);
     process({ muted: true });
 
     vi.advanceTimersByTime(200);
@@ -247,13 +227,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('ignores regular currentTime updates and announces completed seeks once', () => {
     const core = new StatusAnnouncerCore();
-    let snapshot = { currentTime: 10, duration: 120, seeking: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
-
-    core.processSnapshot(snapshot);
+    const process = createSnapshotProcessor(core, { currentTime: 10, duration: 120, seeking: false });
 
     expect(process({ currentTime: 11 })).toBe(false);
     expect(core.state.current.label).toBeNull();
@@ -270,13 +244,13 @@ describe('StatusAnnouncerCore', () => {
 
   it('announces a completed seek when volume changes in the same snapshot', () => {
     const core = new StatusAnnouncerCore();
-    let snapshot = { currentTime: 10, duration: 120, seeking: false, volume: 0.5, muted: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
-
-    core.processSnapshot(snapshot);
+    const process = createSnapshotProcessor(core, {
+      currentTime: 10,
+      duration: 120,
+      seeking: false,
+      volume: 0.5,
+      muted: false,
+    });
 
     process({ currentTime: 45, seeking: true });
     expect(process({ seeking: false, volume: 0.75 })).toBe(true);
@@ -289,13 +263,7 @@ describe('StatusAnnouncerCore', () => {
   it('allows seek announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
     core.setProps({ shouldAnnounceSeek: () => false });
-    let snapshot = { currentTime: 10, duration: 120, seeking: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
-
-    core.processSnapshot(snapshot);
+    const process = createSnapshotProcessor(core, { currentTime: 10, duration: 120, seeking: false });
 
     process({ currentTime: 45, seeking: true });
     expect(process({ seeking: false })).toBe(false);
@@ -308,13 +276,7 @@ describe('StatusAnnouncerCore', () => {
   it('allows volume announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
     core.setProps({ shouldAnnounceVolume: () => false });
-    let snapshot = { volume: 0.5, muted: false };
-    const process = (partial: Partial<typeof snapshot>) => {
-      snapshot = { ...snapshot, ...partial };
-      return core.processSnapshot(snapshot);
-    };
-
-    core.processSnapshot(snapshot);
+    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
 
     expect(process({ volume: 0.75 })).toBe(false);
 
@@ -323,3 +285,13 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBeNull();
   });
 });
+
+function createSnapshotProcessor(core: StatusAnnouncerCore, initial: MediaSnapshot) {
+  let snapshot = initial;
+  core.processSnapshot(snapshot);
+
+  return (partial: MediaSnapshot) => {
+    snapshot = { ...snapshot, ...partial };
+    return core.processSnapshot(snapshot);
+  };
+}
