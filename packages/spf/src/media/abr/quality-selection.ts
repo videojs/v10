@@ -154,24 +154,6 @@ export function selectLowestQuality<T extends { bandwidth: number }>(tracks: rea
 }
 
 /**
- * Lowest-quality fallback tolerant of tracks whose `bandwidth` is optional
- * (audio candidates). Falls back to the first track when no candidate carries
- * bandwidth info.
- *
- * @param tracks - Candidate tracks (bandwidth optional)
- * @returns The lowest-bandwidth track, the first track when none carry
- *   bandwidth, or `undefined` if `tracks` is empty
- */
-export function selectLowestQualityWithBandwidth<T extends { bandwidth?: number }>(
-  tracks: readonly T[]
-): T | undefined {
-  if (tracks.length === 0) return undefined;
-  const withBandwidth = tracks.filter((t): t is T & { bandwidth: number } => typeof t.bandwidth === 'number');
-  if (withBandwidth.length === 0) return tracks[0];
-  return selectLowestQuality(withBandwidth);
-}
-
-/**
  * Check if track A has higher resolution than track B.
  * Compares by total pixel count (width × height).
  *
