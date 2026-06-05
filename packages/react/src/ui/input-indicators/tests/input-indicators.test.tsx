@@ -273,7 +273,10 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
   return { store, setState };
 }
 
-function createPlayerContextValue(store: UnknownStore, container = document.createElement('div')): PlayerContextValue {
+function createPlayerContextValue(
+  store: UnknownStore,
+  container: HTMLElement = document.createElement('div')
+): PlayerContextValue {
   return {
     store,
     media: null,
