@@ -4,6 +4,8 @@ import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
 import { getMediaSnapshot, isSliderFocused, visuallyHiddenStyle } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
+
+import { useContainer, usePlayer } from '../../player/context';
 import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -19,16 +21,20 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   componentProps: StatusAnnouncerProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { render, className, style, closeDelay, ...elementProps } = componentProps;
+  const { render, className, style, closeDelay, labels, shouldAnnounceSeek, shouldAnnounceVolume, ...elementProps } =
+    componentProps;
   const translator = useTranslator();
   const [core] = useState(() => new StatusAnnouncerCore());
   const store = usePlayer();
+  const container = useContainer();
   useDestroy(core);
   core.setProps({
     closeDelay,
     labels: createInputIndicatorLabels(translator),
-    shouldAnnounceSeek: () => !isSliderFocused(),
-    shouldAnnounceVolume: () => !isSliderFocused(),
+    shouldAnnounceSeek: (snapshot) =>
+      shouldAnnounceSeek?.(snapshot) !== false && (!container || !isSliderFocused(container)),
+    shouldAnnounceVolume: (snapshot) =>
+      shouldAnnounceVolume?.(snapshot) !== false && (!container || !isSliderFocused(container)),
   });
 
   useInputActionSubscription((event, snapshot) => {

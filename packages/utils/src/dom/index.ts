@@ -2,6 +2,7 @@ export { animationFrame } from './animation-frame';
 export { namedNodeMapToObject, serializeAttributes } from './attributes';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
+export { getDeepActiveElement } from './focus';
 export { idleCallback } from './idle-callback';
 export {
   EDITABLE_SELECTOR,
@@ -19,7 +20,7 @@ export { resolveLangAttr } from './locale/resolve-lang-attr';
 export { subscribeAmbientLang } from './locale/subscribe-ambient-lang';
 export { isMacOS } from './platform';
 export { tryHidePopover, tryShowPopover } from './popover';
-export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
+export { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { loadScript } from './script';
 export {
@@ -46,6 +47,7 @@ export type {
   EventType,
   QueriedElement,
 } from './types';
+export { containsComposed } from './tree';
 export { walkAncestors } from './walk-ancestors';
 export {
   isWebKitAirPlayCapable,

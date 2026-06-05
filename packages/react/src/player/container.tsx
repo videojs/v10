@@ -1,6 +1,7 @@
 'use client';
 
 import { DEFAULT_CONTAINER_LABEL, DEFAULT_CONTAINER_ROLE, DEFAULT_CONTAINER_TAB_INDEX } from '@videojs/core/dom';
+import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 import { forwardRef, type HTMLAttributes, type PointerEventHandler, type ReactNode, useEffect, useRef } from 'react';
 import { useComposedRefs } from '@/utils/use-composed-refs';
 import { useContainerAttach } from './context';
@@ -33,8 +34,10 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     props.onPointerUp?.(event);
     const el = internalRef.current;
     if (!el) return;
+    const active = getDeepActiveElement(el.ownerDocument);
+
     // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
-    if (!el.contains(document.activeElement) || document.activeElement === document.body) {
+    if (!active || active === el.ownerDocument.body || !containsComposed(el, active)) {
       el.focus({ preventScroll: true });
     }
   };

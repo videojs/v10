@@ -7,7 +7,7 @@ import {
 import { type AnyPlayerStore, getIndicatorVisibilityCoordinator } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { playerContext } from '../../../player/context';
+import { containerContext, playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { SeekIndicatorElement } from '../../seek-indicator/seek-indicator-element';
 import { SeekIndicatorValueElement } from '../../seek-indicator/seek-indicator-value-element';
@@ -50,6 +50,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
 
 class TestStatusAnnouncerPlayerElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
+  readonly #containerProvider = new ContextProvider(this, { context: containerContext });
   #store = createTestStore().store;
 
   get store(): AnyPlayerStore {
@@ -63,6 +64,7 @@ class TestStatusAnnouncerPlayerElement extends MediaElement {
 
   override connectedCallback(): void {
     this.#provider.setValue(this.#store);
+    this.#containerProvider.setValue({ container: this, setContainer: vi.fn() });
     super.connectedCallback();
   }
 }
@@ -176,19 +178,16 @@ describe('input indicators', () => {
 
   it('does not announce completed seeks while a time slider is focused', async () => {
     vi.useFakeTimers();
-    const slider = document.createElement('button');
-    slider.setAttribute('role', 'slider');
-    document.body.append(slider);
-    slider.focus();
 
     try {
       const { store, setState } = createTestStore({ currentTime: 10, duration: 120, seeking: false });
       const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
       provider.store = store;
-      provider.innerHTML = '<media-status-announcer></media-status-announcer>';
+      provider.innerHTML = '<button role="slider"></button><media-status-announcer></media-status-announcer>';
       document.body.append(provider);
       await provider.updateComplete;
 
+      provider.querySelector('button')?.focus();
       const announcer = provider.querySelector('media-status-announcer')!;
       setState({ currentTime: 45, seeking: true });
       await Promise.resolve();
@@ -204,6 +203,30 @@ describe('input indicators', () => {
   });
 
   it('does not announce volume changes while a volume slider is focused', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+      const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+      provider.store = store;
+      provider.innerHTML = '<button role="slider"></button><media-status-announcer></media-status-announcer>';
+      document.body.append(provider);
+      await provider.updateComplete;
+
+      provider.querySelector('button')?.focus();
+      const announcer = provider.querySelector('media-status-announcer')!;
+      setState({ volume: 0.75 });
+      await Promise.resolve();
+      vi.advanceTimersByTime(200);
+      await (announcer as StatusAnnouncerElement).updateComplete;
+
+      expect(announcer.textContent).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('announces volume changes when a slider outside the player is focused', async () => {
     vi.useFakeTimers();
     const slider = document.createElement('button');
     slider.setAttribute('role', 'slider');
@@ -222,9 +245,10 @@ describe('input indicators', () => {
       setState({ volume: 0.75 });
       await Promise.resolve();
       vi.advanceTimersByTime(200);
+      await Promise.resolve();
       await (announcer as StatusAnnouncerElement).updateComplete;
 
-      expect(announcer.textContent).toBe('');
+      expect(announcer.textContent).toBe('Volume 75%');
     } finally {
       vi.useRealTimers();
     }
