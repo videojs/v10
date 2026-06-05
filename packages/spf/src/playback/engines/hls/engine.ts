@@ -18,6 +18,7 @@ import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant
 import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
+import type { FailoverMonitorConfig } from '../../../network/failover-monitor';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
@@ -39,6 +40,7 @@ import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectTextTrack } from '../../behaviors/select-tracks';
+import { type FailoverReporter, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
@@ -84,7 +86,7 @@ export interface SimpleHlsEngineState {
   cdnPriority?: string[];
   /**
    * CDN ids (origins) currently in failover cooldown — written by the CDN
-   * breaker when a host fails too often, read by `track-switching`'s
+   * monitor when a host fails too often, read by `track-switching`'s
    * `excludeFailedCdns` hard constraint, which prunes their tracks so the
    * active-CDN scope falls to the next CDN in `cdnPriority`. Empty / absent
    * means all CDNs are eligible.
@@ -108,6 +110,12 @@ export interface SimpleHlsEngineContext {
   audioSegmentLoaderActor?: SegmentLoaderActor;
   textTracksActor?: TextTracksActor;
   textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
+  /**
+   * Failover failure reporter, owned by `setupFailoverMonitor`. Segment loading and
+   * media-playlist resolution call it with each fetch outcome; the monitor
+   * trips a CDN into `failedCdns` after repeated failures.
+   */
+  failoverReporter?: FailoverReporter;
 }
 
 /**
@@ -204,6 +212,13 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
   quality?: Partial<QualityConfig>;
+  /**
+   * Multi-CDN failover monitor tuning. `failureThreshold` is the consecutive
+   * fetch failures on one CDN before it's excluded; `cooldownMs` how long it
+   * stays excluded. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG` (3 / 30s). Only
+   * meaningful for redundant-stream sources.
+   */
+  failover?: Partial<FailoverMonitorConfig>;
 }
 
 // ============================================================================
@@ -216,7 +231,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
  * `onSignalsReady` callback at setup time, and materializes input slots that no
  * composed behavior produces yet: `user*TrackSelection` (track-switching only
  * reads them) and `failedCdns` (read by the `excludeFailedCdns` constraint;
- * until the CDN breaker lands it's driven externally, and stays writable after
+ * until the failover monitor lands it's driven externally, and stays writable after
  * for manual CDN override).
  */
 const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
@@ -285,6 +300,12 @@ export function createSimpleHlsEngine(
       // redundant streams (the norm) never hit it — the first-listed CDN is
       // already the primary we'd pick anyway.
       resolveCdnPriority,
+
+      // CDN failover monitor: owns `failedCdns` and publishes the `failoverReporter`
+      // reporter that segment loading + track resolution report fetch outcomes
+      // to. Composed before those consumers so the reporter is published before
+      // the first fetch.
+      setupFailoverMonitor,
 
       // Track selection (reads config for initial preferences).
       // Video selection lives in switchVideoTrack (composed below);

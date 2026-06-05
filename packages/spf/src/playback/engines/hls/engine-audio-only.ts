@@ -10,6 +10,7 @@ import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
+import type { FailoverMonitorConfig } from '../../../network/failover-monitor';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import {
@@ -26,6 +27,7 @@ import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasourc
 import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
+import { type FailoverReporter, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 
@@ -80,6 +82,8 @@ export interface SimpleHlsAudioOnlyEngineContext {
   mediaSource?: MediaSource;
   audioBufferActor?: SourceBufferActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
+  /** Failover failure reporter, owned by `setupFailoverMonitor`. */
+  failoverReporter?: FailoverReporter;
 }
 
 export type SimpleHlsAudioOnlyEngineSignals = {
@@ -100,6 +104,8 @@ export interface SimpleHlsAudioOnlyEngineConfig
   parsePresentation?: ParsePresentation;
   forwardBuffer?: Partial<ForwardBufferConfig>;
   backBuffer?: Partial<BackBufferConfig>;
+  /** Multi-CDN failover monitor tuning. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
+  failover?: Partial<FailoverMonitorConfig>;
 }
 
 // ============================================================================
@@ -109,7 +115,7 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // Materializes input slots no composed behavior produces yet —
 // `userAudioTrackSelection` (switchAudioTrack only reads it) and `failedCdns`
 // (read by the excludeFailedCdns constraint; driven externally until the CDN
-// breaker lands) — in addition to forwarding refs.
+// monitor lands) — in addition to forwarding refs.
 const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
   'userAudioTrackSelection',
   'failedCdns',
@@ -170,6 +176,10 @@ export function createHlsAudioOnlyEngine(
       // with the default engine and for future failover / steering, where the
       // active CDN changes dynamically (and selection stays reactive either way).
       resolveCdnPriority,
+
+      // CDN failover monitor: owns `failedCdns`, publishes the `failoverReporter`
+      // reporter that segment loading + track resolution report fetch outcomes to.
+      setupFailoverMonitor,
 
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's

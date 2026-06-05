@@ -10,6 +10,11 @@ import type {
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
+import type { FailoverReporter } from '../setup-failover-monitor';
+
+// The resolve* behaviors read a `failoverReporter` reporter from context (failover
+// failure reporting); supply an empty one for the direct setup calls below.
+const cdnContext = () => ({ failoverReporter: signal<FailoverReporter | undefined>(undefined) });
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -68,7 +73,7 @@ http://example.com/segment2.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const reactor = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state, context: cdnContext() });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -128,7 +133,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
 
-    const reactor = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state, context: cdnContext() });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -149,7 +154,7 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation });
 
-    const reactor = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state, context: cdnContext() });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -205,7 +210,7 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const reactor = resolveAudioTrack.setup({ state });
+    const reactor = resolveAudioTrack.setup({ state, context: cdnContext() });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -274,7 +279,7 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const reactor = resolveTextTrack.setup({ state });
+    const reactor = resolveTextTrack.setup({ state, context: cdnContext() });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -340,7 +345,7 @@ ${segUrl}
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
-    const reactor = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state, context: cdnContext() });
 
     state.selectedVideoTrackId.set('track-b');
 
@@ -394,7 +399,7 @@ http://example.com/a-seg1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const reactor = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state, context: cdnContext() });
 
     // Trigger multiple state changes while track-a is resolving.
     state.selectedVideoTrackId.set('track-a');

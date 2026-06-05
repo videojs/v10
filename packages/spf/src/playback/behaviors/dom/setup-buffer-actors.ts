@@ -75,6 +75,7 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
+import { type FailoverReporter, reportFetchBytes } from '../setup-failover-monitor';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 
 /**
@@ -96,6 +97,7 @@ export interface BufferActorsContext {
   audioBufferActor?: SourceBufferActor;
   videoSegmentLoaderActor?: SegmentLoaderActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
+  failoverReporter?: FailoverReporter;
 }
 
 type BufferActorsFsmState = 'preconditions-unmet' | 'buffer-ready';
@@ -110,6 +112,7 @@ type BufferActorsStateMap<K extends SelectedTrackKey> = {
 
 type BufferActorsContextMap<A extends BufferActorKey, L extends SegmentLoaderActorKey> = {
   mediaSource: ReadonlySignal<BufferActorsContext['mediaSource']>;
+  failoverReporter?: ReadonlySignal<FailoverReporter | undefined>;
 } & { [P in A]: Signal<SourceBufferActor | undefined> } & {
   [P in L]: Signal<SegmentLoaderActor | undefined>;
 };
@@ -144,7 +147,10 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
     fetch: FetchBytes;
   } & SegmentLoaderActorConfig;
 }): Reactor<BufferActorsFsmState | 'destroying' | 'destroyed'> {
-  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer } = config;
+  const { type, selectedKey, actorKey, loaderKey, fetch: baseFetch, forwardBuffer, backBuffer } = config;
+  // Report each segment fetch's outcome to the failover monitor (failover
+  // auto-detection). No-op when no monitor is composed.
+  const fetch = reportFetchBytes(baseFetch, () => context.failoverReporter?.get());
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -211,7 +217,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
  */
 export const setupVideoBufferActors = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId', 'bandwidthState'] as const,
-  contextKeys: ['mediaSource', 'videoBufferActor', 'videoSegmentLoaderActor'] as const,
+  contextKeys: ['mediaSource', 'videoBufferActor', 'videoSegmentLoaderActor', 'failoverReporter'] as const,
   setup: ({
     state,
     context,
@@ -266,7 +272,7 @@ export const setupVideoBufferActors = defineBehavior({
  */
 export const setupAudioBufferActors = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'] as const,
-  contextKeys: ['mediaSource', 'audioBufferActor', 'audioSegmentLoaderActor'] as const,
+  contextKeys: ['mediaSource', 'audioBufferActor', 'audioSegmentLoaderActor', 'failoverReporter'] as const,
   setup: ({
     state,
     context,

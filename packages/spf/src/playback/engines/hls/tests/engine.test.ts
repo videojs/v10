@@ -285,6 +285,55 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
+  it('auto-fails-over when a CDN fails too often (monitor trips, failedCdns set)', async () => {
+    const engine = createSimpleHlsEngine({ failover: { failureThreshold: 1, cooldownMs: 60_000 } });
+
+    // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
+      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+    }) as typeof fetch;
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-failover',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+
+    // The primary (cdn-a) is picked first, its media-playlist fetch fails, the
+    // monitor trips it, the constraint prunes it, and the scope fails over to
+    // cdn-b — all without any external failedCdns write.
+    await vi.waitFor(() => {
+      expect(engine.state.failedCdns.get()).toEqual(['https://cdn-a.example.com']);
+      expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    });
+
+    engine.destroy();
+  });
+
   it('allows patching state and owners from outside', async () => {
     const engine = createSimpleHlsEngine();
 

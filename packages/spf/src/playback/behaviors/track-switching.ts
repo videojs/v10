@@ -319,7 +319,7 @@ type CdnScopeStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
 /**
  * State the failed-CDN constraint reads: the lifecycle map plus an *optional*
  * `failedCdns` — the CDN ids currently in failover cooldown. The signal exists
- * only when the composition includes a CDN breaker (or an external driver); the
+ * only when the composition includes a failover monitor (or an external driver); the
  * constraint reads it defensively and excludes nothing when it's absent.
  */
 type CdnConstraintStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
@@ -354,7 +354,7 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
 /**
  * Failed-CDN constraint — a *hard* filter (constraints pre-pass), shared by
  * video and audio. Removes tracks served from a CDN currently in failover
- * cooldown (`failedCdns`, written by the CDN breaker). Removed tracks are never
+ * cooldown (`failedCdns`, written by the failover monitor). Removed tracks are never
  * attempted; the scope then narrows to the next surviving CDN in `cdnPriority`,
  * and snaps back to the primary once it leaves cooldown.
  *
