@@ -21,7 +21,7 @@ export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
     #provider: GoogleCastProvider | null | undefined;
     #destroyed = false;
 
-    get remote(): RemotePlayback | RemotePlaybackLike | undefined {
+    get remote(): RemotePlaybackLike {
       if (this.#remote) return this.#remote;
       if (this.#destroyed) return super.remote;
 

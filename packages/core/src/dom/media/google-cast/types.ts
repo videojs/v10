@@ -1,5 +1,16 @@
-import type { RemotePlaybackLike } from '../../../core/media/types';
-import type { StreamType } from '../hls/index';
+import type {
+  MediaPauseCapability,
+  MediaPlaybackCapability,
+  MediaPlaybackRateCapability,
+  MediaPosterCapability,
+  MediaRemotePlaybackCapability,
+  MediaSeekCapability,
+  MediaSourceCapability,
+  MediaStreamTypeCapability,
+  MediaTextTrackCapability,
+  MediaVolumeCapability,
+  RemotePlaybackLike,
+} from '../../../core/media/types';
 import type { RemotePlayback } from './remote-playback';
 import type { CastOptions } from './utils';
 
@@ -19,29 +30,20 @@ export const googleCastMediaDefaultProps: GoogleCastMediaProps = {
   castCustomData: undefined,
 };
 
-export interface GoogleCastMediaHost extends EventTarget {
+export interface GoogleCastMediaHost
+  extends EventTarget,
+    MediaPlaybackCapability,
+    MediaPauseCapability,
+    MediaVolumeCapability,
+    MediaPlaybackRateCapability,
+    MediaPosterCapability,
+    MediaSourceCapability,
+    MediaSeekCapability,
+    MediaStreamTypeCapability,
+    MediaTextTrackCapability,
+    MediaRemotePlaybackCapability {
   readonly target: HTMLMediaElement | null;
-  readonly remote: RemotePlaybackLike | undefined;
   title: string;
-  poster: string;
-  src: string;
-  currentSrc: string;
-  currentTime: number;
-  duration: number;
-  muted: boolean;
-  paused: boolean;
-  ended: boolean;
-  loop: boolean;
-  seeking: boolean;
-  readyState: number;
-  volume: number;
-  playbackRate: number;
-  streamType?: StreamType;
-  textTracks: TextTrackList;
-  disableRemotePlayback: boolean;
-  load(): void | Promise<void>;
-  play(): void | Promise<void | undefined>;
-  pause(): void;
   attach(target: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
