@@ -227,6 +227,48 @@ describe('Container', () => {
     expect(container.querySelector('span')).toBeTruthy();
   });
 
+  it('provides a default accessible name', () => {
+    const value = createContextValue();
+
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    const el = container.firstElementChild;
+    expect(el?.getAttribute('role')).toBe('group');
+    expect(el?.getAttribute('aria-label')).toBe('Media player');
+  });
+
+  it('preserves explicit accessible naming', () => {
+    const value = createContextValue();
+
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container aria-label="Video player" role="region" />
+      </PlayerContextProvider>
+    );
+
+    const el = container.firstElementChild;
+    expect(el?.getAttribute('role')).toBe('region');
+    expect(el?.getAttribute('aria-label')).toBe('Video player');
+  });
+
+  it('uses aria-labelledby instead of the default label when provided', () => {
+    const value = createContextValue();
+
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container aria-labelledby="player-title" />
+      </PlayerContextProvider>
+    );
+
+    const el = container.firstElementChild;
+    expect(el?.getAttribute('aria-labelledby')).toBe('player-title');
+    expect(el?.hasAttribute('aria-label')).toBe(false);
+  });
+
   it('registers container element via setContainer', () => {
     const setContainer = vi.fn();
     const value = createContextValue({ setContainer });

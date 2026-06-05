@@ -1,13 +1,14 @@
 'use client';
 
 import { StatusAnnouncerCore } from '@videojs/core';
+import { getMediaSnapshot, isSliderFocused, visuallyHiddenStyle } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useState, useSyncExternalStore } from 'react';
+import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
 
+import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
-import { useInputActionSubscription } from '../input-indicators/use-input-action-subscription';
 
 export interface StatusAnnouncerProps
   extends UIComponentProps<'div', StatusAnnouncerCore.State>,
@@ -19,12 +20,19 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
 ) {
   const { render, className, style, closeDelay, labels, ...elementProps } = componentProps;
   const [core] = useState(() => new StatusAnnouncerCore());
+  const store = usePlayer();
   useDestroy(core);
-  core.setProps({ closeDelay, labels });
-
-  useInputActionSubscription((event, snapshot) => {
-    core.processEvent(event, snapshot);
+  core.setProps({
+    closeDelay,
+    labels,
+    shouldAnnounceSeek: () => !isSliderFocused(),
+    shouldAnnounceVolume: () => !isSliderFocused(),
   });
+
+  useEffect(() => {
+    core.processSnapshot(getMediaSnapshot(store));
+    return store.subscribe(() => core.processSnapshot(getMediaSnapshot(store)));
+  }, [core, store]);
 
   const state = useSyncExternalStore(
     (callback) => core.state.subscribe(callback),
@@ -39,11 +47,11 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
       state,
       ref: forwardedRef,
       props: [
+        elementProps,
         {
           role: 'status',
-          'aria-label': state.label ?? undefined,
+          children: <span style={visuallyHiddenStyle}>{state.label ?? ''}</span>,
         },
-        elementProps,
       ],
     }
   );
