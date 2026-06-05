@@ -165,7 +165,7 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
       const useMse =
         Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
-      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config } }) : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config.hlsJs } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
