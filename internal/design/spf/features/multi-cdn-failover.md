@@ -1,211 +1,253 @@
 ---
 status: draft
-date: 2026-05-20
-definition: coarse
+date: 2026-06-05
+definition: sketched
 ---
 
 # Multi-CDN failover
 
-Alternate-URI rotation for HLS sources with multiple CDN paths to the
-same content. When a fetch fails on the active URI (after
-[network-resilience](./network-resilience.md)'s retries are
-exhausted), rotate to the next URI in the rendition's alternate-URI
-list. Mux Video produces such sources via the `?redundant_streams=true`
-playback URL parameter; HLS spec / vendor conventions provide the
-manifest-side declaration. Cluster G sister feature to
-`network-resilience`; consumes the foundation's retry + circuit-
-breaker primitives and adds the URI-rotation policy on top.
+CDN selection and failover for HLS sources that publish the same content
+on more than one host (e.g. Mux Video's `?redundant_streams=true`). The
+redundant variants parse as ordinary candidate tracks — one per
+(rendition × CDN) — so the work is **selecting which CDN to use and
+keeping the whole presentation on it**, modeled inside the
+[track-switching rule model](../track-switching-model.md) rather than as
+URL rewriting at fetch time.
 
-A **Media-src feature** for sources that genuinely require it
-(redundant-streams sources where the customer expects automatic
-failover) and a **Player feature** at Tier 2 (customer-customizable
-rotation policies). Notion epic #9 classifies as "Media-src? /
-Player?" — the ambiguity reflects the dual scope.
+Two sub-features, mapping onto the two rule kinds in that model:
+
+1. **Sticky CDN pick** *(implemented)* — a session-level behavior picks a
+   CDN (the manifest-head host) and holds it; a shared **scope** rule
+   (`preferActiveCdn`) narrows every track type's candidates to that CDN,
+   so video / audio / text resolve from one host. This is the
+   *active-pathway scope* the track-switching model lists for
+   multi-cdn-failover.
+2. **Failover** *(deferred)* — when requests to the active CDN fail too
+   often within a window, a **constraint** removes that CDN's tracks from
+   the candidate set during cooldown and the session behavior rotates the
+   active CDN. This is the *failed-CDN constraint* the model lists, and it
+   consumes [network-resilience](./network-resilience.md)'s per-host
+   circuit-breaker — its hard prerequisite.
+
+A **Media-src feature** for sources that genuinely require failover, with
+a **Player feature** surface at the failover tier (customer-customizable
+CDN policy). Notion epic #9 classifies as "Media-src? / Player?" — the
+ambiguity reflects that split.
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. The
-  parser doesn't recognize alternate-URI declarations; no rotation
-  policy state; no failover behavior. Single-URI behavior throughout.
-- **Definition depth:** coarse — scope from Notion epic + Mux Video
-  convention + network-resilience composition; SPF touchpoints
-  sketched at the cluster level. Implementation details (parser
-  syntax, state-slot shape, rotation defaults) tracked as open
-  questions.
-- **Hard prerequisite:** [network-resilience](./network-resilience.md).
-  Rotation triggers on the foundation's retry-exhaustion signal;
-  per-URI health tracking consumes the foundation's circuit-breaker
-  state.
+- **Composition:** sub-feature 1 (sticky CDN pick) is implemented in
+  `createSimpleHlsEngine` and `createHlsAudioOnlyEngine`. The
+  `selectActiveCdn` behavior owns the `activeCdn` signal; the
+  `preferActiveCdn` scope rule (shared by the video + audio chains in
+  `track-switching`) narrows candidates to it. Failover (sub-feature 2)
+  is not implemented — no constraints pass, no per-CDN failure tracking,
+  no rotation.
+- **Definition depth:** sketched — sub-feature 1 has a populated
+  implementation surface + verification; sub-feature 2 stays at the
+  scope-and-constraints level pending its prerequisite.
+- **Hard prerequisite (failover only):**
+  [network-resilience](./network-resilience.md). The failed-CDN
+  constraint consumes the foundation's per-host circuit-breaker /
+  retry-exhaustion state. Sub-feature 1 has no such dependency — it's
+  pure selection over the already-parsed candidate set.
+- **Governing model:** [track-switching-model.md](../track-switching-model.md)
+  — multi-CDN is the canonical *constraint + scope* feature there. The
+  active-CDN scope is a soft filter in the rule chain; the failed-CDN
+  constraint is a hard filter in the (not-yet-built) constraints pre-pass.
+
+## How redundant streams are modeled
+
+There is no `alternateUris` field and no fetch-time URL rotation. A
+redundant-streams manifest lists each rendition once per CDN (duplicate
+`#EXT-X-STREAM-INF` / `#EXT-X-MEDIA` entries on different hosts), and the
+existing parser already emits one `Track` per entry with a unique id and
+its own absolute `url`. So the candidate set for each type *already*
+contains one variant per CDN. CDN identity is derived from each track
+URL's origin (`getCdnId`); the active CDN is a single per-presentation
+signal (`activeCdn`), and selecting a CDN-tagged track id means
+`resolveTrack` / segment loading fetch from that CDN with no further
+plumbing.
+
+This is why sub-feature 1 needed **no parser change** and no new data
+shape — only a selection behavior and a scope rule over existing tracks.
 
 ## Phases of complexity
 
-[Tier 1 / Tier 2 framing](./clusters.md#tier-1-spec-compliant-baseline-vs-tier-2-custom-behavior)
-per Notion epic #9 ("Tier 1: Parse spec-extension alternate URIs.
-Tier 2: Rotation policy, backoff strategy."). Each phase notes Naive
-vs Full depth where relevant per the
-[Naive vs Full framing](./clusters.md#naive-vs-full-implementation-depth).
-
-| Phase | Tier | What | Notes |
-|---|---|---|---|
-| Alternate-URI parsing + presentation surfacing | Tier 1 | Parser extracts alternate-URI lists from multivariant playlist (HLS spec extension or vendor convention; syntax open). Presentation `Track` data shape grows an `alternateUris: string[]` field (or similar) on each rendition | Parser extension; [presentation-modeling](../presentation-modeling.md)'s `Track` shape grows. Tier 1 spec-compliant baseline: surface what the manifest says. **Naive:** parse the simplest known syntax (Mux convention). **Full:** support multiple alternate-URI declarations across HLS spec drafts + vendor variants |
-| Active-URI state + initial selection | Tier 1 | New state slot — per-rendition active-URI tracking (e.g., `selectedRenditionUris: Map<TrackId, string>` or per-Track field on resolved presentation). Initial value: first URI in each rendition's `alternateUris` list. Behaviors consuming `Track.uri` (segment loading, playlist reload, manifest fetch) read the active URI rather than the canonical URI | Constraint+filter shape: active-URI slot is the read-side for downstream consumers; rotation policy (Tier 2) is the write-side. Without rotation, this phase is degenerate-equivalent to single-URI behavior — Tier 1 alone provides parsing but not failover |
-| Rotation on retry-exhaustion | Tier 2 | When `network-resilience` exhausts retries on the active URI for a given rendition, rotate to the next URI in the list. Active-URI slot updates; consumers re-fetch using the new URI. The rotation policy controls *which* URI is chosen next | Consumes [network-resilience](./network-resilience.md)'s retry-exhaustion signal. **Naive:** round-robin through the list. **Full:** primary-preferred-with-fallback (return to primary when its circuit-breaker cools), or weighted, or region-aware. Live + multi-CDN composition: reload-loop failover during live consumes this phase too |
-| Per-URI health tracking | Tier 2 | Combine `network-resilience`'s per-URI circuit-breaker state into a health score per alternate URI. Rotation reads health when choosing next URI — skip known-unhealthy URIs without trying them. Health values surface from the breaker's `healthy` / `cooldown` / `unhealthy` state | Consumes `network-resilience`'s circuit-breaker primitive. Likely a derived signal (computed from breaker state). **Naive:** binary healthy/unhealthy from breaker state. **Full:** time-decayed health score that distinguishes "recently-cooled" from "long-healthy" |
-| Customer-policy hooks | Tier 2 | Pluggable hooks: `selectAlternateUri(failedUri, candidates, history) → string`. Customer can override default rotation (region-preferred ordering, weighted, A/B testing, regulatory-compliant routing) | Tier 2 customer-policy surface. Built-in defaults; hooks override when set. Adapter-layer customer-facing toggles ("prefer CDN A" UI) wire through these hooks |
+| Phase | Sub-feature | Kind | What | State |
+|---|---|---|---|---|
+| Sticky CDN pick | 1 | scope | `selectActiveCdn` picks the manifest-head CDN (origin of the first track) per presentation and holds it; `preferActiveCdn` narrows every type's candidates to `activeCdn`, falling through when nothing matches. Per-presentation, so all types share one CDN | **Implemented** |
+| Failed-CDN constraint | 2 | constraint | A constraint in the track-switching constraints pre-pass removes a cooled-down CDN's tracks from the candidate set. Requires the generic constraints phase (track-switching-model "Phase 2") to be built first | Deferred |
+| Per-CDN failure tracking | 2 | — | Count per-CDN fetch failures within a window; mark a CDN unhealthy / in cooldown. Consumes `network-resilience`'s circuit-breaker | Deferred (prereq) |
+| Rotation on cooldown | 2 | scope (write side) | `selectActiveCdn` rotates `activeCdn` to the next healthy CDN when the active one enters cooldown; the scope re-narrows and the selection follows | Deferred |
+| Customer CDN policy | 2 | config | Pluggable CDN-id derivation and/or rotation preference (region-preferred, weighted). The origin-based `getCdnId` is the built-in default; a config seam is anticipated | Deferred |
 
 ## What's in scope vs out of scope
 
 **In scope:**
-- All five phases above for HLS sources with alternate-URI
-  declarations
-- Parser support for alternate-URI lists (Mux convention syntax + any
-  HLS spec extension forms)
-- Active-URI state slot + rotation policy
-- Integration with `network-resilience`'s retry-exhaustion + circuit-
-  breaker primitives
-- Customer-pluggable rotation hooks
-- Live + multi-CDN composition (reload-loop failover during live
-  streams)
+- Sticky per-presentation CDN selection (sub-feature 1, done)
+- Failover via a track-switching constraint + active-CDN rotation
+  (sub-feature 2)
+- Per-CDN health derived from `network-resilience`'s circuit-breaker
+- Customer-configurable CDN-id derivation / rotation policy
 
 **Out of scope (separate cluster G sister features):**
 - **[network-resilience](./network-resilience.md)** *(foundation,
-  prerequisite)* — retry + backoff + circuit-breaker. Multi-CDN
-  consumes; doesn't reimplement.
-- **[content-steering](./content-steering.md)** — HLS content-
-  steering protocol. Server-side host-pool advertisement (dynamically
-  updated). Different mechanism than static alternate-URI lists.
-  Content-steering's pathway-priority composes with this feature's
-  rotation primitive: pathway-priority is the dynamic ordering bias
-  (a sort key); static manifest alternate-URI lists are the static
-  candidate set.
+  prerequisite for failover)* — retry + backoff + circuit-breaker.
+  Multi-CDN consumes; doesn't reimplement.
+- **[content-steering](./content-steering.md)** — HLS content-steering
+  protocol (server-advertised, dynamically-updated host pool). Different
+  mechanism than static redundant streams, but the *same* active-pathway
+  scope shape: content-steering picks the active pathway dynamically; the
+  scope reflecting it is the one implemented here. Designed-with-in-mind:
+  `activeCdn` is a single reflected pick a steering behavior could write.
 
 **Out of scope (different architectural layer):**
-- Adapter-layer customer-facing UI surfaces (e.g., "Switch CDN"
-  buttons, region-preferred dropdowns). Consumer policy expressed via
-  this feature's Tier 2 hooks.
-- CDN-side load balancer / origin-shield / health-check infrastructure.
-  Service-side concerns; engine reacts to what the CDN responds with.
-- DRM key-server failover. Even when license fetches are CDN-routed,
-  the failover concern lives under [drm-support](./drm-support.md)
-  (license-fetch retries) + this feature's primitive may compose, but
-  the key-server-specific rotation policy is DRM-side state.
+- Adapter-layer customer-facing UI ("Switch CDN" buttons). Consumer
+  policy is expressed via the failover tier's config seam.
+- CDN-side load balancer / origin-shield infrastructure. Service-side.
+- DRM key-server failover — lives under [drm-support](./drm-support.md).
 
 ## Likely cross-cutting impact
 
-Things this feature probably forces decisions on, not just additions:
-
-- **Per-rendition vs per-presentation active URI.** Each rendition
-  can have its own alternate-URI list (different CDN paths per
-  bitrate variant) OR all renditions share the same active-URI
-  index. Per-rendition is more flexible (one rendition's CDN can be
-  unhealthy while others are fine); per-presentation is simpler
-  (one rotation state for the source). Lean: per-rendition. Affects
-  state-slot shape (`Map<TrackId, string>` vs single index).
-- **Active-URI slot writer composition.** This feature writes the
-  active URI; downstream behaviors read it. Single-writer slot —
-  this feature's rotation behavior is sole writer. The slot is read
-  by segment-loading, playlist-reload (when live-stream-support
-  lands), manifest-fetch. Standard constraint+filter pattern.
-- **Parser surface for alternate-URI declarations.** HLS spec
-  extensions vary; Mux uses one convention. Parser-pluggability
-  question from [presentation-modeling](../presentation-modeling.md)
-  is sharpened by this feature — alternate-URI parsing extends the
-  `parseMediaPlaylist` / `parseMultivariantPlaylist` schema. Likely
-  HLS-only initially; format-extension to DASH/MoQ adds different
-  shapes.
-- **Live + multi-CDN composition.** During live playback, manifest
-  reload-loop fetches periodically. Reload-fetch retry-exhaustion
-  should trigger rotation (and the new URI's reload-loop continues).
-  Cross-feature with [live-stream-support](./live-stream-support.md)
-  (not implemented yet).
-- **Composition with `[content-steering]`.** Content-steering's
-  server-advertised host pool changes the rotation's candidate set
-  dynamically. Two composition shapes: (a) content-steering writes
-  to the `alternateUris` list (replacing the static manifest values);
-  (b) content-steering writes a separate `steeredHosts` slot that
-  composes with `alternateUris` (intersect, prefer, etc.). Open
-  question — when content-steering lands.
-- **Rotation state across source changes.** When the consumer changes
-  `presentation.url`, the active-URI state tears down with the source
-  (per [source-replacement](./source-replacement.md)'s cascade). Per-
-  URI circuit-breaker state in `network-resilience` may persist across
-  sources for the same hosts (cross-source-resilience benefit).
-- **Per-stream-type rotation coordination.** A presentation with
-  separate audio and video URIs (each possibly with their own
-  alternate-URI lists) can rotate them independently. Live + multi-
-  CDN with per-track rotation: each track's reload-loop manages its
-  own active-URI rotation. Inherits live-stream-support's per-type
-  reload-coordination open question.
+- **Per-presentation, not per-rendition (resolved).** A single
+  `activeCdn` signal governs all track types — the per-presentation
+  coherence requirement. The track-switching model's
+  "cross-type consistency is a composition convention" applies: both the
+  video and audio chains reference the *same* `preferActiveCdn`
+  definition, so they reflect one pick. (The doc's earlier per-rendition
+  lean is superseded.)
+- **`activeCdn` writer composition.** `selectActiveCdn` is the sole
+  writer today (sticky pick). Failover adds rotation as a second write
+  path *in the same behavior*; content-steering could later write it from
+  a steering behavior — single-writer-per-behavior holds, the slot reflects
+  one upstream pick.
+- **Constraints phase is a shared prerequisite.** The failed-CDN
+  constraint can't land until the generic constraints pre-pass
+  (`applyConstraints` + the `constraints` config field + empty-playable-set
+  terminal state) is built into `setupTrackSwitching`. The seam exists
+  (`candidateSet` computed); the machinery does not. capability-probing
+  shares this prerequisite.
+- **Live + multi-CDN.** During live playback the reload loop re-resolves
+  the presentation; `selectActiveCdn`'s sticky pick holds across resolved
+  swaps (it only re-derives on a fresh source). Cross-feature with
+  [live-stream-support](./live-stream-support.md) (not yet implemented).
+- **Rotation state across source changes.** `activeCdn` tears down with
+  the source via the resolved/unresolved cascade (per
+  [source-replacement](./source-replacement.md)); per-host circuit-breaker
+  state in `network-resilience` may outlive a source.
 
 ## Open questions
 
-- **Alternate-URI manifest syntax.** HLS spec extension(s) vs Mux
-  convention vs both. Parser scope question. Open until the first
-  alternate-URI-bearing manifest lands as a test fixture.
-- **Per-rendition vs per-presentation active URI.** Per the cross-
-  cutting note; lean per-rendition for flexibility.
-- **Default rotation policy.** Round-robin vs primary-preferred vs
-  weighted. Lean: primary-preferred-with-circuit-breaker-cooldown-
-  return.
-- **Composition with content-steering.** Static `alternateUris`
-  manifest values + dynamic content-steering host-pool: how to
-  combine? Replacement vs intersection vs preference order?
-- **Rotation-state preservation.** Reset on source change (default)
-  vs preserve via the `bandwidthState`-style cross-source-survival
-  pattern (rare in this case — rotation state is per-URI, and URIs
-  are per-source).
-- **Customer-hook contract.** Function signature, async semantics,
-  failover-after-hook-failure policy. Same shape question as
-  network-resilience's hook design; harmonize.
-- **DRM license-fetch interaction.** When `drm-support` lands, license
-  fetches go through CDN routing too. Multi-CDN rotation for license
-  fetches: same feature, or DRM-side?
-- **Per-stream-type rotation coordination.** Independent rotation
-  per type (video / audio / text) is the default; whether to allow
-  coordinated rotation (single failover decision rotates all types)
-  is an open Tier 2 question.
+- **Constraints-phase shape.** How `applyConstraints` and the
+  empty-playable-set terminal state are modeled — owned by the
+  track-switching constraints work, consumed here. (See
+  [track-switching-model.md](../track-switching-model.md) → *Fitting the
+  model to the track-switching behavior*.)
+- **Failure-window policy.** Threshold count / window length / cooldown
+  duration for marking a CDN unhealthy. Empirical; lives with
+  `network-resilience`'s circuit-breaker.
+- **CDN-id derivation configurability.** Origin-based `getCdnId` is the
+  default; whether/where to expose a consumer override (config field vs.
+  rule config view) is deferred until a non-origin case appears.
+- **Composition with content-steering.** Static redundant CDNs +
+  dynamic steered host pool: does steering replace, intersect, or
+  reprioritize the candidate CDNs? Open until content-steering lands; the
+  single-`activeCdn`-reflected-pick shape keeps it tractable.
+
+### Resolved during sub-feature 1 implementation
+
+- **Active-CDN granularity** → per-presentation (single `activeCdn`), not
+  per-rendition. Matches the cross-type coherence requirement.
+- **CDN identity** → URL origin (`getCdnId`); configurable derivation
+  deferred.
+- **Manifest syntax / parser** → no change. Redundant variants already
+  parse as separate per-CDN tracks; no `alternateUris` field needed.
+- **Architecture** → constraint + scope in the track-switching model, not
+  active-URI rotation in `resolveTrack`.
+
+## Implementation surface
+
+- **`packages/spf/src/media/utils/cdn.ts`** — `getCdnId(url)` (origin-based
+  CDN identity) and `getOrderedCdnIds(presentation)` (distinct CDNs in
+  manifest order; head = primary).
+- **`packages/spf/src/playback/behaviors/select-active-cdn.ts`** —
+  `selectActiveCdn` behavior + `SelectActiveCdnState`. Machine reactor on
+  `presentation-unresolved` ↔ `presentation-resolved`; owns the
+  `activeCdn` signal; picks the head CDN once (sticky via `peek`), clears
+  on exit.
+- **`packages/spf/src/playback/behaviors/track-switching.ts`** —
+  `preferActiveCdn` scope rule (soft filter on `activeCdn`), added to both
+  variants' chains: `[filterByUserSelection, preferActiveCdn,
+  rankByBandwidth]`. `SwitchableTrack` gains `url` (the rule's input).
+- **`packages/spf/src/playback/engines/hls/engine.ts` +
+  `engine-audio-only.ts`** — `selectActiveCdn` composed after
+  `resolvePresentation`; `activeCdn?: string` added to both engine state
+  interfaces.
+
+State signal: `activeCdn?: string` (origin of the active CDN), owned by
+`selectActiveCdn`, read optionally by `preferActiveCdn`.
+
+## Verification
+
+Sub-feature 1:
+
+- `media/utils/tests/cdn.test.ts` — `getCdnId` (origin extraction;
+  same/different host; scheme+port; unparseable fallback);
+  `getOrderedCdnIds` (distinct CDNs in order; dedupe; single-CDN;
+  unresolved → `[]`).
+- `playback/behaviors/tests/select-active-cdn.test.ts` — picks the
+  manifest-head CDN; single-CDN source; sticky across a resolved→resolved
+  swap; clears on src unload + on destroy; re-picks after a src reset.
+- `playback/behaviors/tests/track-switching.test.ts` (`preferActiveCdn`
+  block) — narrows the pick to the active CDN overriding manifest order;
+  keeps the pick when active = head; falls through when nothing matches;
+  no-op when `activeCdn` absent; re-picks reactively when `activeCdn`
+  changes (failover-ready seam); same scope applied to the audio chain
+  (cross-type coherence).
+- `playback/engines/hls/tests/engine.test.ts` — integration: a
+  redundant-stream presentation yields `activeCdn` = head CDN and a video
+  selection on it; an external `activeCdn` change re-narrows and the
+  selection follows.
+
+Out of scope / deferred:
+
+- End-to-end + sandbox verification against a real Mux
+  `?redundant_streams=true` source (needs a fixture).
+- All of sub-feature 2 (failover): blocked on the constraints phase +
+  `network-resilience`.
 
 ## Related features
 
-- **[network-resilience](./network-resilience.md)** *(hard
-  prerequisite)* — retry + backoff + circuit-breaker foundation.
-  Multi-CDN consumes the retry-exhaustion signal (rotation trigger)
-  and the per-URI circuit-breaker state (per-URI health tracking).
-- **[content-steering](./content-steering.md)** — parallel sister;
-  dynamic host-pool advertisement variant. Pathway-priority composes
-  with this feature's rotation primitive (sort-key shape).
-- **[presentation-modeling](../presentation-modeling.md)** — `Track`
-  data shape grows `alternateUris` field; parser extension is in
-  scope here.
-- **[live-stream-support](./live-stream-support.md)** *(not yet
-  implemented)* — reload-loop failover during live consumes this
-  feature's rotation primitive. Per-type reload coordination open
-  question applies.
-- **[source-replacement](./source-replacement.md)** — active-URI
-  state tears down via the resolved/unresolved cascade on source
-  change.
-- **[mse-mms-pipeline](./mse-mms-pipeline.md)** — segment-fetch
-  sites consume the active-URI slot indirectly via `Track.uri` reads.
-- **[drm-support](./drm-support.md)** *(not implemented)* — license-
-  fetch failover question: same feature's rotation, or DRM-side?
-- **[video-abr](./video-abr.md)** / **[audio-abr](./audio-abr.md)** —
-  ABR operates within a rendition; rotation operates on the rendition's
-  URI. Orthogonal axes; both compose.
+- **[track-switching-model.md](../track-switching-model.md)** *(governing
+  model)* — multi-CDN is its canonical constraint + scope feature; the
+  active-CDN scope is implemented against the rule chain it specifies.
+- **[network-resilience](./network-resilience.md)** *(hard prerequisite
+  for failover)* — per-host circuit-breaker the failed-CDN constraint
+  consumes.
+- **[content-steering](./content-steering.md)** — dynamic host-pool
+  sibling; shares the active-pathway scope shape (`activeCdn` as a
+  reflected pick).
+- **[capability-probing](./capability-probing.md)** — shares the
+  not-yet-built constraints pre-pass with the failed-CDN constraint.
+- **[live-stream-support](./live-stream-support.md)** *(not implemented)*
+  — reload-loop re-resolution; sticky pick holds across resolved swaps.
+- **[source-replacement](./source-replacement.md)** — `activeCdn` tears
+  down via the resolved/unresolved cascade on source change.
+- **[video-abr](./video-abr.md)** / **[audio-abr](./audio-abr.md)** — ABR
+  ranks within the CDN-narrowed set; the scope runs before the ranker.
 
 ## See also
 
+- [track-switching-model.md](../track-switching-model.md) — the rule
+  model (constraints → soft filters → ranker) this feature composes into
 - [clusters.md § Selection resilience](./clusters.md#selection-resilience)
-  — cluster G description; this feature is the selection-side
-  resilience sister to `network-resilience`'s response-error
-  handling
-- [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes)
-  — Tier 1 / Tier 2 framing; Media-src? / Player? classification
-  ambiguity
-- [presentation-modeling.md](../presentation-modeling.md) — parser-
-  pluggability open question; alternate-URI parsing is one
-  forcing function
-- [network-resilience.md](./network-resilience.md) — hard prerequisite;
-  retry + circuit-breaker foundation
+  — cluster G; this feature is the selection-side resilience sister to
+  `network-resilience`'s response-error handling
+- [clusters.md § Selection / filtering across clusters](./clusters.md#selection--filtering-across-clusters)
+  — cluster G's role: alternate-CDN selection within the chosen track
+- [network-resilience.md](./network-resilience.md) — circuit-breaker
+  foundation the failover tier consumes
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   — source material; epic #9 (Multi-CDN Failover)
 - [Mux Video — `?redundant_streams=true`](https://www.mux.com/docs/guides/play-back-on-multiple-cdns)
