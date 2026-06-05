@@ -101,6 +101,22 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     return this.#delegate?.error ?? null;
   }
 
+  get videoTracks() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
+  }
+
+  get audioTracks() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
+  }
+
+  get videoRenditions() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
+  }
+
+  get audioRenditions() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
+  }
+
   get src() {
     return this.#src;
   }
