@@ -1,4 +1,5 @@
 import * as dashjs from 'dashjs';
+import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 
@@ -11,7 +12,7 @@ export const dashMediaDefaultProps: DashMediaProps = {
 };
 
 export class DashMedia
-  extends HTMLVideoElementHost
+  extends MediaTracksMixin(HTMLVideoElementHost)
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
