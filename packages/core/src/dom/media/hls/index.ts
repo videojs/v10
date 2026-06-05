@@ -1,9 +1,10 @@
 import { shallowEqual } from '@videojs/utils/object';
+import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
 import { GoogleCastMixin } from '../google-cast';
-import { type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
+import { type GoogleCastMedia, type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
@@ -51,7 +52,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   ...googleCastMediaDefaultProps,
 };
 
-export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements HlsMediaProps {
+class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, keyof GoogleCastMediaProps> {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = hlsMediaDefaultProps.src;
   #config = { ...hlsMediaDefaultProps.config };
@@ -215,6 +216,10 @@ export class HlsMedia extends GoogleCastMixin(HTMLVideoElementHost) implements H
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
   }
 }
+
+const HlsMediaWithGoogleCast: MixinReturn<typeof HlsMediaBase, GoogleCastMedia> = GoogleCastMixin(HlsMediaBase);
+
+export class HlsMedia extends HlsMediaWithGoogleCast implements HlsMediaProps {}
 
 function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';

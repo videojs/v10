@@ -5,6 +5,7 @@ import { ContentTypes, HlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.unstubAllGlobals();
 });
 
 function fireDurationChange(video: HTMLVideoElement, duration: number) {
@@ -18,6 +19,144 @@ function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
     configurable: true,
   });
   video.dispatchEvent(new Event('error'));
+}
+
+async function setupCastFramework() {
+  const loadMedia = vi.fn(async () => {});
+
+  class MediaInfo {
+    customData: object | null = null;
+    metadata?: unknown;
+    streamType?: string;
+    tracks?: unknown[];
+
+    constructor(
+      public contentId: string,
+      public contentType: string
+    ) {}
+  }
+
+  class LoadRequest {
+    currentTime = 0;
+    autoplay = false;
+    activeTrackIds: number[] = [];
+
+    constructor(public media: MediaInfo) {}
+  }
+
+  class RemotePlayer {
+    controller?: {
+      addEventListener: ReturnType<typeof vi.fn>;
+      removeEventListener: ReturnType<typeof vi.fn>;
+      muteOrUnmute: ReturnType<typeof vi.fn>;
+      setVolumeLevel: ReturnType<typeof vi.fn>;
+      seek: ReturnType<typeof vi.fn>;
+    };
+    isMediaLoaded = false;
+    isPaused = true;
+    isMuted = false;
+    volumeLevel = 1;
+    playerState = 'IDLE';
+    currentTime = 0;
+    duration = Number.NaN;
+  }
+
+  class RemotePlayerController {
+    constructor(remote: RemotePlayer) {
+      remote.controller = {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        muteOrUnmute: vi.fn(),
+        setVolumeLevel: vi.fn(),
+        seek: vi.fn(),
+      };
+    }
+  }
+
+  const castContext = {
+    addEventListener: vi.fn(),
+    setOptions: vi.fn(),
+    getCastState: vi.fn(() => 'CONNECTED'),
+    getSessionState: vi.fn(() => 'SESSION_STARTED'),
+    requestSession: vi.fn(async () => {}),
+    getCurrentSession: vi.fn(() => ({
+      loadMedia,
+      getSessionObj: () => ({ media: [] }),
+      sendMessage: vi.fn(),
+    })),
+  };
+
+  vi.stubGlobal('chrome', {
+    cast: {
+      isAvailable: true,
+      AutoJoinPolicy: { ORIGIN_SCOPED: 'origin_scoped' },
+      Image: class {
+        constructor(public url: string) {}
+      },
+      media: {
+        MediaInfo,
+        LoadRequest,
+        GenericMediaMetadata: class {
+          title = '';
+          images: unknown[] = [];
+        },
+        Track: class {
+          trackContentId = '';
+          trackContentType = '';
+          subtype = '';
+          name = '';
+          language = '';
+
+          constructor(
+            public trackId: number,
+            public type: string
+          ) {}
+        },
+        TrackType: { TEXT: 'TEXT' },
+        TextTrackType: { CAPTIONS: 'CAPTIONS', SUBTITLES: 'SUBTITLES' },
+        StreamType: { LIVE: 'LIVE', BUFFERED: 'BUFFERED' },
+        HlsSegmentFormat: { FMP4: 'FMP4', TS: 'TS' },
+        HlsVideoSegmentFormat: { FMP4: 'FMP4', TS: 'TS' },
+        PlayerState: { IDLE: 'IDLE', BUFFERING: 'BUFFERING', PAUSED: 'PAUSED', PLAYING: 'PLAYING' },
+        IdleReason: { FINISHED: 'FINISHED' },
+      },
+    },
+  });
+
+  vi.stubGlobal('cast', {
+    framework: {
+      CastContext: { getInstance: () => castContext },
+      CastContextEventType: {
+        CAST_STATE_CHANGED: 'CAST_STATE_CHANGED',
+        SESSION_STATE_CHANGED: 'SESSION_STATE_CHANGED',
+      },
+      CastState: { NO_DEVICES_AVAILABLE: 'NO_DEVICES_AVAILABLE', CONNECTING: 'CONNECTING' },
+      SessionState: { SESSION_RESUMED: 'SESSION_RESUMED' },
+      RemotePlayerEventType: {
+        IS_CONNECTED_CHANGED: 'IS_CONNECTED_CHANGED',
+        DURATION_CHANGED: 'DURATION_CHANGED',
+        VOLUME_LEVEL_CHANGED: 'VOLUME_LEVEL_CHANGED',
+        IS_MUTED_CHANGED: 'IS_MUTED_CHANGED',
+        CURRENT_TIME_CHANGED: 'CURRENT_TIME_CHANGED',
+        VIDEO_INFO_CHANGED: 'VIDEO_INFO_CHANGED',
+        IS_PAUSED_CHANGED: 'IS_PAUSED_CHANGED',
+        PLAYER_STATE_CHANGED: 'PLAYER_STATE_CHANGED',
+        IS_MEDIA_LOADED_CHANGED: 'IS_MEDIA_LOADED_CHANGED',
+      },
+      RemotePlayer,
+      RemotePlayerController,
+    },
+  });
+
+  if (!customElements.get('google-cast-button')) {
+    customElements.define('google-cast-button', class extends HTMLElement {});
+  }
+
+  (globalThis as { __onGCastApiAvailable?: () => void }).__onGCastApiAvailable?.();
+  await customElements.whenDefined('google-cast-button');
+  await Promise.resolve();
+
+  return { loadMedia };
 }
 
 function setup() {
@@ -37,6 +176,37 @@ function setup() {
 }
 
 describe('HlsMedia', () => {
+  describe('load', () => {
+    it('routes through Google Cast while casting', async () => {
+      const { loadMedia } = await setupCastFramework();
+      const video = document.createElement('video');
+      vi.spyOn(video, 'pause').mockImplementation(() => {});
+      Object.defineProperty(video, 'textTracks', {
+        value: {
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          [Symbol.iterator]: function* () {},
+        },
+        configurable: true,
+      });
+      document.body.appendChild(video);
+
+      const media = new HlsMedia();
+      media.attach(video);
+      media.castSrc = 'https://example.com/cast.mp4';
+
+      const remote = media.remote;
+      expect(remote).toBeDefined();
+      await remote!.prompt();
+
+      expect(loadMedia).toHaveBeenCalledOnce();
+
+      await media.load();
+
+      expect(loadMedia).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('error event delegation', () => {
     it('dispatches only the enriched error, not the raw native error', () => {
       const { video, handler } = setup();
