@@ -36,24 +36,29 @@ describe('input-action', () => {
           paused: true,
           volume: 0.5,
           muted: false,
+          playbackRates: [1, 1.5],
+          playbackRate: 1.5,
           fullscreen: true,
           subtitlesShowing: true,
           textTrackList: [{ kind: 'captions', label: 'English', language: 'en', mode: 'showing' }],
           pip: false,
           currentTime: 30,
           duration: 120,
+          seeking: true,
         })
       )
     ).toEqual({
       paused: true,
       volume: 0.5,
       muted: false,
+      playbackRate: 1.5,
       fullscreen: true,
       subtitlesShowing: true,
       subtitlesAvailable: true,
       pip: false,
       currentTime: 30,
       duration: 120,
+      seeking: true,
     });
   });
 

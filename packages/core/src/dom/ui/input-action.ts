@@ -10,6 +10,7 @@ import {
   selectFullscreen,
   selectPiP,
   selectPlayback,
+  selectPlaybackRate,
   selectTextTrack,
   selectTime,
   selectVolume,
@@ -42,12 +43,14 @@ export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSn
     paused: selectPlayback(state)?.paused,
     volume: selectVolume(state)?.volume,
     muted: selectVolume(state)?.muted,
+    playbackRate: selectPlaybackRate(state)?.playbackRate,
     fullscreen: selectFullscreen(state)?.fullscreen,
     subtitlesShowing: textTrack?.subtitlesShowing,
     subtitlesAvailable: textTrack ? (textTrack.textTrackList ?? []).some(isCaptionOrSubtitleTrack) : undefined,
     pip: selectPiP(state)?.pip,
     currentTime: time?.currentTime,
     duration: time?.duration,
+    seeking: time?.seeking,
   };
 }
 
