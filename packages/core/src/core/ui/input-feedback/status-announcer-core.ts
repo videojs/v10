@@ -77,30 +77,30 @@ export class StatusAnnouncerCore {
 
     const labels = this.#getLabels();
     let accepted = false;
-    const immediateLabels: string[] = [];
+    const queue: string[] = [];
 
     if (hasChanged(previous.paused, snapshot.paused)) {
-      immediateLabels.push(snapshot.paused ? labels.paused : labels.playing);
+      queue.push(snapshot.paused ? labels.paused : labels.playing);
     }
 
     if (hasChanged(previous.subtitlesShowing, snapshot.subtitlesShowing) && snapshot.subtitlesAvailable !== false) {
-      immediateLabels.push(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
+      queue.push(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
     }
 
     if (hasChanged(previous.fullscreen, snapshot.fullscreen)) {
-      immediateLabels.push(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
+      queue.push(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
     }
 
     if (hasChanged(previous.pip, snapshot.pip)) {
-      immediateLabels.push(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
+      queue.push(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
     }
 
     if (hasChanged(previous.playbackRate, snapshot.playbackRate)) {
-      immediateLabels.push(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
+      queue.push(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
     }
 
-    if (immediateLabels.length > 0) {
-      accepted = this.#announce(formatAnnouncementLabels(immediateLabels));
+    if (queue.length > 0) {
+      accepted = this.#announce(formatAnnouncementLabels(queue));
     }
 
     if (this.#processVolumeSnapshot(previous, snapshot, labels, accepted)) {
