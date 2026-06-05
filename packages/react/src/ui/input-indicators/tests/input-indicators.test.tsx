@@ -57,6 +57,30 @@ describe('input indicators', () => {
     expect(getByRole('status').textContent).toBe('Playing');
   });
 
+  it('uses the next store snapshot as baseline when StatusAnnouncer store changes', async () => {
+    const first = createTestStore({ paused: false });
+    const second = createTestStore({ paused: false });
+    const { getByRole, rerender } = render(
+      <PlayerContextProvider value={createPlayerContextValue(first.store)}>
+        <StatusAnnouncer />
+      </PlayerContextProvider>
+    );
+    await act(async () => {});
+
+    first.setState({ paused: true });
+    await act(async () => {});
+    expect(getByRole('status').textContent).toBe('Paused');
+
+    rerender(
+      <PlayerContextProvider value={createPlayerContextValue(second.store)}>
+        <StatusAnnouncer />
+      </PlayerContextProvider>
+    );
+    await act(async () => {});
+
+    expect(getByRole('status').textContent).toBe('');
+  });
+
   it('does not announce completed seeks while a time slider is focused', async () => {
     vi.useFakeTimers();
     const slider = document.createElement('button');
@@ -204,15 +228,17 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
   return { store, setState };
 }
 
-function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store) {
+function createPlayerContextValue(store: UnknownStore): PlayerContextValue {
   const container = document.createElement('div');
-  const playerContextValue = {
+  return {
     store,
     media: null,
     setMedia: vi.fn(),
     container,
     setContainer: vi.fn(),
   } as unknown as PlayerContextValue;
+}
 
-  return render(<PlayerContextProvider value={playerContextValue}>{ui}</PlayerContextProvider>);
+function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store) {
+  return render(<PlayerContextProvider value={createPlayerContextValue(store)}>{ui}</PlayerContextProvider>);
 }

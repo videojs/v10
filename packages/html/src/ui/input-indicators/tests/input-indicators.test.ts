@@ -49,12 +49,20 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
 }
 
 class TestStatusAnnouncerPlayerElement extends MediaElement {
-  store = createTestStore().store;
-
   readonly #provider = new ContextProvider(this, { context: playerContext });
+  #store = createTestStore().store;
+
+  get store(): AnyPlayerStore {
+    return this.#store;
+  }
+
+  set store(store: AnyPlayerStore) {
+    this.#store = store;
+    if (this.isConnected) this.#provider.setValue(this.#store);
+  }
 
   override connectedCallback(): void {
-    this.#provider.setValue(this.store);
+    this.#provider.setValue(this.#store);
     super.connectedCallback();
   }
 }
@@ -142,6 +150,28 @@ describe('input indicators', () => {
     await (announcer as StatusAnnouncerElement).updateComplete;
 
     expect(announcer.textContent).toBe('Playing');
+  });
+
+  it('uses the next store snapshot as baseline when StatusAnnouncerElement store changes', async () => {
+    const first = createTestStore({ paused: false });
+    const second = createTestStore({ paused: false });
+    const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+    provider.store = first.store;
+    provider.innerHTML = '<media-status-announcer></media-status-announcer>';
+    document.body.append(provider);
+    await provider.updateComplete;
+
+    const announcer = provider.querySelector('media-status-announcer')!;
+    first.setState({ paused: true });
+    await Promise.resolve();
+    await (announcer as StatusAnnouncerElement).updateComplete;
+    expect(announcer.textContent).toBe('Paused');
+
+    provider.store = second.store;
+    await Promise.resolve();
+    await (announcer as StatusAnnouncerElement).updateComplete;
+
+    expect(announcer.textContent).toBe('');
   });
 
   it('does not announce completed seeks while a time slider is focused', async () => {

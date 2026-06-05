@@ -71,6 +71,7 @@ export class StatusAnnouncerElement extends MediaElement {
   #reconnect(): void {
     this.#storeUnsubscribe?.();
     this.#storeUnsubscribe = null;
+    this.#core.resetSnapshot();
 
     const store = this.#player.value;
     if (!store) return;

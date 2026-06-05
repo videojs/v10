@@ -59,6 +59,31 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBeNull();
   });
 
+  it('uses the first snapshot after reset as a baseline only', () => {
+    const core = new StatusAnnouncerCore();
+
+    core.processSnapshot({ paused: false, volume: 0.5, muted: false });
+    core.resetSnapshot();
+
+    expect(core.processSnapshot({ paused: true, volume: 0.75, muted: true })).toBe(false);
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBeNull();
+  });
+
+  it('clears pending debounced announcements when reset', () => {
+    const core = new StatusAnnouncerCore();
+
+    core.processSnapshot({ volume: 0.5, muted: false });
+    core.processSnapshot({ volume: 0.75, muted: false });
+    core.resetSnapshot();
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBeNull();
+  });
+
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
     const core = new StatusAnnouncerCore();
     let snapshot = {
