@@ -144,6 +144,16 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     if (this.target) this.target.title = value;
   }
 
+  // -- Controls --
+
+  get controls() {
+    return this.target?.controls ?? false;
+  }
+
+  set controls(value: boolean) {
+    if (this.target) this.target.controls = value;
+  }
+
   // -- Playback --
 
   get paused() {
@@ -168,6 +178,16 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
 
   pause() {
     this.target?.pause();
+  }
+
+  // -- Autoplay --
+
+  get autoplay() {
+    return this.target?.autoplay ?? false;
+  }
+
+  set autoplay(value: boolean) {
+    if (this.target) this.target.autoplay = value;
   }
 
   // -- Time --
@@ -248,6 +268,14 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     if (this.target) this.target.muted = value;
   }
 
+  get defaultMuted() {
+    return this.target?.defaultMuted ?? false;
+  }
+
+  set defaultMuted(value: boolean) {
+    if (this.target) this.target.defaultMuted = value;
+  }
+
   // -- Playback rate --
 
   get playbackRate() {
@@ -310,31 +338,5 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
 
   set disableRemotePlayback(value: boolean) {
     if (this.target) this.target.disableRemotePlayback = value;
-  }
-
-  // -- Playback options --
-
-  get autoplay() {
-    return this.target?.autoplay ?? false;
-  }
-
-  set autoplay(value: boolean) {
-    if (this.target) this.target.autoplay = value;
-  }
-
-  get defaultMuted() {
-    return this.target?.defaultMuted ?? false;
-  }
-
-  set defaultMuted(value: boolean) {
-    if (this.target) this.target.defaultMuted = value;
-  }
-
-  get controls() {
-    return this.target?.controls ?? false;
-  }
-
-  set controls(value: boolean) {
-    if (this.target) this.target.controls = value;
   }
 }

@@ -29,6 +29,14 @@ export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike
 export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 // ----------------------------------------
+// Controls
+// ----------------------------------------
+
+export interface MediaControlsCapability {
+  controls: boolean;
+}
+
+// ----------------------------------------
 // Playback
 // ----------------------------------------
 
@@ -40,6 +48,14 @@ export interface MediaPlaybackEvents {
 
 export interface MediaPlaybackCapability {
   play(): Promise<void>;
+}
+
+// ----------------------------------------
+// Autoplay
+// ----------------------------------------
+
+export interface MediaAutoplayCapability {
+  autoplay: boolean;
 }
 
 // ----------------------------------------
@@ -127,6 +143,7 @@ export interface MediaVolumeEvents {
 export interface MediaVolumeCapability {
   volume: number;
   muted: boolean;
+  defaultMuted: boolean;
 }
 
 // ----------------------------------------
@@ -341,16 +358,6 @@ export interface MediaRemotePlaybackCapability {
 }
 
 // ----------------------------------------
-// Playback options
-// ----------------------------------------
-
-export interface MediaPlaybackOptionsCapability {
-  autoplay: boolean;
-  defaultMuted: boolean;
-  controls: boolean;
-}
-
-// ----------------------------------------
 // Plays inline (video-only)
 // ----------------------------------------
 
@@ -428,7 +435,8 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
     MediaStreamTypeCapability,
     MediaLiveCapability,
     MediaRemotePlaybackCapability,
-    MediaPlaybackOptionsCapability,
+    MediaControlsCapability,
+    MediaAutoplayCapability,
     MediaConfigCapability {}
 
 export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
