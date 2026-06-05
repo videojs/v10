@@ -82,6 +82,14 @@ export interface SimpleHlsEngineState {
    * has one entry.
    */
   cdnPriority?: string[];
+  /**
+   * CDN ids (origins) currently in failover cooldown — written by the CDN
+   * breaker when a host fails too often, read by `track-switching`'s
+   * `excludeFailedCdns` hard constraint, which prunes their tracks so the
+   * active-CDN scope falls to the next CDN in `cdnPriority`. Empty / absent
+   * means all CDNs are eligible.
+   */
+  failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -205,13 +213,16 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
 /**
  * Generic `shareSignals` instantiated against the HLS engine's full state
  * and context — captures composition signal refs into the consumer's
- * `onSignalsReady` callback at setup time, and materializes the consumer-input
- * slots (`user*TrackSelection`) that no behavior produces: the track-switching
- * behaviors only *read* them, so shareSignals owns bringing them into existence.
+ * `onSignalsReady` callback at setup time, and materializes input slots that no
+ * composed behavior produces yet: `user*TrackSelection` (track-switching only
+ * reads them) and `failedCdns` (read by the `excludeFailedCdns` constraint;
+ * until the CDN breaker lands it's driven externally, and stays writable after
+ * for manual CDN override).
  */
 const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
+  'failedCdns',
 ]);
 
 /**

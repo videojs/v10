@@ -210,6 +210,81 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
+  it('fails over video and audio to the next CDN when one is marked failed', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine();
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+    const audioTrack = (id: string, host: string): PartiallyResolvedAudioTrack => ({
+      type: 'audio',
+      id,
+      codecs: ['mp4a.40.2'],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 128_000,
+      mimeType: 'audio/mp4',
+      groupId: 'audio',
+      name: id,
+      sampleRate: 48_000,
+      channels: 2,
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-failover',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [audioTrack('aud-a', 'cdn-a.example.com'), audioTrack('aud-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // Primary CDN initially.
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
+
+    // Mark cdn-a failed → both types fail over to cdn-b coherently.
+    engine.state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-b');
+
+    // cdn-a recovers → both return to the primary.
+    engine.state.failedCdns.set([]);
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
+
+    engine.destroy();
+  });
+
   it('allows patching state and owners from outside', async () => {
     const engine = createSimpleHlsEngine();
 

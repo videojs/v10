@@ -12,6 +12,7 @@ import type {
 } from '../../../media/types';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
+  applyConstraints,
   applyRules,
   type SelectionRule,
   type SwitchVideoTrackConfig,
@@ -736,6 +737,43 @@ describe('applyRules', () => {
 });
 
 // ============================================================================
+// applyConstraints — the hard-constraints pre-pass (pure; no signals)
+// ============================================================================
+
+describe('applyConstraints', () => {
+  const track = (id: string) => ({ id });
+  const all = [track('a'), track('b'), track('c')];
+  const noDeps = { state: {}, context: {}, config: {} };
+
+  const noA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
+  const noC: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'c');
+
+  it('removes what each constraint excludes (pooled)', () => {
+    expect(applyConstraints([noA, noC], all, noDeps).map((t) => t.id)).toEqual(['b']);
+  });
+
+  it('is order-independent', () => {
+    expect(applyConstraints([noA, noC], all, noDeps)).toEqual(applyConstraints([noC, noA], all, noDeps));
+  });
+
+  it('preserves an empty result — no fall-through, unlike applyRules', () => {
+    const none: SelectionRule<{ id: string }> = () => [];
+    expect(applyConstraints([none], all, noDeps)).toEqual([]);
+  });
+
+  it('runs every constraint — no early-bail at a single survivor', () => {
+    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
+    let laterCalled = false;
+    const later: SelectionRule<{ id: string }> = (tracks) => {
+      laterCalled = true;
+      return tracks;
+    };
+    applyConstraints([toA, later], all, noDeps);
+    expect(laterCalled).toBe(true);
+  });
+});
+
+// ============================================================================
 // preferActiveCdn — active-CDN scope (shared by video + audio)
 // ============================================================================
 
@@ -860,6 +898,90 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     const reactor = switchAudioTrack.setup({ state });
     await flush();
     expect(state.selectedAudioTrackId.get()).toBe('aud-b');
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// excludeFailedCdns — the failover constraint (hard pre-pass) + scope interplay
+// ============================================================================
+
+describe('excludeFailedCdns (failover constraint)', () => {
+  const cdnVideoTrack = (id: string, host: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [],
+    id,
+    url: `https://${host}/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  const multiCdn = () =>
+    createPresentation([
+      cdnVideoTrack('720p-a', 'cdn-a.example.com', 2_400_000),
+      cdnVideoTrack('720p-b', 'cdn-b.example.com', 2_400_000),
+      cdnVideoTrack('1080p-a', 'cdn-a.example.com', 4_800_000),
+      cdnVideoTrack('1080p-b', 'cdn-b.example.com', 4_800_000),
+    ]);
+
+  const makeState = (failedCdns?: string[]) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(multiCdn()),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    cdnPriority: signal<string[] | undefined>(['https://cdn-a.example.com', 'https://cdn-b.example.com']),
+    failedCdns: signal<string[] | undefined>(failedCdns),
+  });
+
+  it('excludes nothing when failedCdns is absent — picks the primary', async () => {
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('fails over to the next CDN when the primary is in cooldown', async () => {
+    const state = makeState(['https://cdn-a.example.com']);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // cdn-a's tracks are pruned by the constraint, so the scope falls to cdn-b.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+    reactor.destroy();
+  });
+
+  it('fails over reactively, then returns to the primary on recovery', async () => {
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    // cdn-a enters cooldown → prune → scope falls to cdn-b.
+    state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+
+    // cdn-a recovers → its tracks reappear → scope snaps back to the primary.
+    state.failedCdns.set([]);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    reactor.destroy();
+  });
+
+  it('keeps the prior pick when every CDN is in cooldown (nothing playable)', async () => {
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    // All CDNs cooled down → constraints prune everything → no playable set →
+    // the effect no-ops, leaving the last pick in place (deferred terminal-state
+    // modeling).
+    state.failedCdns.set(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
     reactor.destroy();
   });
 });

@@ -59,6 +59,12 @@ export interface SimpleHlsAudioOnlyEngineState {
    * redundant-stream sources; a single-CDN source has one entry.
    */
   cdnPriority?: string[];
+  /**
+   * CDN ids currently in failover cooldown — read by `track-switching`'s
+   * `excludeFailedCdns` constraint, which prunes their tracks so the active-CDN
+   * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
+   */
+  failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -100,10 +106,13 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // Audio-Only HLS Playback Engine
 // ============================================================================
 
-// Materializes the consumer-input slot `userAudioTrackSelection` (only read by
-// switchAudioTrack, produced by no behavior) in addition to forwarding refs.
+// Materializes input slots no composed behavior produces yet —
+// `userAudioTrackSelection` (switchAudioTrack only reads it) and `failedCdns`
+// (read by the excludeFailedCdns constraint; driven externally until the CDN
+// breaker lands) — in addition to forwarding refs.
 const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
   'userAudioTrackSelection',
+  'failedCdns',
 ]);
 
 /**
