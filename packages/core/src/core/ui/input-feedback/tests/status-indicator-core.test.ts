@@ -268,6 +268,24 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBe('Seeked to 45 seconds');
   });
 
+  it('announces a completed seek when volume changes in the same snapshot', () => {
+    const core = new StatusAnnouncerCore();
+    let snapshot = { currentTime: 10, duration: 120, seeking: false, volume: 0.5, muted: false };
+    const process = (partial: Partial<typeof snapshot>) => {
+      snapshot = { ...snapshot, ...partial };
+      return core.processSnapshot(snapshot);
+    };
+
+    core.processSnapshot(snapshot);
+
+    process({ currentTime: 45, seeking: true });
+    expect(process({ seeking: false, volume: 0.75 })).toBe(true);
+
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBe('Seeked to 45 seconds');
+  });
+
   it('allows seek announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
     core.setProps({ shouldAnnounceSeek: () => false });
