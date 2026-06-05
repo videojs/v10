@@ -13,7 +13,7 @@ import {
   type StatusAnnouncerLabels,
 } from './status';
 
-const SNAPSHOT_ANNOUNCER_DEBOUNCE = 200;
+const ANNOUNCEMENT_DEBOUNCE = 200;
 
 export interface StatusAnnouncerProps extends IndicatorCoreProps {
   labels?: Partial<StatusAnnouncerLabels> | undefined;
@@ -76,7 +76,7 @@ export class StatusAnnouncerCore {
     if (!previous) return false;
 
     const labels = this.#getLabels();
-    let accepted = false;
+    let handled = false;
     const queue: string[] = [];
 
     if (hasChanged(previous.paused, snapshot.paused)) {
@@ -100,18 +100,18 @@ export class StatusAnnouncerCore {
     }
 
     if (queue.length > 0) {
-      accepted = this.#announce(formatAnnouncementLabels(queue));
+      handled = this.#announce(formatAnnouncementQueue(queue));
     }
 
-    if (this.#processVolumeSnapshot(previous, snapshot, labels, accepted)) {
-      accepted = true;
+    if (this.#processVolumeSnapshot(previous, snapshot, labels, handled)) {
+      handled = true;
     }
 
-    if (this.#processSeekSnapshot(previous, snapshot, labels, accepted)) {
-      accepted = true;
+    if (this.#processSeekSnapshot(previous, snapshot, labels, handled)) {
+      handled = true;
     }
 
-    return accepted;
+    return handled;
   }
 
   #getLabels(): StatusAnnouncerLabels {
@@ -133,11 +133,11 @@ export class StatusAnnouncerCore {
     previous: MediaSnapshot,
     snapshot: MediaSnapshot,
     labels: StatusAnnouncerLabels,
-    suppress: boolean
+    alreadyHandled: boolean
   ): boolean {
     if (!hasChanged(previous.volume, snapshot.volume) && !hasChanged(previous.muted, snapshot.muted)) return false;
     if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return false;
-    if (suppress) return false;
+    if (alreadyHandled) return false;
 
     const volume = snapshot.volume ?? previous.volume;
     const muted = snapshot.muted ?? previous.muted;
@@ -153,7 +153,7 @@ export class StatusAnnouncerCore {
     previous: MediaSnapshot,
     snapshot: MediaSnapshot,
     labels: StatusAnnouncerLabels,
-    suppress: boolean
+    alreadyHandled: boolean
   ): boolean {
     if (previous.seeking !== true && snapshot.seeking === true) {
       this.#seekStartTime = previous.currentTime ?? null;
@@ -176,7 +176,7 @@ export class StatusAnnouncerCore {
 
     if (targetTime === undefined || targetTime === null || Object.is(targetTime, startTime)) return false;
     if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return false;
-    if (suppress) return false;
+    if (alreadyHandled) return false;
 
     this.#scheduleSeekAnnouncement(formatSeekAnnouncerLabel(targetTime, labels), snapshot);
     return true;
@@ -188,7 +188,7 @@ export class StatusAnnouncerCore {
       this.#volumeTimer = null;
       if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return;
       this.#announce(label);
-    }, SNAPSHOT_ANNOUNCER_DEBOUNCE);
+    }, ANNOUNCEMENT_DEBOUNCE);
   }
 
   #scheduleSeekAnnouncement(label: string, snapshot: MediaSnapshot): void {
@@ -197,7 +197,7 @@ export class StatusAnnouncerCore {
       this.#seekTimer = null;
       if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return;
       this.#announce(label);
-    }, SNAPSHOT_ANNOUNCER_DEBOUNCE);
+    }, ANNOUNCEMENT_DEBOUNCE);
   }
 
   #clearSeekTimer(): void {
@@ -222,6 +222,6 @@ function hasChanged<Value>(previous: Value | undefined, next: Value | undefined)
   return previous !== undefined && next !== undefined && !Object.is(previous, next);
 }
 
-function formatAnnouncementLabels(labels: string[]): string {
-  return labels.join('. ');
+function formatAnnouncementQueue(queue: string[]): string {
+  return queue.join('. ');
 }
