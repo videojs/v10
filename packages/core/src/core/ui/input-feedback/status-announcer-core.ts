@@ -43,6 +43,15 @@ export class StatusAnnouncerCore {
     this.#props = props;
   }
 
+  resetSnapshot(): void {
+    this.#snapshot = null;
+    this.#seekStartTime = null;
+    this.#seekTargetTime = null;
+    this.#clearSeekTimer();
+    this.#clearVolumeTimer();
+    this.#close.close();
+  }
+
   destroy(): void {
     this.#clearSeekTimer();
     this.#clearVolumeTimer();
