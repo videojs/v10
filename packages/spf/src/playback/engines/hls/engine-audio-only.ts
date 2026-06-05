@@ -25,6 +25,7 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
+import { selectActiveCdn } from '../../behaviors/select-active-cdn';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 
@@ -51,6 +52,12 @@ export interface SimpleHlsAudioOnlyEngineState {
    * Multi-language-audio Tier 2 programmatic-write path.
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
+  /**
+   * The CDN the source is currently served from. Owned by `selectActiveCdn`,
+   * read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
+   * redundant-stream sources; a single-CDN source has one value.
+   */
+  activeCdn?: string;
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -142,6 +149,10 @@ export function createHlsAudioOnlyEngine(
       syncPreload,
       trackLoadTriggers,
       resolvePresentation,
+
+      // Session-level CDN pick for redundant-stream sources. Owns `activeCdn`;
+      // switchAudioTrack's preferActiveCdn scope reads it. No-op for single-CDN.
+      selectActiveCdn,
 
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's

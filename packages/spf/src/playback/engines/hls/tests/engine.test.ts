@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import type { PartiallyResolvedVideoTrack, Presentation } from '../../../../media/types';
 import { createSimpleHlsEngine } from '../engine';
 
 // Mock appendSegment to succeed without real MP4 data
@@ -59,6 +60,7 @@ describe('createSimpleHlsEngine', () => {
     // Everything else starts as `undefined` and behaviors write their
     // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
+      activeCdn: undefined,
       userVideoTrackSelection: undefined,
       bandwidthState: {
         fastEstimate: 0,
@@ -78,6 +80,54 @@ describe('createSimpleHlsEngine', () => {
 
     const contextSnapshot = snapshot(engine.context);
     expect(Object.values(contextSnapshot).every((v) => v === undefined)).toBe(true);
+
+    engine.destroy();
+  });
+
+  it('picks the active CDN and keeps the video selection on it (redundant-stream source)', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine();
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    // Same rendition duplicated across cdn-a (manifest head) and cdn-b.
+    engine.state.presentation.set({
+      id: 'pres-1',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('720p-a', 'cdn-a.example.com'), videoTrack('720p-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // selectActiveCdn picks the manifest-head CDN; preferActiveCdn keeps the
+    // video pick on it.
+    expect(engine.state.activeCdn.get()).toBe('https://cdn-a.example.com');
+    expect(engine.state.selectedVideoTrackId.get()).toBe('720p-a');
+
+    // Simulate an external/failover CDN change: the scope re-narrows and the
+    // selection follows to the other CDN's matching rendition.
+    engine.state.activeCdn.set('https://cdn-b.example.com');
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('720p-b');
 
     engine.destroy();
   });

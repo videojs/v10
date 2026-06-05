@@ -7,11 +7,15 @@
  * Selection runs a small ordered chain of rules over the candidate tracks
  * (`applyRules`). Each rule narrows or reorders the list and reads the signals
  * it needs at apply time, so the effect subscribes to exactly what the applied
- * rules consult. Today the chain is two rules, most authoritative first:
+ * rules consult. Today the chain is three rules, most authoritative first:
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   2. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
+ *   2. **active CDN** — a soft filter on `activeCdn` (`preferActiveCdn`): narrow
+ *      to tracks served from the session's active CDN; an empty match falls
+ *      through. Shared by video and audio, so every type stays on one CDN
+ *      (`selectActiveCdn` owns the choice). No-op for non-redundant sources.
+ *   3. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
  *      via boosting the current track's sort weight by `upgradeMargin`.
@@ -28,13 +32,15 @@
  * The pick is the head of the chain's result (`applyRules(...)[0]`). Each
  * variant supplies its **rule chain** via config; `setupTrackSwitching` owns
  * only the lifecycle and runs whatever chain it's given. Both variants today run
- * `[filterByUserSelection, rankByBandwidth]`; `switchVideoTrack` also accepts ABR
- * tuning config, `switchAudioTrack` takes none.
+ * `[filterByUserSelection, preferActiveCdn, rankByBandwidth]`; `switchVideoTrack`
+ * also accepts ABR tuning config, `switchAudioTrack` takes none.
  *
  * Deferred (not yet in the chain): a hard-constraints pre-pass (capability
- * probing, CDN failover) gating the candidate set, and audio's preferred-
- * language / default-track selection as standing soft-filter rules — previously
- * the empty-slot picker, dropped in the move to the rule chain.
+ * probing, CDN *failover* — excluding a failed CDN's tracks during cooldown)
+ * gating the candidate set, and audio's preferred-language / default-track
+ * selection as standing soft-filter rules — previously the empty-slot picker,
+ * dropped in the move to the rule chain. (The active-CDN *scope* above is the
+ * sticky-pick half of multi-CDN; the failed-CDN constraint is the failover half.)
  */
 
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
@@ -50,6 +56,7 @@ import {
   type PartiallyResolvedVideoTrack,
   type VideoTrack,
 } from '../../media/types';
+import { getCdnId } from '../../media/utils/cdn';
 import { getTracksByType } from '../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
@@ -178,11 +185,14 @@ export function applyRules<T, State, Context, Config>(
 // ============================================================================
 
 /**
- * Minimum candidate-track shape consumed by the helper. `bandwidth` feeds the
- * ranker's throughput sort; `width`/`height` are the equal-bitrate tie-break
- * (absent on audio, so audio candidates area-compare equal).
+ * Minimum candidate-track shape consumed by the helper and its rules: an `id`
+ * (the pick), a `url` (the active-CDN scope derives the CDN from it), an
+ * optional `bandwidth` (the ranker's throughput sort), and optional
+ * `width`/`height` (the ranker's equal-bitrate tie-break — absent on audio, so
+ * audio candidates area-compare equal). Every resolved/partially-resolved video
+ * track carries them all; audio tracks omit the dimensions.
  */
-type SwitchableTrack = { id: string; bandwidth?: number; width?: number; height?: number };
+type SwitchableTrack = { id: string; url: string; bandwidth?: number; width?: number; height?: number };
 
 type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
@@ -264,6 +274,16 @@ type BandwidthRankerStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S>
 type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> &
   SwitchVideoTrackConfig;
 
+/**
+ * State the active-CDN scope reads: the lifecycle map plus an *optional*
+ * `activeCdn`. The signal exists only when the composition includes
+ * `selectActiveCdn` (which materializes + owns it); the scope reads it
+ * defensively and passes through when it's absent (no CDN preference).
+ */
+type CdnScopeStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
+  activeCdn?: ReadonlySignal<string | undefined>;
+};
+
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
 
@@ -287,6 +307,29 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
   if (!key) return tracks;
   const filter = state[key]?.get();
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
+}
+
+/**
+ * Active-CDN scope — a soft filter, shared by video and audio. Narrows to the
+ * tracks served from the session's active CDN (`activeCdn`, owned by
+ * `selectActiveCdn`), so every track type stays on one CDN. A redundant-streams
+ * source lists the same renditions on multiple hosts; this keeps the pick on the
+ * sticky CDN rather than letting the ranker drift across hosts.
+ *
+ * Soft-filter semantics: passes through when there's no `activeCdn` signal/value
+ * (no preference) or when nothing matches it (`applyRules` skips an empty
+ * result). Non-redundant sources have one CDN, so the narrow is a no-op.
+ *
+ * The CDN-id derivation (`getCdnId`, origin-based) is hardcoded for now; a
+ * consumer-configurable derivation can move onto a rule config view later.
+ */
+function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
+  tracks: readonly T[],
+  { state }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
+): readonly T[] {
+  const activeCdn = state.activeCdn?.get();
+  if (!activeCdn) return tracks;
+  return tracks.filter((track) => getCdnId(track.url) === activeCdn);
 }
 
 /**
@@ -470,7 +513,7 @@ export const switchVideoTrack = defineBehavior({
         selectionKey: 'selectedVideoTrackId',
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        rules: [filterByUserSelection, rankByBandwidth],
+        rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
       },
     }),
 });
@@ -503,7 +546,7 @@ export const switchAudioTrack = defineBehavior({
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        rules: [filterByUserSelection, rankByBandwidth],
+        rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
       },
     }),
 });

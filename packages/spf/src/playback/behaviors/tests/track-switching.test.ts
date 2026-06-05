@@ -734,3 +734,102 @@ describe('applyRules', () => {
     expect(received).toEqual([all, deps]);
   });
 });
+
+// ============================================================================
+// preferActiveCdn — active-CDN scope (shared by video + audio)
+// ============================================================================
+
+describe('preferActiveCdn (active-CDN scope)', () => {
+  const cdnVideoTrack = (id: string, host: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [],
+    id,
+    url: `https://${host}/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  // Two renditions duplicated across cdn-a (listed first) and cdn-b.
+  const multiCdn = () =>
+    createPresentation([
+      cdnVideoTrack('720p-a', 'cdn-a.example.com', 2_400_000),
+      cdnVideoTrack('720p-b', 'cdn-b.example.com', 2_400_000),
+      cdnVideoTrack('1080p-a', 'cdn-a.example.com', 4_800_000),
+      cdnVideoTrack('1080p-b', 'cdn-b.example.com', 4_800_000),
+    ]);
+
+  // Bandwidth high enough that 1080p fits, so the pick is the highest rendition
+  // on whichever CDN the scope leaves standing.
+  const makeCdnState = (activeCdn?: string) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(multiCdn()),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    activeCdn: signal<string | undefined>(activeCdn),
+  });
+
+  it('narrows the pick to the active CDN, overriding manifest order', async () => {
+    // cdn-a's 1080p is listed first, so without the scope abr would pick 1080p-a.
+    const state = makeCdnState('https://cdn-b.example.com');
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+    reactor.destroy();
+  });
+
+  it('keeps the pick on the active CDN when it is the manifest head', async () => {
+    const state = makeCdnState('https://cdn-a.example.com');
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('falls through to all CDNs when activeCdn matches nothing', async () => {
+    const state = makeCdnState('https://cdn-z.example.com');
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('is a no-op when no activeCdn value is present', async () => {
+    const state = makeCdnState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('re-picks when activeCdn changes while staying resolved (failover-ready seam)', async () => {
+    const state = makeCdnState('https://cdn-a.example.com');
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    state.activeCdn.set('https://cdn-b.example.com');
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+
+    reactor.destroy();
+  });
+
+  it('applies the same scope to the audio chain (cross-type CDN coherence)', async () => {
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createAudioPresentation([
+          makeAudioTrack('aud-a', { url: 'https://cdn-a.example.com/aud.m3u8' }),
+          makeAudioTrack('aud-b', { url: 'https://cdn-b.example.com/aud.m3u8' }),
+        ])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(undefined),
+      selectedAudioTrackId: signal<string | undefined>(undefined),
+      userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(undefined),
+      activeCdn: signal<string | undefined>('https://cdn-b.example.com'),
+    };
+    const reactor = switchAudioTrack.setup({ state });
+    await flush();
+    expect(state.selectedAudioTrackId.get()).toBe('aud-b');
+    reactor.destroy();
+  });
+});
