@@ -103,11 +103,11 @@ export class StatusAnnouncerCore {
       handled = this.#announce(formatAnnouncementQueue(queue));
     }
 
-    if (this.#processVolumeSnapshot(previous, snapshot, labels, handled)) {
+    if (this.#processSeekSnapshot(previous, snapshot, labels, handled)) {
       handled = true;
     }
 
-    if (this.#processSeekSnapshot(previous, snapshot, labels, handled)) {
+    if (this.#processVolumeSnapshot(previous, snapshot, labels, handled)) {
       handled = true;
     }
 
