@@ -153,7 +153,13 @@ export function createHlsAudioOnlyEngine(
 
       // Session-level CDN priority for redundant-stream sources. Owns
       // `cdnPriority`; switchAudioTrack's preferActiveCdn scope reads it. No-op
-      // for single-CDN.
+      // for single-CDN sources.
+      //
+      // With a single track type there's no cross-type coherence to enforce and
+      // the first pick is the primary CDN regardless, so composition order is
+      // not load-bearing here today. It earns its place for forward-consistency
+      // with the default engine and for future failover / steering, where the
+      // active CDN changes dynamically (and selection stays reactive either way).
       resolveCdnPriority,
 
       // Audio track selection — slot owner with filter reactivity.

@@ -262,6 +262,17 @@ export function createSimpleHlsEngine(
       // Session-level CDN priority for redundant-stream sources. Owns
       // `cdnPriority`; `track-switching`'s preferActiveCdn scope reads it so
       // every type stays on one CDN. No-op for single-CDN sources.
+      //
+      // Placed before switch* so `cdnPriority` is set before the first pick —
+      // but this ordering is only *mildly* load-bearing, not required for
+      // correctness. Selection is reactive: a late `cdnPriority` re-fires the
+      // pick and converges on the same result (see the late-arrival test in
+      // track-switching.test.ts). Order affects only a transient, and only for
+      // an *asymmetric* manifest (a type listing a non-primary CDN first):
+      // composing this after switch* would let that type fire one wasted
+      // media-playlist fetch to the wrong CDN before correcting. Symmetric
+      // redundant streams (the norm) never hit it — the first-listed CDN is
+      // already the primary we'd pick anyway.
       resolveCdnPriority,
 
       // Track selection (reads config for initial preferences).
