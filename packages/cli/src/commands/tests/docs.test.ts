@@ -382,7 +382,8 @@ describe('handleDocs', () => {
         .mockResolvedValueOnce('default-video') // preset
         .mockResolvedValueOnce('video') // skin
         .mockResolvedValueOnce('hls') // media (user confirms detection hint)
-        .mockResolvedValueOnce('npm'); // installMethod
+        .mockResolvedValueOnce('npm') // installMethod
+        .mockResolvedValueOnce('packaged'); // embedMethod
 
       await handleDocs({ framework: 'html', 'source-url': 'https://example.com/video.m3u8' }, ['how-to/installation']);
 
