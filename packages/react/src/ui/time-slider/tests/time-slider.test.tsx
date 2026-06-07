@@ -213,8 +213,8 @@ describe('TimeSlider compound', () => {
   });
 });
 
-describe('TimeSliderRoot pauseWhileDragging', () => {
-  it('does nothing when pauseWhileDragging is false (default)', () => {
+describe('TimeSliderRoot pauseOnDrag', () => {
+  it('does nothing when pauseOnDrag is false (default)', () => {
     mockPlaybackState.paused = false;
     mockPlaybackState.play.mockClear();
     mockPlaybackState.pause.mockClear();
@@ -241,7 +241,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     const { Wrapper } = createPlayerWrapper();
     render(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging />
+        <TimeSliderRoot pauseOnDrag />
       </Wrapper>
     );
 
@@ -260,7 +260,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     const { Wrapper } = createPlayerWrapper();
     render(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging />
+        <TimeSliderRoot pauseOnDrag />
       </Wrapper>
     );
 
@@ -279,7 +279,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     const { Wrapper } = createPlayerWrapper();
     render(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging onDragStart={onDragStart} onDragEnd={onDragEnd} />
+        <TimeSliderRoot pauseOnDrag onDragStart={onDragStart} onDragEnd={onDragEnd} />
       </Wrapper>
     );
 
@@ -290,7 +290,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     expect(onDragEnd).toHaveBeenCalled();
   });
 
-  it('resumes on drag-end even if pauseWhileDragging is turned off mid-drag', () => {
+  it('resumes on drag-end even if pauseOnDrag is turned off mid-drag', () => {
     mockPlaybackState.paused = false;
     mockPlaybackState.play.mockClear();
     mockPlaybackState.pause.mockClear();
@@ -298,7 +298,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     const { Wrapper } = createPlayerWrapper();
     const { rerender } = render(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging />
+        <TimeSliderRoot pauseOnDrag />
       </Wrapper>
     );
 
@@ -307,7 +307,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
 
     rerender(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging={false} />
+        <TimeSliderRoot pauseOnDrag={false} />
       </Wrapper>
     );
 
@@ -323,7 +323,7 @@ describe('TimeSliderRoot pauseWhileDragging', () => {
     const { Wrapper } = createPlayerWrapper();
     const { unmount } = render(
       <Wrapper>
-        <TimeSliderRoot pauseWhileDragging />
+        <TimeSliderRoot pauseOnDrag />
       </Wrapper>
     );
 

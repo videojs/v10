@@ -34,17 +34,17 @@ describe('TimeSliderElement', () => {
     expect(slider.orientation).toBe('horizontal');
     expect(slider.disabled).toBe(false);
     expect(slider.thumbAlignment).toBe('center');
-    expect(slider.pauseWhileDragging).toBe(false);
+    expect(slider.pauseOnDrag).toBe(false);
   });
 
-  it('reflects pause-while-dragging attribute to property', async () => {
+  it('reflects pause-on-drag attribute to property', async () => {
     const slider = createElement(TimeSliderElement);
-    slider.setAttribute('pause-while-dragging', '');
+    slider.setAttribute('pause-on-drag', '');
 
     document.body.appendChild(slider);
     await slider.updateComplete;
 
-    expect(slider.pauseWhileDragging).toBe(true);
+    expect(slider.pauseOnDrag).toBe(true);
   });
 
   it('binds rootProps pointer events on connect', async () => {

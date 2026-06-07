@@ -31,7 +31,7 @@ export class TimeSliderElement extends MediaElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
-    pauseWhileDragging: { type: Boolean, attribute: 'pause-while-dragging' },
+    pauseOnDrag: { type: Boolean, attribute: 'pause-on-drag' },
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
@@ -41,14 +41,13 @@ export class TimeSliderElement extends MediaElement {
   orientation = TimeSliderCore.defaultProps.orientation;
   disabled = TimeSliderCore.defaultProps.disabled;
   thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
-  pauseWhileDragging = TimeSliderCore.defaultProps.pauseWhileDragging;
+  pauseOnDrag = TimeSliderCore.defaultProps.pauseOnDrag;
 
   readonly #core = new TimeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
   readonly #playbackState = new PlayerController(this, playerContext, selectPlayback);
-  #wasPlayingBeforeDrag = false;
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -79,21 +78,11 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
-        this.#wasPlayingBeforeDrag = false;
-        const playback = this.#playbackState.value;
-        if (this.pauseWhileDragging && playback && !playback.paused) {
-          this.#wasPlayingBeforeDrag = true;
-          playback.pause();
-        }
+        this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        if (this.#wasPlayingBeforeDrag) {
-          this.#playbackState.value?.play().catch(() => {
-            // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
-          });
-        }
-        this.#wasPlayingBeforeDrag = false;
+        this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -126,10 +115,7 @@ export class TimeSliderElement extends MediaElement {
   // would leave playback paused. Called from both disconnect and destroy paths
   // before super so the PlayerController is still attached.
   #resumeIfDragPaused(): void {
-    if (this.#wasPlayingBeforeDrag) {
-      this.#playbackState.value?.play().catch(() => {});
-      this.#wasPlayingBeforeDrag = false;
-    }
+    this.#core.endDrag(this.#playbackState.value);
   }
 
   protected override willUpdate(_changed: PropertyValues): void {

@@ -3,7 +3,7 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { formatTime } from '@videojs/utils/time';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -34,7 +34,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       thumbAlignment,
       onDragStart,
       onDragEnd,
-      pauseWhileDragging = TimeSliderCore.defaultProps.pauseWhileDragging,
+      pauseOnDrag,
       ...elementProps
     } = componentProps;
 
@@ -43,23 +43,17 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const playback = usePlayer(selectPlayback);
 
     const [core] = useState(() => new TimeSliderCore());
-    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment });
+    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment, pauseOnDrag });
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
     const playbackRef = useLatestRef(playback);
-    const wasPlayingRef = useRef(false);
 
     // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
     // does not fire onDragEnd, so without this the player would stay paused.
     useEffect(() => {
-      return () => {
-        if (wasPlayingRef.current) {
-          playbackRef.current?.play().catch(() => {});
-          wasPlayingRef.current = false;
-        }
-      };
-    }, []);
+      return () => core.endDrag(playbackRef.current);
+    }, [core]);
 
     const duration = time?.duration ?? 0;
 
@@ -95,21 +89,11 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         if (media) media.seek(core.rawValueFromPercent(percent));
       },
       onDragStart: () => {
-        wasPlayingRef.current = false;
-        const playback = playbackRef.current;
-        if (pauseWhileDragging && playback && !playback.paused) {
-          wasPlayingRef.current = true;
-          playback.pause();
-        }
+        core.startDrag(playbackRef.current);
         onDragStart?.();
       },
       onDragEnd: () => {
-        if (wasPlayingRef.current) {
-          playbackRef.current?.play().catch(() => {
-            // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
-          });
-        }
-        wasPlayingRef.current = false;
+        core.endDrag(playbackRef.current);
         onDragEnd?.();
       },
     });
