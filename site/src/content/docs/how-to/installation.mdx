@@ -182,6 +182,63 @@ Add it to your components folder in a new file.
 
 </div>
 
+## Self-host the player
+
+The CDN tab loads the player from a public CDN. To serve everything from your own origin instead — for offline, air-gapped, or locked-down network deployments — pick one of the options below.
+
+<FrameworkCase frameworks={["html"]}>
+
+### Bundle a single file (recommended)
+
+Install the package, put the JavaScript imports from the **Use your player** step above into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player that's:
+
+```js title="player.js"
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+```
+
+```bash
+npm install @videojs/html
+npx esbuild player.js --bundle --format=esm --minify --outfile=public/player.js
+```
+
+Load the output as a module — the same `type="module"` requirement as the CDN path applies:
+
+```html
+<script type="module" src="/player.js"></script>
+```
+
+You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works — Vite, Rollup, or webpack — as long as the output stays ESM.
+
+### Mirror the prebuilt CDN files
+
+To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
+
+<Aside type="caution" title="Copy the whole cdn/ directory">
+The CDN entry files (`video.js`, `media/hls-video.js`, …) are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, …) that live alongside them. Copying a single file breaks at runtime — mirror the entire `cdn/` directory and keep its layout intact.
+</Aside>
+
+```bash
+npm install @videojs/html
+cp -r node_modules/@videojs/html/cdn public/videojs
+```
+
+Then point each script tag at your copy instead of the CDN:
+
+```html
+<script type="module" src="/videojs/video.js"></script>
+```
+
+Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+`@videojs/react` is bundled into your app like any other dependency, so your normal production build already serves the player from your own origin with no CDN or runtime fetches. No extra steps are needed for offline or self-hosted deployments.
+
+</FrameworkCase>
+
 ## CSP
 
 If your application uses a Content Security Policy, you may need to allow additional sources for player features to work correctly.
