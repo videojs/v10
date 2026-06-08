@@ -59,7 +59,7 @@ import {
   type PartiallyResolvedVideoTrack,
   type VideoTrack,
 } from '../../media/types';
-import { getCdnId } from '../../media/utils/cdn';
+import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
 import { getTracksByType } from '../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
@@ -94,6 +94,8 @@ export interface SwitchVideoTrackConfig {
   quality?: Partial<QualityConfig>;
   bandwidth?: Partial<BandwidthConfig>;
   initialBandwidth?: number;
+  /** Override CDN-id derivation (shared by the CDN scope + failover constraint). */
+  getCdnId?: GetCdnId;
 }
 
 /** Default initial-bandwidth value before bandwidth measurements arrive. */
@@ -326,6 +328,17 @@ type CdnConstraintStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> &
   failedCdns?: ReadonlySignal<string[] | undefined>;
 };
 
+/**
+ * Config the CDN rules read: the base config plus an *optional* `getCdnId`
+ * override. Both `excludeFailedCdns` and `preferActiveCdn` derive a track's CDN
+ * from its URL; the override must be the *same* one `resolveCdnPriority` and the
+ * failover trip use, or the keys stop matching. Optional → defaults to the
+ * origin-based `getCdnId`, so the base config (without it) stays assignable.
+ */
+type CdnRuleConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> & {
+  getCdnId?: GetCdnId;
+};
+
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
 
@@ -365,10 +378,11 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  */
 function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state }: SelectionRuleDeps<CdnConstraintStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
+  { state, config }: SelectionRuleDeps<CdnConstraintStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const failed = state.failedCdns?.get();
   if (!failed?.length) return tracks;
+  const getCdnId = config.getCdnId ?? defaultGetCdnId;
   const failedSet = new Set(failed);
   return tracks.filter((track) => !failedSet.has(getCdnId(track.url)));
 }
@@ -390,15 +404,17 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
  * (no preference) or when nothing matches (`applyRules` skips an empty result).
  * Non-redundant sources have one CDN, so the narrow is a no-op.
  *
- * The CDN-id derivation (`getCdnId`, origin-based) is hardcoded for now; a
- * consumer-configurable derivation can move onto a rule config view later.
+ * The CDN-id derivation defaults to origin-based `getCdnId`, overridable via the
+ * `getCdnId` config — it must match the one `resolveCdnPriority` used to build
+ * `cdnPriority`, or no track's CDN would ever equal an entry.
  */
 function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
+  { state, config }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const cdnPriority = state.cdnPriority?.get();
   if (!cdnPriority?.length) return tracks;
+  const getCdnId = config.getCdnId ?? defaultGetCdnId;
   for (const cdn of cdnPriority) {
     const tracksUsingCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
     if (tracksUsingCdn.length) return tracksUsingCdn;
@@ -612,11 +628,28 @@ export const switchVideoTrack = defineBehavior({
 export const switchAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state, ...otherProps }: { state: TrackSwitchingStateMap<'selectedAudioTrackId'> }) =>
+  setup: ({
+    state,
+    config,
+    ...otherProps
+  }: {
+    state: TrackSwitchingStateMap<'selectedAudioTrackId'>;
+    // Shares the video config shape so the engine config spreads through (CDN
+    // derivation + any future cross-cutting fields).
+    config?: SwitchVideoTrackConfig;
+  }) =>
     setupTrackSwitching({
       ...otherProps,
       state,
       config: {
+        // Spread engine config so cross-cutting fields (`getCdnId`, future shared
+        // tuning) flow through like they do for video, then override the per-type
+        // wiring. Video-only ABR tuning (`quality`/`bandwidth`/`initialBandwidth`)
+        // rides along into the shared `rankByBandwidth` too; harmless since audio
+        // has no `bandwidthState` to act on it and the ranker always yields a pick.
+        // FOLLOW-UP: a shared config type for the genuinely cross-cutting fields
+        // would keep video-only tuning out of audio entirely (CJP).
+        ...config,
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],

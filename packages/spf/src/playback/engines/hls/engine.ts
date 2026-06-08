@@ -16,6 +16,7 @@ import {
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -212,6 +213,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * sources.
    */
   failover?: Partial<FailoverMonitorConfig>;
+  /**
+   * How to derive a CDN grouping key from a track URL — used to build
+   * `cdnPriority`, to record the failover trip in `failedCdns`, and by the
+   * track-switching CDN scope + failover constraint. One function, read by all of
+   * them, so the keys stay comparable. Defaults to the URL origin; override to
+   * key on something else (e.g. Mux's `cdn=` query param).
+   */
+  getCdnId?: GetCdnId;
 }
 
 // ============================================================================

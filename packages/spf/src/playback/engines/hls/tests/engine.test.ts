@@ -334,6 +334,52 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
+  it('honors a custom getCdnId across cdnPriority, the trip, and the constraint/scope', async () => {
+    // Key CDNs on the `cdn=` query param instead of origin. Both variants share a
+    // host, so origin-based identity would see ONE CDN (no redundancy); the
+    // custom resolver must be respected at every site for failover to work.
+    const getCdnId = (url: string) => new URL(url).searchParams.get('cdn') ?? url;
+    const engine = createSimpleHlsEngine({ getCdnId, failover: { cooldownMs: 60_000 } });
+
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
+      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+    }) as typeof fetch;
+
+    const videoTrack = (id: string, cdn: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://cdn.example.com/${id}.m3u8?cdn=${cdn}`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-custom-cdn',
+      url: 'https://cdn.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [{ id: 'vs', type: 'video', tracks: [videoTrack('vid-a', 'a'), videoTrack('vid-b', 'b')] }],
+        },
+      ],
+    } as Presentation);
+
+    await vi.waitFor(() => {
+      // resolveCdnPriority keyed on the param (not origin → not a single CDN).
+      expect(engine.state.cdnPriority.get()).toEqual(['a', 'b']);
+      // The trip recorded the param key, and the constraint + scope failed over.
+      expect(engine.state.failedCdns.get()).toEqual(['a']);
+      expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    });
+
+    engine.destroy();
+  });
+
   it('allows patching state and owners from outside', async () => {
     const engine = createSimpleHlsEngine();
 

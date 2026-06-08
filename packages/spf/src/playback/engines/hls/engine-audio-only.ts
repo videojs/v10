@@ -9,6 +9,7 @@ import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, MaybeResolvedPresentation } from '../../../media/types';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -103,6 +104,12 @@ export interface SimpleHlsAudioOnlyEngineConfig
   backBuffer?: Partial<BackBufferConfig>;
   /** Multi-CDN failover monitor tuning. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
   failover?: Partial<FailoverMonitorConfig>;
+  /**
+   * Derive a CDN grouping key from a track URL (used by `cdnPriority`, the
+   * failover trip, and the track-switching CDN rules — one function read by all).
+   * Defaults to the URL origin; override to key on e.g. Mux's `cdn=` param.
+   */
+  getCdnId?: GetCdnId;
 }
 
 // ============================================================================

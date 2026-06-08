@@ -5,7 +5,7 @@ import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { getCdnId } from '../../media/utils/cdn';
+import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
@@ -46,19 +46,22 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
     presentation: MaybeResolvedPresentation,
     trackId: string
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
+  /** Override CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
+  getCdnId?: GetCdnId;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve },
+  config: { selectedKey, findTrackToResolve, getCdnId = defaultGetCdnId },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
 }) {
-  // On a failed media-playlist fetch, add the track's CDN (origin) to
-  // `failedCdns` — the failover trip. `setupFailoverMonitor` watches the signal
-  // and removes the CDN once its cooldown lapses. Idempotent: re-adding an
-  // already-failed CDN is a no-op.
+  // On a failed media-playlist fetch, add the track's CDN to `failedCdns` — the
+  // failover trip. `setupFailoverMonitor` watches the signal and removes the CDN
+  // once its cooldown lapses. Idempotent: re-adding an already-failed CDN is a
+  // no-op. The CDN-id derivation defaults to origin, overridable via config so it
+  // stays consistent with `cdnPriority` + the track-switching constraint/scope.
   const failCdn = (url: string) =>
     update(state.failedCdns, (current) => {
       const cdn = getCdnId(url);
