@@ -63,3 +63,13 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation, getId:
   }
   return ids;
 }
+
+/**
+ * Add a CDN id to a failed-CDN list, preserving order and ignoring duplicates.
+ * Idempotent: re-adding an already-present id returns the same array reference
+ * (so a no-op trip doesn't churn the `failedCdns` signal). The failover trip in
+ * `resolve-track` and the segment loaders feed this into `failedCdns` via `update`.
+ */
+export function addFailedCdn(failed: string[] | undefined, cdn: string): string[] {
+  return failed?.includes(cdn) ? failed : [...(failed ?? []), cdn];
+}

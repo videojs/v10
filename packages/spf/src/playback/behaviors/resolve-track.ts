@@ -5,7 +5,7 @@ import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
+import { addFailedCdn, getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
@@ -192,10 +192,7 @@ function failoverFetch<K extends SelectedTrackKey>(
       // change / teardown) doesn't. No-op when no failover monitor is composed
       // (it owns the signal).
       if (!options?.signal?.aborted && state.failedCdns) {
-        update(state.failedCdns, (cdns) => {
-          const cdn = getCdnId(addressable.url);
-          return cdns?.includes(cdn) ? cdns : [...(cdns ?? []), cdn];
-        });
+        update(state.failedCdns, (cdns) => addFailedCdn(cdns, getCdnId(addressable.url)));
       }
       throw error;
     }
