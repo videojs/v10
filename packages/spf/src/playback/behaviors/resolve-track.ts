@@ -7,7 +7,8 @@ import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack }
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
-import { fetchResolvable, getResponseText } from '../../network/fetch';
+import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
+import { reportFailedCdns } from './setup-failover-monitor';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -37,7 +38,6 @@ type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selec
 
 type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
-  failedCdns: Signal<ResolveTrackState['failedCdns']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
 interface TrackResolutionConfig<K extends SelectedTrackKey> {
@@ -46,27 +46,28 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
     presentation: MaybeResolvedPresentation,
     trackId: string
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
-  /** Override CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
+  /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
+  fetchResolvableText?: FetchText;
+}
+
+/**
+ * Engine-config slice each `resolve*` behavior reads to build its failover-
+ * decorated playlist fetch. Both optional with defaults.
+ */
+interface ResolveTrackConfig {
+  /** Base (pre-decoration) media-playlist fetch; defaults to `fetchResolvableText`. */
+  fetchResolvableText?: FetchText;
+  /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve, getCdnId = defaultGetCdnId },
+  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
 }) {
-  // On a failed media-playlist fetch, add the track's CDN to `failedCdns` — the
-  // failover trip. `setupFailoverMonitor` watches the signal and removes the CDN
-  // once its cooldown lapses. Idempotent: re-adding an already-failed CDN is a
-  // no-op. The CDN-id derivation defaults to origin, overridable via config so it
-  // stays consistent with `cdnPriority` + the track-switching constraint/scope.
-  const failCdn = (url: string) =>
-    update(state.failedCdns, (current) => {
-      const cdn = getCdnId(url);
-      return current?.includes(cdn) ? current : [...(current ?? []), cdn];
-    });
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
@@ -119,30 +120,23 @@ function setupTrackResolution<K extends SelectedTrackKey>({
               // likely eventually passed down via config or a new "definitions" argument (CJP).
               new Task(
                 async (signal) => {
-                  try {
-                    const response = await fetchResolvable(track, { signal });
-                    // A non-OK status is a CDN failure (fetch only rejects on
-                    // network errors): trip the CDN so the constraint prunes it.
-                    if (!response.ok) failCdn(track.url);
-                    const text = await getResponseText(response);
-                    const mediaTrack = parseMediaPlaylist(text, track);
+                  // `fetchResolvableText` is the behavior's failover-decorated
+                  // fetch: it trips the CDN on a failed fetch (network error or
+                  // non-OK status). A parse failure is a content issue, not a
+                  // CDN-availability one, so it doesn't trip.
+                  const text = await fetchResolvableText(track, { signal });
+                  const mediaTrack = parseMediaPlaylist(text, track);
 
-                    // Updater handles undefined inputs by returning current
-                    // unchanged; isResolvedPresentation narrows for the patch.
-                    // State-exit on resolving→unresolved fires runner.abortAll
-                    // before any URL change settles, and per the Fetch spec the
-                    // signal abort cancels in-flight body reads — so by the
-                    // time we reach this point the presentation we resolved
-                    // against is the live one.
-                    update(state.presentation, (current) =>
-                      isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
-                    );
-                  } catch (error) {
-                    // A network error (down CDN) is a failure; an abort (src
-                    // change / teardown) is not.
-                    if (!signal.aborted) failCdn(track.url);
-                    throw error;
-                  }
+                  // Updater handles undefined inputs by returning current
+                  // unchanged; isResolvedPresentation narrows for the patch.
+                  // State-exit on resolving→unresolved fires runner.abortAll
+                  // before any URL change settles, and per the Fetch spec the
+                  // signal abort cancels in-flight body reads — so by the
+                  // time we reach this point the presentation we resolved
+                  // against is the live one.
+                  update(state.presentation, (current) =>
+                    isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
+                  );
                 },
                 { id: track.id }
               )
@@ -176,6 +170,27 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
     findTrack(presentation, 'text', trackId),
 } as const;
 
+/**
+ * Build a behavior's failover-decorated playlist fetch: wrap the base fetch so a
+ * failed request trips the track's CDN into `failedCdns`.
+ *
+ * `state` is typed as the behavior's map intersected with an *optional*
+ * `failedCdns` — the failover monitor owns that slot, so a behavior's narrow
+ * state is assignable here without the behavior declaring it (and the
+ * intersection shares keys, so it isn't a weak type). When no monitor is
+ * composed the slot is absent and tracking no-ops.
+ */
+function failoverFetch<K extends SelectedTrackKey>(
+  state: ResolveTrackStateMap<K> & { failedCdns?: Signal<ResolveTrackState['failedCdns']> },
+  config: ResolveTrackConfig
+): FetchText {
+  return reportFailedCdns(
+    config.fetchResolvableText ?? defaultFetchResolvableText,
+    state.failedCdns,
+    config.getCdnId ?? defaultGetCdnId
+  );
+}
+
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
@@ -186,12 +201,18 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
  * writes the resolved track back into `state.presentation`.
  */
 export const resolveVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'failedCdns'],
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedVideoTrackId'>; config?: object }) =>
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedVideoTrackId'>;
+    config?: ResolveTrackConfig;
+  }) =>
     setupTrackResolution({
       state,
-      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config },
+      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
     }),
 });
 
@@ -200,12 +221,18 @@ export const resolveVideoTrack = defineBehavior({
  * narrowed to audio.
  */
 export const resolveAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId', 'failedCdns'],
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedAudioTrackId'>; config?: object }) =>
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedAudioTrackId'>;
+    config?: ResolveTrackConfig;
+  }) =>
     setupTrackResolution({
       state,
-      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config },
+      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
     }),
 });
 
@@ -214,11 +241,17 @@ export const resolveAudioTrack = defineBehavior({
  * narrowed to text.
  */
 export const resolveTextTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedTextTrackId', 'failedCdns'],
+  stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedTextTrackId'>; config?: object }) =>
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedTextTrackId'>;
+    config?: ResolveTrackConfig;
+  }) =>
     setupTrackResolution({
       state,
-      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config },
+      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
     }),
 });

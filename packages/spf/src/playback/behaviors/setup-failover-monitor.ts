@@ -20,6 +20,8 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { effect } from '../../core/signals/effect';
 import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
+import type { GetCdnId } from '../../media/utils/cdn';
+import type { FetchText } from '../../network/fetch';
 
 /**
  * Failover policy: how long a CDN stays excluded after a failed fetch trips it.
@@ -42,6 +44,34 @@ export interface SetupFailoverMonitorState {
 export interface SetupFailoverMonitorConfig {
   /** Failover policy (cooldown); defaults to `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
   failover?: Partial<FailoverMonitorConfig>;
+}
+
+/**
+ * Decorate a {@link FetchText} so a failed fetch trips its CDN into `failedCdns`
+ * — the failover trip — mirroring how `createTrackedFetch` decorates a
+ * `FetchBytes` with bandwidth sampling. A rejection (network error or non-OK
+ * status) adds `getCdnId(url)` to `failedCdns`; an abort (src change / teardown)
+ * does not. `failedCdns` is optional — when no monitor is composed there's no
+ * signal and tracking is a no-op (the monitor owns materializing it).
+ */
+export function reportFailedCdns(
+  fetchText: FetchText,
+  failedCdns: Signal<string[] | undefined> | undefined,
+  getCdnId: GetCdnId
+): FetchText {
+  return async (addressable, options) => {
+    try {
+      return await fetchText(addressable, options);
+    } catch (error) {
+      if (!options?.signal?.aborted && failedCdns) {
+        update(failedCdns, (current) => {
+          const cdn = getCdnId(addressable.url);
+          return current?.includes(cdn) ? current : [...(current ?? []), cdn];
+        });
+      }
+      throw error;
+    }
+  };
 }
 
 /**
