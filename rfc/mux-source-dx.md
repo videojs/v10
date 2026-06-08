@@ -227,9 +227,7 @@ flavors. Either one uses two triggers:
 The surface that feeds both is a stable per-token refresher (function) or an
 `onTokenExpiring` / `token-refresh` event the consumer answers with a fresh
 token. The engine-side counterpart is `refreshPlaybackToken(originalUrl,
-errorContext)` from [network-resilience.md], whose cross-cutting note weighs
-harmonizing this with the DRM license-refresh hook but currently leans toward
-keeping them separate per-feature (#1411–#1414).
+errorContext)` from [network-resilience.md].
 
 ### Thumbnails & poster
 
@@ -260,14 +258,19 @@ playback-restriction error handling) rather than a silent stall.
 - **Resolver home & extensibility** — does the resolver live on the element, in
   core, or in a Mux adapter? Is it a public extension point for non-Mux
   providers, or Mux-internal for now? (Lean: internal first.)
-- **Goal-B + thumbnails** — if the user passes only a full signed `src`, can we
-  still derive thumbnails, or does that require `playback-id`?
-- **DRM harmonization** — unify the token-refresh and DRM license-refresh hook
-  shapes (#1411–#1414, [network-resilience.md] cross-cutting note)?
-- **Pass-through prerequisite** — a minimal `playback-token` attribute that
-  appends `?token=` to the resolved URL (the `@mux/playback-core` `toMuxVideoURL`
-  shape, [#1432]): ship it first as an independent step, or only as part of the
-  resolver?
+- **Goal-B + thumbnails** — thumbnails come from a different URL
+  (`image.mux.com/{playback-id}/…`), and the playback-id can be extracted from the
+  `src`. The blocker is the token: Mux scopes JWTs by an `aud` claim — `v` (video),
+  `t` (thumbnail), `s` (storyboard) — so the *video* token embedded in a signed
+  `src` can't sign a thumbnail. A `src`-only flow (Goal B) therefore can't build a
+  working *signed* thumbnail without a separate `thumbnail` token. Do we require
+  that extra token, or accept that signed thumbnails need the convenience inputs?
+- **Pass-through prerequisite** — the smallest standalone step: a `playback-token`
+  attribute that just appends `?token=<token>` to the `src` — no resolver, no
+  refresh (the same thing `@mux/playback-core`'s `toMuxVideoURL` does, [#1432]).
+  It makes signed playback *work* before any of the above is built. Ship it first
+  as a quick win to unblock signed playback, or only deliver it as part of the
+  Option 3 resolver?
 
 ## Final Decision
 
@@ -282,7 +285,7 @@ playback-restriction error handling) rather than a silent stall.
 - [#1432] — Signed token refresh (motivating issue)
 - #1431 — Playback restriction error handling (expired-token error path)
 - #977 — Mux Media Elements (epic)
-- #1411–#1414 — DRM (shared secure-playback space; refresh-hook harmonization)
+- #1411–#1414 — DRM (related secure-playback work)
 - [network-resilience.md] — SPF Tier 1/2 retry & refresh
 - [media.md](/internal/design/media.md) — media contracts & engine lifecycle
   (the engine-agnostic substrate)
