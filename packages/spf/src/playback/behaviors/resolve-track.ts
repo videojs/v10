@@ -8,7 +8,6 @@ import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
-import { reportFailedCdns } from './setup-failover-monitor';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -52,11 +51,9 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 
 /**
  * Engine-config slice each `resolve*` behavior reads to build its failover-
- * decorated playlist fetch. Both optional with defaults.
+ * decorated playlist fetch.
  */
 interface ResolveTrackConfig {
-  /** Base (pre-decoration) media-playlist fetch; defaults to `fetchResolvableText`. */
-  fetchResolvableText?: FetchText;
   /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
 }
@@ -184,11 +181,25 @@ function failoverFetch<K extends SelectedTrackKey>(
   state: ResolveTrackStateMap<K> & { failedCdns?: Signal<ResolveTrackState['failedCdns']> },
   config: ResolveTrackConfig
 ): FetchText {
-  return reportFailedCdns(
-    config.fetchResolvableText ?? defaultFetchResolvableText,
-    state.failedCdns,
-    config.getCdnId ?? defaultGetCdnId
-  );
+  const getCdnId = config.getCdnId ?? defaultGetCdnId;
+  return async (addressable, options) => {
+    try {
+      // `fetchResolvableText` rejects on non-OK, so this one catch covers both
+      // non-OK status and network errors → a single trip site.
+      return await defaultFetchResolvableText(addressable, options);
+    } catch (error) {
+      // A failed fetch trips the track's CDN into `failedCdns`; an abort (src
+      // change / teardown) doesn't. No-op when no failover monitor is composed
+      // (it owns the signal).
+      if (!options?.signal?.aborted && state.failedCdns) {
+        update(state.failedCdns, (cdns) => {
+          const cdn = getCdnId(addressable.url);
+          return cdns?.includes(cdn) ? cdns : [...(cdns ?? []), cdn];
+        });
+      }
+      throw error;
+    }
+  };
 }
 
 // ============================================================================
