@@ -134,13 +134,13 @@ themselves.
   the v8 `reloadSourceOnError` failure mode [#1432] cites; thumbnails/poster
   aren't automatic; worse out-of-box DX.
 
-### Option 3 — Pluggable source-resolver, convenience sugar on top
+### Option 3 — Pluggable source-resolver with optional convenience inputs
 
 Make the **middle layer the contract.** A *source-resolver* maps component
 config to the URL(s) the engine plays:
 
 - Raw `src` is the base case — the resolver is identity.
-- `playback-id` + `tokens` is **sugar**: the default Mux resolver expands it to
+- `playback-id` + `tokens` is an **optional convenience**: the default Mux resolver expands it to
   a signed `stream.mux.com` URL.
 - The same resolver seam re-resolves the URL on (or before) token expiry —
   engine-agnostically, above the engine. The 4xx-trigger-and-retry half is
@@ -150,13 +150,13 @@ config to the URL(s) the engine plays:
   util and keep passing `src`.
 
 So A and B stop being either/or: the raw URL is the contract, the convenience
-inputs are sugar over the same seam, and refresh + thumbnails derive from one
+inputs resolve through the same seam, and refresh + thumbnails derive from one
 resolved identity.
 
 **Recommended default shape:** the leanest config — a `src` plus an *optional*
 token-refresher (no `playback-id`, no `tokens` object). The player swaps the
 `?token=` on (or before) expiry using the refresher; `playback-id` + `tokens`
-stay available as heavier opt-in sugar for full convenience. This keeps the
+stay available as a heavier opt-in for full convenience. This keeps the
 surface minimal (Goal B) while the player still owns refresh (unlike Option 2),
 and — with no `playback-id` input — sidesteps the `src` / `playback-id`
 precedence question entirely.
@@ -173,19 +173,19 @@ precedence question entirely.
 **Option 3.** It's the only one that satisfies the engine-agnostic constraint
 *and* both DX goals, and the only one where [#1432]'s refresh has a natural
 place to live. Options 1 and 2 are really the two *ends* of Option 3 — the
-convenience sugar and the raw-URL base case — so adopting 3 doesn't foreclose
+convenience inputs and the raw-URL base case — so adopting 3 doesn't foreclose
 either style of use, which also makes it the least-committal (most reversible)
 choice.
 
 **What it looks like** — the recommended default is the leanest shape: a `src`
 plus an *optional* token-refresher. `playback-id` + `tokens` stay available as
-heavier opt-in sugar (Goal A).
+heavier opt-in convenience inputs (Goal A).
 
 ```html
 <!-- Recommended default: src is the contract -->
 <mux-video src="https://stream.mux.com/abc123.m3u8?token=…"></mux-video>
 
-<!-- Opt-in sugar: the resolver builds the signed URL + thumbnails -->
+<!-- Opt-in convenience: the resolver builds the signed URL + thumbnails -->
 <mux-video playback-id="abc123"></mux-video>
 ```
 
@@ -196,7 +196,7 @@ heavier opt-in sugar (Goal A).
 // on (or before) expiry. No playback-id → no src / playback-id precedence.
 el.refreshToken = () => fetchFreshToken();
 
-// Heavier opt-in sugar: structured inputs the resolver expands and refreshes.
+// Heavier opt-in convenience: structured inputs the resolver expands and refreshes.
 el.tokens = { playback: () => fetchFreshToken(), thumbnail: '…', storyboard: '…' };
 ```
 
@@ -215,14 +215,14 @@ refresh itself** — its token is embedded and expiring, so *something* has to k
 how to get a fresh one. Any option that refreshes automatically therefore needs
 *some* surface beyond a static `src`; the only question is its shape:
 
-- **`src`-flavored** — `src` + a callback returning a fresh **full URL** (no
+- **`src`-based** — `src` + a callback returning a fresh **full URL** (no
   `playback-id`, no `tokens`). Closest to Goal B.
-- **convenience-flavored** — `playback-id` + `tokens` + a refresher returning a
+- **convenience-based** — `playback-id` + `tokens` + a refresher returning a
   fresh **token**, which the resolver rebuilds into a URL. Goal A.
 
 This is why "everything depends on `src`" can't fully hold for [#1432] under any
 option — refresh always needs at least a callback. Option 3's seam carries both
-flavors. Either one uses two triggers:
+forms. Either one uses two triggers:
 
 - **Reactive** — on a `403` expired-token response, re-resolve and retry the
   request. This is the Shaka / hls.js precedent ([#1432]) and the SPF Tier-2
@@ -261,9 +261,9 @@ playback-restriction error handling) rather than a silent stall.
   `packages/core/src/dom/media/mux/mux-data.ts`). *If* Option 3 adds
   `playback-id` as a settable convenience input, a user could set both it and
   `src` — so we'd need a rule. (Lean: `src` is the contract and `playback-id` is
-  sugar that *produces* a `src`, so an explicit `src` wins.) The recommended
+  a shorthand that *produces* a `src`, so an explicit `src` wins.) The recommended
   default shape (`src` + token-refresher, no `playback-id`) avoids this entirely
-  — it only arises if the convenience sugar is used.
+  — it only arises if the convenience inputs are used.
 - **Refresh surface** — per-token refresher function vs `onTokenExpiring` event
   vs both; proactive, reactive, or both by default; and if proactive, where the
   `exp`-decoding scheduler lives (resolver / engine / element).
