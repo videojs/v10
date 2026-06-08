@@ -153,6 +153,14 @@ So A and B stop being either/or: the raw URL is the contract, the convenience
 inputs are sugar over the same seam, and refresh + thumbnails derive from one
 resolved identity.
 
+**Recommended default shape:** the leanest config — a `src` plus an *optional*
+token-refresher (no `playback-id`, no `tokens` object). The player swaps the
+`?token=` on (or before) expiry using the refresher; `playback-id` + `tokens`
+stay available as heavier opt-in sugar for full convenience. This keeps the
+surface minimal (Goal B) while the player still owns refresh (unlike Option 2),
+and — with no `playback-id` input — sidesteps the `src` / `playback-id`
+precedence question entirely.
+
 - **Pros** — A and B coexist; refresh gets a stable, engine-agnostic home;
   thumbnails/poster derive from the resolved identity; per-feature config can
   ride on the resolver instead of multiplying attributes.
@@ -169,25 +177,27 @@ convenience sugar and the raw-URL base case — so adopting 3 doesn't foreclose
 either style of use, which also makes it the least-committal (most reversible)
 choice.
 
-**What it looks like** — convenience form (Goal A) and raw form (Goal B)
-resolving through the same seam:
+**What it looks like** — the recommended default is the leanest shape: a `src`
+plus an *optional* token-refresher. `playback-id` + `tokens` stay available as
+heavier opt-in sugar (Goal A).
 
 ```html
-<!-- Sugar: the resolver builds the signed URL + thumbnails -->
-<mux-video playback-id="abc123"></mux-video>
-
-<!-- Raw: src is the contract; the resolver is identity -->
+<!-- Recommended default: src is the contract -->
 <mux-video src="https://stream.mux.com/abc123.m3u8?token=…"></mux-video>
+
+<!-- Opt-in sugar: the resolver builds the signed URL + thumbnails -->
+<mux-video playback-id="abc123"></mux-video>
 ```
 
 ```ts
 // Illustrative only — shapes are open (see Open Questions).
-// Tokens carry the signed JWTs; a refresher keeps them fresh (#1432).
-el.tokens = {
-  playback: () => fetchFreshToken(), // refresher (property form), not a static string
-  thumbnail: '…',
-  storyboard: '…',
-};
+
+// Lean default: keep src, supply a token-refresher; the player swaps `?token=`
+// on (or before) expiry. No playback-id → no src / playback-id precedence.
+el.refreshToken = () => fetchFreshToken();
+
+// Heavier opt-in sugar: structured inputs the resolver expands and refreshes.
+el.tokens = { playback: () => fetchFreshToken(), thumbnail: '…', storyboard: '…' };
 ```
 
 Exact shapes (attribute vs property, event vs refresher) are open — see below.
@@ -251,7 +261,9 @@ playback-restriction error handling) rather than a silent stall.
   `packages/core/src/dom/media/mux/mux-data.ts`). *If* Option 3 adds
   `playback-id` as a settable convenience input, a user could set both it and
   `src` — so we'd need a rule. (Lean: `src` is the contract and `playback-id` is
-  sugar that *produces* a `src`, so an explicit `src` wins.)
+  sugar that *produces* a `src`, so an explicit `src` wins.) The recommended
+  default shape (`src` + token-refresher, no `playback-id`) avoids this entirely
+  — it only arises if the convenience sugar is used.
 - **Refresh surface** — per-token refresher function vs `onTokenExpiring` event
   vs both; proactive, reactive, or both by default; and if proactive, where the
   `exp`-decoding scheduler lives (resolver / engine / element).
