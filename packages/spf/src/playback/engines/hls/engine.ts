@@ -18,7 +18,6 @@ import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant
 import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
-import type { FailoverMonitorConfig } from '../../../network/failover-monitor';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
@@ -40,7 +39,7 @@ import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { selectTextTrack } from '../../behaviors/select-tracks';
-import { type FailoverReporter, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
+import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
@@ -110,12 +109,6 @@ export interface SimpleHlsEngineContext {
   audioSegmentLoaderActor?: SegmentLoaderActor;
   textTracksActor?: TextTracksActor;
   textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
-  /**
-   * Failover failure reporter, owned by `setupFailoverMonitor`. Segment loading and
-   * media-playlist resolution call it with each fetch outcome; the monitor
-   * trips a CDN into `failedCdns` after repeated failures.
-   */
-  failoverReporter?: FailoverReporter;
 }
 
 /**
@@ -213,10 +206,10 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Multi-CDN failover monitor tuning. `failureThreshold` is the consecutive
-   * fetch failures on one CDN before it's excluded; `cooldownMs` how long it
-   * stays excluded. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG` (3 / 30s). Only
-   * meaningful for redundant-stream sources.
+   * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
+   * excluded after a failed fetch trips it. Defaults:
+   * `DEFAULT_FAILOVER_MONITOR_CONFIG` (30s). Only meaningful for redundant-stream
+   * sources.
    */
   failover?: Partial<FailoverMonitorConfig>;
 }
@@ -229,15 +222,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
  * Generic `shareSignals` instantiated against the HLS engine's full state
  * and context — captures composition signal refs into the consumer's
  * `onSignalsReady` callback at setup time, and materializes input slots that no
- * composed behavior produces yet: `user*TrackSelection` (track-switching only
- * reads them) and `failedCdns` (read by the `excludeFailedCdns` constraint;
- * until the failover monitor lands it's driven externally, and stays writable after
- * for manual CDN override).
+ * composed behavior produces: `user*TrackSelection` (track-switching only reads
+ * them). `failedCdns` is owned by `setupFailoverMonitor`, so it's already
+ * materialized and reachable on the `onSignalsReady` refs without being listed
+ * here.
  */
 const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
-  'failedCdns',
 ]);
 
 /**
@@ -301,10 +293,9 @@ export function createSimpleHlsEngine(
       // already the primary we'd pick anyway.
       resolveCdnPriority,
 
-      // CDN failover monitor: owns `failedCdns` and publishes the `failoverReporter`
-      // reporter that segment loading + track resolution report fetch outcomes
-      // to. Composed before those consumers so the reporter is published before
-      // the first fetch.
+      // CDN failover cooldown: owns the expiry half of failover — watches
+      // `failedCdns` (tripped directly by track resolution on a failed
+      // media-playlist fetch) and removes each CDN once its cooldown lapses.
       setupFailoverMonitor,
 
       // Track selection (reads config for initial preferences).

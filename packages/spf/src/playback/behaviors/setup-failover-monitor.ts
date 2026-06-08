@@ -1,100 +1,67 @@
 /**
- * **CDN failure monitor.** Auto-detection behind multi-CDN failover: while a
- * presentation is resolved, owns `failedCdns` and publishes a `failoverReporter`
- * reporter to context. Fetch sites (segment loading, media-playlist resolution)
- * call `reporter.recordResult(url, ok)`; the monitor counts per-CDN failures and,
- * once a CDN trips, writes it into `failedCdns` for a cooldown window.
- * `track-switching`'s `excludeFailedCdns` constraint then prunes that CDN's
+ * **CDN failover cooldown.** The expiry half of multi-CDN failover. Fetch sites
+ * own the *trip*: on a failed fetch they add the failing CDN (origin) to the
+ * `failedCdns` state signal directly. This behavior owns the *expiry*: while a
+ * presentation is resolved, it watches `failedCdns` and, for each CDN that
+ * appears, schedules a timer to remove it once its cooldown lapses.
+ * `track-switching`'s `excludeFailedCdns` constraint prunes a failed CDN's
  * tracks and the active-CDN scope falls to the next one — and back, once the
- * cooldown lapses.
+ * cooldown removes it here.
  *
- * The pure counting/cooldown logic lives in `network/failover-monitor`; this behavior
- * supplies the real clock (`Date.now`) and the timers that re-sync `failedCdns`
- * when a cooldown lapses (so a recovered CDN leaves the set even with no new
- * fetch activity). Lifecycle is per-source: a fresh monitor on each resolve, all
- * timers + state cleared on exit.
- *
- * This is the minimal `network-resilience` failure-detection slice; policy
- * (threshold / cooldown) is engine config.
+ * Lifecycle is per-source: timers + `failedCdns` are cleared on exit (a new
+ * source starts with a clean slate). Policy (cooldown) is engine config. This is
+ * the minimal `network-resilience` slice — a single failure trips a CDN, since
+ * transient blips are the retry layer's job (it sits below the fetch sites, so
+ * anything that reaches `failedCdns` is already terminal).
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { effect } from '../../core/signals/effect';
+import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
-import { getCdnId } from '../../media/utils/cdn';
-import {
-  createFailoverMonitor,
-  DEFAULT_FAILOVER_MONITOR_CONFIG,
-  type FailoverMonitorConfig,
-} from '../../network/failover-monitor';
-import type { FetchBytes } from '../../network/fetch';
-
-/** Imperative reporter published to context for fetch sites to report results. */
-export interface FailoverReporter {
-  /** Report the outcome of a fetch to `url` — `ok: false` counts a failure. */
-  recordResult(url: string, ok: boolean): void;
-}
 
 /**
- * Wrap a `FetchBytes` so each request reports its outcome to the failover monitor.
- * A thrown error counts as a failure (a down CDN rejects the request); a
- * resolved request counts as a success. Aborts (track switch / teardown) are
- * not failures. The reporter is read lazily so it can be published after the
- * fetch is constructed.
- *
- * (HTTP error *statuses* that still resolve with a body — e.g. 5xx — aren't
- * distinguished here; that's a network-resilience error-classification refinement.)
+ * Failover policy: how long a CDN stays excluded after a failed fetch trips it.
+ * Supplied via engine config.
  */
-export function reportFetchBytes(fetch: FetchBytes, getReporter: () => FailoverReporter | undefined): FetchBytes {
-  return async (addressable, options) => {
-    try {
-      const result = await fetch(addressable, options);
-      getReporter()?.recordResult(addressable.url, true);
-      return result;
-    } catch (error) {
-      if (!options?.signal?.aborted) getReporter()?.recordResult(addressable.url, false);
-      throw error;
-    }
-  };
+export interface FailoverMonitorConfig {
+  /** How long a tripped CDN stays excluded, in milliseconds. */
+  cooldownMs: number;
 }
+
+export const DEFAULT_FAILOVER_MONITOR_CONFIG: FailoverMonitorConfig = {
+  cooldownMs: 30_000,
+};
 
 export interface SetupFailoverMonitorState {
   presentation?: MaybeResolvedPresentation;
   failedCdns?: string[];
 }
 
-export interface SetupFailoverMonitorContext {
-  failoverReporter?: FailoverReporter;
-}
-
 export interface SetupFailoverMonitorConfig {
-  /** Per-failover monitor policy (threshold / cooldown); defaults to `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
+  /** Failover policy (cooldown); defaults to `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
   failover?: Partial<FailoverMonitorConfig>;
 }
 
-const sameSet = (a: string[] | undefined, b: readonly string[]): boolean =>
-  !!a && a.length === b.length && a.every((cdn) => b.includes(cdn));
-
 /**
- * Manage `failedCdns` + the `failoverReporter` reporter for the resolved source.
+ * Expire failed CDNs from `failedCdns` once their cooldown lapses, for the
+ * resolved source.
  *
  * @example
- * const reactor = setupFailoverMonitor.setup({ state, context });
+ * const reactor = setupFailoverMonitor.setup({ state });
  */
 export const setupFailoverMonitor = defineBehavior({
   stateKeys: ['presentation', 'failedCdns'],
-  contextKeys: ['failoverReporter'],
+  contextKeys: [],
   setup: ({
     state,
-    context,
     config = {},
   }: {
     state: {
       presentation: ReadonlySignal<SetupFailoverMonitorState['presentation']>;
       failedCdns: Signal<SetupFailoverMonitorState['failedCdns']>;
     };
-    context: { failoverReporter: Signal<FailoverReporter | undefined> };
     config?: SetupFailoverMonitorConfig;
   }) => {
     const cooldownMs = config.failover?.cooldownMs ?? DEFAULT_FAILOVER_MONITOR_CONFIG.cooldownMs;
@@ -111,44 +78,29 @@ export const setupFailoverMonitor = defineBehavior({
         'presentation-unresolved': {},
         'presentation-resolved': {
           entry: () => {
-            // Fresh monitor per source — CDN identities and health are
-            // per-presentation.
-            const monitor = createFailoverMonitor(config.failover);
-            const timers = new Set<ReturnType<typeof setTimeout>>();
+            // CDN id → its pending cooldown-removal timer. Fetch sites add a
+            // failed CDN to `failedCdns`; we schedule its removal once the
+            // cooldown lapses. Per-source: all timers cleared on exit.
+            const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
-            // Recompute the cooled-down set at `now` and publish if it changed.
-            const sync = (now: number): readonly string[] => {
-              const failed = monitor.failedCdns(now);
-              if (!sameSet(peek(state.failedCdns), failed)) state.failedCdns.set(failed);
-              return failed;
-            };
-
-            const reporter: FailoverReporter = {
-              recordResult(url, ok) {
-                const cdn = getCdnId(url);
-                const now = Date.now();
-                if (ok) monitor.recordSuccess(cdn);
-                else monitor.recordFailure(cdn, now);
-                const failed = sync(now);
-                // While any CDN is cooling, schedule a re-sync at the cooldown
-                // boundary so a recovered CDN leaves `failedCdns` without needing
-                // a new fetch to nudge it.
-                if (failed.length) {
-                  const timer = setTimeout(() => {
-                    timers.delete(timer);
-                    sync(Date.now());
-                  }, cooldownMs);
-                  timers.add(timer);
-                }
-              },
-            };
-
-            context.failoverReporter.set(reporter);
+            const stop = effect(() => {
+              const failed = state.failedCdns.get() ?? [];
+              for (const cdn of failed) {
+                // Idempotent: a CDN already counting down keeps its original
+                // deadline (re-failing it mid-cooldown doesn't extend it).
+                if (timers.has(cdn)) continue;
+                const timer = setTimeout(() => {
+                  timers.delete(cdn);
+                  update(state.failedCdns, (current) => current?.filter((c) => c !== cdn));
+                }, cooldownMs);
+                timers.set(cdn, timer);
+              }
+            });
 
             return () => {
-              for (const timer of timers) clearTimeout(timer);
+              stop();
+              for (const timer of timers.values()) clearTimeout(timer);
               timers.clear();
-              context.failoverReporter.set(undefined);
               state.failedCdns.set(undefined);
             };
           },

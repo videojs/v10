@@ -6,7 +6,6 @@ import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } 
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
-import type { FailoverReporter } from '../../setup-failover-monitor';
 import {
   type BufferActorsContext,
   type BufferActorsState,
@@ -176,7 +175,6 @@ function makeContext(initial: BufferActorsContext = {}): ContextSignals<BufferAc
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
     videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
     audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
-    failoverReporter: signal<FailoverReporter | undefined>(initial.failoverReporter),
   };
 }
 

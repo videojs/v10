@@ -285,8 +285,8 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('auto-fails-over when a CDN fails too often (monitor trips, failedCdns set)', async () => {
-    const engine = createSimpleHlsEngine({ failover: { failureThreshold: 1, cooldownMs: 60_000 } });
+  it('auto-fails-over when a CDN fetch fails (monitor trips, failedCdns set)', async () => {
+    const engine = createSimpleHlsEngine({ failover: { cooldownMs: 60_000 } });
 
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {

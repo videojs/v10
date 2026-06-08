@@ -5,9 +5,9 @@ import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
+import { getCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvable, getResponseText } from '../../network/fetch';
-import type { FailoverReporter } from './setup-failover-monitor';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -30,12 +30,14 @@ export interface ResolveTrackState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
+  failedCdns?: string[];
 }
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 
 type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
+  failedCdns: Signal<ResolveTrackState['failedCdns']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
 interface TrackResolutionConfig<K extends SelectedTrackKey> {
@@ -48,16 +50,20 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  context,
   config: { selectedKey, findTrackToResolve },
 }: {
   state: ResolveTrackStateMap<K>;
-  context?: { failoverReporter?: ReadonlySignal<FailoverReporter | undefined> };
   config: TrackResolutionConfig<K>;
 }) {
-  // Report each media-playlist fetch's outcome to the failover monitor (failover
-  // auto-detection). No-op when no monitor is composed.
-  const getReporter = () => context?.failoverReporter?.get();
+  // On a failed media-playlist fetch, add the track's CDN (origin) to
+  // `failedCdns` — the failover trip. `setupFailoverMonitor` watches the signal
+  // and removes the CDN once its cooldown lapses. Idempotent: re-adding an
+  // already-failed CDN is a no-op.
+  const failCdn = (url: string) =>
+    update(state.failedCdns, (current) => {
+      const cdn = getCdnId(url);
+      return current?.includes(cdn) ? current : [...(current ?? []), cdn];
+    });
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
@@ -112,12 +118,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                 async (signal) => {
                   try {
                     const response = await fetchResolvable(track, { signal });
+                    // A non-OK status is a CDN failure (fetch only rejects on
+                    // network errors): trip the CDN so the constraint prunes it.
+                    if (!response.ok) failCdn(track.url);
                     const text = await getResponseText(response);
                     const mediaTrack = parseMediaPlaylist(text, track);
-                    // A non-OK status counts as a CDN failure (fetch only rejects
-                    // on network errors); reporting is outcome-only and doesn't
-                    // change the resolve control flow.
-                    getReporter()?.recordResult(track.url, response.ok);
 
                     // Updater handles undefined inputs by returning current
                     // unchanged; isResolvedPresentation narrows for the patch.
@@ -132,7 +137,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   } catch (error) {
                     // A network error (down CDN) is a failure; an abort (src
                     // change / teardown) is not.
-                    if (!signal.aborted) getReporter()?.recordResult(track.url, false);
+                    if (!signal.aborted) failCdn(track.url);
                     throw error;
                   }
                 },
@@ -178,20 +183,11 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
  * writes the resolved track back into `state.presentation`.
  */
 export const resolveVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId'],
-  contextKeys: ['failoverReporter'],
-  setup: ({
-    state,
-    context,
-    config = {},
-  }: {
-    state: ResolveTrackStateMap<'selectedVideoTrackId'>;
-    context: { failoverReporter: ReadonlySignal<FailoverReporter | undefined> };
-    config?: object;
-  }) =>
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'failedCdns'],
+  contextKeys: [],
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedVideoTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      context,
       config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
@@ -201,20 +197,11 @@ export const resolveVideoTrack = defineBehavior({
  * narrowed to audio.
  */
 export const resolveAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId'],
-  contextKeys: ['failoverReporter'],
-  setup: ({
-    state,
-    context,
-    config = {},
-  }: {
-    state: ResolveTrackStateMap<'selectedAudioTrackId'>;
-    context: { failoverReporter: ReadonlySignal<FailoverReporter | undefined> };
-    config?: object;
-  }) =>
+  stateKeys: ['presentation', 'selectedAudioTrackId', 'failedCdns'],
+  contextKeys: [],
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedAudioTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      context,
       config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
@@ -224,20 +211,11 @@ export const resolveAudioTrack = defineBehavior({
  * narrowed to text.
  */
 export const resolveTextTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedTextTrackId'],
-  contextKeys: ['failoverReporter'],
-  setup: ({
-    state,
-    context,
-    config = {},
-  }: {
-    state: ResolveTrackStateMap<'selectedTextTrackId'>;
-    context: { failoverReporter: ReadonlySignal<FailoverReporter | undefined> };
-    config?: object;
-  }) =>
+  stateKeys: ['presentation', 'selectedTextTrackId', 'failedCdns'],
+  contextKeys: [],
+  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedTextTrackId'>; config?: object }) =>
     setupTrackResolution({
       state,
-      context,
       config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config },
     }),
 });
