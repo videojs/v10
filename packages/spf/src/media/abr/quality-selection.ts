@@ -154,6 +154,15 @@ export function selectLowestQuality<T extends { bandwidth: number }>(tracks: rea
 }
 
 /**
+ * Resolution as a total pixel count (`width × height`), the basis for
+ * comparing two tracks at the same bitrate. Missing dimensions count as 0, so
+ * tracks without resolution metadata (e.g. audio) area-compare equal.
+ */
+export function resolutionArea(track: { width?: number; height?: number }): number {
+  return (track.width ?? 0) * (track.height ?? 0);
+}
+
+/**
  * Check if track A has higher resolution than track B.
  * Compares by total pixel count (width × height).
  *
@@ -165,7 +174,5 @@ function hasHigherResolution(
   trackA: PartiallyResolvedVideoTrack | VideoTrack,
   trackB: PartiallyResolvedVideoTrack | VideoTrack
 ): boolean {
-  const pixelsA = (trackA.width ?? 0) * (trackA.height ?? 0);
-  const pixelsB = (trackB.width ?? 0) * (trackB.height ?? 0);
-  return pixelsA > pixelsB;
+  return resolutionArea(trackA) > resolutionArea(trackB);
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack } from '../../types';
-import { DEFAULT_QUALITY_CONFIG, selectLowestQuality, selectQuality } from '../quality-selection';
+import { DEFAULT_QUALITY_CONFIG, resolutionArea, selectLowestQuality, selectQuality } from '../quality-selection';
 
 // Helper to create test tracks
 const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): PartiallyResolvedVideoTrack => ({
@@ -306,5 +306,17 @@ describe('selectLowestQuality', () => {
     ];
 
     expect(selectLowestQuality(tracks)?.id).toBe('low');
+  });
+});
+
+describe('resolutionArea', () => {
+  it('returns the pixel count (width × height)', () => {
+    expect(resolutionArea({ width: 1920, height: 1080 })).toBe(2_073_600);
+  });
+
+  it('treats a missing dimension as 0', () => {
+    expect(resolutionArea({ width: 1920 })).toBe(0);
+    expect(resolutionArea({ height: 1080 })).toBe(0);
+    expect(resolutionArea({})).toBe(0);
   });
 });

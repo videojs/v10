@@ -40,7 +40,7 @@
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
-import { DEFAULT_QUALITY_CONFIG, type QualityConfig } from '../../media/abr/quality-selection';
+import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
 import { matchesPartialTrack } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
@@ -177,8 +177,12 @@ export function applyRules<T, State, Context, Config>(
 // --------------------------------------------------------------------------
 // ============================================================================
 
-/** Minimum candidate-track shape consumed by the helper. */
-type SwitchableTrack = { id: string; bandwidth?: number };
+/**
+ * Minimum candidate-track shape consumed by the helper. `bandwidth` feeds the
+ * ranker's throughput sort; `width`/`height` are the equal-bitrate tie-break
+ * (absent on audio, so audio candidates area-compare equal).
+ */
+type SwitchableTrack = { id: string; bandwidth?: number; width?: number; height?: number };
 
 type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
@@ -297,10 +301,13 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * outranks it once it clears `current.bitrate * upgradeMargin` (no flapping on
  * marginal bandwidth gains). Downgrades fall out for free — a current track
  * over the threshold isn't in the fitting set to be boosted, so the best fit (a
- * downgrade) wins immediately. A stable sort, so equal-bitrate tracks (e.g.
- * same-bitrate language variants) keep candidate order. Early-bail skips this
- * rule when a prior one narrowed to a single track, so the estimate is neither
- * read nor subscribed while that holds.
+ * downgrade) wins immediately. Equal-bitrate tracks break by resolution (higher
+ * `width × height` first), so an equal-bitrate ladder never picks a lower-
+ * quality rendition by manifest order; audio tracks carry no dimensions, so
+ * they area-compare equal and a stable sort keeps their candidate order (e.g.
+ * same-bitrate language variants). Early-bail skips this rule when a prior one
+ * narrowed to a single track, so the estimate is neither read nor subscribed
+ * while that holds.
  */
 function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
@@ -321,8 +328,16 @@ function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   // Boost the current track's sort weight by upgradeMargin (fitting set only) so
   // an upgrade must clear current.bitrate * upgradeMargin to outrank it.
   const rank = (track: T) => (track.id === currentId ? bitrate(track) * upgradeMargin : bitrate(track));
-  const fitting = tracks.filter((track) => bitrate(track) <= threshold).sort((a, b) => rank(b) - rank(a));
-  const over = tracks.filter((track) => bitrate(track) > threshold).sort((a, b) => bitrate(a) - bitrate(b));
+  // Equal bitrate → prefer higher resolution (width × height), so an
+  // equal-bitrate ladder doesn't pick a lower-quality rendition by manifest
+  // order. Audio tracks carry no dimensions, so they area-compare equal and
+  // keep candidate order (stable sort).
+  const fitting = tracks
+    .filter((track) => bitrate(track) <= threshold)
+    .sort((a, b) => rank(b) - rank(a) || resolutionArea(b) - resolutionArea(a));
+  const over = tracks
+    .filter((track) => bitrate(track) > threshold)
+    .sort((a, b) => bitrate(a) - bitrate(b) || resolutionArea(b) - resolutionArea(a));
   return [...fitting, ...over];
 }
 

@@ -378,6 +378,52 @@ describe('switchVideoTrack', () => {
     });
   });
 
+  describe('equal-bitrate resolution tie-break', () => {
+    const withResolution = (track: PartiallyResolvedVideoTrack, width: number, height: number) => ({
+      ...track,
+      width,
+      height,
+    });
+
+    it('prefers the higher-resolution rendition when bitrates are equal', async () => {
+      // Same bitrate, but the lower-resolution variant is listed first — a
+      // bitrate-only ranker would pick it by manifest order.
+      const equalBitrate = [
+        withResolution(createVideoTrack('sd', 3_000_000), 640, 360),
+        withResolution(createVideoTrack('hd', 3_000_000), 1920, 1080),
+      ];
+      const state = makeState({
+        presentation: createPresentation(equalBitrate),
+        bandwidthState: createBandwidthState(6_000_000),
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('hd');
+
+      reactor.destroy();
+    });
+
+    it('breaks ties by resolution among the smallest over-throughput renditions', async () => {
+      // Both exceed the throughput threshold (equal, lowest bitrate) — the
+      // fallback pick should still favor the higher-resolution variant.
+      const overThreshold = [
+        withResolution(createVideoTrack('sd', 8_000_000), 640, 360),
+        withResolution(createVideoTrack('hd', 8_000_000), 1920, 1080),
+      ];
+      const state = makeState({
+        presentation: createPresentation(overThreshold),
+        bandwidthState: createBandwidthState(1_000_000),
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('hd');
+
+      reactor.destroy();
+    });
+  });
+
   describe('configuration', () => {
     it('uses custom safetyMargin', async () => {
       const state = makeState({
