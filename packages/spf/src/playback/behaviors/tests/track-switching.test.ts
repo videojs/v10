@@ -29,6 +29,7 @@ interface SwitchVideoTrackState {
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   userVideoTrackSelection?: Partial<VideoTrack>;
+  noPlayableVideoTracks?: boolean;
 }
 
 function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
@@ -37,6 +38,7 @@ function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<S
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(initial.userVideoTrackSelection),
+    noPlayableVideoTracks: signal<boolean | undefined>(initial.noPlayableVideoTracks),
   };
 }
 
@@ -528,6 +530,7 @@ interface SwitchAudioTrackState {
   bandwidthState?: BandwidthState;
   selectedAudioTrackId?: string;
   userAudioTrackSelection?: Partial<AudioTrack>;
+  noPlayableAudioTracks?: boolean;
 }
 
 function makeAudioState(initial: SwitchAudioTrackState = {}): StateSignals<SwitchAudioTrackState> {
@@ -536,6 +539,7 @@ function makeAudioState(initial: SwitchAudioTrackState = {}): StateSignals<Switc
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(initial.userAudioTrackSelection),
+    noPlayableAudioTracks: signal<boolean | undefined>(initial.noPlayableAudioTracks),
   };
 }
 
@@ -803,6 +807,7 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
     selectedVideoTrackId: signal<string | undefined>(undefined),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    noPlayableVideoTracks: signal<boolean | undefined>(undefined),
     cdnPriority: signal<string[] | undefined>(cdnPriority),
   });
 
@@ -893,6 +898,7 @@ describe('preferActiveCdn (active-CDN scope)', () => {
       bandwidthState: signal<BandwidthState | undefined>(undefined),
       selectedAudioTrackId: signal<string | undefined>(undefined),
       userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(undefined),
+      noPlayableAudioTracks: signal<boolean | undefined>(undefined),
       cdnPriority: signal<string[] | undefined>(['https://cdn-b.example.com', 'https://cdn-a.example.com']),
     };
     const reactor = switchAudioTrack.setup({ state });
@@ -929,6 +935,7 @@ describe('excludeFailedCdns (failover constraint)', () => {
     bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
     selectedVideoTrackId: signal<string | undefined>(undefined),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    noPlayableVideoTracks: signal<boolean | undefined>(undefined),
     cdnPriority: signal<string[] | undefined>(['https://cdn-a.example.com', 'https://cdn-b.example.com']),
     failedCdns: signal<string[] | undefined>(failedCdns),
   });
@@ -981,6 +988,169 @@ describe('excludeFailedCdns (failover constraint)', () => {
     state.failedCdns.set(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// excludeUnplayableTracks — the capability constraint (hard pre-pass)
+// ============================================================================
+
+describe('excludeUnplayableTracks (capability constraint)', () => {
+  const codecVideoTrack = (id: string, codec: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [codec],
+    id,
+    url: `https://example.com/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  // Mixed HEVC + AVC ladder; the same bitrates on each codec.
+  const mixedCodecPresentation = () =>
+    createPresentation([
+      codecVideoTrack('720p-hevc', 'hvc1.1.6.L93.B0', 2_400_000),
+      codecVideoTrack('720p-avc', 'avc1.4d401f', 2_400_000),
+      codecVideoTrack('1080p-hevc', 'hvc1.1.6.L120.B0', 4_800_000),
+      codecVideoTrack('1080p-avc', 'avc1.640028', 4_800_000),
+    ]);
+
+  // Rejects HEVC, accepts everything else.
+  const rejectsHevc = (track: { codecs?: string[] }) => !track.codecs?.some((c) => c.startsWith('hvc1'));
+
+  const makeState = () => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(mixedCodecPresentation()),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    noPlayableVideoTracks: signal<boolean | undefined>(undefined),
+  });
+
+  it('prunes undecodable renditions before ranking — picks the best playable codec', async () => {
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc } });
+    await flush();
+    // HEVC pruned upstream; ranker picks the highest-bitrate AVC that fits.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    reactor.destroy();
+  });
+
+  it('passes everything through when no canPlayTrack probe is wired', async () => {
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // No probe → HEVC survives; same-bitrate tie keeps manifest order, so the
+    // first 1080p (HEVC) wins.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-hevc');
+    reactor.destroy();
+  });
+
+  it('still excludes an unplayable track the user selected (hard constraint beats the soft filter)', async () => {
+    const state = makeState();
+    state.userVideoTrackSelection.set({ id: '1080p-hevc' });
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc } });
+    await flush();
+    // The user's HEVC pick is pruned by the constraint before the user filter
+    // runs; the filter finds no match and falls through to the playable set.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// noPlayable* surfacing — Phase-6 partial (per-type "nothing playable" flag)
+// ============================================================================
+
+describe('noPlayableVideoTracks surfacing', () => {
+  const codecVideoTrack = (id: string, codec: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [codec],
+    id,
+    url: `https://example.com/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  const makeState = (presentation: MaybeResolvedPresentation | undefined) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    noPlayableVideoTracks: signal<boolean | undefined>(undefined),
+  });
+
+  it('flags true when the type had candidates but all are undecodable, leaving no pick', async () => {
+    const state = makeState(createPresentation([codecVideoTrack('1080p-hevc', 'hvc1.1.6.L120.B0', 4_800_000)]));
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(true);
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('flags false when a playable candidate exists', async () => {
+    const state = makeState(createPresentation([codecVideoTrack('1080p-avc', 'avc1.640028', 4_800_000)]));
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => true } });
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(false);
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    reactor.destroy();
+  });
+
+  it('flips true → false reactively when the pruned set recovers (cause-agnostic)', async () => {
+    // Drive emptiness through the dynamic failover constraint to exercise the
+    // flag's reactivity (codec support is static).
+    const multiCdn = createPresentation([
+      { ...codecVideoTrack('720p', 'avc1.4d401f', 2_400_000), url: 'https://cdn-a.example.com/720p.m3u8' },
+    ]);
+    const state = {
+      ...makeState(multiCdn),
+      cdnPriority: signal<string[] | undefined>(['https://cdn-a.example.com']),
+      failedCdns: signal<string[] | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(false);
+
+    state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(true);
+
+    state.failedCdns.set([]);
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('leaves the flag false (not a no-playable error) when the type simply has no tracks', async () => {
+    // A presentation with only a video selection set → audio behavior sees no
+    // audio candidates at all, which is not an "unsupported" condition.
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createPresentation([codecVideoTrack('1080p-avc', 'avc1.640028', 4_800_000)])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+      selectedAudioTrackId: signal<string | undefined>(undefined),
+      userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(undefined),
+      noPlayableAudioTracks: signal<boolean | undefined>(undefined),
+    };
+    const reactor = switchAudioTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+    expect(state.noPlayableAudioTracks.get()).toBe(false);
+    reactor.destroy();
+  });
+
+  it('clears the flag on src unload', async () => {
+    const state = makeState(createPresentation([codecVideoTrack('1080p-hevc', 'hvc1.1.6.L120.B0', 4_800_000)]));
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBe(true);
+
+    state.presentation.set(undefined);
+    await flush();
+    expect(state.noPlayableVideoTracks.get()).toBeUndefined();
 
     reactor.destroy();
   });
