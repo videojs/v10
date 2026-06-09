@@ -133,7 +133,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('keeps audio on the same CDN as video even when the audio rendition order differs', async () => {
-    // Order-effect guard: `resolveCdnPriority` derives the list from track order,
+    // Order-effect guard: `deriveCdnPriority` derives the list from track order,
     // so a same-ordered source can't distinguish "scope applied" from "scope is
     // a no-op". This source is doubly adversarial to the desired result: the
     // audio selection set comes BEFORE video in the manifest, and within it the
@@ -370,7 +370,7 @@ describe('createSimpleHlsEngine', () => {
     } as Presentation);
 
     await vi.waitFor(() => {
-      // resolveCdnPriority keyed on the param (not origin → not a single CDN).
+      // deriveCdnPriority keyed on the param (not origin → not a single CDN).
       expect(engine.state.cdnPriority.get()).toEqual(['a', 'b']);
       // The trip recorded the param key, and the constraint + scope failed over.
       expect(engine.state.failedCdns.get()).toEqual(['a']);

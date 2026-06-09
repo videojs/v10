@@ -17,6 +17,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -24,7 +25,6 @@ import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
@@ -56,7 +56,7 @@ export interface SimpleHlsAudioOnlyEngineState {
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
    * The CDNs the source is served from, in manifest priority order (mirrors
-   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `resolveCdnPriority`,
+   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`,
    * read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
    * redundant-stream sources; a single-CDN source has one entry.
    */
@@ -178,7 +178,7 @@ export function createHlsAudioOnlyEngine(
       // not load-bearing here today. It earns its place for forward-consistency
       // with the default engine and for future failover / steering, where the
       // active CDN changes dynamically (and selection stays reactive either way).
-      resolveCdnPriority,
+      deriveCdnPriority,
 
       // CDN failover cooldown: watches `failedCdns` (tripped directly by audio
       // track resolution on a failed media-playlist fetch) and removes each CDN

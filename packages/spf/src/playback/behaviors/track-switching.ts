@@ -17,7 +17,7 @@
  *   2. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
- *      (`resolveCdnPriority` owns the list). No-op for non-redundant sources.
+ *      (`deriveCdnPriority` owns the list). No-op for non-redundant sources.
  *   3. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
@@ -310,7 +310,7 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
 /**
  * State the active-CDN scope reads: the lifecycle map plus an *optional*
  * `cdnPriority` — the manifest-ordered CDN list (most-preferred first). The
- * signal exists only when the composition includes `resolveCdnPriority` (which
+ * signal exists only when the composition includes `deriveCdnPriority` (which
  * materializes + owns it); the scope reads it defensively and passes through
  * when it's absent (no CDN preference).
  */
@@ -331,7 +331,7 @@ type CdnConstraintStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> &
 /**
  * Config the CDN rules read: the base config plus an *optional* `getCdnId`
  * override. Both `excludeFailedCdns` and `preferActiveCdn` derive a track's CDN
- * from its URL; the override must be the *same* one `resolveCdnPriority` and the
+ * from its URL; the override must be the *same* one `deriveCdnPriority` and the
  * failover trip use, or the keys stop matching. Optional → defaults to the
  * origin-based `getCdnId`, so the base config (without it) stays assignable.
  */
@@ -389,7 +389,7 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
 
 /**
  * Active-CDN scope — a soft filter, shared by video and audio. Narrows to the
- * highest-priority CDN in `cdnPriority` (owned by `resolveCdnPriority`) that
+ * highest-priority CDN in `cdnPriority` (owned by `deriveCdnPriority`) that
  * still has tracks, so every track type stays on one CDN. A redundant-streams
  * source lists the same renditions on multiple hosts; this keeps the pick on one
  * host rather than letting the ranker drift across them.
@@ -405,7 +405,7 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
  * Non-redundant sources have one CDN, so the narrow is a no-op.
  *
  * The CDN-id derivation defaults to origin-based `getCdnId`, overridable via the
- * `getCdnId` config — it must match the one `resolveCdnPriority` used to build
+ * `getCdnId` config — it must match the one `deriveCdnPriority` used to build
  * `cdnPriority`, or no track's CDN would ever equal an entry.
  */
 function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(

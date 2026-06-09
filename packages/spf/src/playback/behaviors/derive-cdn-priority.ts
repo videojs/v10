@@ -31,7 +31,7 @@ import { computed, peek, type ReadonlySignal, type Signal } from '../../core/sig
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
 import { getCdnId as defaultGetCdnId, type GetCdnId, getOrderedCdnIds } from '../../media/utils/cdn';
 
-export interface ResolveCdnPriorityState {
+export interface DeriveCdnPriorityState {
   presentation?: MaybeResolvedPresentation;
   cdnPriority?: string[];
 }
@@ -44,9 +44,9 @@ const samePriority = (a: string[] | undefined, b: string[]): boolean =>
  * on src unload.
  *
  * @example
- * const reactor = resolveCdnPriority.setup({ state });
+ * const reactor = deriveCdnPriority.setup({ state });
  */
-export const resolveCdnPriority = defineBehavior({
+export const deriveCdnPriority = defineBehavior({
   stateKeys: ['presentation', 'cdnPriority'],
   contextKeys: [],
   setup: ({
@@ -54,8 +54,8 @@ export const resolveCdnPriority = defineBehavior({
     config = {},
   }: {
     state: {
-      presentation: ReadonlySignal<ResolveCdnPriorityState['presentation']>;
-      cdnPriority: Signal<ResolveCdnPriorityState['cdnPriority']>;
+      presentation: ReadonlySignal<DeriveCdnPriorityState['presentation']>;
+      cdnPriority: Signal<DeriveCdnPriorityState['cdnPriority']>;
     };
     config?: { getCdnId?: GetCdnId };
   }) => {

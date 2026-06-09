@@ -41,7 +41,7 @@ ambiguity reflects that split.
 ## Status
 
 - **Composition:** both sub-features are implemented in
-  `createSimpleHlsEngine` and the audio-only engine. `resolveCdnPriority`
+  `createSimpleHlsEngine` and the audio-only engine. `deriveCdnPriority`
   owns the `cdnPriority` signal (manifest-ordered CDN list); the
   `preferActiveCdn` scope rule narrows candidates to the highest-priority CDN
   with surviving tracks (shared by the video + audio chains). For failover:
@@ -96,7 +96,7 @@ tracks, plus a fetch decorator that records failures into `failedCdns`.
 
 | Phase | Sub-feature | Kind | What | State |
 |---|---|---|---|---|
-| Sticky CDN pick | 1 | scope | `resolveCdnPriority` publishes the manifest-ordered CDN list (`cdnPriority`); `preferActiveCdn` narrows every type's candidates to the highest-priority CDN with surviving tracks, falling through when nothing matches. Shared list → all types on one CDN | **Implemented** |
+| Sticky CDN pick | 1 | scope | `deriveCdnPriority` publishes the manifest-ordered CDN list (`cdnPriority`); `preferActiveCdn` narrows every type's candidates to the highest-priority CDN with surviving tracks, falling through when nothing matches. Shared list → all types on one CDN | **Implemented** |
 | Constraints pre-pass | 2 | — | `applyConstraints` + the `constraints` config slot in `setupTrackSwitching` (the hard-filter pre-pass that runs before the rule chain). Reusable by capability-probing | **Implemented** |
 | Failed-CDN constraint | 2 | constraint | `excludeFailedCdns` prunes tracks whose CDN ∈ `failedCdns`; the scope falls to the next `cdnPriority` entry and snaps back on recovery | **Implemented** |
 | Per-CDN failure tracking | 2 | — | **Site-adds, behavior-expires**: fetch sites trip a CDN into `failedCdns` on a failed fetch (`failoverFetch` / `failoverFetchBytes`); `setupFailoverMonitor` expires it after a cooldown. Self-contained (trip-on-first-failure + cooldown), not a `network-resilience` circuit-breaker | **Implemented** |
@@ -139,7 +139,7 @@ tracks, plus a fetch decorator that records failures into `failedCdns`.
   video and audio chains reference the *same* `preferActiveCdn` definition
   reading the *same* list, so they agree on the CDN even if their per-type
   track arrays differ. (The doc's earlier per-rendition lean is superseded.)
-- **`cdnPriority` writer composition.** `resolveCdnPriority` is the sole
+- **`cdnPriority` writer composition.** `deriveCdnPriority` is the sole
   writer today (publishes the manifest order). Failover needs no second
   writer — the failed-CDN constraint prunes tracks and the scope re-derives
   the active CDN. Content-steering would *reorder* `cdnPriority` (still a
@@ -157,7 +157,7 @@ tracks, plus a fetch decorator that records failures into `failedCdns`.
   terminal "everything pruned" state — today an all-CDNs-failed candidate set
   is empty and the prior pick is left in place (see *Follow-up candidates*).
 - **Live + multi-CDN.** During live playback the reload loop re-resolves
-  the presentation; `resolveCdnPriority` re-publishes only when the CDN set
+  the presentation; `deriveCdnPriority` re-publishes only when the CDN set
   changes (idempotent for a stable manifest). Cross-feature with
   [live-stream-support](./live-stream-support.md) (not yet implemented).
 - **Failover state is per-source.** Both `cdnPriority` and `failedCdns` tear
@@ -224,7 +224,7 @@ tracking as a future effort:
 - **`media/utils/cdn.ts`** — `getCdnId(url)` (origin-based default) + the
   `GetCdnId` type; `getOrderedCdnIds(presentation, getCdnId?)`;
   `addFailedCdn(failed, cdn)` (pure, idempotent dedup-append).
-- **`playback/behaviors/resolve-cdn-priority.ts`** — `resolveCdnPriority` owns
+- **`playback/behaviors/derive-cdn-priority.ts`** — `deriveCdnPriority` owns
   `cdnPriority` (publishes `getOrderedCdnIds` on resolve, skips unchanged
   writes, clears on exit).
 - **`playback/behaviors/setup-failover-monitor.ts`** — `setupFailoverMonitor`
@@ -240,13 +240,13 @@ tracking as a future effort:
   `CdnRuleConfig` view that carries `getCdnId`); `applyConstraints` pre-pass +
   `constraints` config slot; `SwitchableTrack` gains `url`.
 - **`playback/engines/hls/engine.ts` + `engine-audio-only.ts`** —
-  `resolveCdnPriority` + `setupFailoverMonitor` composed after
+  `deriveCdnPriority` + `setupFailoverMonitor` composed after
   `resolvePresentation`; `failover?` + `getCdnId?` engine config; `cdnPriority?`
   + `failedCdns?` engine state.
 - **`network/fetch.ts`** — `FetchText` type + `fetchResolvableText` default
   (fetch → reject on non-OK → text), the text analog of `FetchBytes`.
 
-State signals: `cdnPriority?: string[]` (owned by `resolveCdnPriority`) and
+State signals: `cdnPriority?: string[]` (owned by `deriveCdnPriority`) and
 `failedCdns?: string[]` (owned by `setupFailoverMonitor`; tripped by the fetch
 sites, read by the `excludeFailedCdns` constraint).
 
@@ -255,7 +255,7 @@ sites, read by the `excludeFailedCdns` constraint).
 - `media/utils/tests/cdn.test.ts` — `getCdnId` (origin; same/different host;
   scheme+port; unparseable fallback); `getOrderedCdnIds` (order; dedupe; single;
   unresolved → `[]`); `addFailedCdn` (append; order; idempotent same-reference).
-- `playback/behaviors/tests/resolve-cdn-priority.test.ts` — publishes the
+- `playback/behaviors/tests/derive-cdn-priority.test.ts` — publishes the
   manifest-ordered list; single-CDN; skips the write on a same-CDN swap; updates
   on reorder; clears on unload/destroy; re-publishes after reset.
 - `playback/behaviors/tests/setup-failover-monitor.test.ts` — a tripped CDN is

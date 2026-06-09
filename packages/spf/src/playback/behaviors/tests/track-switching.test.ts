@@ -851,8 +851,8 @@ describe('preferActiveCdn (active-CDN scope)', () => {
   });
 
   it('applies the scope when cdnPriority arrives after the first pick (composition-order independence)', async () => {
-    // Guards against the pick depending on `resolveCdnPriority` being composed
-    // *before* `switchVideoTrack`. The worst case — resolveCdnPriority last — is
+    // Guards against the pick depending on `deriveCdnPriority` being composed
+    // *before* `switchVideoTrack`. The worst case — deriveCdnPriority last — is
     // equivalent to cdnPriority being written after switch*'s first pick. The
     // scope subscribes to cdnPriority even while it's undefined, so a late write
     // must re-fire and correct the pick.
