@@ -74,7 +74,7 @@ function getTemplateHTML() {
 
           <div class="media-time-controls">
             <media-time-group class="media-time-group">
-              <media-time type="current" class="media-time media-time--current"></media-time>
+              <media-time toggle type="current" class="media-time media-time--current"></media-time>
               <media-time-separator class="media-time-separator"></media-time-separator>
               <media-time type="duration" class="media-time media-time--duration"></media-time>
             </media-time-group>

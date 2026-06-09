@@ -256,7 +256,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className={time.duration} />
+            <Time.Value toggle type="remaining" className={time.duration} />
           </div>
 
           <div className={buttonGroup}>

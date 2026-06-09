@@ -451,7 +451,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className="media-time" />
+            <Time.Value toggle type="remaining" className="media-time" />
           </div>
 
           <div className="media-button-group">

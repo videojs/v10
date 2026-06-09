@@ -89,7 +89,7 @@ function getTemplateHTML() {
 
           <div class="${time.controls}">
             <media-time-group class="${time.group}">
-              <media-time type="current" class="${time.current}"></media-time>
+              <media-time toggle type="current" class="${time.current}"></media-time>
               <media-time-separator class="${time.separator}"></media-time-separator>
               <media-time type="duration" class="${time.duration}"></media-time>
             </media-time-group>

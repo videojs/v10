@@ -244,7 +244,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
           <div className={time.controls}>
             <Time.Group className={time.group}>
-              <Time.Value type="current" className={time.current} />
+              <Time.Value toggle type="current" className={time.current} />
               <Time.Separator className={time.separator} />
               <Time.Value type="duration" className={time.duration} />
             </Time.Group>

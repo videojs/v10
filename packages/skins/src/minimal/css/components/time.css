@@ -21,6 +21,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+.media-minimal-skin .media-time[role="button"] {
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  border-radius: 0.25rem;
+  transition-timing-function: ease-out;
+  transition-duration: 100ms;
+  transition-property: outline-color, outline-offset;
+
+  @supports (corner-shape: squircle) {
+    border-radius: 1rem;
+    corner-shape: squircle;
+  }
+
+  &:focus-visible {
+    outline-color: currentColor;
+    outline-offset: 2px;
+  }
+}
+
 .media-minimal-skin .media-time--current,
 .media-minimal-skin .media-time-separator {
   display: none;

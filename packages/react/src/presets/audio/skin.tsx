@@ -200,7 +200,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className="media-time" />
+            <Time.Value toggle type="remaining" className="media-time" />
           </div>
 
           <div className="media-button-group">

@@ -435,7 +435,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
           <div className="media-time-controls">
             <Time.Group className="media-time-group">
-              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Value toggle type="current" className="media-time media-time--current" />
               <Time.Separator className="media-time-separator" />
               <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>

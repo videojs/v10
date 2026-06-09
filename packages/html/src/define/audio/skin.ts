@@ -81,7 +81,7 @@ function getTemplateHTML() {
                 <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>
-            <media-time type="duration" class="media-time"></media-time>
+            <media-time toggle type="remaining" class="media-time"></media-time>
           </div>
 
           <div class="media-button-group">

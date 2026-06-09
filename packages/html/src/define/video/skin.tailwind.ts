@@ -113,7 +113,7 @@ function getTemplateHTML() {
                 <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>
-            <media-time type="duration" class="${time.duration}"></media-time>
+            <media-time toggle type="remaining" class="${time.duration}"></media-time>
           </div>
 
           <div class="${cn(buttonGroupEnd, menu.settingsGroup)}">
