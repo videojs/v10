@@ -9,6 +9,7 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
+const TOUCH_SETTLE_DELAY = 500;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
@@ -90,6 +91,8 @@ export const controlsFeature = definePlayerFeature({
     let pointerDownTime = 0;
     let lastTouchAt = 0;
 
+    const isRecentTouch = () => lastTouchAt > 0 && Date.now() - lastTouchAt < TOUCH_SETTLE_DELAY;
+
     function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
       if (event.pointerType === 'touch') {
@@ -156,7 +159,7 @@ export const controlsFeature = definePlayerFeature({
       'focusin',
       () => {
         // Ignore focusin from the container's own pointerup focus grab.
-        if (lastTouchAt > 0 && Date.now() - lastTouchAt < 500) return;
+        if (isRecentTouch()) return;
         setActive();
       },
       { signal }
@@ -168,7 +171,7 @@ export const controlsFeature = definePlayerFeature({
       'mouseleave',
       () => {
         // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
-        if (lastTouchAt > 0 && Date.now() - lastTouchAt < 500) return;
+        if (isRecentTouch()) return;
         setInactive();
       },
       { signal }
