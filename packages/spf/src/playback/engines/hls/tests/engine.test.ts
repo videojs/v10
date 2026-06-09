@@ -285,6 +285,87 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
+  it('codec-filters renditions via the injected canPlayTrack before selection', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    // Reject HEVC; accept everything else.
+    const canPlayTrack = (track: { codecs?: string[] }) => !track.codecs?.some((c) => c.startsWith('hvc1'));
+    const engine = createSimpleHlsEngine({ canPlayTrack });
+
+    const videoTrack = (id: string, codec: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [codec],
+      url: `https://example.com/${id}.m3u8`,
+      bandwidth: 4_800_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-codec',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('1080p-hevc', 'hvc1.1.6.L120.B0'), videoTrack('1080p-avc', 'avc1.640028')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // HEVC pruned upstream by the capability constraint; AVC selected.
+    expect(engine.state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    expect(engine.state.noPlayableVideoTracks.get()).toBe(false);
+
+    engine.destroy();
+  });
+
+  it('surfaces noPlayableVideoTracks when no rendition is decodable', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine({ canPlayTrack: () => false });
+
+    engine.state.presentation.set({
+      id: 'pres-unsupported',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '1080p-hevc',
+                  codecs: ['hvc1.1.6.L120.B0'],
+                  url: 'https://example.com/1080p-hevc.m3u8',
+                  bandwidth: 4_800_000,
+                  mimeType: 'video/mp4',
+                } as PartiallyResolvedVideoTrack,
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    expect(engine.state.noPlayableVideoTracks.get()).toBe(true);
+    expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
+
+    engine.destroy();
+  });
+
   it('auto-fails-over when a CDN fetch fails (monitor trips, failedCdns set)', async () => {
     const engine = createSimpleHlsEngine({ failover: { cooldownMs: 60_000 } });
 
