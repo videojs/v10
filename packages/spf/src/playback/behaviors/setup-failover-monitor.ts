@@ -17,7 +17,6 @@
 
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { effect } from '../../core/signals/effect';
 import { computed, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
 
@@ -65,6 +64,10 @@ export const setupFailoverMonitor = defineBehavior({
     config?: SetupFailoverMonitorConfig;
   }) => {
     const cooldownMs = config.failover?.cooldownMs ?? DEFAULT_FAILOVER_MONITOR_CONFIG.cooldownMs;
+    // CDN id → its pending cooldown-removal timer. Shared by the `effects`
+    // scheduler (adds a timer per newly-failed CDN) and the exit cleanup
+    // (clears them). Per-source: emptied on exit, so it re-enters clean.
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
     const derivedStateSignal = computed(() =>
       isResolvedPresentation(state.presentation.get())
         ? ('presentation-resolved' as const)
@@ -77,33 +80,28 @@ export const setupFailoverMonitor = defineBehavior({
       states: {
         'presentation-unresolved': {},
         'presentation-resolved': {
-          entry: () => {
-            // CDN id → its pending cooldown-removal timer. Fetch sites add a
-            // failed CDN to `failedCdns`; we schedule its removal once the
-            // cooldown lapses. Per-source: all timers cleared on exit.
-            const timers = new Map<string, ReturnType<typeof setTimeout>>();
-
-            const stop = effect(() => {
+          // Cleanup-binds-to-setup: on exit (src unload + destroy) clear the
+          // pending timers and reset `failedCdns` for the next source.
+          entry: () => () => {
+            timers.forEach((timer) => clearTimeout(timer));
+            timers.clear();
+            state.failedCdns.set(undefined);
+          },
+          effects: [
+            () => {
               const failed = state.failedCdns.get() ?? [];
-              for (const cdn of failed) {
+              failed.forEach((cdn) => {
                 // Idempotent: a CDN already counting down keeps its original
                 // deadline (re-failing it mid-cooldown doesn't extend it).
-                if (timers.has(cdn)) continue;
+                if (timers.has(cdn)) return;
                 const timer = setTimeout(() => {
                   timers.delete(cdn);
                   update(state.failedCdns, (current) => current?.filter((c) => c !== cdn));
                 }, cooldownMs);
                 timers.set(cdn, timer);
-              }
-            });
-
-            return () => {
-              stop();
-              for (const timer of timers.values()) clearTimeout(timer);
-              timers.clear();
-              state.failedCdns.set(undefined);
-            };
-          },
+              });
+            },
+          ],
         },
       },
     });
