@@ -17,6 +17,7 @@ const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
+const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
@@ -60,6 +61,10 @@ function formatBandwidth(bps: number): string {
 
 function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+}
+
+function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+  return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
@@ -123,7 +128,7 @@ function renderRenditionPicker() {
   if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
   const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
-  const abrDisabled = engine.state.abrDisabled.get() === true;
+  const isManual = engine.state.userVideoTrackSelection.get() !== undefined;
   const tracks = getVideoTracks(presentation);
 
   if (tracks.length === 0) {
@@ -136,17 +141,17 @@ function renderRenditionPicker() {
   const statusRow = document.createElement('div');
   statusRow.className = 'abr-status';
   const modeLabel = document.createElement('span');
-  modeLabel.className = abrDisabled ? 'mode-manual' : 'mode-abr';
-  modeLabel.textContent = abrDisabled ? '🔒 Manual' : '⟳ ABR';
+  modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
+  modeLabel.textContent = isManual ? '🔒 Manual' : '⟳ ABR';
   statusRow.appendChild(modeLabel);
-  if (abrDisabled) {
+  if (isManual) {
     const enableBtn = document.createElement('button');
     enableBtn.type = 'button';
     enableBtn.className = 'enable-abr-btn';
     enableBtn.textContent = 'Enable ABR';
     enableBtn.addEventListener('click', () => {
       log('ABR re-enabled', 'success');
-      signals.state.abrDisabled.set(false);
+      signals.state.userVideoTrackSelection.set(undefined);
     });
     statusRow.appendChild(enableBtn);
   }
@@ -156,19 +161,151 @@ function renderRenditionPicker() {
     const isSelected = track.id === selectedVideoTrackId;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `rendition-btn${isSelected ? (abrDisabled ? ' selected-manual' : ' selected-abr') : ''}`;
+    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
     const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} @ ` : '';
-    const badge = isSelected ? (abrDisabled ? ' 🔒' : ' ⟳') : '';
+    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
     btn.textContent = `${res}${formatBandwidth(track.bandwidth)}${badge}`;
     btn.title = track.id;
     btn.addEventListener('click', () => {
       log(`Manual rendition select: ${formatBandwidth(track.bandwidth)} (ABR disabled)`, 'warning');
-      // TODO(stage-d): selectedVideoTrackId is the deferred reconciler case —
-      // direct write into composition state until intent/state split lands.
-      engine.state.selectedVideoTrackId.set(track.id);
-      signals.state.abrDisabled.set(true);
+      signals.state.userVideoTrackSelection.set({ id: track.id });
     });
     renditionButtonsDiv.appendChild(btn);
+  }
+}
+
+// Signature of the currently-rendered audio track set. Lets the picker rebuild
+// its buttons only when the track set actually changes — selection and pin
+// changes update existing buttons in place (see renderAudioTrackPicker) so a
+// click or hover isn't interrupted by a full DOM teardown.
+let audioTrackSetKey = '';
+
+function renderAudioTrackPicker() {
+  if (!engine || !signals) return;
+  const presentation = engine.state.presentation.get();
+  const selectedAudioTrackId = engine.state.selectedAudioTrackId.get();
+  const userFilter = engine.state.userAudioTrackSelection.get();
+  const tracks = getAudioTracks(presentation);
+
+  if (tracks.length === 0) {
+    audioTrackButtonsDiv.textContent = presentation ? 'No audio tracks found' : 'Waiting for presentation…';
+    audioTrackSetKey = '';
+    return;
+  }
+
+  // The picker pins by language (see the click handler / track-switching
+  // behavior), so multiple same-language renditions are NOT independently
+  // selectable — clicking the "med" variant still just pins the language.
+  // Collapse to one button per selection identity so the UI matches what
+  // selection actually guarantees.
+  const groups = getAudioSelectionGroups(tracks);
+  const setKey = groups.map((group) => group.key).join('|');
+  if (setKey !== audioTrackSetKey) {
+    audioTrackSetKey = setKey;
+    buildAudioTrackButtons(groups);
+  }
+  updateAudioTrackSelection(tracks, selectedAudioTrackId, userFilter);
+}
+
+// One selectable audio identity: a language (when present) or a single track id.
+// `key` is exactly what the click handler pins on, so highlighting and dedupe
+// share one notion of identity.
+interface AudioSelectionGroup {
+  key: string;
+  byLanguage: boolean;
+  language?: string | undefined;
+  label: string;
+  members: string[];
+}
+
+/** Collapse audio tracks to one entry per selection identity (language, else id). */
+function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): AudioSelectionGroup[] {
+  const groups = new Map<string, AudioSelectionGroup>();
+  for (const track of tracks) {
+    const language = track.language || undefined;
+    const key = language ?? track.id;
+    let group = groups.get(key);
+    if (!group) {
+      const name = 'name' in track && track.name ? track.name : track.id;
+      group = { key, byLanguage: !!language, language, label: `${language ?? '—'} · ${name}`, members: [] };
+      groups.set(key, group);
+    }
+    // Member labels (bitrate, else groupId tier) are surfaced in the tooltip so
+    // the collapsed renditions are still inspectable.
+    const groupId = 'groupId' in track ? track.groupId : undefined;
+    const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
+    group.members.push(tier ?? track.id);
+  }
+  return [...groups.values()];
+}
+
+/** (Re)build the static button list — one per selection group, tagged with its key. */
+function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
+  audioTrackButtonsDiv.innerHTML = '';
+
+  const statusRow = document.createElement('div');
+  statusRow.id = 'audio-status-row';
+  statusRow.className = 'audio-status';
+  audioTrackButtonsDiv.appendChild(statusRow);
+
+  for (const group of groups) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.selectionKey = group.key;
+    // Base label minus the selection badge; the badge is toggled in place.
+    btn.dataset.label = group.label;
+    btn.title = group.byLanguage
+      ? `language: ${group.language} · ${group.members.length} rendition(s): ${group.members.join(', ')}`
+      : `id: ${group.key}`;
+    btn.addEventListener('click', () => {
+      const filter = group.byLanguage ? { language: group.language } : { id: group.key };
+      log(
+        `Audio track filter: ${JSON.stringify(filter)} — mid-stream flush will fire if language differs from buffered`,
+        'warning'
+      );
+      signals.state.userAudioTrackSelection.set(filter);
+    });
+    audioTrackButtonsDiv.appendChild(btn);
+  }
+}
+
+/** Update the status row and per-button selected state without tearing down. */
+function updateAudioTrackSelection(
+  tracks: ReturnType<typeof getAudioTracks>,
+  selectedAudioTrackId: string | undefined,
+  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+) {
+  const isPinned = userFilter !== undefined;
+
+  const statusRow = document.getElementById('audio-status-row');
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
+    modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
+    statusRow.appendChild(modeLabel);
+    if (isPinned) {
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'clear-filter-btn';
+      clearBtn.textContent = 'Clear filter';
+      clearBtn.addEventListener('click', () => {
+        log('Cleared userAudioTrackSelection (back to default picker)', 'success');
+        signals!.state.userAudioTrackSelection.set(undefined);
+      });
+      statusRow.appendChild(clearBtn);
+    }
+  }
+
+  // The selected track belongs to a group keyed by its language (else its id);
+  // highlight that group's button.
+  const selectedTrack = tracks.find((track) => track.id === selectedAudioTrackId);
+  const selectedKey = selectedTrack ? selectedTrack.language || selectedTrack.id : undefined;
+  for (const btn of audioTrackButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
+    const isSelected = btn.dataset.selectionKey === selectedKey;
+    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+    btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
   }
 }
 
@@ -322,7 +459,7 @@ function startEngine(src: string) {
     }
 
     if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
-      const mode = state.abrDisabled ? '(manual)' : '(ABR)';
+      const mode = state.userVideoTrackSelection ? '(manual)' : '(ABR)';
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
       prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
@@ -336,13 +473,16 @@ function startEngine(src: string) {
     }
   });
 
-  // Throughput + rendition picker + resolution status — re-render on any state change
-  const stopStateUI = effect(() => {
-    snapshot(engine.state); // track all state changes
-    updateThroughputDisplay();
-    renderRenditionPicker();
-    renderResolutionStatus();
-  });
+  // One effect per UI region, each auto-tracking only the signals its renderer
+  // reads. The previous single effect snapshotted *all* of engine.state, so
+  // high-frequency fields (currentTime, bandwidthState) re-fired every renderer
+  // many times a second — and the picker's full innerHTML rebuild interrupted
+  // clicks/hover. Now the audio picker re-runs only on presentation /
+  // selectedAudioTrackId / userAudioTrackSelection changes.
+  const stopThroughputUI = effect(() => updateThroughputDisplay());
+  const stopRenditionUI = effect(() => renderRenditionPicker());
+  const stopAudioPickerUI = effect(() => renderAudioTrackPicker());
+  const stopResolutionUI = effect(() => renderResolutionStatus());
 
   // Context logger
   const stopContextLogger = effect(() => {
@@ -402,7 +542,10 @@ function startEngine(src: string) {
 
   cleanupEffects = () => {
     stopStateLogger();
-    stopStateUI();
+    stopThroughputUI();
+    stopRenditionUI();
+    stopAudioPickerUI();
+    stopResolutionUI();
     stopContextLogger();
   };
 
@@ -411,8 +554,9 @@ function startEngine(src: string) {
   log('✓ Reactive effects active', 'success');
 
   // ── Wire media element ──────────────────────────────────────────────────────
-  // Set preload on the element BEFORE wiring context so syncPreloadAttribute
-  // reads the correct value rather than the hardcoded "none" from the HTML.
+  // Set preload on the element BEFORE wiring context so syncPreload's read
+  // effect picks up the user-selected value rather than the hardcoded "none"
+  // from the HTML.
   video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
   signals.context.mediaElement.set(video);
   signals.state.presentation.set({ url: src });

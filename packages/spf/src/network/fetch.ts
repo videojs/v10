@@ -1,12 +1,18 @@
 /**
  * HTTP Fetch Wrapper
  *
- * Two-function approach for composability:
- * 1. fetchResolvable() - Fetch Resource (handles byte ranges)
- * 2. getResponseText() - Extract text from Response
- * 3. fetchResolvableStream() - Stream body as Uint8Array chunks
+ * Composable building blocks:
+ * - fetchResolvable() — fetch a Resource (handles byte ranges); returns Response
+ * - getResponseText() — extract text from Response
+ * - fetchResolvableStream() — single-stage async generator over body chunks
+ * - fetchStream() — two-stage: await connection establishment, then lazily
+ *   iterate body chunks. Use when timing the connection start independently
+ *   of body consumption matters (e.g., observable fetch timing for ABR).
+ * - createTrackedFetch() — factory for a fetchStream-shape function that
+ *   samples bandwidth (via EWMA) per chunk and notifies via callback.
  */
 
+import { type BandwidthState, sampleBandwidth } from './bandwidth-estimator';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from './chunked-stream-iterable';
 
 /**
@@ -116,4 +122,66 @@ export async function* fetchResolvableStream(
  */
 export function getResponseText(response: ResponseLike): Promise<string> {
   return response.text();
+}
+
+/**
+ * Two-stage fetch helper: eagerly starts the HTTP request (TTFB is awaited),
+ * then returns a lazy iterable over the response body. Separating connection
+ * start from body iteration makes fetch timing predictable and observable
+ * regardless of when downstream consumers begin pulling chunks.
+ *
+ * Sibling to {@link fetchResolvableStream}, which is single-stage (calls
+ * `fetch` only when iteration starts). Pick `fetchStream` when "when did the
+ * fetch start" needs to be observable separately from "when did the body
+ * begin arriving."
+ */
+export type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
+
+export type FetchBytes = (addressable: Resource, options?: FetchOptions) => Promise<AsyncIterable<Uint8Array>>;
+
+export async function fetchStream(addressable: Resource, options?: FetchOptions): Promise<AsyncIterable<Uint8Array>> {
+  const { minChunkSize, ...fetchOptions } = options ?? {};
+  const response = await fetchResolvable(addressable, fetchOptions);
+  if (!response.body) throw new Error('Response has no body');
+  return new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
+}
+
+/**
+ * Returns a {@link FetchBytes} function that samples bandwidth via EWMA
+ * per body chunk. The factory captures the running bandwidth state
+ * internally; per chunk it computes the next state and notifies the
+ * supplied `onSample` callback.
+ *
+ * The factory's internal accumulator is seeded from `initial` and updated
+ * on every chunk; callers don't need to thread it back in. `onSample`
+ * receives the *new* state after each chunk — typical use is to bridge
+ * samples back into engine state for ABR consumers.
+ *
+ * @param initial - Starting `BandwidthState` (commonly zeros or the
+ *   engine's current accumulator).
+ * @param onSample - Called with the new `BandwidthState` after each chunk.
+ */
+export function createTrackedFetch(initial: BandwidthState, onSample: (next: BandwidthState) => void): FetchBytes {
+  let state = initial;
+  return async (addressable, options) => {
+    const { minChunkSize, ...fetchOptions } = options ?? {};
+    const response = await fetchResolvable(addressable, fetchOptions);
+    if (!response.body) throw new Error('Response has no body');
+    const body = response.body;
+    return {
+      [Symbol.asyncIterator]: async function* () {
+        let chunkStart = performance.now();
+        for await (const chunk of new ChunkedStreamIterable(
+          body,
+          ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
+        )) {
+          const elapsed = performance.now() - chunkStart;
+          state = sampleBandwidth(state, elapsed, chunk.byteLength);
+          onSample(state);
+          yield chunk;
+          chunkStart = performance.now();
+        }
+      },
+    };
+  };
 }

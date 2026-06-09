@@ -2,6 +2,8 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -22,6 +24,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -99,7 +102,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -204,13 +207,17 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
 
-              <div className="media-preview media-slider__preview">
-                <div className="media-preview__thumbnail-wrapper">
-                  <Slider.Thumbnail className="media-preview__thumbnail" />
+              <div className="media-thumbnail media-slider__thumbnail">
+                <div className="media-thumbnail__image-wrapper">
+                  <Slider.Thumbnail className="media-thumbnail__image" />
                 </div>
-                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
-                <SpinnerIcon className="media-preview__spinner media-icon" />
+                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
+                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
               </div>
+
+              <TimeSlider.Preview className="media-slider__preview">
+                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 
@@ -243,6 +250,18 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                     <CastEnterIcon className="media-icon media-icon--cast-enter" />
                     <CastExitIcon className="media-icon media-icon--cast-exit" />
                   </CastButton>
+                }
+              />
+              <Tooltip.Popup className="media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className="media-button--airplay" render={<Button />}>
+                    <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
+                    <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className="media-tooltip" />

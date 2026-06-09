@@ -1,3 +1,5 @@
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import type { RemotePlaybackState } from './remote-playback';
 import type { GoogleCastMediaElement } from './types';
 import {
@@ -141,9 +143,7 @@ export class GoogleCastProvider {
     const mediaInfo = new chrome.cast.media.MediaInfo(this.media.castSrc, this.media.castContentType ?? '');
     mediaInfo.customData = (this.media.castCustomData as object) ?? null;
 
-    const subtitles = [...this.media.querySelectorAll('track')].filter(
-      (el) => el.src && (el.kind === 'subtitles' || el.kind === 'captions')
-    );
+    const subtitles = [...this.media.querySelectorAll('track')].filter((el) => el.src && isCaptionOrSubtitleTrack(el));
 
     const { Track, TrackType, TextTrackType } = chrome.cast.media;
     const activeTrackIds: number[] = [];
@@ -481,7 +481,7 @@ export class GoogleCastProvider {
   async #updateRemoteTextTrack() {
     if (!this.isCasting) return;
 
-    const localSubs = [...this.media.textTracks].filter(({ kind }) => kind === 'subtitles' || kind === 'captions');
+    const localSubs = [...this.media.textTracks].filter(isCaptionOrSubtitleTrack);
 
     const matched = (this.#remote.mediaInfo?.tracks ?? [])
       .filter(({ type }) => type === chrome.cast.media.TrackType.TEXT)

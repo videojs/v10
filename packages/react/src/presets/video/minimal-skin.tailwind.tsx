@@ -15,16 +15,18 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -45,6 +47,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -158,7 +161,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -271,13 +274,16 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <div className={preview.thumbnailWrapper}>
-                  <Slider.Thumbnail className={preview.thumbnail} />
+              <div className={thumbnail.root}>
+                <div className={thumbnail.imageWrapper}>
+                  <Slider.Thumbnail className={thumbnail.image} />
                 </div>
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+                <TimeSlider.Value type="pointer" className={cn(time.current, thumbnail.time)} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={cn(slider.value, time.current)} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 
@@ -313,6 +319,18 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">

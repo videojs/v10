@@ -22,10 +22,11 @@
 
 /* Play: ended → restart */
 .media-button--play[data-ended] .media-icon--restart,
-/* Play: paused (not ended) → play */
+/* Play: paused or not yet started (not ended) → play */
 .media-button--play:not([data-ended])[data-paused] .media-icon--play,
-/* Play: playing (not paused, not ended) → pause */
-.media-button--play:not([data-paused]):not([data-ended]) .media-icon--pause,
+.media-button--play:not([data-ended]):not([data-started]) .media-icon--play,
+/* Play: started and not paused/ended → pause */
+.media-button--play[data-started]:not([data-paused]):not([data-ended]) .media-icon--pause,
 /* Mute: muted → volume off */
 .media-button--mute[data-muted] .media-icon--volume-off,
 /* Mute: volume low (not muted) → volume low */

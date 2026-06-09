@@ -185,6 +185,19 @@ export class PlayerPage {
     await this.page.mouse.move(x, y);
   }
 
+  /**
+   * Opens the playback rate menu and selects the first option that differs from the current rate.
+   * Skins expose rate via a menu (not cycle-on-trigger).
+   */
+  async selectAlternativePlaybackRate(): Promise<void> {
+    await this.playbackRateButton.click();
+    const option = this.page
+      .locator(`${SELECTORS.playbackRateMenuPanel} [role="menuitemradio"][aria-checked="false"]`)
+      .first();
+    await expect(option).toBeVisible({ timeout: 5_000 });
+    await option.click();
+  }
+
   /** Hover over the player area to trigger user-active state and show controls. */
   async showControls(): Promise<void> {
     // Use the play button as anchor — it's always inside the player

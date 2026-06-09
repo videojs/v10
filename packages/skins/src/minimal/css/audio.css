@@ -112,3 +112,7 @@
   padding: 0 0 0 4rem;
   background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
 }
+
+.media-minimal-skin--audio .media-slider__preview .media-slider__value {
+  bottom: 2.5rem;
+}

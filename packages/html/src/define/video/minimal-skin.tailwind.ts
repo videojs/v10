@@ -16,10 +16,10 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
@@ -100,13 +100,16 @@ function getTemplateHTML() {
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
 
-              <div class="${preview.root}">
-                <div class="${preview.thumbnailWrapper}">
-                  <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
+              <div class="${thumbnail.root}">
+                <div class="${thumbnail.imageWrapper}">
+                  <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
                 </div>
-                <media-slider-value type="pointer" class="${preview.time}"></media-slider-value>
-                ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
+                <media-slider-value type="pointer" class="${cn(time.current, thumbnail.time)}"></media-slider-value>
+                ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
               </div>
+              <media-slider-preview class="${slider.preview}">
+                <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
+              </media-slider-preview>
             </media-time-slider>
           </div>
 
@@ -150,6 +153,11 @@ function getTemplateHTML() {
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
               </media-cast-button>
               <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.airplay.button)}">
+                ${renderIcon('airplay-enter', { class: cn(icon, iconState.airplay.enter) })}
+                ${renderIcon('airplay-exit', { class: cn(icon, iconState.airplay.exit) })}
+              </media-airplay-button>
+              <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
                 ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
                 ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}

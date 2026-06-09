@@ -209,11 +209,11 @@ describe('SimpleHlsMediaElement', () => {
       result.catch(() => {});
     });
 
-    it('sets playbackInitiated on engine state when called', () => {
+    it('sets loadActivated on engine state when called', () => {
       const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
-      expect(media.engine.state.playbackInitiated.get()).toBe(true);
+      expect(media.engine.state.loadActivated.get()).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
@@ -336,14 +336,15 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.engine.state.preload.get()).toBe('none');
     });
 
-    it('explicit preload is re-applied before owners.patch on src change so syncPreloadAttribute skips inference', () => {
+    it('explicit preload is re-applied before owners.patch on src change so syncPreload preserves it', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
-      // syncPreloadAttribute fires when owners.patch re-attaches the element,
-      // but since preload was already patched into the new engine's state, it skips.
+      // syncPreload fires when context.mediaElement is set on the new engine.
+      // The freshly-created <video> has no preload attribute (mediaElement.preload === '')
+      // so the read effect's "only overwrite for W3C values" rule leaves state alone.
       expect(media.engine.state.preload.get()).toBe('none');
     });
   });

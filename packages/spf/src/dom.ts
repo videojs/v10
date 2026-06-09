@@ -13,10 +13,7 @@ export { loadAudioSegments, loadVideoSegments } from './playback/behaviors/dom/l
 export { setupTextTrackActors } from './playback/behaviors/dom/setup-text-track-actors';
 export type { CurrentTimeContext, CurrentTimeState } from './playback/behaviors/dom/track-current-time';
 export { trackCurrentTime } from './playback/behaviors/dom/track-current-time';
-export type {
-  PlaybackInitiatedContext,
-  PlaybackInitiatedState,
-} from './playback/behaviors/dom/track-playback-initiated';
-export { trackPlaybackInitiated } from './playback/behaviors/dom/track-playback-initiated';
+export type { LoadTriggersContext, LoadTriggersState } from './playback/behaviors/dom/track-load-triggers';
+export { trackLoadTriggers } from './playback/behaviors/dom/track-load-triggers';
 export type { PlaybackRateContext, PlaybackRateState } from './playback/behaviors/dom/track-playback-rate';
 export { trackPlaybackRate } from './playback/behaviors/dom/track-playback-rate';

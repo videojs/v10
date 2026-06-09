@@ -82,7 +82,7 @@ function createSimpleHlsEngine(config = {}) {
   return createPlaybackEngine(
     [
       // Preload and playback tracking
-      syncPreloadAttribute,
+      syncPreload,
       trackPlaybackInitiated,
 
       // Manifest resolution
@@ -103,7 +103,7 @@ function createSimpleHlsEngine(config = {}) {
 
       // MSE setup
       setupMediaSource,
-      updateDuration,
+      updateMediaSourceDuration,
       setupSourceBuffers,
 
       // Playback tracking and ABR
@@ -119,7 +119,7 @@ function createSimpleHlsEngine(config = {}) {
 
       // Text tracks
       syncTextTracks,
-      loadTextTrackCues,
+      loadTextTrackSegments,
     ],
     { config, initialState: { bandwidthState: initialBandwidthState() } }
   );

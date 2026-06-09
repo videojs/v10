@@ -297,6 +297,16 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
  */
 export type Segment = Ham & AddressableObject & TimeSpan;
 
+/**
+ * Floating-point tolerance for matching segments by `startTime`. Two
+ * segments are considered the same position when
+ * `Math.abs(a.startTime - b.startTime) < SEGMENT_TIME_EPSILON`. Used by
+ * the source-buffer dedup and segment-loader quality-aware filter to
+ * tolerate sub-millisecond drift in segment timestamps across multiple
+ * playlists / quality levels.
+ */
+export const SEGMENT_TIME_EPSILON = 0.0001;
+
 // =============================================================================
 // Media Playlist Info
 // =============================================================================

@@ -68,7 +68,7 @@ http://example.com/segment2.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -85,7 +85,7 @@ http://example.com/segment2.m4s
       expect(resolvedTrack.segments.length).toBeGreaterThan(0);
     }
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not resolve when track is already resolved', async () => {
@@ -128,13 +128,13 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
 
-    const cleanup = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not resolve when no track is selected', async () => {
@@ -149,13 +149,13 @@ http://example.com/segment2.m4s
 
     const state = makeState({ presentation });
 
-    const cleanup = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    cleanup();
+    reactor.destroy();
   });
 });
 
@@ -205,7 +205,7 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveAudioTrack.setup({ state });
+    const reactor = resolveAudioTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -223,7 +223,7 @@ http://example.com/segment1.m4s
       expect(resolvedTrack.type).toBe('audio');
     }
 
-    cleanup();
+    reactor.destroy();
   });
 });
 
@@ -274,7 +274,7 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTextTrack.setup({ state });
+    const reactor = resolveTextTrack.setup({ state });
 
     await vi.waitFor(() => {
       const currentPres = state.presentation.get();
@@ -290,7 +290,7 @@ http://example.com/subtitle1.webvtt
       expect(resolvedTrack.type).toBe('text');
     }
 
-    cleanup();
+    reactor.destroy();
   });
 });
 
@@ -340,7 +340,7 @@ ${segUrl}
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
-    const cleanup = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state });
 
     state.selectedVideoTrackId.set('track-b');
 
@@ -357,7 +357,7 @@ ${segUrl}
     expect(fetchedUrls.filter((u: string) => u.includes('track-a'))).toHaveLength(1);
     expect(fetchedUrls.filter((u: string) => u.includes('track-b'))).toHaveLength(1);
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not fetch the same track twice when state changes rapidly', async () => {
@@ -394,7 +394,7 @@ http://example.com/a-seg1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveVideoTrack.setup({ state });
+    const reactor = resolveVideoTrack.setup({ state });
 
     // Trigger multiple state changes while track-a is resolving.
     state.selectedVideoTrackId.set('track-a');
@@ -406,7 +406,7 @@ http://example.com/a-seg1.m4s
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
-    cleanup();
+    reactor.destroy();
   });
 });
 

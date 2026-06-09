@@ -37,6 +37,8 @@ site/src/content/generated-feature-reference/
 site/src/content/generated-preset-reference/
 site/src/content/ejected-skins.json
 packages/cli/docs/
+packages/html/docs/
+packages/react/docs/
 
 # -------------------------
 # Environment
@@ -152,6 +154,7 @@ bun.lockb
 .claude/worktrees/
 .opencode
 AGENTS.md
+.agents
 agents
 
 # Playwright

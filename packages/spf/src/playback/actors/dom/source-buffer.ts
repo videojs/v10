@@ -2,7 +2,7 @@ import { createMachineActor, type HandlerContext, type MessageActor } from '../.
 import { SerialRunner, Task } from '../../../core/tasks/task';
 import { type AppendData, appendSegment } from '../../../media/dom/mse/append-segment';
 import { flushBuffer } from '../../../media/dom/mse/buffer-flusher';
-import type { Segment, Track } from '../../../media/types';
+import { SEGMENT_TIME_EPSILON, type Segment, type Track } from '../../../media/types';
 
 // =============================================================================
 // Types
@@ -21,7 +21,18 @@ export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> &
 
 export type { AppendData };
 
-export type AppendInitMessage = { type: 'append-init'; data: AppendData; meta: { trackId: Track['id'] } };
+export type AppendInitMessage = {
+  type: 'append-init';
+  data: AppendData;
+  /**
+   * `language` is captured alongside `trackId` so downstream loaders can
+   * compare the buffered track's language to the newly-selected track's
+   * language and decide whether ahead-buffer flush is warranted on track
+   * switch (see `segment-loader`'s `planTasks`). Undefined for video and
+   * for audio without explicit `LANGUAGE` attribute.
+   */
+  meta: { trackId: Track['id']; language?: string };
+};
 export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; meta: AppendSegmentMeta };
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
@@ -37,6 +48,13 @@ export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface SourceBufferActorContext {
   initTrackId?: string | undefined;
+  /**
+   * Language of the most recently appended init segment's track (when
+   * present on the playlist). Used by the segment-loader's `planTasks`
+   * to detect cross-language switches and schedule ahead-buffer flush.
+   * Undefined for video and for language-less audio.
+   */
+  initTrackLanguage?: string | undefined;
   segments: Array<
     Pick<Segment, 'id' | 'startTime' | 'duration'> & {
       trackId: Track['id'];
@@ -91,7 +109,7 @@ function appendInitTask(
     await appendSegment(sourceBuffer, message.data);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.
-    return { ...ctx, initTrackId: message.meta.trackId };
+    return { ...ctx, initTrackId: message.meta.trackId, initTrackLanguage: message.meta.language };
   });
 }
 
@@ -106,10 +124,10 @@ function appendSegmentTask(
     const { meta } = message;
     // Remove any existing entry at the same start time (same "slot" in the
     // timeline), then record the new segment. Assumes time-aligned segments
-    // across playlists. The epsilon guards against floating-point drift in
-    // parsed timestamps.
-    const EPSILON = 0.0001;
-    const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
+    // across playlists. `SEGMENT_TIME_EPSILON` guards against floating-point
+    // drift in parsed timestamps (shared with the segment-loader quality
+    // filter — single source of truth).
+    const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= SEGMENT_TIME_EPSILON);
 
     // For streaming data: emit partial state before the first chunk so
     // downstream code can see the in-progress segment and treat it as

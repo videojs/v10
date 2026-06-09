@@ -11,8 +11,20 @@ jobs:
     permissions:
       issues: write
     steps:
-      - run: gh issue edit "$NUMBER" --add-label triage
+      - name: Add triage label for external authors
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.issue.number }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          internal=(decepulis mihar-22 luwes sampotts cjpillsbury heff esbie r-delfino95 ronald-urbina ronalduqualabs jerricho93 spuppo-mux)
+          author_lc="${AUTHOR,,}"
+          for handle in "${internal[@]}"; do
+            if [[ "$author_lc" == "$handle" ]]; then
+              echo "Author $AUTHOR is internal; skipping triage label."
+              exit 0
+            fi
+          done
+          echo "Author $AUTHOR is external; adding triage label."
+          gh issue edit "$NUMBER" --add-label triage

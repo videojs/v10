@@ -139,6 +139,23 @@ export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string):
 }
 
 /**
+ * Build a MIME codec string from a track's `mimeType` + `codecs`. Works
+ * on partially-resolved tracks — both fields come from the multivariant
+ * playlist and are available before media-playlist resolution.
+ *
+ * @param track - Track carrying `mimeType` and `codecs`
+ * @returns MIME codec string suitable for `MediaSource.addSourceBuffer`
+ *
+ * @example
+ * buildMimeCodec({ mimeType: 'video/mp4', codecs: ['avc1.42E01E'] })
+ * // => 'video/mp4; codecs="avc1.42E01E"'
+ */
+export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): string {
+  const codecString = track.codecs?.join(',') ?? '';
+  return `${track.mimeType}; codecs="${codecString}"`;
+}
+
+/**
  * Check if a codec is supported.
  *
  * @param mimeCodec - MIME type with codecs string
@@ -185,4 +202,37 @@ export function onMediaSourceReadyStateChange(
   mediaSource.addEventListener('sourceopen', update, options);
   mediaSource.addEventListener('sourceended', update, options);
   mediaSource.addEventListener('sourceclose', update, options);
+}
+
+/**
+ * Wait until `mediaSource.readyState` transitions away from `'closed'`
+ * (the next `sourceopen`/`sourceended`/`sourceclose` event), or until
+ * `signal` aborts — whichever fires first.
+ *
+ * Resolves immediately when `readyState` is already `'open'` or `'ended'`
+ * (no further transition is coming, so there's nothing to wait for). The
+ * caller is expected to re-check `readyState` after the await to
+ * distinguish `'open'` from terminal states.
+ *
+ * Companion to `onMediaSourceReadyStateChange` for one-shot use in async
+ * sequences (e.g., a behavior's reactor entry that needs to wait for the
+ * MediaSource to attach before performing a spec-conforming mutation).
+ *
+ * @example
+ * await waitForMediaSourceOpen(mediaSource, signal);
+ * if (signal.aborted || mediaSource.readyState !== 'open') return;
+ * // safe to perform 'open'-state-only work
+ */
+export function waitForMediaSourceOpen(mediaSource: MediaSource, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+  if (mediaSource.readyState !== 'closed') return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    const done = () => resolve();
+    const options = { once: true, signal };
+    mediaSource.addEventListener('sourceopen', done, options);
+    mediaSource.addEventListener('sourceended', done, options);
+    mediaSource.addEventListener('sourceclose', done, options);
+    signal.addEventListener('abort', done, { once: true });
+  });
 }

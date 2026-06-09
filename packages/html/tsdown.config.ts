@@ -7,9 +7,7 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 
-type BuildMode = 'dev' | 'default';
-
-const buildModes: BuildMode[] = ['dev', 'default'];
+import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
@@ -36,19 +34,14 @@ const iconEntries = Object.fromEntries(
   })
 );
 
-const createConfig = (mode: BuildMode): UserConfig => ({
+const createConfig = (mode: PackageBuildMode): UserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
   entry: {
     index: 'src/index.ts',
     ...iconEntries,
     ...defineEntries,
     ...presetEntries,
   },
-  platform: 'browser',
-  format: 'es',
-  sourcemap: true,
-  clean: true,
-  hash: false,
-  unbundle: true,
   treeshake: {
     // The sideEffects field in package.json uses dist paths, but the build
     // runs against source. Ensure define/* modules (which register custom
@@ -62,16 +55,11 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  outDir: `dist/${mode}`,
-  define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
-  },
-  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json' } : false,
   plugins: [
     copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
-    inlineCssPlugin({ skinsDir, minify: mode !== 'dev' }),
-    inlineTemplatePlugin({ minify: mode !== 'dev' }),
+    inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
+    inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
   ],
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));

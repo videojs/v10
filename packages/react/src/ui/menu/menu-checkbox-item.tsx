@@ -21,7 +21,7 @@ export const MenuCheckboxItem = forwardRef<HTMLDivElement, MenuCheckboxItemProps
   { render, className, style, checked, onCheckedChange, disabled, onClick, ...elementProps },
   forwardedRef
 ) {
-  const { menu, state, stateAttrMap } = useMenuContext();
+  const { menu, state } = useMenuContext();
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,7 +50,6 @@ export const MenuCheckboxItem = forwardRef<HTMLDivElement, MenuCheckboxItemProps
     { render, className, style },
     {
       state,
-      stateAttrMap,
       ref: [forwardedRef, elementRef],
       props: [
         {

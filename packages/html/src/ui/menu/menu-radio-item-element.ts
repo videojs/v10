@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs, completeMenuItemSelection } from '@videojs/core/dom';
+import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -77,7 +77,5 @@ export class MenuRadioItemElement extends MediaElement {
       'aria-checked': String(checked),
       'aria-disabled': this.disabled ? 'true' : undefined,
     });
-
-    applyStateDataAttrs(this, menuCtx.state, menuCtx.stateAttrMap);
   }
 }

@@ -2,6 +2,7 @@
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
+import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
@@ -27,9 +28,8 @@ import {
   defineErrorDialog,
   defineInputIndicators,
   defineMenu,
+  defineSliders,
   defineTime,
-  defineTimeSlider,
-  defineVolumeSlider,
 } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
@@ -44,12 +44,12 @@ safeDefine(MediaContainerElement);
 defineControls();
 defineErrorDialog();
 defineInputIndicators();
-defineTimeSlider();
-defineVolumeSlider();
+defineSliders();
 defineTime();
 defineMenu();
 
 // Standalone elements.
+safeDefine(AirPlayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);

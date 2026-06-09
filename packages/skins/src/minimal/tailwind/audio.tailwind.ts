@@ -3,6 +3,7 @@ import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
+import { slider as baseSlider } from './components/slider';
 
 /* ==========================================================================
    Root
@@ -68,6 +69,15 @@ export const popup = {
 };
 
 /* ==========================================================================
+   Sliders
+   ========================================================================== */
+
+export const slider = {
+  ...baseSlider,
+  value: cn(baseSlider.value, 'bottom-10'),
+};
+
+/* ==========================================================================
    Error
    ========================================================================== */
 
@@ -98,5 +108,4 @@ export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon'
 export { menu } from './components/menu';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
-export { slider } from './components/slider';
 export { time } from './components/time';

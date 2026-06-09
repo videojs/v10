@@ -1,6 +1,7 @@
 // Registers the live video player, container, and all video UI custom
 // elements without creating a skin element. Use this entry when building an
 // ejected (light DOM) player layout for live HLS / DASH streams.
+import { AirPlayButtonElement } from '@/ui/airplay-button/airplay-button-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
@@ -17,14 +18,7 @@ import { PosterElement } from '../../ui/poster/poster-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import {
-  defineControls,
-  defineErrorDialog,
-  defineInputIndicators,
-  defineTime,
-  defineTimeSlider,
-  defineVolumeSlider,
-} from '../ui/compounds';
+import { defineControls, defineErrorDialog, defineInputIndicators, defineSliders, defineTime } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { LiveVideoPlayerElement } from './player';
@@ -38,11 +32,11 @@ safeDefine(MediaContainerElement);
 defineControls();
 defineErrorDialog();
 defineInputIndicators();
-defineTimeSlider();
-defineVolumeSlider();
+defineSliders();
 defineTime();
 
 // Standalone elements.
+safeDefine(AirPlayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);

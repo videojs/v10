@@ -282,6 +282,9 @@ export class MenuElement extends MediaElement {
     // Apply base submenu attributes regardless of phase.
     const transitionState = this.#menuViewTransition.input.current;
 
+    this.removeAttribute(MenuDataAttrs.side);
+    this.removeAttribute(MenuDataAttrs.align);
+
     applyElementProps(this, {
       ...getMenuViewTransitionAttrs(transitionState),
       role: 'menu',

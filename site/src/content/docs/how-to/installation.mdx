@@ -18,6 +18,7 @@ import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 <Aside type="caution" title="Beta Software">
@@ -34,7 +35,8 @@ Video.js is an **HTML video player built on custom elements**: lightweight, fram
 <LLMCase>
 <div data-cli-omit="installation">
 
-The code examples in this guide can be tailored to your use case. Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
+This guide has code examples tailored to your use case. To generate this guide with tailored code examples, run `npx @videojs/cli docs how-to/installation`.
+If you run it without flags, it will allow you to interactively configure your player. Or, you can run it with flags:
 
 ```bash
 npx @videojs/cli docs how-to/installation \
@@ -45,12 +47,35 @@ npx @videojs/cli docs how-to/installation \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
+
+Here's what the flags mean:
+- *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
+- *Preset*: Pick a pre-built player. The default presets work well for general website playback.
+- *Skin*: Pick what your player looks like
+- *Media*: Pick what kind of media you have
+- *Source URL*: Define where your media comes from (or omit for a sample URL)
+- *Install method*: How do you want to install your package? (CDN is HTML-only)
+
+If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 </div>
+
+<FrameworkCase frameworks={["react"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
 </LLMCase>
 
 <HumanCase>
 
-Answer the questions below to get started quickly with your first embed code.
+If you're working with an agent, consider providing it this guide in Markdown:
+
+<ContentWidth>
+<CopyMarkdownButton client:idle />
+</ContentWidth>
+
+Otherwise, answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 

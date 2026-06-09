@@ -49,6 +49,8 @@ The substance: `core/`, `media/`, `network/` are framework-agnostic foundations.
 
 If a module looks like a primitive but reaches into `core/`, that's a smell — consider whether the signal binding can move to the call site (see `onMediaSourceReadyStateChange` for a callback-shaped primitive that lets the consumer create the signal).
 
+Conversely: if a function inside `playback/behaviors/` (or `playback/actors/`) has no `core/` dependency — no signals, effects, or reactors — it probably belongs in a layer below (`media/`, `network/`, or `@videojs/utils`). Same layering principle, opposite direction. When reviewing a behavior or actor file, scan its top-level helpers; any pure data-manipulation / lookup / format-handling code with no reactive concerns is a candidate to extract.
+
 ## DOM-vs-not enforcement
 
 The DOM/no-DOM split is enforced by `lib` settings on each subtree's `tsconfig.json`:
@@ -75,3 +77,24 @@ Internal paths are not part of the public API. Don't import from `@videojs/spf/p
 - `types` — type-only tests via tsgo
 
 When adding a test in a new location, check the project globs match.
+
+## Code style
+
+SPF-specific style preferences. These extend the workspace-wide rules in the root `CLAUDE.md` — they apply across `packages/spf/src/`, not just behaviors. (Style guidance specific to a single domain — behavior naming, reactor state names, signal access patterns — lives in `internal/design/spf/conventions/` instead.)
+
+### Prefer `const` + ternary over `let` + conditional reassignment
+
+For single-branch derivations of one value, use a `const` with a ternary rather than a `let` that gets conditionally overwritten:
+
+```ts
+// Good
+const duration = maxBufferedEnd > target ? maxBufferedEnd : target;
+
+// Avoid
+let duration = target;
+if (maxBufferedEnd > duration) {
+  duration = maxBufferedEnd;
+}
+```
+
+The `const`-ternary form makes the value's identity immutable from its first binding — readers don't have to scan ahead for reassignment, and the dependency on each branch's inputs is structurally clear. `let` is appropriate when the variable is genuinely mutable across multiple statements (accumulators, loop indices, state that flips on conditions other than a single-shot derivation); reserve it for those cases.

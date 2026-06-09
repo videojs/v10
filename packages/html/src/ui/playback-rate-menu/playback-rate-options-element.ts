@@ -14,7 +14,7 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
   static override properties = {
     ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
+  } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
 
   disabled = false;
   formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
@@ -53,7 +53,10 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getRateValue(state.rate);
-      this.label = this.label || 'Playback rate';
+      if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
+        this.setAttribute('aria-label', 'Playback rate');
+      }
+
       this.#syncContent(state);
     }
 

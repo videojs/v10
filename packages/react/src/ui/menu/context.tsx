@@ -61,6 +61,22 @@ export function useSubMenuContext(): SubMenuContextValue | null {
 }
 
 // ---------------------------------------------------------------------------
+// Group context — shared by group-like parts and MenuGroupLabel
+// ---------------------------------------------------------------------------
+
+export interface MenuGroupContextValue {
+  registerLabel: (id: string) => () => void;
+}
+
+const MenuGroupContext = createContext<MenuGroupContextValue | null>(null);
+
+export const MenuGroupContextProvider = MenuGroupContext.Provider;
+
+export function useMenuGroupContext(): MenuGroupContextValue | null {
+  return useContext(MenuGroupContext);
+}
+
+// ---------------------------------------------------------------------------
 // Radio group context — shared between MenuRadioGroup and MenuRadioItem
 // ---------------------------------------------------------------------------
 

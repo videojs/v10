@@ -9,15 +9,34 @@ vi.mock('../../../../media/dom/mse/append-segment', () => ({
 
 describe('createSimpleHlsEngine', () => {
   let originalFetch: typeof globalThis.fetch;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  // Tests assert at actor-presence and state-shape level, not at "init
+  // segment appended" level — so unmocked init/segment URLs in the manifests
+  // are intentional. The fetch loop's reject path leaks a console.error in
+  // each test; suppress only the expected patterns so genuine failures still
+  // surface.
+  const expectedErrorPatterns = [
+    /Unexpected error in segment loader.*Unmocked URL/s,
+    /Failed to load text-track segment/,
+  ];
 
   beforeEach(() => {
     // Save original fetch
     originalFetch = globalThis.fetch;
+
+    const originalConsoleError = console.error.bind(console);
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+      if (expectedErrorPatterns.some((p) => p.test(text))) return;
+      originalConsoleError(...args);
+    });
   });
 
   afterEach(() => {
     // Restore original fetch
     globalThis.fetch = originalFetch;
+    consoleErrorSpy.mockRestore();
   });
   it('creates engine with state, owners, and destroy', () => {
     const engine = createSimpleHlsEngine();
@@ -30,15 +49,17 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
-  it('initializes state with seeded bandwidthState and undefined elsewhere', () => {
+  it('initializes state with seeded bandwidthState and behavior-supplied defaults', () => {
     const engine = createSimpleHlsEngine();
 
-    // Composition creates one signal per declared key. The engine seeds
-    // `bandwidthState` to an empty BandwidthState via `initialState` so
-    // ABR machinery has a non-nullish starting point; everything else
-    // starts as `undefined` and behaviors write their own slots.
+    // Composition creates one signal per declared key. ABR machinery is
+    // seeded via `initialState` with an empty BandwidthState. `preload` is
+    // backfilled by `syncPreload` to its default (`'metadata'`); `currentTime`
+    // is backfilled by `trackCurrentTime` to its default (`0`).
+    // Everything else starts as `undefined` and behaviors write their
+    // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
-      abrDisabled: undefined,
+      userVideoTrackSelection: undefined,
       bandwidthState: {
         fastEstimate: 0,
         fastTotalWeight: 0,
@@ -46,12 +67,10 @@ describe('createSimpleHlsEngine', () => {
         slowTotalWeight: 0,
         bytesSampled: 0,
       },
-      currentTime: undefined,
-      mediaSourceReadyState: undefined,
-      playbackInitiated: undefined,
-      preload: undefined,
+      currentTime: 0,
+      loadActivated: undefined,
+      preload: 'metadata',
       presentation: undefined,
-      presentationUrl: undefined,
       selectedAudioTrackId: undefined,
       selectedTextTrackId: undefined,
       selectedVideoTrackId: undefined,
@@ -258,13 +277,150 @@ http://example.com/audio-seg1.m4s
         expect(owners.mediaSource).toBeDefined();
         expect(owners.mediaSource?.readyState).toBe('open');
 
-        // 6. Video SourceBuffer should be created
-        expect(owners.videoBuffer).toBeDefined();
-        expect(owners.videoBuffer).toBeInstanceOf(SourceBuffer);
+        // 6. Video buffer cluster should be created (actor presence implies
+        //    `addSourceBuffer` ran; SourceBuffer itself is private to
+        //    `setupVideoBufferActors`).
+        expect(owners.videoBufferActor).toBeDefined();
 
-        // 7. Audio SourceBuffer should be created
-        expect(owners.audioBuffer).toBeDefined();
-        expect(owners.audioBuffer).toBeInstanceOf(SourceBuffer);
+        // 7. Audio buffer cluster should be created
+        expect(owners.audioBufferActor).toBeDefined();
+      },
+      { timeout: 5000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('cleanly replaces source in place via state.presentation overwrite', async () => {
+    // Two sources, A and B, each with their own video + audio playlists.
+    // Source-replacement validation: the resolved/unresolved routing in
+    // `resolvePresentation` should let an in-place `state.presentation.set`
+    // tear down A's actors via reactor state-exit and rebuild fresh actors
+    // for B without recreating the engine.
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",CHANNELS="2",URI="http://example.com/audio-a.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E,mp4a.40.2",AUDIO="audio",RESOLUTION=640x360
+http://example.com/video-a.m3u8`)
+        );
+      }
+      if (url.includes('video-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video-a.mp4"
+#EXTINF:10.0,
+http://example.com/video-a-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('audio-a.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio-a.mp4"
+#EXTINF:10.0,
+http://example.com/audio-a-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('playlist-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",CHANNELS="2",URI="http://example.com/audio-b.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2000000,CODECS="avc1.4D401F,mp4a.40.2",AUDIO="audio",RESOLUTION=1280x720
+http://example.com/video-b.m3u8`)
+        );
+      }
+      if (url.includes('video-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video-b.mp4"
+#EXTINF:10.0,
+http://example.com/video-b-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+      if (url.includes('audio-b.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio-b.mp4"
+#EXTINF:10.0,
+http://example.com/audio-b-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createSimpleHlsEngine();
+    const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
+
+    engine.context.mediaElement.set(mediaElement);
+    engine.state.presentation.set({ url: 'http://example.com/playlist-a.m3u8' });
+    engine.state.preload.set('auto');
+
+    // Wait for source A's pipeline to fully resolve
+    await vi.waitFor(
+      () => {
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
+        expect(state.presentation?.url).toBe('http://example.com/playlist-a.m3u8');
+        expect(state.presentation?.id).toBeDefined();
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(state.selectedAudioTrackId).toBeDefined();
+        expect(owners.mediaSource?.readyState).toBe('open');
+        expect(owners.videoBufferActor).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
+      },
+      { timeout: 5000 }
+    );
+
+    // Capture source A's identities for post-switch comparison
+    const sourceA = snapshot(engine.context);
+    const sourceAMediaSource = sourceA.mediaSource;
+    const sourceAVideoBufferActor = sourceA.videoBufferActor;
+    const sourceAAudioBufferActor = sourceA.audioBufferActor;
+
+    // In-place replacement: overwrite state.presentation with B's unresolved
+    // {url}. resolvePresentation's FSM should route through 'resolving' again;
+    // downstream behaviors tear down via state-exit and rebuild for source B.
+    engine.state.presentation.set({ url: 'http://example.com/playlist-b.m3u8' });
+
+    await vi.waitFor(
+      () => {
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
+
+        // Source B is resolved
+        expect(state.presentation?.url).toBe('http://example.com/playlist-b.m3u8');
+        expect(state.presentation?.id).toBeDefined();
+        expect(state.presentation?.selectionSets).toBeDefined();
+
+        // Tracks re-selected for source B
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(state.selectedAudioTrackId).toBeDefined();
+
+        // Fresh MediaSource + buffer actors (different instances from A)
+        expect(owners.mediaSource?.readyState).toBe('open');
+        expect(owners.mediaSource).not.toBe(sourceAMediaSource);
+        expect(owners.videoBufferActor).not.toBe(sourceAVideoBufferActor);
+        expect(owners.audioBufferActor).not.toBe(sourceAAudioBufferActor);
       },
       { timeout: 5000 }
     );
@@ -317,11 +473,11 @@ http://example.com/video-seg1.m4s
 
         // Should create video track and buffer
         expect(state.selectedVideoTrackId).toBeDefined();
-        expect(owners.videoBuffer).toBeDefined();
+        expect(owners.videoBufferActor).toBeDefined();
 
         // Should NOT create audio track or buffer
         expect(state.selectedAudioTrackId).toBeUndefined();
-        expect(owners.audioBuffer).toBeUndefined();
+        expect(owners.audioBufferActor).toBeUndefined();
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
@@ -379,11 +535,11 @@ http://example.com/audio-seg1.m4s
 
         // Should create audio track and buffer
         expect(state.selectedAudioTrackId).toBeDefined();
-        expect(owners.audioBuffer).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
 
         // Should NOT create video track or buffer
         expect(state.selectedVideoTrackId).toBeUndefined();
-        expect(owners.videoBuffer).toBeUndefined();
+        expect(owners.videoBufferActor).toBeUndefined();
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
@@ -511,7 +667,7 @@ http://example.com/video-seg1.m4s
     // Should NOT create MediaSource or SourceBuffers without mediaElement
     expect(owners.mediaElement).toBeUndefined();
     expect(owners.mediaSource).toBeUndefined();
-    expect(owners.videoBuffer).toBeUndefined();
+    expect(owners.videoBufferActor).toBeUndefined();
 
     engine.destroy();
   });
@@ -591,8 +747,8 @@ http://example.com/audio-seg1.m4s
 
         expect(owners.mediaSource).toBeDefined();
         expect(owners.mediaSource?.readyState).toBe('open');
-        expect(owners.videoBuffer).toBeDefined();
-        expect(owners.audioBuffer).toBeDefined();
+        expect(owners.videoBufferActor).toBeDefined();
+        expect(owners.audioBufferActor).toBeDefined();
       },
       { timeout: 2000 }
     );
@@ -709,7 +865,7 @@ http://example.com/seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    // Use a conservative initialBandwidth so switchQuality also selects 360p and
+    // Use a conservative initialBandwidth so switchVideoQuality also selects 360p and
     // doesn't immediately upgrade — verifying only the selected track is resolved.
     const engine = createSimpleHlsEngine({ initialBandwidth: 600_000 });
     const mediaElement = document.createElement('video');

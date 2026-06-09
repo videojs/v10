@@ -15,16 +15,18 @@ import {
   playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -45,6 +47,7 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -158,7 +161,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -268,11 +271,14 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <Slider.Thumbnail className={preview.thumbnail} />
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+              <div className={thumbnail.root}>
+                <Slider.Thumbnail className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={cn(time.current, thumbnail.time)} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={cn(slider.value, time.current)} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
           </div>
@@ -309,6 +315,18 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">

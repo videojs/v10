@@ -25,7 +25,7 @@ type NavbarProps = {
   onPreloadChange: (value: PreloadValue) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
-  isSimpleHlsVideo: boolean;
+  isSimpleHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
   platforms: readonly Platform[];
@@ -49,6 +49,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'mux-video': 'Mux Video',
   'mux-audio': 'Mux Audio',
   'simple-hls-video': 'Simple HLS Video',
+  'simple-hls-audio-only': 'Simple HLS Audio-Only',
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
@@ -75,7 +76,7 @@ export function Navbar({
   onPreloadChange,
   availableSources,
   isBackgroundVideo,
-  isSimpleHlsVideo,
+  isSimpleHls,
   isMuxVideo,
   isMuxAudio,
   platforms,
@@ -131,7 +132,7 @@ export function Navbar({
           onChange={onSourceChange}
           options={availableSources
             .filter((id) => {
-              if (isSimpleHlsVideo) return sources[id].subType === 'mp4';
+              if (isSimpleHls) return sources[id].subType === 'mp4';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })

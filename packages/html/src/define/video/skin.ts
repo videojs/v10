@@ -74,11 +74,15 @@ function getTemplateHTML() {
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
 
-              <div class="media-surface media-preview media-slider__preview">
-                <media-slider-thumbnail class="media-preview__thumbnail"></media-slider-thumbnail>
-                <media-slider-value type="pointer" class="media-time media-preview__time"></media-slider-value>
-                ${renderIcon('spinner', { class: 'media-preview__spinner media-icon' })}
+              <div class="media-surface media-thumbnail media-slider__thumbnail">
+                <media-slider-thumbnail class="media-thumbnail__image"></media-slider-thumbnail>
+                <media-slider-value type="pointer" class="media-time media-thumbnail__time"></media-slider-value>
+                ${renderIcon('spinner', { class: 'media-thumbnail__spinner media-icon' })}
               </div>
+
+              <media-slider-preview class="media-slider__preview">
+                <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
+              </media-slider-preview>
             </media-time-slider>
             <media-time type="duration" class="media-time"></media-time>
           </div>
@@ -124,6 +128,12 @@ function getTemplateHTML() {
               ${renderIcon('cast-exit', { class: 'media-icon media-icon--cast-exit' })}
             </media-cast-button>
             <media-tooltip id="cast-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            
+            <media-airplay-button commandfor="airplay-tooltip" class="media-button media-button--subtle media-button--icon media-button--airplay">
+              ${renderIcon('airplay-enter', { class: 'media-icon media-icon--airplay-enter' })}
+              ${renderIcon('airplay-exit', { class: 'media-icon media-icon--airplay-exit' })}
+            </media-airplay-button>
+            <media-tooltip id="airplay-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
 
             <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}

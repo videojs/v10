@@ -2,6 +2,8 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -22,6 +24,7 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { CastButton } from '@/ui/cast-button';
@@ -99,7 +102,7 @@ function PlaybackRateMenuItems(): ReactNode {
   const { options, setValue, value } = usePlaybackRateMenu();
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -201,11 +204,15 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
 
-              <div className="media-surface media-preview media-slider__preview">
-                <Slider.Thumbnail className="media-preview__thumbnail" />
-                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
-                <SpinnerIcon className="media-preview__spinner media-icon" />
+              <div className="media-surface media-thumbnail media-slider__thumbnail">
+                <Slider.Thumbnail className="media-thumbnail__image" />
+                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
+                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
               </div>
+
+              <TimeSlider.Preview className="media-slider__preview">
+                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className="media-time" />
           </div>
@@ -239,6 +246,18 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                     <CastEnterIcon className="media-icon media-icon--cast-enter" />
                     <CastExitIcon className="media-icon media-icon--cast-exit" />
                   </CastButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip" />
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className="media-button--airplay" render={<Button />}>
+                    <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
+                    <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className="media-surface media-tooltip" />

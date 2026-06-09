@@ -1,3 +1,5 @@
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import { IndicatorVisibilityCoordinator } from '../../core/ui/input-feedback/indicator-lifecycle';
 import type { InputActionEvent, MediaSnapshot } from '../../core/ui/input-feedback/status';
 import { getGestureCoordinator } from '../gesture/coordinator';
@@ -34,12 +36,15 @@ export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSn
   const state = store.state;
   const time = selectTime(state);
 
+  const textTrack = selectTextTrack(state);
+
   return {
     paused: selectPlayback(state)?.paused,
     volume: selectVolume(state)?.volume,
     muted: selectVolume(state)?.muted,
     fullscreen: selectFullscreen(state)?.fullscreen,
-    subtitlesShowing: selectTextTrack(state)?.subtitlesShowing,
+    subtitlesShowing: textTrack?.subtitlesShowing,
+    subtitlesAvailable: textTrack ? (textTrack.textTrackList ?? []).some(isCaptionOrSubtitleTrack) : undefined,
     pip: selectPiP(state)?.pip,
     currentTime: time?.currentTime,
     duration: time?.duration,

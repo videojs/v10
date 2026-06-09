@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findTrackElement } from '../text-track';
+import { findTrackElement, isCaptionOrSubtitleTrack } from '../text-track';
 
 /**
  * jsdom does not create unique TextTrack objects per <track> element,
@@ -11,6 +11,19 @@ function mockTrackProperty(el: HTMLTrackElement): TextTrack {
   Object.defineProperty(el, 'track', { value: track, configurable: true });
   return track;
 }
+
+describe('isCaptionOrSubtitleTrack', () => {
+  it('returns true for captions and subtitles tracks', () => {
+    expect(isCaptionOrSubtitleTrack({ kind: 'captions' })).toBe(true);
+    expect(isCaptionOrSubtitleTrack({ kind: 'subtitles' })).toBe(true);
+  });
+
+  it('returns false for other text track kinds', () => {
+    expect(isCaptionOrSubtitleTrack({ kind: 'chapters' })).toBe(false);
+    expect(isCaptionOrSubtitleTrack({ kind: 'metadata' })).toBe(false);
+    expect(isCaptionOrSubtitleTrack({ kind: 'descriptions' })).toBe(false);
+  });
+});
 
 describe('findTrackElement', () => {
   it('returns the track element that owns the given TextTrack', () => {

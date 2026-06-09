@@ -50,20 +50,20 @@ If you're not using presets, you can create a player that has individual feature
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, playback, volume, time } from '@videojs/react';
+import { createPlayer, playbackFeature, volumeFeature, timeFeature, controlsFeature } from '@videojs/react';
 
 const Player = createPlayer({
-  features: [playback, volume, time],
+  features: [playbackFeature, volumeFeature, timeFeature, controlsFeature],
 });
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, playback, volume, time } from '@videojs/html';
+import { createPlayer, playbackFeature, volumeFeature, timeFeature, controlsFeature } from '@videojs/html';
 
 const { ProviderMixin, PlayerController, context } = createPlayer({ // [!code focus]
-  features: [playback, volume, time], // [!code focus]
+  features: [playbackFeature, volumeFeature, timeFeature, controlsFeature], // [!code focus]
 }); // [!code focus]
 
 class MyPlayer extends ProviderMixin(MediaElement) {
@@ -80,22 +80,22 @@ Since feature bundles are just an array of features under the hood, it doesn't t
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, playback } from '@videojs/react';
+import { createPlayer, playbackFeature } from '@videojs/react';
 import { backgroundFeatures } from '@videojs/react/background';
 
 const Player = createPlayer({
-  features: [...backgroundFeatures, playback],
+  features: [...backgroundFeatures, playbackFeature],
 });
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, playback } from '@videojs/html';
+import { createPlayer, playbackFeature } from '@videojs/html';
 import { backgroundFeatures } from '@videojs/html/background';
 import { MediaElement } from '@videojs/html';
 
 const { ProviderMixin } = createPlayer({ // [!code focus]
-  features: [...backgroundFeatures, playback], // [!code focus]
+  features: [...backgroundFeatures, playbackFeature], // [!code focus]
 }); // [!code focus]
 
 class MyPlayer extends ProviderMixin(MediaElement) {

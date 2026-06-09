@@ -5,10 +5,10 @@ import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { inputFeedback as baseInputFeedback } from './components/input-feedback';
 import { popup as basePopup } from './components/popup';
-import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
+import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* ==========================================================================
@@ -18,7 +18,7 @@ import { time as baseTime } from './components/time';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
-    'bg-black',
+    'bg-black overflow-clip',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',
@@ -96,7 +96,6 @@ export const controls = cn(
   surface,
   // Position & wrapping layout (small)
   'absolute bottom-2 inset-x-2 flex-wrap',
-  'mx-auto max-w-4xl',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',
@@ -134,23 +133,24 @@ export const time = {
 };
 
 /* ==========================================================================
-   Preview (with video surface)
+   Thumbnail (with video surface)
    ========================================================================== */
 
-export const preview = {
-  ...basePreview,
+export const thumbnail = {
+  ...baseThumbnail,
   root: cn(
-    '[--media-preview-max-width:11rem] [--media-preview-padding:-1.125rem] [--media-preview-inset:calc((100cqi-100%)/2)]',
-    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)-var(--media-preview-inset)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    baseThumbnail.root,
+    surface,
+    '[--media-slider-thumbnail-max-width:11rem] [--media-slider-thumbnail-padding:-1.125rem] [--media-slider-thumbnail-inset:calc((100cqi-100%)/2)]',
+    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)-var(--media-slider-thumbnail-inset)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
-    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    'has-[[role=img][data-hidden]]:opacity-0 has-[[role=img][data-hidden]]:scale-80 has-[[role=img][data-hidden]]:blur-sm',
-    'has-[[role=img][data-loading]]:max-h-24',
-    surface,
-    basePreview.root
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none',
+    'has-[[role=img][data-loading]]:max-h-24'
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
+  image: cn(baseThumbnail.image, 'max-w-(--media-slider-thumbnail-max-width)'),
 };
 
 /* ==========================================================================

@@ -55,9 +55,9 @@
   background-color: currentColor;
   border-radius: calc(infinity * 1px);
   box-shadow:
-    0 0 0 1px var(--media-current-shadow-color-subtle, oklch(0 0 0 / 0.1)),
-    0 1px 3px 0 oklch(0 0 0 / 0.15),
-    0 1px 2px -1px oklch(0 0 0 / 0.15);
+    0 0 0 1px var(--media-current-shadow-color, oklch(0 0 0 / 0.1)),
+    0 1px 3px 0 oklch(0 0 0 / 0.35),
+    0 1px 2px -1px oklch(0 0 0 / 0.35);
   opacity: 0;
   translate: -50% -50%;
   transition-timing-function: ease-out;
@@ -76,7 +76,7 @@
 
   &:hover,
   &:focus {
-    outline-color: oklch(from currentColor l c h / 0.25);
+    outline-color: oklch(from currentColor l c h / 0.15);
     outline-offset: 0;
   }
 
@@ -107,6 +107,49 @@
 .media-default-skin .media-slider__thumb:focus-visible,
 .media-default-skin .media-slider__thumb--persistent {
   opacity: 1;
+}
+
+/* Preview */
+.media-default-skin .media-slider__preview {
+  & .media-slider__value,
+  &::before {
+    opacity: 0;
+    scale: 0.5;
+    transition-timing-function: ease-out;
+    transition-duration: 200ms;
+    transition-property: opacity, scale;
+  }
+
+  & .media-slider__value {
+    position: absolute;
+    bottom: 2.25rem;
+    text-shadow: 0 1px 0 var(--media-current-shadow-color);
+    filter: blur(8px);
+    translate: -50% 0.5rem;
+    transition-property: filter, opacity, scale, translate;
+  }
+
+  &::before {
+    display: block;
+    min-width: 0.25rem;
+    height: 0.25rem;
+    content: "";
+    background-color: currentColor;
+    border-radius: 100%;
+    box-shadow:
+      0 0 0 1px var(--media-current-shadow-color, oklch(0 0 0 / 0.15)),
+      0 1px 2px 0 oklch(0 0 0 / 0.35);
+  }
+
+  &[data-pointing] .media-slider__value,
+  &[data-pointing]:not([data-dragging])::before {
+    opacity: 1;
+    scale: 1;
+  }
+  &[data-pointing] .media-slider__value {
+    filter: blur(0);
+    translate: -50% 0;
+  }
 }
 
 /* Shared track fills */

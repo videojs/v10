@@ -1,33 +1,60 @@
+/**
+ * **Default audio/text/video track selection on src load / unselect on src unload.**
+ * When a presentation is resolved, sets `selectedVideoTrackId` /
+ * `selectedAudioTrackId` / `selectedTextTrackId` to a per-type-picker default
+ * if no selection already exists. When the presentation is unset/reset
+ * (transitions back to unresolved), clears the selection so a stale id from
+ * the previous source doesn't persist.
+ *
+ * Lifecycle-driven: each transition fires its work once. Does not police the
+ * selection between transitions; external writes (user picks, ABR, programmatic
+ * filter-driven re-picks) are left alone.
+ *
+ * Picker is config-driven: each per-type export wires a sensible default
+ * (`pickAudioTrack` for audio — three-tier language-aware; `pickTextTrack`
+ * for text; `pickFirstTrackId` for video) and the caller can supply their
+ * own via `config.picker` for custom selection logic. The behavior's
+ * `config` is forwarded to the picker as its second argument, so options
+ * like `preferredAudioLanguage` / `preferredSubtitleLanguage` reach the
+ * picker without an intermediate wrapping layer.
+ *
+ * Compose `selectVideoTrack` for the simple "pick a default video track"
+ * behavior, or `switchVideoTrack` (`./track-switching.ts`) for the
+ * ABR-driven variant. Compose `selectAudioTrack` for the simple default
+ * pick, or `switchAudioTrack` (`./track-switching.ts`) for the
+ * filter-reactive + mid-stream-flush slot-owner variant — when audio-abr
+ * lands, `switchAudioTrack` extends into `switchAudioQuality`. Compose
+ * only one per type — they're alternatives, not stackable (each writes
+ * the same `selected*TrackId` slot). The simple variants tree-shake out
+ * the heavier machinery (bandwidth estimator, quality selection, flush
+ * orchestration).
+ */
+
 import { defineBehavior } from '../../core/composition/create-composition';
-import { effect } from '../../core/signals/effect';
-import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
+import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
+  type AudioSelectionConfig,
+  pickAudioTrack,
+  pickFirstTrackId,
   pickTextTrack,
   type TextSelectionConfig,
+  type TrackPicker,
   type TrackSelectionState,
+  type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
-import { isResolvedPresentation, type MaybeResolvedPresentation, type TrackType } from '../../media/types';
-
-/**
- * Pick the first track of the given type from a presentation.
- *
- * Currently a POC: returns the first track in the first switching set.
- * The full pickers (`pickVideoTrack` / `pickAudioTrack` in
- * `media/primitives/select-tracks.ts`) honor bandwidth + language
- * preferences and will replace this once the selection algorithm matures.
- */
-function pickFirstTrackId(presentation: MaybeResolvedPresentation, type: TrackType): string | undefined {
-  return presentation.selectionSets?.find((set) => set.type === type)?.switchingSets[0]?.tracks[0]?.id;
-}
+import { isResolvedPresentation } from '../../media/types';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
 // Specialization helper
 //
-// Each `selectXTrack` export below is a thin wrapper that binds (selectedKey,
-// picker) at module load. Picker is variant-specific: video/audio use
-// `pickFirstTrackId` (works on any `MaybeResolvedPresentation`); text uses
-// `pickTextTrack` against a fully-resolved `Presentation`. The orchestration
-// — read presentation, no-op when already selected, pick, set — is shared.
+// `setupTrackSelection` has the same shape as a Behavior `setup` function:
+// `({ state, config }) => Reactor`. Each `selectXTrack` export below calls
+// it from inside its own `defineBehavior` setup, supplying its per-type
+// `selectedKey`, default picker, and forwarded picker config. The lifecycle
+// — pick on entering 'presentation-resolved' if not already selected; clear
+// on entering 'presentation-unresolved' — is shared.
 // ============================================================================
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
@@ -36,77 +63,188 @@ type SelectStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<TrackSelectionState['presentation']>;
 } & { [P in K]: Signal<TrackSelectionState[P]> };
 
-function setupTrackSelection<K extends SelectedTrackKey>(
-  state: SelectStateMap<K>,
-  selectedKey: K,
-  picker: (presentation: MaybeResolvedPresentation) => string | undefined
-): () => void {
-  return effect(() => {
-    const presentation = state.presentation.get();
-    if (!presentation || state[selectedKey].get()) return;
-    const id = picker(presentation);
-    if (id) state[selectedKey].set(id);
+interface TrackSelectionSetupConfig<K extends SelectedTrackKey, PickerConfig> {
+  selectedKey: K;
+  picker: TrackPicker<PickerConfig>;
+  pickerConfig?: PickerConfig;
+}
+
+function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
+  state,
+  config: { selectedKey, picker, pickerConfig },
+}: {
+  state: SelectStateMap<K>;
+  config: TrackSelectionSetupConfig<K, PickerConfig>;
+}) {
+  const derivedStateSignal = computed(() =>
+    isResolvedPresentation(state.presentation.get())
+      ? ('presentation-resolved' as const)
+      : ('presentation-unresolved' as const)
+  );
+
+  return createMachineReactor({
+    initial: 'presentation-unresolved',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      'presentation-unresolved': {},
+      'presentation-resolved': {
+        // Entry: pick a default on entering presentation-resolved if none
+        // is set. External writes (user picks, ABR) that already populated
+        // the slot are left alone.
+        //
+        // The returned cleanup runs on state exit — which fires on src
+        // unload (presentation-resolved → presentation-unresolved) AND on
+        // behavior destroy (presentation-resolved → destroying →
+        // destroyed). Putting the clear here rather than as
+        // presentation-unresolved.entry is more cohesive (operation +
+        // cleanup co-located) and correctly covers destroy (destroy
+        // doesn't pass through presentation-unresolved).
+        entry: () => {
+          if (!state[selectedKey].get()) {
+            // `state.presentation.get()` is non-null inside this entry —
+            // the reactor's `'presentation-resolved'` gate is exactly
+            // `isResolvedPresentation(state.presentation.get())`, which
+            // requires a truthy Presentation.
+            const id = picker(state.presentation.get()!, pickerConfig);
+            if (id) state[selectedKey].set(id);
+          }
+          return () => state[selectedKey].set(undefined);
+        },
+      },
+    },
   });
 }
+
+// ============================================================================
+// Default pickers
+//
+// Each variant resolves its picker as `config?.picker ?? <default>` and
+// forwards the whole engine config as `pickerConfig`, so rich pickers
+// (`pickAudioTrack`, `pickTextTrack`) read their options directly. Audio
+// and text use their primitive pickers as-is; video adapts
+// `pickFirstTrackId` (positional `type` arg) into the `TrackPicker` shape.
+// ============================================================================
+
+/** Default video picker: first track in the video selection set. */
+const defaultVideoPicker: TrackPicker = (presentation) => pickFirstTrackId(presentation, 'video');
 
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
 
 /**
- * Select the first available video track when a presentation loads.
+ * Config for `selectVideoTrack`. Pass `picker` to fully override selection
+ * logic; otherwise the default `pickFirstTrackId` is used.
+ */
+export interface SelectVideoTrackConfig extends VideoSelectionConfig {
+  picker?: TrackPicker<SelectVideoTrackConfig>;
+}
+
+/**
+ * Select a video track when a presentation loads. Clears the selection on
+ * src unload.
  *
- * No-op once a video track is already selected.
+ * This is the simple, non-ABR counterpart to `switchVideoTrack` — compose
+ * one or the other, not both (both write `selectedVideoTrackId`). Composing
+ * `selectVideoTrack` alone tree-shakes out the ABR code path
+ * (bandwidth-estimator, quality-selection); use it for sources without
+ * meaningful quality variants, test setups, or players that intentionally
+ * pin a quality.
  *
  * @example
- * const cleanup = selectVideoTrack.setup({ state });
+ * const reactor = selectVideoTrack.setup({ state });
  */
 export const selectVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: SelectStateMap<'selectedVideoTrackId'> }) =>
-    setupTrackSelection(state, 'selectedVideoTrackId', (presentation) => pickFirstTrackId(presentation, 'video')),
+  setup: ({ state, config }: { state: SelectStateMap<'selectedVideoTrackId'>; config?: SelectVideoTrackConfig }) =>
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: VIDEO_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? defaultVideoPicker,
+        pickerConfig: config,
+      },
+    }),
 });
 
 /**
- * Select the first available audio track when a presentation loads.
+ * Config for `selectAudioTrack`. Pass `picker` to fully override selection
+ * logic; otherwise the default `pickAudioTrack` is used (three-tier:
+ * `preferredAudioLanguage` → `DEFAULT=YES` → first track).
+ */
+export interface SelectAudioTrackConfig extends AudioSelectionConfig {
+  picker?: TrackPicker<SelectAudioTrackConfig>;
+}
+
+/**
+ * Select an audio track when a presentation loads. Clears the selection
+ * on src unload.
  *
- * No-op once an audio track is already selected.
+ * This is the simple, lifecycle-only counterpart to `switchAudioTrack`
+ * (in `./track-switching.ts`) — compose one or the other, not both
+ * (both write `selectedAudioTrackId`). `switchAudioTrack` adds
+ * filter-reactivity (`userAudioTrackSelection`) and mid-stream-flush
+ * orchestration; `selectAudioTrack` covers the default-on-load case
+ * without those. Use this variant for test setups, audio-only flows
+ * that don't expose language switching, or composition variants that
+ * intentionally pin a track.
  *
  * @example
- * const cleanup = selectAudioTrack.setup({ state });
+ * const reactor = selectAudioTrack.setup({ state });
+ *
+ * @example
+ * // Custom picker with language preference
+ * const reactor = selectAudioTrack.setup({
+ *   state,
+ *   config: { preferredAudioLanguage: 'en', picker: myLanguageAwarePicker },
+ * });
  */
 export const selectAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state }: { state: SelectStateMap<'selectedAudioTrackId'> }) =>
-    setupTrackSelection(state, 'selectedAudioTrackId', (presentation) => pickFirstTrackId(presentation, 'audio')),
+  setup: ({ state, config }: { state: SelectStateMap<'selectedAudioTrackId'>; config?: SelectAudioTrackConfig }) =>
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: AUDIO_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? pickAudioTrack,
+        pickerConfig: config,
+      },
+    }),
 });
 
 /**
+ * Config for `selectTextTrack`. Pass `picker` to fully override selection
+ * logic; otherwise the default `pickTextTrack` is used, which honors the
+ * other fields.
+ */
+export interface SelectTextTrackConfig extends TextSelectionConfig {
+  picker?: TrackPicker<SelectTextTrackConfig>;
+}
+
+/**
  * Select a text track based on user preferences (preferred language,
- * default-track auto-select, forced-track filtering).
+ * default-track auto-select, forced-track filtering). Clears the selection
+ * on src unload.
  *
- * Unlike video/audio selection, text-track selection is user opt-in —
- * `pickTextTrack` returns undefined when no preference matches, and the
- * effect leaves `selectedTextTrackId` unset. Also requires a fully-resolved
- * presentation; partial resolutions are skipped until a media playlist is parsed.
+ * Unlike audio selection, the default text picker returns `undefined` when
+ * no preference matches, leaving the selection unset — text-track
+ * selection is user opt-in.
  *
  * @example
- * const cleanup = selectTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+ * const reactor = selectTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
  */
 export const selectTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
-  setup: ({
-    state,
-    config,
-  }: {
-    state: SelectStateMap<'selectedTextTrackId'>;
-    config: Omit<TextSelectionConfig, 'type'>;
-  }) =>
-    setupTrackSelection(state, 'selectedTextTrackId', (presentation) => {
-      if (!isResolvedPresentation(presentation)) return undefined;
-      return pickTextTrack(presentation, { ...config, type: 'text' });
+  setup: ({ state, config }: { state: SelectStateMap<'selectedTextTrackId'>; config?: SelectTextTrackConfig }) =>
+    setupTrackSelection({
+      state,
+      config: {
+        selectedKey: TEXT_TYPE_CONFIG.selectedKey,
+        picker: config?.picker ?? pickTextTrack,
+        pickerConfig: config,
+      },
     }),
 });

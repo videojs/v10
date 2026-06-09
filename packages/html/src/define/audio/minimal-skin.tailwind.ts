@@ -85,6 +85,9 @@ function getTemplateHTML() {
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
+              <media-slider-preview class="${slider.preview}">
+                <media-slider-value type="pointer" class="${slider.value}"></media-slider-value>
+              </media-slider-preview>
             </media-time-slider>
           </div>
 
