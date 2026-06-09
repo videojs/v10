@@ -264,9 +264,14 @@ playback-restriction error handling) rather than a silent stall.
   a shorthand that *produces* a `src`, so an explicit `src` wins.) The recommended
   default shape (`src` + token-refresher, no `playback-id`) avoids this entirely
   — it only arises if the convenience inputs are used.
-- **Refresh surface** — per-token refresher function vs `onTokenExpiring` event
-  vs both; proactive, reactive, or both by default; and if proactive, where the
-  `exp`-decoding scheduler lives (resolver / engine / element).
+- **Refresh surface** — three sub-questions:
+  - *How the consumer supplies a fresh token* — a refresher function the player
+    calls (`el.refreshToken = () => …`), an `onTokenExpiring` event the consumer
+    answers, or both.
+  - *When refresh runs by default* — reactive (after a `403`), proactive (before
+    expiry), or both.
+  - *If proactive, where the `exp`-decoding timer lives* — resolver, engine, or
+    element.
 - **Resolver home & extensibility** — does the resolver live on the element, in
   core, or in a Mux adapter? Is it a public extension point for non-Mux
   providers, or Mux-internal for now? (Lean: internal first.)
