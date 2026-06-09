@@ -13,15 +13,14 @@ export type ScreenOrientationLockType =
   | 'natural'
   | 'portrait'
   | 'portrait-primary'
-  | 'portrait-secondary'
-  | false;
+  | 'portrait-secondary';
 
 export interface ScreenOrientationLockConfig {
   type?: ScreenOrientationLockType | undefined;
 }
 
 interface ScreenOrientation {
-  lock?: ((type: Exclude<ScreenOrientationLockType, false>) => Promise<void>) | undefined;
+  lock?: ((type: ScreenOrientationLockType) => Promise<void>) | undefined;
   unlock?: (() => void) | undefined;
 }
 
@@ -44,7 +43,7 @@ export function createScreenOrientationLock({
 
   return {
     async lock() {
-      if (!type || locked) return;
+      if (locked) return;
 
       const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
       const lock = orientation?.lock;

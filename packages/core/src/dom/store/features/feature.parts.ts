@@ -2,6 +2,7 @@ import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { fullscreenFeature } from './fullscreen';
 import { liveFeature } from './live';
+import { orientationLockFeature } from './orientation-lock';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
@@ -20,6 +21,7 @@ export {
   controlsFeature as controls,
   fullscreenFeature as fullscreen,
   liveFeature as live,
+  orientationLockFeature as orientationLock,
   pipFeature as pip,
   playbackFeature as playback,
   playbackRateFeature as playbackRate,

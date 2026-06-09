@@ -7,15 +7,6 @@ import { createMockVideo } from '../../../tests/test-helpers';
 import { selectFullscreen } from '../../selectors';
 import { fullscreenFeature } from '../fullscreen';
 
-function stubOrientation() {
-  const orientation = {
-    lock: vi.fn(async () => {}),
-    unlock: vi.fn(),
-  };
-  vi.stubGlobal('screen', { orientation });
-  return orientation;
-}
-
 describe('fullscreenFeature', () => {
   let originalFullscreenEnabled: boolean | undefined;
 
@@ -43,11 +34,11 @@ describe('fullscreenFeature', () => {
       expect(selectFullscreen.displayName).toBe('fullscreen');
     });
 
-    it('selects configured fullscreen state', () => {
+    it('selects fullscreen state', () => {
       const video = createMockVideo();
       const container = document.createElement('div');
 
-      const store = createStore<PlayerTarget>()(fullscreenFeature({ orientationLock: false }));
+      const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: video, container });
 
       expect(selectFullscreen(store.state)?.fullscreen).toBe(false);
@@ -300,46 +291,6 @@ describe('fullscreenFeature', () => {
       expect(container.requestFullscreen).toHaveBeenCalled();
     });
 
-    it('requestFullscreen() locks orientation to landscape by default', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      expect(orientation.lock).toHaveBeenCalledWith('landscape');
-    });
-
-    it('requestFullscreen() skips orientation lock when disabled', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature({ orientationLock: false }));
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      expect(orientation.lock).not.toHaveBeenCalled();
-    });
-
     it('requestFullscreen() falls back to media when no container', async () => {
       const video = createMockVideo();
       video.requestFullscreen = vi.fn().mockResolvedValue(undefined);
@@ -364,32 +315,6 @@ describe('fullscreenFeature', () => {
       await store.exitFullscreen();
 
       expect(document.exitFullscreen).toHaveBeenCalled();
-
-      document.exitFullscreen = originalExit;
-    });
-
-    it('exitFullscreen() unlocks orientation after a successful lock', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const originalExit = document.exitFullscreen;
-      document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-      await store.exitFullscreen();
-
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
 
       document.exitFullscreen = originalExit;
     });
@@ -434,42 +359,6 @@ describe('fullscreenFeature', () => {
   });
 
   describe('transitions', () => {
-    it('toggleFullscreen() locks on enter and unlocks on exit', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const originalExit = document.exitFullscreen;
-      document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.toggleFullscreen();
-
-      expect(orientation.lock).toHaveBeenCalledWith('landscape');
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-
-      await store.toggleFullscreen();
-
-      expect(document.exitFullscreen).toHaveBeenCalled();
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
-
-      document.exitFullscreen = originalExit;
-    });
-
     it('toggleFullscreen() exits PiP first when entering fullscreen', async () => {
       Object.defineProperty(document, 'fullscreenEnabled', {
         value: true,
@@ -504,151 +393,6 @@ describe('fullscreenFeature', () => {
         writable: true,
         configurable: true,
       });
-    });
-
-    it('unlocks orientation when fullscreen exits outside store actions', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: null,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
-    });
-
-    it('unlocks orientation when fullscreen exits before lock settles', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      let resolveLock!: () => void;
-      const lockPromise = new Promise<void>((resolve) => {
-        resolveLock = resolve;
-      });
-
-      const orientation = {
-        lock: vi.fn(() => lockPromise),
-        unlock: vi.fn(),
-      };
-      vi.stubGlobal('screen', { orientation });
-
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      const enterTask = store.requestFullscreen();
-
-      await vi.waitFor(() => {
-        expect(orientation.lock).toHaveBeenCalled();
-      });
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: null,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      resolveLock();
-      await enterTask;
-
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
-    });
-
-    it('unlocks orientation on detach while still fullscreen', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      const detach = store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      orientation.unlock.mockClear();
-      detach();
-
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
-    });
-
-    it('unlocks orientation on destroy while still fullscreen', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const orientation = stubOrientation();
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      orientation.unlock.mockClear();
-      store.destroy();
-
-      expect(orientation.unlock).toHaveBeenCalledTimes(1);
     });
 
     it('requestFullscreen() exits PiP first if active', async () => {

@@ -7,7 +7,7 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Controls fullscreen mode. Tries the container element first, falls back to the media element. Video players lock screen orientation to landscape while fullscreen is active when the browser supports the Screen Orientation API.
+Controls fullscreen mode. Tries the container element first, falls back to the media element.
 
 <FeatureReference feature="fullscreen" />
 
@@ -53,14 +53,15 @@ class FullscreenButton extends MediaElement {
 
 ### Screen orientation
 
-When fullscreen is entered, `features.fullscreen` tries `screen.orientation.lock('landscape')`. When fullscreen exits, it unlocks orientation if the feature successfully locked it. Unsupported browsers and rejected lock requests are ignored, so iOS Safari continues to use its normal fullscreen behavior.
+Add <DocsLink slug="reference/feature-orientation-lock">`features.orientationLock`</DocsLink> to lock screen orientation while fullscreen is active. Unsupported browsers and rejected lock requests are ignored, so iOS Safari continues to use its normal fullscreen behavior.
 
-Disable orientation locking by replacing the default fullscreen feature in a custom feature bundle:
+By default, the feature locks to `landscape`. Pass a Screen Orientation API type to customize it:
 
 ```ts
 import { createPlayer, features } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
 
 const Player = createPlayer({
-  features: [features.playback, features.time, features.fullscreen({ orientationLock: false })],
+  features: [...videoFeatures, features.orientationLock({ type: 'portrait' })],
 });
 ```

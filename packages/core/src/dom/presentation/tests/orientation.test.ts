@@ -38,22 +38,6 @@ describe('createScreenOrientationLock', () => {
     expect(orientation.lock).toHaveBeenCalledWith('portrait');
   });
 
-  it('does nothing when disabled', async () => {
-    const orientation = {
-      lock: vi.fn(async () => {}),
-      unlock: vi.fn(),
-    };
-    stubOrientation(orientation);
-
-    const screenLock = createScreenOrientationLock({ type: false });
-
-    await screenLock.lock();
-    screenLock.unlock();
-
-    expect(orientation.lock).not.toHaveBeenCalled();
-    expect(orientation.unlock).not.toHaveBeenCalled();
-  });
-
   it('unlocks only after a successful lock', async () => {
     const orientation = {
       lock: vi.fn(async () => {}),
