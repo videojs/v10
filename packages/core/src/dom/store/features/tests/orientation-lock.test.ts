@@ -2,7 +2,6 @@ import { createStore } from '@videojs/store';
 import type { Mock } from 'vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
-import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { orientationLockFeature } from '../orientation-lock';
 
@@ -10,6 +9,10 @@ type OrientationMock = {
   lock: Mock<ScreenOrientation['lock']>;
   unlock: Mock<ScreenOrientation['unlock']>;
 };
+
+interface WebKitPresentationVideo extends HTMLVideoElement {
+  webkitPresentationMode?: string;
+}
 
 function stubOrientation(): OrientationMock;
 function stubOrientation<Orientation extends Partial<ScreenOrientation>>(orientation: Orientation): Orientation;
@@ -119,7 +122,7 @@ describe('orientationLockFeature', () => {
 
   it('handles webkit presentation mode changes', async () => {
     const orientation = stubOrientation();
-    const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+    const video = createMockVideo() as WebKitPresentationVideo;
     video.webkitPresentationMode = 'inline';
     const container = document.createElement('div');
 

@@ -88,8 +88,18 @@ function isEmptyState(node: ts.Expression): boolean {
   if (!ts.isArrowFunction(node) && !ts.isFunctionExpression(node)) return false;
   if (ts.isBlock(node.body)) return false;
 
-  const body = ts.skipParentheses(node.body);
+  const body = unwrapParentheses(node.body);
   return ts.isObjectLiteralExpression(body) && body.properties.length === 0;
+}
+
+function unwrapParentheses(node: ts.Expression): ts.Expression {
+  let expression = node;
+
+  while (ts.isParenthesizedExpression(expression)) {
+    expression = expression.expression;
+  }
+
+  return expression;
 }
 
 // ─── Type Formatting ──────────────────────────────────────────────

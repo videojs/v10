@@ -3,11 +3,14 @@ import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 import { isFullscreen } from '../../presentation/fullscreen';
 import { createScreenOrientationLock, type ScreenOrientationLockType } from '../../presentation/orientation';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export interface OrientationLockFeatureConfig {
   /** Screen orientation type to lock while fullscreen is active. */
   type?: ScreenOrientationLockType | undefined;
+}
+
+interface WebKitPresentationMedia extends HTMLMediaElement {
+  webkitPresentationMode?: string;
 }
 
 export const orientationLockFeature = definePlayerFeature(
@@ -37,7 +40,7 @@ export const orientationLockFeature = definePlayerFeature(
       listen(document, 'fullscreenchange', sync, { signal });
       listen(document, 'webkitfullscreenchange', sync, { signal });
 
-      const video = media as WebKitVideoElement;
+      const video = media as WebKitPresentationMedia;
       if ('webkitPresentationMode' in video) {
         listen(media, 'webkitpresentationmodechanged', sync, { signal });
       }
