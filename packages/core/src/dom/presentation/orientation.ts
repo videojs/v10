@@ -28,7 +28,7 @@ export function createScreenOrientationLock({
   type = 'landscape',
 }: ScreenOrientationLockConfig = {}): ScreenOrientationLock {
   let locked = false;
-  let generation = 0;
+  let desired = false;
 
   const releaseOrientation = () => {
     const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
@@ -44,13 +44,12 @@ export function createScreenOrientationLock({
   return {
     async lock() {
       if (locked) return;
+      desired = true;
 
       const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
       const lock = orientation?.lock;
 
       if (!isFunction(lock)) return;
-
-      const lockGeneration = ++generation;
 
       try {
         await lock.call(orientation, type);
@@ -58,7 +57,7 @@ export function createScreenOrientationLock({
         return;
       }
 
-      if (lockGeneration === generation) {
+      if (desired) {
         locked = true;
       } else {
         releaseOrientation();
@@ -66,7 +65,7 @@ export function createScreenOrientationLock({
     },
 
     unlock() {
-      generation += 1;
+      desired = false;
 
       if (!locked) return;
 

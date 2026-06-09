@@ -88,6 +88,42 @@ describe('createScreenOrientationLock', () => {
     expect(orientation.unlock).toHaveBeenCalledTimes(1);
   });
 
+  it('does not release a newer active lock when an older lock settles', async () => {
+    let resolveFirst!: () => void;
+    let resolveSecond!: () => void;
+
+    const firstLock = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondLock = new Promise<void>((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    const orientation = {
+      lock: vi.fn<ScreenOrientation['lock']>().mockReturnValueOnce(firstLock).mockReturnValueOnce(secondLock),
+      unlock: vi.fn(),
+    };
+    stubOrientation(orientation);
+
+    const screenLock = createScreenOrientationLock();
+    const firstTask = screenLock.lock();
+
+    screenLock.unlock();
+    const secondTask = screenLock.lock();
+
+    resolveSecond();
+    await secondTask;
+
+    resolveFirst();
+    await firstTask;
+
+    expect(orientation.unlock).not.toHaveBeenCalled();
+
+    screenLock.unlock();
+
+    expect(orientation.unlock).toHaveBeenCalledTimes(1);
+  });
+
   it('ignores rejected locks and thrown unlocks', async () => {
     const orientation = {
       lock: vi.fn<ScreenOrientation['lock']>().mockRejectedValue(new Error('NotAllowedError')),
