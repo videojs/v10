@@ -175,6 +175,21 @@ export type TextTrack = Track & {
 };
 
 /**
+ * Predicate that answers "can this environment decode this track?" — the
+ * capability-probing surface, read by the track-switching hard-constraint
+ * pre-pass (`excludeUnplayableTracks`) to drop undecodable renditions before
+ * selection. Kept DOM-free here (a plain function type over a minimal track
+ * shape) so DOM-free behaviors can consume it; the DOM implementation
+ * (`canPlayTrack` in `media/dom/capabilities.ts`) wraps
+ * `MediaSource.isTypeSupported`.
+ *
+ * Takes the minimal codec-bearing shape both video and audio candidates
+ * carry. `mimeType` is optional so unprobeable candidates (no MIME) can be
+ * passed straight through as playable rather than dropped.
+ */
+export type CanPlayTrack = (track: { mimeType?: string; codecs?: string[] }) => boolean;
+
+/**
  * Minimal text-track cue shape — start time, end time, and display text.
  *
  * Host-agnostic representation. `VTTCue` structurally satisfies this
