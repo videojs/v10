@@ -124,53 +124,143 @@ function updateThroughputDisplay() {
   throughputDiv.className = 'has-data';
 }
 
+// Signature of the currently-rendered video rendition set. Lets the picker
+// rebuild its buttons only when the set actually changes — selection and ABR/
+// manual changes update existing buttons in place (see renderRenditionPicker),
+// so a click or hover isn't interrupted by a full DOM teardown on every ABR
+// switch (selectedVideoTrackId changes frequently during playback).
+let videoTrackSetKey = '';
+
 function renderRenditionPicker() {
   if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
   const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
-  const isManual = engine.state.userVideoTrackSelection.get() !== undefined;
+  const userFilter = engine.state.userVideoTrackSelection.get();
   const tracks = getVideoTracks(presentation);
 
   if (tracks.length === 0) {
     renditionButtonsDiv.textContent = presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    videoTrackSetKey = '';
     return;
   }
 
+  // Selection pins by bitrate + resolution (see the click handler), not track
+  // id, so redundant-stream renditions duplicated across CDNs share one
+  // selection identity and are NOT independently selectable. Collapse to one
+  // button per identity so the UI matches what selection actually guarantees.
+  const groups = getVideoSelectionGroups(tracks);
+  const setKey = groups.map((group) => group.key).join('|');
+  if (setKey !== videoTrackSetKey) {
+    videoTrackSetKey = setKey;
+    buildVideoTrackButtons(groups);
+  }
+  updateVideoTrackSelection(tracks, selectedVideoTrackId, userFilter);
+}
+
+// One selectable video identity: a bitrate + resolution. `key` is exactly what
+// the click handler pins on (as a partial-track filter), so highlighting and
+// dedupe share one notion of identity.
+interface VideoSelectionGroup {
+  key: string;
+  label: string;
+  filter: { bandwidth: number; width?: number; height?: number };
+  members: string[];
+}
+
+/** Stable bitrate+resolution identity for a video track (matches the pin filter). */
+function videoSelectionKey(track: ReturnType<typeof getVideoTracks>[number]): string {
+  const width = 'width' in track ? track.width : undefined;
+  const height = 'height' in track ? track.height : undefined;
+  return `${track.bandwidth}|${width ?? ''}×${height ?? ''}`;
+}
+
+/** Collapse video tracks to one entry per selection identity (bitrate + resolution). */
+function getVideoSelectionGroups(tracks: ReturnType<typeof getVideoTracks>): VideoSelectionGroup[] {
+  const groups = new Map<string, VideoSelectionGroup>();
+  for (const track of tracks) {
+    const key = videoSelectionKey(track);
+    let group = groups.get(key);
+    if (!group) {
+      const width = 'width' in track ? track.width : undefined;
+      const height = 'height' in track ? track.height : undefined;
+      const res = width && height ? `${width}×${height} @ ` : '';
+      const filter: VideoSelectionGroup['filter'] = { bandwidth: track.bandwidth };
+      if (width) filter.width = width;
+      if (height) filter.height = height;
+      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}`, filter, members: [] };
+      groups.set(key, group);
+    }
+    // Member ids (one per CDN for redundant streams) are surfaced in the
+    // tooltip so the collapsed renditions are still inspectable.
+    group.members.push(track.id);
+  }
+  return [...groups.values()];
+}
+
+/** (Re)build the static button list — one per selection group, tagged with its key. */
+function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
   renditionButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
+  statusRow.id = 'video-status-row';
   statusRow.className = 'abr-status';
-  const modeLabel = document.createElement('span');
-  modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
-  modeLabel.textContent = isManual ? '🔒 Manual' : '⟳ ABR';
-  statusRow.appendChild(modeLabel);
-  if (isManual) {
-    const enableBtn = document.createElement('button');
-    enableBtn.type = 'button';
-    enableBtn.className = 'enable-abr-btn';
-    enableBtn.textContent = 'Enable ABR';
-    enableBtn.addEventListener('click', () => {
-      log('ABR re-enabled', 'success');
-      signals.state.userVideoTrackSelection.set(undefined);
-    });
-    statusRow.appendChild(enableBtn);
-  }
   renditionButtonsDiv.appendChild(statusRow);
 
-  for (const track of tracks) {
-    const isSelected = track.id === selectedVideoTrackId;
+  for (const group of groups) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
-    const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} @ ` : '';
-    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
-    btn.textContent = `${res}${formatBandwidth(track.bandwidth)}${badge}`;
-    btn.title = track.id;
+    btn.dataset.selectionKey = group.key;
+    // Base label minus the selection badge; the badge is toggled in place.
+    btn.dataset.label = group.label;
+    btn.title =
+      group.members.length > 1
+        ? `${group.members.length} rendition(s) across CDNs: ${group.members.join(', ')}`
+        : (group.members[0] ?? group.key);
     btn.addEventListener('click', () => {
-      log(`Manual rendition select: ${formatBandwidth(track.bandwidth)} (ABR disabled)`, 'warning');
-      signals.state.userVideoTrackSelection.set({ id: track.id });
+      log(`Manual rendition select: ${JSON.stringify(group.filter)} (ABR disabled)`, 'warning');
+      signals.state.userVideoTrackSelection.set(group.filter);
     });
     renditionButtonsDiv.appendChild(btn);
+  }
+}
+
+/** Update the status row and per-button selected state without tearing down. */
+function updateVideoTrackSelection(
+  tracks: ReturnType<typeof getVideoTracks>,
+  selectedVideoTrackId: string | undefined,
+  userFilter: SimpleHlsEngineState['userVideoTrackSelection']
+) {
+  const isManual = userFilter !== undefined;
+
+  const statusRow = document.getElementById('video-status-row');
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
+    modeLabel.textContent = isManual ? `🔒 Manual: ${JSON.stringify(userFilter)}` : '⟳ ABR';
+    statusRow.appendChild(modeLabel);
+    if (isManual) {
+      const enableBtn = document.createElement('button');
+      enableBtn.type = 'button';
+      enableBtn.className = 'enable-abr-btn';
+      enableBtn.textContent = 'Enable ABR';
+      enableBtn.addEventListener('click', () => {
+        log('ABR re-enabled', 'success');
+        signals.state.userVideoTrackSelection.set(undefined);
+      });
+      statusRow.appendChild(enableBtn);
+    }
+  }
+
+  // The selected track belongs to a group keyed by its bitrate + resolution;
+  // highlight that group's button.
+  const selectedTrack = tracks.find((track) => track.id === selectedVideoTrackId);
+  const selectedKey = selectedTrack ? videoSelectionKey(selectedTrack) : undefined;
+  for (const btn of renditionButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
+    const isSelected = btn.dataset.selectionKey === selectedKey;
+    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
+    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
+    btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
   }
 }
 
