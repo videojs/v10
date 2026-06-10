@@ -1,8 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
-import { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from '../predicates';
+import { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from '../predicates';
 
 describe('DOM predicates', () => {
+  describe('isDocument', () => {
+    it('returns true for documents', () => {
+      expect(isDocument(document)).toBe(true);
+    });
+
+    it('returns false for non-documents', () => {
+      expect(isDocument(document.body)).toBe(false);
+      expect(isDocument(null)).toBe(false);
+    });
+  });
+
+  describe('isShadowRoot', () => {
+    it('returns true for shadow roots', () => {
+      const host = document.createElement('div');
+      const shadow = host.attachShadow({ mode: 'open' });
+
+      expect(isShadowRoot(shadow)).toBe(true);
+    });
+
+    it('returns false for non-shadow roots', () => {
+      expect(isShadowRoot(document)).toBe(false);
+      expect(isShadowRoot(document.body)).toBe(false);
+      expect(isShadowRoot(null)).toBe(false);
+    });
+  });
+
   describe('isHTMLVideoElement', () => {
     it('returns true for video elements', () => {
       const video = document.createElement('video');

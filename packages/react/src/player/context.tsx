@@ -1,9 +1,16 @@
 'use client';
 
 import type { Media } from '@videojs/core';
-import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
+import {
+  DEFAULT_CONTAINER_LABEL,
+  DEFAULT_CONTAINER_ROLE,
+  DEFAULT_CONTAINER_TAB_INDEX,
+  type MediaContainer,
+  type PopupGroup,
+} from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
+import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
 
@@ -118,7 +125,14 @@ export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container(
-  { children, tabIndex = 0, ...props },
+  {
+    children,
+    tabIndex = DEFAULT_CONTAINER_TAB_INDEX,
+    role = DEFAULT_CONTAINER_ROLE,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    ...props
+  },
   ref
 ) {
   const setContainer = useContainerAttach();
@@ -134,14 +148,28 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     props.onPointerUp?.(event);
     const el = internalRef.current;
     if (!el) return;
+    const active = getDeepActiveElement(el.ownerDocument);
+
     // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
-    if (!el.contains(document.activeElement) || document.activeElement === document.body) {
+    if (!active || active === el.ownerDocument.body || !containsComposed(el, active)) {
       el.focus({ preventScroll: true });
     }
   };
 
+  const accessibleNameProps =
+    ariaLabel !== undefined || ariaLabelledBy !== undefined
+      ? { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy }
+      : { 'aria-label': DEFAULT_CONTAINER_LABEL };
+
   return (
-    <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
+    <div
+      ref={composedRef}
+      role={role}
+      tabIndex={tabIndex}
+      {...accessibleNameProps}
+      {...props}
+      onPointerUp={handlePointerUp}
+    >
       {children}
     </div>
   );
