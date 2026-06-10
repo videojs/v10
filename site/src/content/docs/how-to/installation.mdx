@@ -184,7 +184,7 @@ Add it to your components folder in a new file.
 
 ## Self-host the player
 
-The CDN tab loads the player from a public CDN. To serve everything from your own origin instead — for offline, air-gapped, or locked-down network deployments — pick one of the options below.
+The CDN tab loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead. Pick one of the options below.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -199,27 +199,28 @@ import '@videojs/html/video/skin';
 
 ```bash
 npm install @videojs/html
-npx esbuild player.js --bundle --format=esm --minify --outfile=public/player.js
+npx esbuild player.js --bundle --format=esm --minify --sourcemap --outfile=public/player.js
 ```
 
-Load the output as a module — the same `type="module"` requirement as the CDN path applies:
+Load the output with `type="module"`, the same as the CDN path:
 
 ```html
 <script type="module" src="/player.js"></script>
 ```
 
-You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works — Vite, Rollup, or webpack — as long as the output stays ESM.
+You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works (Vite, Rollup, webpack) as long as the output stays ESM.
 
 ### Mirror the prebuilt CDN files
 
 To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
 
 <Aside type="caution" title="Copy the whole cdn/ directory">
-The CDN entry files (`video.js`, `media/hls-video.js`, …) are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, …) that live alongside them. Copying a single file breaks at runtime — mirror the entire `cdn/` directory and keep its layout intact.
+The CDN entry files like `video.js` and `media/hls-video.js` are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them. Copying a single file breaks at runtime, so mirror the entire `cdn/` directory and keep its layout intact.
 </Aside>
 
 ```bash
 npm install @videojs/html
+mkdir -p public
 cp -r node_modules/@videojs/html/cdn public/videojs
 ```
 
@@ -235,7 +236,7 @@ Hashed chunk names change between releases, so re-copy the directory whenever yo
 
 <FrameworkCase frameworks={["react"]}>
 
-`@videojs/react` is bundled into your app like any other dependency, so your normal production build already serves the player from your own origin with no CDN or runtime fetches. No extra steps are needed for offline or self-hosted deployments.
+Your bundler includes `@videojs/react` in your app like any other dependency, so your production build already serves the player from your own origin with no CDN or runtime fetches. Offline and self-hosted deployments need no extra steps.
 
 </FrameworkCase>
 
