@@ -42,8 +42,6 @@ export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
 export * from './ui/playback-rate-button/playback-rate-button-core';
 export * from './ui/playback-rate-button/playback-rate-button-data-attrs';
-export * from './ui/playback-rate-menu/playback-rate-menu-core';
-export * from './ui/playback-rate-menu/playback-rate-menu-data-attrs';
 export * from './ui/playback-rate-radio-group/playback-rate-radio-group-core';
 export * from './ui/playback-rate-radio-group/playback-rate-radio-group-data-attrs';
 export * from './ui/popover/popover-core';

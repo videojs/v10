@@ -38,10 +38,10 @@ function renderPlaybackRateOptions({
 }
 
 function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
-  const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
-  if (!rateState) return null;
+  const state = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+  if (!state) return null;
 
-  const { options, setValue, value } = rateState;
+  const { options, setValue, value } = state;
 
   return (
     <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Playback rate">
@@ -55,12 +55,12 @@ function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) =
 }
 
 function PlaybackRateTrigger({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
-  const rateState = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
-  if (!rateState) return null;
+  const state = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+  if (!state) return null;
 
   return (
     <Menu.Trigger
-      disabled={rateState.disabled}
+      disabled={state.disabled}
       render={<PlaybackRateButton data-testid="trigger" render={<button type="button" />} />}
     />
   );
