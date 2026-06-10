@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SELECTORS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 test.describe('Captions', () => {
@@ -11,10 +11,11 @@ test.describe('Captions', () => {
     await player.waitForMediaReady();
   });
 
-  test('captions settings hidden without subtitle tracks', async () => {
+  test('captions settings are unavailable without subtitle tracks', async () => {
     await player.showControls();
     await player.settingsButton.click();
-    await expect(player.settingsCaptionsItem).toBeHidden();
+    await expect(player.settingsCaptionsItem).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
+    await expect(player.settingsCaptionsItem).toHaveAttribute('aria-disabled', 'true');
   });
 
   test('captions settings lists tracks when subtitle track is added', async ({ page }) => {
@@ -33,7 +34,7 @@ test.describe('Captions', () => {
     await player.showControls();
     await player.openCaptionsSettings();
 
-    const options = page.locator(SELECTORS.activeMenuRadioItems);
+    const options = page.locator(SELECTORS.activeMenuOptions);
     await expect(options).toHaveCount(2, { timeout: 5_000 });
   });
 });
