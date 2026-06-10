@@ -224,13 +224,24 @@ mkdir -p public
 cp -r node_modules/@videojs/html/cdn public/videojs
 ```
 
-Then point each script tag at your copy instead of the CDN:
+Then point the script tag at your copy instead of the CDN:
 
 ```html
 <script type="module" src="/videojs/video.js"></script>
 ```
 
+The file name matches your selection: the CDN tab above generated it (for example `video.js`, `audio.js`, or `background.js`). Every option is present in the `cdn/` folder you copied.
+
 Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
+
+### HLS and other media types
+
+HLS and other non-default media need their own module on top of the player, the same way the **Use your player** step adds it to the generated imports. Match it in your self-hosted build:
+
+- **Bundle:** add the media import to your entry file (`import '@videojs/html/media/hls-video';`) and use the matching `<hls-video>` element with your `.m3u8` source.
+- **Mirror:** serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hls-video.js"></script>`).
+
+Without the media module the player UI renders but the video never loads, with no console error.
 
 </FrameworkCase>
 
