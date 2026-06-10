@@ -78,4 +78,44 @@ describe('getOrderedCdnIds', () => {
   it('returns [] for an unresolved presentation', () => {
     expect(getOrderedCdnIds({ url: 'https://cdn-a.example.com/master.m3u8' })).toEqual([]);
   });
+
+  it('orders video CDNs ahead of audio regardless of selection-set order', () => {
+    // Audio selection set listed first, cdn-b ahead of cdn-a within it; video
+    // listed second with cdn-a first. Raw manifest order would make cdn-b primary,
+    // but the head must be video-derived (cdn-a).
+    const presentation: MaybeResolvedPresentation = {
+      url: 'https://cdn-a.example.com/master.m3u8',
+      selectionSets: [
+        {
+          id: 'audio-set',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'audio-switching',
+              type: 'audio',
+              tracks: [
+                { id: 'aud-b', type: 'audio', url: 'https://cdn-b.example.com/audio.m3u8', bandwidth: 0 },
+                { id: 'aud-a', type: 'audio', url: 'https://cdn-a.example.com/audio.m3u8', bandwidth: 0 },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                { id: 'vid-a', type: 'video', url: 'https://cdn-a.example.com/720p.m3u8', bandwidth: 0 },
+                { id: 'vid-b', type: 'video', url: 'https://cdn-b.example.com/720p.m3u8', bandwidth: 0 },
+              ],
+            },
+          ],
+        },
+      ] as MaybeResolvedPresentation['selectionSets'],
+    };
+    expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+  });
 });

@@ -135,11 +135,14 @@ describe('createSimpleHlsEngine', () => {
   it('keeps audio on the same CDN as video even when the audio rendition order differs', async () => {
     // Order-effect guard: `resolveCdnPriority` derives the list from track order,
     // so a same-ordered source can't distinguish "scope applied" from "scope is
-    // a no-op". Here the audio renditions list cdn-b FIRST while video lists
-    // cdn-a first. The shared `cdnPriority` is video-derived (cdn-a primary), so
-    // a working scope pulls audio onto cdn-a — `aud-a`, NOT the manifest-first
-    // `aud-b` a no-op / per-type pick would land on. This exercises the natural
-    // resolveCdnPriority → scope pipeline, not a manual reorder.
+    // a no-op". This source is doubly adversarial to the desired result: the
+    // audio selection set comes BEFORE video in the manifest, and within it the
+    // audio renditions list cdn-b first. By raw parse order that would make
+    // cdn-b primary and pull everything onto cdn-b. `getOrderedCdnIds` instead
+    // visits video selection sets before audio, so `cdnPriority` is video-derived
+    // (cdn-a primary) *by guarantee*, and the scope pulls audio onto cdn-a —
+    // `aud-a`, NOT the parse-order `aud-b`. This pins the type-priority ordering,
+    // not a manifest/parse-order coincidence.
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     const engine = createSimpleHlsEngine();
 
@@ -168,7 +171,21 @@ describe('createSimpleHlsEngine', () => {
       id: 'pres-asym',
       url: 'https://cdn-a.example.com/master.m3u8',
       startTime: 0,
+      // Audio selection set listed FIRST, cdn-b first within it — the reverse of
+      // the video order on both axes. Type-priority ordering must still put video
+      // (cdn-a) at the head of cdnPriority.
       selectionSets: [
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [audioTrack('aud-b', 'cdn-b.example.com'), audioTrack('aud-a', 'cdn-a.example.com')],
+            },
+          ],
+        },
         {
           id: 'v',
           type: 'video',
@@ -180,26 +197,14 @@ describe('createSimpleHlsEngine', () => {
             },
           ],
         },
-        {
-          id: 'a',
-          type: 'audio',
-          // cdn-b first — the reverse of the video order.
-          switchingSets: [
-            {
-              id: 'as',
-              type: 'audio',
-              tracks: [audioTrack('aud-b', 'cdn-b.example.com'), audioTrack('aud-a', 'cdn-a.example.com')],
-            },
-          ],
-        },
       ],
     } as Presentation);
     await flush();
 
     expect(engine.state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
-    // The discriminator: audio lists aud-b first, but the shared (video-derived)
-    // cdnPriority puts cdn-a first, so the scope picks aud-a.
+    // The discriminator: audio is listed first and lists aud-b first, but the
+    // video-derived cdnPriority puts cdn-a first, so the scope picks aud-a.
     expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
 
     engine.destroy();
