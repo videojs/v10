@@ -1,0 +1,192 @@
+---
+title: Menu
+frameworkTitle:
+  html: media-menu
+description: A composable menu component for settings, option selection, and actions
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/menu/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/menu/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/menu/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/menu/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/menu/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/menu/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/menu/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+A submenu is a menu inside another menu. The submenu trigger lives in the parent list, and the submenu content is the next view.
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Menu.Root>
+    <Menu.Trigger />
+    <Menu.Content>
+      <Menu.View>
+        {/* Parent menu item that opens a submenu */}
+        <Menu.Root>
+          {/* Submenu trigger */}
+          <Menu.Trigger>
+            <Menu.ItemValue />
+          </Menu.Trigger>
+
+          {/* Submenu content */}
+          <Menu.Content>
+            <Menu.Back />
+            <Menu.RadioGroup>
+              <Menu.GroupLabel />
+              <Menu.RadioItem>
+                <Menu.ItemIndicator />
+              </Menu.RadioItem>
+            </Menu.RadioGroup>
+          </Menu.Content>
+        </Menu.Root>
+
+        {/* Other parent menu items */}
+        <Menu.Group>
+          <Menu.GroupLabel />
+          <Menu.CheckboxItem>
+            <Menu.ItemIndicator />
+          </Menu.CheckboxItem>
+        </Menu.Group>
+        <Menu.Separator />
+        <Menu.Item />
+      </Menu.View>
+    </Menu.Content>
+  </Menu.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <button type="button" commandfor="settings-menu">Settings</button>
+
+  <media-menu id="settings-menu">
+    <media-menu-view>
+      <!-- Parent menu item that opens a submenu -->
+      <media-menu-item commandfor="submenu">
+        <media-menu-item-value></media-menu-item-value>
+      </media-menu-item>
+
+      <!-- Other parent menu items -->
+      <media-menu-group>
+        <media-menu-group-label></media-menu-group-label>
+        <media-menu-checkbox-item>
+          <media-menu-item-indicator></media-menu-item-indicator>
+        </media-menu-checkbox-item>
+      </media-menu-group>
+      <media-menu-separator></media-menu-separator>
+      <media-menu-item></media-menu-item>
+    </media-menu-view>
+
+    <!-- Submenu content -->
+    <media-menu id="submenu">
+      <media-menu-back></media-menu-back>
+      <media-menu-radio-group>
+        <media-menu-group-label></media-menu-group-label>
+        <media-menu-radio-item>
+          <media-menu-item-indicator></media-menu-item-indicator>
+        </media-menu-radio-item>
+      </media-menu-radio-group>
+    </media-menu>
+  </media-menu>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+Menus open from a trigger and close when you select an item, click outside, move focus away, or press <kbd>Escape</kbd>. Root menus are positioned against their trigger with `side` and `align`.
+
+Create a submenu by putting another menu inside the root menu's content. Its trigger stays in the root list, and its content becomes the next view. In HTML, give the submenu a matching `id` and point the trigger at it with `commandfor`. Wrap the root list in `Menu.View` or `<media-menu-view>` when the root list and submenus share one animated viewport.
+
+Set `type="playback-rate"`, `type="quality"`, `type="audio-track"`, or `type="captions"` on a submenu trigger when it represents a media setting. `Menu.ItemValue` and `<media-menu-item-value>` read that setting context and display the current value, such as `1.5x`, `Auto`, `English`, or `Off`. See <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink> and <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink> for the generated option groups.
+
+## Styling
+
+Use data attributes to style open state, highlighted items, selected radio items, and submenu views:
+
+`data-highlighted` is added to the current menu item. The highlighted item is the item that keyboard selection will act on. It changes when the menu opens, when the pointer moves over another item, when the user presses arrow keys, or when type-ahead search finds a match.
+
+<FrameworkCase frameworks={["react"]}>
+  ```css
+  .menu[data-open] {
+    opacity: 1;
+  }
+
+  .menu-item[data-highlighted] {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  [role="menuitemradio"][aria-checked="true"] {
+    font-weight: 600;
+  }
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-menu[data-open] {
+    opacity: 1;
+  }
+
+  media-menu-item[data-highlighted] {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  media-menu-radio-item[aria-checked="true"] {
+    font-weight: 600;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+Menu content renders with `role="menu"`. Items use `menuitem`, `menuitemradio`, or `menuitemcheckbox` roles. Radio and checkbox items reflect selection with `aria-checked`.
+
+Keyboard controls:
+
+- <kbd>Enter</kbd> / <kbd>Space</kbd>: Select the highlighted item.
+- <kbd>Arrow Up</kbd> / <kbd>Arrow Down</kbd>: Move between items.
+- <kbd>Arrow Right</kbd>: Open a submenu.
+- <kbd>Arrow Left</kbd>: Return to the parent menu.
+- <kbd>Escape</kbd>: Close the root menu or return from a submenu.
+
+Use `Menu.GroupLabel` or `<media-menu-group-label>` inside grouped choices so the group receives an accessible label.
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Menu" />

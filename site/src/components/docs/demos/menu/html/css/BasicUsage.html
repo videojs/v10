@@ -1,0 +1,116 @@
+<video-player class="video-player">
+    <media-container>
+        <hlsjs-video
+            class="video-media"
+            src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
+            autoplay
+            crossorigin="anonymous"
+            muted
+            playsinline
+            loop
+        >
+            <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
+            <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srclang="es" label="Spanish" />
+        </hlsjs-video>
+        <div class="menu-bar">
+            <button type="button" commandfor="settings-menu" class="settings-trigger">Settings</button>
+            <media-menu id="settings-menu" side="top" align="end" class="menu">
+                <media-menu-view class="menu-panel">
+                    <media-menu-item commandfor="quality-menu" type="quality" class="menu-item">
+                        <span>Quality</span>
+                        <span class="menu-value">
+                            <media-menu-item-value></media-menu-item-value>
+                            <span aria-hidden="true">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item commandfor="audio-menu" type="audio-track" class="menu-item">
+                        <span>Audio</span>
+                        <span class="menu-value">
+                            <media-menu-item-value></media-menu-item-value>
+                            <span aria-hidden="true">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item commandfor="speed-menu" type="playback-rate" class="menu-item">
+                        <span>Speed</span>
+                        <span class="menu-value">
+                            <media-menu-item-value></media-menu-item-value>
+                            <span aria-hidden="true">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item commandfor="captions-menu" type="captions" class="menu-item">
+                        <span>Captions</span>
+                        <span class="menu-value">
+                            <media-menu-item-value></media-menu-item-value>
+                            <span aria-hidden="true">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item class="menu-item">Copy link</media-menu-item>
+                </media-menu-view>
+
+                <media-menu id="quality-menu" class="menu-panel">
+                    <media-menu-back class="menu-back">
+                        <span aria-hidden="true">‹</span>
+                        Quality
+                    </media-menu-back>
+                    <media-quality-radio-group class="menu-group">
+                        <template>
+                            <media-menu-radio-item class="menu-item">
+                                <span>
+                                    <span data-part="label"></span>
+                                    <sup data-part="tier" class="menu-tier"></sup>
+                                </span>
+                                <span data-part="badge" class="menu-badge"></span>
+                                <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-quality-radio-group>
+                </media-menu>
+
+                <media-menu id="audio-menu" class="menu-panel">
+                    <media-menu-back class="menu-back">
+                        <span aria-hidden="true">‹</span>
+                        Audio
+                    </media-menu-back>
+                    <media-audio-track-radio-group class="menu-group">
+                        <template>
+                            <media-menu-radio-item class="menu-item">
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-audio-track-radio-group>
+                </media-menu>
+
+                <media-menu id="speed-menu" class="menu-panel">
+                    <media-menu-back class="menu-back">
+                        <span aria-hidden="true">‹</span>
+                        Speed
+                    </media-menu-back>
+                    <media-playback-rate-radio-group class="menu-group">
+                        <template>
+                            <media-menu-radio-item class="menu-item">
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-playback-rate-radio-group>
+                </media-menu>
+
+                <media-menu id="captions-menu" class="menu-panel">
+                    <media-menu-back class="menu-back">
+                        <span aria-hidden="true">‹</span>
+                        Captions
+                    </media-menu-back>
+                    <media-captions-radio-group class="menu-group">
+                        <template>
+                            <media-menu-radio-item class="menu-item">
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-captions-radio-group>
+                </media-menu>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

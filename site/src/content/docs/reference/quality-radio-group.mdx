@@ -1,0 +1,81 @@
+---
+title: QualityRadioGroup
+frameworkTitle:
+  html: media-quality-radio-group
+description: A menu radio group for selecting video quality
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Creates radio items from the player video rendition state and selects automatic or manual quality.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  const quality = useQualityOptions();
+
+  <Menu.RadioGroup value={quality.value} onValueChange={quality.setValue}>
+    <Menu.GroupLabel>Quality</Menu.GroupLabel>
+    {quality.options.map((option) => (
+      <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+        {option.label}
+        <Menu.ItemIndicator checked={option.value === quality.value} />
+      </Menu.RadioItem>
+    ))}
+  </Menu.RadioGroup>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-quality-radio-group>
+    <template>
+      <media-menu-radio-item>
+        <span data-part="label"></span>
+        <span data-part="tier"></span>
+        <span data-part="badge"></span>
+        <media-menu-item-indicator></media-menu-item-indicator>
+      </media-menu-radio-item>
+    </template>
+  </media-quality-radio-group>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The group is available when the configured media exposes more than one video rendition. The first generated option is `Auto`; selecting it returns control to adaptive bitrate selection. Pass `formatRendition` to customize visible rendition labels.
+
+<FrameworkCase frameworks={["react"]}>
+`useQualityOptions` returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-quality-radio-group>` generates `<media-menu-radio-item>` children. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
+</FrameworkCase>
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-quality` | `string` | Current quality value. |
+| `data-disabled` | Present / absent | Present when quality selection is disabled. |
+| `data-availability` | `"available"` / `"unavailable"` | Whether multiple renditions are available. |
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-quality-radio-group[data-availability="unavailable"] {
+    display: none;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+The group uses the menu radio group pattern. It receives an accessible label from the `label` prop or defaults to `Quality`.
+
+<FrameworkCase frameworks={["html"]}>
+  <ComponentReference component="QualityRadioGroup" />
+</FrameworkCase>

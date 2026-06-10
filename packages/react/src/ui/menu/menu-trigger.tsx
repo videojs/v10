@@ -20,7 +20,7 @@ import type { MenuItemSettingType } from './menu-item-type';
 export interface MenuTriggerProps extends Omit<UIComponentProps<'button', MenuState>, 'type'> {
   /** Disables the trigger. */
   disabled?: boolean;
-  /** Setting kind for submenu triggers (`playback-rate` or `captions`). */
+  /** Setting kind for submenu triggers (`playback-rate`, `quality`, `audio-track`, or `captions`). */
   type?: MenuItemSettingType | undefined;
 }
 
