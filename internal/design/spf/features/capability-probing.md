@@ -97,8 +97,10 @@ layer onto specific phases per the
 
 | Export | File | Role |
 |---|---|---|
-| `canPlayTrack` | `media/dom/capabilities.ts` | `(track) => boolean` — builds the MIME codec string and checks `MediaSource.isTypeSupported`, memoized by MIME. Unprobeable tracks (no `mimeType` / no `codecs`) pass through |
+| `canPlayTrack` | `media/dom/capabilities.ts` | `(track) => boolean` — builds the MIME codec string and checks `MediaSource.isTypeSupported`, memoized by MIME. Unprobeable tracks (no `mimeType` / no `codecs`) pass through. **Asserts detected non-fMP4 containers (`video/mp2t`, `audio/aac`) unsupported without probing** — TS because the probe false-positives + no transmux; raw AAC because the pipeline assumes init segments (a temporary limitation — browser supports it) |
 | `CanPlayTrack` (type) | `media/types/index.ts` | DOM-free predicate type the constraint consumes; `canPlayTrack` is its DOM implementation |
+| Container detection (`CONTAINER_MIME_BY_EXTENSION`, `NON_FMP4_CONTAINER_MIMES`) | `media/hls/parse-media-playlist.ts` | Detects non-fMP4 containers per media playlist (no `#EXT-X-MAP` **and** a recognized segment extension: `.ts` → `video/mp2t`, `.aac` → `audio/aac`) and relabels the resolved track's `mimeType` from the fMP4 default. `canPlayTrack` then prunes them |
+| `applyContainerMimeType` | `media/utils/tracks.ts` | Propagates the detected container to every rendition of the **same type** (called from `resolve-track`): one resolved non-fMP4 playlist relabels all of that type's renditions, so the type is pruned from a single fetch. Scoped to one type — never crosses audio↔video (mixed-container sources exist), which also keeps per-type resolutions' writes disjoint (race-free) |
 
 **Constraint + surfacing (in `playback/behaviors/track-switching.ts`):**
 
@@ -117,11 +119,15 @@ layer onto specific phases per the
 
 ## Verification
 
-- **Unit — `media/dom/tests/capabilities.test.ts`:** `canPlayTrack` returns the `isTypeSupported` verdict for a track's built MIME; memoizes per unique MIME (probes once); passes through (`true`) for unprobeable tracks (no `mimeType`, or empty/absent `codecs`).
+- **Unit — `media/dom/tests/capabilities.test.ts`:** `canPlayTrack` returns the `isTypeSupported` verdict for a track's built MIME; memoizes per unique MIME (probes once); passes through (`true`) for unprobeable tracks (no `mimeType`, or empty/absent `codecs`); asserts non-fMP4 containers (`video/mp2t`, `audio/aac`) unsupported without consulting `isTypeSupported` (even with codecs).
+- **Unit — `media/hls/tests/parse-media-playlist.test.ts`:** relabels to `video/mp2t` / `audio/aac` when there's no `#EXT-X-MAP` and segments are `.ts` / `.aac` (query string ignored; `video/mp2t` for audio TS too); keeps the fMP4 default when an `#EXT-X-MAP` is present or the extension is unrecognized.
+- **Unit — `media/utils/tests/tracks.test.ts`:** `applyContainerMimeType` sets the MIME on every track of the given type, leaves other types untouched (never crosses audio↔video), idempotent.
 - **Unit — `playback/behaviors/tests/track-switching.test.ts`:** `excludeUnplayableTracks` prunes undecodable renditions before ranking (picks best playable codec); passes through with no probe wired; a user-selected unplayable track is still excluded (hard constraint beats the soft user filter). `noPlayable*` surfacing: flags `true` when a non-empty type prunes to empty (no pick); `false` when a playable candidate exists; flips `true → false` reactively on recovery (driven via failover); stays `false` when the type simply has no tracks; clears on src unload.
 - **Integration — `playback/engines/hls/tests/engine.test.ts`:** a mixed HEVC+AVC source with a `canPlayTrack` rejecting HEVC selects the AVC rendition; an all-undecodable source surfaces `noPlayableVideoTracks=true` with no pick.
 
-**Out of scope / deferred:** `canPlayType` wrapper, key-system probing, `changeType()` probing, segment-level checking, the full error-code interface, and Tier 2 override config. No sandbox surface yet for the no-playable state.
+**Live smoke test:** verified in the SPF sandbox against the Apple `bipbop_4x3` stream (muxed-TS video + raw-`.aac` audio) — video relabels `video/mp2t` → `noPlayableVideoTracks=true`, audio relabels `audio/aac` → `noPlayableAudioTracks=true` (per-type propagation: one fetch per type, not per rendition). An audio-only `.aac` source likewise surfaces `noPlayableAudioTracks=true` (loud, not a silent stall).
+
+**Out of scope / deferred:** `canPlayType` wrapper, key-system probing, `changeType()` probing, per-segment CODECS checking, the full error-code interface, and Tier 2 override config. Container *detection* covers MPEG-TS + raw ADTS AAC (not `.mp3` etc. yet); both are asserted **unplayable** for now. *Playing* them is separate follow-up work — TS needs a transmux pipeline; **raw AAC is genuinely browser-supported (Chrome/Safari) and could be played by removing the pipeline's init-segment assumption** (the segment loader queues an `append-init` with an empty URL, and append handling is fMP4-shaped). No sandbox surface yet for the no-playable state.
 
 ## Likely cross-cutting impact
 
@@ -168,6 +174,24 @@ layer onto specific phases per the
   the downstream error-mapping feature. A track with no declared `CODECS`
   (optional per spec) is unprobeable and passes through; the late
   `createSourceBuffer` check remains its backstop.
+- **Container-detection scope → non-fMP4 detection (TS + raw AAC), per-track-type,
+  marked unplayable.** The media-playlist parser relabels a resolved non-fMP4
+  rendition (no `#EXT-X-MAP` + a recognized extension: `.ts` → `video/mp2t`,
+  `.aac` → `audio/aac`), and `resolve-track` propagates that MIME to every
+  rendition of the **same type** (`applyContainerMimeType`), so a type is pruned
+  from a single resolved playlist. Propagation is **same-type, not cross-type**:
+  Apple `bipbop_4x3` is mixed-container (muxed-TS video + raw-`.aac` audio), so a
+  cross-type "whole source is one container" assumption was both *wrong* for that
+  stream and racy under concurrent per-type resolution; same-type is safe (an ABR
+  ladder shares its container) and race-free (disjoint writes). Both are asserted
+  unplayable, for different reasons: TS because `isTypeSupported('video/mp2t…')`
+  false-positives on Chromium *and* there's no transmux pipeline; raw AAC as a
+  **temporary** limitation — the browser genuinely supports it (Chrome/Safari
+  decode bare `audio/aac`; Firefox doesn't), but our segment loader / append
+  pipeline assumes an `EXT-X-MAP` init segment, so it would fetch-but-never-buffer
+  (a silent stall) today. Making raw AAC playable (remove the init-segment
+  assumption; bare-MIME probe + projection) is deliberately out of scope here —
+  see [container-support](./container-support.md).
 
 ## Open questions
 
@@ -177,15 +201,6 @@ layer onto specific phases per the
 - **Tier 2 customer override surface.** Config-driven (engine-wide)
   vs per-source vs both? Per-source is more flexible but harder to
   wire.
-- **Container-detection scope.** [container-support](./container-support.md)
-  is documented as standalone (cluster-less; MSE doesn't accept
-  non-fMP4 containers per spec, so the concern is structurally
-  different from capability-probing's "what can the browser decode
-  in fMP4?" framing). Open: should this feature surface container-
-  format detection as part of multivariant filtering (filter out
-  MPEG-TS variants when no transmuxer is composed)? That would
-  resolve the scope intersection cleanly without building the
-  transmuxer.
 
 ## Related features
 
@@ -208,12 +223,12 @@ layer onto specific phases per the
   consumer-facing error mapping on top of this feature's error
   primitive.
 - **[container-support](./container-support.md)** — standalone
-  feature (cluster-less); resolved per the doc's framing that MSE
-  doesn't accept non-fMP4 containers per spec, making the concern
-  fundamentally different from capability-probing's framing.
-  Container-detection-without-transmuxer remains a possible cross-
-  feature integration point (filter MPEG-TS variants when no
-  transmuxer is composed).
+  feature (cluster-less) for *playing* non-fMP4 containers. The
+  detection half landed here: MPEG-TS (`.ts` → `video/mp2t`) and raw
+  ADTS AAC (`.aac` → `audio/aac`) are detected and asserted unplayable.
+  Playing them lives there — TS needs a transmux pipeline; raw AAC just
+  needs the init-segment assumption removed from the segment loader /
+  append pipeline (the browser already supports it).
 
 ## See also
 
