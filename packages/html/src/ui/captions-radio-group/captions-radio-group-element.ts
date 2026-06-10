@@ -1,5 +1,5 @@
-import { PlaybackRateMenuCore, PlaybackRateMenuDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
+import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
+import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
@@ -8,21 +8,22 @@ import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
 
-export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
-  static override readonly tagName = 'media-playback-rate-options';
+export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
+  static override readonly tagName = 'media-captions-radio-group';
 
   static override properties = {
     ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
+    label: { type: String },
+  } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
   disabled = false;
-  formatRate = PlaybackRateMenuCore.defaultProps.formatRate;
+  label = '';
 
-  readonly #core = new PlaybackRateMenuCore();
-  readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
+  readonly #core = new CaptionsRadioGroupCore();
+  readonly #mediaState = new PlayerController(this, playerContext, selectTextTrack);
 
-  #ratesKey = '';
+  #tracksKey = '';
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -45,40 +46,38 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
 
   protected override update(changed: PropertyValues): void {
     const media = this.#mediaState.value;
-    let state: PlaybackRateMenuCore.State | null = null;
+    let state: CaptionsRadioGroupCore.State | null = null;
 
     if (media) {
-      this.#core.setProps({ formatRate: this.formatRate, disabled: this.disabled });
+      this.#core.setProps({ disabled: this.disabled });
       this.#core.setMedia(media);
       state = this.#core.getState();
 
-      this.value = this.#core.getRateValue(state.rate);
-      if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
-        this.setAttribute('aria-label', 'Playback rate');
-      }
-
+      this.value = state.value;
+      this.label = this.label || 'Captions';
       this.#syncContent(state);
     }
 
     super.update(changed);
 
-    if (state) applyStateDataAttrs(this, state, PlaybackRateMenuDataAttrs);
+    if (state) applyStateDataAttrs(this, state, CaptionsRadioGroupDataAttrs);
   }
 
-  #syncContent(state: PlaybackRateMenuCore.State): void {
+  #syncContent(state: CaptionsRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
-    const ratesKey = `${state.rates.join('|')}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => track.value).join('|')}::${templateKey}`;
 
-    if (ratesKey !== this.#ratesKey) {
-      this.#ratesKey = ratesKey;
+    if (tracksKey !== this.#tracksKey) {
+      this.#tracksKey = tracksKey;
 
       for (const child of [...this.children]) {
         if (child instanceof HTMLTemplateElement) continue;
         child.remove();
       }
 
-      this.append(...state.rates.map((rate) => this.#createItem(rate, template)));
+      this.append(this.#createItem(CAPTIONS_OFF_VALUE, 'Off', template));
+      this.append(...state.tracks.map((track) => this.#createItem(track.value, track.label, template)));
     }
 
     for (const item of this.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)) {
@@ -92,13 +91,12 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
     }
   }
 
-  #createItem(rate: number, template: HTMLTemplateElement | null): MenuRadioItemElement {
+  #createItem(value: string, label: string, template: HTMLTemplateElement | null): MenuRadioItemElement {
     const item = this.#createItemFromTemplate(template);
-    const value = this.#core.getRateValue(rate);
 
     item.value = value;
-    item.setAttribute('data-rate', value);
-    this.#setLabel(item, this.#core.getRateLabel(rate));
+    item.setAttribute('data-track', value);
+    this.#setLabel(item, label);
 
     return item;
   }
@@ -145,6 +143,6 @@ export class PlaybackRateOptionsElement extends MenuRadioGroupElement {
   };
 }
 
-export namespace PlaybackRateOptionsElement {
-  export type State = PlaybackRateMenuCore.State;
+export namespace CaptionsRadioGroupElement {
+  export type State = CaptionsRadioGroupCore.State;
 }

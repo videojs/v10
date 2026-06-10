@@ -13,7 +13,6 @@ import {
   inputFeedback,
   menu,
   overlay,
-  playbackRate,
   popup,
   poster,
   root,
@@ -109,21 +108,7 @@ function getTemplateHTML() {
             <media-time type="duration" class="${time.duration}"></media-time>
           </div>
 
-          <div class="${buttonGroupEnd}">
-            <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-menu-trigger>
-            <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
-              <media-playback-rate-options class="${menu.group}">
-                <template>
-                  <media-menu-radio-item class="${menu.item}">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: icon })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-options>
-            </media-playback-rate-menu>
-
+          <div class="${cn(buttonGroupEnd, menu.settingsGroup)}">
             <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
@@ -138,11 +123,65 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
-                ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
-                ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
-              </media-captions-button>
-              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+
+            <button commandfor="settings-menu" aria-label="Settings" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger, 'media-button--settings')}">
+              ${renderIcon('gear', { class: cn(icon, menu.settingsIcon) })}
+            </button>
+            <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
+              <media-menu-view class="${menu.rootView}">
+                <div class="${menu.group}">
+                  <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    <span>Speed</span>
+                    <span class="${menu.hint}">
+                      <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    </span>
+                  </media-menu-item>
+                  <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    <span>Captions</span>
+                    <span class="${menu.hint}">
+                      <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    </span>
+                  </media-menu-item>
+                </div>
+              </media-menu-view>
+
+              <media-menu id="settings-speed-menu" class="${menu.submenuPanel}">
+                <media-menu-back class="${menu.back}">
+                  ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                  Speed
+                </media-menu-back>
+                <media-playback-rate-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: icon })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-playback-rate-radio-group>
+              </media-menu>
+
+              <media-menu id="settings-captions-menu" class="${menu.submenuPanel}">
+                <media-menu-back class="${menu.back}">
+                  ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                  Captions
+                </media-menu-back>
+                <media-captions-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: icon })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-captions-radio-group>
+              </media-menu>
+            </media-menu>
+
               <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
                 ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}

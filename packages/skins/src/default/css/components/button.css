@@ -125,6 +125,27 @@
   }
 }
 
+/* Settings button */
+.media-default-skin .media-button--settings {
+  display: none;
+
+  & .media-icon--settings {
+    transition: transform 150ms ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition-duration: 0ms;
+    }
+  }
+
+  &[aria-expanded="true"] .media-icon--settings {
+    transform: rotate(90deg);
+  }
+}
+
+.media-default-skin .media-button-group:has([data-availability="available"]) .media-button--settings {
+  display: grid;
+}
+
 /* Live button — wide pill button with a status dot (gray → red at the live
    edge) rendered via ::before, and "LIVE" text rendered as the button's own
    text content. */

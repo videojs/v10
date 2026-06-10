@@ -6,12 +6,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
+import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
-import { PlaybackRateMenuElement } from '../playback-rate-menu-element';
-import { PlaybackRateMenuTriggerElement } from '../playback-rate-menu-trigger-element';
-import { PlaybackRateOptionsElement } from '../playback-rate-options-element';
+import { PlaybackRateButtonElement } from '../../playback-rate-button/playback-rate-button-element';
+import { PlaybackRateRadioGroupElement } from '../playback-rate-radio-group-element';
 
 let tagCounter = 0;
 
@@ -88,10 +88,12 @@ class TestPlayerProviderElement extends MediaElement {
   }
 }
 
+defineElement(MenuElement.tagName, MenuElement);
 defineElement(MenuRadioGroupElement.tagName, MenuRadioGroupElement);
 defineElement(MenuRadioItemElement.tagName, MenuRadioItemElement);
 defineElement(MenuItemIndicatorElement.tagName, MenuItemIndicatorElement);
-defineElement(PlaybackRateOptionsElement.tagName, PlaybackRateOptionsElement);
+defineElement(PlaybackRateRadioGroupElement.tagName, PlaybackRateRadioGroupElement);
+defineElement(PlaybackRateButtonElement.tagName, PlaybackRateButtonElement);
 defineElement('test-playback-rate-player', TestPlayerProviderElement);
 
 function setup({
@@ -107,13 +109,13 @@ function setup({
 } = {}) {
   const store = createPlaybackRateStore({ playbackRates, playbackRate, setPlaybackRate });
   const provider = document.createElement('test-playback-rate-player') as TestPlayerProviderElement;
-  const trigger = createElement(PlaybackRateMenuTriggerElement);
-  const menu = createElement(PlaybackRateMenuElement);
-  const options = createElement(PlaybackRateOptionsElement);
+  const trigger = createElement(PlaybackRateButtonElement);
+  const menu = createElement(MenuElement);
+  const options = createElement(PlaybackRateRadioGroupElement);
 
   provider.setStore(store);
-  trigger.commandfor = 'playback-rate-menu';
   menu.id = 'playback-rate-menu';
+  trigger.setAttribute('commandfor', 'playback-rate-menu');
 
   if (template) {
     const templateElement = document.createElement('template');
@@ -129,15 +131,15 @@ function setup({
 }
 
 async function waitForMenu(
-  menu: PlaybackRateMenuElement,
-  trigger?: PlaybackRateMenuTriggerElement,
-  options?: PlaybackRateOptionsElement
+  menu: MenuElement,
+  trigger?: PlaybackRateButtonElement,
+  options?: PlaybackRateRadioGroupElement
 ): Promise<void> {
   await trigger?.updateComplete;
   await menu.updateComplete;
   await options?.updateComplete;
 
-  const group = menu.querySelector<PlaybackRateOptionsElement>(PlaybackRateOptionsElement.tagName);
+  const group = menu.querySelector<PlaybackRateRadioGroupElement>(PlaybackRateRadioGroupElement.tagName);
   await group?.updateComplete;
 
   const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
@@ -151,7 +153,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('PlaybackRateMenuElement', () => {
+describe('PlaybackRateRadioGroupElement', () => {
   it('renders radio items from the available playback rates', async () => {
     const { menu, trigger } = setup({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
 
@@ -163,8 +165,6 @@ describe('PlaybackRateMenuElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
-    expect(menu.getAttribute('aria-label')).toBe('Playback rate 1.25');
-    expect(menu.getAttribute('data-rate')).toBe('1.25');
   });
 
   it('renders radio items from a template', async () => {
@@ -183,15 +183,6 @@ describe('PlaybackRateMenuElement', () => {
     expect(indicators.map((indicator) => indicator.checked)).toEqual([false, false, true, false]);
   });
 
-  it('center aligns the root popup by default', async () => {
-    const { menu, trigger } = setup();
-
-    await waitForMenu(menu, trigger);
-
-    expect(menu.align).toBe('center');
-    expect(menu.getAttribute('data-align')).toBe('center');
-  });
-
   it('sets the selected playback rate', async () => {
     const setPlaybackRate = vi.fn();
     const { menu, trigger } = setup({ setPlaybackRate });
@@ -208,8 +199,8 @@ describe('PlaybackRateMenuElement', () => {
   });
 });
 
-describe('PlaybackRateMenuTriggerElement', () => {
-  it('renders a dynamic trigger from the current playback rate', async () => {
+describe('PlaybackRateButtonElement', () => {
+  it('renders the current playback rate on the trigger button', async () => {
     const { trigger } = setup({ playbackRate: 2 });
 
     await trigger.updateComplete;
@@ -219,17 +210,58 @@ describe('PlaybackRateMenuTriggerElement', () => {
     expect(trigger.getAttribute('data-rate')).toBe('2');
   });
 
-  it('prevents activation when there are no playback rates', async () => {
+  it('does not cycle when commandfor is set', async () => {
+    const setPlaybackRate = vi.fn();
+    const { trigger, store } = setup({ playbackRate: 1, setPlaybackRate });
+
+    await trigger.updateComplete;
+
+    trigger.click();
+
+    expect(setPlaybackRate).not.toHaveBeenCalled();
+    expect((store.state as MediaPlaybackRateState).playbackRate).toBe(1);
+  });
+
+  it('opens the linked menu on Enter when commandfor is set', async () => {
+    const { menu, trigger } = setup();
+
+    await waitForMenu(menu, trigger);
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+    await waitForAssertion(() => {
+      expect(menu.open).toBe(true);
+    });
+  });
+
+  it('opens the linked menu on Space when commandfor is set', async () => {
+    const { menu, trigger } = setup();
+
+    await waitForMenu(menu, trigger);
+
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+    trigger.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true, cancelable: true }));
+
+    await waitForAssertion(() => {
+      expect(menu.open).toBe(true);
+    });
+  });
+
+  it('disables the trigger when there are no playback rates', async () => {
     const { trigger } = setup({ playbackRates: [] });
 
     await trigger.updateComplete;
 
-    const onClick = vi.fn();
-    trigger.addEventListener('click', onClick);
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('does not open the linked menu when disabled and clicked', async () => {
+    const { menu, trigger } = setup({ playbackRates: [] });
+
+    await waitForMenu(menu, trigger);
+
     trigger.click();
 
-    expect(trigger.getAttribute('aria-disabled')).toBe('true');
-    expect(trigger.hasAttribute('data-disabled')).toBe(true);
-    expect(onClick).not.toHaveBeenCalled();
+    expect(menu.open).toBe(false);
   });
 });

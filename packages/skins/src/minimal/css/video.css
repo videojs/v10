@@ -41,6 +41,9 @@
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.5rem;
   --media-tooltip-boundary-offset: 0.5rem;
+  --media-popover-background-color: oklch(1 0 0 / 0.1);
+  --media-popover-border-color: transparent;
+  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
   --media-popover-side-offset: 1.5rem;
   --media-popover-boundary-offset: 0.5rem;
   overflow: clip;

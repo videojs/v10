@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createPlayerWrapper } from '../../../testing/mocks';
 import { ControlsContextProvider } from '../../controls/context';
 import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
@@ -10,6 +11,7 @@ import { MenuGroup } from '../menu-group';
 import { MenuGroupLabel } from '../menu-group-label';
 import { MenuItem } from '../menu-item';
 import { MenuItemIndicator } from '../menu-item-indicator';
+import { MenuItemValue } from '../menu-item-value';
 import { MenuRadioGroup } from '../menu-radio-group';
 import { MenuRadioItem } from '../menu-radio-item';
 import { MenuRoot } from '../menu-root';
@@ -777,5 +779,43 @@ describe('MenuContent', () => {
     await waitFor(() => {
       expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
     });
+  });
+
+  it('forwards disabled to a root trigger render prop and prevents opening', () => {
+    render(
+      <MenuRoot>
+        <MenuTrigger disabled render={<button type="button" data-testid="trigger" />} />
+        <MenuContent data-testid="content">Captions</MenuContent>
+      </MenuRoot>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    expect(trigger).toHaveProperty('disabled', true);
+
+    fireEvent.click(trigger);
+
+    expect(screen.queryByTestId('content')).toBeNull();
+
+    const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    trigger.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(screen.queryByTestId('content')).toBeNull();
+  });
+
+  it('provides setting context for root trigger item values', () => {
+    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1.5 });
+
+    render(
+      <MenuRoot>
+        <MenuTrigger type="playback-rate" data-testid="trigger">
+          Speed <MenuItemValue data-testid="value" />
+        </MenuTrigger>
+        <MenuContent data-testid="content">Speed</MenuContent>
+      </MenuRoot>,
+      { wrapper: Wrapper }
+    );
+
+    expect(screen.getByTestId('value').textContent).toBe('1.5×');
   });
 });
