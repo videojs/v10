@@ -144,7 +144,14 @@ export type VideoTrack = Track &
     width?: number;
     height?: number;
     frameRate?: FrameRate;
-    audioGroupId?: string;
+    /**
+     * Audio groups (`EXT-X-STREAM-INF:AUDIO`) this video rendition can pair
+     * with. A list because one rendition is typically listed across multiple
+     * `EXT-X-STREAM-INF` entries — one per audio group (the HLS cross-product) —
+     * which the parser collapses into a single track carrying every group it
+     * advertised.
+     */
+    audioGroupIds?: string[];
   };
 
 /**

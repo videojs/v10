@@ -175,8 +175,29 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     }
   }
 
-  // Build PartiallyResolvedVideoTracks from video streams
-  const videoTracks: PartiallyResolvedVideoTrack[] = videoStreams.map((stream) => {
+  // Build PartiallyResolvedVideoTracks from video streams, de-duplicating the
+  // HLS cross-product: one video rendition is listed across several
+  // `EXT-X-STREAM-INF` entries — one per audio group it can pair with, all
+  // sharing the same media-playlist URI. Collapse them to one track per URI,
+  // accumulating every advertised audio group. (Redundant-stream renditions
+  // live at *distinct* per-CDN URIs, so they stay separate — only the same-URI
+  // cross-product merges.)
+  const videoTracksByUrl = new Map<string, PartiallyResolvedVideoTrack>();
+  for (const stream of videoStreams) {
+    const existing = videoTracksByUrl.get(stream.uri);
+    if (existing) {
+      if (stream.audioGroupId && !existing.audioGroupIds?.includes(stream.audioGroupId)) {
+        existing.audioGroupIds = [...(existing.audioGroupIds ?? []), stream.audioGroupId];
+      }
+      // BANDWIDTH is video + audio combined; the duplicates differ only in the
+      // paired audio. Keep the lowest as the closest proxy to video-only, which
+      // is what ABR should rank on.
+      if (stream.bandwidth < existing.bandwidth) {
+        existing.bandwidth = stream.bandwidth;
+      }
+      continue;
+    }
+
     const codecs = stream.codecs ? parseCodecs(stream.codecs) : undefined;
 
     const track: PartiallyResolvedVideoTrack = {
@@ -202,11 +223,12 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       track.frameRate = stream.frameRate;
     }
     if (stream.audioGroupId) {
-      track.audioGroupId = stream.audioGroupId;
+      track.audioGroupIds = [stream.audioGroupId];
     }
 
-    return track;
-  });
+    videoTracksByUrl.set(stream.uri, track);
+  }
+  const videoTracks: PartiallyResolvedVideoTrack[] = [...videoTracksByUrl.values()];
 
   // Build PartiallyResolvedAudioTracks from audio-only streams
   const audioOnlyTracks: PartiallyResolvedAudioTrack[] = audioOnlyStreams.map((stream) => {
