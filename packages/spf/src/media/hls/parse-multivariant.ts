@@ -49,6 +49,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     uri?: string | undefined;
     default?: boolean | undefined;
     autoselect?: boolean | undefined;
+    channels?: number | undefined;
   }
 
   interface SubtitleRenditionInfo {
@@ -101,6 +102,10 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
           uri: uri ? resolveUrl(uri, baseUrl) : undefined,
           default: mediaAttrs.getBool('DEFAULT'),
           autoselect: mediaAttrs.getBool('AUTOSELECT'),
+          // CHANNELS is a quoted string whose first parameter is the channel
+          // count ("6", or "16/JOC" for spatial audio); getInt reads the
+          // leading integer.
+          channels: mediaAttrs.getInt('CHANNELS'),
         });
       }
 
@@ -274,7 +279,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       mimeType: 'audio/mp4',
       bandwidth: 0, // Not available in multivariant for demuxed audio
       sampleRate: 48000, // CMAF default
-      channels: 2, // Stereo default
+      channels: rendition.channels ?? 2, // From EXT-X-MEDIA CHANNELS; stereo default
       codecs: [],
     };
 

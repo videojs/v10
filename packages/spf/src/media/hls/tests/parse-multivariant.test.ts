@@ -288,6 +288,25 @@ video-lo.m3u8`;
       ]);
     });
 
+    it('parses the CHANNELS attribute on audio renditions (6 for 5.1, default 2 when absent)', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="surround",NAME="5.1",CHANNELS="6",URI="https://example.com/a51.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="stereo",NAME="Stereo",CHANNELS="2",URI="https://example.com/a2.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="nochan",NAME="Unspecified",URI="https://example.com/anc.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1920x1080,CODECS="avc1.640028,ac-3",AUDIO="surround"
+https://example.com/v.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = (result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ??
+        []) as PartiallyResolvedAudioTrack[];
+      const byGroup = (groupId: string) => audioTracks.find((t) => t.groupId === groupId);
+
+      expect(byGroup('surround')?.channels).toBe(6);
+      expect(byGroup('stereo')?.channels).toBe(2);
+      // No CHANNELS attribute → stereo default.
+      expect(byGroup('nochan')?.channels).toBe(2);
+    });
+
     it('extracts audio codecs from referencing streams', () => {
       const result = parseMultivariantPlaylist(muxPlaylist, { url: baseUrl });
       const audioSet = result.selectionSets.find((s) => s.type === 'audio');
