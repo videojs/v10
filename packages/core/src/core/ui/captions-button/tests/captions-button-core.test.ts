@@ -57,7 +57,9 @@ describe('CaptionsButtonCore', () => {
     it('returns unavailable when no subtitles', () => {
       const core = new CaptionsButtonCore();
       core.setMedia(
-        createMediaState({ textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }] })
+        createMediaState({
+          textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
+        })
       );
 
       expect(core.getState().availability).toBe('unavailable');

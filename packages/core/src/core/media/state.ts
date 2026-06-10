@@ -259,6 +259,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
+  id?: string;
   kind: Kind;
   label: string;
   language: string;

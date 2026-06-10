@@ -35,18 +35,20 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         subtitlesShowing: true,
         textTrackList: [
-          { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
-          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+          { id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+          { id: 'captions-en', kind: 'captions', label: 'CC', language: 'en', mode: 'disabled' },
+          { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
       core.setMedia(media);
       const state = core.getState();
 
       expect(state.tracks).toEqual([
-        { value: '0', label: 'English' },
-        { value: '1', label: 'Spanish' },
+        { value: 'captions-en', label: 'CC' },
+        { value: 'subtitles-en', label: 'English' },
+        { value: 'subtitles-es', label: 'Spanish' },
       ]);
-      expect(state.value).toBe('0');
+      expect(state.value).toBe('subtitles-en');
       expect(state.subtitlesShowing).toBe(true);
     });
 
@@ -114,9 +116,14 @@ describe('CaptionsRadioGroupCore', () => {
   describe('getTrackLabel', () => {
     it('formats track labels by default', () => {
       const core = new CaptionsRadioGroupCore();
-      expect(core.getTrackLabel({ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' })).toBe(
-        'English'
-      );
+      expect(
+        core.getTrackLabel({
+          kind: 'subtitles',
+          label: 'English',
+          language: 'en',
+          mode: 'disabled',
+        })
+      ).toBe('English');
       expect(core.getTrackLabel({ kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })).toBe('es');
       expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('Captions');
     });
@@ -126,9 +133,14 @@ describe('CaptionsRadioGroupCore', () => {
         formatTrack: (track) => `${track.language.toUpperCase()} subtitles`,
       });
 
-      expect(core.getTrackLabel({ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' })).toBe(
-        'EN subtitles'
-      );
+      expect(
+        core.getTrackLabel({
+          kind: 'subtitles',
+          label: 'English',
+          language: 'en',
+          mode: 'disabled',
+        })
+      ).toBe('EN subtitles');
     });
   });
 
@@ -137,12 +149,12 @@ describe('CaptionsRadioGroupCore', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
         textTrackList: [
-          { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
-          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+          { id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+          { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
-      core.select(media, '1');
-      expect(media.selectSubtitlesTrack).toHaveBeenCalledWith('1');
+      core.select(media, 'subtitles-es');
+      expect(media.selectSubtitlesTrack).toHaveBeenCalledWith('subtitles-es');
     });
 
     it('turns captions off', () => {
@@ -159,7 +171,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
-      core.select(media, '0');
+      core.select(media, 'subtitles-en');
       expect(media.selectSubtitlesTrack).not.toHaveBeenCalled();
     });
 
@@ -168,7 +180,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
-      core.select(media, '2');
+      core.select(media, 'subtitles-es');
       expect(media.selectSubtitlesTrack).not.toHaveBeenCalled();
     });
   });

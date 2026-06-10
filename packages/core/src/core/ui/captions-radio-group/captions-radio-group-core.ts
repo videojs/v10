@@ -88,10 +88,6 @@ export class CaptionsRadioGroupCore {
     return this.#props.formatTrack(track);
   }
 
-  getTrackValue(index: number): string {
-    return String(index);
-  }
-
   getAttrs(state: CaptionsRadioGroupState) {
     return {
       'aria-label': this.getLabel(state),
@@ -108,7 +104,7 @@ export class CaptionsRadioGroupCore {
     const captionTracks = getCaptionTracks(media.textTrackList);
     const showingIndex = captionTracks.findIndex((track) => track.mode === 'showing');
     const tracks = captionTracks.map((track, index) => ({
-      value: this.getTrackValue(index),
+      value: track.id || String(index),
       label: this.getTrackLabel(track),
     }));
 
@@ -117,7 +113,7 @@ export class CaptionsRadioGroupCore {
 
     this.state.patch({
       tracks,
-      value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : this.getTrackValue(showingIndex),
+      value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : captionTracks[showingIndex]!.id || String(showingIndex),
       subtitlesShowing: media.subtitlesShowing,
       disabled: this.#props.disabled || captionTracks.length === 0,
       availability,
@@ -138,8 +134,7 @@ export class CaptionsRadioGroupCore {
       return;
     }
 
-    const index = captionTracks.findIndex((_track, candidateIndex) => this.getTrackValue(candidateIndex) === value);
-    if (index === -1) return;
+    if (!captionTracks.some((track, index) => (track.id || String(index)) === value)) return;
 
     media.selectSubtitlesTrack(value);
   }
