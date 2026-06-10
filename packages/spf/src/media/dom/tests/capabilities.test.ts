@@ -45,7 +45,7 @@ describe('canPlayTrack', () => {
   it('asserts non-fMP4 containers (video/mp2t, audio/aac) unsupported without consulting isTypeSupported', () => {
     // TS: the probe false-positives on Chromium + no transmux. Raw AAC: a
     // temporary limitation (the browser supports it, but our pipeline assumes an
-    // init segment) — both surface noPlayable rather than stalling.
+    // init segment) — both are pruned before selection rather than stalling.
     const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
     expect(canPlayTrack({ mimeType: 'video/mp2t', codecs: ['avc1.640028'] })).toBe(false);
     expect(canPlayTrack({ mimeType: 'audio/aac', codecs: ['mp4a.40.2'] })).toBe(false);

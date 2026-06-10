@@ -93,16 +93,6 @@ export interface SimpleHlsEngineState {
    * means all CDNs are eligible.
    */
   failedCdns?: string[];
-  /**
-   * Per-type "nothing playable" flags, written by `track-switching` when a
-   * type's candidates are pruned to empty by the hard-constraints pre-pass —
-   * every rendition undecodable (capability probing) or every CDN in cooldown
-   * (failover). `false` when a playable candidate exists; unset/`false` when the
-   * type simply has no tracks. Cause-agnostic; the Phase-6 partial of capability
-   * probing.
-   */
-  noPlayableVideoTracks?: boolean;
-  noPlayableAudioTracks?: boolean;
   currentTime?: number;
   loadActivated?: boolean;
 }

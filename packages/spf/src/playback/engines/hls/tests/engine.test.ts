@@ -322,12 +322,11 @@ describe('createSimpleHlsEngine', () => {
 
     // HEVC pruned upstream by the capability constraint; AVC selected.
     expect(engine.state.selectedVideoTrackId.get()).toBe('1080p-avc');
-    expect(engine.state.noPlayableVideoTracks.get()).toBe(false);
 
     engine.destroy();
   });
 
-  it('surfaces noPlayableVideoTracks when no rendition is decodable', async () => {
+  it('makes no video pick when no rendition is decodable', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     const engine = createSimpleHlsEngine({ canPlayTrack: () => false });
 
@@ -360,7 +359,6 @@ describe('createSimpleHlsEngine', () => {
     } as Presentation);
     await flush();
 
-    expect(engine.state.noPlayableVideoTracks.get()).toBe(true);
     expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
 
     engine.destroy();

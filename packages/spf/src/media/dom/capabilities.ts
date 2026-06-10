@@ -34,9 +34,9 @@ const codecSupportCache = new Map<string, boolean>();
  * check stays as the backstop for those.
  *
  * Detected non-fMP4 containers (`video/mp2t`, `audio/aac`) are asserted
- * unsupported regardless of the probe, so they surface a loud, observable
- * `noPlayable` instead of failing/stalling deep in the pipeline. Two different
- * reasons, neither UA-based:
+ * unsupported regardless of the probe, so they're pruned before selection
+ * (the type makes no pick) instead of failing/stalling deep in the pipeline.
+ * Two different reasons, neither UA-based:
  *
  * - **MPEG-TS** can't be played at all here: `isTypeSupported('video/mp2t…')` is
  *   a genuine false positive on Chromium (reports `true` but appends produce no

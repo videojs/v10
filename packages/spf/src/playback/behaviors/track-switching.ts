@@ -41,9 +41,11 @@
  * *scope* is the sticky-pick half of multi-CDN; the failed-CDN *constraint* is
  * the failover half — prune the cooled-down CDN, the scope falls to the next.)
  *
- * When the pre-pass prunes a type's candidates to empty, the behavior surfaces a
- * per-type `noPlayable*` flag (the "nothing playable" not-ready state) — the
- * Phase-6 partial of capability probing; full error mapping is deferred.
+ * When the pre-pass prunes a type's candidates to empty, the behavior leaves any
+ * prior pick in place and makes no new pick; the late `createSourceBuffer` check
+ * stays as the structural backstop for an unplayable rendition reaching the
+ * pipeline. Surfacing "nothing playable" as observable state is deferred until a
+ * consumer (error mapping) needs it.
  *
  * Deferred: audio's preferred-language / default-track selection as standing
  * soft-filter rules (previously the empty-slot picker, dropped in the move to
@@ -85,17 +87,6 @@ export interface TrackSwitchingState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
-  /**
-   * Per-type "nothing playable" flags — `true` when the type had candidate
-   * tracks that the hard-constraints pre-pass pruned to empty (every rendition
-   * undecodable, or every CDN in cooldown), `false` when a playable candidate
-   * exists, cleared on src unload. Cause-agnostic by design: it surfaces the
-   * not-ready state, and a downstream error-mapping feature attributes the
-   * cause. Distinct from "no tracks of this type at all" (e.g. a video-only
-   * source has no audio), which leaves the flag unset.
-   */
-  noPlayableVideoTracks?: boolean;
-  noPlayableAudioTracks?: boolean;
 }
 
 /**
@@ -262,7 +253,6 @@ type SwitchableTrack = {
 
 type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
-type NoPlayableKey = 'noPlayableVideoTracks' | 'noPlayableAudioTracks';
 
 // Each mapped value references `P` so TS keeps the per-key dependency and
 // resolves `state[selectionKey]` to the right arm. `T` (track type) stays out
@@ -276,18 +266,9 @@ type NoPlayableKey = 'noPlayableVideoTracks' | 'noPlayableAudioTracks';
 // so the behavior never assumes a rule-only signal exists. Those slots are
 // materialized by whoever owns them: `shareSignals` for the consumer-input
 // `user*TrackSelection`, the buffer-actor sampler for `bandwidthState`.
-// `N` (the per-type `noPlayable*` slot this variant writes) defaults to `never`
-// so the *base / rule* views carry no `noPlayable` key — rules never see it, and
-// the variant's narrow state stays assignable to them. Each variant instantiates
-// `N` with its own key, so the slot is a *required* signal on the behavior's
-// declared param: optional here would collapse under the composition's
-// `UnwrapSignals` (`Signal | undefined` doesn't match `{ get() }` → `never` →
-// false conflict). `setupTrackSwitching` widens to an optional both-keys view
-// internally (it's a plain function, not subject to that check) so the write can
-// stay defensive.
-type TrackSwitchingStateMap<S extends SelectionKey, N extends NoPlayableKey = never> = {
+type TrackSwitchingStateMap<S extends SelectionKey> = {
   presentation: ReadonlySignal<TrackSwitchingState['presentation']>;
-} & { [P in S]: Signal<TrackSwitchingState[P]> } & { [P in N]: Signal<TrackSwitchingState[P]> };
+} & { [P in S]: Signal<TrackSwitchingState[P]> };
 
 /**
  * Config `setupTrackSwitching` itself reads — its own wiring: which selection
@@ -457,7 +438,8 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
  * Passes everything through when there's no `canPlayTrack` probe (a composition
  * that didn't wire it, or DOM-free tests). When it prunes *every* track (no
  * decodable rendition), the empty result is preserved (per `applyConstraints`)
- * — "nothing playable," surfaced by the behavior's per-type `noPlayable*` flag.
+ * — "nothing playable," so the behavior makes no pick and the late
+ * `createSourceBuffer` check stays as the backstop.
  */
 function excludeUnplayableTracks<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
@@ -565,17 +547,8 @@ function setupTrackSwitching<
   S extends SelectionKey,
   T extends SwitchableTrack,
   C extends TrackSwitchingConfig<S, T>,
->(deps: {
-  state: TrackSwitchingStateMap<S>;
-  context?: AnySlotMap;
-  config: C;
-  // The per-type `noPlayable*` signal to write when this type's candidates prune
-  // to empty (Phase-6 not-ready surfacing). Passed in by the variant (which has
-  // it typed on its own state map) rather than indexed off the generic `state`
-  // here, so the helper stays free of the slot's key. Absent → no surfacing.
-  noPlayableSignal?: Signal<boolean | undefined>;
-}) {
-  const { state, config, noPlayableSignal } = deps;
+>(deps: { state: TrackSwitchingStateMap<S>; context?: AnySlotMap; config: C }) {
+  const { state, config } = deps;
   const { selectionKey, getTracks, rules } = config;
 
   const derivedStateSignal = computed(() =>
@@ -618,10 +591,7 @@ function setupTrackSwitching<
         // Canonical cleanup-binds-to-setup: the selection signal's valid
         // lifespan is exactly 'presentation-resolved'. Clear fires on exit,
         // covering both src unload and behavior destroy.
-        entry: () => () => {
-          state[selectionKey].set(undefined);
-          noPlayableSignal?.set(undefined);
-        },
+        entry: () => () => state[selectionKey].set(undefined),
         effects: [
           () => {
             // Reactive read: subscribes the reaction to the candidate set, so a
@@ -629,21 +599,12 @@ function setupTrackSwitching<
             // re-picks.
             const tracks = candidateSet.get();
 
-            // Per-type "nothing playable" surfacing: distinguish "the type had
-            // candidates that the hard-constraints pre-pass pruned to empty"
-            // (every rendition undecodable, or every CDN cooled down →
-            // `true`) from "no tracks of this type at all" (e.g. a video-only
-            // source's absent audio → leave unset, not an error). Cause-agnostic
-            // by design — a downstream error-mapping feature attributes cause.
-            if (noPlayableSignal) {
-              const presentation = state.presentation.get();
-              const hadCandidates = isResolvedPresentation(presentation) && getTracks(presentation).length > 0;
-              noPlayableSignal.set(hadCandidates && tracks.length === 0);
-            }
-
-            // No playable tracks: no tracks of this type, or everything pruned.
-            // Nothing to pick — leave any prior pick in place (the no-playable
-            // flag above is the observable signal for the pruned-to-empty case).
+            // No playable tracks: no tracks of this type, or the hard-constraints
+            // pre-pass pruned everything (every rendition undecodable, or every
+            // CDN cooled down). Nothing to pick — leave any prior pick in place.
+            // The late createSourceBuffer check is the backstop if an unplayable
+            // rendition reaches the pipeline; surfacing "nothing playable" as
+            // observable state is deferred until a consumer needs it.
             if (!tracks.length) return;
 
             // The whole deps object passes straight through to every rule in the
@@ -689,20 +650,19 @@ function setupTrackSwitching<
  * const reactor = switchVideoTrack.setup({ state });
  */
 export const switchVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'noPlayableVideoTracks'],
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config,
     ...otherProps
   }: {
-    state: TrackSwitchingStateMap<'selectedVideoTrackId', 'noPlayableVideoTracks'>;
+    state: TrackSwitchingStateMap<'selectedVideoTrackId'>;
     config?: SwitchVideoTrackConfig;
   }) =>
     setupTrackSwitching({
       ...otherProps,
       state,
-      noPlayableSignal: state.noPlayableVideoTracks,
       config: {
         ...config,
         selectionKey: 'selectedVideoTrackId',
@@ -732,14 +692,14 @@ export const switchVideoTrack = defineBehavior({
  * const reactor = switchAudioTrack.setup({ state });
  */
 export const switchAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId', 'noPlayableAudioTracks'],
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config,
     ...otherProps
   }: {
-    state: TrackSwitchingStateMap<'selectedAudioTrackId', 'noPlayableAudioTracks'>;
+    state: TrackSwitchingStateMap<'selectedAudioTrackId'>;
     // Shares the video config shape so the engine config spreads through (CDN
     // derivation + any future cross-cutting fields).
     config?: SwitchVideoTrackConfig;
@@ -747,7 +707,6 @@ export const switchAudioTrack = defineBehavior({
     setupTrackSwitching({
       ...otherProps,
       state,
-      noPlayableSignal: state.noPlayableAudioTracks,
       config: {
         // Spread engine config so cross-cutting fields (`getCdnId`, future shared
         // tuning) flow through like they do for video, then override the per-type

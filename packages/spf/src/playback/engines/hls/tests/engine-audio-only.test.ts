@@ -63,12 +63,12 @@ describe('createHlsAudioOnlyEngine', () => {
     engine.destroy();
   });
 
-  it('wires the default canPlayTrack — prunes an undecodable (raw-AAC) audio source and surfaces noPlayableAudioTracks', async () => {
+  it('wires the default canPlayTrack — prunes an undecodable (raw-AAC) audio source, making no pick', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     // No canPlayTrack override → relies on the engine's default. A raw-AAC
-    // (audio/aac) rendition is asserted unplayable, so it should be pruned and
-    // surfaced rather than selected. (If the default weren't wired, the
-    // constraint would pass through and select it.)
+    // (audio/aac) rendition is asserted unplayable, so it should be pruned
+    // rather than selected. (If the default weren't wired, the constraint would
+    // pass through and select it.)
     const engine = createHlsAudioOnlyEngine();
     engine.state.presentation.set({
       id: 'pres-aac',
@@ -103,7 +103,6 @@ describe('createHlsAudioOnlyEngine', () => {
     } as Presentation);
     await flush();
 
-    expect(engine.state.noPlayableAudioTracks.get()).toBe(true);
     expect(engine.state.selectedAudioTrackId.get()).toBeUndefined();
 
     engine.destroy();

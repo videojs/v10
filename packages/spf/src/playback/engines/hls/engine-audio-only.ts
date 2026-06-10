@@ -68,14 +68,6 @@ export interface SimpleHlsAudioOnlyEngineState {
    * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
    */
   failedCdns?: string[];
-  /**
-   * "Nothing playable" flag, written by `track-switching` when the audio
-   * candidate set is pruned to empty by the hard-constraints pre-pass — every
-   * rendition undecodable (capability probing) or every CDN in cooldown
-   * (failover). Cause-agnostic. Sibling of the default engine's
-   * `noPlayableAudioTracks`.
-   */
-  noPlayableAudioTracks?: boolean;
   currentTime?: number;
   loadActivated?: boolean;
 }
