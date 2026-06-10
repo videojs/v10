@@ -109,9 +109,9 @@ layer onto specific phases per the
 | `excludeUnplayableTracks` | Hard-constraint in the `applyConstraints` pre-pass; reads `config.canPlayTrack`, drops undecodable renditions before the rule chain. Shared by `switchVideoTrack` / `switchAudioTrack`, pooled with `excludeFailedCdns` |
 | `noPlayableSignal` write | `setupTrackSwitching` sets the per-type flag when a non-empty candidate set prunes to empty; cleared on src unload |
 
-**Engine wiring (`playback/engines/hls/engine.ts`):**
-- `SimpleHlsEngineConfig.canPlayTrack` — defaults to the DOM `canPlayTrack` in `finalConfig`; override to force-exclude a codec (the Tier 2 seam).
-- `SimpleHlsEngineState.noPlayable{Video,Audio}Tracks` — per-type not-ready flags, observable via `shareSignals`.
+**Engine wiring (`playback/engines/hls/engine.ts` + `engine-audio-only.ts`):**
+- `canPlayTrack` config — both engine factories default it to the DOM `canPlayTrack` in `finalConfig` (the audio-only variant too, so filtering isn't inert there); override to force-exclude a codec (the Tier 2 seam). Adapters forward it via `...config`.
+- `noPlayable{Video,Audio}Tracks` state — per-type not-ready flags, observable via `shareSignals` (audio-only engine exposes `noPlayableAudioTracks`).
 
 **State slots:**
 - **Reads (constraint):** `presentation` candidates' `mimeType` + `codecs`, via `config.canPlayTrack`.

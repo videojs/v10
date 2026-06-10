@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import type { Presentation } from '../../../../media/types';
 import { createHlsAudioOnlyEngine } from '../engine-audio-only';
 
 // Mock appendSegment to succeed without real MP4 data
@@ -58,6 +59,52 @@ describe('createHlsAudioOnlyEngine', () => {
 
     engine.state.userAudioTrackSelection.set({ language: 'es' });
     expect(engine.state.userAudioTrackSelection.get()).toEqual({ language: 'es' });
+
+    engine.destroy();
+  });
+
+  it('wires the default canPlayTrack — prunes an undecodable (raw-AAC) audio source and surfaces noPlayableAudioTracks', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    // No canPlayTrack override → relies on the engine's default. A raw-AAC
+    // (audio/aac) rendition is asserted unplayable, so it should be pruned and
+    // surfaced rather than selected. (If the default weren't wired, the
+    // constraint would pass through and select it.)
+    const engine = createHlsAudioOnlyEngine();
+    engine.state.presentation.set({
+      id: 'pres-aac',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [
+                {
+                  type: 'audio',
+                  id: 'aud-aac',
+                  codecs: ['mp4a.40.2'],
+                  url: 'https://example.com/aud.m3u8',
+                  bandwidth: 128_000,
+                  mimeType: 'audio/aac',
+                  groupId: 'audio',
+                  name: 'Default',
+                  sampleRate: 48_000,
+                  channels: 2,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    expect(engine.state.noPlayableAudioTracks.get()).toBe(true);
+    expect(engine.state.selectedAudioTrackId.get()).toBeUndefined();
 
     engine.destroy();
   });
