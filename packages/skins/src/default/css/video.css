@@ -10,11 +10,11 @@
 @import "./components/button.css";
 @import "./components/button-group.css";
 @import "./components/icons.css";
-@import "./components/menus.css";
 @import "./components/poster.css";
 @import "./components/thumbnail.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "./components/captions.css";
 @import "./components/input-feedback.css";
 @import "../../shared/css/video/icon-state.css";

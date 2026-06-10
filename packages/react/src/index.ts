@@ -33,6 +33,12 @@ export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airp
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
+export {
+  type CaptionsOption,
+  type CaptionsOptionsProps,
+  type CaptionsOptionsResult,
+  useCaptionsOptions,
+} from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
 export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
@@ -52,13 +58,13 @@ export { Menu, type MenuContextValue, useMenuContext, useOptionalMenuContext } f
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
-export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export {
-  PlaybackRateMenu,
-  type PlaybackRateMenuOption,
-  type PlaybackRateMenuResult,
-  usePlaybackRateMenu,
-} from './ui/playback-rate-menu';
+  type PlaybackRateOption,
+  type PlaybackRateOptionsProps,
+  type PlaybackRateOptionsResult,
+  usePlaybackRateOptions,
+} from './ui/playback-rate';
+export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';

@@ -8,6 +8,7 @@ import {
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -24,6 +25,7 @@ import { Container, usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -31,6 +33,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -95,6 +98,69 @@ function VolumePopover(): ReactNode {
  * the start and end button groups so they sit at opposite edges of the
  * control bar.
  */
+function CaptionsTrigger(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions) return null;
+
+  const { disabled } = captions;
+
+  if (!captions.showMenu) {
+    return (
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <CaptionsButton className="media-button--captions" render={<Button />}>
+              <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+              <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            </CaptionsButton>
+          }
+        />
+        <Tooltip.Popup className="media-tooltip" />
+      </Tooltip.Root>
+    );
+  }
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        disabled={disabled}
+        render={
+          <CaptionsButton className="media-button--captions" render={<Button />}>
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+          </CaptionsButton>
+        }
+      />
+      <Menu.Content className="media-popover media-menu media-menu--captions">
+        <Menu.RadioGroup
+          className="media-menu__group"
+          value={captions.value}
+          onValueChange={captions.setValue}
+          aria-label="Captions"
+        >
+          {captions.options.map((option) => (
+            <Menu.RadioItem
+              key={option.value}
+              className="media-menu__item"
+              value={option.value}
+              disabled={option.disabled}
+            >
+              <span>{option.label}</span>
+              <Menu.ItemIndicator
+                checked={option.value === captions.value}
+                forceMount
+                className="media-menu__indicator"
+              >
+                <CheckIcon className="media-icon" />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
 export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 
@@ -152,17 +218,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
           <div className="media-button-group">
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className="media-button--captions" render={<Button />}>
-                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className="media-tooltip" />
-            </Tooltip.Root>
+            <CaptionsTrigger />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
