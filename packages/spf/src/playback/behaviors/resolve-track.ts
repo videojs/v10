@@ -2,11 +2,11 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
-import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
+import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
-import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
+import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
@@ -132,9 +132,21 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // signal abort cancels in-flight body reads — so by the
                   // time we reach this point the presentation we resolved
                   // against is the live one.
-                  update(state.presentation, (current) =>
-                    isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
-                  );
+                  update(state.presentation, (current) => {
+                    if (!isResolvedPresentation(current)) return current;
+                    const patched = updateTrackInPresentation(current, mediaTrack);
+                    // Container is uniform within a type (an ABR ladder shares
+                    // its container), so a detected non-fMP4 rendition (TS,
+                    // raw AAC) implies every rendition of *this* type matches —
+                    // relabel them all from one resolved playlist instead of
+                    // fetching each. Scoped to this track's own type: never cross
+                    // audio↔video (mixed-container sources exist, e.g. muxed-TS
+                    // video + raw-.aac audio), which also keeps per-type
+                    // resolutions' writes disjoint (no race).
+                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                      ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
+                      : patched;
+                  });
                 },
                 { id: track.id }
               )
