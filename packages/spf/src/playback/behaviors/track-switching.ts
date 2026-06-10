@@ -337,8 +337,8 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
   const cdnPriority = state.cdnPriority?.get();
   if (!cdnPriority?.length) return tracks;
   for (const cdn of cdnPriority) {
-    const onCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
-    if (onCdn.length) return onCdn;
+    const tracksUsingCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
+    if (tracksUsingCdn.length) return tracksUsingCdn;
   }
   return tracks;
 }
