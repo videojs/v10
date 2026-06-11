@@ -3,7 +3,7 @@
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
-import type { CSSProperties, ForwardedRef } from 'react';
+import type { CSSProperties, ForwardedRef, SyntheticEvent } from 'react';
 import { forwardRef, useCallback, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
@@ -44,7 +44,9 @@ export const Poster = forwardRef(function Poster(
   const src = (elementProps as { src?: string }).src;
   const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
   const loaded = loadedSrc === src;
-  const handleLoad = useCallback(() => setLoadedSrc(src), [src]);
+  const handleLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
+    setLoadedSrc(event.currentTarget.getAttribute('src') ?? undefined);
+  }, []);
 
   if (!playback) {
     if (__DEV__) logMissingFeature('Poster', 'playback');
