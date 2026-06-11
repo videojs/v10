@@ -17,8 +17,10 @@ import {
   applyRules,
   type SelectionRule,
   type SwitchVideoTrackConfig,
+  setupTrackSwitching,
   switchAudioTrack,
   switchVideoTrack,
+  type TrackSwitchingStateMap,
 } from '../track-switching';
 
 // ============================================================================
@@ -1090,6 +1092,73 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
     expect(errorSpy).toHaveBeenCalled();
 
     errorSpy.mockRestore();
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// setupTrackSwitching — resolveSelection seam
+//
+// The variant-supplied final-pick hook. Defaults to the chain head (video/audio
+// always-pick); a variant with optional selection (text) may resolve to
+// `undefined` to clear the slot. Exercised here directly via the helper rather
+// than through a variant, since no text variant exists yet.
+// ============================================================================
+
+describe('setupTrackSwitching (resolveSelection)', () => {
+  it('defaults to the chain head when resolveSelection is absent', async () => {
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: { selectionKey: 'selectedVideoTrackId', getTracks: () => tracks, rules: [] },
+    });
+    await flush();
+    // No rules → candidate order preserved → head is the pick.
+    expect(state.selectedVideoTrackId.get()).toBe('360p');
+    reactor.destroy();
+  });
+
+  it('clears the slot when resolveSelection returns undefined', async () => {
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+      selectedVideoTrackId: '720p',
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: {
+        selectionKey: 'selectedVideoTrackId',
+        getTracks: () => tracks,
+        rules: [],
+        resolveSelection: () => undefined,
+      },
+    });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('threads the chain survivors to resolveSelection', async () => {
+    const seen: string[][] = [];
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: {
+        selectionKey: 'selectedVideoTrackId',
+        getTracks: () => tracks,
+        rules: [],
+        resolveSelection: (candidates) => {
+          seen.push(candidates.map((track) => track.id));
+          return candidates[candidates.length - 1]!.id;
+        },
+      },
+    });
+    await flush();
+    expect(seen.at(-1)).toEqual(['360p', '720p', '1080p']);
+    expect(state.selectedVideoTrackId.get()).toBe('1080p');
     reactor.destroy();
   });
 });

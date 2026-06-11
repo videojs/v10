@@ -251,6 +251,20 @@ type SwitchableTrack = {
   codecs?: string[];
 };
 
+/**
+ * Map the rule chain's surviving candidates to the final selection id, or
+ * `undefined` for a deliberate no-selection. Defaults to the chain head
+ * (`selectChainHead`) — the always-pick contract video and audio rely on
+ * (`applyRules` guarantees a non-empty result, so the head is always there). A
+ * variant whose selection is legitimately optional (text: opt-in captions,
+ * explicit off) supplies its own picker that may return `undefined`; the helper
+ * writes that straight through to the slot, clearing it.
+ */
+export type ResolveSelection<T extends SwitchableTrack, State = unknown, Context = unknown, Config = unknown> = (
+  candidates: readonly T[],
+  deps: SelectionRuleDeps<State, Context, Config>
+) => string | undefined;
+
 type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 
@@ -266,7 +280,7 @@ type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 // so the behavior never assumes a rule-only signal exists. Those slots are
 // materialized by whoever owns them: `shareSignals` for the consumer-input
 // `user*TrackSelection`, the buffer-actor sampler for `bandwidthState`.
-type TrackSwitchingStateMap<S extends SelectionKey> = {
+export type TrackSwitchingStateMap<S extends SelectionKey> = {
   presentation: ReadonlySignal<TrackSwitchingState['presentation']>;
 } & { [P in S]: Signal<TrackSwitchingState[P]> };
 
@@ -275,18 +289,26 @@ type TrackSwitchingStateMap<S extends SelectionKey> = {
  * slot to write and clear (`selectionKey`), how to enumerate candidate tracks
  * (`getTracks`), the optional **hard-constraints pre-pass** (`constraints`,
  * applied before the chain to prune the unplayable), and the **rule chain** to
- * run (`rules`). Rule-/constraint-specific config is deliberately absent — each
- * declares the fields it reads as *optional* on its own config view
- * (`UserSelectionConfig`, `BandwidthRankerConfig`), so the behavior never
- * enumerates them. The variant builds the concrete config as this base plus
- * whatever its chain consults; it flows through untouched as the `C` type param
- * on `setupTrackSwitching`.
+ * run (`rules`), and how to map the chain's survivors to the final pick
+ * (`resolveSelection`, defaulting to the chain head). Rule-/constraint-specific
+ * config is deliberately absent — each declares the fields it reads as *optional*
+ * on its own config view (`UserSelectionConfig`, `BandwidthRankerConfig`), so the
+ * behavior never enumerates them. The variant builds the concrete config as this
+ * base plus whatever its chain consults; it flows through untouched as the `C`
+ * type param on `setupTrackSwitching`.
  */
 interface TrackSwitchingConfig<S extends SelectionKey, T extends SwitchableTrack> {
   selectionKey: S;
   getTracks: (presentation: MaybeResolvedPresentation) => readonly T[];
   constraints?: readonly SelectionRule<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>[];
   rules: readonly SelectionRule<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>[];
+  /**
+   * Map the chain's surviving candidates to the final selection id. Optional —
+   * absent means the chain head (`selectChainHead`), the always-pick path video
+   * and audio use. A variant with optional selection (text) supplies one that
+   * may return `undefined`.
+   */
+  resolveSelection?: ResolveSelection<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>;
 }
 
 /**
@@ -537,19 +559,28 @@ function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   return [...fitting, ...over];
 }
 
+/**
+ * Default final pick: the chain head. `applyRules` never narrows to nothing and
+ * early-bails to a single survivor, so video and audio always converge to a
+ * track and the head is the pick.
+ */
+function selectChainHead<T extends SwitchableTrack>(candidates: readonly T[]): string {
+  return candidates[0]!.id;
+}
+
 // `context` is the composition's context map, threaded in by each variant's
 // rest-spread and typed as the generic slot-map shape (`AnySlotMap`). It can't
 // be a typed param on the `defineBehavior` setup without widening `ContextMap`
 // to its constraint and forcing the slot required, so the variants forward it
 // untyped via the rest and it lands here — absent on direct setup calls, and
 // passed straight through to the rules (which don't read it yet).
-function setupTrackSwitching<
+export function setupTrackSwitching<
   S extends SelectionKey,
   T extends SwitchableTrack,
   C extends TrackSwitchingConfig<S, T>,
 >(deps: { state: TrackSwitchingStateMap<S>; context?: AnySlotMap; config: C }) {
   const { state, config } = deps;
-  const { selectionKey, getTracks, rules } = config;
+  const { selectionKey, getTracks, rules, resolveSelection = selectChainHead } = config;
 
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
@@ -643,9 +674,12 @@ function setupTrackSwitching<
               console.error('[track-switching] applyRules returned no candidates');
               return;
             }
+            // Map survivors to the final id. Defaults to the chain head; a
+            // variant with optional selection (text) may resolve to `undefined`,
+            // which clears the slot (e.g. explicit off, opt-in decline).
             // No change-guard needed: the slot uses default (Object.is) equality,
-            // so re-setting the same id is a no-op (no notify, no re-fire).
-            state[selectionKey].set(candidates[0]!.id);
+            // so re-setting the same value is a no-op (no notify, no re-fire).
+            state[selectionKey].set(resolveSelection(candidates, deps));
           },
         ],
       },
