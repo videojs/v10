@@ -11,9 +11,13 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import StoreAccessDemoReact from "@/components/docs/demos/use-player/react/css/StoreAccess";
 import storeAccessReactTsx from "@/components/docs/demos/use-player/react/css/StoreAccess.tsx?raw";
 import storeAccessReactCss from "@/components/docs/demos/use-player/react/css/StoreAccess.css?raw";
+import StoreAccessDemoReactTailwind from "@/components/docs/demos/use-player/react/tailwind/StoreAccess";
+import storeAccessReactTailwindTsx from "@/components/docs/demos/use-player/react/tailwind/StoreAccess.tsx?raw";
 import SelectorDemoReact from "@/components/docs/demos/use-player/react/css/Selector";
 import selectorReactTsx from "@/components/docs/demos/use-player/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-player/react/css/Selector.css?raw";
+import SelectorDemoReactTailwind from "@/components/docs/demos/use-player/react/tailwind/Selector";
+import selectorReactTailwindTsx from "@/components/docs/demos/use-player/react/tailwind/Selector.tsx?raw";
 
 `Player.usePlayer` gives you access to the player store from any component within a `Player.Provider`. It has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions. `Player.usePlayer` is typed to the features you passed to <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>. It's also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped store.
 
@@ -34,6 +38,15 @@ Call `Player.usePlayer()` without arguments to get the store instance. Use this 
       <StoreAccessDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: storeAccessReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <StoreAccessDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 ### Selector Subscription
@@ -49,6 +62,15 @@ Pass a selector function to subscribe to specific state. The component re-render
       ]}
     >
       <SelectorDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: selectorReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <SelectorDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>

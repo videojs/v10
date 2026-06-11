@@ -11,9 +11,13 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import StoreAccessDemoReact from "@/components/docs/demos/use-store/react/css/StoreAccess";
 import storeAccessReactTsx from "@/components/docs/demos/use-store/react/css/StoreAccess.tsx?raw";
 import storeAccessReactCss from "@/components/docs/demos/use-store/react/css/StoreAccess.css?raw";
+import StoreAccessDemoReactTailwind from "@/components/docs/demos/use-store/react/tailwind/StoreAccess";
+import storeAccessReactTailwindTsx from "@/components/docs/demos/use-store/react/tailwind/StoreAccess.tsx?raw";
 import SelectorDemoReact from "@/components/docs/demos/use-store/react/css/Selector";
 import selectorReactTsx from "@/components/docs/demos/use-store/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-store/react/css/Selector.css?raw";
+import SelectorDemoReactTailwind from "@/components/docs/demos/use-store/react/tailwind/Selector";
+import selectorReactTailwindTsx from "@/components/docs/demos/use-store/react/tailwind/Selector.tsx?raw";
 
 `useStore` subscribes to a store instance directly. It has the same two overloads as <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> — without a selector for store access, or with a selector for reactive state. Within a player provider, `usePlayer` is usually simpler since it reads the store from context. Reach for `useStore` when you have a store instance directly or need to derive computed values from the store.
 
@@ -34,6 +38,15 @@ Call `useStore(store)` without a selector to get the store instance back for imp
       <StoreAccessDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: storeAccessReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <StoreAccessDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 ### Selector Subscription
@@ -49,6 +62,15 @@ Pass a selector to derive and subscribe to computed values from the store. The c
       ]}
     >
       <SelectorDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: selectorReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <SelectorDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>
