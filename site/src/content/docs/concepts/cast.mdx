@@ -186,11 +186,10 @@ function CastStatus() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { selectRemotePlayback } from '@videojs/html';
-import { PlayerController } from '@videojs/html';
+import { PlayerController, playerContext, selectRemotePlayback } from '@videojs/html';
 
 class CastStatus extends HTMLElement {
-  readonly #remotePlayback = new PlayerController(this, context, selectRemotePlayback);
+  readonly #remotePlayback = new PlayerController(this, playerContext, selectRemotePlayback);
 }
 ```
 </FrameworkCase>
