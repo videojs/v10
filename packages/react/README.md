@@ -10,6 +10,12 @@
 provides a complete set of components, hooks, and utilities for creating feature-rich, accessible
 video and audio players with React.
 
+## Documentation
+
+Read the docs at [videojs.org](https://videojs.org/docs/framework/react), or after installing,
+browse the bundled markdown at `node_modules/@videojs/react/docs/` (start with `llms.txt` for the
+structured index).
+
 ## Community
 
 If you need help with anything related to Video.js 10, or if you'd like to casually chat with other

@@ -419,21 +419,14 @@ describe('renderElement', () => {
   });
 
   describe('state data attributes', () => {
-    it('generates data-* attributes from state boolean true values', () => {
+    it('does not generate data-* attributes without an explicit mapping', () => {
       const { container } = render(<TestComponent active />);
-      const element = container.firstElementChild;
-
-      expect(element?.getAttribute('data-active')).toBe('');
-    });
-
-    it('does not generate data-* attributes from state boolean false values', () => {
-      const { container } = render(<TestComponent active={false} />);
       const element = container.firstElementChild;
 
       expect(element?.hasAttribute('data-active')).toBe(false);
     });
 
-    it('generates data-* attributes from state with multiple properties', () => {
+    it('generates mapped data-* attributes from state with multiple properties', () => {
       interface MultiState {
         paused: boolean;
         ended: boolean;
@@ -454,8 +447,17 @@ describe('renderElement', () => {
           ...elementProps
         } = props;
         const state: MultiState = { paused, ended, volume };
+        const stateAttrMap = {
+          paused: 'data-paused',
+          ended: 'data-ended',
+          volume: 'data-volume',
+        } as const;
 
-        return renderElement('div', { className, style, render: renderProp }, { state, ref, props: [elementProps] });
+        return renderElement(
+          'div',
+          { className, style, render: renderProp },
+          { state, ref, props: [elementProps], stateAttrMap }
+        );
       });
 
       const { container } = render(<MultiStateComponent paused ended={false} volume={0.5} />);
@@ -466,7 +468,7 @@ describe('renderElement', () => {
       expect(element?.getAttribute('data-volume')).toBe('0.5');
     });
 
-    it('converts state keys to lowercase for data attributes', () => {
+    it('does not expose unmapped state keys as data attributes', () => {
       interface CamelCaseState {
         isPaused: boolean;
       }
@@ -484,7 +486,7 @@ describe('renderElement', () => {
       const { container } = render(<CamelCaseComponent isPaused />);
       const element = container.firstElementChild;
 
-      expect(element?.getAttribute('data-ispaused')).toBe('');
+      expect(element?.hasAttribute('data-ispaused')).toBe(false);
     });
 
     it('supports explicit state attribute mapping', () => {
@@ -534,6 +536,7 @@ describe('renderElement', () => {
           {
             state,
             ref,
+            stateAttrMap: { active: 'data-active' },
             // Explicit prop comes after state in merge order, so it wins
             props: [elementProps],
           }

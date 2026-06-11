@@ -8,6 +8,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  min-height: 0;
   padding: 0.5rem 1rem;
   text-align: center;
   touch-action: manipulation;
@@ -77,8 +78,17 @@
     scale: 0.9;
   }
 
+  & .media-icon__container {
+    display: grid;
+  }
+
   & .media-icon {
-    filter: drop-shadow(0 1px 0 var(--media-controls-current-shadow-color, oklch(0 0 0 / 0.25)));
+    grid-area: 1 / 1;
+    transition-behavior: allow-discrete;
+    transition-property: display, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+    filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
   }
 }
 
@@ -89,8 +99,9 @@
     right: -1px;
     bottom: -3px;
     font-size: 10px;
-    font-weight: 480;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
   }
 
   &:has(.media-icon--flipped) .media-icon__label {
@@ -102,10 +113,67 @@
 /* Playback rate button */
 .media-default-skin .media-button--playback-rate {
   padding: 0;
+  font-variant-numeric: tabular-nums;
 
   &::after {
     width: 4ch;
-    font-variant-numeric: tabular-nums;
     content: attr(data-rate) "\00D7";
+  }
+
+  &[data-inline-rate-label]::after {
+    content: none;
+  }
+}
+
+/* Settings button */
+.media-default-skin .media-button--settings {
+  display: none;
+
+  & .media-icon--settings {
+    transition: transform 150ms ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition-duration: 0ms;
+    }
+  }
+
+  &[aria-expanded="true"] .media-icon--settings {
+    transform: rotate(90deg);
+  }
+}
+
+.media-default-skin .media-button-group:has([data-availability="available"]) .media-button--settings {
+  display: grid;
+}
+
+/* Live button — wide pill button with a status dot (gray → red at the live
+   edge) rendered via ::before, and "LIVE" text rendered as the button's own
+   text content. */
+.media-default-skin .media-button--live {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  width: auto;
+  aspect-ratio: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &::before {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    content: "";
+    background-color: oklch(from currentColor l c h / 0.4);
+    border-radius: 50%;
+    transition: background-color 150ms ease-out;
+  }
+
+  &[data-live-edge]::before {
+    background-color: oklch(0.65 0.22 27);
   }
 }

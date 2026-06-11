@@ -5,6 +5,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
+import { baseConfig } from '../../build/tsdown.ts';
 
 type BuildMode = 'dev' | 'prod';
 
@@ -25,7 +26,15 @@ const presets = [
   'audio-minimal-ui',
   'background',
 ];
-const media = ['hls-video', 'mux-audio', 'mux-video', 'native-hls-video', 'simple-hls-video', 'dash-video'];
+const media = [
+  'hls-video',
+  'mux-audio',
+  'mux-video',
+  'native-hls-video',
+  'simple-hls-audio-only',
+  'simple-hls-video',
+  'dash-video',
+];
 
 const entries = [
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
@@ -72,6 +81,7 @@ for (const mode of buildModes) {
   const entryMap = Object.fromEntries(entries.map(({ src, name }) => [isProd ? name : `${name}.dev`, src]));
 
   configs.push({
+    ...baseConfig,
     entry: entryMap,
     platform: 'browser',
     format: 'es',

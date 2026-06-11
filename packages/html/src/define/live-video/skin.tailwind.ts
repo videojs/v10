@@ -8,6 +8,8 @@ import {
   error,
   icon,
   iconState,
+  inputFeedback,
+  menu,
   overlay,
   popup,
   poster,
@@ -19,8 +21,8 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Reuse the video preset's UI element registrations.
-import '../video/ui';
+// Register the live video player, container, and all UI custom elements.
+import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -60,6 +62,8 @@ function getTemplateHTML() {
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+
+              <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>
@@ -79,16 +83,33 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
+              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
+              <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root, 'media-menu--captions')}">
+                <media-captions-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: icon })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-captions-radio-group>
+              </media-menu>
               <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
                 ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
               </media-cast-button>
               <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.airplay.button)}">
+                ${renderIcon('airplay-enter', { class: cn(icon, iconState.airplay.enter) })}
+                ${renderIcon('airplay-exit', { class: cn(icon, iconState.airplay.exit) })}
+              </media-airplay-button>
+              <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
               <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
                 ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
                 ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
@@ -104,6 +125,53 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="${overlay}"></div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+      <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
+      <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+
+      <!-- Gestures -->
+      <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+      <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+      <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+
+      <!-- Input Feedback -->
+      <media-status-announcer></media-status-announcer>
+      <div class="${inputFeedback.root}">
+        <media-volume-indicator hidden class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}">
+          <media-volume-indicator-fill class="${inputFeedback.island.content}">
+            ${renderIcon('volume-high', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh) })}
+            ${renderIcon('volume-low', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow) })}
+            ${renderIcon('volume-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff) })}
+            <media-volume-indicator-value class="${inputFeedback.island.value}"></media-volume-indicator-value>
+          </media-volume-indicator-fill>
+        </media-volume-indicator>
+        <media-status-indicator
+          hidden
+          actions="toggleSubtitles toggleFullscreen togglePictureInPicture"
+          class="${cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}"
+        >
+          <div class="${inputFeedback.island.content}">
+            ${renderIcon('captions-on', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn) })}
+            ${renderIcon('captions-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff) })}
+            ${renderIcon('fullscreen-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter) })}
+            ${renderIcon('fullscreen-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit) })}
+            ${renderIcon('pip-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter) })}
+            ${renderIcon('pip-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit) })}
+            <media-status-indicator-value class="${inputFeedback.island.value}"></media-status-indicator-value>
+          </div>
+        </media-status-indicator>
+        <media-status-indicator hidden actions="togglePaused" class="${inputFeedback.bubble.base}">
+          ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
+          ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
+        </media-status-indicator>
+      </div>
     </media-container>
   `;
 }

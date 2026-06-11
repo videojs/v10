@@ -1,18 +1,27 @@
 'use client';
 
 import { type TooltipProps as CoreTooltipProps, TooltipCore, TooltipDataAttrs } from '@videojs/core';
-import { createTooltip, createTransition, type TooltipChangeDetails } from '@videojs/core/dom';
+import {
+  createTooltip,
+  createTransition,
+  type PositioningBoundary,
+  type TooltipChangeDetails,
+} from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-
+import { useOptionalContainer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
+import { useOptionalControlsContext } from '../controls/context';
 import { TooltipContextProvider } from './context';
 import { useTooltipGroup } from './group-context';
 
 export interface TooltipRootProps extends CoreTooltipProps {
+  /** Boundary used to constrain the popup size. */
+  boundary?: PositioningBoundary;
   /** Called when the tooltip open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: TooltipChangeDetails) => void;
   /** Called after open/close animations complete. */
@@ -29,13 +38,16 @@ export function TooltipRoot({
   closeDelay = TooltipCore.defaultProps.closeDelay,
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup,
   disabled = TooltipCore.defaultProps.disabled,
+  boundary = 'container',
   children,
   ...coreProps
 }: TooltipRootProps): ReactNode {
+  const container = useOptionalContainer();
+  const controls = useOptionalControlsContext();
   const [core] = useState(() => new TooltipCore(coreProps));
   core.setProps(coreProps);
 
-  const isControlled = controlledOpen !== undefined;
+  const isControlled = !isUndefined(controlledOpen);
 
   const groupFromContext = useTooltipGroup();
 
@@ -80,7 +92,7 @@ export function TooltipRoot({
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {
-    if (controlledOpen === undefined) return;
+    if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = tooltip.input.current;
     if (controlledOpen === inputOpen) return;
@@ -92,6 +104,13 @@ export function TooltipRoot({
     }
   }, [controlledOpen, tooltip]);
 
+  useEffect(() => {
+    if (isUndefined(controls?.state.visible)) return;
+    if (controls.state.visible) return;
+
+    tooltip.close('imperative-action');
+  }, [controls?.state.visible, tooltip]);
+
   useDestroy(tooltip);
 
   const input = useSnapshot(tooltip.input);
@@ -100,7 +119,18 @@ export function TooltipRoot({
 
   return (
     <TooltipContextProvider
-      value={{ core, tooltip, state, stateAttrMap: TooltipDataAttrs, anchorName, popupId, content, setContent }}
+      value={{
+        core,
+        tooltip,
+        state,
+        stateAttrMap: TooltipDataAttrs,
+        anchorName,
+        popupId,
+        content,
+        setContent,
+        boundary,
+        container,
+      }}
     >
       {children}
     </TooltipContextProvider>

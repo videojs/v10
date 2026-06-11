@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.23",
+  "version": "10.0.0-beta.24",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -20,7 +20,8 @@
   ],
   "files": [
     "dist",
-    "cdn"
+    "cdn",
+    "docs"
   ],
   "exports": {
     ".": {
@@ -131,7 +132,8 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rimraf --glob dist cdn types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
+    "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",

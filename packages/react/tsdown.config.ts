@@ -3,31 +3,18 @@ import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
-
-type BuildMode = 'dev' | 'default';
-
-const buildModes: BuildMode[] = ['dev', 'default'];
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
-const createConfig = (mode: BuildMode): UserConfig => ({
+const createConfig = (mode: PackageBuildMode): UserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
   entry: 'src/**/index.{ts,tsx}',
-  platform: 'browser',
-  format: 'es',
-  sourcemap: true,
-  clean: true,
-  hash: false,
-  unbundle: true,
   noExternal: [/^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  outDir: `dist/${mode}`,
-  define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
-  },
-  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json' } : false,
   plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` })],
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));

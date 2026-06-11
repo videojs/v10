@@ -9,6 +9,7 @@
 @import "./components/icons.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
 /* ==========================================================================
@@ -29,7 +30,12 @@
   --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.75rem;
+  --media-tooltip-boundary-offset: 0.75rem;
+  --media-popover-background-color: oklch(1 0 0 / 0.1);
+  --media-popover-border-color: oklch(0 0 0 / 0.05);
+  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
   --media-popover-side-offset: 0.75rem;
+  --media-popover-boundary-offset: 0.75rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -108,4 +114,8 @@
 .media-minimal-skin--audio .media-popover--volume {
   padding: 0 0 0 4rem;
   background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
+}
+
+.media-minimal-skin--audio .media-slider__preview .media-slider__value {
+  bottom: 2.5rem;
 }

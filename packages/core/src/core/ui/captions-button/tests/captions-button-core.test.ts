@@ -12,6 +12,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(() => true),
+    selectSubtitlesTrack: vi.fn(),
     ...overrides,
   };
 }
@@ -56,7 +57,9 @@ describe('CaptionsButtonCore', () => {
     it('returns unavailable when no subtitles', () => {
       const core = new CaptionsButtonCore();
       core.setMedia(
-        createMediaState({ textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }] })
+        createMediaState({
+          textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
+        })
       );
 
       expect(core.getState().availability).toBe('unavailable');
@@ -114,6 +117,27 @@ describe('CaptionsButtonCore', () => {
       const media = createMediaState();
       core.toggle(media);
       expect(media.toggleSubtitles).not.toHaveBeenCalled();
+    });
+
+    it('does not toggle when acting as a menu trigger with multiple tracks', () => {
+      const core = new CaptionsButtonCore({ menuTrigger: true });
+      const media = createMediaState({
+        textTrackList: [
+          { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+        ],
+      });
+      core.toggle(media);
+      expect(media.toggleSubtitles).not.toHaveBeenCalled();
+    });
+
+    it('still toggles as a menu trigger with a single track', () => {
+      const core = new CaptionsButtonCore({ menuTrigger: true });
+      const media = createMediaState({
+        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
+      });
+      core.toggle(media);
+      expect(media.toggleSubtitles).toHaveBeenCalled();
     });
   });
 });

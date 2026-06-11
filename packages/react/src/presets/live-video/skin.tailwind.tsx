@@ -7,6 +7,8 @@ import {
   error,
   icon,
   iconState,
+  inputFeedback,
+  menu,
   overlay,
   popup,
   poster,
@@ -17,10 +19,13 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -34,21 +39,33 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
+import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { StatusAnnouncer } from '@/ui/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { LiveVideoSkinProps } from './skin';
+
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
@@ -121,6 +138,60 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function CaptionsTrigger(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions) return null;
+
+  const { disabled } = captions;
+
+  if (!captions.showMenu) {
+    return (
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <CaptionsButton className={iconState.captions.button} render={<Button />}>
+              <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+              <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+            </CaptionsButton>
+          }
+        />
+        <Tooltip.Popup className={cn(popup.tooltip)} />
+      </Tooltip.Root>
+    );
+  }
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        disabled={disabled}
+        render={
+          <CaptionsButton className={iconState.captions.button} render={<Button />}>
+            <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+            <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+          </CaptionsButton>
+        }
+      />
+      <Menu.Content className={cn(popup.popover, menu.root)}>
+        <Menu.RadioGroup
+          className={menu.group}
+          value={captions.value}
+          onValueChange={captions.setValue}
+          aria-label="Captions"
+        >
+          {captions.options.map((option) => (
+            <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+              <span>{option.label}</span>
+              <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
+                <CheckIcon className={icon} />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
 export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 
@@ -178,6 +249,8 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
             </Tooltip.Root>
+
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />
@@ -185,17 +258,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
           <div className={buttonGroupEnd}>
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+            <CaptionsTrigger />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -207,6 +270,18 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -237,6 +312,106 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className={overlay} />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className={inputFeedback.root}>
+        <VolumeIndicator.Root
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <VolumeIndicator.Fill className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <VolumeIndicator.Value className={inputFeedback.island.value} />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+            <StatusIndicator.Value className={inputFeedback.island.value} />
+          </div>
+        </StatusIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
+          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+        </StatusIndicator.Root>
+      </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className={inputFeedback.root}>
+        <VolumeIndicator.Root
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <VolumeIndicator.Fill className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <VolumeIndicator.Value className={inputFeedback.island.value} />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+            <StatusIndicator.Value className={inputFeedback.island.value} />
+          </div>
+        </StatusIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
+          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

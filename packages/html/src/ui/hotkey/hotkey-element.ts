@@ -65,6 +65,7 @@ export class HotkeyElement extends MediaElement {
     this.#cleanup = createHotkey(container, {
       keys: this.keys,
       action,
+      value,
       target: this.target,
       disabled: this.disabled,
       repeatable: !isHotkeyToggleAction(action),

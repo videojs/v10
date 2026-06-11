@@ -1,0 +1,43 @@
+/* -------------------------------------------------------------------------- */
+/* Global @keyframes for all video skins (CSS & Tailwind)                     */
+/* -------------------------------------------------------------------------- */
+
+@keyframes media-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: -6px 0;
+  }
+  40% {
+    translate: 4px 0;
+  }
+  60% {
+    translate: -2px 0;
+  }
+  80% {
+    translate: 1px 0;
+  }
+}
+
+@keyframes media-slide-in-forward {
+  from {
+    translate: -60% 0;
+    opacity: 0;
+  }
+}
+
+@keyframes media-slide-in-backward {
+  from {
+    translate: 60% 0;
+    opacity: 0;
+  }
+}
+
+@keyframes media-pop-in {
+  from {
+    scale: 0.8;
+    opacity: 0;
+  }
+}

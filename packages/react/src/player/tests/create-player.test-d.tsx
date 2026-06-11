@@ -1,5 +1,5 @@
 import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
-import { audioFeatures, definePlayerFeature, videoFeatures } from '@videojs/core/dom';
+import { audioFeatures, definePlayerFeature, features, videoFeatures } from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
@@ -36,6 +36,16 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: [customFeature] });
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+  });
+
+  it('accepts the orientation lock feature alias with and without config', () => {
+    const configuredOrientationLock = features.orientationLock({ type: 'portrait' });
+
+    const defaultResult = createPlayer({ features: [features.orientationLock] });
+    const configuredResult = createPlayer({ features: [configuredOrientationLock] });
+
+    assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(defaultResult);
+    assertType<CreatePlayerResult<PlayerStore<[typeof configuredOrientationLock]>>>(configuredResult);
   });
 
   it('resolves extended video features to generic PlayerStore', () => {

@@ -11,6 +11,8 @@ export interface PlaybackRateButtonProps {
   label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
+  /** When true, pointer activation opens a menu instead of cycling. React sets this automatically inside `Menu.Trigger`. */
+  menuTrigger?: boolean | undefined;
 }
 
 export interface PlaybackRateButtonState extends ButtonState {
@@ -21,6 +23,7 @@ export class PlaybackRateButtonCore {
   static readonly defaultProps: NonNullableObject<PlaybackRateButtonProps> = {
     label: '',
     disabled: false,
+    menuTrigger: false,
   };
 
   readonly state = createState<PlaybackRateButtonState>({
@@ -73,6 +76,7 @@ export class PlaybackRateButtonCore {
 
   cycle(media: MediaPlaybackRateState): void {
     if (this.#props.disabled) return;
+    if (this.#props.menuTrigger) return;
 
     const { playbackRates, playbackRate } = media;
     if (playbackRates.length === 0) return;

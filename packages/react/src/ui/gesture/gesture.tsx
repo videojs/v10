@@ -37,7 +37,7 @@ export function Gesture({ type, action, value, pointer, region, disabled }: Gest
       resolver({ store, value, event });
     };
 
-    const options = { pointer, region, action };
+    const options = { pointer, region, action, value };
 
     if (type === 'doubletap') {
       return createDoubleTapGesture(container, onActivate, options);

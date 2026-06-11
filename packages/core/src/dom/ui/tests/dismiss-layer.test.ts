@@ -136,6 +136,19 @@ describe('createDismissLayer', () => {
       expect(onEscapeDismiss).not.toHaveBeenCalled();
     });
 
+    it('does not call onEscapeDismiss when Escape was already handled', () => {
+      const { layer, onEscapeDismiss } = createTestLayer();
+      const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+      layer.open();
+      flush();
+
+      event.preventDefault();
+      document.dispatchEvent(event);
+
+      expect(onEscapeDismiss).not.toHaveBeenCalled();
+    });
+
     it('ignores non-Escape keys', () => {
       const { layer, onEscapeDismiss } = createTestLayer();
 

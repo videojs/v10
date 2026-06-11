@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
   VideoTrack,
 } from '../index';
-import { hasPresentationDuration, isResolvedTrack } from '../index';
+import { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from '../index';
 
 describe('Type Guards', () => {
   describe('isResolvedTrack', () => {
@@ -139,6 +140,75 @@ describe('Type Guards', () => {
         // TypeScript knows duration is number (not undefined)
         const d: number = presentation.duration;
         expect(d).toBe(100);
+      }
+    });
+  });
+
+  describe('isResolvedPresentation', () => {
+    it('returns false for undefined', () => {
+      expect(isResolvedPresentation(undefined)).toBe(false);
+    });
+
+    it('returns false for an unresolved presentation (url only)', () => {
+      const unresolved: MaybeResolvedPresentation = {
+        url: 'https://example.com/master.m3u8',
+      };
+      expect(isResolvedPresentation(unresolved)).toBe(false);
+    });
+
+    it('returns false when id is set but selectionSets is missing', () => {
+      // Guards against partial values that would crash downstream behaviors
+      // when they access selectionSets — only `id` is not enough.
+      const partial: MaybeResolvedPresentation = {
+        url: 'https://example.com/master.m3u8',
+        id: 'presentation-0',
+      };
+      expect(isResolvedPresentation(partial)).toBe(false);
+    });
+
+    it('returns false when selectionSets is set but id is missing', () => {
+      const partial: MaybeResolvedPresentation = {
+        url: 'https://example.com/master.m3u8',
+        selectionSets: [],
+      };
+      expect(isResolvedPresentation(partial)).toBe(false);
+    });
+
+    it('returns true when both id and selectionSets are present', () => {
+      const resolved: Presentation = {
+        id: 'presentation-0',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [],
+      };
+      expect(isResolvedPresentation(resolved)).toBe(true);
+    });
+
+    it('returns true when selectionSets is empty (still resolved)', () => {
+      // Empty selectionSets is a valid resolved manifest (no playable tracks),
+      // distinct from "selectionSets not yet known".
+      const resolved: Presentation = {
+        id: 'presentation-0',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [],
+      };
+      expect(isResolvedPresentation(resolved)).toBe(true);
+    });
+
+    it('narrows MaybeResolvedPresentation to Presentation', () => {
+      const presentation: MaybeResolvedPresentation = {
+        id: 'presentation-0',
+        url: 'https://example.com/master.m3u8',
+        selectionSets: [],
+      };
+
+      if (isResolvedPresentation(presentation)) {
+        // TypeScript should know presentation is Presentation here
+        const id: string = presentation.id;
+        const sets = presentation.selectionSets;
+        expect(id).toBe('presentation-0');
+        expect(sets).toBeDefined();
       }
     });
   });

@@ -4,8 +4,8 @@ import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
 
-// Reuse the audio preset's UI element registrations.
-import '../audio/ui';
+// Register the live audio player, container, and all UI custom elements.
+import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -34,7 +34,9 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip"></media-tooltip>
+
+            <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
           </div>
 
           <div class="media-time-controls" aria-hidden="true"></div>
@@ -46,7 +48,7 @@ function getTemplateHTML() {
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
 
-            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popover media-popover--volume">
+            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="media-surface media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>

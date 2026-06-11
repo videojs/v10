@@ -15,8 +15,8 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Reuse the audio preset's UI element registrations.
-import '../audio/ui';
+// Register the live audio player, container, and all UI custom elements.
+import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
@@ -45,7 +45,9 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
+
+              <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
 
           <div class="grow" aria-hidden="true"></div>
@@ -57,7 +59,7 @@ function getTemplateHTML() {
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
 
-            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.popover, popup.volume)}">
+            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popup.popover, popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>

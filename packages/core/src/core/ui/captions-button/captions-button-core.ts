@@ -1,4 +1,5 @@
 import { createState } from '@videojs/store';
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -11,6 +12,8 @@ export interface CaptionsButtonProps {
   label?: string | ((state: CaptionsButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
+  /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
+  menuTrigger?: boolean | undefined;
 }
 
 export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
@@ -21,6 +24,7 @@ export class CaptionsButtonCore {
   static readonly defaultProps: NonNullableObject<CaptionsButtonProps> = {
     label: '',
     disabled: false,
+    menuTrigger: false,
   };
 
   readonly state = createState<CaptionsButtonState>({
@@ -66,9 +70,7 @@ export class CaptionsButtonCore {
 
   getState(): CaptionsButtonState {
     const media = this.#media!;
-    const availability: CaptionsButtonState['availability'] = media.textTrackList.some(
-      (t) => t.kind === 'captions' || t.kind === 'subtitles'
-    )
+    const availability: CaptionsButtonState['availability'] = media.textTrackList.some(isCaptionOrSubtitleTrack)
       ? 'available'
       : 'unavailable';
 
@@ -80,8 +82,13 @@ export class CaptionsButtonCore {
 
   toggle(media: MediaTextTrackState): void {
     if (this.#props.disabled) return;
+    if (this.#props.menuTrigger && getCaptionTrackCount(media) > 1) return;
     media.toggleSubtitles();
   }
+}
+
+function getCaptionTrackCount(media: MediaTextTrackState): number {
+  return media.textTrackList.filter(isCaptionOrSubtitleTrack).length;
 }
 
 export namespace CaptionsButtonCore {

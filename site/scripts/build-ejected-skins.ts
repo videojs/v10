@@ -1133,7 +1133,7 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
     }
 
     utilities.push(
-      "function isRenderProp(value: unknown): value is RenderProp<any> {\n  return typeof value === 'function' || isValidElement(value);\n}"
+      "function isRenderProp(value: unknown): value is RenderProp<unknown> {\n  return typeof value === 'function' || isValidElement(value);\n}"
     );
   }
 

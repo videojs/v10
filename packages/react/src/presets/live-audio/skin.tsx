@@ -3,10 +3,12 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
-import { Hotkey } from '@/ui/hotkey/hotkey';
+import { Hotkey } from '@/ui/hotkey';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
@@ -38,7 +40,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className="media-surface media-popover media-popover--volume">
         <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
@@ -82,7 +84,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
       <div className="media-surface media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <PlayButton className="media-button--play" render={<Button />}>
@@ -94,6 +96,8 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
               />
               <Tooltip.Popup className="media-surface media-tooltip" />
             </Tooltip.Root>
+
+            <LiveButton className="media-button media-button--subtle media-button--live" />
           </div>
 
           <div className="media-time-controls" aria-hidden="true" />
@@ -110,6 +114,9 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
       <Hotkey keys="m" action="toggleMuted" />
       <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
       <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
     </Container>
   );
 }
