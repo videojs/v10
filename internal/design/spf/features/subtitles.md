@@ -23,9 +23,10 @@ What's implemented today, organized from base case to richer support. Each row i
 |---|---|---|
 | Base WebVTT captions | Single subtitle track, segmented WebVTT, browser-native parsing | `resolveVttSegment` uses an offscreen `<video><track>`; VTTCue settings (position, line, align, size) pass through; voice spans, regions, ruby pass through opaquely |
 | Multi-language tracks | Any number of subtitle renditions surfaced from a multivariant playlist | `LANGUAGE`, `NAME`, `DEFAULT`, `AUTOSELECT`, `FORCED`, `URI` parsed from `#EXT-X-MEDIA:TYPE=SUBTITLES` |
-| Default selection | Three-tier picker: `preferredSubtitleLanguage` → `DEFAULT=YES + AUTOSELECT=YES` → none | Forced-only tracks excluded by default (Apple-spec compliance); opt-in via `includeForcedTracks` |
-| User selection (DOM-driven) | Browser captions UI / host-page button → DOM `mode='showing'` → state | `change` listener on `mediaElement.textTracks`; Chromium settling-window guard prevents auto-pick false positives |
-| Programmatic selection | Consumer writes `state.selectedTextTrackId` via `onSignalsReady` callback | `syncTextTracks` mirrors the write into DOM `mode` |
+| Default selection | Auto (no user intent) runs the opt-in three-tier policy: `preferredSubtitleLanguage` → `DEFAULT=YES + AUTOSELECT=YES` → none | `switchTextTrack`'s terminal (`pickResolvedTextTrack` → `pickTextTrackFromTracks`) over the constrained, CDN-scoped candidates. Forced-only tracks excluded by default (Apple-spec); opt-in via `includeForcedTracks` |
+| User selection (DOM-driven) | Browser captions UI / host-page button → DOM `mode='showing'` → `userTextTrackSelection` intent → resolved into `selectedTextTrackId` | `change` listener on `mediaElement.textTracks` writes a language-based partial (or `'off'`); Chromium settling-window + echo guard (`showingId === selectedTextTrackId`) reject auto-pick / mirror echoes |
+| Programmatic selection | Consumer writes `state.userTextTrackSelection` (partial / `'off'`) via `onSignalsReady` | `switchTextTrack` resolves it; `syncTextTracks` mirrors the resolved id into DOM `mode`. (Was a direct `selectedTextTrackId` write.) |
+| Constraint- & CDN-aware selection | Selection runs the track-switching chain: failed-CDN renditions pruned, narrowed to the active CDN | `[excludeFailedCdns]` + `[preferActiveCdn]`; re-resolves on failover. Sticky language / `'off'` intent persists across source changes |
 | Cue deduplication | Per-track cue cache in `TextTracksActor`; segment reloads don't double-add | Dedup by exact `(startTime, endTime, text)` match |
 | Preload-aware segment loading | FSM gates fetches: `'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'` driven by `preload` + `loadActivated` | `metadata-only` is a no-op for text (no init-segment concept) |
 | Source-reset cleanup | `'clear'` message to `TextTracksActor` evicts cue + segment cache; `<track>` elements removed | Symmetric with manifest unload |
@@ -49,9 +50,9 @@ Extension boundaries — each could become its own feature doc or a phase extens
 
 | Behavior | File | Responsibility |
 |---|---|---|
-| `selectTextTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default selection via config-driven picker (three-tier logic) |
+| `switchTextTrack` | `packages/spf/src/playback/behaviors/track-switching.ts` | Owns `selectedTextTrackId`: resolves `userTextTrackSelection` intent (incl. `'off'` / opt-in default policy) against failed-CDN-pruned, active-CDN-scoped renditions; may resolve to none |
 | `resolveTextTrack` | `packages/spf/src/playback/behaviors/resolve-track.ts` | Fetches media playlist for selected text track |
-| `syncTextTracks` | `packages/spf/src/playback/behaviors/dom/sync-text-tracks.ts` | DOM `<track>` lifecycle + bidirectional state ↔ DOM sync |
+| `syncTextTracks` | `packages/spf/src/playback/behaviors/dom/sync-text-tracks.ts` | DOM `<track>` lifecycle; one-way mirror of resolved id → `mode`; DOM `change` → `userTextTrackSelection` intent (echo-guarded) |
 | `setupTextTrackActors` | `packages/spf/src/playback/behaviors/dom/setup-text-track-actors.ts` | Creates `TextTracksActor` + `TextTrackSegmentLoaderActor`; element-bound lifecycle |
 | `loadTextTrackSegments` | `packages/spf/src/playback/behaviors/dom/load-segments.ts` | Dispatches `'load'` messages to segment-loader actor |
 
@@ -64,7 +65,9 @@ Extension boundaries — each could become its own feature doc or a phase extens
 
 **State slots:**
 
-- `selectedTextTrackId` — **multi-writer.** `selectTextTrack` writes on default-on-load / clear-on-unload; `syncTextTracks` writes from DOM user action. The two writers are intentionally orthogonal and don't conflict.
+- `selectedTextTrackId` — **single-writer output**, owned by `switchTextTrack` (cleared on src unload by its exit cleanup). Other behaviors only read it.
+- `userTextTrackSelection` — the user-intent **input**: `Partial<TextTrack>` (language-based) selects, `'off'` disables, `undefined` is auto. Written by `syncTextTracks` (DOM) and consumers (`shareSignals` / `onSignalsReady`); both are intent surfaces, so dual-write is last-write-wins by design. Materialized by `shareSignals`; **not** cleared on src unload (sticky preference, like `userAudioTrackSelection`).
+- `cdnPriority`, `failedCdns` — read by the chain (active-CDN scope + failed-CDN constraint).
 - `presentation`, `preload`, `loadActivated`, `currentTime` — read-only consumers.
 
 **Manifest parsing:** `parseMultivariantPlaylist` (`packages/spf/src/media/hls/parse-multivariant.ts`) extracts subtitle renditions; each becomes a `PartiallyResolvedTextTrack` carrying language, default, autoselect, forced metadata.
@@ -77,15 +80,18 @@ Extension boundaries — each could become its own feature doc or a phase extens
 {
   preferredSubtitleLanguage?: string;   // BCP-47 language tag for default selection
   includeForcedTracks?: boolean;        // default false — exclude forced-only tracks from auto-selection
-  enableDefaultTrack?: boolean;         // default true — honor DEFAULT=YES + AUTOSELECT=YES
+  enableDefaultTrack?: boolean;         // default false — honor DEFAULT=YES + AUTOSELECT=YES when set
   resolveTextTrackSegment?: (url: string) => Promise<Cue[]>;  // override VTT parser
+  getCdnId?: (url: string) => string;   // shared CDN-id derivation (active-CDN scope + failed-CDN constraint)
 }
 ```
 
 ## Verification
 
-- **Unit test:** `packages/spf/src/playback/behaviors/dom/tests/sync-text-tracks.test.ts` — covers DOM `<track>` slot allocation for multi-language manifests (creates a presentation with `en` + `es` tracks; verifies `srclang` on each `<track>`). Does **not** cover default-selection logic, segment loading, or cue dedup — those live in adjacent test files for the respective behaviors / actors.
-- **Sandbox:** no dedicated multi-language captions demo today. `apps/sandbox/src/spf-segment-loading/` is video/audio-only.
+- **Unit tests:**
+  - `packages/spf/src/playback/behaviors/tests/track-switching.test.ts` — `switchTextTrack` selection: auto-default policy, explicit language, `'off'` (incl. sticky across a candidate-set refresh), stale-pick fall-through, FORCED exclusion, CDN co-location + failover re-resolution; plus the `setupTrackSwitching` `resolveSelection` no-selection seam.
+  - `packages/spf/src/playback/behaviors/dom/tests/sync-text-tracks.test.ts` — `<track>` slot allocation, mode mirror, the DOM `change` → `userTextTrackSelection` intent bridge, and the echo guard (mirror echo + resolver correction are not written back).
+- **Sandbox:** no dedicated multi-language captions demo today. `apps/sandbox/src/spf-segment-loading/` auto-selects the first text track via `userTextTrackSelection` but isn't a focused captions demo.
 
 ## Related features
 
@@ -94,7 +100,9 @@ References to other features in the registry. Bracketed entries are candidate fe
 - **preload-modes** — `loadTextTrackSegments` reads the same `(preload, loadActivated)` gate state as the audio/video segment loaders; the load-mode FSM rows are direct consumers of the preload-modes contract.
 - **buffer-management** — text tracks share the per-type segment-loading dispatcher pattern with video/audio (the `'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'` FSM is the same shape). Text uses `TextTrackSegmentLoaderActor` rather than the v/a `SegmentLoaderActor`, but the dispatcher contract is unified.
 - **hls-multivariant-parsing** *(not yet documented)* — subtitle rendition extraction is one slice of manifest parsing.
-- **track-registry-primitive** *(coarse, not yet documented)* — `selectedTextTrackId` is currently the only multi-writer track-id slot. A generalized track-registry primitive likely emerges when multi-language audio is added.
+- **track-switching** — text selection is now a `switchTextTrack` variant of the shared track-switching chain (constraints + rules + a `resolveSelection` terminal). It diverges from video/audio in being *optional* (opt-in / `'off'`), which is what motivated the no-selection terminal seam.
+- **multi-cdn-failover** — text selection consumes the same `failedCdns` constraint + `cdnPriority` scope as video/audio, so captions co-locate on the active CDN and re-resolve on failover.
+- **track-registry-primitive** *(coarse, not yet documented)* — `selectedTextTrackId` is now a single-writer resolved output; the dual-input (DOM + consumer) lives on the `userTextTrackSelection` *intent* slot, which is the natural multi-writer. Any generalized registry primitive would formalize the intent → resolved split rather than a multi-writer resolved slot.
 - **styled-webvtt-cues** *(coarse, not yet documented)* — candidate extension for SPF-side cue styling.
 - **text-track-error-recovery** *(coarse, not yet documented)* — candidate extension for retry / fallback / state-surfacing on segment fetch errors.
 
