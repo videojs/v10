@@ -536,15 +536,16 @@ function startEngine(src: string) {
       prev.hasPresentation = true;
     }
 
-    // Auto-select first text track when presentation arrives
-    if (state.presentation && !state.selectedTextTrackId && state.presentation.selectionSets) {
+    // Auto-select first text track when presentation arrives, via intent:
+    // switchTextTrack resolves userTextTrackSelection into selectedTextTrackId.
+    if (state.presentation && !state.userTextTrackSelection && state.presentation.selectionSets) {
       const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
       const firstText = textSet?.switchingSets?.[0]?.tracks?.[0];
       if (firstText) {
         log(`Auto-selecting text track: ${firstText.id}`);
-        // TODO(stage-d): selectedTextTrackId is the deferred reconciler case —
-        // direct write into composition state until intent/state split lands.
-        engine.state.selectedTextTrackId.set(firstText.id);
+        engine.state.userTextTrackSelection.set(
+          firstText.language ? { language: firstText.language } : { id: firstText.id }
+        );
       }
     }
 

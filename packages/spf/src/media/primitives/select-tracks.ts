@@ -107,7 +107,7 @@ export interface TextSelectionConfig {
  * select, or `undefined` to leave the slot unset.
  *
  * Behaviors that own a track-selection slot (`selectAudioTrack`,
- * `selectTextTrack`, `selectVideoTrack`, `switchVideoTrack`) accept a
+ * `selectVideoTrack`, `switchVideoTrack`) accept a
  * `TrackPicker` via config. The behavior passes its own config straight
  * through as the picker's second argument — pickers that need richer
  * options (language preferences, default-track filtering, bandwidth-aware
@@ -295,9 +295,10 @@ export function pickAudioTrack(
 }
 
 /**
- * Pick text track to activate. Conforms to the `TrackPicker` contract so it
- * can be used directly as a default picker for `selectTextTrack` without an
- * adapter wrapper.
+ * Pick text track to activate from a presentation. Conforms to the
+ * `TrackPicker` contract. The candidate-list core (`pickTextTrackFromTracks`)
+ * is the opt-in default policy `switchTextTrack`'s terminal applies once it has
+ * narrowed the renditions.
  *
  * Selection priority (if enabled):
  * 1. User preference (preferredSubtitleLanguage)

@@ -16,7 +16,7 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
@@ -40,10 +40,9 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectTextTrack } from '../../behaviors/select-tracks';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -75,6 +74,15 @@ export interface SimpleHlsEngineState {
    * when it changes. Multi-language-audio Tier 2 programmatic-write path.
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
+  /**
+   * Consumer-driven *intent* for text selection, resolved into
+   * `selectedTextTrackId` by `switchTextTrack`. A language-based partial
+   * (`{ language: 'es' }`) selects captions, `'off'` disables them, and absence
+   * means auto (the engine's `preferredSubtitleLanguage` / DEFAULT-track policy).
+   * Also the write path for the DOM caption UI (via `syncTextTracks`); unlike the
+   * resolved id it persists across source changes (sticky preference).
+   */
+  userTextTrackSelection?: Partial<TextTrack> | 'off';
   /**
    * The CDNs the source is served from (track-URL origins), in manifest
    * priority order — most-preferred first (mirrors HLS content steering's
@@ -248,6 +256,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
 const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
+  'userTextTrackSelection',
 ]);
 
 /**
@@ -317,13 +326,9 @@ export function createSimpleHlsEngine(
       // media-playlist fetch) and removes each CDN once its cooldown lapses.
       setupFailoverMonitor,
 
-      // Track selection (reads config for initial preferences).
-      // Video selection lives in switchVideoTrack (composed below);
-      // audio selection lives in switchAudioTrack (composed below) —
-      // both are slot owners with filter-reactivity, mirroring shapes.
-      selectTextTrack,
-
-      // Resolve selected tracks (fetch media playlists)
+      // Resolve selected tracks (fetch media playlists). Composed before the
+      // switch* slot owners; selection is reactive, so a resolve* re-fires once
+      // its switch* sets the id (same convergence for all three types).
       resolveVideoTrack,
       resolveAudioTrack,
       resolveTextTrack,
@@ -348,6 +353,12 @@ export function createSimpleHlsEngine(
       // Mid-stream audio-buffer flush on language switch is handled in
       // `segment-loader`'s `planTasks` (predicate: language differs from
       // the previously-buffered track) — not in switchAudioTrack itself.
+
+      // Text selection: resolves `userTextTrackSelection` intent (incl. 'off',
+      // or the configured preferred-language / DEFAULT-track policy) against the
+      // failed-CDN-pruned, active-CDN-scoped text renditions. Optional selection
+      // (captions are opt-in), so it can resolve to none.
+      switchTextTrack,
 
       // Segment loading
       loadVideoSegments,

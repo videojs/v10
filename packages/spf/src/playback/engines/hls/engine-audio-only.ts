@@ -139,7 +139,7 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  * Subtractive composition variant of `createSimpleHlsEngine`: omits
  * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
  * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
- * (`selectTextTrack`, `resolveTextTrack`, `syncTextTracks`,
+ * (`switchTextTrack`, `resolveTextTrack`, `syncTextTracks`,
  * `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio
  * pipeline composes unchanged.
  *
