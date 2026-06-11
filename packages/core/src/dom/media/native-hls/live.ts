@@ -31,9 +31,9 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
       return ranges.end(ranges.length - 1) - this.#liveEdgeStartOffset;
     }
 
-    attach(target: EventTarget) {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement) {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach() {

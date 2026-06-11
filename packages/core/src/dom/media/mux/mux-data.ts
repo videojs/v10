@@ -1,7 +1,7 @@
 import type { MixinReturn } from '@videojs/utils/types';
 import Mux from 'mux-embed';
-import type { MediaEngineHost } from '../../../core/media/types';
 import { Hls, type HlsMedia } from '../hls';
+import type { HTMLVideoElementHost } from '../video-host';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
@@ -31,11 +31,12 @@ export const muxDataMediaDefaultProps: MuxDataMediaProps = {
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export interface MuxDataMediaHost extends EventTarget, MediaEngineHost<HlsMedia['engine'], HTMLMediaElement> {
-  attach(target: HTMLMediaElement): void;
-  detach(): void;
+// Class-based so the mixin (applied to an `HTMLVideoElementHost` subclass)
+// retains access to the protected `target`, which is no longer public.
+export type MuxDataMediaHost = HTMLVideoElementHost & {
+  readonly engine: HlsMedia['engine'];
   load(): void;
-}
+};
 
 export interface MuxDataMediaHostConstructor {
   new (...args: any[]): MuxDataMediaHost;
@@ -129,7 +130,7 @@ export const MuxDataMediaMixin = <Base extends MuxDataMediaHostConstructor>(
       this.#metadata = value;
     }
 
-    attach(target: HTMLMediaElement) {
+    attach(target: HTMLVideoElement) {
       super.attach(target);
 
       // Only initialize Mux Data SDK if it was already initialized before in attach;

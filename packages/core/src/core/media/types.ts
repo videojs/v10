@@ -455,7 +455,6 @@ export interface Audio extends MediaFull<AudioEvents> {}
 
 export interface MediaEngineHost<Engine = unknown, Target = unknown> {
   readonly engine: Engine | null;
-  readonly target: Target | null;
   attach?(target: Target): void;
   detach?(): void;
   destroy(): void;

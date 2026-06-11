@@ -23,9 +23,9 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       this.#update(value);
     }
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement): void {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach(): void {

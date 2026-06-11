@@ -82,11 +82,10 @@ function getCommonTemplateHTML(tag: string) {
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
 interface MediaHost extends EventTarget {
-  readonly target: EventTarget | null;
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding. */
+  /** Index signature for dynamic property forwarding (includes the host's protected `target`). */
   [key: string]: any;
 }
 

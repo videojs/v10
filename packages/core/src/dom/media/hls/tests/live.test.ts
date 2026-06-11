@@ -1,8 +1,8 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
+import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaLiveMixin } from '../live';
-import type { HlsEngineHost } from '../types';
 
 function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -22,9 +22,8 @@ function createEngine(userConfig: Record<string, unknown> = {}): Hls {
   } as unknown as Hls;
 }
 
-class FakeHost extends EventTarget implements HlsEngineHost {
+class FakeHost extends HTMLVideoElementHost {
   engine: Hls | null;
-  target: HTMLMediaElement | null = null;
 
   constructor(engine: Hls | null = null) {
     super();
@@ -53,7 +52,7 @@ function emitLevelLoaded(engine: Hls, details: unknown) {
   (engine as any).emit(Hls.Events.LEVEL_LOADED, { details });
 }
 
-function setTargetSeekable(host: { target: HTMLMediaElement | null }, ranges: [number, number][]) {
+function setTargetSeekable(host: FakeHost, ranges: [number, number][]) {
   const video = document.createElement('video');
   Object.defineProperty(video, 'seekable', {
     configurable: true,
@@ -65,7 +64,7 @@ function setTargetSeekable(host: { target: HTMLMediaElement | null }, ranges: [n
       } as TimeRanges;
     },
   });
-  host.target = video;
+  host.attach(video);
   return video;
 }
 
@@ -203,7 +202,7 @@ describe('HlsJsMediaLiveMixin', () => {
           } as TimeRanges;
         },
       });
-      host.target = video;
+      host.attach(video);
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 

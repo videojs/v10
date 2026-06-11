@@ -1,13 +1,11 @@
 import type { Constructor } from '@videojs/utils/types';
 
 import { MediaError } from '../../../core/media/media-error';
+import type { HTMLVideoElementHost } from '../video-host';
 
-export interface NativeMediaHost extends EventTarget {
-  readonly target: EventTarget | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-  destroy?(): void;
-}
+// Class-based so mixins applied to an `HTMLVideoElementHost` subclass retain
+// access to the protected `target`, which is no longer part of any public type.
+export type NativeMediaHost = HTMLVideoElementHost;
 
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
@@ -18,9 +16,9 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
       return this.#error;
     }
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement): void {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach(): void {

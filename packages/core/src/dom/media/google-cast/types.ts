@@ -42,7 +42,6 @@ export interface GoogleCastMediaHost
     MediaStreamTypeCapability,
     MediaTextTrackCapability,
     MediaRemotePlaybackCapability {
-  readonly target: HTMLMediaElement | null;
   title: string;
   attach(target: HTMLMediaElement): void;
   detach(): void;
