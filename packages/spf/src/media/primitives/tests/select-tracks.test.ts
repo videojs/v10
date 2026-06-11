@@ -8,10 +8,11 @@ import type {
   VideoSelectionSet,
 } from '../../types';
 import {
-  parseResolutionHeight,
+  maxResolutionToPixelArea,
   pickAudioTrack,
-  pickMaxResolutionVideoTrack,
+  pickHighestResolutionVideoTrack,
   pickTextTrack,
+  pickTrackUnderPixelArea,
   pickVideoTrack,
 } from '../select-tracks';
 
@@ -182,7 +183,7 @@ describe('pickVideoTrack', () => {
   });
 });
 
-describe('pickMaxResolutionVideoTrack', () => {
+describe('pickHighestResolutionVideoTrack', () => {
   it('selects the track with the highest width × height area', () => {
     const tracks: PartiallyResolvedVideoTrack[] = [
       {
@@ -218,7 +219,7 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('1080p');
+    expect(pickHighestResolutionVideoTrack(presentation)).toBe('1080p');
   });
 
   it('falls back to bandwidth when resolution metadata is missing', () => {
@@ -242,7 +243,7 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('high');
+    expect(pickHighestResolutionVideoTrack(presentation)).toBe('high');
   });
 
   it('breaks ties on equal resolution by bandwidth', () => {
@@ -270,128 +271,79 @@ describe('pickMaxResolutionVideoTrack', () => {
     ];
 
     const presentation = createPresentation({ video: tracks });
-    expect(pickMaxResolutionVideoTrack()(presentation)).toBe('1080p-high');
+    expect(pickHighestResolutionVideoTrack(presentation)).toBe('1080p-high');
   });
 
   it('returns undefined when no video tracks exist', () => {
     const presentation = createPresentation({ audio: [] });
-    expect(pickMaxResolutionVideoTrack()(presentation)).toBeUndefined();
-  });
-
-  describe('with maxResolution cap', () => {
-    const fourTrackPresentation = () =>
-      createPresentation({
-        video: [
-          {
-            type: 'video',
-            id: '360p',
-            url: 'http://example.com/360p.m3u8',
-            bandwidth: 500_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 640,
-            height: 360,
-          },
-          {
-            type: 'video',
-            id: '720p',
-            url: 'http://example.com/720p.m3u8',
-            bandwidth: 2_000_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 1280,
-            height: 720,
-          },
-          {
-            type: 'video',
-            id: '1080p',
-            url: 'http://example.com/1080p.m3u8',
-            bandwidth: 4_000_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 1920,
-            height: 1080,
-          },
-          {
-            type: 'video',
-            id: '1440p',
-            url: 'http://example.com/1440p.m3u8',
-            bandwidth: 8_000_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 2560,
-            height: 1440,
-          },
-        ],
-      });
-
-    it('picks the highest track at or below the cap', () => {
-      expect(pickMaxResolutionVideoTrack({ maxResolution: '720p' })(fourTrackPresentation())).toBe('720p');
-      expect(pickMaxResolutionVideoTrack({ maxResolution: '1080p' })(fourTrackPresentation())).toBe('1080p');
-    });
-
-    it('accepts a bare number for maxResolution', () => {
-      expect(pickMaxResolutionVideoTrack({ maxResolution: 720 })(fourTrackPresentation())).toBe('720p');
-    });
-
-    it('accepts an unsuffixed string for maxResolution', () => {
-      expect(pickMaxResolutionVideoTrack({ maxResolution: '1080' })(fourTrackPresentation())).toBe('1080p');
-    });
-
-    it('falls back to the lowest available track when the cap excludes every track', () => {
-      const onlyHighPresentation = createPresentation({
-        video: [
-          {
-            type: 'video',
-            id: '1080p',
-            url: 'http://example.com/1080p.m3u8',
-            bandwidth: 4_000_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 1920,
-            height: 1080,
-          },
-          {
-            type: 'video',
-            id: '1440p',
-            url: 'http://example.com/1440p.m3u8',
-            bandwidth: 8_000_000,
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            width: 2560,
-            height: 1440,
-          },
-        ],
-      });
-      expect(pickMaxResolutionVideoTrack({ maxResolution: '720p' })(onlyHighPresentation)).toBe('1080p');
-    });
-
-    it('ignores an unparseable cap (treats as unset)', () => {
-      expect(pickMaxResolutionVideoTrack({ maxResolution: 'garbage' })(fourTrackPresentation())).toBe('1440p');
-    });
+    expect(pickHighestResolutionVideoTrack(presentation)).toBeUndefined();
   });
 });
 
-describe('parseResolutionHeight', () => {
-  it('parses "<n>p" strings', () => {
-    expect(parseResolutionHeight('720p')).toBe(720);
-    expect(parseResolutionHeight('1080P')).toBe(1080);
+describe('maxResolutionToPixelArea', () => {
+  it('translates `"<n>p"` strings to 16:9 pixel area', () => {
+    expect(maxResolutionToPixelArea('720p')).toBe(720 * 1280);
+    expect(maxResolutionToPixelArea('1080P')).toBe(1080 * 1920);
+    expect(maxResolutionToPixelArea('1440p')).toBe(1440 * 2560);
+    expect(maxResolutionToPixelArea('2160p')).toBe(2160 * 3840);
   });
 
-  it('parses bare numeric strings', () => {
-    expect(parseResolutionHeight('720')).toBe(720);
+  it('treats bare numeric strings as height (16:9 area)', () => {
+    expect(maxResolutionToPixelArea('720')).toBe(720 * 1280);
   });
 
-  it('passes through positive numbers', () => {
-    expect(parseResolutionHeight(720)).toBe(720);
+  it('treats bare numbers as a pixel-area cap', () => {
+    expect(maxResolutionToPixelArea(921_600)).toBe(921_600);
   });
 
-  it('returns undefined for unrecognized inputs', () => {
-    expect(parseResolutionHeight(undefined)).toBeUndefined();
-    expect(parseResolutionHeight('garbage')).toBeUndefined();
-    expect(parseResolutionHeight('-720')).toBeUndefined();
-    expect(parseResolutionHeight(0)).toBeUndefined();
-    expect(parseResolutionHeight(-1)).toBeUndefined();
+  it('returns +Infinity for unrecognized inputs (no cap)', () => {
+    expect(maxResolutionToPixelArea(undefined)).toBe(Number.POSITIVE_INFINITY);
+    expect(maxResolutionToPixelArea('garbage')).toBe(Number.POSITIVE_INFINITY);
+    expect(maxResolutionToPixelArea('-720')).toBe(Number.POSITIVE_INFINITY);
+    expect(maxResolutionToPixelArea(0)).toBe(Number.POSITIVE_INFINITY);
+    expect(maxResolutionToPixelArea(-1)).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe('pickTrackUnderPixelArea', () => {
+  const tracks = [
+    { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
+    { id: '720p', width: 1280, height: 720, bandwidth: 2_000_000 },
+    { id: '1080p', width: 1920, height: 1080, bandwidth: 4_000_000 },
+    { id: '1440p', width: 2560, height: 1440, bandwidth: 8_000_000 },
+  ];
+
+  it('returns undefined for an empty list', () => {
+    expect(pickTrackUnderPixelArea([])).toBeUndefined();
+  });
+
+  it('picks the highest-area track when no cap is provided', () => {
+    expect(pickTrackUnderPixelArea(tracks)?.id).toBe('1440p');
+  });
+
+  it('picks the highest track at or below the cap', () => {
+    expect(pickTrackUnderPixelArea(tracks, 1280 * 720)?.id).toBe('720p');
+    expect(pickTrackUnderPixelArea(tracks, 1920 * 1080)?.id).toBe('1080p');
+  });
+
+  it('falls back to the lowest track when the cap excludes everything', () => {
+    expect(pickTrackUnderPixelArea(tracks, 100)?.id).toBe('360p');
+  });
+
+  it('tiebreaks on bandwidth at equal pixel area', () => {
+    const ties = [
+      { id: '1080p-low', width: 1920, height: 1080, bandwidth: 3_000_000 },
+      { id: '1080p-high', width: 1920, height: 1080, bandwidth: 6_000_000 },
+    ];
+    expect(pickTrackUnderPixelArea(ties)?.id).toBe('1080p-high');
+  });
+
+  it('treats missing dimensions as area 0', () => {
+    const mixed = [
+      { id: 'unknown', bandwidth: 1_000_000 },
+      { id: '720p', width: 1280, height: 720, bandwidth: 2_000_000 },
+    ];
+    expect(pickTrackUnderPixelArea(mixed)?.id).toBe('720p');
   });
 });
 

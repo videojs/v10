@@ -1,6 +1,11 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
-import { pickMaxResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
+import {
+  maxResolutionToPixelArea,
+  pickTrackUnderPixelArea,
+  type TrackPicker,
+} from '../../../media/primitives/select-tracks';
+import type { VideoSelectionSet } from '../../../media/types';
 import {
   type BackgroundLoopingVideoEngineConfig,
   type BackgroundLoopingVideoEngineContext,
@@ -233,8 +238,11 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     // -------------------------------------------------------------------------
 
     #createEngine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
-      const adapterPicker: TrackPicker = (presentation) =>
-        pickMaxResolutionVideoTrack({ maxResolution: this.#maxResolution })(presentation);
+      const adapterPicker: TrackPicker = (presentation) => {
+        const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
+        const tracks = videoSet?.switchingSets[0]?.tracks ?? [];
+        return pickTrackUnderPixelArea(tracks, maxResolutionToPixelArea(this.#maxResolution))?.id;
+      };
 
       return createBackgroundLoopingVideoEngine({
         picker: adapterPicker,

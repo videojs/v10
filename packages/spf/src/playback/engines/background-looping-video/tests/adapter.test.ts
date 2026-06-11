@@ -7,6 +7,7 @@
  * passthroughs and defaults both to true (autoplay-muted, looping).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { BackgroundLoopingVideoMediaElement } from '../adapter';
 
 describe('BackgroundLoopingVideoMediaElement', () => {
@@ -207,5 +208,90 @@ describe('BackgroundLoopingVideoMediaElement', () => {
       media.maxResolution = '720p';
       expect(media.engine).toBe(firstEngine);
     });
+
+    // Pre-resolved 4-track presentation used by the closure-picker assertions
+    // below. Setting it on `engine.state.presentation` drives the composition
+    // through `presentation-unresolved → presentation-resolved`, which is
+    // what fires the picker.
+    const presentationWithFourTracks = (): MaybeResolvedPresentation => ({
+      id: 'p',
+      url: 'https://example.com/manifest.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                videoTrack('360p', 640, 360, 500_000),
+                videoTrack('720p', 1280, 720, 2_000_000),
+                videoTrack('1080p', 1920, 1080, 4_000_000),
+                videoTrack('1440p', 2560, 1440, 8_000_000),
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    it('the closure picker reads maxResolution at pick time', async () => {
+      // Construct without a cap. If the closure captured at creation, the
+      // pick would use `undefined` (→ 1440p). It uses the current field instead.
+      const media = new BackgroundLoopingVideoMediaElement();
+      media.maxResolution = '720p';
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
+      media.destroy();
+    });
+
+    it('setter writes are reflected on the next presentation cycle', async () => {
+      const media = new BackgroundLoopingVideoMediaElement();
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
+
+      media.maxResolution = '720p';
+      // Cycle the presentation through unresolved → resolved so the picker
+      // re-fires on entry. The microtask between the two sets lets the
+      // reactor's monitor observe the transition and run exit cleanup
+      // (which clears selectedVideoTrackId) before re-entry runs the picker.
+      media.engine.state.presentation.set(undefined);
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
+      media.destroy();
+    });
+
+    it('honors a user-supplied picker, overriding the closure default', async () => {
+      const media = new BackgroundLoopingVideoMediaElement({
+        config: { maxResolution: '720p', picker: () => '1440p' },
+      });
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
+      media.destroy();
+    });
   });
 });
+
+function videoTrack(id: string, width: number, height: number, bandwidth: number) {
+  return {
+    type: 'video' as const,
+    id,
+    url: `https://example.com/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+    codecs: ['avc1.42E01E'],
+    initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+    segments: [],
+    startTime: 0,
+    duration: 0,
+    width,
+    height,
+  } as never;
+}
