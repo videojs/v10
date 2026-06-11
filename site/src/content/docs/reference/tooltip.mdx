@@ -14,21 +14,31 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/tooltip/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/tooltip/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/tooltip/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/tooltip/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/tooltip/react/tailwind/BasicUsage.tsx?raw";
 
 import GroupingDemoReact from "@/components/docs/demos/tooltip/react/css/Grouping";
 import groupingReactTsx from "@/components/docs/demos/tooltip/react/css/Grouping.tsx?raw";
 import groupingReactCss from "@/components/docs/demos/tooltip/react/css/Grouping.css?raw";
+import GroupingDemoReactTailwind from "@/components/docs/demos/tooltip/react/tailwind/Grouping";
+import groupingReactTailwindTsx from "@/components/docs/demos/tooltip/react/tailwind/Grouping.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/tooltip/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/tooltip/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/tooltip/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/tooltip/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/tooltip/html/tailwind/BasicUsage.ts?raw";
 
 import GroupingDemoHtml from "@/components/docs/demos/tooltip/html/css/Grouping.astro";
 import groupingHtml from "@/components/docs/demos/tooltip/html/css/Grouping.html?raw";
 import groupingHtmlCss from "@/components/docs/demos/tooltip/html/css/Grouping.css?raw";
 import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts?raw";
+import GroupingDemoHtmlTailwind from "@/components/docs/demos/tooltip/html/tailwind/Grouping.astro";
+import groupingTailwindHtml from "@/components/docs/demos/tooltip/html/tailwind/Grouping.html?raw";
+import groupingTailwindHtmlTs from "@/components/docs/demos/tooltip/html/tailwind/Grouping.ts?raw";
 
 ## Anatomy
 
@@ -163,6 +173,15 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -175,6 +194,16 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+        { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -196,6 +225,15 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
       <GroupingDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: groupingReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <GroupingDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -212,6 +250,16 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
       ]}
     >
       <GroupingDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: groupingTailwindHtml, lang: "html" },
+        { title: "index.ts", code: groupingTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <GroupingDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

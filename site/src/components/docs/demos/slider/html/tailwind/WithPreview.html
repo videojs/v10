@@ -1,0 +1,22 @@
+<div class="flex items-center bg-neutral-900 px-6 py-10">
+    <media-slider class="relative flex h-5 w-full cursor-pointer items-center" value="50">
+        <media-slider-track
+            class="absolute inset-x-0 h-1 rounded-full bg-white/30 transition-[height] duration-150 in-data-interactive:h-1.5"
+        >
+            <media-slider-fill
+                class="absolute top-0 left-0 h-full w-(--media-slider-fill) rounded-full bg-white"
+            ></media-slider-fill>
+        </media-slider-track>
+        <media-slider-thumb
+            class="absolute left-(--media-slider-fill) size-3.5 -translate-x-1/2 scale-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.4)] transition-transform duration-150 in-data-interactive:scale-100 in-data-dragging:scale-110"
+        ></media-slider-thumb>
+        <media-slider-preview
+            class="pointer-events-none absolute bottom-full mb-1.5 opacity-0 transition-opacity duration-150 in-data-pointing:opacity-100"
+        >
+            <media-slider-value
+                type="pointer"
+                class="rounded-sm bg-black/80 px-1.5 py-0.5 text-xs whitespace-nowrap text-white"
+            ></media-slider-value>
+        </media-slider-preview>
+    </media-slider>
+</div>

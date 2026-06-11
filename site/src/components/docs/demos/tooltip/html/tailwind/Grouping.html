@@ -1,0 +1,43 @@
+<media-tooltip-group class="flex items-center justify-center px-6 py-10">
+    <button
+        type="button"
+        commandfor="tooltip-play"
+        class="cursor-pointer border border-white/30 bg-white/70 px-4 py-1.5 text-black backdrop-blur-[10px]"
+    >
+        Play
+    </button>
+    <media-tooltip
+        id="tooltip-play"
+        class="pointer-events-none rounded-md bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]"
+    >
+        Play video
+    </media-tooltip>
+
+    <button
+        type="button"
+        commandfor="tooltip-mute"
+        class="cursor-pointer border border-white/30 bg-white/70 px-4 py-1.5 text-black backdrop-blur-[10px]"
+    >
+        Mute
+    </button>
+    <media-tooltip
+        id="tooltip-mute"
+        class="pointer-events-none rounded-md bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]"
+    >
+        Mute audio
+    </media-tooltip>
+
+    <button
+        type="button"
+        commandfor="tooltip-fullscreen"
+        class="cursor-pointer border border-white/30 bg-white/70 px-4 py-1.5 text-black backdrop-blur-[10px]"
+    >
+        Fullscreen
+    </button>
+    <media-tooltip
+        id="tooltip-fullscreen"
+        class="pointer-events-none rounded-md bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]"
+    >
+        Enter fullscreen
+    </media-tooltip>
+</media-tooltip-group>

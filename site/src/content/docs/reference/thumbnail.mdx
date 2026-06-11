@@ -14,6 +14,8 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import TextTrackDemoReact from "@/components/docs/demos/thumbnail/react/css/BasicUsage";
 import textTrackReactTsx from "@/components/docs/demos/thumbnail/react/css/BasicUsage.tsx?raw";
 import textTrackReactCss from "@/components/docs/demos/thumbnail/react/css/BasicUsage.css?raw";
+import TextTrackDemoReactTailwind from "@/components/docs/demos/thumbnail/react/tailwind/BasicUsage";
+import textTrackReactTailwindTsx from "@/components/docs/demos/thumbnail/react/tailwind/BasicUsage.tsx?raw";
 import JsonDemoReact from "@/components/docs/demos/thumbnail/react/css/JsonUsage";
 import jsonReactTsx from "@/components/docs/demos/thumbnail/react/css/JsonUsage.tsx?raw";
 import JsonSpriteDemoReact from "@/components/docs/demos/thumbnail/react/css/JsonSpriteUsage";
@@ -24,6 +26,9 @@ import TextTrackDemoHtml from "@/components/docs/demos/thumbnail/html/css/BasicU
 import textTrackHtml from "@/components/docs/demos/thumbnail/html/css/BasicUsage.html?raw";
 import textTrackHtmlCss from "@/components/docs/demos/thumbnail/html/css/BasicUsage.css?raw";
 import textTrackHtmlTs from "@/components/docs/demos/thumbnail/html/css/BasicUsage.ts?raw";
+import TextTrackDemoHtmlTailwind from "@/components/docs/demos/thumbnail/html/tailwind/BasicUsage.astro";
+import textTrackTailwindHtml from "@/components/docs/demos/thumbnail/html/tailwind/BasicUsage.html?raw";
+import textTrackTailwindHtmlTs from "@/components/docs/demos/thumbnail/html/tailwind/BasicUsage.ts?raw";
 import JsonDemoHtml from "@/components/docs/demos/thumbnail/html/css/JsonUsage.astro";
 import jsonHtml from "@/components/docs/demos/thumbnail/html/css/JsonUsage.html?raw";
 import jsonHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonUsage.ts?raw";
@@ -152,6 +157,15 @@ React renders a `<div>` element. Add a `className` to style it:
       <TextTrackDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: textTrackReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <TextTrackDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -166,60 +180,62 @@ React renders a `<div>` element. Add a `className` to style it:
       <TextTrackDemoHtml />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: textTrackTailwindHtml, lang: "html" },
+        { title: "index.ts", code: textTrackTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <TextTrackDemoHtmlTailwind />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 ### JSON Array
 
 <FrameworkCase frameworks={["react"]}>
-  <StyleCase styles={["css"]}>
-    <Demo
-      files={[
-        { title: "App.tsx", code: jsonReactTsx, lang: "tsx" },
-      ]}
-    >
-      <JsonDemoReact client:idle />
-    </Demo>
-  </StyleCase>
+  <Demo
+    files={[
+      { title: "App.tsx", code: jsonReactTsx, lang: "tsx" },
+    ]}
+  >
+    <JsonDemoReact client:idle />
+  </Demo>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <StyleCase styles={["css"]}>
-    <Demo
-      files={[
-        { title: "index.html", code: jsonHtml, lang: "html" },
-        { title: "index.ts", code: jsonHtmlTs, lang: "ts" },
-      ]}
-    >
-      <JsonDemoHtml />
-    </Demo>
-  </StyleCase>
+  <Demo
+    files={[
+      { title: "index.html", code: jsonHtml, lang: "html" },
+      { title: "index.ts", code: jsonHtmlTs, lang: "ts" },
+    ]}
+  >
+    <JsonDemoHtml />
+  </Demo>
 </FrameworkCase>
 
 ### JSON Sprite Array
 
 <FrameworkCase frameworks={["react"]}>
-  <StyleCase styles={["css"]}>
-    <Demo
-      files={[
-        { title: "App.tsx", code: jsonSpriteReactTsx, lang: "tsx" },
-      ]}
-    >
-      <JsonSpriteDemoReact client:idle />
-    </Demo>
-  </StyleCase>
+  <Demo
+    files={[
+      { title: "App.tsx", code: jsonSpriteReactTsx, lang: "tsx" },
+    ]}
+  >
+    <JsonSpriteDemoReact client:idle />
+  </Demo>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <StyleCase styles={["css"]}>
-    <Demo
-      files={[
-        { title: "index.html", code: jsonSpriteHtml, lang: "html" },
-        { title: "index.ts", code: jsonSpriteHtmlTs, lang: "ts" },
-      ]}
-    >
-      <JsonSpriteDemoHtml />
-    </Demo>
-  </StyleCase>
+  <Demo
+    files={[
+      { title: "index.html", code: jsonSpriteHtml, lang: "html" },
+      { title: "index.ts", code: jsonSpriteHtmlTs, lang: "ts" },
+    ]}
+  >
+    <JsonSpriteDemoHtml />
+  </Demo>
 </FrameworkCase>
 
 <ComponentReference component="Thumbnail" />
