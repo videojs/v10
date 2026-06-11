@@ -4,6 +4,8 @@ import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
 import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
+import type { MenuItemSettingType } from './menu-item-type';
+
 export interface MenuContextValue {
   core: MenuCore;
   menu: MenuApi;
@@ -93,4 +95,41 @@ export function useMenuRadioGroupContext(): MenuRadioGroupContextValue {
   const ctx = useContext(MenuRadioGroupContext);
   if (!ctx) throw new Error('Menu.RadioItem must be used within a Menu.RadioGroup');
   return ctx;
+}
+
+// ---------------------------------------------------------------------------
+// Root trigger render context — provided by Menu.Trigger for render children.
+// ---------------------------------------------------------------------------
+
+const MenuTriggerChildContext = createContext(false);
+
+export const MenuTriggerChildContextProvider = MenuTriggerChildContext.Provider;
+
+export function useOptionalMenuTriggerChildContext(): boolean {
+  return useContext(MenuTriggerChildContext);
+}
+
+// ---------------------------------------------------------------------------
+// Menu item setting context — provided by Menu.Item or Menu.Trigger when `type`
+// is set; consumed by Menu.ItemValue.
+// ---------------------------------------------------------------------------
+
+export interface MenuItemSettingContextValue {
+  type: MenuItemSettingType;
+  label: string;
+  availability: 'available' | 'unavailable';
+}
+
+const MenuItemSettingContext = createContext<MenuItemSettingContextValue | null>(null);
+
+export const MenuItemSettingContextProvider = MenuItemSettingContext.Provider;
+
+export function useMenuItemSettingContext(): MenuItemSettingContextValue {
+  const ctx = useContext(MenuItemSettingContext);
+  if (!ctx) throw new Error('Menu.ItemValue must be used within a Menu.Item or Menu.Trigger with `type` set');
+  return ctx;
+}
+
+export function useOptionalMenuItemSettingContext(): MenuItemSettingContextValue | null {
+  return useContext(MenuItemSettingContext);
 }

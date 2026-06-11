@@ -8,4 +8,4 @@ export const icon = cn(
 
 export const iconHidden = 'hidden opacity-0';
 export const iconFlipped = '[scale:-1_1]';
-export const iconContainer = 'relative';
+export const iconContainer = 'relative grid';

@@ -194,9 +194,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
 /**
  * Generic `shareSignals` instantiated against the HLS engine's full state
  * and context — captures composition signal refs into the consumer's
- * `onSignalsReady` callback at setup time.
+ * `onSignalsReady` callback at setup time, and materializes the consumer-input
+ * slots (`user*TrackSelection`) that no behavior produces: the track-switching
+ * behaviors only *read* them, so shareSignals owns bringing them into existence.
  */
-const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
+  'userVideoTrackSelection',
+  'userAudioTrackSelection',
+]);
 
 /**
  * Create an HLS playback engine.

@@ -11,6 +11,7 @@ export {
   MenuItemIndicator as ItemIndicator,
   type MenuItemIndicatorProps as ItemIndicatorProps,
 } from './menu-item-indicator';
+export { MenuItemValue as ItemValue, type MenuItemValueProps as ItemValueProps } from './menu-item-value';
 export { MenuRadioGroup as RadioGroup, type MenuRadioGroupProps as RadioGroupProps } from './menu-radio-group';
 export { MenuRadioItem as RadioItem, type MenuRadioItemProps as RadioItemProps } from './menu-radio-item';
 export { MenuRoot as Root, type MenuRootProps as RootProps } from './menu-root';

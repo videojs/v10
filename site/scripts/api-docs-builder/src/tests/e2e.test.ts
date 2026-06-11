@@ -713,6 +713,7 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers features from the features index', () => {
       const names = results.map((r) => r.name);
+      expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
       expect(names).toContain('volume');
     });
@@ -729,7 +730,16 @@ describe('Feature pipeline (end-to-end)', () => {
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(2);
+      expect(results.length).toBe(3);
+    });
+  });
+
+  describe('orientationLock (silent feature)', () => {
+    it('generates an empty reference for empty state', () => {
+      const ref = findFeature('orientationLock')!.reference;
+
+      expect(ref.state).toEqual({});
+      expect(ref.actions).toEqual({});
     });
   });
 

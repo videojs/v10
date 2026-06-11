@@ -44,6 +44,12 @@ export const SOURCES = {
     subType: 'mp4',
     live: true,
   },
+  'hls-audio-only-cmaf': {
+    label: 'HLS - Audio only (CMAF/fmp4)',
+    url: 'https://stream.mux.com/2NEjLyf6ETnskbfAtbM00Vdzb97B00OKUUQcRD6LZpBRw.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',

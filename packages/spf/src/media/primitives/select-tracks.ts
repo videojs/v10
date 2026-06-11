@@ -113,6 +113,24 @@ export type TrackPicker<Config = unknown> = (
 ) => string | undefined;
 
 /**
+ * Test whether a track matches a partial-track description: every present,
+ * defined field of `filter` equals the track's. Absent or `undefined` filter
+ * fields don't constrain. Used to narrow candidates by a user selection
+ * (`{ id }`, `{ language }`, `{ height }`, …).
+ *
+ * @param track - The track to test
+ * @param filter - Partial-track description; only present, defined fields constrain
+ * @returns `true` when the track matches every constraining field
+ */
+export function matchesPartialTrack<T>(track: T, filter: Partial<T>): boolean {
+  for (const key in filter) {
+    const filterValue = filter[key as keyof T];
+    if (filterValue !== undefined && track[key as keyof T] !== filterValue) return false;
+  }
+  return true;
+}
+
+/**
  * Pick the first track of the given type from a presentation.
  *
  * Returns the first track in the first switching set of the matching

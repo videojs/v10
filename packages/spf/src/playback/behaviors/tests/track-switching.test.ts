@@ -12,10 +12,11 @@ import type {
 } from '../../../media/types';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
+  applyRules,
+  type SelectionRule,
+  type SwitchVideoTrackConfig,
   switchAudioTrack,
   switchVideoTrack,
-  type TrackSwitchingConfig,
-  type TrackSwitchingState,
 } from '../track-switching';
 
 // ============================================================================
@@ -29,7 +30,7 @@ interface SwitchVideoTrackState {
   userVideoTrackSelection?: Partial<VideoTrack>;
 }
 
-function makeState(initial: Partial<TrackSwitchingState> = {}): StateSignals<SwitchVideoTrackState> {
+function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
@@ -146,6 +147,28 @@ describe('switchVideoTrack', () => {
       state.presentation.set(newPresentation);
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
+    it('re-picks when the candidate set changes while staying resolved (constraint-readiness seam)', async () => {
+      // The playable candidate set is derived in a `computed` the effect reads
+      // reactively, so the pick updates whenever that set changes — not only on
+      // an unresolved→resolved gate transition. This is what readies the
+      // behavior for dynamic constraints (e.g. CDN failover) that re-prune the
+      // set while a presentation stays resolved.
+      const state = makeState({ presentation: createPresentation(tracks) });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      // Swap directly to a different resolved presentation (no undefined gap, so
+      // the gate state stays 'presentation-resolved' and never re-enters).
+      const narrowed = [createVideoTrack('480p', 1_200_000), createVideoTrack('540p', 1_500_000)];
+      state.presentation.set({ ...createPresentation(narrowed), id: 'pres-2' });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('540p');
 
       reactor.destroy();
     });
@@ -355,6 +378,52 @@ describe('switchVideoTrack', () => {
     });
   });
 
+  describe('equal-bitrate resolution tie-break', () => {
+    const withResolution = (track: PartiallyResolvedVideoTrack, width: number, height: number) => ({
+      ...track,
+      width,
+      height,
+    });
+
+    it('prefers the higher-resolution rendition when bitrates are equal', async () => {
+      // Same bitrate, but the lower-resolution variant is listed first — a
+      // bitrate-only ranker would pick it by manifest order.
+      const equalBitrate = [
+        withResolution(createVideoTrack('sd', 3_000_000), 640, 360),
+        withResolution(createVideoTrack('hd', 3_000_000), 1920, 1080),
+      ];
+      const state = makeState({
+        presentation: createPresentation(equalBitrate),
+        bandwidthState: createBandwidthState(6_000_000),
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('hd');
+
+      reactor.destroy();
+    });
+
+    it('breaks ties by resolution among the smallest over-throughput renditions', async () => {
+      // Both exceed the throughput threshold (equal, lowest bitrate) — the
+      // fallback pick should still favor the higher-resolution variant.
+      const overThreshold = [
+        withResolution(createVideoTrack('sd', 8_000_000), 640, 360),
+        withResolution(createVideoTrack('hd', 8_000_000), 1920, 1080),
+      ];
+      const state = makeState({
+        presentation: createPresentation(overThreshold),
+        bandwidthState: createBandwidthState(1_000_000),
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('hd');
+
+      reactor.destroy();
+    });
+  });
+
   describe('configuration', () => {
     it('uses custom safetyMargin', async () => {
       const state = makeState({
@@ -363,7 +432,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: TrackSwitchingConfig = { quality: { safetyMargin: 1.0 } };
+      const config: SwitchVideoTrackConfig = { quality: { safetyMargin: 1.0 } };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
@@ -378,7 +447,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: 'low',
       });
 
-      const config: TrackSwitchingConfig = { quality: { upgradeMargin: 1.05 } };
+      const config: SwitchVideoTrackConfig = { quality: { upgradeMargin: 1.05 } };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('high');
@@ -401,49 +470,10 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: TrackSwitchingConfig = { initialBandwidth: 5_000_000 };
+      const config: SwitchVideoTrackConfig = { initialBandwidth: 5_000_000 };
       const reactor = switchVideoTrack.setup({ state, config });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
-      reactor.destroy();
-    });
-
-    it('uses custom picker for initial pick; ABR adjusts from there', async () => {
-      // Picker pins the initial pick to 360p (lowest, regardless of bandwidth).
-      // At 6 Mbps, ABR would default-pick 1080p; the picker overrides for
-      // the initial pick. Subsequent ABR upgrade applies normally.
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(6_000_000),
-      });
-
-      const config: TrackSwitchingConfig = { picker: () => '360p' };
-      const reactor = switchVideoTrack.setup({ state, config });
-      await flush();
-      // Picker drives the initial selection.
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
-
-      // Bumping bandwidth re-fires the effect; the slot is no longer empty,
-      // so ABR runs and upgrades to 1080p (at 6 Mbps with default margins).
-      state.bandwidthState.set(createBandwidthState(6_000_001));
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('1080p');
-
-      reactor.destroy();
-    });
-
-    it('picker returning undefined falls back to bandwidth-aware default', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-      });
-
-      const config: TrackSwitchingConfig = { picker: () => undefined };
-      const reactor = switchVideoTrack.setup({ state, config });
-      await flush();
-      // 3 Mbps with default safetyMargin 0.85 → 720p (1080p needs 5.65 Mbps).
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
       reactor.destroy();
     });
 
@@ -465,7 +495,7 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '720p',
       });
 
-      const config: TrackSwitchingConfig = {
+      const config: SwitchVideoTrackConfig = {
         bandwidth: { minTotalBytes: 40_000 },
         initialBandwidth: 5_000_000,
       };
@@ -484,11 +514,12 @@ describe('switchVideoTrack', () => {
 // switchAudioTrack
 //
 // The audio variant shares `setupTrackSwitching` with `switchVideoTrack` —
-// these tests cover the audio-specific surface: default picker, language
-// pinning, filter reactivity, single-candidate short-circuit. The
-// bandwidth-driven re-evaluation tests live above under `switchVideoTrack`
-// and don't need duplicating; audio's `selectAudioCurrent` pins to the
-// current track and is exercised here by the steady-state assertions.
+// these tests cover the audio-specific surface: default pick (first track),
+// language pinning via the user-selection filter, filter reactivity, and the
+// single-candidate early-bail. The bandwidth-driven re-evaluation tests live
+// above under `switchVideoTrack` and don't need duplicating; audio's
+// `selectAudioCurrent` pins to the current track and is exercised here by the
+// steady-state assertions.
 // ============================================================================
 
 interface SwitchAudioTrackState {
@@ -566,22 +597,6 @@ describe('switchAudioTrack', () => {
     reactor.destroy();
   });
 
-  it('picks track matching preferredAudioLanguage when supplied', async () => {
-    const state = makeAudioState({
-      presentation: createAudioPresentation([
-        makeAudioTrack('audio-en', { language: 'en' }),
-        makeAudioTrack('audio-es', { language: 'es' }),
-      ]),
-    });
-
-    const reactor = switchAudioTrack.setup({ state, config: { preferredAudioLanguage: 'es' } });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
   it('clears selectedAudioTrackId on src unload', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
@@ -640,7 +655,7 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
     reactor.destroy();
   });
 
-  it('filter narrowing to a single track short-circuits the picker', async () => {
+  it('filter narrowing to a single track early-bails to that track', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([
         makeAudioTrack('audio-en', { language: 'en' }),
@@ -667,5 +682,55 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
+  });
+});
+
+// ============================================================================
+// applyRules — the rule-chain composer (pure; no signals)
+// ============================================================================
+
+describe('applyRules', () => {
+  const track = (id: string) => ({ id });
+  const all = [track('a'), track('b'), track('c')];
+
+  const noDeps = { state: {}, context: {}, config: {} };
+
+  it('applies rules in order; the pick is the first survivor', () => {
+    const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
+    const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
+    const result = applyRules([dropA, reverse], all, noDeps);
+    expect(result.map((t) => t.id)).toEqual(['c', 'b']);
+  });
+
+  it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
+    const matchNone: SelectionRule<{ id: string }> = () => [];
+    const result = applyRules([matchNone], all, noDeps);
+    expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('stops at one survivor and does not run later rules (early-bail)', () => {
+    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
+    let laterCalled = false;
+    const later: SelectionRule<{ id: string }> = (tracks) => {
+      laterCalled = true;
+      return tracks;
+    };
+    const result = applyRules([toA, later], all, noDeps);
+    expect(result.map((t) => t.id)).toEqual(['a']);
+    expect(laterCalled).toBe(false);
+  });
+
+  it('passes the candidate list and deps (state, context, config) through to each rule', () => {
+    const deps = { state: { marker: 1 }, context: { other: 2 }, config: { tuning: 3 } };
+    let received: unknown[] = [];
+    const rule: SelectionRule<{ id: string }, typeof deps.state, typeof deps.context, typeof deps.config> = (
+      tracks,
+      ruleDeps
+    ) => {
+      received = [tracks, ruleDeps];
+      return tracks;
+    };
+    applyRules([rule], all, deps);
+    expect(received).toEqual([all, deps]);
   });
 });

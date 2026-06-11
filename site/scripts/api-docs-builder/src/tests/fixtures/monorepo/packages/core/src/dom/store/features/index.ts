@@ -7,6 +7,7 @@
  */
 
 export * as features from './feature.parts';
+export * from './orientation-lock';
 export * from './playback';
 export * from './presets';
 export * from './volume';
