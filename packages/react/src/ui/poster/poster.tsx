@@ -2,18 +2,14 @@
 
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import { isFunction } from '@videojs/utils/predicate';
-import type { CSSProperties, ForwardedRef, SyntheticEvent } from 'react';
-import { forwardRef, useCallback, useState } from 'react';
+import type { ForwardedRef, SyntheticEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
-export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {
-  /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
-  placeholder?: string | undefined;
-}
+export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
 /**
  * Displays the video poster image. Shows before playback starts, hides after.
@@ -33,7 +29,7 @@ export const Poster = forwardRef(function Poster(
   componentProps: PosterProps,
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
-  const { render, className, style, placeholder, ...elementProps } = componentProps;
+  const { render, className, style, ...elementProps } = componentProps;
 
   const playback = usePlayer(selectPlayback);
 
@@ -44,6 +40,17 @@ export const Poster = forwardRef(function Poster(
   const src = (elementProps as { src?: string }).src;
   const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
   const loaded = loadedSrc === src;
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // A cached image may already be complete when the element mounts, in which
+  // case onLoad never fires. Check synchronously after mount and on src change.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0 && img.getAttribute('src') === src) {
+      setLoadedSrc(src);
+    }
+  }, [src]);
+
   const handleLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
     setLoadedSrc(event.currentTarget.getAttribute('src') ?? undefined);
   }, []);
@@ -55,21 +62,13 @@ export const Poster = forwardRef(function Poster(
 
   core.setMedia(playback);
 
-  const resolvedStyle: typeof style = placeholder
-    ? (state) =>
-        ({
-          '--media-poster-placeholder': `url(${placeholder})`,
-          ...(isFunction(style) ? style(state) : style),
-        }) as CSSProperties
-    : style;
-
   return renderElement(
     'img',
-    { render, className, style: resolvedStyle },
+    { render, className, style },
     {
       state: core.getState(),
       stateAttrMap: PosterDataAttrs,
-      ref: [forwardedRef],
+      ref: [forwardedRef, imgRef],
       props: [elementProps, { 'data-loaded': loaded ? '' : undefined, onLoad: handleLoad }],
     }
   );

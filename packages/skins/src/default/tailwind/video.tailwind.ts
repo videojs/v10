@@ -89,7 +89,7 @@ export const root = (isShadowDOM: boolean) =>
           'before:[background-size:var(--media-object-fit,contain)]',
           'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
           'before:transition-opacity before:duration-250',
-          'has-[img[data-visible]]:before:opacity-100',
+          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         ]
       : [],
     // Fullscreen
