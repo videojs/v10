@@ -24,5 +24,9 @@ export const poster = (isShadowDOM: boolean) =>
           '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
           '[&_::slotted(img)]:rounded-(--media-video-border-radius)',
         ]
-      : 'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]'
+      : [
+          'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',
+          // Hide until the image has loaded so the placeholder shows first
+          '[&[data-visible]:not([data-loaded])]:opacity-0',
+        ]
   );

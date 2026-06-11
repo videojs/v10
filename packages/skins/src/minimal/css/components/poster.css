@@ -12,7 +12,8 @@
   transition: opacity 0.25s;
 }
 .media-minimal-skin media-poster:not([data-visible]),
-.media-minimal-skin > img:not([data-visible]) {
+.media-minimal-skin > img:not([data-visible]),
+.media-minimal-skin > img[data-visible]:not([data-loaded]) {
   opacity: 0;
 }
 .media-minimal-skin media-poster ::slotted(img),
@@ -58,7 +59,8 @@
   filter: blur(var(--media-poster-placeholder-blur, 20px));
   transition: opacity 0.25s;
 }
-.media-minimal-skin:has(img[data-visible])::before {
+/* Show placeholder while the poster is visible but not yet loaded */
+.media-minimal-skin:has(img[data-visible]:not([data-loaded]))::before {
   opacity: 1;
 }
 

@@ -4,7 +4,7 @@ import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { CSSProperties, ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -39,6 +39,13 @@ export const Poster = forwardRef(function Poster(
 
   const [core] = useState(() => new PosterCore());
 
+  // Track when the current src has finished loading so the CSS blur-up
+  // sequence can show the placeholder first, then crossfade to the full image.
+  const src = (elementProps as { src?: string }).src;
+  const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
+  const loaded = loadedSrc === src;
+  const handleLoad = useCallback(() => setLoadedSrc(src), [src]);
+
   if (!playback) {
     if (__DEV__) logMissingFeature('Poster', 'playback');
     return null;
@@ -61,7 +68,7 @@ export const Poster = forwardRef(function Poster(
       state: core.getState(),
       stateAttrMap: PosterDataAttrs,
       ref: [forwardedRef],
-      props: [elementProps],
+      props: [elementProps, { 'data-loaded': loaded ? '' : undefined, onLoad: handleLoad }],
     }
   );
 });
