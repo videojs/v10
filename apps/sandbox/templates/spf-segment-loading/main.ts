@@ -72,6 +72,19 @@ function getTextTracks(presentation: SimpleHlsEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks ?? [];
 }
 
+// Drive the *native* TextTrack modes — what a captions button / browser UI
+// touches — so a user selection flows through the syncTextTracks DOM→intent
+// bridge (change event → userTextTrackSelection) rather than writing the SPF
+// signal directly. `showId === undefined` disables all (Off).
+function setNativeTextMode(showId: string | undefined) {
+  const tt = video.textTracks;
+  for (let i = 0; i < tt.length; i++) {
+    const track = tt[i];
+    if (!track || (track.kind !== 'subtitles' && track.kind !== 'captions')) continue;
+    track.mode = track.id === showId ? 'showing' : 'disabled';
+  }
+}
+
 // ── Display functions ─────────────────────────────────────────────────────────
 function updateShareUrl() {
   const p = new URLSearchParams();
@@ -406,9 +419,13 @@ function updateAudioTrackSelection(
 
 // Subtitle/caption picker. Text selection changes are user-driven and
 // infrequent, so this rebuilds the button list on each change (no build/update
-// split like the audio picker, which fights frequent ABR churn). Writes the
-// userTextTrackSelection *intent* — a language partial, 'off', or undefined
-// (auto) — which switchTextTrack resolves into selectedTextTrackId.
+// split like the audio picker, which fights frequent ABR churn).
+//
+// Off + language buttons drive the *native* TextTrack mode (like a captions
+// button), so selection exercises the real syncTextTracks DOM→intent bridge.
+// "Reset to auto" has no native-mode analog (it means "forget my preference"),
+// so it writes userTextTrackSelection=undefined directly — the programmatic
+// escape hatch. Highlighting reads the resolved selectedTextTrackId + intent.
 function renderTextTrackPicker() {
   if (!engine || !signals) return;
   const presentation = engine.state.presentation.get();
@@ -459,8 +476,8 @@ function renderTextTrackPicker() {
   offBtn.className = `audio-track-btn${offSelected ? (isOff ? ' selected-pinned' : ' selected-default') : ''}`;
   offBtn.textContent = `Off${offSelected ? (isOff ? ' 🔇' : ' 🌐') : ''}`;
   offBtn.addEventListener('click', () => {
-    log("Text track intent: 'off'", 'warning');
-    signals!.state.userTextTrackSelection.set('off');
+    log('Disabling all text tracks via native mode (bridges to off intent)', 'warning');
+    setNativeTextMode(undefined);
   });
   textTrackButtonsDiv.appendChild(offBtn);
 
@@ -481,9 +498,8 @@ function renderTextTrackPicker() {
     btn.textContent = `${language ?? '—'} · ${label}${badge}`;
     btn.title = `kind: ${track.kind}${track.forced ? ' · forced' : ''} · id: ${track.id}`;
     btn.addEventListener('click', () => {
-      const filter = language ? { language } : { id: track.id };
-      log(`Text track intent: ${JSON.stringify(filter)}`, 'warning');
-      signals!.state.userTextTrackSelection.set(filter);
+      log(`Showing ${language ?? track.id} via native mode (bridges to intent)`, 'warning');
+      setNativeTextMode(track.id);
     });
     textTrackButtonsDiv.appendChild(btn);
   }
