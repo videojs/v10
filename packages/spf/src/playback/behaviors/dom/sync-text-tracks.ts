@@ -4,11 +4,13 @@
  * available, allocate one slot in `mediaElement.textTracks` per model text
  * track — via creating `<track>` children, since that's the only spec
  * mechanism for adding *and* removing entries to `textTracks` (no
- * `removeTextTrack` API exists). Once slots are provisioned, mirror
- * `selectedTextTrackId` into their `mode`s, and propagate user-initiated
- * DOM `change` events back to `selectedTextTrackId` so non-SPF consumers
- * (host-page captions buttons, browser native UI, video.js store) remain
- * the canonical write path for selection.
+ * `removeTextTrack` API exists). Once slots are provisioned, mirror the
+ * resolved `selectedTextTrackId` into their `mode`s (one-way: state → DOM),
+ * and propagate user-initiated DOM `change` events back to
+ * `userTextTrackSelection` — the standing *intent* (a language-based partial,
+ * or `'off'`) that `switchTextTrack` resolves into `selectedTextTrackId`. So
+ * non-SPF consumers (host-page captions buttons, browser native UI, video.js
+ * store) drive selection by expressing intent, not by writing the resolved id.
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'sync-active'`):
  * the entry allocates the slots, applies the initial selection, attaches
@@ -27,14 +29,21 @@
  * presentation reusing a trackId would have `getSegmentsToLoad` treat
  * its segments as already-buffered and skip loading them.
  *
- * Multi-writer with `selectTextTrack` is intentional and orthogonal:
- * `selectTextTrack` owns the *default-on-load / clear-on-unload* contract
- * for `selectedTextTrackId`; this behavior writes only from DOM `change`
- * events. They reflect distinct decision-making domains (config-driven
- * intent vs DOM-driven user action), so this behavior never clears the
- * slot on source unload — that's `selectTextTrack`'s contract. (It *does*
- * write `undefined` when a user disables all tracks via native UI, since
- * that's a real user action that should round-trip into SPF state.)
+ * Single-writer separation: `selectedTextTrackId` is the resolved *output*
+ * owned solely by `switchTextTrack`; this behavior only reads it (to mirror
+ * modes). The write path here is `userTextTrackSelection` — the user-intent
+ * *input* — so DOM action and the resolver never contend for one slot. The
+ * intent isn't cleared on source unload (it's a standing preference, like
+ * `userAudioTrackSelection`); `'off'` is written when the user disables all
+ * tracks via native UI.
+ *
+ * Echo guard: `selectedTextTrackId` is exactly the id this behavior last drove
+ * into the DOM, so a `change` event still showing it is our own echo (or a
+ * resolver-driven correction — e.g. the picked track's CDN failed and the
+ * resolver disabled it) and is ignored, never written back as a spurious user
+ * action. Only a showing id that *differs* from the resolved id is a real user
+ * pick. The settling-window guard additionally swallows Chromium's init-time
+ * auto-selection before the resolved selection has settled.
  */
 
 import { listen } from '@videojs/utils/dom';
@@ -81,6 +90,21 @@ function deriveState(
   return getTracksByType(presentation, 'text').length > 0 ? 'sync-active' : 'preconditions-unmet';
 }
 
+/**
+ * Map the DOM-showing track back to standing user intent. No showing track is an
+ * explicit `'off'`. Otherwise prefer a language-based partial (so the pick
+ * persists across source changes); fall back to `{ id }` for a track without a
+ * language (precise within a source, just not portable).
+ */
+function deriveTextTrackIntent(
+  showingId: string | undefined,
+  modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
+): Partial<TextTrack> | 'off' {
+  if (!showingId) return 'off';
+  const language = modelTextTracks.find((track) => track.id === showingId)?.language;
+  return language ? { language } : { id: showingId };
+}
+
 function syncTextTracksSetup({
   state,
   context,
@@ -88,7 +112,11 @@ function syncTextTracksSetup({
 }: {
   state: {
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
-    selectedTextTrackId: Signal<string | undefined>;
+    // Read-only here: the resolved output owned by `switchTextTrack`, mirrored
+    // into DOM modes and used as the echo-guard reference.
+    selectedTextTrackId: ReadonlySignal<string | undefined>;
+    // The write path: standing user intent the DOM bridge feeds.
+    userTextTrackSelection: Signal<Partial<TextTrack> | 'off' | undefined>;
   };
   context: {
     mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
@@ -153,9 +181,14 @@ function syncTextTracksSetup({
             const showingTrack = getShowingSubtitlesTrackFromMedia(mediaElement);
             // `showingTrack.id` matches the SPF id we set when the slot was
             // allocated. Empty-string ids fall through to `undefined`.
-            const nextId = showingTrack?.id || undefined;
-            if (nextId === state.selectedTextTrackId.get()) return;
-            state.selectedTextTrackId.set(nextId);
+            const showingId = showingTrack?.id || undefined;
+            // Echo guard: selectedTextTrackId is the id we last drove into the
+            // DOM (mirror / resolver correction). A change still showing it is our
+            // own echo — ignore it rather than write spurious intent.
+            if (showingId === state.selectedTextTrackId.get()) return;
+            // Genuine user action → write intent (resolved into selectedTextTrackId
+            // by switchTextTrack), not the resolved id.
+            state.userTextTrackSelection.set(deriveTextTrackIntent(showingId, modelTextTracks));
           };
 
           const unlisten = listen(mediaElement.textTracks, 'change', onChange);
@@ -189,7 +222,7 @@ function syncTextTracksSetup({
 }
 
 export const syncTextTracks = defineBehavior({
-  stateKeys: ['presentation', 'selectedTextTrackId'],
+  stateKeys: ['presentation', 'selectedTextTrackId', 'userTextTrackSelection'],
   contextKeys: ['mediaElement', 'textTracksActor'],
   setup: syncTextTracksSetup,
 });
