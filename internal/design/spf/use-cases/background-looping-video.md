@@ -54,8 +54,8 @@ configuration. Alternative-implementation buckets surface in Phase 3.
 From [`createSimpleHlsEngine`](../../../../packages/spf/src/playback/engines/hls/engine.ts):
 
 - `syncPreload`, `trackLoadTriggers` — no preload-state monitoring or DOM `play`/`seeking` activation; replaced by `loadActivated: true` initial state.
-- `selectAudioTrack`, `selectTextTrack`, `resolveAudioTrack`, `resolveTextTrack`, `setupAudioBufferActors`, `loadAudioSegments` — no audio side.
-- `syncTextTracks`, `setupTextTrackActors`, `loadTextTrackSegments` — no text-track machinery.
+- `selectAudioTrack`, `resolveAudioTrack`, `setupAudioBufferActors`, `loadAudioSegments` — no audio side.
+- `switchTextTrack`, `resolveTextTrack`, `syncTextTracks`, `setupTextTrackActors`, `loadTextTrackSegments` — no text-track machinery.
 - `switchVideoQuality` — no ABR; commits to a single rendition for the session.
 
 ### Added

@@ -244,7 +244,7 @@ If the purpose overlaps with another behavior's purpose — both writing the sam
 **Diagnostic — do the writers share a decision-making domain?**
 
 - **Same domain → likely split-symptom; consider merging.** Multiple writers that read the *same inputs* and choose among the *same options* are aspects of one concern. Example: `selectVideoTrack` (default on load) and `quality-switching` (ABR over bandwidth) both decide what to write to `selectedVideoTrackId` based on presentation + bandwidth + config. They're two aspects of one "manage video track selection" concern; merging dissolves the multi-writer arrangement.
-- **Different domains → legitimate multi-writer; keep separate.** Writers that reflect *genuinely different inputs* (config-driven default vs DOM-driven user action; intent vs derived default; programmatic vs network-event-driven) belong in separate behaviors. Example: `selectTextTrack` (config-driven default) and `sync-text-tracks` (DOM `change`-event-driven) both write `selectedTextTrackId` but reflect different sources of truth.
+- **Different domains → separate behaviors, but prefer an intent slot over co-writing the resolved slot.** Writers that reflect *genuinely different inputs* (config-driven default vs DOM-driven user action; programmatic vs network-event-driven) belong in separate behaviors — but route them to a shared *intent* slot that a single owner resolves, rather than co-writing the resolved output. Example: text selection once had `selectTextTrack` (config default) and `sync-text-tracks` (DOM `change`) both writing `selectedTextTrackId`. That multi-writer was resolved by moving the DOM bridge to write `userTextTrackSelection` (intent) and making `switchTextTrack` the single writer of the resolved `selectedTextTrackId` (see [clusters.md § multi-writer](../features/clusters.md)).
 
 Make this decision *after* the refactor proposal lands so the simpler shape is what you're evaluating, not the current shape. The decomposition merge often slots cleanly into the larger refactor of the *other* writer — e.g., `selectVideoTrack` would naturally merge into a refactored `quality-switching` rather than land as a standalone change.
 
@@ -512,7 +512,7 @@ When a behavior's logic varies by media type (video / audio / text), prefer **se
 // good — narrow per-type keys, no runtime discriminant, dead code drops out
 export const selectVideoTrack = defineBehavior({ ... });
 export const selectAudioTrack = defineBehavior({ ... });
-export const selectTextTrack = defineBehavior({ ... });
+// (text selection is the switchTextTrack variant in track-switching.ts)
 ```
 
 Engines opt into specific tracks (e.g. an audio-only engine uses `selectAudioTrack` only). This wins on **A — Reusability** (engines aren't forced to carry video logic), **C — Patternability** (call sites read the same shape regardless of type), and **E — Size** (unused specializations tree-shake out).
@@ -788,7 +788,7 @@ Per-export JSDoc (already conventional) describes individual exports; the file-l
 
 - Behaviors are named as **descriptive verbs**: `syncPreload`, `selectVideoTrack`, `loadVideoSegments`, `endOfStream`. No `*Behavior` suffix.
 - Files match the exported name in kebab-case: `sync-preload.ts` exports `syncPreload`.
-- Per-type specializations co-locate in one module: `select-tracks.ts` exports `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`.
+- Per-type specializations co-locate in one module: `select-tracks.ts` exports `selectVideoTrack` / `selectAudioTrack`; `track-switching.ts` exports `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack`.
 - Behavior factories are named `make*`: `makeShareSignals`. The factory's product is a Behavior; the prefix distinguishes the factory from a Behavior export.
 - Setup-shape helpers are named `setup*`: `setupTrackResolution`. The shape is a `Behavior.setup`-style function called from inside a per-type behavior's setup.
 - **Name by the unit-of-work this behavior triggers, not by its downstream observable.** When per-type-specialized behaviors exist (video / audio / text), the names must match the work they share — sibling consistency is load-bearing. `loadVideoSegments` triggers segment fetches; segments produce frames downstream, but we don't call it `loadVideoFrames`. Same for audio (`loadAudioSegments`, not `loadAudioSamples`) and text (`loadTextTrackSegments`, not `loadTextTrackCues`). A name that breaks the sibling pattern is a sniff that the author was thinking about a different layer than the convention assumes.

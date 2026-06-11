@@ -148,7 +148,7 @@ Resolved during implementation:
 ## Related features
 
 - **[audio-playback](./audio-playback.md)** — single-rendition baseline this feature extends. The "Language-aware default selection" gap there is now resolved.
-- **[subtitles](./subtitles.md)** — direct template for the selection-picker shape; multi-writer state slot pattern. Subtitles uses orthogonal multi-writer (`selectTextTrack` + DOM `change`); audio uses constraint+filter — different shapes.
+- **[subtitles](./subtitles.md)** — now the same shape as audio: text selection moved onto the track-switching chain (`switchTextTrack`) with a `userTextTrackSelection` constraint+filter, converging on this feature's `userAudioTrackSelection` pattern. (Text adds an `'off'`/opt-in terminal and resolves the former `selectedTextTrackId` multi-writer to a single-writer output, with the DOM `change` bridge writing intent instead.)
 - **[video-abr](./video-abr.md)** — `userVideoTrackSelection` constraint+filter precedent. Same shape as audio's new `userAudioTrackSelection` slot.
 - **[audio-abr](./audio-abr.md)** *(documented; pending implementation)* — destination-architecture sibling. When implemented, `switchAudioQuality` will replace `selectAudioTrack` as the `selectedAudioTrackId` writer; `userAudioTrackSelection` filter shape carries over.
 - **[5.1-surround-selection](./5.1-surround-selection.md)** *(coarse, not yet documented, candidate)* — codec-change extension. Tier 2 mid-stream flush is designed extensible to codec-change routing.

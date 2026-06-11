@@ -96,7 +96,7 @@ From `createSimpleHlsEngine`'s composition, omit:
 
 **Text-track-side** *(Phase 1 ships without subtitle support; future phase
 may add back):*
-- `selectTextTrack` — no subtitle rendition selection
+- `switchTextTrack` — no subtitle rendition selection
 - `resolveTextTrack` — no subtitle media playlist fetch
 - `syncTextTracks` — no `TextTrack` slot sync
 - `setupTextTrackActors` — no text-track actors

@@ -29,7 +29,7 @@ export function createSimpleHlsEngine(
       // Track selection (reads config for initial preferences)
       selectVideoTrack,
       selectAudioTrack,
-      selectTextTrack,
+      switchTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
       resolveVideoTrack,
@@ -187,21 +187,21 @@ Once the manifest is resolved, the engine picks one track per type:
 ```ts
 selectVideoTrack,
 selectAudioTrack,
-selectTextTrack,
+switchTextTrack,
 ```
 
-Each is a separate `defineBehavior` export from `playback/behaviors/select-tracks.ts`, with narrow `stateKeys` matching exactly the slots it touches:
+Video and audio use `defineBehavior` exports from `playback/behaviors/select-tracks.ts`, with narrow `stateKeys` matching exactly the slots they touch:
 
 - `selectVideoTrack` declares `['presentation', 'selectedVideoTrackId']`
 - `selectAudioTrack` declares `['presentation', 'selectedAudioTrackId']`
-- `selectTextTrack` declares `['presentation', 'selectedTextTrackId']` and reads `config` for preferred-language / default-track preferences
+- `switchTextTrack` (from `playback/behaviors/track-switching.ts`) declares `['presentation', 'selectedTextTrackId']` and resolves the standing `userTextTrackSelection` intent against the constrained, CDN-scoped renditions — reading `config` for preferred-language / default-track preferences. Unlike the simple `select*` variants it can resolve to no selection (captions are opt-in / off-able).
 
 The behaviors share a small `pickFirstTrackId` helper for the presentation traversal, but the bodies are inlined per type. No engine-side wrappers, no `config.type` discriminant carried at runtime — each export is type-honest about which signal it writes (`state.selectedVideoTrackId.set(...)` vs. `state.selectedAudioTrackId.set(...)`).
 
 The behaviors themselves are split across two locations on purpose:
 
-- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack`. No signals, no effects. Just functions that take a `Presentation` and a config and return an id.
-- **Orchestrations** live in `playback/behaviors/select-tracks.ts` — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack`. These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
+- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack` / `pickTextTrackFromTracks`. No signals, no effects. Just functions that take a `Presentation` (or track list) and a config and return an id.
+- **Orchestrations** live in `playback/behaviors/select-tracks.ts` (`selectVideoTrack`, `selectAudioTrack`) and `playback/behaviors/track-switching.ts` (`switchTextTrack`, plus the `switch*` ABR variants). These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
 
 The split keeps the framework-free helpers reusable outside SPF, while the SPF-integrated behaviors stay thin and easy to swap.
 

@@ -124,7 +124,7 @@ The selection model — which audio / video / text tracks are available, which i
 
 **Docs.** `subtitles`, `video-abr`, `audio-playback`, `multi-language-audio`, `hevc-variant-selection` (cluster D consumer, video codec axis), `5.1-surround-selection` (cluster D consumer, audio channel-count axis), `audio-abr` (audio sibling of video-abr), `multi-signal-abr` (algorithm extension to ABR with non-bandwidth signals).
 
-**Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`); the `selected*TrackId` slot family.
+**Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` for the simple default-pick path; `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` for the track-switching chain); the `selected*TrackId` slot family.
 
 **Maps to Notion cluster C** ("Track & variant registry").
 
@@ -284,7 +284,7 @@ Two or more behaviors write to the same state slot from different decision domai
 
 **Signals.** A `selected*TrackId` or similar slot named on more than one behavior's writer list; a "default + user-action" pattern; orthogonal-by-design coordination.
 
-**Where it shows up.** `selectedTextTrackId` (default-on-load via `selectTextTrack` + DOM user-action via `syncTextTracks`). Proposed `selectedAudioTrackId` for multi-language audio (default + programmatic write).
+**Where it shows up.** Formerly `selectedTextTrackId` (default-on-load via `selectTextTrack` + DOM user-action via `syncTextTracks`) — since resolved to a single-writer output of `switchTextTrack`, with the dual-input relocated to the `userTextTrackSelection` *intent* slot (DOM `change` bridge + consumer via `shareSignals`). That's the canonical resolution of this pattern: route differing inputs to a shared intent slot and let one owner derive the resolved slot, rather than co-writing the resolved slot. Proposed `selectedAudioTrackId` for multi-language audio (default + programmatic write).
 
 **Skill action when this pattern is suspected.** Characterize the existing writer(s) and the proposed writer along three axes: (1) decision domain (config vs DOM vs intent vs derived), (2) trigger (one-shot transition vs ongoing reactive), (3) cost (cheap write vs side-effect-heavy write — e.g., audio writes trigger flush + re-resolve + replan). If the proposed writer doesn't share decision domain or cost with the existing pattern, the multi-writer convention may not transfer cleanly.
 
