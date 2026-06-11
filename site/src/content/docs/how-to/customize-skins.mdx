@@ -4,6 +4,7 @@ description: Learn how to customize Video.js v10 skins by copying and modifying 
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 
 Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customization is possible with CSS custom properties, but if you want more control over the design and functionality of your player, you can copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
@@ -23,44 +24,82 @@ If you'd like to customize them you can fully customize them by "ejecting" the c
 
 While eventually we’ll have a CLI that will eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
 
-{/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
-
 ### Default Video Skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="default-video-react" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="default-video-react-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="default-video" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="default-video-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 ### Default Audio Skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-audio-react" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="default-audio-react" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="default-audio-react-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-audio" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="default-audio" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="default-audio-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 ### Minimal Video Skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-video-react" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="minimal-video-react" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="minimal-video-react-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-video" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="minimal-video" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="minimal-video-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 ### Minimal Audio Skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-audio-react" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="minimal-audio-react" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="minimal-audio-react-tailwind" />
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-audio" />
+  <StyleCase styles={["css"]}>
+    <EjectedSkin id="minimal-audio" />
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <EjectedSkin id="minimal-audio-tailwind" />
+  </StyleCase>
 </FrameworkCase>

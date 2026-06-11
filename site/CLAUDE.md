@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **Video.js v10 documentation site** is an Astro-based static site generator with React islands for interactivity. The site serves documentation, blog posts, and interactive demos for the Video.js v10 library.
 
-Key architectural feature: **Multi-framework documentation** — the same content generates separate routes for different framework/style combinations (e.g., HTML + CSS, React + CSS), allowing framework-specific documentation from shared MDX sources.
+Key architectural feature: **Multi-framework documentation** — the same content generates separate routes for different framework/style combinations (e.g., HTML + CSS, HTML + Tailwind, React + CSS, React + Tailwind), allowing framework-specific documentation from shared MDX sources.
 
 ## Deployment
 
@@ -196,7 +196,7 @@ site/
 
 ## Interactive Demos
 
-Reference pages include live, interactive demos for each component. Demos are framework-specific (React, HTML) and style-specific (CSS).
+Reference pages include live, interactive demos for each component. Demos are framework-specific (React, HTML) and style-specific (CSS, Tailwind). Every demo exists in a `css/` variant and a parallel `tailwind/` variant, gated in MDX via `<StyleCase>`.
 
 ### Directory Structure
 
@@ -204,13 +204,22 @@ Reference pages include live, interactive demos for each component. Demos are fr
 src/components/docs/demos/
 ├── Demo.astro              # Shared shell (live preview + tabbed source code)
 ├── HtmlDemo.astro          # Renders raw HTML via set:html
-└── {component}/{framework}/{style}/
-    ├── BasicUsage.tsx      # React: component (+ .css)
-    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML, imports CSS, bundles script)
+└── {component}/{framework}/{style}/   # style: css | tailwind
+    ├── BasicUsage.tsx      # React: component (css variant adds a .css file)
+    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML, bundles script)
     ├── BasicUsage.html     # HTML: markup only, no <style> or <script>
-    ├── BasicUsage.css      # HTML: styles (imported by .astro wrapper for live demo)
+    ├── BasicUsage.css      # HTML css variant only: styles
     └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
 ```
+
+**Tailwind variants** mirror the css variant 1:1 (same markup, same demo names) with utility
+classes inline and no `.css` file. They must stay copy-paste compatible with a **stock Tailwind
+v4 setup**: never use site theme tokens (`manila-*`, `text-h1`, `intent:`, ...). The site theme
+resets the default color/text scales, so the stock tokens demos rely on (`gray-*`, `blue-500`,
+`neutral-*`, `text-xs`, `text-sm`) are re-declared with stock values in a dedicated `@theme`
+block in `src/styles/globals.css` — extend that block (stock values only) if a new demo needs
+another token. State-dependent styling uses data-attribute variants (`data-paused:`,
+`in-data-paused:`, `not-in-data-ended:`) instead of the css variant's attribute selectors.
 
 ### CSS Scoping and Class Naming
 
@@ -299,6 +308,23 @@ HTML custom elements expose state via `data-*` attributes. Use CSS to toggle lab
 
 The React equivalent uses the `render` prop: `render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}`.
 
+In Tailwind variants, the same state reflection uses data-attribute variants inline:
+
+```html
+<media-play-button class="...">
+  <span class="hidden in-data-paused:inline">Play</span>
+  <span class="hidden not-in-data-paused:inline">Pause</span>
+</media-play-button>
+```
+
+### Tailwind Demo MDX Wiring
+
+Tailwind demos render in a sibling `<StyleCase styles={["tailwind"]}>` next to the css demo's
+`<StyleCase styles={["css"]}>` (both inside the same `<FrameworkCase>`). React Tailwind demos
+show a single `App.tsx` tab; HTML Tailwind demos show `index.html` + `index.ts` (no css tab).
+Import names append `Tailwind` to the css demo's names (e.g. `BasicUsageDemoReactTailwind`,
+`basicUsageReactTailwindTsx`, `basicUsageTailwindHtml`, `basicUsageTailwindHtmlTs`).
+
 ### Video Attributes
 
 All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted playsInline loop`).
@@ -311,7 +337,7 @@ Documentation is generated for **multiple framework and style combinations** fro
 
 **Current support** (defined in `src/types/docs.ts`):
 - **Frameworks**: `html`, `react`
-- **Styles**: `css` (more may be added)
+- **Styles**: `css`, `tailwind`
 
 **URL pattern:**
 ```

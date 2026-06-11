@@ -193,11 +193,17 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
 </FrameworkCase>
 ```
 
+Each `<FrameworkCase>` also contains a sibling `<StyleCase styles={["tailwind"]}>` rendering the
+demo's `tailwind/` variant. Tailwind import names append `Tailwind` to the css names
+(`BasicUsageDemoReactTailwind`, `basicUsageReactTailwindTsx`, `BasicUsageDemoHtmlTailwind`,
+`basicUsageTailwindHtml`, `basicUsageTailwindHtmlTs`); place them directly after the
+corresponding css imports.
+
 Key details:
 - React demos use `client:idle` for hydration
 - HTML demos render server-side (no `client:*` directive)
-- React source tabs: `App.tsx`, `App.css`
-- HTML source tabs: `index.html`, `index.css`, `index.ts`
+- React source tabs: `App.tsx`, `App.css` (Tailwind variant: `App.tsx` only)
+- HTML source tabs: `index.html`, `index.css`, `index.ts` (Tailwind variant: `index.html`, `index.ts`)
 
 ### ComponentReference Component
 
