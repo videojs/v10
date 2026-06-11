@@ -1,6 +1,6 @@
 /**
  * **Per-type track selection as a rule chain.** While a presentation is
- * resolved, owns that type's `selected{Video,Audio}TrackId` signal: pick a
+ * resolved, owns that type's `selected{Video,Audio,Text}TrackId` signal: pick a
  * default, react to user intent and algorithmic ranking, and clear it on src
  * unload.
  *
@@ -32,14 +32,20 @@
  * resolved state owns the signal; its entry-returned cleanup clears it on exit
  * (canonical cleanup-binds-to-setup per `reactors.md`).
  *
- * The pick is the head of the chain's result (`applyRules(...)[0]`). Each
- * variant supplies its **constraints + rule chain** via config;
- * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Both
- * variants today run constraints `[excludeFailedCdns]` then rules
- * `[filterByUserSelection, preferActiveCdn, rankByBandwidth]`; `switchVideoTrack`
- * also accepts ABR tuning config, `switchAudioTrack` takes none. (The active-CDN
- * *scope* is the sticky-pick half of multi-CDN; the failed-CDN *constraint* is
- * the failover half — prune the cooled-down CDN, the scope falls to the next.)
+ * The pick is the chain's result mapped to a slot value by `resolveSelection`
+ * (default: the head, `applyRules(...)[0]`). Each variant supplies its
+ * **constraints + rule chain (+ optional resolveSelection)** via config;
+ * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
+ * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
+ * rules `[filterByUserSelection, preferActiveCdn, rankByBandwidth]` and take the
+ * head; `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack`
+ * takes none. `switchTextTrack` differs — selection is *optional* (captions are
+ * opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
+ * supplies a text terminal (`pickResolvedTextTrack`) that resolves standing user
+ * intent (`userTextTrackSelection`, incl. `'off'`) and may yield no selection.
+ * (The active-CDN *scope* is the sticky-pick half of multi-CDN; the failed-CDN
+ * *constraint* is the failover half — prune the cooled-down CDN, the scope falls
+ * to the next.)
  *
  * When the pre-pass prunes a type's candidates to empty, the behavior leaves any
  * prior pick in place and makes no new pick; the late `createSourceBuffer` check
@@ -56,14 +62,20 @@ import { type AnySlotMap, defineBehavior } from '../../core/composition/create-c
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
-import { matchesPartialTrack } from '../../media/primitives/select-tracks';
+import {
+  matchesPartialTrack,
+  pickTextTrackFromTracks,
+  type TextSelectionConfig,
+} from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
   type CanPlayTrack,
   isResolvedPresentation,
   type MaybeResolvedPresentation,
   type PartiallyResolvedAudioTrack,
+  type PartiallyResolvedTextTrack,
   type PartiallyResolvedVideoTrack,
+  type TextTrack,
   type VideoTrack,
 } from '../../media/types';
 import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
@@ -87,6 +99,7 @@ export interface TrackSwitchingState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
+  selectedTextTrackId?: string;
 }
 
 /**
@@ -265,7 +278,7 @@ export type ResolveSelection<T extends SwitchableTrack, State = unknown, Context
   deps: SelectionRuleDeps<State, Context, Config>
 ) => string | undefined;
 
-type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId';
+type SelectionKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 type UserSelectionKey = 'userVideoTrackSelection' | 'userAudioTrackSelection';
 
 // Each mapped value references `P` so TS keeps the per-key dependency and
@@ -401,6 +414,7 @@ type CapabilityConstraintConfig<S extends SelectionKey, T extends SwitchableTrac
 
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
+type TextTrackCandidate = PartiallyResolvedTextTrack | TextTrack;
 
 // ----------------------------------------------------------------------------
 // Rules — defined outside the behavior closure, parameterized only by their
@@ -566,6 +580,57 @@ function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
  */
 function selectChainHead<T extends SwitchableTrack>(candidates: readonly T[]): string {
   return candidates[0]!.id;
+}
+
+/**
+ * State the text terminal reads: the lifecycle map plus an *optional*
+ * `userTextTrackSelection` — the standing user intent. `Partial<TextTrack>` is an
+ * explicit pick (language-based), `'off'` is explicit no-captions, `undefined` is
+ * auto (no preference). The slot exists only when the composition materializes it
+ * (`shareSignals`); the terminal reads it defensively and treats absence as auto.
+ *
+ * Unlike `user*TrackSelection` for video/audio, this carries the `'off'` sentinel
+ * and feeds the terminal pick (not the shared `filterByUserSelection`) — text is
+ * the only type whose selection is legitimately optional, so the off/auto logic
+ * lives in one text-specific place rather than widening the shared filter.
+ */
+type TextSelectionStateMap = TrackSwitchingStateMap<'selectedTextTrackId'> & {
+  userTextTrackSelection?: ReadonlySignal<Partial<TextTrack> | 'off' | undefined>;
+};
+
+/** Config the text terminal reads: the base config plus the opt-in default policy. */
+type TextTerminalConfig = TrackSwitchingConfig<'selectedTextTrackId', TextTrackCandidate> & TextSelectionConfig;
+
+/**
+ * Terminal pick for text — the `resolveSelection` the text variant supplies.
+ * Resolves the standing `userTextTrackSelection` intent against the chain's
+ * survivors (already CDN-failover-pruned and active-CDN-scoped):
+ *
+ *   - `'off'` → no selection (clear the slot). Sticky through re-evaluation, so a
+ *     live refresh or failover re-run can't re-assert a default.
+ *   - explicit `Partial<TextTrack>` → narrow to the match (language-based). A
+ *     stale pick whose match is gone (e.g. the language dropped on a source
+ *     change) falls through to the default policy.
+ *   - auto (`undefined`) → the opt-in default policy (`preferredSubtitleLanguage`
+ *     → `DEFAULT=YES + AUTOSELECT=YES` → none), shared with `pickTextTrack`.
+ *
+ * Returning `undefined` is a real outcome (captions are opt-in), which is why the
+ * text variant relies on `setupTrackSwitching`'s no-selection seam.
+ */
+function pickResolvedTextTrack<T extends TextTrackCandidate>(
+  candidates: readonly T[],
+  { state, config }: SelectionRuleDeps<TextSelectionStateMap, AnySlotMap, TextTerminalConfig>
+): string | undefined {
+  const intent = state.userTextTrackSelection?.get();
+  if (intent === 'off') return undefined;
+  if (intent) {
+    // The stored intent is a `Partial<TextTrack>`; cast to the candidate's own
+    // partial shape so the generic `matchesPartialTrack` accepts it (every field
+    // it carries — language, forced — exists on the candidate too).
+    const matched = candidates.filter((track) => matchesPartialTrack(track, intent as Partial<T>));
+    if (matched.length) return matched[0]!.id;
+  }
+  return pickTextTrackFromTracks(candidates, config);
 }
 
 // `context` is the composition's context map, threaded in by each variant's
@@ -772,6 +837,67 @@ export const switchAudioTrack = defineBehavior({
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
         rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+      },
+    }),
+});
+
+// ============================================================================
+// Variant: switchTextTrack — intent-resolved, optional selection
+// ============================================================================
+
+/**
+ * Config for `switchTextTrack` — the opt-in default policy
+ * (`preferredSubtitleLanguage` / `includeForcedTracks` / `enableDefaultTrack`,
+ * via `TextSelectionConfig`) read by the terminal when the user has no standing
+ * intent, plus the `getCdnId` override shared with the CDN constraint + scope.
+ */
+export interface SwitchTextTrackConfig extends TextSelectionConfig {
+  /** Override CDN-id derivation (shared by the failed-CDN constraint + active-CDN scope). */
+  getCdnId?: GetCdnId;
+}
+
+/**
+ * Manage `selectedTextTrackId` as the single-writer **output** of standing user
+ * intent (`userTextTrackSelection`) resolved against the playable, CDN-scoped
+ * text renditions: clear on src unload; re-resolve when a CDN fails or recovers.
+ *
+ * Unlike video/audio, the selection is *optional* — captions are opt-in and the
+ * user can turn them off — so the chain skips the bandwidth ranker and the shared
+ * user-selection filter, and supplies a text-specific terminal
+ * (`pickResolvedTextTrack`) that may resolve to no-selection via
+ * `setupTrackSwitching`'s `resolveSelection` seam. Constraints are failed-CDN only
+ * (`excludeUnplayableTracks`/`canPlayTrack` is MSE-based — the wrong probe for
+ * text, whose playability is SPF-parser support); the active-CDN scope co-locates
+ * captions with the surviving CDN on failover.
+ *
+ * @example
+ * const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+ */
+export const switchTextTrack = defineBehavior({
+  stateKeys: ['presentation', 'selectedTextTrackId'],
+  contextKeys: [],
+  setup: ({
+    state,
+    config,
+    ...otherProps
+  }: {
+    state: TrackSwitchingStateMap<'selectedTextTrackId'>;
+    config?: SwitchTextTrackConfig;
+  }) =>
+    // Explicit type args pin the candidate type to `TextTrackCandidate`. Video and
+    // audio let it infer to the `SwitchableTrack` constraint (harmless — every
+    // rule is assignable up to it), but the text terminal needs the narrower type
+    // (it reads text-only fields), so it's named here rather than inferred.
+    setupTrackSwitching<'selectedTextTrackId', TextTrackCandidate, TextTerminalConfig & SwitchTextTrackConfig>({
+      ...otherProps,
+      state,
+      config: {
+        ...config,
+        selectionKey: 'selectedTextTrackId',
+        getTracks: (presentation) => getTracksByType(presentation, 'text') as readonly TextTrackCandidate[],
+        constraints: [excludeFailedCdns],
+        rules: [preferActiveCdn],
+        resolveSelection: pickResolvedTextTrack,
       },
     }),
 });
