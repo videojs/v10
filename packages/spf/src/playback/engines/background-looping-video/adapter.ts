@@ -168,15 +168,21 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     }
 
     // -------------------------------------------------------------------------
-    // maxResolution — engine-config passthrough to the default picker. The
-    // picker bakes config into a closure at engine creation, so changes
-    // after construction require an engine rebuild.
+    // maxResolution — adapter-owned cap on the picked rendition. The engine's
+    // closure picker (see `#createEngine`) reads this field at pick time, so
+    // setter writes take effect on the next `presentation-resolved` transition
+    // without an engine rebuild.
     // -------------------------------------------------------------------------
 
     get maxResolution(): string | number | undefined {
       return this.#maxResolution;
     }
 
+    /**
+     * Set the cap. Accepts `"720p"` / `"1080p"` etc., a bare number
+     * (interpreted as pixel area), or `undefined` to clear. Unrecognized
+     * values are treated as no cap.
+     */
     set maxResolution(value: string | number | undefined) {
       if (value === this.#maxResolution) return;
       this.#maxResolution = value;

@@ -1,13 +1,12 @@
 import '@app/styles.css';
 
-// SPF Background Looping Video — Phase 1 demo
+// SPF Background Looping Video — sandbox demo
 // http://localhost:5173/spf-background-looping-video/
 //
-// Drives the Phase 1 `BackgroundLoopingVideoMediaElement` adapter (the SPF
-// surface added in this PR). The diagnostic strip surfaces three signals
-// reviewers should verify:
+// Drives `BackgroundLoopingVideoMediaElement`. The diagnostic strip
+// surfaces three signals reviewers should verify:
 //   - loadActivated is true from frame 0 (no preload-gate or play-event needed)
-//   - the picker selects the highest-resolution rendition by default
+//   - the picker honors `maxResolution` (defaults to the highest variant)
 //   - audio-side actors are absent from the engine context (subtraction proof)
 //
 // Rendition selection is driven by `maxResolution` on the adapter. The

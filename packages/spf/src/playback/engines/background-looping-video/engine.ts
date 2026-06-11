@@ -82,6 +82,9 @@ export interface BackgroundLoopingVideoEngineConfig
    * `pickHighestResolutionVideoTrack` — picks the highest-resolution variant on
    * presentation resolve and pins it for the session. Override for
    * mobile-aware or content-aware caps.
+   *
+   * Adapters (e.g. `BackgroundLoopingVideoMediaElement`) install their own
+   * picker; this default applies when the engine is constructed directly.
    */
   picker?: TrackPicker<SelectVideoTrackConfig>;
   /**
