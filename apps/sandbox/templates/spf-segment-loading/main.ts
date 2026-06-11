@@ -18,6 +18,7 @@ const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
+const textTrackButtonsDiv = document.getElementById('text-track-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
@@ -65,6 +66,10 @@ function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
 
 function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
+}
+
+function getTextTracks(presentation: SimpleHlsEngineState['presentation']) {
+  return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks ?? [];
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
@@ -399,6 +404,91 @@ function updateAudioTrackSelection(
   }
 }
 
+// Subtitle/caption picker. Text selection changes are user-driven and
+// infrequent, so this rebuilds the button list on each change (no build/update
+// split like the audio picker, which fights frequent ABR churn). Writes the
+// userTextTrackSelection *intent* — a language partial, 'off', or undefined
+// (auto) — which switchTextTrack resolves into selectedTextTrackId.
+function renderTextTrackPicker() {
+  if (!engine || !signals) return;
+  const presentation = engine.state.presentation.get();
+  const selectedTextTrackId = engine.state.selectedTextTrackId.get();
+  const intent = engine.state.userTextTrackSelection.get();
+  const tracks = getTextTracks(presentation);
+
+  if (tracks.length === 0) {
+    textTrackButtonsDiv.textContent = presentation ? 'No text tracks found' : 'Waiting for presentation…';
+    return;
+  }
+
+  const isOff = intent === 'off';
+  const isPinned = intent !== undefined && intent !== 'off';
+  const selectedTrack = tracks.find((track) => track.id === selectedTextTrackId);
+  const selectedKey = selectedTrack ? selectedTrack.language || selectedTrack.id : undefined;
+
+  textTrackButtonsDiv.innerHTML = '';
+
+  // Status row: current intent (auto / pinned / off) + reset.
+  const statusRow = document.createElement('div');
+  statusRow.className = 'audio-status';
+  const modeLabel = document.createElement('span');
+  modeLabel.className = isPinned || isOff ? 'mode-pinned' : 'mode-default';
+  modeLabel.textContent = isOff
+    ? '🔇 Off (user)'
+    : isPinned
+      ? `🔒 Pinned: ${JSON.stringify(intent)}`
+      : '🌐 Auto (default policy)';
+  statusRow.appendChild(modeLabel);
+  if (intent !== undefined) {
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'clear-filter-btn';
+    resetBtn.textContent = 'Reset to auto';
+    resetBtn.addEventListener('click', () => {
+      log('Cleared userTextTrackSelection (back to default policy)', 'success');
+      signals!.state.userTextTrackSelection.set(undefined);
+    });
+    statusRow.appendChild(resetBtn);
+  }
+  textTrackButtonsDiv.appendChild(statusRow);
+
+  // Off button — explicit 'off' intent; highlighted whenever nothing resolves.
+  const offBtn = document.createElement('button');
+  offBtn.type = 'button';
+  const offSelected = !selectedTextTrackId;
+  offBtn.className = `audio-track-btn${offSelected ? (isOff ? ' selected-pinned' : ' selected-default') : ''}`;
+  offBtn.textContent = `Off${offSelected ? (isOff ? ' 🔇' : ' 🌐') : ''}`;
+  offBtn.addEventListener('click', () => {
+    log("Text track intent: 'off'", 'warning');
+    signals!.state.userTextTrackSelection.set('off');
+  });
+  textTrackButtonsDiv.appendChild(offBtn);
+
+  // One button per selection identity (language, else id).
+  const seen = new Set<string>();
+  for (const track of tracks) {
+    const language = track.language || undefined;
+    const key = language ?? track.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const label = 'label' in track && track.label ? track.label : track.id;
+    const isSelected = key === selectedKey;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+    btn.textContent = `${language ?? '—'} · ${label}${badge}`;
+    btn.title = `kind: ${track.kind}${track.forced ? ' · forced' : ''} · id: ${track.id}`;
+    btn.addEventListener('click', () => {
+      const filter = language ? { language } : { id: track.id };
+      log(`Text track intent: ${JSON.stringify(filter)}`, 'warning');
+      signals!.state.userTextTrackSelection.set(filter);
+    });
+    textTrackButtonsDiv.appendChild(btn);
+  }
+}
+
 function renderResolutionStatus() {
   if (!engine) return;
   const presentation = engine.state.presentation.get();
@@ -527,26 +617,15 @@ function startEngine(src: string) {
   };
   const prevContext = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
 
-  // State logger + auto-select first text track
+  // State logger. Text selection is driven by the Subtitles/Captions picker
+  // (userTextTrackSelection intent) — no auto-select here, so the engine's real
+  // opt-in default policy is what runs on load.
   const stopStateLogger = effect(() => {
     const state = snapshot(engine.state);
 
     if (state.presentation && !prev.hasPresentation) {
       log('Presentation resolved');
       prev.hasPresentation = true;
-    }
-
-    // Auto-select first text track when presentation arrives, via intent:
-    // switchTextTrack resolves userTextTrackSelection into selectedTextTrackId.
-    if (state.presentation && !state.userTextTrackSelection && state.presentation.selectionSets) {
-      const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
-      const firstText = textSet?.switchingSets?.[0]?.tracks?.[0];
-      if (firstText) {
-        log(`Auto-selecting text track: ${firstText.id}`);
-        engine.state.userTextTrackSelection.set(
-          firstText.language ? { language: firstText.language } : { id: firstText.id }
-        );
-      }
     }
 
     if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
@@ -573,6 +652,7 @@ function startEngine(src: string) {
   const stopThroughputUI = effect(() => updateThroughputDisplay());
   const stopRenditionUI = effect(() => renderRenditionPicker());
   const stopAudioPickerUI = effect(() => renderAudioTrackPicker());
+  const stopTextPickerUI = effect(() => renderTextTrackPicker());
   const stopResolutionUI = effect(() => renderResolutionStatus());
 
   // Context logger
@@ -636,6 +716,7 @@ function startEngine(src: string) {
     stopThroughputUI();
     stopRenditionUI();
     stopAudioPickerUI();
+    stopTextPickerUI();
     stopResolutionUI();
     stopContextLogger();
   };
