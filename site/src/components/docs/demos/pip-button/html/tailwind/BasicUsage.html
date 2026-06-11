@@ -1,0 +1,18 @@
+<video-player class="relative block">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-pip-button
+            class="absolute right-2.5 bottom-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px]"
+        >
+            <span class="hidden in-data-pip:inline">Exit PiP</span>
+            <span class="hidden not-in-data-pip:inline">Enter PiP</span>
+        </media-pip-button>
+    </media-container>
+</video-player>

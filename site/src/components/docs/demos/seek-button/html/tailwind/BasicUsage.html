@@ -1,0 +1,26 @@
+<video-player class="relative">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <div class="absolute bottom-2.5 left-2.5 flex gap-2">
+            <media-seek-button
+                seconds="-5"
+                class="cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 whitespace-nowrap text-black backdrop-blur-[10px]"
+            >
+                <span class="hidden in-data-[direction=backward]:inline">&#9194; 5s</span>
+            </media-seek-button>
+            <media-seek-button
+                seconds="10"
+                class="cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 whitespace-nowrap text-black backdrop-blur-[10px]"
+            >
+                <span class="hidden in-data-[direction=forward]:inline">10s &#9193;</span>
+            </media-seek-button>
+        </div>
+    </media-container>
+</video-player>
