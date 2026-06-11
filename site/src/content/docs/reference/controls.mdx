@@ -14,12 +14,17 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/controls/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/controls/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/controls/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/controls/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/controls/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/controls/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/controls/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/controls/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/controls/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/controls/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/controls/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/controls/html/tailwind/BasicUsage.ts?raw";
 
 ## Anatomy
 
@@ -121,6 +126,13 @@ No ARIA role is applied to `Controls.Root` — it is a layout wrapper, not a lan
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -133,6 +145,14 @@ No ARIA role is applied to `Controls.Root` — it is a layout wrapper, not a lan
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

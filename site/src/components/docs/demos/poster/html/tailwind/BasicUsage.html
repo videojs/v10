@@ -1,0 +1,25 @@
+<!-- biome-ignore-all lint/a11y/useMediaCaption: TODO -->
+<video-player class="relative block">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            playsinline
+        ></video>
+
+        <media-poster class="pointer-events-none absolute inset-0 transition-opacity duration-250 not-data-visible:opacity-0">
+            <img
+                class="h-full w-full object-cover"
+                src="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.jpg"
+                alt="Video thumbnail"
+            />
+        </media-poster>
+
+        <media-play-button
+            class="absolute bottom-2.5 left-2.5 cursor-pointer rounded-full border border-white/25 bg-white/75 px-4 py-2 text-black backdrop-blur-[10px]"
+        >
+            <span class="hidden in-data-paused:inline">Play</span>
+            <span class="hidden not-in-data-paused:inline">Pause</span>
+        </media-play-button>
+    </media-container>
+</video-player>

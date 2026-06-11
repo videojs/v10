@@ -1,0 +1,32 @@
+<video-player class="relative block">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+
+        <media-controls
+            class="pointer-events-none absolute inset-0 flex items-end bg-linear-to-t from-black/45 to-transparent to-45% p-3 transition-opacity duration-250 not-data-visible:opacity-0"
+        >
+            <media-controls-group
+                class="pointer-events-auto flex w-full items-center justify-between"
+                aria-label="Playback controls"
+            >
+                <media-play-button
+                    class="cursor-pointer rounded-full border border-white/25 bg-white/75 px-4 py-2 text-sm text-black backdrop-blur-[10px]"
+                >
+                    <span class="hidden in-data-paused:inline">Play</span>
+                    <span class="hidden not-in-data-paused:inline">Pause</span>
+                </media-play-button>
+                <media-time
+                    class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/75 px-4 py-2 text-sm text-black backdrop-blur-[10px]"
+                    type="current"
+                ></media-time>
+            </media-controls-group>
+        </media-controls>
+    </media-container>
+</video-player>
