@@ -291,12 +291,6 @@ export function createSlider(options: SliderOptions): SliderApi {
         case 'End':
           newPercent = 100;
           break;
-        default:
-          // Suppress when any modifier is held to avoid hijacking browser/OS shortcuts.
-          if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key >= '0' && event.key <= '9') {
-            newPercent = Number(event.key) * 10;
-          }
-          break;
       }
 
       if (newPercent !== null) {
