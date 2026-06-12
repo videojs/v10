@@ -85,6 +85,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/mux-audio' },
       { slug: 'reference/mux-video' },
       { slug: 'reference/native-hls-video' },
+      { slug: 'reference/simple-hls-audio-only' },
       { slug: 'reference/simple-hls-video' },
     ],
   },
