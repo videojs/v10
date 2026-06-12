@@ -582,16 +582,25 @@ export interface HostPropertyDef {
   description?: string;
   readonly: boolean;
   overridesNative?: boolean;
+  /** Serialized default value from the host's `*DefaultProps` export. */
+  default?: string;
+}
+
+export interface MediaEventDef {
+  name: string;
+  /** Description from a `@fires` JSDoc tag on the dispatching class or mixin. */
+  description?: string;
 }
 
 export interface MediaElementReference {
   name: string;
   tagName: string;
+  mediaType: 'video' | 'audio';
   hostProperties: Record<string, HostPropertyDef>;
   nativeAttributes: string[];
   events: {
     native: string[];
-    elementSpecific: string[];
+    elementSpecific: MediaEventDef[];
   };
   cssCustomProperties: Record<string, { description: string }>;
   slots: string[];

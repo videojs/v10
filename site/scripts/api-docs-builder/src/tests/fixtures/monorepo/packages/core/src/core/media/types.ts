@@ -6,6 +6,15 @@
  * AudioEvents extends a subset (no text track events).
  */
 
+// Mirrors the real MediaStreamTypes const object. Exercises default-value
+// resolution of property-access expressions (e.g. MediaStreamTypes.UNKNOWN)
+// through an import to a `... as const` object literal.
+export const MediaStreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
 export interface EventLike<Detail = void> {
   readonly type: string;
   readonly timeStamp: number;

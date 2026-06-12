@@ -25,7 +25,7 @@ import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCSSVars } from './css-vars-handler.js';
-import type { HostPropertyDef, MediaElementReference, MediaElementResult } from './pipeline.js';
+import type { HostPropertyDef, MediaElementReference, MediaElementResult, MediaEventDef } from './pipeline.js';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -269,7 +269,10 @@ function parseCustomMediaElementCall(
 /**
  * Extract getter/setter pairs from a host class and its ancestors,
  * mirroring what CustomMediaElement does at runtime when it walks
- * the MediaHost prototype chain.
+ * the MediaHost prototype chain. Defaults are collected from the
+ * `*DefaultProps` exports in every file the walk visits — base files first,
+ * then mixins innermost-to-outermost, then the leaf class file — so the
+ * most-derived default wins, matching property override semantics.
  */
 function extractHostProperties(
   filePath: string,
@@ -278,7 +281,20 @@ function extractHostProperties(
   nativeNames: Set<string>
 ): Record<string, HostPropertyDef> {
   const properties: Record<string, HostPropertyDef> = {};
-  extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set(), nativeNames);
+  const visitedFiles: string[] = [];
+  extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set(), nativeNames, visitedFiles);
+
+  const defaults = new Map<string, string>();
+  for (const visitedFile of visitedFiles) {
+    for (const [name, value] of collectFileDefaults(visitedFile, compilerOptions)) {
+      defaults.set(name, value);
+    }
+  }
+  for (const [name, def] of Object.entries(properties)) {
+    const value = defaults.get(name);
+    if (value !== undefined) def.default = value;
+  }
+
   return properties;
 }
 
@@ -294,7 +310,8 @@ function extractClassProperties(
   properties: Record<string, HostPropertyDef>,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>,
-  nativeNames: Set<string>
+  nativeNames: Set<string>,
+  visitedFiles: string[]
 ): void {
   if (seen.has(`${filePath}:${className}`)) return;
   seen.add(`${filePath}:${className}`);
@@ -315,9 +332,19 @@ function extractClassProperties(
   const extendsClause = classNode.heritageClauses?.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
   if (extendsClause && extendsClause.types.length > 0) {
     const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
-    processExtendsExpression(extendsExpr, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+    processExtendsExpression(
+      extendsExpr,
+      sourceFile,
+      filePath,
+      properties,
+      compilerOptions,
+      seen,
+      nativeNames,
+      visitedFiles
+    );
   }
 
+  visitedFiles.push(filePath);
   applyClassMembers(classNode, sourceFile, properties, nativeNames);
 }
 
@@ -341,7 +368,8 @@ function processExtendsExpression(
   properties: Record<string, HostPropertyDef>,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>,
-  nativeNames: Set<string>
+  nativeNames: Set<string>,
+  visitedFiles: string[]
 ): void {
   if (ts.isIdentifier(extendsExpr)) {
     const parentClassName = extendsExpr.text;
@@ -350,11 +378,19 @@ function processExtendsExpression(
     if (parentImportPath) {
       const parentFilePath = resolveModuleToFile(filePath, parentImportPath, compilerOptions);
       if (parentFilePath) {
-        extractClassProperties(parentFilePath, parentClassName, properties, compilerOptions, seen, nativeNames);
+        extractClassProperties(
+          parentFilePath,
+          parentClassName,
+          properties,
+          compilerOptions,
+          seen,
+          nativeNames,
+          visitedFiles
+        );
       }
     } else {
       // Parent is declared in the same file.
-      extractClassProperties(filePath, parentClassName, properties, compilerOptions, seen, nativeNames);
+      extractClassProperties(filePath, parentClassName, properties, compilerOptions, seen, nativeNames, visitedFiles);
     }
     return;
   }
@@ -363,9 +399,9 @@ function processExtendsExpression(
     const { mixins, base } = unwindMixinChain(extendsExpr);
     // Process the base class first (innermost identifier), then layer each
     // mixin from innermost to outermost so outer mixins override inner ones.
-    processExtendsExpression(base, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+    processExtendsExpression(base, sourceFile, filePath, properties, compilerOptions, seen, nativeNames, visitedFiles);
     for (let i = mixins.length - 1; i >= 0; i--) {
-      processMixin(mixins[i]!.name, sourceFile, filePath, properties, compilerOptions, seen, nativeNames);
+      processMixin(mixins[i]!.name, sourceFile, filePath, properties, compilerOptions, seen, nativeNames, visitedFiles);
     }
   }
 }
@@ -411,7 +447,8 @@ function processMixin(
   properties: Record<string, HostPropertyDef>,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>,
-  nativeNames: Set<string>
+  nativeNames: Set<string>,
+  visitedFiles: string[]
 ): void {
   const resolved = resolveMixinDeclaration(mixinName, callerSourceFile, callerFilePath, compilerOptions, new Set());
   if (!resolved) return;
@@ -420,6 +457,7 @@ function processMixin(
   if (seen.has(seenKey)) return;
   seen.add(seenKey);
 
+  visitedFiles.push(resolved.filePath);
   applyClassMembers(resolved.innerClass, resolved.sourceFile, properties, nativeNames);
 }
 
@@ -459,7 +497,25 @@ function resolveMixinDeclaration(
 
   // Not declared here — follow a re-export if present.
   const reExport = findReExportSource(sourceFile, mixinName);
-  if (!reExport) return undefined;
+  if (!reExport) {
+    // Entry-point barrels (and rolled-up entry .d.ts files, e.g.
+    // @videojs/spf/hls → dist/dev/hls.d.ts) import the implementation and
+    // re-export it without a module specifier — follow the import binding.
+    const importBinding = findImportPath(sourceFile, mixinName);
+    if (!importBinding) return undefined;
+    const importedFilePath = resolveModuleToFile(mixinFilePath, importBinding, compilerOptions);
+    if (!importedFilePath || importedFilePath === mixinFilePath) return undefined;
+    const importedVisitKey = `${importedFilePath}::${mixinName}`;
+    if (visited.has(importedVisitKey)) return undefined;
+    visited.add(importedVisitKey);
+    const importedContent = fs.readFileSync(importedFilePath, 'utf-8');
+    const importedSourceFile = ts.createSourceFile(importedFilePath, importedContent, ts.ScriptTarget.Latest, true);
+    const importedInner = findMixinInnerClass(importedSourceFile, mixinName);
+    if (importedInner) {
+      return { name: mixinName, filePath: importedFilePath, sourceFile: importedSourceFile, innerClass: importedInner };
+    }
+    return resolveMixinDeclaration(mixinName, importedSourceFile, importedFilePath, compilerOptions, visited);
+  }
 
   const targetName = reExport.exportedName;
   const targetFilePath = resolveModuleToFile(mixinFilePath, reExport.moduleSpecifier, compilerOptions);
@@ -658,6 +714,185 @@ function getJSDocDescription(node: ts.Node): string | undefined {
     }
   }
   return parts.join('') || undefined;
+}
+
+// ─── Default Value Extraction ────────────────────────────────────────
+
+const fileDefaultsCache = new Map<string, Map<string, string>>();
+
+/**
+ * Collect default values from every `*DefaultProps` object literal exported
+ * by a file, in declaration order. Spread entries are resolved through
+ * imports (e.g. `{ ...hlsMediaDefaultProps, castSrc: '' }`).
+ */
+function collectFileDefaults(filePath: string, compilerOptions: ts.CompilerOptions): Map<string, string> {
+  const cached = fileDefaultsCache.get(filePath);
+  if (cached) return cached;
+
+  const defaults = new Map<string, string>();
+  fileDefaultsCache.set(filePath, defaults);
+  if (!fs.existsSync(filePath)) return defaults;
+
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isVariableStatement(node)) return;
+    for (const decl of node.declarationList.declarations) {
+      if (!ts.isIdentifier(decl.name) || !decl.name.text.endsWith('DefaultProps')) continue;
+      if (!decl.initializer) continue;
+      const init = unwrapExpression(decl.initializer);
+      if (!ts.isObjectLiteralExpression(init)) continue;
+      for (const [name, value] of resolveObjectLiteralEntries(init, sourceFile, filePath, compilerOptions, new Set())) {
+        defaults.set(name, value);
+      }
+    }
+  });
+
+  return defaults;
+}
+
+/**
+ * Flatten an object literal into name → serialized value, resolving spreads
+ * of identifiers declared in the same file or imported from another file.
+ * Entries are processed in source order, so later entries override spreads.
+ */
+function resolveObjectLiteralEntries(
+  objectLiteral: ts.ObjectLiteralExpression,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  compilerOptions: ts.CompilerOptions,
+  visited: Set<string>
+): Map<string, string> {
+  const entries = new Map<string, string>();
+
+  for (const prop of objectLiteral.properties) {
+    if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+      const value = serializeDefaultValue(prop.initializer, sourceFile, filePath, compilerOptions);
+      if (value !== undefined) entries.set(prop.name.text, value);
+      continue;
+    }
+
+    if (ts.isSpreadAssignment(prop) && ts.isIdentifier(prop.expression)) {
+      const resolved = resolveConstObjectLiteral(prop.expression.text, sourceFile, filePath, compilerOptions);
+      if (!resolved) continue;
+      const visitKey = `${resolved.filePath}::${prop.expression.text}`;
+      if (visited.has(visitKey)) continue;
+      visited.add(visitKey);
+      const spreadEntries = resolveObjectLiteralEntries(
+        resolved.objectLiteral,
+        resolved.sourceFile,
+        resolved.filePath,
+        compilerOptions,
+        visited
+      );
+      for (const [name, value] of spreadEntries) {
+        entries.set(name, value);
+      }
+    }
+  }
+
+  return entries;
+}
+
+/**
+ * Resolve an identifier to a `const name = { ... }` object literal declared
+ * in the same file or in an imported file.
+ */
+function resolveConstObjectLiteral(
+  name: string,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  compilerOptions: ts.CompilerOptions
+): { objectLiteral: ts.ObjectLiteralExpression; sourceFile: ts.SourceFile; filePath: string } | undefined {
+  const local = findConstObjectLiteral(sourceFile, name);
+  if (local) return { objectLiteral: local, sourceFile, filePath };
+
+  const importPath = findImportPath(sourceFile, name);
+  if (!importPath) return undefined;
+  const importedFilePath = resolveModuleToFile(filePath, importPath, compilerOptions);
+  if (!importedFilePath || !fs.existsSync(importedFilePath)) return undefined;
+
+  const content = fs.readFileSync(importedFilePath, 'utf-8');
+  const importedSourceFile = ts.createSourceFile(importedFilePath, content, ts.ScriptTarget.Latest, true);
+  const imported = findConstObjectLiteral(importedSourceFile, name);
+  if (!imported) return undefined;
+  return { objectLiteral: imported, sourceFile: importedSourceFile, filePath: importedFilePath };
+}
+
+function findConstObjectLiteral(sourceFile: ts.SourceFile, name: string): ts.ObjectLiteralExpression | undefined {
+  let result: ts.ObjectLiteralExpression | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (result || !ts.isVariableStatement(node)) return;
+    for (const decl of node.declarationList.declarations) {
+      if (!ts.isIdentifier(decl.name) || decl.name.text !== name || !decl.initializer) continue;
+      const init = unwrapExpression(decl.initializer);
+      if (ts.isObjectLiteralExpression(init)) {
+        result = init;
+        return;
+      }
+    }
+  });
+  return result;
+}
+
+// `undefined` is deliberately excluded — "default: undefined" conveys nothing
+// beyond the table's "—" placeholder.
+const LITERAL_IDENTIFIERS = new Set(['NaN', 'Infinity']);
+
+/**
+ * Serialize a default value expression for display in the docs:
+ *   - Literals (strings, numbers, booleans, null, undefined, NaN) verbatim
+ *   - Empty object literals as `{}`, non-empty abbreviated as `{…}`
+ *   - Short array literals verbatim, long ones abbreviated as `[…]`
+ *   - `Obj.MEMBER` resolved to the member's literal in a `... as const` object
+ *   - Anything else is omitted (returns undefined)
+ */
+function serializeDefaultValue(
+  expr: ts.Expression,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  compilerOptions: ts.CompilerOptions
+): string | undefined {
+  const value = unwrapExpression(expr);
+
+  if (
+    ts.isStringLiteral(value) ||
+    ts.isNoSubstitutionTemplateLiteral(value) ||
+    ts.isNumericLiteral(value) ||
+    value.kind === ts.SyntaxKind.TrueKeyword ||
+    value.kind === ts.SyntaxKind.FalseKeyword ||
+    value.kind === ts.SyntaxKind.NullKeyword ||
+    ts.isPrefixUnaryExpression(value)
+  ) {
+    return value.getText(sourceFile);
+  }
+
+  if (ts.isIdentifier(value) && LITERAL_IDENTIFIERS.has(value.text)) {
+    return value.text;
+  }
+
+  if (ts.isObjectLiteralExpression(value)) {
+    return value.properties.length === 0 ? '{}' : '{…}';
+  }
+
+  if (ts.isArrayLiteralExpression(value)) {
+    const text = value.getText(sourceFile);
+    return text.length <= 24 ? text : '[…]';
+  }
+
+  if (ts.isPropertyAccessExpression(value) && ts.isIdentifier(value.expression) && ts.isIdentifier(value.name)) {
+    const resolved = resolveConstObjectLiteral(value.expression.text, sourceFile, filePath, compilerOptions);
+    if (!resolved) return undefined;
+    for (const prop of resolved.objectLiteral.properties) {
+      if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name) && prop.name.text === value.name.text) {
+        return serializeDefaultValue(prop.initializer, resolved.sourceFile, resolved.filePath, compilerOptions);
+      }
+    }
+    return undefined;
+  }
+
+  return undefined;
 }
 
 // ─── Shared Data Extraction ──────────────────────────────────────────
@@ -876,16 +1111,19 @@ function extractEventsFromTypes(filePath: string, interfaceName: string): string
 
 /**
  * Scan a host class (and its mixin/parent chain) for `this.dispatchEvent(new Event('name'))`
- * style calls and return the set of event names dispatched. Forwarding patterns like
- * `new (event.constructor as ...)(event.type, event)` are naturally skipped because their
- * first argument is not a `StringLiteral`.
+ * style calls and `@fires` JSDoc tags, collecting dispatched event names into `events`
+ * and tag descriptions into `fires` (which also acts as an event source — dispatch
+ * sites in helper files the walk never visits can be declared via `@fires` alone).
+ * Forwarding patterns like `new (event.constructor as ...)(event.type, event)` are
+ * naturally skipped because their first argument is not a `StringLiteral`.
  */
 function extractDispatchedEvents(
   filePath: string,
   className: string,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>,
-  events: Set<string>
+  events: Set<string>,
+  fires: Map<string, string>
 ): Set<string> {
   const fileScanKey = `${filePath}::dispatchEvents`;
   if (!seen.has(fileScanKey)) {
@@ -893,6 +1131,7 @@ function extractDispatchedEvents(
     const content = fs.readFileSync(filePath, 'utf-8');
     const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
     scanForDispatchEvents(sourceFile, events);
+    scanForFiresTags(sourceFile, fires);
 
     let classNode: ts.ClassDeclaration | undefined;
     ts.forEachChild(sourceFile, (n) => {
@@ -904,7 +1143,7 @@ function extractDispatchedEvents(
       const extendsClause = classNode.heritageClauses?.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
       if (extendsClause && extendsClause.types.length > 0) {
         const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
-        walkExtendsForDispatchEvents(extendsExpr, sourceFile, filePath, compilerOptions, seen, events);
+        walkExtendsForDispatchEvents(extendsExpr, sourceFile, filePath, compilerOptions, seen, events, fires);
       }
     }
   }
@@ -917,7 +1156,8 @@ function walkExtendsForDispatchEvents(
   filePath: string,
   compilerOptions: ts.CompilerOptions,
   seen: Set<string>,
-  events: Set<string>
+  events: Set<string>,
+  fires: Map<string, string>
 ): void {
   if (ts.isIdentifier(extendsExpr)) {
     const parentName = extendsExpr.text;
@@ -926,17 +1166,17 @@ function walkExtendsForDispatchEvents(
     if (parentImportPath) {
       const parentFilePath = resolveModuleToFile(filePath, parentImportPath, compilerOptions);
       if (parentFilePath) {
-        extractDispatchedEvents(parentFilePath, parentName, compilerOptions, seen, events);
+        extractDispatchedEvents(parentFilePath, parentName, compilerOptions, seen, events, fires);
       }
     } else {
-      extractDispatchedEvents(filePath, parentName, compilerOptions, seen, events);
+      extractDispatchedEvents(filePath, parentName, compilerOptions, seen, events, fires);
     }
     return;
   }
 
   if (ts.isCallExpression(extendsExpr)) {
     const { mixins, base } = unwindMixinChain(extendsExpr);
-    walkExtendsForDispatchEvents(base, sourceFile, filePath, compilerOptions, seen, events);
+    walkExtendsForDispatchEvents(base, sourceFile, filePath, compilerOptions, seen, events, fires);
     for (const mixin of mixins) {
       const importPath = findImportPath(sourceFile, mixin.name);
       let mixinFilePath: string;
@@ -947,14 +1187,57 @@ function walkExtendsForDispatchEvents(
       } else {
         mixinFilePath = filePath;
       }
+      // Follow barrel re-exports so the actual mixin declaration file is
+      // scanned (mirrors resolveMixinDeclaration's re-export handling).
+      const declaration = resolveMixinDeclaration(mixin.name, sourceFile, filePath, compilerOptions, new Set());
+      if (declaration) mixinFilePath = declaration.filePath;
       const key = `${mixinFilePath}::dispatchEvents`;
       if (seen.has(key)) continue;
       seen.add(key);
       const content = fs.readFileSync(mixinFilePath, 'utf-8');
       const mixinSourceFile = ts.createSourceFile(mixinFilePath, content, ts.ScriptTarget.Latest, true);
       scanForDispatchEvents(mixinSourceFile, events);
+      scanForFiresTags(mixinSourceFile, fires);
     }
   }
+}
+
+/**
+ * Collect `@fires name - description` JSDoc tags from a file. The tag may sit
+ * on the dispatching class, a mixin function, or the const holding a mixin
+ * arrow function.
+ */
+function scanForFiresTags(sourceFile: ts.SourceFile, fires: Map<string, string>): void {
+  function visit(node: ts.Node): void {
+    const jsDocNodes = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
+    if (jsDocNodes) {
+      for (const doc of jsDocNodes) {
+        for (const tag of doc.tags ?? []) {
+          if (tag.tagName.text !== 'fires') continue;
+          const parsed = parseFiresTagComment(tag);
+          if (parsed && !fires.has(parsed.name)) {
+            fires.set(parsed.name, parsed.description);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+}
+
+function parseFiresTagComment(tag: ts.JSDocTag): { name: string; description: string } | undefined {
+  let comment = '';
+  if (typeof tag.comment === 'string') {
+    comment = tag.comment;
+  } else if (tag.comment) {
+    comment = tag.comment.map((part) => ('text' in part ? part.text : '')).join('');
+  }
+  const match = comment.trim().match(/^(\S+)\s*(?:-\s*)?(.*)$/s);
+  if (!match) return undefined;
+  const [, name, description] = match;
+  if (!name) return undefined;
+  return { name, description: description?.trim() ?? '' };
 }
 
 function scanForDispatchEvents(sourceFile: ts.SourceFile, events: Set<string>): void {
@@ -1080,19 +1363,30 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
     const native = source.mediaType === 'video' ? videoEvents : audioEvents;
 
+    const fires = new Map<string, string>();
     const dispatched = extractDispatchedEvents(
       source.hostFilePath,
       source.hostClassName,
       compilerOptions,
       new Set(),
-      new Set()
+      new Set(),
+      fires
     );
     const nativeSet = new Set(native);
-    const elementSpecific = [...dispatched].filter((e) => !nativeSet.has(e)).sort();
+    const elementSpecific: MediaEventDef[] = [...new Set([...dispatched, ...fires.keys()])]
+      .filter((e) => !nativeSet.has(e))
+      .sort()
+      .map((name) => {
+        const def: MediaEventDef = { name };
+        const description = fires.get(name);
+        if (description) def.description = description;
+        return def;
+      });
 
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
+      mediaType: source.mediaType,
       hostProperties,
       nativeAttributes,
       events: { native, elementSpecific },

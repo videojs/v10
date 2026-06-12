@@ -12,6 +12,13 @@ export class HTMLVideoElementHost {
   destroy(): void {}
 }
 
+// Stub — audio counterpart, also a prototype-chain stop.
+export class HTMLAudioElementHost {
+  attach(_target: EventTarget): void {}
+  detach(): void {}
+  destroy(): void {}
+}
+
 export class SimpleHost extends HTMLVideoElementHost {
   #src: string = '';
   #engine: object = {};
