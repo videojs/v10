@@ -209,7 +209,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
   /**
    * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
    * excluded after a failed fetch trips it. Defaults:
-   * `DEFAULT_FAILOVER_MONITOR_CONFIG` (30s). Only meaningful for redundant-stream
+   * `DEFAULT_FAILOVER_MONITOR_CONFIG` (300s). Only meaningful for redundant-stream
    * sources.
    */
   failover?: Partial<FailoverMonitorConfig>;
