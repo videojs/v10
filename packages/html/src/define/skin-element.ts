@@ -6,7 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
-import rootStyles from './base.css?inline';
+import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 
 const STYLES_ID = '__media-styles';
@@ -25,7 +25,7 @@ export class SkinElement extends ReactiveElement {
   constructor() {
     super();
 
-    ensureGlobalStyle(STYLES_ID, rootStyles);
+    ensureGlobalStyle(STYLES_ID, globalStyles);
 
     if (!this.shadowRoot) {
       const ctor = this.constructor as typeof SkinElement;

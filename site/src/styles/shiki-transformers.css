@@ -6,8 +6,8 @@
   .astro-code .line.focused {
     position: relative;
     width: calc(100% + var(--spacing) * 12);
-    margin-inline: calc(var(--spacing) * -6);
     padding-inline: calc(var(--spacing) * 6);
+    margin-inline: calc(var(--spacing) * -6);
   }
 
   /* Diff: added lines */
@@ -18,19 +18,19 @@
   .astro-code .line.diff.add::before,
   .astro-code .line.diff.remove::before {
     position: absolute;
-    font-weight: bold;
-    left: 0;
     top: 0;
     bottom: 0;
-    width: calc(var(--spacing) * 6);
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: calc(var(--spacing) * 6);
+    font-weight: bold;
   }
 
   .astro-code .line.diff.add::before {
-    content: "+";
     color: rgba(184, 187, 31, 1);
+    content: "+";
   }
 
   /* Diff: removed lines */
@@ -39,15 +39,15 @@
   }
 
   .astro-code .line.diff.remove::before {
-    content: "-";
     color: rgba(251, 73, 52, 1);
+    content: "-";
   }
 
   /* Word highlight */
   .astro-code .highlighted-word {
+    padding-inline: 0.2em;
     background-color: var(--color-soot);
     border-bottom: 1px solid var(--color-manila-dark);
-    padding-inline: 0.2em;
   }
 
   :where(.dark, .dark *) .astro-code .highlighted-word {

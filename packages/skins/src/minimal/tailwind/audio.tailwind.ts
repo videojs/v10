@@ -3,6 +3,7 @@ import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
+import { slider as baseSlider } from './components/slider';
 
 /* ==========================================================================
    Root
@@ -23,7 +24,12 @@ export const root = cn(
   '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-tooltip-text-color:currentColor]',
   '[--media-tooltip-side-offset:0.75rem]',
+  '[--media-tooltip-boundary-offset:0.75rem]',
+  '[--media-popover-background-color:oklch(1_0_0/0.1)]',
+  '[--media-popover-border-color:oklch(0_0_0/0.05)]',
+  '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-popover-side-offset:0.75rem]',
+  '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -45,7 +51,7 @@ export const controls = cn(
   // Layout
   'p-1.5 gap-2',
   'rounded-(--media-border-radius,1rem)',
-  'peer-data-open/error:[&_*]:invisible',
+  'peer-data-open/error:**:invisible',
   // Appearance
   'text-(--media-controls-text-color)',
   // Border
@@ -63,6 +69,15 @@ export const popup = {
     'p-0 pl-16',
     'bg-transparent bg-gradient-to-l from-(--media-controls-background-color) from-80% to-transparent'
   ),
+};
+
+/* ==========================================================================
+   Sliders
+   ========================================================================== */
+
+export const slider = {
+  ...baseSlider,
+  value: cn(baseSlider.value, 'bottom-10'),
 };
 
 /* ==========================================================================
@@ -93,6 +108,7 @@ export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { menu } from './components/menu';
+export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
-export { slider } from './components/slider';
 export { time } from './components/time';

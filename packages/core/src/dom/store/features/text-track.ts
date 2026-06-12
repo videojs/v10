@@ -1,9 +1,13 @@
-import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
+import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
+
+function getTrackId(track: TextTrackLike, index: number): string {
+  return track.id || `track:${index}:${track.kind}:${track.language}:${track.label}`;
+}
 
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
@@ -17,10 +21,7 @@ export const textTrackFeature = definePlayerFeature({
       const { media } = target();
       if (!isMediaTextTrackCapable(media)) return false;
 
-      const subtitlesTracks = getTextTrackList(
-        media,
-        (track) => track.kind === 'subtitles' || track.kind === 'captions'
-      );
+      const subtitlesTracks = getTextTrackList(media, isCaptionOrSubtitleTrack);
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track) => track.mode === 'showing');
@@ -31,6 +32,30 @@ export const textTrackFeature = definePlayerFeature({
       }
 
       return nextShowing;
+    },
+    selectSubtitlesTrack(value: string) {
+      const { media } = target();
+      if (!isMediaTextTrackCapable(media)) return;
+
+      const subtitlesTracks = Array.from(media.textTracks)
+        .map((track, index) => ({ index, track }))
+        .filter(({ track }) => isCaptionOrSubtitleTrack(track));
+      if (!subtitlesTracks.length) return;
+
+      if (value === 'off') {
+        for (const { track } of subtitlesTracks) {
+          track.mode = 'disabled';
+        }
+        return;
+      }
+
+      const active = subtitlesTracks.find(({ index, track }) => getTrackId(track, index) === value);
+      const track = active?.track;
+      if (!track) return;
+
+      for (const { track: candidate } of subtitlesTracks) {
+        candidate.mode = candidate === track ? 'showing' : 'disabled';
+      }
     },
   }),
 
@@ -56,13 +81,14 @@ export const textTrackFeature = definePlayerFeature({
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
 
         textTrackList.push({
+          id: getTrackId(track, i),
           kind: track.kind as TextTrackKind,
           label: track.label,
           language: track.language,
           mode: track.mode,
         });
 
-        if ((track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing') {
+        if (isCaptionOrSubtitleTrack(track) && track.mode === 'showing') {
           subtitlesShowing = true;
         }
       }

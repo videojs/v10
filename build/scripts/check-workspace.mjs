@@ -240,7 +240,33 @@ function checkReleasePleaseConfig() {
   return { ok: warnings.length === 0, warnings };
 }
 
-// ── Check 6: Define imports ──────────────────────────────────────────────────
+// ── Check 6: Bundled docs publishing ─────────────────────────────────────────
+
+/**
+ * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs
+ * subtree inside their tarballs (see `site/scripts/copy-package-docs.js`).
+ * Both wires (the `files[]` entry and the `prepack` script) must stay in sync
+ * — without one, publishing silently drops the docs.
+ */
+function checkBundledDocs() {
+  const warnings = [];
+
+  for (const dir of ['html', 'react']) {
+    const pkg = readPackageJson(dir);
+    if (!pkg.files?.includes('docs')) {
+      warnings.push(`${pkg.name}: missing "docs" entry in "files" — bundled docs would not ship`);
+    }
+    const prepack = pkg.scripts?.prepack;
+    const expected = `node --import tsx ../../site/scripts/copy-package-docs.ts ${dir}`;
+    if (prepack !== expected) {
+      warnings.push(`${pkg.name}: prepack script should be \`${expected}\` (got: ${prepack ?? 'missing'})`);
+    }
+  }
+
+  return { ok: warnings.length === 0, warnings };
+}
+
+// ── Check 7: Define imports ──────────────────────────────────────────────────
 
 /**
  * Bare side-effect imports from relative paths in the define directory cause
@@ -306,6 +332,7 @@ const checks = [
   { name: 'Root tsconfig references', fn: checkTsconfigReferences },
   { name: 'Package metadata', fn: checkPackageMetadata },
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
+  { name: 'Bundled docs publishing', fn: checkBundledDocs },
   { name: 'Define imports', fn: checkDefineImports },
 ];
 

@@ -8,15 +8,16 @@ import '@app/styles.css';
 //   autoplay=true        Start with autoplay enabled
 //   preload=auto|metadata|none  Initial preload mode
 
-import { effect } from '@videojs/spf';
-import type { HlsPlaybackEngineState } from '@videojs/spf/playback-engine';
-import { createHlsPlaybackEngine } from '@videojs/spf/playback-engine';
+import { effect, snapshot } from '@videojs/spf';
+import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
+import { createSimpleHlsEngine } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
+const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
@@ -58,8 +59,12 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
-function getVideoTracks(state: HlsPlaybackEngineState) {
-  return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
+  return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+}
+
+function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+  return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
@@ -77,7 +82,7 @@ function updateShareUrl() {
 
 function updateNowPlayingQuality() {
   if (!engine) return;
-  const segments = engine.owners.get().videoBufferActor?.snapshot.get().context.segments ?? [];
+  const segments = engine.context.videoBufferActor.get()?.snapshot.get().context.segments ?? [];
   const t = video.currentTime;
   const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
   if (current?.trackBandwidth) {
@@ -100,7 +105,7 @@ function correctedEstimate(estimate: number, totalWeight: number, halfLife: numb
 
 function updateThroughputDisplay() {
   if (!engine) return;
-  const bs = engine.state.get().bandwidthState;
+  const bs = engine.state.bandwidthState.get();
   if (!bs || bs.bytesSampled === 0) {
     throughputDiv.textContent = '📶 Throughput: no samples yet';
     throughputDiv.className = '';
@@ -119,62 +124,288 @@ function updateThroughputDisplay() {
   throughputDiv.className = 'has-data';
 }
 
+// Signature of the currently-rendered video rendition set. Lets the picker
+// rebuild its buttons only when the set actually changes — selection and ABR/
+// manual changes update existing buttons in place (see renderRenditionPicker),
+// so a click or hover isn't interrupted by a full DOM teardown on every ABR
+// switch (selectedVideoTrackId changes frequently during playback).
+let videoTrackSetKey = '';
+
 function renderRenditionPicker() {
-  if (!engine) return;
-  const state = engine.state.get();
-  const tracks = getVideoTracks(state);
-  const isManual = state.abrDisabled === true;
+  if (!engine || !signals) return;
+  const presentation = engine.state.presentation.get();
+  const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
+  const userFilter = engine.state.userVideoTrackSelection.get();
+  const tracks = getVideoTracks(presentation);
 
   if (tracks.length === 0) {
-    renditionButtonsDiv.textContent = state.presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    renditionButtonsDiv.textContent = presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    videoTrackSetKey = '';
     return;
   }
 
+  // Selection pins by bitrate + resolution (see the click handler), not track
+  // id, so redundant-stream renditions duplicated across CDNs share one
+  // selection identity and are NOT independently selectable. Collapse to one
+  // button per identity so the UI matches what selection actually guarantees.
+  const groups = getVideoSelectionGroups(tracks);
+  const setKey = groups.map((group) => group.key).join('|');
+  if (setKey !== videoTrackSetKey) {
+    videoTrackSetKey = setKey;
+    buildVideoTrackButtons(groups);
+  }
+  updateVideoTrackSelection(tracks, selectedVideoTrackId, userFilter);
+}
+
+// One selectable video identity: a bitrate + resolution. `key` is exactly what
+// the click handler pins on (as a partial-track filter), so highlighting and
+// dedupe share one notion of identity.
+interface VideoSelectionGroup {
+  key: string;
+  label: string;
+  filter: { bandwidth: number; width?: number; height?: number };
+  members: string[];
+}
+
+/** Stable bitrate+resolution identity for a video track (matches the pin filter). */
+function videoSelectionKey(track: ReturnType<typeof getVideoTracks>[number]): string {
+  const width = 'width' in track ? track.width : undefined;
+  const height = 'height' in track ? track.height : undefined;
+  return `${track.bandwidth}|${width ?? ''}×${height ?? ''}`;
+}
+
+/** Collapse video tracks to one entry per selection identity (bitrate + resolution). */
+function getVideoSelectionGroups(tracks: ReturnType<typeof getVideoTracks>): VideoSelectionGroup[] {
+  const groups = new Map<string, VideoSelectionGroup>();
+  for (const track of tracks) {
+    const key = videoSelectionKey(track);
+    let group = groups.get(key);
+    if (!group) {
+      const width = 'width' in track ? track.width : undefined;
+      const height = 'height' in track ? track.height : undefined;
+      const res = width && height ? `${width}×${height} @ ` : '';
+      const filter: VideoSelectionGroup['filter'] = { bandwidth: track.bandwidth };
+      if (width) filter.width = width;
+      if (height) filter.height = height;
+      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}`, filter, members: [] };
+      groups.set(key, group);
+    }
+    // Member ids (one per CDN for redundant streams) are surfaced in the
+    // tooltip so the collapsed renditions are still inspectable.
+    group.members.push(track.id);
+  }
+  return [...groups.values()];
+}
+
+/** (Re)build the static button list — one per selection group, tagged with its key. */
+function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
   renditionButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
+  statusRow.id = 'video-status-row';
   statusRow.className = 'abr-status';
-  const modeLabel = document.createElement('span');
-  modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
-  modeLabel.textContent = isManual ? '🔒 Manual' : '⟳ ABR';
-  statusRow.appendChild(modeLabel);
-  if (isManual) {
-    const enableBtn = document.createElement('button');
-    enableBtn.type = 'button';
-    enableBtn.className = 'enable-abr-btn';
-    enableBtn.textContent = 'Enable ABR';
-    enableBtn.addEventListener('click', () => {
-      log('ABR re-enabled', 'success');
-      engine.state.set({ ...engine.state.get(), abrDisabled: false });
-    });
-    statusRow.appendChild(enableBtn);
-  }
   renditionButtonsDiv.appendChild(statusRow);
 
-  for (const track of tracks) {
-    const isSelected = track.id === state.selectedVideoTrackId;
+  for (const group of groups) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
-    const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} @ ` : '';
-    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
-    btn.textContent = `${res}${formatBandwidth(track.bandwidth)}${badge}`;
-    btn.title = track.id;
+    btn.dataset.selectionKey = group.key;
+    // Base label minus the selection badge; the badge is toggled in place.
+    btn.dataset.label = group.label;
+    btn.title =
+      group.members.length > 1
+        ? `${group.members.length} rendition(s) across CDNs: ${group.members.join(', ')}`
+        : (group.members[0] ?? group.key);
     btn.addEventListener('click', () => {
-      log(`Manual rendition select: ${formatBandwidth(track.bandwidth)} (ABR disabled)`, 'warning');
-      engine.state.set({ ...engine.state.get(), selectedVideoTrackId: track.id, abrDisabled: true });
+      log(`Manual rendition select: ${JSON.stringify(group.filter)} (ABR disabled)`, 'warning');
+      signals.state.userVideoTrackSelection.set(group.filter);
     });
     renditionButtonsDiv.appendChild(btn);
   }
 }
 
-function renderResolutionStatus() {
-  if (!engine) return;
-  const state = engine.state.get();
-  const tracks = getVideoTracks(state);
+/** Update the status row and per-button selected state without tearing down. */
+function updateVideoTrackSelection(
+  tracks: ReturnType<typeof getVideoTracks>,
+  selectedVideoTrackId: string | undefined,
+  userFilter: SimpleHlsEngineState['userVideoTrackSelection']
+) {
+  const isManual = userFilter !== undefined;
+
+  const statusRow = document.getElementById('video-status-row');
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
+    modeLabel.textContent = isManual ? `🔒 Manual: ${JSON.stringify(userFilter)}` : '⟳ ABR';
+    statusRow.appendChild(modeLabel);
+    if (isManual) {
+      const enableBtn = document.createElement('button');
+      enableBtn.type = 'button';
+      enableBtn.className = 'enable-abr-btn';
+      enableBtn.textContent = 'Enable ABR';
+      enableBtn.addEventListener('click', () => {
+        log('ABR re-enabled', 'success');
+        signals.state.userVideoTrackSelection.set(undefined);
+      });
+      statusRow.appendChild(enableBtn);
+    }
+  }
+
+  // The selected track belongs to a group keyed by its bitrate + resolution;
+  // highlight that group's button.
+  const selectedTrack = tracks.find((track) => track.id === selectedVideoTrackId);
+  const selectedKey = selectedTrack ? videoSelectionKey(selectedTrack) : undefined;
+  for (const btn of renditionButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
+    const isSelected = btn.dataset.selectionKey === selectedKey;
+    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
+    const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
+    btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
+  }
+}
+
+// Signature of the currently-rendered audio track set. Lets the picker rebuild
+// its buttons only when the track set actually changes — selection and pin
+// changes update existing buttons in place (see renderAudioTrackPicker) so a
+// click or hover isn't interrupted by a full DOM teardown.
+let audioTrackSetKey = '';
+
+function renderAudioTrackPicker() {
+  if (!engine || !signals) return;
+  const presentation = engine.state.presentation.get();
+  const selectedAudioTrackId = engine.state.selectedAudioTrackId.get();
+  const userFilter = engine.state.userAudioTrackSelection.get();
+  const tracks = getAudioTracks(presentation);
 
   if (tracks.length === 0) {
-    resolutionListDiv.textContent = state.presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    audioTrackButtonsDiv.textContent = presentation ? 'No audio tracks found' : 'Waiting for presentation…';
+    audioTrackSetKey = '';
+    return;
+  }
+
+  // The picker pins by language (see the click handler / track-switching
+  // behavior), so multiple same-language renditions are NOT independently
+  // selectable — clicking the "med" variant still just pins the language.
+  // Collapse to one button per selection identity so the UI matches what
+  // selection actually guarantees.
+  const groups = getAudioSelectionGroups(tracks);
+  const setKey = groups.map((group) => group.key).join('|');
+  if (setKey !== audioTrackSetKey) {
+    audioTrackSetKey = setKey;
+    buildAudioTrackButtons(groups);
+  }
+  updateAudioTrackSelection(tracks, selectedAudioTrackId, userFilter);
+}
+
+// One selectable audio identity: a language (when present) or a single track id.
+// `key` is exactly what the click handler pins on, so highlighting and dedupe
+// share one notion of identity.
+interface AudioSelectionGroup {
+  key: string;
+  byLanguage: boolean;
+  language?: string | undefined;
+  label: string;
+  members: string[];
+}
+
+/** Collapse audio tracks to one entry per selection identity (language, else id). */
+function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): AudioSelectionGroup[] {
+  const groups = new Map<string, AudioSelectionGroup>();
+  for (const track of tracks) {
+    const language = track.language || undefined;
+    const key = language ?? track.id;
+    let group = groups.get(key);
+    if (!group) {
+      const name = 'name' in track && track.name ? track.name : track.id;
+      group = { key, byLanguage: !!language, language, label: `${language ?? '—'} · ${name}`, members: [] };
+      groups.set(key, group);
+    }
+    // Member labels (bitrate, else groupId tier) are surfaced in the tooltip so
+    // the collapsed renditions are still inspectable.
+    const groupId = 'groupId' in track ? track.groupId : undefined;
+    const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
+    group.members.push(tier ?? track.id);
+  }
+  return [...groups.values()];
+}
+
+/** (Re)build the static button list — one per selection group, tagged with its key. */
+function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
+  audioTrackButtonsDiv.innerHTML = '';
+
+  const statusRow = document.createElement('div');
+  statusRow.id = 'audio-status-row';
+  statusRow.className = 'audio-status';
+  audioTrackButtonsDiv.appendChild(statusRow);
+
+  for (const group of groups) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.selectionKey = group.key;
+    // Base label minus the selection badge; the badge is toggled in place.
+    btn.dataset.label = group.label;
+    btn.title = group.byLanguage
+      ? `language: ${group.language} · ${group.members.length} rendition(s): ${group.members.join(', ')}`
+      : `id: ${group.key}`;
+    btn.addEventListener('click', () => {
+      const filter = group.byLanguage ? { language: group.language } : { id: group.key };
+      log(
+        `Audio track filter: ${JSON.stringify(filter)} — mid-stream flush will fire if language differs from buffered`,
+        'warning'
+      );
+      signals.state.userAudioTrackSelection.set(filter);
+    });
+    audioTrackButtonsDiv.appendChild(btn);
+  }
+}
+
+/** Update the status row and per-button selected state without tearing down. */
+function updateAudioTrackSelection(
+  tracks: ReturnType<typeof getAudioTracks>,
+  selectedAudioTrackId: string | undefined,
+  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+) {
+  const isPinned = userFilter !== undefined;
+
+  const statusRow = document.getElementById('audio-status-row');
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
+    modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
+    statusRow.appendChild(modeLabel);
+    if (isPinned) {
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'clear-filter-btn';
+      clearBtn.textContent = 'Clear filter';
+      clearBtn.addEventListener('click', () => {
+        log('Cleared userAudioTrackSelection (back to default picker)', 'success');
+        signals!.state.userAudioTrackSelection.set(undefined);
+      });
+      statusRow.appendChild(clearBtn);
+    }
+  }
+
+  // The selected track belongs to a group keyed by its language (else its id);
+  // highlight that group's button.
+  const selectedTrack = tracks.find((track) => track.id === selectedAudioTrackId);
+  const selectedKey = selectedTrack ? selectedTrack.language || selectedTrack.id : undefined;
+  for (const btn of audioTrackButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
+    const isSelected = btn.dataset.selectionKey === selectedKey;
+    btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
+    const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+    btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
+  }
+}
+
+function renderResolutionStatus() {
+  if (!engine) return;
+  const presentation = engine.state.presentation.get();
+  const tracks = getVideoTracks(presentation);
+
+  if (tracks.length === 0) {
+    resolutionListDiv.textContent = presentation ? 'No video tracks found' : 'Waiting for presentation…';
     return;
   }
 
@@ -195,22 +426,22 @@ function inspectState() {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
     return;
   }
-  const state = engine.state.get();
-  const owners = engine.owners.get();
+  const state = snapshot(engine.state);
+  const ctx = snapshot(engine.context);
 
-  const videoBufferRanges = owners.videoBuffer
+  const videoBufferRanges = ctx.videoBuffer
     ? Array.from(
-        { length: owners.videoBuffer.buffered.length },
+        { length: ctx.videoBuffer.buffered.length },
         (_, i) =>
-          `Range ${i}: ${owners.videoBuffer!.buffered.start(i).toFixed(2)}s - ${owners.videoBuffer!.buffered.end(i).toFixed(2)}s`
+          `Range ${i}: ${ctx.videoBuffer!.buffered.start(i).toFixed(2)}s - ${ctx.videoBuffer!.buffered.end(i).toFixed(2)}s`
       ).join('\n  ')
     : 'N/A';
 
-  const audioBufferRanges = owners.audioBuffer
+  const audioBufferRanges = ctx.audioBuffer
     ? Array.from(
-        { length: owners.audioBuffer.buffered.length },
+        { length: ctx.audioBuffer.buffered.length },
         (_, i) =>
-          `Range ${i}: ${owners.audioBuffer!.buffered.start(i).toFixed(2)}s - ${owners.audioBuffer!.buffered.end(i).toFixed(2)}s`
+          `Range ${i}: ${ctx.audioBuffer!.buffered.start(i).toFixed(2)}s - ${ctx.audioBuffer!.buffered.end(i).toFixed(2)}s`
       ).join('\n  ')
     : 'N/A';
 
@@ -220,36 +451,36 @@ function inspectState() {
     <h3>Playback State</h3>
     <pre>${JSON.stringify(state, null, 2)}</pre>
 
-    <h3>Owners (SourceBuffers)</h3>
-    <div>Video Buffer: ${owners.videoBuffer ? '✓ Created' : '✗ Not created'}</div>
-    <div>Audio Buffer: ${owners.audioBuffer ? '✓ Created' : '✗ Not created'}</div>
+    <h3>Context (SourceBuffers)</h3>
+    <div>Video Buffer: ${ctx.videoBuffer ? '✓ Created' : '✗ Not created'}</div>
+    <div>Audio Buffer: ${ctx.audioBuffer ? '✓ Created' : '✗ Not created'}</div>
 
     ${
-      owners.videoBuffer
+      ctx.videoBuffer
         ? `
       <h4>Video Buffer State</h4>
-      <div>Buffered ranges: ${owners.videoBuffer.buffered.length}</div>
+      <div>Buffered ranges: ${ctx.videoBuffer.buffered.length}</div>
       <pre>${videoBufferRanges}</pre>
     `
         : ''
     }
 
     ${
-      owners.audioBuffer
+      ctx.audioBuffer
         ? `
       <h4>Audio Buffer State</h4>
-      <div>Buffered ranges: ${owners.audioBuffer.buffered.length}</div>
+      <div>Buffered ranges: ${ctx.audioBuffer.buffered.length}</div>
       <pre>${audioBufferRanges}</pre>
     `
         : ''
     }
 
     <h3>MediaSource State</h3>
-    <div>readyState: ${owners.mediaSource?.readyState ?? 'N/A'}</div>
+    <div>readyState: ${ctx.mediaSource?.readyState ?? 'N/A'}</div>
 
     <h3>Buffer Model (actor context)</h3>
-    <div>Video segments loaded: ${owners.videoBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
-    <div>Audio segments loaded: ${owners.audioBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
+    <div>Video segments loaded: ${ctx.videoBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
+    <div>Audio segments loaded: ${ctx.audioBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
 
     <h3>Video Element State</h3>
     <div>readyState: ${video.readyState}</div>
@@ -265,21 +496,28 @@ function inspectState() {
 log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
-let engine: ReturnType<typeof createHlsPlaybackEngine>;
+let engine: ReturnType<typeof createSimpleHlsEngine>;
+let signals: SimpleHlsEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createHlsPlaybackEngine({ initialBandwidth: 1_000_000 });
+  engine = createSimpleHlsEngine({
+    initialBandwidth: 1_000_000,
+    onSignalsReady: (refs) => {
+      signals = refs;
+    },
+  });
   (window as any).engine = engine;
-  (window as any).state = () => engine.state.get();
-  (window as any).owners = () => engine.owners.get();
+  (window as any).signals = signals;
+  (window as any).state = () => snapshot(engine.state);
+  (window as any).context = () => snapshot(engine.context);
 
   // ── Reactive effects ───────────────────────────────────────────────────────
 
-  // prev/prevOwners track one-time transitions for logging purposes.
+  // prev/prevContext track one-time transitions for logging purposes.
   // They are reset on each startEngine call so a new source logs correctly.
   const prev = {
     hasPresentation: false,
@@ -287,11 +525,11 @@ function startEngine(src: string) {
     selectedAudioTrackId: undefined as string | undefined,
     selectedTextTrackId: undefined as string | undefined,
   };
-  const prevOwners = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
+  const prevContext = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
 
   // State logger + auto-select first text track
   const stopStateLogger = effect(() => {
-    const state = engine.state.get();
+    const state = snapshot(engine.state);
 
     if (state.presentation && !prev.hasPresentation) {
       log('Presentation resolved');
@@ -304,12 +542,14 @@ function startEngine(src: string) {
       const firstText = textSet?.switchingSets?.[0]?.tracks?.[0];
       if (firstText) {
         log(`Auto-selecting text track: ${firstText.id}`);
-        engine.state.set({ ...engine.state.get(), selectedTextTrackId: firstText.id });
+        // TODO(stage-d): selectedTextTrackId is the deferred reconciler case —
+        // direct write into composition state until intent/state split lands.
+        engine.state.selectedTextTrackId.set(firstText.id);
       }
     }
 
     if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
-      const mode = state.abrDisabled ? '(manual)' : '(ABR)';
+      const mode = state.userVideoTrackSelection ? '(manual)' : '(ABR)';
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
       prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
@@ -323,28 +563,31 @@ function startEngine(src: string) {
     }
   });
 
-  // Throughput + rendition picker + resolution status — re-render on any state change
-  const stopStateUI = effect(() => {
-    engine.state.get(); // track all state changes
-    updateThroughputDisplay();
-    renderRenditionPicker();
-    renderResolutionStatus();
-  });
+  // One effect per UI region, each auto-tracking only the signals its renderer
+  // reads. The previous single effect snapshotted *all* of engine.state, so
+  // high-frequency fields (currentTime, bandwidthState) re-fired every renderer
+  // many times a second — and the picker's full innerHTML rebuild interrupted
+  // clicks/hover. Now the audio picker re-runs only on presentation /
+  // selectedAudioTrackId / userAudioTrackSelection changes.
+  const stopThroughputUI = effect(() => updateThroughputDisplay());
+  const stopRenditionUI = effect(() => renderRenditionPicker());
+  const stopAudioPickerUI = effect(() => renderAudioTrackPicker());
+  const stopResolutionUI = effect(() => renderResolutionStatus());
 
-  // Owners logger
-  const stopOwnersLogger = effect(() => {
-    const owners = engine.owners.get();
+  // Context logger
+  const stopContextLogger = effect(() => {
+    const ctx = snapshot(engine.context);
 
-    if (owners.mediaSource && !prevOwners.hasMediaSource) {
-      log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
-      prevOwners.hasMediaSource = true;
+    if (ctx.mediaSource && !prevContext.hasMediaSource) {
+      log(`MediaSource created: ${ctx.mediaSource.readyState}`, 'success');
+      prevContext.hasMediaSource = true;
     }
-    if (owners.videoBuffer && !prevOwners.hasVideoBuffer) {
+    if (ctx.videoBuffer && !prevContext.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
-      prevOwners.hasVideoBuffer = true;
+      prevContext.hasVideoBuffer = true;
 
-      const origRemove = owners.videoBuffer.remove.bind(owners.videoBuffer);
-      owners.videoBuffer.remove = (start: number, end: number) => {
+      const origRemove = ctx.videoBuffer.remove.bind(ctx.videoBuffer);
+      ctx.videoBuffer.remove = (start: number, end: number) => {
         log(
           `📹 Video SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
           'warning'
@@ -352,8 +595,8 @@ function startEngine(src: string) {
         return origRemove(start, end);
       };
 
-      owners.videoBuffer.addEventListener('updateend', () => {
-        const buf = engine.owners.get().videoBuffer;
+      ctx.videoBuffer.addEventListener('updateend', () => {
+        const buf = engine.context.videoBuffer.get();
         if (!buf) return;
         const ranges: string[] = [];
         for (let i = 0; i < buf.buffered.length; i++) {
@@ -362,12 +605,12 @@ function startEngine(src: string) {
         log(`📹 Video buffered: ${ranges.join(' ') || '(empty)'}`, 'info');
       });
     }
-    if (owners.audioBuffer && !prevOwners.hasAudioBuffer) {
+    if (ctx.audioBuffer && !prevContext.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
-      prevOwners.hasAudioBuffer = true;
+      prevContext.hasAudioBuffer = true;
 
-      const origRemove = owners.audioBuffer.remove.bind(owners.audioBuffer);
-      owners.audioBuffer.remove = (start: number, end: number) => {
+      const origRemove = ctx.audioBuffer.remove.bind(ctx.audioBuffer);
+      ctx.audioBuffer.remove = (start: number, end: number) => {
         log(
           `🔊 Audio SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
           'warning'
@@ -375,8 +618,8 @@ function startEngine(src: string) {
         return origRemove(start, end);
       };
 
-      owners.audioBuffer.addEventListener('updateend', () => {
-        const buf = engine.owners.get().audioBuffer;
+      ctx.audioBuffer.addEventListener('updateend', () => {
+        const buf = engine.context.audioBuffer.get();
         if (!buf) return;
         const ranges: string[] = [];
         for (let i = 0; i < buf.buffered.length; i++) {
@@ -389,20 +632,24 @@ function startEngine(src: string) {
 
   cleanupEffects = () => {
     stopStateLogger();
-    stopStateUI();
-    stopOwnersLogger();
+    stopThroughputUI();
+    stopRenditionUI();
+    stopAudioPickerUI();
+    stopResolutionUI();
+    stopContextLogger();
   };
 
   log('✓ Engine created', 'success');
-  log('Exposed as window.engine / window.state() / window.owners()');
+  log('Exposed as window.engine / window.signals / window.state() / window.context()');
   log('✓ Reactive effects active', 'success');
 
   // ── Wire media element ──────────────────────────────────────────────────────
-  // Set preload on the element BEFORE wiring owners so syncPreloadAttribute
-  // reads the correct value rather than the hardcoded "none" from the HTML.
+  // Set preload on the element BEFORE wiring context so syncPreload's read
+  // effect picks up the user-selected value rather than the hardcoded "none"
+  // from the HTML.
   video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  engine.owners.set({ mediaElement: video });
-  engine.state.set({ ...engine.state.get(), presentation: { url: src } });
+  signals.context.mediaElement.set(video);
+  signals.state.presentation.set({ url: src });
 
   log('✓ Orchestration started', 'success');
 
@@ -459,7 +706,7 @@ autoplayToggle.addEventListener('change', () => {
 
 preloadSelect.addEventListener('change', () => {
   const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  engine.state.set({ ...engine.state.get(), preload: value });
+  signals.state.preload.set(value);
   log(`Preload: ${value}`);
   updateShareUrl();
 });

@@ -1,12 +1,4 @@
 import {
-  PauseIcon,
-  PlayIcon,
-  RestartIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeOffIcon,
-} from '@videojs/icons/react/minimal';
-import {
   button,
   buttonGroup,
   controls,
@@ -19,11 +11,15 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
+import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { MinimalLiveAudioSkinProps } from './minimal-skin';
@@ -85,7 +81,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.volume)}>
         <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
@@ -123,7 +119,7 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top">
+            <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
                   <PlayButton className={iconState.play.button} render={<Button />}>
@@ -133,8 +129,10 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)} />
             </Tooltip.Root>
+
+            <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
           <div className="grow" aria-hidden="true" />
@@ -144,6 +142,16 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
     </Container>
   );
 }

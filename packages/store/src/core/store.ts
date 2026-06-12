@@ -6,7 +6,7 @@ import type { AttachContext, Slice, StateContext } from './slice';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
-const STORE_SYMBOL = Symbol('@videojs/store');
+const STORE_SYMBOL = Symbol.for('@videojs/store');
 
 export interface StoreOptions<Target, State> extends StoreCallbacks<Target, State> {}
 

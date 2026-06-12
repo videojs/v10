@@ -4,7 +4,7 @@
  * Measure SPF bundle size
  *
  * Usage:
- *   pnpm size                    # Measure playback engine
+ *   pnpm size                    # Measure the HLS engine entry (@videojs/spf/hls)
  *   pnpm size:all                # Measure all exports (all.ts)
  */
 
@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
 const measureAll = process.argv.includes('--all');
-const measureEngine = process.argv.includes('--playback-engine');
+const measureEngine = process.argv.includes('--hls');
 
 let entry, label, bundlePath;
 
@@ -22,8 +22,8 @@ if (measureAll) {
   label = 'All Exports';
   bundlePath = './dist/all.js';
 } else if (measureEngine) {
-  entry = 'dom/playback-engine/index.ts';
-  label = 'Playback Engine';
+  entry = 'playback/engines/hls/index.ts';
+  label = 'HLS Engine';
   bundlePath = './dist/index.js';
 } else {
   entry = 'index.ts';

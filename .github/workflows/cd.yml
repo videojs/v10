@@ -74,7 +74,16 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cdn
 
-      - name: Build CLI (requires site build)
+      # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
+      # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
+      # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
+      # build:cli also depends on the site build transitively; turbo caches it, so this step
+      # adds no rebuild cost — it just makes the dependency visible in CI.
+      - name: Build site (required by html/react prepack and CLI)
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: pnpm build:site
+
+      - name: Build CLI
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cli
 

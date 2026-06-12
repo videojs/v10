@@ -1,6 +1,11 @@
 import { flush } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
+import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
 
 describe('createPopover', () => {
   it('starts closed', () => {
@@ -74,6 +79,68 @@ describe('createPopover', () => {
 
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'hover' });
     });
+
+    it('supports imperative close reason', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.open();
+      onOpenChange.mockClear();
+
+      popover.close('imperative-action');
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+    });
+
+    it('ignores imperative close while already closed', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.close('imperative-action');
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('closes the previously open grouped popover when another opens', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+
+      first.popover.open();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
+
+    it('does not close popovers in a different group', () => {
+      const firstGroup = createPopupGroup();
+      const secondGroup = createPopupGroup();
+      const first = createTestPopover({ group: () => firstGroup });
+      const second = createTestPopover({ group: () => secondGroup });
+
+      first.popover.open();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('clears the grouped popover when destroyed', () => {
+      const group = createPopupGroup();
+      const first = createTestPopover({ group: () => group });
+      const second = createTestPopover({ group: () => group });
+
+      first.popover.open();
+      first.popover.destroy();
+      first.onOpenChange.mockClear();
+
+      second.popover.open();
+
+      expect(first.onOpenChange).not.toHaveBeenCalled();
+      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+    });
   });
 
   describe('onOpenChangeComplete', () => {
@@ -97,6 +164,18 @@ describe('createPopover', () => {
 
       expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+    });
+
+    it('does not open on click when trigger is aria-disabled', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const trigger = document.createElement('button');
+      trigger.setAttribute('aria-disabled', 'true');
+      popover.setTriggerElement(trigger);
+
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
+
+      expect(popover.input.current.active).toBe(false);
+      expect(onOpenChange).not.toHaveBeenCalled();
     });
 
     it('closes on click when open', () => {
@@ -128,8 +207,8 @@ describe('createPopover', () => {
     });
 
     it('does not open on click on touch devices when openOnHover is enabled', () => {
-      const matchMedia = vi.fn((query: string) => ({
-        matches: query === '(hover: hover)' ? false : false,
+      const matchMedia = vi.fn(() => ({
+        matches: false,
       }));
       vi.stubGlobal('matchMedia', matchMedia);
 
@@ -146,8 +225,8 @@ describe('createPopover', () => {
     });
 
     it('does not open via focus on touch devices when openOnHover is enabled', () => {
-      const matchMedia = vi.fn((query: string) => ({
-        matches: query === '(hover: hover)' ? false : false,
+      const matchMedia = vi.fn(() => ({
+        matches: false,
       }));
       vi.stubGlobal('matchMedia', matchMedia);
 
@@ -300,6 +379,57 @@ describe('createPopover', () => {
 
       popover.destroy();
       host.remove();
+    });
+  });
+
+  describe('focusout', () => {
+    it('keeps the popover open when blur follows an inside pointerdown', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+      popup.appendChild(child);
+      document.body.appendChild(popup);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+
+      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      popover.destroy();
+      popup.remove();
+    });
+
+    it('closes after focus settles outside the popover', async () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      document.body.appendChild(popup);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+      await nextFrame();
+      await nextFrame();
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
+
+      popover.destroy();
+      popup.remove();
     });
   });
 

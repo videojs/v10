@@ -4,15 +4,17 @@
 import { MediaContainerElement } from '../../media/container-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
+import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
+import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import { defineErrorDialog, defineMenu, defineSliders, defineTime } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { AudioPlayerElement } from './player';
@@ -24,16 +26,18 @@ safeDefine(MediaContainerElement);
 
 // Compound groups.
 defineErrorDialog();
-defineTimeSlider();
-defineVolumeSlider();
+defineSliders();
 defineTime();
+defineMenu();
 
 // Standalone elements.
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
+safeDefine(LiveButtonElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PlaybackRateButtonElement);
+safeDefine(PlaybackRateRadioGroupElement);
 safeDefine(PopoverElement);
 safeDefine(SeekButtonElement);
 safeDefine(TooltipElement);

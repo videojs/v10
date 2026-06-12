@@ -16,6 +16,10 @@
 .media-minimal-skin button {
   font: inherit;
 }
+.media-minimal-skin [hidden][hidden] {
+  /* Keep authored templates hidden even when component classes set display. */
+  display: none;
+}
 @media (prefers-reduced-motion: no-preference) {
   .media-minimal-skin {
     interpolate-size: allow-keywords;

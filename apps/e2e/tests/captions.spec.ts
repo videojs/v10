@@ -11,18 +11,14 @@ test.describe('Captions', () => {
     await player.waitForMediaReady();
   });
 
-  test('captions button shows unavailable without subtitle tracks', async ({ page }) => {
-    const captionsBtn = page.locator(SELECTORS.captionsButton).first();
-    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
+  test('captions settings are unavailable without subtitle tracks', async () => {
+    await player.showControls();
+    await player.settingsButton.click();
+    await expect(player.settingsCaptionsItem).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
+    await expect(player.settingsCaptionsItem).toHaveAttribute('aria-disabled', 'true');
   });
 
-  test('captions button becomes available when subtitle track is added', async ({ page }) => {
-    const captionsBtn = page.locator(SELECTORS.captionsButton).first();
-
-    // Initially unavailable
-    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'unavailable');
-
-    // Add a subtitle track
+  test('captions settings lists tracks when subtitle track is added', async ({ page }) => {
     await page.evaluate(() => {
       const video = document.querySelector('video') as HTMLVideoElement;
       if (!video) return;
@@ -35,9 +31,10 @@ test.describe('Captions', () => {
       video.appendChild(track);
     });
 
-    // Button should switch to available
-    await expect(captionsBtn).toHaveAttribute(DATA_ATTRS.availability, 'available', {
-      timeout: 5_000,
-    });
+    await player.showControls();
+    await player.openCaptionsSettings();
+
+    const options = page.locator(SELECTORS.activeMenuOptions);
+    await expect(options).toHaveCount(2, { timeout: 5_000 });
   });
 });

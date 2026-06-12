@@ -113,14 +113,14 @@ The orchestration hub. Initializes all features in a fixed order, wiring shared 
 
 | Step | Feature | Purpose |
 |------|---------|---------|
-| 0a | `syncPreloadAttribute` | Read `preload` attr from `<video>` into state before any buffering decisions |
+| 0a | `syncPreload` | Bidirectional sync of `mediaElement.preload` ↔ `state.preload` (backfilled to `'metadata'` by default) before any buffering decisions |
 | 0b | `trackPlaybackInitiated` | `play` event → `state.playbackInitiated = true` |
 | 1 | `resolvePresentation` | Fetch multivariant playlist, parse tracks |
 | 2 | `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack` | Choose initial tracks |
 | 3 | `resolveTrack` | Fetch media playlist for each selected track |
 | 3.5 | `calculatePresentationDuration` | Derive duration from playlists |
 | 4 | `setupMediaSource` | Create `MediaSource`, attach to `<video>` |
-| 4.5 | `updateDuration` | Set `mediaSource.duration` |
+| 4.5 | `updateMediaSourceDuration` | Set `mediaSource.duration` |
 | 5 | `setupSourceBuffers` | Create both `SourceBuffer` instances **together** |
 | 5.5 | `trackCurrentTime` | Poll `currentTime`, update state |
 | 5.75 | `switchQuality` (ABR) | Monitor bandwidth, update `selectedVideoTrackId` |
@@ -130,7 +130,7 @@ The orchestration hub. Initializes all features in a fixed order, wiring shared 
 
 > **Step 5 note:** Both SourceBuffers are created in a single synchronous pass to avoid a Firefox bug where `mozHasAudio` stays `false` if the video buffer is created first and an audio track is added later. See [decisions.md](decisions.md#sourcebuffer-creation-order).
 
-> **Step 0a note:** `syncPreloadAttribute` must run before `setupSourceBuffers` attaches the media element. The `syncPreloadAttribute` feature reads the element's `preload` attribute and writes it to state; if mediaElement is attached first, `setupSourceBuffers` reads the attribute before state is initialized.
+> **Step 0a note:** `syncPreload` must be registered before behaviors that read `state.preload` (notably `resolvePresentation`, which gates manifest fetching on the preload value). The behavior backfills `state.preload` to its configured default on initial setup and keeps it bidirectionally synced with `mediaElement.preload` thereafter.
 
 ### SegmentLoaderActor (`dom/features/segment-loader-actor.ts`)
 

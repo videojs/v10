@@ -3,6 +3,8 @@ export const TooltipCSSVars = {
   sideOffset: '--media-tooltip-side-offset',
   /** Distance between the popup and the trigger along the alignment axis. */
   alignOffset: '--media-tooltip-align-offset',
+  /** Minimum distance between the popup and the positioning boundary. */
+  boundaryOffset: '--media-tooltip-boundary-offset',
   /** The anchor element's width. */
   anchorWidth: '--media-tooltip-anchor-width',
   /** The anchor element's height. */

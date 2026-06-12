@@ -19,10 +19,10 @@
 }
 
 .media-minimal-skin video::-webkit-media-text-track-container {
-  transition: translate var(--media-caption-track-duration) ease-out;
-  transition-delay: var(--media-caption-track-delay);
-  translate: 0 var(--media-caption-track-y);
-  scale: 0.98;
   z-index: 1;
   font-family: inherit;
+  scale: 0.98;
+  translate: 0 var(--media-caption-track-y);
+  transition: translate var(--media-caption-track-duration) ease-out;
+  transition-delay: var(--media-caption-track-delay);
 }

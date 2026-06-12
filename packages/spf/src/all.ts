@@ -22,18 +22,18 @@ export { resolveUrl } from './media/hls/resolve-url';
 // ABR (P6, P7)
 // =============================================================================
 
+export type { QualityConfig } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
 export type {
   BandwidthConfig,
   BandwidthState,
-} from './media/abr/bandwidth-estimator';
+} from './network/bandwidth-estimator';
 export {
   DEFAULT_BANDWIDTH_CONFIG,
   getBandwidthEstimate,
   hasGoodEstimate,
   sampleBandwidth,
-} from './media/abr/bandwidth-estimator';
-export type { QualityConfig } from './media/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
+} from './network/bandwidth-estimator';
 
 // =============================================================================
 // Buffer Management (P8, P9)
@@ -51,6 +51,7 @@ export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './media/buffer
 export type {
   AudioTrack,
   FrameRate,
+  MaybeResolvedPresentation,
   MediaElementLike,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
@@ -63,7 +64,7 @@ export type {
   Track,
   VideoTrack,
 } from './media/types';
-export { hasPresentationDuration, isResolvedTrack } from './media/types';
+export { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from './media/types';
 
 // =============================================================================
 // DOM APIs (P4, P12, P16)
@@ -72,7 +73,7 @@ export { hasPresentationDuration, isResolvedTrack } from './media/types';
 export type {
   AttachMediaSourceResult,
   CreateMediaSourceOptions,
-} from './dom/media/mediasource-setup';
+} from './media/dom/mse/mediasource-setup';
 export {
   attachMediaSource,
   createMediaSource,
@@ -80,33 +81,25 @@ export {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-} from './dom/media/mediasource-setup';
-export type { ResponseLike } from './dom/network/fetch';
-export { fetchResolvable, getResponseText } from './dom/network/fetch';
+} from './media/dom/mse/mediasource-setup';
+export type { ResponseLike } from './network/fetch';
+export { fetchResolvable, getResponseText } from './network/fetch';
 
 // =============================================================================
 // Features (F1)
 // =============================================================================
 
 export type {
+  ParsePresentation,
   PresentationState,
-  UnresolvedPresentation,
-} from './media/features/resolve-presentation';
-export {
-  canResolve,
-  isUnresolved,
-  resolvePresentation,
-  shouldResolve,
-} from './media/features/resolve-presentation';
-export type { PlatformOwners } from './media/features/sync-preload-attribute';
-export { syncPreloadAttribute } from './media/features/sync-preload-attribute';
+  ResolvePresentationConfig,
+} from './playback/behaviors/resolve-presentation';
+export { resolvePresentation } from './playback/behaviors/resolve-presentation';
+export { syncPreload } from './playback/behaviors/sync-preload';
 
 // =============================================================================
-// Features (F9 - Quality Switching)
+// Features — Track Switching (video ABR + audio language selection)
 // =============================================================================
 
-export type {
-  QualitySwitchingConfig,
-  QualitySwitchingState,
-} from './media/features/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './media/features/quality-switching';
+export type { SwitchVideoTrackConfig, TrackSwitchingState } from './playback/behaviors/track-switching';
+export { DEFAULT_INITIAL_BANDWIDTH, switchAudioTrack, switchVideoTrack } from './playback/behaviors/track-switching';

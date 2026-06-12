@@ -1,21 +1,21 @@
 import type {
-  AddressableObject,
   AudioTrack,
+  MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
-  Presentation,
   TextTrack,
   TrackType,
   VideoTrack,
 } from '../types';
+import { isResolvedTrack } from '../types';
 
 /**
  * State shape for track selection.
  * Minimal shape containing presentation and selected track IDs.
  */
 export interface TrackSelectionState {
-  presentation?: AddressableObject | Presentation | undefined;
+  presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string | undefined;
   selectedAudioTrackId?: string | undefined;
   selectedTextTrackId?: string | undefined;
@@ -28,15 +28,6 @@ export const SelectedTrackIdKeyByType = {
   video: 'selectedVideoTrackId',
   audio: 'selectedAudioTrackId',
   text: 'selectedTextTrackId',
-} as const;
-
-/**
- * Map track type to buffer owner property key.
- * Used for SourceBuffer references in owners.
- */
-export const BufferKeyByType = {
-  video: 'videoBuffer',
-  audio: 'audioBuffer',
 } as const;
 
 /**
@@ -62,8 +53,7 @@ export function getSelectedTrack<T extends TrackType>(
       : never {
   const { presentation } = state;
 
-  /** @TODO Consider moving and reusing isUnresolved(presentation) (CJP) */
-  if (!presentation || !('id' in presentation)) return undefined as any;
+  if (!presentation?.selectionSets) return undefined as any;
 
   // Get track ID based on type
   const trackIdKey = SelectedTrackIdKeyByType[type];
@@ -71,4 +61,22 @@ export function getSelectedTrack<T extends TrackType>(
   return presentation.selectionSets
     .find(({ type: selectionSetType }) => selectionSetType === type)
     ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId) as any;
+}
+
+/**
+ * Returns the duration of the first resolved selected track, preferring
+ * video over audio. A track is "resolved" once its media playlist has been
+ * parsed (per {@link isResolvedTrack}). Returns `undefined` if neither
+ * selected track is resolved.
+ */
+export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
+  if (state.selectedVideoTrackId) {
+    const video = getSelectedTrack(state, 'video');
+    if (video && isResolvedTrack(video)) return video.duration;
+  }
+  if (state.selectedAudioTrackId) {
+    const audio = getSelectedTrack(state, 'audio');
+    if (audio && isResolvedTrack(audio)) return audio.duration;
+  }
+  return undefined;
 }

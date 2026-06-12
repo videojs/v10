@@ -8,29 +8,29 @@
 .toggle {
   align-self: flex-start;
   padding: 6px 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
   cursor: pointer;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 .tags {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
 }
 
 .tag {
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
-  border-radius: 9999px;
-  background: #e5e7eb;
   color: #374151;
+  background: #e5e7eb;
+  border-radius: 9999px;
   transition: all 0.2s ease;
 }
 
 .tag--active {
-  background: #3b82f6;
   color: white;
+  background: #3b82f6;
 }

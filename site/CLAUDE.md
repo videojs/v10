@@ -15,7 +15,7 @@ The site deploys via Netlify from two branches:
 | Branch | Deploys to | Content |
 | --- | --- | --- |
 | `site/v10` (production) | **videojs.org** | Stable docs matching the latest release |
-| `main` (branch deploy) | **next.videojs.org** | Pre-release docs (may include unreleased APIs) |
+| `main` (branch deploy) | **main.videojs.org** | Pre-release docs (may include unreleased APIs) |
 
 **On release:** The CD workflow (`.github/workflows/cd.yml`) publishes packages to npm, then force-pushes `main`'s HEAD to `site/v10`. This keeps the production docs in sync with the latest release.
 
@@ -29,7 +29,7 @@ git push origin site/v10
 
 The next release force-pushes `main` to `site/v10`, which already includes the cherry-picked commit (since it originated on `main`). All fixes must land on `main` first — the `site/v10` branch has branch protection that restricts direct pushes to the CD bot.
 
-**Branch deploys (next.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs.
+**Branch deploys (main.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs. They also render a top banner (`src/components/PrereleaseBanner.astro`) that links back to the stable site. The banner is gated by `isPrereleaseSite(Astro.site)` from `src/consts.ts` — change `PRERELEASE_URL` there if the pre-release hostname moves.
 
 ## Commands
 

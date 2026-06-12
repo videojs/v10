@@ -10,35 +10,35 @@
   position: absolute;
   bottom: 10px;
   left: 10px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  color: black;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 9999px;
   padding-block: 8px;
   padding-inline: 20px;
+  color: black;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
 }
 
 .media-volume-slider {
   position: absolute;
-  bottom: 10px;
   right: 10px;
-  width: 100px;
+  bottom: 10px;
   display: flex;
   align-items: center;
+  width: 100px;
   height: 20px;
   cursor: pointer;
 }
 
 .media-slider-track {
   position: absolute;
-  left: 0;
   right: 0;
+  left: 0;
   height: 4px;
   background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
   border-radius: 9999px;
+  backdrop-filter: blur(10px);
   transition: height 150ms ease;
 }
 
@@ -50,8 +50,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
   width: var(--media-slider-fill);
+  height: 100%;
   background: white;
   border-radius: 9999px;
 }
@@ -63,9 +63,9 @@
   height: 14px;
   background: white;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   transform: translateX(-50%) scale(0);
   transition: transform 150ms ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .media-volume-slider[data-interactive] .media-slider-thumb {
@@ -78,18 +78,18 @@
 
 .media-slider-value {
   position: absolute;
-  left: var(--media-slider-pointer);
   bottom: 100%;
-  transform: translateX(-50%);
-  margin-bottom: 6px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  font-size: 12px;
+  left: var(--media-slider-pointer);
   padding: 2px 6px;
-  border-radius: 4px;
-  pointer-events: none;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: white;
   white-space: nowrap;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
   opacity: 0;
+  transform: translateX(-50%);
   transition: opacity 150ms ease;
 }
 

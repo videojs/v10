@@ -431,6 +431,22 @@ describe('interactive child filtering', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('does not fire when event originates from a child with role="menuitemradio"', () => {
+    const container = setup();
+    const item = document.createElement('div');
+    item.setAttribute('role', 'menuitemradio');
+    container.appendChild(item);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(item);
+    vi.advanceTimersByTime(50);
+    pointerUp(item, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('does not fire when event originates from a nested child inside an interactive element', () => {
     const container = setup();
     const button = document.createElement('button');

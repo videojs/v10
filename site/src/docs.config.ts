@@ -23,6 +23,7 @@ export const sidebar: Sidebar = [
     llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
+      { slug: 'concepts/why-videojs' },
       { slug: 'concepts/overview' },
       { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
@@ -54,6 +55,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/player-provider' },
       { slug: 'reference/player-container' },
       // sorted alphabetically
+      { slug: 'reference/airplay-button' },
       { slug: 'reference/buffering-indicator' },
       { slug: 'reference/captions-button' },
       { slug: 'reference/controls' },
@@ -141,6 +143,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-error' },
       { slug: 'reference/feature-fullscreen' },
       { slug: 'reference/feature-live' },
+      { slug: 'reference/feature-orientation-lock' },
       { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
       { slug: 'reference/feature-playback' },
       { slug: 'reference/feature-playback-rate' },

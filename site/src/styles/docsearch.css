@@ -75,14 +75,14 @@
 /* ── Trigger button — match rounded-pill navbar style ── */
 .DocSearch-Button {
   box-sizing: border-box;
-  border-radius: 9999px;
-  border: none;
-  padding: 0 calc(var(--spacing) * 2);
   gap: calc(var(--spacing) * 2);
   height: auto;
   min-height: calc(var(--spacing) * 6);
+  padding: 0 calc(var(--spacing) * 2);
   margin: 0;
   font-family: inherit;
+  border: none;
+  border-radius: 9999px;
 }
 
 .DocSearch-Button:hover,
@@ -112,8 +112,8 @@
 
 .DocSearch-Button-Keys {
   display: none;
-  min-width: 0;
   gap: 0;
+  min-width: 0;
 }
 
 .DocSearch-Button-Keys:has(.DocSearch-Button-Key--ctrl) {
@@ -121,25 +121,25 @@
 }
 
 .DocSearch-Button .DocSearch-Button-Key {
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h4--line-height);
+  color: inherit;
+  letter-spacing: var(--text-h4--letter-spacing);
   background: none;
   border: none;
   box-shadow: none !important;
-  color: inherit;
-  width: auto;
-  height: auto;
-  font-family: var(--font-display);
-  font-size: var(--text-h4);
-  line-height: var(--text-h4--line-height);
-  letter-spacing: var(--text-h4--letter-spacing);
-  font-weight: var(--font-weight-bold);
-  padding: 0;
-  margin: 0;
 }
 
 @media (width >= 40rem) {
   .DocSearch-Button {
-    border: 1px solid var(--color-faded-black);
     width: calc(var(--spacing) * 16.5);
+    border: 1px solid var(--color-faded-black);
   }
 
   .DocSearch-Button:has(.DocSearch-Button-Key--ctrl) {
@@ -185,8 +185,8 @@
 }
 
 .DocSearch-Footer {
-  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
   border-block-start: none;
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
 }
 
 .DocSearch-Dropdown + .DocSearch-Footer {
@@ -201,35 +201,35 @@
 .DocSearch-Modal {
   font-family: var(--font-sans);
   font-size: var(--text-p2);
+  font-weight: var(--text-p2--font-weight);
   line-height: var(--text-p2--line-height);
   letter-spacing: var(--text-p2--letter-spacing);
-  font-weight: var(--text-p2--font-weight);
   text-underline-offset: 0.25em;
 }
 
 .DocSearch-Input {
-  letter-spacing: var(--tracking-tight);
   font-weight: var(--text-p1--font-weight);
+  letter-spacing: var(--tracking-tight);
 }
 
 .DocSearch-Button-Key,
 .DocSearch-Escape-Key {
   font-family: var(--font-mono);
   font-size: var(--text-code);
-  line-height: var(--text-code--line-height);
-  letter-spacing: var(--text-code--letter-spacing);
   font-weight: var(--text-code--font-weight);
   font-variant-ligatures: none;
+  line-height: var(--text-code--line-height);
+  letter-spacing: var(--text-code--letter-spacing);
   text-underline-offset: 0.125em;
 }
 
 .DocSearch-Hit-source {
-  font-size: var(--text-p2);
-  line-height: var(--text-p2--line-height);
-  letter-spacing: var(--text-p2--letter-spacing);
-  font-weight: var(--font-weight-bold);
   padding-block-start: calc(var(--spacing) * 4);
   padding-block-end: calc(var(--spacing) * 2);
+  font-size: var(--text-p2);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-p2--line-height);
+  letter-spacing: var(--text-p2--letter-spacing);
 }
 
 .DocSearch-Hit-title {
@@ -240,18 +240,18 @@
 
 .DocSearch-Hit-path {
   font-size: var(--text-p3);
+  font-weight: var(--text-p3--font-weight);
   line-height: var(--text-p3--line-height);
   letter-spacing: var(--text-p3--letter-spacing);
-  font-weight: var(--text-p3--font-weight);
 }
 
 .DocSearch-Label,
 .DocSearch-Help,
 .DocSearch-NoResults-Help {
   font-size: var(--text-p3);
+  font-weight: var(--text-p3--font-weight);
   line-height: var(--text-p3--line-height);
   letter-spacing: var(--text-p3--letter-spacing);
-  font-weight: var(--text-p3--font-weight);
 }
 
 .DocSearch-Clear {
@@ -277,6 +277,6 @@
 /* ── Text match highlight — keep readable in all states ── */
 .DocSearch-Hit mark,
 .DocSearch-Hit[aria-selected="true"] mark {
-  text-decoration-color: var(--color-gold);
   color: currentColor;
+  text-decoration-color: var(--color-gold);
 }

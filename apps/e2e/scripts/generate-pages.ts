@@ -296,7 +296,8 @@ function ejectedHtmlPage(): string {
   // Path from pages/ to the site content
   const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
 
-  return `import '@videojs/html/video/ui';
+  return `import '@videojs/html/icons/element';
+import '@videojs/html/video/ui';
 import ejectedSkins from '${jsonPath}';
 
 interface EjectedSkinEntry {

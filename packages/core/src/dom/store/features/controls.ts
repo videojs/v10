@@ -9,6 +9,7 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
+const TOUCH_SETTLE_DELAY = 500;
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
@@ -74,14 +75,36 @@ export const controlsFeature = definePlayerFeature({
       },
     });
 
-    // Touch tap-to-toggle
+    // Touch tap-to-toggle.
+    //
+    // When the skin registers `tap action="toggleControls"` alongside
+    // `doubletap` gestures, the tap recognizer defers its callback by 200 ms
+    // (doubletap window) and re-reads live state at fire time. Any synthetic
+    // event that flips visibility during that window inverts the toggle —
+    // Android first-tap flash. The guards below short-circuit such events
+    // inside a touch interaction.
+    //
+    // `lastTouchAt` is recorded on pointerdown as well as pointerup: the
+    // container's own pointerup listener calls this.focus() synchronously
+    // before ours runs, firing focusin while lastTouchAt would otherwise
+    // still be 0.
     let pointerDownTime = 0;
+    let lastTouchAt = 0;
 
-    function onPointerDown() {
+    const isRecentTouch = () => lastTouchAt > 0 && Date.now() - lastTouchAt < TOUCH_SETTLE_DELAY;
+
+    function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
+      if (event.pointerType === 'touch') {
+        lastTouchAt = pointerDownTime;
+      }
     }
 
     function onPointerUp(event: PointerEvent) {
+      if (event.pointerType === 'touch') {
+        lastTouchAt = Date.now();
+      }
+
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
         // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
         const coordinator = findGestureCoordinator(container as HTMLElement);
@@ -117,15 +140,42 @@ export const controlsFeature = definePlayerFeature({
       }
     };
 
+    function onPointerMove(event: PointerEvent): void {
+      // On touch, don't flip visibility mid-gesture — just keep the idle timer alive.
+      if (event.pointerType === 'touch') {
+        if (get().userActive) scheduleIdle();
+        return;
+      }
+      setActive();
+    }
+
     // Container event listeners
-    listen(container, 'pointermove', setActive, { signal });
+    listen(container, 'pointermove', onPointerMove, { signal });
     listen(container, 'pointerdown', onPointerDown, { signal });
     listen(container, 'pointerup', onPointerUp, { signal });
     listen(container, 'keyup', setActive, { signal });
-    listen(container, 'focusin', setActive, { signal });
+    listen(
+      container,
+      'focusin',
+      () => {
+        // Ignore focusin from the container's own pointerup focus grab.
+        if (isRecentTouch()) return;
+        setActive();
+      },
+      { signal }
+    );
     // On touch devices pointerleave would fire after a pointerup event which hides the controls.
     // https://w3c.github.io/pointerevents/#dfn-pointerup
-    listen(container, 'mouseleave', setInactive, { signal });
+    listen(
+      container,
+      'mouseleave',
+      () => {
+        // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
+        if (isRecentTouch()) return;
+        setInactive();
+      },
+      { signal }
+    );
 
     // Media event listeners for playback state changes.
     listen(media, 'play', onPlaybackChange, { signal });

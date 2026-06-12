@@ -3,6 +3,7 @@
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
@@ -11,6 +12,7 @@ import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
 import { useAriaKeyShortcuts } from './hotkey/use-aria-key-shortcuts';
+import { useOptionalMenuTriggerChildContext } from './menu/context';
 import { useOptionalTooltipContext } from './tooltip/context';
 
 interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
@@ -49,10 +51,16 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     }
 
     const tooltipCtx = useOptionalTooltipContext();
+    const menuTriggerChild = useOptionalMenuTriggerChildContext();
     const feature = usePlayer(selector);
     const shortcuts = useAriaKeyShortcuts(hotkeyAction);
 
     const [core] = useState(() => new CoreClass());
+
+    if (corePropKeys.has('menuTrigger') && isUndefined(coreProps.menuTrigger)) {
+      coreProps.menuTrigger = menuTriggerChild;
+    }
+
     core.setProps(coreProps);
 
     const { getButtonProps, buttonRef } = useButton({
