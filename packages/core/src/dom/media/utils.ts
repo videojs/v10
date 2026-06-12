@@ -1,6 +1,11 @@
 import { isFunction } from '@videojs/utils/predicate';
-import type { HTMLMediaElementHost, HTMLMediaTargetLike as TargetLike } from './media-host';
-import type { AnyComponent, ComponentConstructor, Components } from './types';
+import type {
+  Component,
+  ComponentConstructor,
+  Components,
+  HTMLMediaElementHost,
+  HTMLMediaTargetLike as TargetLike,
+} from './media-host';
 
 type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
@@ -12,7 +17,7 @@ export function getComponents(host: Host) {
   return map;
 }
 
-export function addComponent<T extends AnyComponent>(host: Host, instance: T) {
+export function addComponent<T extends Component>(host: Host, instance: T) {
   const components = getComponents(host);
   const ctor = instance.constructor as ComponentConstructor<T>;
   components.set(ctor, instance);

@@ -34,7 +34,13 @@ export {
   isCaptionOrSubtitleTrack,
 } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
-export type { CustomElement, CustomElementCallbacks } from './types';
+export type {
+  CustomElement,
+  CustomElementCallbacks,
+  EventListenerFor,
+  EventType,
+  QueriedElement,
+} from './types';
 export {
   isWebKitAirPlayCapable,
   supportsWebKitAirPlay,

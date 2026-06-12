@@ -1,43 +1,46 @@
+import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
 import {
   type EventLike,
   type MediaFull,
   type MediaStreamType,
   MediaStreamTypes,
+  type MediaTargetLike,
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import type { ComponentConstructor, EventListenerFor, EventType, HTMLMediaTargetLike, QueriedElement } from './types';
 import { getComponents, getProp, setProp } from './utils';
 
-export type {
-  AnyComponent,
-  Component,
-  ComponentConstructor,
-  Components,
-  HTMLMediaTargetLike,
-} from './types';
 export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
 
-/**
- * Per-component config namespaces. A component contributes an entry by
- * augmenting this interface, keying its public config props under its
- * `static configKey`:
- *
- * @example
- * declare module '@videojs/core/dom/media/media-host' {
- *   interface MediaComponentConfig {
- *     mux: MuxDataProps;
- *   }
- * }
- */
+export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+}
+
+export interface Component<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
+  readonly targetOverride?: Partial<Target> | null;
+  setMedia?(host: HTMLMediaElementHost<Target, any>): void;
+  attach?(target: Target): void;
+  detach?(): void;
+  destroy?(): void;
+}
+
+export interface ComponentConstructor<T extends Component = Component> {
+  new (...args: any[]): T;
+  readonly configKey?: string;
+}
+
+export interface Components extends Map<ComponentConstructor, Component> {
+  get<T extends Component>(component: ComponentConstructor<T>): T | undefined;
+  set<T extends Component>(component: ComponentConstructor<T>, instance: T): this;
+}
+
 // biome-ignore lint/suspicious/noEmptyInterface: augmentation target for component config namespaces
 export interface MediaComponentConfig {}
 
 /** Host config bag: free-form host/engine settings plus per-component config namespaces. */
-export interface MediaConfig extends Partial<MediaComponentConfig> {
-  [name: string]: unknown;
-}
+export type MediaConfig = Partial<MediaComponentConfig> & Record<string, unknown>;
 
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
