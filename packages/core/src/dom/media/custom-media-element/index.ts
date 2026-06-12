@@ -269,9 +269,12 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
 
     disconnectedCallback(): void {
-      if (!this.hasAttribute('keep-alive')) {
-        this.#mediaHost.destroy();
-      }
+      if (this.hasAttribute('keep-alive')) return;
+      // Defer so a synchronous reparent (remove + insert) doesn't tear down
+      // the host and its registered components.
+      queueMicrotask(() => {
+        if (!this.isConnected) this.#mediaHost.destroy();
+      });
     }
 
     addEventListener(

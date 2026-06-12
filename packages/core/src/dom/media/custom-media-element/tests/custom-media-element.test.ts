@@ -659,19 +659,34 @@ describe('CustomMediaElement', () => {
   });
 
   describe('disconnectedCallback', () => {
-    it('calls destroy on the MediaHost when disconnected', () => {
+    it('calls destroy on the MediaHost when disconnected', async () => {
       const el = create(defineVideoElement());
       expect(el.destroyed).toBe(false);
 
       el.remove();
+      // Destroy is deferred a microtask to allow synchronous reparenting.
+      await Promise.resolve();
       expect(el.destroyed).toBe(true);
     });
 
-    it('does not destroy when keep-alive attribute is set', () => {
+    it('does not destroy when keep-alive attribute is set', async () => {
       const el = create(defineVideoElement());
       el.setAttribute('keep-alive', '');
 
       el.remove();
+      await Promise.resolve();
+      expect(el.destroyed).toBe(false);
+    });
+
+    it('does not destroy when synchronously moved to a new parent', async () => {
+      const el = create(defineVideoElement());
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      // Moving fires disconnectedCallback + connectedCallback synchronously.
+      container.appendChild(el);
+      await Promise.resolve();
+
       expect(el.destroyed).toBe(false);
     });
   });
