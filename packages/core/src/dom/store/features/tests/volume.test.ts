@@ -1,8 +1,9 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
+import type { StorageAdapter } from '../../../storage';
 import { createMockVideo } from '../../../tests/test-helpers';
-import { volumeFeature } from '../volume';
+import { createVolumeFeature, volumeFeature } from '../volume';
 
 describe('volumeFeature', () => {
   describe('attach', () => {
@@ -161,5 +162,123 @@ describe('volumeFeature', () => {
         expect(result).toBe(false);
       });
     });
+  });
+});
+
+describe('createVolumeFeature', () => {
+  function makeAdapter(initial: Record<string, string> = {}): StorageAdapter & { store: Record<string, string> } {
+    const store: Record<string, string> = { ...initial };
+    return {
+      store,
+      getItem: (key) => store[key] ?? null,
+      setItem: (key, value) => {
+        store[key] = value;
+      },
+      removeItem: (key) => {
+        delete store[key];
+      },
+    };
+  }
+
+  describe('attach with adapter', () => {
+    it('restores stored volume on attach', () => {
+      const adapter = makeAdapter({ 'vjs-pref-volume': '0.4' });
+      const video = createMockVideo({ volume: 1, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      expect(video.volume).toBe(0.4);
+      expect(store.state.volume).toBe(0.4);
+    });
+
+    it('restores stored muted on attach', () => {
+      const adapter = makeAdapter({ 'vjs-pref-muted': 'true' });
+      const video = createMockVideo({ volume: 1, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      expect(video.muted).toBe(true);
+      expect(store.state.muted).toBe(true);
+    });
+
+    it('ignores missing stored values', () => {
+      const adapter = makeAdapter({});
+      const video = createMockVideo({ volume: 0.7, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      expect(store.state.volume).toBe(0.7);
+      expect(store.state.muted).toBe(false);
+    });
+
+    it('ignores invalid stored volume', () => {
+      const adapter = makeAdapter({ 'vjs-pref-volume': 'not-a-number' });
+      const video = createMockVideo({ volume: 0.6, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      expect(store.state.volume).toBe(0.6);
+    });
+
+    it('clamps stored volume to 0–1', () => {
+      const adapter = makeAdapter({ 'vjs-pref-volume': '1.5' });
+      const video = createMockVideo({ volume: 1, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      expect(video.volume).toBe(1);
+    });
+
+    it('writes to adapter on volumechange', () => {
+      const adapter = makeAdapter({});
+      const video = createMockVideo({ volume: 1, muted: false });
+
+      const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+      store.attach({ media: video, container: null });
+
+      video.volume = 0.3;
+      video.muted = true;
+      video.dispatchEvent(new Event('volumechange'));
+
+      expect(adapter.store['vjs-pref-volume']).toBe('0.3');
+      expect(adapter.store['vjs-pref-muted']).toBe('true');
+    });
+
+    it('writes initial state to adapter on attach', () => {
+      const adapter = makeAdapter({});
+      const video = createMockVideo({ volume: 0.8, muted: false });
+
+      createStore<PlayerTarget>()(createVolumeFeature(adapter)).attach({ media: video, container: null });
+
+      expect(adapter.store['vjs-pref-volume']).toBe('0.8');
+      expect(adapter.store['vjs-pref-muted']).toBe('false');
+    });
+  });
+
+  it('behaves identically to volumeFeature when no adapter provided', () => {
+    const video = createMockVideo({ volume: 0.5, muted: true });
+
+    const store = createStore<PlayerTarget>()(createVolumeFeature());
+    store.attach({ media: video, container: null });
+
+    expect(store.state.volume).toBe(0.5);
+    expect(store.state.muted).toBe(true);
+  });
+
+  it('getItem returning null for a key is handled silently', () => {
+    const adapter: StorageAdapter = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+    };
+    const video = createMockVideo({ volume: 0.9, muted: false });
+
+    const store = createStore<PlayerTarget>()(createVolumeFeature(adapter));
+    expect(() => store.attach({ media: video, container: null })).not.toThrow();
+    expect(store.state.volume).toBe(0.9);
   });
 });

@@ -3,59 +3,83 @@ import type { MediaVolumeState } from '../../../core/media/state';
 import type { MediaFeatureAvailability } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 import { isMediaVolumeCapable } from '../../media/predicate';
+import { type StorageAdapter, VJS_PREF_MUTED, VJS_PREF_VOLUME } from '../../storage';
 
 /** Volume to restore when unmuting at zero. */
 const UNMUTE_VOLUME = 0.25;
 
-export const volumeFeature = definePlayerFeature({
-  name: 'volume',
-  state: ({ target }): MediaVolumeState => ({
-    volume: 1,
-    muted: false,
-    volumeAvailability: 'unavailable',
+export function createVolumeFeature(adapter?: StorageAdapter) {
+  return definePlayerFeature({
+    name: 'volume',
+    state: ({ target }): MediaVolumeState => ({
+      volume: 1,
+      muted: false,
+      volumeAvailability: 'unavailable',
 
-    setVolume(volume: number) {
-      const { media } = target();
-      if (!isMediaVolumeCapable(media)) return 0;
-      const clamped = Math.max(0, Math.min(1, volume));
+      setVolume(volume: number) {
+        const { media } = target();
+        if (!isMediaVolumeCapable(media)) return 0;
+        const clamped = Math.max(0, Math.min(1, volume));
 
-      if (clamped > 0 && media.muted) {
-        media.muted = false;
+        if (clamped > 0 && media.muted) {
+          media.muted = false;
+        }
+
+        media.volume = clamped;
+        return media.volume;
+      },
+
+      toggleMuted() {
+        const { media } = target();
+        if (!isMediaVolumeCapable(media)) return false;
+        const effectivelyMuted = media.muted || media.volume === 0;
+
+        if (effectivelyMuted) {
+          media.muted = false;
+          if (media.volume === 0) media.volume = UNMUTE_VOLUME;
+        } else {
+          media.muted = true;
+        }
+
+        return media.muted;
+      },
+    }),
+
+    attach({ target, signal, set }) {
+      const { media } = target;
+
+      if (!isMediaVolumeCapable(media)) return;
+
+      set({ volumeAvailability: canSetVolume() });
+
+      if (adapter) {
+        const storedVolume = adapter.getItem(VJS_PREF_VOLUME);
+        const storedMuted = adapter.getItem(VJS_PREF_MUTED);
+
+        if (storedVolume !== null) {
+          const parsed = Number(storedVolume);
+          if (!Number.isNaN(parsed)) media.volume = Math.max(0, Math.min(1, parsed));
+        }
+        if (storedMuted !== null) {
+          media.muted = storedMuted === 'true';
+        }
       }
 
-      media.volume = clamped;
-      return media.volume;
+      const sync = () => {
+        set({ volume: media.volume, muted: media.muted });
+        if (adapter) {
+          adapter.setItem(VJS_PREF_VOLUME, String(media.volume));
+          adapter.setItem(VJS_PREF_MUTED, String(media.muted));
+        }
+      };
+      sync();
+
+      listen(media, 'volumechange', sync, { signal });
     },
+  });
+}
 
-    toggleMuted() {
-      const { media } = target();
-      if (!isMediaVolumeCapable(media)) return false;
-      const effectivelyMuted = media.muted || media.volume === 0;
-
-      if (effectivelyMuted) {
-        media.muted = false;
-        if (media.volume === 0) media.volume = UNMUTE_VOLUME;
-      } else {
-        media.muted = true;
-      }
-
-      return media.muted;
-    },
-  }),
-
-  attach({ target, signal, set }) {
-    const { media } = target;
-
-    if (!isMediaVolumeCapable(media)) return;
-
-    set({ volumeAvailability: canSetVolume() });
-
-    const sync = () => set({ volume: media.volume, muted: media.muted });
-    sync();
-
-    listen(media, 'volumechange', sync, { signal });
-  },
-});
+export const volumeFeature = createVolumeFeature();
 
 /** Check if volume can be programmatically set (fails on iOS Safari). */
 function canSetVolume(): MediaFeatureAvailability {

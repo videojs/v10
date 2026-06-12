@@ -8,6 +8,7 @@ export * from './hotkey/aria';
 export * from './hotkey/coordinator';
 export * from './hotkey/hotkey';
 export * from './media/types';
+export * from './storage';
 export * from './store/features';
 export * from './store/selectors';
 export * from './ui/alert-dialog';

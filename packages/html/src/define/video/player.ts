@@ -1,11 +1,14 @@
-import { videoFeatures } from '@videojs/core/dom';
+import { createVolumeFeature, videoFeatures, volumeFeature } from '@videojs/core/dom';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
+import { localStorageAdapter } from '../../storage';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
+const volumeWithStorage = createVolumeFeature(localStorageAdapter);
+
 const { ProviderMixin } = createPlayer({
-  features: videoFeatures,
+  features: videoFeatures.map((f) => (f === volumeFeature ? volumeWithStorage : f)) as typeof videoFeatures,
 });
 
 export class VideoPlayerElement extends ProviderMixin(MediaElement) {
