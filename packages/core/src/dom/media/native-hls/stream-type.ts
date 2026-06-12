@@ -2,6 +2,9 @@ import type { Constructor } from '@videojs/utils/types';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import type { NativeMediaHost } from './errors';
 
+/**
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ */
 export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;

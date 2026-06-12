@@ -46,6 +46,10 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
+/**
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
+ */
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #src = hlsMediaDefaultProps.src;
