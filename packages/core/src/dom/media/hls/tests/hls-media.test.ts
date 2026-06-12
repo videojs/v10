@@ -95,6 +95,34 @@ describe('HlsMedia', () => {
     });
   });
 
+  describe('loadstart', () => {
+    it('dispatches loadstart to listeners once per load', () => {
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsMedia();
+      media.attach(video);
+
+      const handler = vi.fn();
+      media.addEventListener('loadstart', handler);
+
+      media.load();
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('does not forward the native loadstart from the target', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('loadstart', handler);
+
+      video.dispatchEvent(new Event('loadstart'));
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
   describe('destroy', () => {
     it('removes forwarding listeners from the native element', () => {
       const { media, video } = setup();

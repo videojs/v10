@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { HlsMedia } from '../../hls';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -11,6 +12,17 @@ function createSdk() {
   return { sdk, monitor };
 }
 
+class FakeMedia extends EventTarget {
+  engine: HlsMedia['engine'] = null;
+  src = '';
+}
+
+// Initialization is deferred by a microtask so all props settle first.
+async function settle() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 describe('MuxData', () => {
   it('accepts a player software name', () => {
     expect(new MuxData({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
@@ -20,13 +32,13 @@ describe('MuxData', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
     const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia({ engine: null, src: 'https://stream.mux.com/abc123.m3u8' });
+    data.setMedia(media);
     data.attach(video);
 
-    // Initialization is deferred by a microtask so all props settle first.
-    await Promise.resolve();
-    await Promise.resolve();
+    await settle();
 
     expect(monitor).toHaveBeenCalledWith(
       video,
@@ -39,12 +51,65 @@ describe('MuxData', () => {
   it('does not monitor before a target is attached', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk });
+    const media = new FakeMedia();
+    media.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia({ engine: null, src: 'https://stream.mux.com/abc123.m3u8' });
+    data.setMedia(media);
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await settle();
 
     expect(monitor).not.toHaveBeenCalled();
+  });
+
+  it('re-monitors with the new engine when the media fires loadstart', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+
+    data.setMedia(media);
+    data.attach(video);
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(1);
+
+    const engine = {} as NonNullable<HlsMedia['engine']>;
+    media.engine = engine;
+    media.src = 'https://stream.mux.com/abc123.m3u8';
+    media.dispatchEvent(new Event('loadstart'));
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(2);
+    expect(monitor).toHaveBeenLastCalledWith(
+      video,
+      expect.objectContaining({
+        hlsjs: engine,
+        data: expect.objectContaining({ video_id: 'abc123' }),
+      })
+    );
+  });
+
+  it('stops re-monitoring after destroy', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.src = 'https://stream.mux.com/abc123.m3u8';
+
+    data.setMedia(media);
+    data.attach(video);
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(1);
+
+    data.destroy();
+    media.dispatchEvent(new Event('loadstart'));
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(1);
   });
 });

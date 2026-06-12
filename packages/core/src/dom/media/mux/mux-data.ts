@@ -17,10 +17,10 @@ export interface MuxDataProps {
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export type MuxDataMedia = {
+export interface MuxDataMedia extends EventTarget {
   readonly engine?: HlsMedia['engine'];
   readonly src: string;
-};
+}
 
 export class MuxData implements MuxDataProps {
   #MuxDataSdk: MuxDataSdk | undefined = Mux;
@@ -42,12 +42,12 @@ export class MuxData implements MuxDataProps {
 
   setMedia(media: MuxDataMedia) {
     this.#media = media;
-    this.initialize();
+    this.#media.addEventListener('loadstart', this.#reinitialize);
   }
 
   attach(target: HTMLVideoElement) {
     this.#target = target;
-    this.initialize();
+    this.#reinitialize();
   }
 
   detach() {
@@ -58,13 +58,19 @@ export class MuxData implements MuxDataProps {
     this.#target = null;
   }
 
+  destroy() {
+    this.#media?.removeEventListener('loadstart', this.#reinitialize);
+    this.#media = null;
+    this.#target = null;
+  }
+
   get MuxDataSdk() {
     return this.#MuxDataSdk;
   }
 
   set MuxDataSdk(value) {
     this.#MuxDataSdk = value;
-    this.reinitialize();
+    this.#reinitialize();
   }
 
   get beaconCollectionDomain() {
@@ -73,7 +79,7 @@ export class MuxData implements MuxDataProps {
 
   set beaconCollectionDomain(value) {
     this.#beaconCollectionDomain = value;
-    this.reinitialize();
+    this.#reinitialize();
   }
 
   get debug() {
@@ -82,7 +88,7 @@ export class MuxData implements MuxDataProps {
 
   set debug(value) {
     this.#debug = value;
-    this.reinitialize();
+    this.#reinitialize();
   }
 
   get disableCookies() {
@@ -91,7 +97,7 @@ export class MuxData implements MuxDataProps {
 
   set disableCookies(value) {
     this.#disableCookies = value;
-    this.reinitialize();
+    this.#reinitialize();
   }
 
   get envKey() {
@@ -139,15 +145,15 @@ export class MuxData implements MuxDataProps {
     this.#target?.mux?.updateData(value ? { ...value } : {});
   }
 
-  reinitialize() {
+  #reinitialize = () => {
     if (this.#target?.mux) {
       this.#target.mux.destroy();
       delete this.#target.mux;
     }
-    this.initialize();
-  }
+    this.#initialize();
+  };
 
-  async initialize() {
+  async #initialize() {
     // Defer to ensure all properties are set before the Mux Data SDK is initialized.
     if (this.#pendingInitialize) return;
     await (this.#pendingInitialize = Promise.resolve());

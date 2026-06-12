@@ -46,6 +46,8 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
+class HlsMediaEvent extends Event {}
+
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #mediaElement: HTMLVideoElement | null = null;
@@ -55,6 +57,12 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
+
+  constructor() {
+    super();
+    // Cancel the native loadstart event, it's handled in the load method.
+    this.addEventListener('loadstart', this.#stopTargetLoadStartEvent);
+  }
 
   attach(target: HTMLVideoElement) {
     this.#mediaElement = target;
@@ -72,6 +80,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.detach();
     this.#engineDestroy();
     super.destroy();
+    this.removeEventListener('loadstart', this.#stopTargetLoadStartEvent);
   }
 
   get engine() {
@@ -128,7 +137,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     if (this.#streamType === value) return;
     this.#streamType = value;
-    this.dispatchEvent(new Event('streamtypechange'));
+    this.dispatchEvent(new HlsMediaEvent('streamtypechange'));
   }
 
   /**
@@ -154,7 +163,9 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#loadRequested = null;
 
     if (this.remote.state === 'connected') {
-      return super.load();
+      this.dispatchEvent(new HlsMediaEvent('loadstart'));
+      super.load();
+      return;
     }
 
     if (this.#shouldEngineUpdate(this.#engineProps())) {
@@ -183,9 +194,14 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     }
 
     if (this.#delegate) {
+      this.dispatchEvent(new HlsMediaEvent('loadstart'));
       this.#delegate.src = this.#src;
     }
   }
+
+  #stopTargetLoadStartEvent = (event: Event) => {
+    if (!(event instanceof HlsMediaEvent)) event.stopImmediatePropagation();
+  };
 
   async #requestLoad() {
     if (this.#loadRequested) return;
