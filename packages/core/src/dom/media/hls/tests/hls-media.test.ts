@@ -125,6 +125,54 @@ describe('HlsMedia', () => {
     });
   });
 
+  describe('config', () => {
+    it('recreates the engine when a new hlsJs config is assigned', () => {
+      const { media, video } = setup();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      // New `hlsJs` option values must recreate the engine to take effect.
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
+      expect(media.streamType).toBe('live');
+    });
+
+    it('does not recreate the engine for an equivalent hlsJs config', () => {
+      const { media, video } = setup();
+
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      // Same option values in a new object (e.g. an inline React prop).
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      // No engine teardown → no streamType churn.
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('merges config assignments', () => {
+      const { media } = setup();
+
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+
+      // Keys from the previous assignment in `setup()` survive.
+      expect(media.config.preferPlayback).toBe('native');
+      expect(media.config.hlsJs).toEqual({ maxBufferLength: 60 });
+    });
+  });
+
   describe('remote playback load', () => {
     function setupConnected(load: () => Promise<void>) {
       const video = document.createElement('video');

@@ -2,6 +2,7 @@ import { shallowEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
+import type { MediaConfig } from '../media-host';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
@@ -33,17 +34,17 @@ export interface HlsMediaProps {
   config?: HlsMediaConfig;
 }
 
-export interface HlsMediaConfig {
+export interface HlsMediaConfig extends MediaConfig {
   preferPlayback?: PlaybackType | undefined;
   contentType?: SourceType | undefined;
   hlsJs?: Partial<HlsJsConfig>;
-  [name: string]: unknown;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
+  config: {},
 };
 
 class HlsMediaEvent extends Event {}
@@ -56,7 +57,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
-  #prevEngineProps?: Record<string, any> | null;
+  #prevEngineConfigKey?: Record<string, any> | null;
 
   constructor() {
     super();
@@ -93,7 +94,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set config(config: HlsMediaConfig) {
     super.config = config;
-    this.#requestLoad();
+    if (this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
   get error() {
@@ -167,9 +168,9 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       return super.load();
     }
 
-    if (this.#shouldEngineUpdate(this.#engineProps())) {
+    if (this.#shouldEngineUpdate(this.#engineConfigKey())) {
       this.#engineDestroy();
-      this.#prevEngineProps = this.#engineProps();
+      this.#prevEngineConfigKey = this.#engineConfigKey();
 
       const contentType = this.config.contentType ?? inferContentType(this.#src);
       const useMse =
@@ -209,23 +210,22 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.load();
   }
 
-  #shouldEngineUpdate(nextEngineProps: Record<string, any>) {
-    return !shallowEqual(this.#prevEngineProps, nextEngineProps);
+  #shouldEngineUpdate(nextEngineConfigKey: Record<string, any>) {
+    return !shallowEqual(this.#prevEngineConfigKey, nextEngineConfigKey);
   }
 
-  #engineProps() {
+  #engineConfigKey() {
     return {
-      config: this.config,
+      ...this.config.hlsJs,
       preferPlayback: this.config.preferPlayback,
       contentType: this.config.contentType,
-      debug: this.config.hlsJs?.debug,
     };
   }
 
   #engineDestroy() {
     this.#delegate?.destroy();
     this.#delegate = null;
-    this.#prevEngineProps = null;
+    this.#prevEngineConfigKey = null;
     this.#loadRequested = null;
     // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;

@@ -7,7 +7,7 @@ import {
   type TextTrackLike,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import type { EventListenerFor, EventType, HTMLMediaTargetLike, QueriedElement } from './types';
+import type { ComponentConstructor, EventListenerFor, EventType, HTMLMediaTargetLike, QueriedElement } from './types';
 import { getComponents, getProp, setProp } from './utils';
 
 export type {
@@ -19,6 +19,26 @@ export type {
 } from './types';
 export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
 
+/**
+ * Per-component config namespaces. A component contributes an entry by
+ * augmenting this interface, keying its public config props under its
+ * `static configKey`:
+ *
+ * @example
+ * declare module '@videojs/core/dom/media/media-host' {
+ *   interface MediaComponentConfig {
+ *     mux: MuxDataProps;
+ *   }
+ * }
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: augmentation target for component config namespaces
+export interface MediaComponentConfig {}
+
+/** Host config bag: free-form host/engine settings plus per-component config namespaces. */
+export interface MediaConfig extends Partial<MediaComponentConfig> {
+  [name: string]: unknown;
+}
+
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
   implements MediaFull
@@ -26,7 +46,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   #target: Target | null = null;
   #eventTypes = new Set<string>();
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
-  #config: Record<string, unknown> = {};
+  #config: MediaConfig = {};
 
   protected get target() {
     return this.#target;
@@ -66,6 +86,8 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     const components = getComponents(this);
     for (const component of components.values()) {
       component.destroy?.();
+      const { configKey } = component.constructor as ComponentConstructor;
+      if (configKey) delete this.#config[configKey];
     }
     components.clear();
   }
@@ -120,12 +142,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     return getProp(this, 'targetLiveWindow') ?? Number.NaN;
   }
 
-  get config() {
-    return getProp(this, 'config') ?? this.#config;
+  get config(): MediaConfig {
+    return this.#config;
   }
-  set config(value) {
-    this.#config = value;
-    setProp(this, 'config', value);
+  set config(value: MediaConfig) {
+    Object.assign(this.#config, value);
   }
 
   get title() {

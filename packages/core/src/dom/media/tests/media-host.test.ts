@@ -38,6 +38,13 @@ class CastLikeOverride implements Component {
   }
 }
 
+class ConfigurableComponent implements Component {
+  static readonly configKey = 'fake';
+  value = 0;
+  label = '';
+  destroy() {}
+}
+
 describe('HTMLMediaElementHost', () => {
   describe('component overrides', () => {
     it('returns the override value when a component exposes the property', () => {
@@ -180,6 +187,101 @@ describe('HTMLMediaElementHost', () => {
       host.attach({} as HTMLAudioElement);
 
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
+    });
+  });
+
+  describe('component config binding', () => {
+    it('exposes the component instance under its configKey', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      expect(host.config.fake).toBe(component);
+    });
+
+    it('reads live values from the component', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      component.value = 5;
+      expect((host.config.fake as ConfigurableComponent).value).toBe(5);
+    });
+
+    it('assigns onto the component when the namespace is written', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config.fake = { value: 7, label: 'hi' };
+
+      expect(component.value).toBe(7);
+      expect(component.label).toBe('hi');
+    });
+
+    it('routes component keys through the config setter', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config = { fake: { value: 3 }, hlsJs: { debug: true } };
+
+      expect(component.value).toBe(3);
+      // Component instance is not stored as a plain object on the host.
+      expect(host.config.fake).toBe(component);
+      // Non-component keys are stored on the host bag.
+      expect(host.config.hlsJs).toEqual({ debug: true });
+    });
+
+    it('reflects a component added after the first config access', () => {
+      const host = new HTMLAudioElementHost();
+      // Access config before the component exists to build the proxy.
+      expect(host.config.fake).toBeUndefined();
+
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      expect(host.config.fake).toBe(component);
+    });
+
+    it('includes the configKey in has/ownKeys', () => {
+      const host = new HTMLAudioElementHost();
+      addComponent(host, new ConfigurableComponent());
+
+      expect('fake' in host.config).toBe(true);
+      expect(Object.keys(host.config)).toContain('fake');
+    });
+
+    it('merges host-level keys on assignment', () => {
+      const host = new HTMLAudioElementHost();
+
+      host.config = { a: 1 };
+      host.config = { b: 2 };
+
+      expect(host.config.a).toBe(1);
+      expect(host.config.b).toBe(2);
+    });
+
+    it('removes the config binding when the component is removed', () => {
+      const host = new HTMLAudioElementHost();
+      const remove = addComponent(host, new ConfigurableComponent());
+
+      remove();
+
+      expect(host.config.fake).toBeUndefined();
+      expect('fake' in host.config).toBe(false);
+    });
+
+    it('adopts config set before the component was registered', () => {
+      const host = new HTMLAudioElementHost();
+      host.config = { fake: { value: 4, label: 'early' } };
+
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      expect(component.value).toBe(4);
+      expect(component.label).toBe('early');
+      expect(host.config.fake).toBe(component);
     });
   });
 });

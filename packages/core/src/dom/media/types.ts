@@ -45,7 +45,14 @@ export interface Component<Target extends HTMLMediaTargetLike = HTMLMediaTargetL
 
 export type AnyComponent = Component;
 
-export type ComponentConstructor<T extends AnyComponent = AnyComponent> = new (...args: any[]) => T;
+export interface ComponentConstructor<T extends AnyComponent = AnyComponent> {
+  new (...args: any[]): T;
+  /**
+   * Namespaces the component's live config under `host.config[configKey]`.
+   * Reading returns the component instance; writing assigns onto it.
+   */
+  readonly configKey?: string;
+}
 export interface Components extends Map<ComponentConstructor, AnyComponent> {
   get<T extends AnyComponent>(component: ComponentConstructor<T>): T | undefined;
   set<T extends AnyComponent>(component: ComponentConstructor<T>, instance: T): this;

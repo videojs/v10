@@ -16,11 +16,29 @@ export function addComponent<T extends AnyComponent>(host: Host, instance: T) {
   const components = getComponents(host);
   const ctor = instance.constructor as ComponentConstructor<T>;
   components.set(ctor, instance);
+
+  // Expose a live binding on `host.config`: reads return the component, writes assign onto it.
+  const { configKey } = ctor;
+  if (configKey) {
+    // Adopt config set before the component was registered.
+    const initial = host.config[configKey];
+    Object.defineProperty(host.config, configKey, {
+      enumerable: true,
+      configurable: true,
+      get: () => instance,
+      set: (value) => Object.assign(instance, value),
+    });
+    if (initial) Object.assign(instance, initial);
+  }
+
   instance.setMedia?.(host);
   // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
   if (host.target) instance.attach?.(host.target);
   return () => {
-    if (components.get(ctor) === instance) components.delete(ctor);
+    if (components.get(ctor) === instance) {
+      components.delete(ctor);
+      if (configKey) delete host.config[configKey];
+    }
   };
 }
 

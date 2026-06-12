@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { HlsMedia } from '../../hls';
+import { HlsMedia } from '../../hls';
+import { addComponent } from '../../media-host';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -89,6 +90,21 @@ describe('MuxData', () => {
         data: expect.objectContaining({ video_id: 'abc123' }),
       })
     );
+  });
+
+  it('exposes mux config under host.config.muxData with inferred types', () => {
+    const media = new HlsMedia();
+    addComponent(media, new MuxData());
+
+    // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
+    // component's `configKey` augmentation, so these assignments/reads are
+    // checked. This line fails to compile if inference regresses.
+    media.config.muxData = { envKey: 'key', debug: true };
+    const envKey: string | undefined = media.config.muxData?.envKey;
+
+    expect(envKey).toBe('key');
+    // Live binding: the write reached the component instance.
+    expect(media.config.muxData).toBeInstanceOf(MuxData);
   });
 
   it('stops re-monitoring after destroy', async () => {

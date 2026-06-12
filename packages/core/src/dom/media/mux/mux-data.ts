@@ -22,7 +22,15 @@ export interface MuxDataMedia extends EventTarget {
   readonly src: string;
 }
 
+declare module '../media-host' {
+  interface MediaComponentConfig {
+    muxData: Partial<MuxDataProps>;
+  }
+}
+
 export class MuxData implements MuxDataProps {
+  static readonly configKey = 'muxData';
+
   #MuxDataSdk: MuxDataSdk | undefined = Mux;
   #pendingInitialize: Promise<void> | null = null;
   #beaconCollectionDomain: string | undefined;
@@ -69,6 +77,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set MuxDataSdk(value) {
+    if (this.#MuxDataSdk === value) return;
     this.#MuxDataSdk = value;
     this.#reinitialize();
   }
@@ -78,6 +87,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set beaconCollectionDomain(value) {
+    if (this.#beaconCollectionDomain === value) return;
     this.#beaconCollectionDomain = value;
     this.#reinitialize();
   }
@@ -87,6 +97,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set debug(value) {
+    if (this.#debug === value) return;
     this.#debug = value;
     this.#reinitialize();
   }
@@ -96,6 +107,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set disableCookies(value) {
+    if (this.#disableCookies === value) return;
     this.#disableCookies = value;
     this.#reinitialize();
   }
@@ -105,6 +117,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set envKey(value) {
+    if (this.#envKey === value) return;
     this.#envKey = value;
     this.#target?.mux?.updateData(value ? { env_key: value } : {});
   }
@@ -114,6 +127,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set playerSoftwareName(value) {
+    if (this.#playerSoftwareName === value) return;
     this.#playerSoftwareName = value;
     this.#target?.mux?.updateData(value ? { player_software_name: value } : {});
   }
@@ -123,6 +137,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set playerSoftwareVersion(value) {
+    if (this.#playerSoftwareVersion === value) return;
     this.#playerSoftwareVersion = value;
     this.#target?.mux?.updateData(value ? { player_software_version: value } : {});
   }
@@ -132,6 +147,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set playerInitTime(value) {
+    if (this.#playerInitTime === value) return;
     this.#playerInitTime = value;
     this.#target?.mux?.updateData(value ? { player_init_time: value } : {});
   }
@@ -141,6 +157,7 @@ export class MuxData implements MuxDataProps {
   }
 
   set metadata(value) {
+    if (this.#metadata === value) return;
     this.#metadata = value;
     this.#target?.mux?.updateData(value ? { ...value } : {});
   }
