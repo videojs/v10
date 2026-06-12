@@ -346,7 +346,7 @@ export interface RemotePlaybackEvents {
 }
 
 export interface RemotePlaybackLike extends EventTargetLike<RemotePlaybackEvents> {
-  readonly state: string;
+  readonly state: 'connecting' | 'connected' | 'disconnected';
   prompt(): Promise<void>;
   watchAvailability(callback: (available: boolean) => void): Promise<number>;
   cancelWatchAvailability(id?: number): Promise<void>;
@@ -452,6 +452,40 @@ export interface Video
 export interface AudioEvents extends MediaFullEvents {}
 
 export interface Audio extends MediaFull<AudioEvents> {}
+
+// ----------------------------------------
+// Target shapes
+// ----------------------------------------
+
+export interface MediaTargetLike
+  extends MediaPlaybackCapability,
+    MediaPauseCapability,
+    MediaSeekCapability,
+    MediaSourceCapability,
+    MediaVolumeCapability,
+    MediaPlaybackRateCapability,
+    MediaBufferCapability,
+    MediaPlayedCapability,
+    MediaErrorCapability,
+    MediaTextTrackCapability,
+    MediaRemotePlaybackCapability,
+    MediaControlsCapability,
+    MediaAutoplayCapability,
+    Partial<MediaLiveCapability>,
+    Partial<MediaStreamTypeCapability>,
+    Partial<MediaConfigCapability> {
+  title: string;
+}
+
+export interface VideoTargetLike
+  extends MediaTargetLike,
+    MediaPosterCapability,
+    MediaPlaysInlineCapability,
+    MediaVideoDimensionsCapability {
+  disablePictureInPicture: boolean;
+  requestPictureInPicture(): Promise<unknown>;
+  requestFullscreen(): Promise<unknown>;
+}
 
 export interface MediaEngineHost<Engine = unknown, Target = unknown> {
   readonly engine: Engine | null;

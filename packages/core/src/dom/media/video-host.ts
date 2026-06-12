@@ -1,39 +1,41 @@
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
-import type { Video, VideoEvents } from '../../core/media/types';
-import { HTMLMediaElementHost } from './media-host';
+import type { Video, VideoEvents, VideoTargetLike } from '../../core/media/types';
+import { getProp, HTMLMediaElementHost, type HTMLMediaTargetLike, setProp } from './media-host';
 
-export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement, VideoEvents> implements Video {
+export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
+
+export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLike, VideoEvents> implements Video {
   get poster() {
-    return this.target?.poster ?? '';
+    return getProp(this, 'poster') ?? '';
   }
 
   set poster(value: string) {
-    if (this.target) this.target.poster = value;
+    setProp(this, 'poster', value);
   }
 
   get playsInline() {
-    return this.target?.playsInline ?? false;
+    return getProp(this, 'playsInline') ?? false;
   }
 
   set playsInline(value: boolean) {
-    if (this.target) this.target.playsInline = value;
+    setProp(this, 'playsInline', value);
   }
 
   get videoWidth() {
-    return this.target?.videoWidth ?? 0;
+    return getProp(this, 'videoWidth') ?? 0;
   }
 
   get videoHeight() {
-    return this.target?.videoHeight ?? 0;
+    return getProp(this, 'videoHeight') ?? 0;
   }
 
   get disablePictureInPicture() {
-    return this.target?.disablePictureInPicture ?? false;
+    return getProp(this, 'disablePictureInPicture') ?? false;
   }
 
   set disablePictureInPicture(value: boolean) {
-    if (this.target) this.target.disablePictureInPicture = value;
+    setProp(this, 'disablePictureInPicture', value);
   }
 
   get webkitPresentationMode() {
@@ -47,17 +49,19 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoElement,
   }
 
   get isPictureInPicture(): boolean {
+    const el = this.target as HTMLVideoElement | null;
     return (
-      (!!this.target && globalThis.document?.pictureInPictureElement === this.target) ||
+      (!!el && globalThis.document?.pictureInPictureElement === el) ||
       this.webkitPresentationMode === 'picture-in-picture'
     );
   }
 
   get isFullscreen(): boolean {
-    if (!this.target) return false;
+    const el = this.target as HTMLVideoElement | null;
+    if (!el) return false;
     if (this.webkitPresentationMode === 'fullscreen') return true;
     const doc = globalThis.document as WebKitDocument;
-    return doc?.fullscreenElement === this.target || doc?.webkitFullscreenElement === this.target;
+    return doc?.fullscreenElement === el || doc?.webkitFullscreenElement === el;
   }
 
   async requestPictureInPicture() {

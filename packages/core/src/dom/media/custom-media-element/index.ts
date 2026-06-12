@@ -81,7 +81,7 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
-interface MediaHost extends EventTarget {
+export interface MediaHost extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
@@ -89,7 +89,9 @@ interface MediaHost extends EventTarget {
   [key: string]: any;
 }
 
-type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTMLElement & InstanceType<T>> & {
+type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
+  HTMLElement & InstanceType<T> & { readonly host: InstanceType<T> }
+> & {
   properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
@@ -251,6 +253,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (target === this.#mediaHost.target) return;
       if (this.#mediaHost.target) this.#mediaHost.detach();
       this.#mediaHost.attach(target);
+    }
+
+    get host(): MediaHost {
+      return this.#mediaHost;
     }
 
     get target(): HTMLVideoElement | HTMLAudioElement | null {

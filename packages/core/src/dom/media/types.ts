@@ -14,9 +14,42 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
-import type { Media } from '../../core/media/types';
+import type { Media, MediaTargetLike } from '../../core/media/types';
+import type { HTMLMediaElementHost } from './media-host';
 
 export type { Media };
+
+export type QueriedElement<S extends string, E extends Element> = S extends keyof HTMLElementTagNameMap
+  ? HTMLElementTagNameMap[S]
+  : E;
+
+export type EventType<Events> = (keyof Events & string) | (string & {});
+
+export type EventListenerFor<Events, K> =
+  | ((event: K extends keyof Events ? Events[K] : Event) => void)
+  | EventListenerOrEventListenerObject
+  | null;
+
+export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+}
+
+export interface Component<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
+  readonly targetOverride?: Partial<Target> | null;
+  setMedia?(host: HTMLMediaElementHost<Target, any>): void;
+  attach?(target: Target): void;
+  detach?(): void;
+  destroy?(): void;
+}
+
+export type AnyComponent = Component;
+
+export type ComponentConstructor<T extends AnyComponent = AnyComponent> = new (...args: any[]) => T;
+export interface Components extends Map<ComponentConstructor, AnyComponent> {
+  get<T extends AnyComponent>(component: ComponentConstructor<T>): T | undefined;
+  set<T extends AnyComponent>(component: ComponentConstructor<T>, instance: T): this;
+}
 
 export interface MediaContainer extends HTMLElement {}
 
