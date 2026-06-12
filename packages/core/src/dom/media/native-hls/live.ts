@@ -22,7 +22,7 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     // Derived on each read from the current `seekable.end` and cached offset.
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
-      const target = this.target as HTMLMediaElement | null;
+      const target = this.target as HTMLVideoElement | null;
       if (!target) return Number.NaN;
       const { seekable, buffered } = target;
       // Native HLS on Chrome doesn't fill the `seekable` property, so we use the `buffered` property instead.

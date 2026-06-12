@@ -36,7 +36,7 @@ class FakeHost extends HTMLVideoElementHost {
 
   // Re-expose the now-protected `target` for test assertions.
   override get target(): HTMLVideoElement | null {
-    return super.target;
+    return super.target as HTMLVideoElement | null;
   }
 }
 

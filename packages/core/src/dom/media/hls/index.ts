@@ -1,10 +1,7 @@
 import { shallowEqual } from '@videojs/utils/object';
-import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
-import { GoogleCastMixin } from '../google-cast';
-import { type GoogleCastMedia, type GoogleCastMediaProps, googleCastMediaDefaultProps } from '../google-cast/types';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
@@ -29,41 +26,65 @@ export const ContentTypes = {
 
 export const StreamTypes = MediaStreamTypes;
 
-export interface HlsMediaConfig {
-  preferPlayback: PlaybackType | undefined;
-  contentType?: SourceType | undefined;
-  hlsJs?: Partial<HlsJsConfig>;
-}
-
-export interface HlsMediaProps extends GoogleCastMediaProps {
+export interface HlsMediaProps {
   src: string;
   preload: PreloadType;
-  config: HlsMediaConfig;
   streamType: StreamType;
+  config?: HlsMediaConfig;
+}
+
+export interface HlsMediaConfig {
+  preferPlayback?: PlaybackType | undefined;
+  contentType?: SourceType | undefined;
+  hlsJs?: Partial<HlsJsConfig>;
+  [name: string]: unknown;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
   preload: 'metadata',
-  config: {
-    preferPlayback: 'mse',
-  },
   streamType: MediaStreamTypes.UNKNOWN,
-  ...googleCastMediaDefaultProps,
 };
 
-class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, keyof GoogleCastMediaProps> {
+export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
+  #mediaElement: HTMLVideoElement | null = null;
   #src = hlsMediaDefaultProps.src;
-  #config = { ...hlsMediaDefaultProps.config };
   #preload = hlsMediaDefaultProps.preload;
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineProps?: Record<string, any> | null;
 
+  attach(target: HTMLVideoElement) {
+    this.#mediaElement = target;
+    super.attach(target);
+    this.#delegate?.attach(target);
+  }
+
+  detach() {
+    this.#delegate?.detach();
+    super.detach();
+    this.#mediaElement = null;
+  }
+
+  destroy() {
+    this.detach();
+    this.#engineDestroy();
+    super.destroy();
+  }
+
   get engine() {
     return this.#delegate?.engine ?? null;
+  }
+
+  get config(): HlsMediaConfig {
+    return super.config;
+  }
+
+  set config(config: HlsMediaConfig) {
+    super.config = config;
+    this.#requestLoad();
   }
 
   get error() {
@@ -76,15 +97,6 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
 
   set src(src: string) {
     this.#src = src;
-    this.#requestLoad();
-  }
-
-  get config() {
-    return this.#config;
-  }
-
-  set config(config) {
-    this.#config = config;
     this.#requestLoad();
   }
 
@@ -138,24 +150,12 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
-  attach(target: HTMLVideoElement) {
-    super.attach(target);
-    this.#delegate?.attach(target);
-  }
-
-  detach() {
-    this.#delegate?.detach();
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
-    this.#engineDestroy();
-    super.destroy();
-  }
-
-  load() {
+  async load() {
     this.#loadRequested = null;
+
+    if (this.remote.state === 'connected') {
+      return super.load();
+    }
 
     if (this.#shouldEngineUpdate(this.#engineProps())) {
       this.#engineDestroy();
@@ -165,7 +165,7 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
       const useMse =
         Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
-      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config.hlsJs } }) : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
@@ -177,8 +177,8 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
 
       this.#delegate.preload = this.preload;
 
-      if (this.target) {
-        this.#delegate.attach(this.target);
+      if (this.#mediaElement) {
+        this.#delegate.attach(this.#mediaElement);
       }
     }
 
@@ -216,10 +216,6 @@ class HlsMediaBase extends HTMLVideoElementHost implements Omit<HlsMediaProps, k
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
   }
 }
-
-const HlsMediaWithGoogleCast: MixinReturn<typeof HlsMediaBase, GoogleCastMedia> = GoogleCastMixin(HlsMediaBase);
-
-export class HlsMedia extends HlsMediaWithGoogleCast implements HlsMediaProps {}
 
 function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';
