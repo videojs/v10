@@ -1,22 +1,50 @@
-import { describe, expect, it } from 'vitest';
-import { MuxVideoMedia } from '..';
+import { describe, expect, it, vi } from 'vitest';
+import { MuxData } from '..';
+import type { MuxDataSdk } from '../types';
 
-describe('MuxVideoMedia', () => {
-  it('accepts src directly', () => {
-    const media = new MuxVideoMedia();
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+function createSdk() {
+  const monitor = vi.fn();
+  const sdk = {
+    monitor,
+    utils: { now: () => 0, generateUUID: () => 'uuid' },
+  } as unknown as MuxDataSdk;
+  return { sdk, monitor };
+}
 
-    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
+describe('MuxData', () => {
+  it('accepts a player software name', () => {
+    expect(new MuxData({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
   });
 
-  it('accepts non-Mux src', () => {
-    const media = new MuxVideoMedia();
-    media.src = 'https://example.com/video.m3u8';
+  it('monitors the attached target with the configured data', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
+    const video = document.createElement('video');
 
-    expect(media.src).toBe('https://example.com/video.m3u8');
+    data.setMedia({ engine: null, src: 'https://stream.mux.com/abc123.m3u8' });
+    data.attach(video);
+
+    // Initialization is deferred by a microtask so all props settle first.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(monitor).toHaveBeenCalledWith(
+      video,
+      expect.objectContaining({
+        data: expect.objectContaining({ env_key: 'key', player_software_name: 'mux-video' }),
+      })
+    );
   });
 
-  it('defaults PLAYER_SOFTWARE_NAME to mux-video', () => {
-    expect(MuxVideoMedia.PLAYER_SOFTWARE_NAME).toBe('mux-video');
+  it('does not monitor before a target is attached', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk });
+
+    data.setMedia({ engine: null, src: 'https://stream.mux.com/abc123.m3u8' });
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(monitor).not.toHaveBeenCalled();
   });
 });
