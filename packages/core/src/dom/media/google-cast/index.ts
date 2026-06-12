@@ -38,7 +38,7 @@ export class GoogleCast implements GoogleCastProps, Component {
     this.#media = host;
 
     this.#provider ??= new GoogleCastProvider(this);
-    this.#override = { remote: this.#provider.remote };
+    this.#override = this.#createRemoteOverride();
     this.#provider.remote.addEventListener('connect', this.#onStateChange);
     this.#provider.remote.addEventListener('disconnect', this.#onStateChange);
   }
@@ -63,9 +63,18 @@ export class GoogleCast implements GoogleCastProps, Component {
     if (this.#provider.remote.state === 'connected') {
       this.#override = this.#provider;
     } else {
-      this.#override = { remote: this.#provider.remote };
+      this.#override = this.#createRemoteOverride();
     }
   };
+
+  #createRemoteOverride(): Partial<HTMLMediaTargetLike> {
+    const provider = this.#provider!;
+    return {
+      get remote() {
+        return provider.remote;
+      },
+    };
+  }
 
   get targetOverride() {
     return this.#override;

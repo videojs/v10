@@ -54,7 +54,7 @@ export class GoogleCastProvider {
   }
 
   get remote() {
-    if (!this.target?.disableRemotePlayback) {
+    if (this.target && !this.target.disableRemotePlayback) {
       ensureCastFramework();
     }
     return this.#remotePlayback;
@@ -62,16 +62,18 @@ export class GoogleCastProvider {
 
   attach(target: HTMLMediaTargetLike) {
     this.target = target;
+    target.textTracks.addEventListener('change', this.#onTextTrackChange);
   }
 
   detach() {
+    this.target?.textTracks.removeEventListener('change', this.#onTextTrackChange);
     this.target = null;
   }
 
   destroy() {
+    this.detach();
     googleCastInstances.delete(this);
     currentMedia()?.removeUpdateListener(this.#onMediaUpdate);
-    this.target?.textTracks.removeEventListener('change', this.#onTextTrackChange);
     this.#detachRemoteListeners();
     this.#isCasting = false;
     this.#isInit = false;
@@ -297,8 +299,6 @@ export class GoogleCastProvider {
     this.#isInit = true;
 
     this.#applyCastOptions();
-
-    this.target?.textTracks.addEventListener('change', this.#onTextTrackChange);
 
     this.onCastStateChanged();
 

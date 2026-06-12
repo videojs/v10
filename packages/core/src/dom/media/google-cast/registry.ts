@@ -10,21 +10,29 @@ let pendingCastFramework: Promise<typeof cast.framework> | null = null;
 export async function ensureCastFramework(): Promise<typeof cast.framework> {
   if (castFramework) return castFramework;
 
-  pendingCastFramework ??= loadCastFramework().then(
-    () =>
-      new Promise<typeof cast.framework>((resolve, reject) => {
-        onCastApiAvailable(() => {
-          registerCastFramework();
+  if (!pendingCastFramework) {
+    pendingCastFramework = loadCastFramework().then(
+      () =>
+        new Promise<typeof cast.framework>((resolve, reject) => {
+          onCastApiAvailable(() => {
+            registerCastFramework();
 
-          if (castFramework) {
-            resolve(castFramework);
-            return;
-          }
+            if (castFramework) {
+              resolve(castFramework);
+              return;
+            }
 
-          reject(new DOMException('Google Cast framework is unavailable.', 'NotSupportedError'));
-        });
-      })
-  );
+            reject(new DOMException('Google Cast framework is unavailable.', 'NotSupportedError'));
+          });
+        })
+    );
+
+    // Reset on failure (e.g. script blocked by an ad-blocker) so a later
+    // attempt can retry instead of replaying a cached rejection.
+    pendingCastFramework.catch(() => {
+      pendingCastFramework = null;
+    });
+  }
 
   return pendingCastFramework;
 }
