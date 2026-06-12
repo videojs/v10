@@ -5,14 +5,6 @@ import { addComponent } from '@videojs/core/dom/media/media-host';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 export class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsMedia)) {
-  static get observedAttributes() {
-    return [
-      // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-      ...super.observedAttributes,
-      'stream-type',
-    ];
-  }
-
   constructor() {
     super();
     addComponent(this.host, new GoogleCast());

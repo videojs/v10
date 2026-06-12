@@ -3,8 +3,6 @@ import type { Constructor } from '@videojs/utils/types';
 import { MediaError } from '../../../core/media/media-error';
 import type { HTMLVideoElementHost } from '../video-host';
 
-// Class-based so mixins applied to an `HTMLVideoElementHost` subclass retain
-// access to the protected `target`, which is no longer part of any public type.
 export type NativeMediaHost = HTMLVideoElementHost;
 
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {

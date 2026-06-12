@@ -123,6 +123,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       poster: { type: String, empty: '' },
       preload: { type: String, empty: null },
       src: { type: String, empty: '' },
+      streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
     };
 
     static get observedAttributes() {

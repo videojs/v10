@@ -262,6 +262,7 @@ describe('CustomMediaElement', () => {
       expect(observed).toContain('poster');
       expect(observed).toContain('autopictureinpicture');
       expect(observed).toContain('disablepictureinpicture');
+      expect(observed).toContain('stream-type');
     });
 
     it('includes standard attributes for audio elements', () => {
@@ -274,6 +275,7 @@ describe('CustomMediaElement', () => {
       expect(observed).toContain('muted');
       expect(observed).toContain('preload');
       expect(observed).toContain('src');
+      expect(observed).toContain('stream-type');
     });
   });
 
@@ -291,6 +293,27 @@ describe('CustomMediaElement', () => {
       expect(observed).not.toContain('current-time');
       expect(observed).not.toContain('volume');
       expect(observed).not.toContain('playback-rate');
+    });
+  });
+
+  describe('stream-type reflection', () => {
+    it('sets the host streamType from the stream-type attribute', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('stream-type', 'live');
+      expect(el.streamType).toBe('live');
+    });
+
+    it('reflects the streamType property to the stream-type attribute', () => {
+      const el = create(defineVideoElement());
+      el.streamType = 'live';
+      expect(el.getAttribute('stream-type')).toBe('live');
+      expect(el.streamType).toBe('live');
+    });
+
+    it('does not forward stream-type to the inner media element', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('stream-type', 'live');
+      expect(el.target!.hasAttribute('stream-type')).toBe(false);
     });
   });
 

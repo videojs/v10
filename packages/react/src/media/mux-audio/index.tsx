@@ -19,9 +19,6 @@ export interface MuxAudioProps
 }
 
 export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
-  // TODO: HlsMedia extends HTMLVideoElementHost, we should compose on top of
-  // HTMLAudioElementHost instead but this would require a HlsMediaMixin,
-  // keep it simple for now.
   const media = useMediaInstance(HlsMedia, (media) => {
     addComponent(media, new MuxData({ playerSoftwareName: 'mux-audio' }));
     addComponent(media, new GoogleCast());
