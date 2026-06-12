@@ -307,6 +307,10 @@ Deferred:
 
 ## See also
 
+- [multi-cdn-failover-prior-art.md](../multi-cdn-failover-prior-art.md) —
+  how eight OSS players model CDN redundancy/failover, read against this
+  design (two architectural families, content-steering convergence, and the
+  prior art behind the 300s cooldown default + the open follow-ups)
 - [track-switching-model.md](../track-switching-model.md) — the rule
   model (constraints → soft filters → ranker) this feature composes into
 - [clusters.md § Selection resilience](./clusters.md#selection-resilience)
