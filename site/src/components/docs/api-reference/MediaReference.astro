@@ -5,8 +5,16 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Pre from '@/components/typography/Pre.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
-import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
+import { createMediaReferenceModel, getAttributeExamples } from '@/utils/mediaReferenceModel';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
 import MediaHostPropsTable from './MediaHostPropsTable.astro';
 
@@ -15,6 +23,7 @@ interface Props {
 }
 
 const { media } = Astro.props;
+const framework = Astro.params.framework === 'react' ? 'react' : 'html';
 
 const entry = await getEntry('mediaReference', kebabCase(media));
 const ref: MediaReference | null = entry?.data ?? null;
@@ -28,6 +37,28 @@ const nativeAttrsSection = model.sections.find((s: { key: string }) => s.key ===
 const eventsSection = model.sections.find((s: { key: string }) => s.key === 'events');
 const cssVarsSection = model.sections.find((s: { key: string }) => s.key === 'cssCustomProperties');
 const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slots');
+
+const mediaTag = `<${ref.mediaType}>`;
+
+// React prop spellings for the curated attribute examples.
+const REACT_PROP_NAMES: Record<string, string> = {
+  autoplay: 'autoPlay',
+  playsinline: 'playsInline',
+  crossorigin: 'crossOrigin',
+};
+const attributeExamples: string[] = getAttributeExamples(ref);
+const attributeExampleNames =
+  framework === 'react' ? attributeExamples.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : attributeExamples;
+
+const elementSpecificEvents = ref.events.elementSpecific;
+
+const htmlEventsSample = [
+  `const el = document.querySelector('${ref.tagName}');`,
+  `el.addEventListener('play', onPlay);`,
+  `el.addEventListener('timeupdate', onTimeUpdate);`,
+].join('\n');
+
+const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={onTimeUpdate} />`;
 ---
 
 <ContentWidth>
@@ -46,14 +77,46 @@ const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slot
   }
 
   {
-    nativeAttrsSection && (
+    nativeAttrsSection && framework === "html" && (
       <>
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
-        <p class="my-4 flex flex-wrap gap-2">
-          {ref.nativeAttributes.map((attr) => (
-            <MarkdownCode>{attr}</MarkdownCode>
+        <P>
+          Accepts common native media attributes and forwards them to the
+          internal <MarkdownCode>{mediaTag}</MarkdownCode> element, including{" "}
+          {attributeExampleNames.map((attr, index) => (
+            <>
+              <MarkdownCode>{attr}</MarkdownCode>
+              {index < attributeExampleNames.length - 1 ? ", " : "."}
+            </>
           ))}
-        </p>
+        </P>
+        <P>
+          Options specific to this element are JavaScript properties, not
+          attributes — see Host Properties above. Setting them as markup
+          attributes has no effect.
+        </P>
+      </>
+    )
+  }
+
+  {
+    nativeAttrsSection && framework === "react" && (
+      <>
+        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
+        <P>
+          The component renders a native <MarkdownCode>{mediaTag}</MarkdownCode>{" "}
+          element, so standard React media props are supported, including{" "}
+          {attributeExampleNames.map((attr, index) => (
+            <>
+              <MarkdownCode>{attr}</MarkdownCode>
+              {index < attributeExampleNames.length - 1 ? ", " : "."}
+            </>
+          ))}
+        </P>
+        <P>
+          Options specific to this element are also props — every host property
+          above is available as a prop.
+        </P>
       </>
     )
   }
@@ -62,13 +125,58 @@ const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slot
     eventsSection && (
       <>
         <H3 id={eventsSection.id}>{eventsSection.title}</H3>
-        <p class="my-4 flex flex-wrap gap-2">
-          {[...ref.events.native, ...ref.events.elementSpecific].map(
-            (event) => (
-              <MarkdownCode>{event}</MarkdownCode>
-            ),
-          )}
-        </p>
+        {framework === "html" ? (
+          <P>
+            Native media events are re-dispatched from the internal{" "}
+            <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
+            for them on the element directly:
+          </P>
+        ) : (
+          <P>
+            The component renders a native{" "}
+            <MarkdownCode>{mediaTag}</MarkdownCode> element, so standard React
+            media event props work:
+          </P>
+        )}
+        <Pre data-language={framework === "html" ? "ts" : "tsx"}>
+          <MarkdownCode codeBlock="true">
+            {framework === "html" ? htmlEventsSample : reactEventsSample}
+          </MarkdownCode>
+        </Pre>
+        {elementSpecificEvents.length === 0 ? (
+          <P>
+            This element dispatches no events beyond the native media events.
+          </P>
+        ) : (
+          <>
+            <P>This element also dispatches:</P>
+            <Table maxWidth={false} outerClass="my-6">
+              <Thead>
+                <Tr>
+                  <Th>Event</Th>
+                  <Th>Description</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {elementSpecificEvents.map((event) => (
+                  <Tr>
+                    <Td class="align-top">
+                      <MarkdownCode>{event.name}</MarkdownCode>
+                    </Td>
+                    <Td class="align-top">{event.description ?? ""}</Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+            {framework === "react" && (
+              <P>
+                These events have no built-in React prop — attach a listener to
+                the element via a <MarkdownCode>ref</MarkdownCode> with{" "}
+                <MarkdownCode>addEventListener</MarkdownCode>.
+              </P>
+            )}
+          </>
+        )}
       </>
     )
   }

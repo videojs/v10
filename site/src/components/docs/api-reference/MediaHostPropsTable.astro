@@ -59,7 +59,7 @@ const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompar
               <MarkdownCode>{def.type}</MarkdownCode>
             </Td>
             <Td class="align-top">
-              <MarkdownCode>—</MarkdownCode>
+              <MarkdownCode>{def.default ?? "—"}</MarkdownCode>
             </Td>
           </DetailRow>
         );
