@@ -157,8 +157,9 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     setProp(this, 'loop', value);
   }
 
-  async play() {
-    return getProp(this, 'play')?.();
+  play() {
+    const play = getProp(this, 'play');
+    return play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {

@@ -167,4 +167,19 @@ describe('HTMLMediaElementHost', () => {
       expect(component.api.playCount).toBe(1);
     });
   });
+
+  describe('play', () => {
+    it('rejects when nothing is attached', async () => {
+      const host = new HTMLAudioElementHost();
+
+      await expect(host.play()).rejects.toBeInstanceOf(DOMException);
+    });
+
+    it('rejects when the target lacks a play implementation', async () => {
+      const host = new HTMLAudioElementHost();
+      host.attach({} as HTMLAudioElement);
+
+      await expect(host.play()).rejects.toBeInstanceOf(DOMException);
+    });
+  });
 });
