@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
+import type { RemotePlaybackLike } from '../../../../core/media/types';
+import { addComponent, type Component } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
 import { ContentTypes, HlsMedia } from '../index';
 
@@ -120,6 +122,51 @@ describe('HlsMedia', () => {
       video.dispatchEvent(new Event('loadstart'));
 
       expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('remote playback load', () => {
+    function setupConnected(load: () => Promise<void>) {
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsMedia();
+      media.attach(video);
+
+      const component: Component = {
+        get targetOverride() {
+          return { remote: { state: 'connected' } as RemotePlaybackLike, load };
+        },
+      };
+      addComponent(media, component);
+
+      return { media };
+    }
+
+    it('awaits the receiver load while connected', async () => {
+      let resolveLoad!: () => void;
+      const load = vi.fn(() => new Promise<void>((resolve) => (resolveLoad = resolve)));
+      const { media } = setupConnected(load);
+
+      let settled = false;
+      const result = media.load().then(() => {
+        settled = true;
+      });
+
+      expect(load).toHaveBeenCalledTimes(1);
+      await Promise.resolve();
+      expect(settled).toBe(false);
+
+      resolveLoad();
+      await result;
+      expect(settled).toBe(true);
+    });
+
+    it('rejects when the receiver load rejects', async () => {
+      const load = vi.fn(() => Promise.reject(new Error('receiver failed')));
+      const { media } = setupConnected(load);
+
+      await expect(media.load()).rejects.toThrow('receiver failed');
     });
   });
 

@@ -164,8 +164,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     if (this.remote.state === 'connected') {
       this.dispatchEvent(new HlsMediaEvent('loadstart'));
-      super.load();
-      return;
+      return super.load();
     }
 
     if (this.#shouldEngineUpdate(this.#engineProps())) {
