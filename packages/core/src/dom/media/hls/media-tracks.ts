@@ -100,14 +100,22 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       const { engine } = this;
       if (!engine) return;
 
-      const selectedTrackId = [...this.audioTracks].find((track) => track.enabled)?.id;
-      if (!selectedTrackId) return;
+      // `enabled` is not exclusive like video `selected`, so prefer a newly
+      // enabled track over the one that is already playing.
+      const enabledTracks = [...this.audioTracks].filter((track) => track.enabled);
+      const selectedTrack = enabledTracks.find((track) => Number(track.id) !== engine.audioTrack) ?? enabledTracks[0];
+      if (!selectedTrack?.id) return;
 
-      const audioTrackId = Number(selectedTrackId);
+      const audioTrackId = Number(selectedTrack.id);
       const availableIds = engine.audioTracks.map((track) => track.id);
 
       if (audioTrackId !== engine.audioTrack && availableIds.includes(audioTrackId)) {
         engine.audioTrack = audioTrackId;
+      }
+
+      // Disable the rest so future change events resolve unambiguously.
+      for (const track of enabledTracks) {
+        if (track !== selectedTrack) track.enabled = false;
       }
     };
 

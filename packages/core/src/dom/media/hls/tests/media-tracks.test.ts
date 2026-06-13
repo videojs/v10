@@ -139,6 +139,25 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['0', '2']);
   });
 
+  it('switches to the newly enabled audio track when multiple are enabled', async () => {
+    const engine = createEngine();
+    const host = new HlsJsMediaMediaTracks(engine);
+
+    audioTracksUpdated(engine, [
+      { id: 0, default: true, name: 'English', lang: 'en' },
+      { id: 1, name: 'Spanish', lang: 'es' },
+    ]);
+
+    const [english, spanish] = [...host.audioTracks];
+    // Enable without disabling the current track first.
+    spanish!.enabled = true;
+    await flush();
+
+    expect(engine.audioTrack).toBe(1);
+    expect(english!.enabled).toBe(false);
+    expect(spanish!.enabled).toBe(true);
+  });
+
   it('clears all media tracks on DESTROYING', () => {
     const engine = createEngine();
     const host = new HlsJsMediaMediaTracks(engine);
