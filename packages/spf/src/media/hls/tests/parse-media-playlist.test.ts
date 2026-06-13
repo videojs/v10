@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
+import {
+  getMediaPlaylistMetadata,
+  type PartiallyResolvedAudioTrack,
+  type PartiallyResolvedTextTrack,
+  type PartiallyResolvedVideoTrack,
+} from '../../types';
 import { parseMediaPlaylist } from '../parse-media-playlist';
 
 describe('parseMediaPlaylist', () => {
@@ -381,6 +386,160 @@ fileSequence0.aac
 segment0.mp4
 #EXT-X-ENDLIST`;
       expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp4');
+    });
+  });
+
+  describe('Live playlists', () => {
+    const unresolvedVideo: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 1400000,
+      codecs: ['avc1.4d401f'],
+      mimeType: 'video/mp4',
+    };
+
+    it('reports Infinity duration for an unended live playlist (no ENDLIST, no PLAYLIST-TYPE)', () => {
+      const playlist = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s`;
+
+      const result = parseMediaPlaylist(playlist, unresolvedVideo);
+
+      expect(result.duration).toBe(Number.POSITIVE_INFINITY);
+      expect(result.startTime).toBe(0);
+      expect(getMediaPlaylistMetadata(result)?.endList).toBe(false);
+    });
+
+    it('reports Infinity duration for an unended EVENT playlist', () => {
+      const playlist = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-PLAYLIST-TYPE:EVENT
+#EXTINF:6.0,
+segment0.m4s`;
+
+      expect(parseMediaPlaylist(playlist, unresolvedVideo).duration).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    it('anchors startTime at 0 on first parse, with media-sequence-derived segment ids', () => {
+      const playlist = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:10
+#EXTINF:6.0,
+segment10.m4s
+#EXTINF:6.0,
+segment11.m4s`;
+
+      const result = parseMediaPlaylist(playlist, unresolvedVideo);
+
+      // No previous snapshot → the window anchors at 0 regardless of media sequence.
+      expect(result.startTime).toBe(0);
+      expect(result.segments.map((s) => s.startTime)).toEqual([0, 6]);
+      // Segment ids are media-sequence-derived, so they stay stable across reloads.
+      expect(result.segments.map((s) => s.id)).toEqual(['segment-10', 'segment-11']);
+    });
+
+    it('treats an ended live playlist as complete with finite duration', () => {
+      const playlist = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:5
+#EXTINF:6.0,
+segment5.m4s
+#EXTINF:6.0,
+segment6.m4s
+#EXT-X-ENDLIST`;
+
+      const result = parseMediaPlaylist(playlist, unresolvedVideo);
+
+      expect(result.duration).toBe(12.0);
+      expect(result.startTime).toBe(0); // first parse, no previous → anchored at 0
+      expect(getMediaPlaylistMetadata(result)?.endList).toBe(true);
+    });
+
+    it('carries the timeline forward across reloads as the window slides', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo);
+      expect(previous.segments.map((s) => s.startTime)).toEqual([0, 6, 12]);
+
+      // Window slid by one (media sequence 0 → 1) and gained a segment.
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:1
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s
+#EXTINF:6.0,
+segment3.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      // segment1 anchors to its prior start (6); the appended segment3 continues at 18.
+      expect(next.segments.map((s) => s.startTime)).toEqual([6, 12, 18]);
+      expect(next.segments.map((s) => s.id)).toEqual(['segment-1', 'segment-2', 'segment-3']);
+    });
+
+    it('appends without shifting when nothing rolls off (media sequence unchanged)', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo);
+
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      expect(next.segments.map((s) => s.startTime)).toEqual([0, 6, 12]);
+    });
+
+    it('estimates the timeline forward on a full window turnover (no overlap)', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo); // ends at 18
+
+      // Jump far ahead — no overlap (offset 10 ≥ 3 segments).
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:10
+#EXTINF:6.0,
+segment10.m4s
+#EXTINF:6.0,
+segment11.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      // anchor = previous end (18) + (offset 10 − 3) × 6 = 60
+      expect(next.segments.map((s) => s.startTime)).toEqual([60, 66]);
     });
   });
 });

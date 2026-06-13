@@ -16,6 +16,13 @@
  */
 export interface Ham {
   id: string;
+  /**
+   * Format-/protocol-specific values that aren't part of the generic CMAF-HAM
+   * model — kept in an open bag so the model stays format-neutral (mirrors how
+   * CMAF-HAM itself stashes protocol extras rather than growing the model).
+   * Typed reads go through dedicated accessors (e.g. `getMediaPlaylistMetadata`).
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -330,6 +337,40 @@ export type Segment = Ham & AddressableObject & TimeSpan;
 export const SEGMENT_TIME_EPSILON = 0.0001;
 
 // =============================================================================
+// Media Playlist Metadata
+// =============================================================================
+
+/**
+ * Playlist-level metadata surfaced from a parsed media playlist. HLS delivery
+ * specifics — not part of the generic CMAF-HAM model — so they live under
+ * `Ham.metadata` (read via `getMediaPlaylistMetadata`) rather than as
+ * first-class `Track` fields:
+ *
+ * - `targetDuration` (`#EXT-X-TARGETDURATION`) — reload-cadence basis.
+ * - `mediaSequence` (`#EXT-X-MEDIA-SEQUENCE`, default 0) — sequence number of
+ *   `segments[0]`; the join key for merging successive reload snapshots.
+ * - `playlistType` (`#EXT-X-PLAYLIST-TYPE`) — `VOD` / `EVENT` / undefined.
+ * - `endList` (`#EXT-X-ENDLIST`) — playlist is complete; stop reloading.
+ *
+ * See [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md)
+ * for how these map onto the protocol-neutral category model.
+ */
+export interface MediaPlaylistMetadata {
+  targetDuration: number;
+  mediaSequence: number;
+  playlistType?: 'VOD' | 'EVENT';
+  endList: boolean;
+}
+
+/** Key under `Ham.metadata` where {@link MediaPlaylistMetadata} is stored. */
+export const MEDIA_PLAYLIST_METADATA_KEY = 'mediaPlaylist';
+
+/** Typed read of the media-playlist metadata stashed in `ham.metadata`. */
+export function getMediaPlaylistMetadata(ham: Ham): MediaPlaylistMetadata | undefined {
+  return ham.metadata?.[MEDIA_PLAYLIST_METADATA_KEY] as MediaPlaylistMetadata | undefined;
+}
+
+// =============================================================================
 // Media Playlist Info
 // =============================================================================
 
@@ -348,6 +389,27 @@ export interface MediaPlaylistInfo {
 }
 
 // =============================================================================
+// Stream Type
+// =============================================================================
+
+/**
+ * The source's semantic nature — live vs on-demand. A model concept
+ * (consumer-facing), distinct from completeness / duration: a live stream that
+ * has *ended* is still `'live'`. See
+ * [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md).
+ */
+export type StreamType = 'live' | 'on-demand';
+
+/**
+ * Derive {@link StreamType} from a media playlist's metadata. Per the model,
+ * only `#EXT-X-PLAYLIST-TYPE:VOD` marks on-demand; everything else (EVENT, or
+ * the tag absent) is live — completeness (`endList`) never factors in.
+ */
+export function deriveStreamType(metadata: MediaPlaylistMetadata | undefined): StreamType {
+  return metadata?.playlistType === 'VOD' ? 'on-demand' : 'live';
+}
+
+// =============================================================================
 // Presentation
 // =============================================================================
 
@@ -362,6 +424,12 @@ export type Presentation = Ham &
   AddressableObject &
   Partial<TimeSpan> & {
     selectionSets: SelectionSet[];
+    /**
+     * Live vs on-demand — the source's semantic nature. Populated once a media
+     * playlist is parsed (derived from `#EXT-X-PLAYLIST-TYPE` via
+     * `deriveStreamType`); orthogonal to duration / completeness.
+     */
+    streamType?: StreamType;
   };
 
 /**
