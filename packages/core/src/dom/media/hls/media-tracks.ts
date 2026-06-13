@@ -28,6 +28,12 @@ type HlsJsMediaAudioTrack = {
   lang?: string | undefined;
 };
 
+// hls.js may rebuild its levels array with new object references between
+// events, so key levels by their identifying attributes instead of identity.
+function getLevelKey(level: HlsJsMediaTrackLevel): string {
+  return `${level.url[0] ?? ''}|${level.width}x${level.height}|${level.videoCodec}|${level.bitrate}`;
+}
+
 /**
  * Mirrors hls.js manifest levels and alternate audio into the media element's
  * `videoRenditions` / `audioTracks` lists, and wires user selection back to
@@ -39,7 +45,7 @@ type HlsJsMediaAudioTrack = {
  */
 export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class HlsJsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
-    #levelIdMap = new WeakMap<HlsJsMediaTrackLevel, string>();
+    #levelIdMap = new Map<string, string>();
     #currentVideoTrack: VideoTrackLike | null = null;
 
     constructor(...args: any[]) {
@@ -59,6 +65,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onManifestParsed = (_event: string, data: { levels: HlsJsMediaTrackLevel[] }) => {
       this.#removeAllMediaTracks();
+      this.#levelIdMap.clear();
 
       const videoTrack = this.addVideoTrack('main');
       this.#currentVideoTrack = videoTrack;
@@ -73,7 +80,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
           level.bitrate
         );
 
-        this.#levelIdMap.set(level, `${id}`);
+        this.#levelIdMap.set(getLevelKey(level), `${id}`);
         rendition.id = `${id}`;
       }
     };
@@ -107,7 +114,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     #onLevelsUpdated = (_event: string, data: { levels: HlsJsMediaTrackLevel[] }) => {
       if (!this.#currentVideoTrack) return;
 
-      const levelIds = data.levels.map((level) => this.#levelIdMap.get(level));
+      const levelIds = data.levels.map((level) => this.#levelIdMap.get(getLevelKey(level)));
 
       for (const rendition of this.videoRenditions) {
         if (rendition.id && !levelIds.includes(rendition.id)) {
@@ -136,6 +143,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       this.videoRenditions.removeEventListener('change', this.#switchRendition);
 
       this.#removeAllMediaTracks();
+      this.#levelIdMap.clear();
       this.#currentVideoTrack = null;
     };
 
