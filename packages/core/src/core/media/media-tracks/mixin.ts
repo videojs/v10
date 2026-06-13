@@ -81,6 +81,23 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
     prototype.removeAudioTrack = removeAudioTrack;
   }
 
+  // Tear down the native-track listeners wired in getVideoTracks/getAudioTracks
+  // when the target is removed, and drop the cached lists so a re-attach
+  // re-mirrors against the new target.
+  if (!hasOwn(prototype, 'detach')) {
+    const baseDetach = prototype.detach as ((this: object) => void) | undefined;
+    prototype.detach = function (this: object) {
+      const priv = getPrivate(this);
+      (priv.videoTracksCleanup as AbortController | undefined)?.abort();
+      (priv.audioTracksCleanup as AbortController | undefined)?.abort();
+      delete priv.videoTracks;
+      delete priv.audioTracks;
+      delete priv.videoTracksCleanup;
+      delete priv.audioTracksCleanup;
+      baseDetach?.call(this);
+    };
+  }
+
   if (!hasOwn(prototype, 'videoRenditions')) {
     Object.defineProperty(prototype, 'videoRenditions', {
       get() {
@@ -168,10 +185,14 @@ function getVideoTracks(media: any) {
         }
       };
 
-      nativeTracks.addEventListener('change', onChange);
-      nativeTracks.addEventListener('addtrack', onAddTrack);
-      nativeTracks.addEventListener('removetrack', onRemoveTrack);
-      currentTracks.addEventListener('addtrack', onCustomAddTrack);
+      const controller = new AbortController();
+      const { signal } = controller;
+      getPrivate(media).videoTracksCleanup = controller;
+
+      nativeTracks.addEventListener('change', onChange, { signal });
+      nativeTracks.addEventListener('addtrack', onAddTrack, { signal });
+      nativeTracks.addEventListener('removetrack', onRemoveTrack, { signal });
+      currentTracks.addEventListener('addtrack', onCustomAddTrack, { signal });
     }
   }
   return tracks;
@@ -214,10 +235,14 @@ function getAudioTracks(media: any) {
         }
       };
 
-      nativeTracks.addEventListener('change', onChange);
-      nativeTracks.addEventListener('addtrack', onAddTrack);
-      nativeTracks.addEventListener('removetrack', onRemoveTrack);
-      currentTracks.addEventListener('addtrack', onCustomAddTrack);
+      const controller = new AbortController();
+      const { signal } = controller;
+      getPrivate(media).audioTracksCleanup = controller;
+
+      nativeTracks.addEventListener('change', onChange, { signal });
+      nativeTracks.addEventListener('addtrack', onAddTrack, { signal });
+      nativeTracks.addEventListener('removetrack', onRemoveTrack, { signal });
+      currentTracks.addEventListener('addtrack', onCustomAddTrack, { signal });
     }
   }
   return tracks;

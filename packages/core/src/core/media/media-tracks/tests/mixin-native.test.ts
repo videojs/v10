@@ -81,4 +81,24 @@ describe('MediaTracksMixin', () => {
     expect(media.audioTracks.length).toBe(1);
     expect([...media.audioTracks]).toEqual([custom]);
   });
+
+  it('removes native track listeners when the target is detached', () => {
+    const media = new NativeMediaWithTracks();
+    const videoList = media.videoTracks;
+    const audioList = media.audioTracks;
+
+    media.target.videoTracks.add({ kind: 'main' });
+    media.target.audioTracks.add({ kind: 'main' });
+    expect(videoList.length).toBe(1);
+    expect(audioList.length).toBe(1);
+
+    (media as unknown as { detach(): void }).detach();
+
+    media.target.videoTracks.add({ kind: 'alternative' });
+    media.target.audioTracks.add({ kind: 'alternative' });
+
+    // Listeners were torn down, so the detached lists no longer mirror.
+    expect(videoList.length).toBe(1);
+    expect(audioList.length).toBe(1);
+  });
 });
