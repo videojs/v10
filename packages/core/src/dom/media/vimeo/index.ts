@@ -1,23 +1,18 @@
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
-import type { ErrorLike, TextTrackListLike, Video } from '../../../core/media/types';
+import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../../core/media/types';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
-// ----------------------------------------------------------------------------
-// Types
-// ----------------------------------------------------------------------------
-
-export type VimeoPreload = 'none' | 'metadata' | 'auto';
-
 /** Public Vimeo embed configuration. Forwarded to `@vimeo/player`. */
-export type VimeoConfig = VimeoEmbedParameters;
+export interface VimeoConfig extends VimeoEmbedParameters {
+  referrerPolicy?: ReferrerPolicy;
+}
 
 /** Parsed pieces of a Vimeo source URL. */
 export interface VimeoSource {
-  /** Numeric Vimeo id. */
   id: number;
   /** `'video'` for regular clips, `'event'` for live events. */
   kind: 'video' | 'event';
@@ -26,21 +21,15 @@ export interface VimeoSource {
 }
 
 export interface VimeoMediaProps {
-  /** Vimeo video id, vimeo.com URL, or player.vimeo.com embed URL. */
   src: string;
   autoplay: boolean;
-  /** Reflects the `muted` attribute (initial state). Use `muted` for runtime mute. */
   defaultMuted: boolean;
+  muted: boolean;
   loop: boolean;
   controls: boolean;
   playsInline: boolean;
-  preload: VimeoPreload;
+  preload: MediaPreloadType;
   poster: string;
-  /**
-   * Arbitrary extra `@vimeo/player` embed parameters merged into the iframe
-   * URL. Use this for Vimeo-specific knobs that aren't on the standard media
-   * surface — e.g. `autopause`, `byline`, `dnt`, `quality`, `texttrack`.
-   */
   config: VimeoConfig;
 }
 
@@ -48,6 +37,7 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   src: '',
   autoplay: false,
   defaultMuted: false,
+  muted: false,
   loop: false,
   controls: false,
   playsInline: true,
@@ -56,20 +46,7 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   config: {},
 };
 
-// ----------------------------------------------------------------------------
-// VimeoMedia
-// ----------------------------------------------------------------------------
-
-/**
- * Media host for Vimeo embeds. Wraps an `<iframe>` and implements the
- * {@link Video} surface against the underlying `@vimeo/player` instance, with
- * played-range tracking via {@link MediaPlayedRangesMixin}. Embed-only props
- * (`autoplay`, `config`, …) live on the class but outside {@link Video}.
- *
- * Vimeo drives state via the JS Player API rather than a native `<video>`
- * target — the `target` here is the `<iframe>` the player is bound to.
- */
-export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements Video {
+export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
   #loadComplete = createPublicPromise<void>();
@@ -100,48 +77,36 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   #isFullscreen = false;
   #isPictureInPicture = false;
   #disablePictureInPicture = false;
-
   #textTracksHost: HTMLVideoElement | null = null;
   #textTracksDisconnect: AbortController | null = null;
 
   static PLAYER_SOFTWARE_NAME = 'vimeo-video';
-
-  // -- Engine + target --
 
   /** Underlying `@vimeo/player` instance (null before attach). */
   get engine() {
     return this.#player;
   }
 
-  /** Iframe element this media is bound to. */
   get target(): HTMLIFrameElement | null {
     return this.#target;
   }
 
-  /**
-   * Bind the iframe that hosts the Vimeo embed. Creates a `@vimeo/player`
-   * instance and dispatches `loadstart`.
-   */
+  /** Bind the iframe hosting the embed, creating a `@vimeo/player` instance. */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
     if (this.#target) this.detach();
-
     this.#target = target;
-
     if (!target.src) {
       const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
       if (initialSrc) target.src = initialSrc;
     }
-
     this.#loadComplete = createPublicPromise<void>();
     this.#player = new VimeoPlayer(target);
     this.#bindPlayerEvents(this.#player);
     this.#setupTextTracks(this.#player);
-
     this.dispatchEvent(new Event('loadstart'));
   }
 
-  /** Unbind the iframe, destroying the underlying `@vimeo/player` instance. */
   detach(): void {
     if (!this.#target) return;
     this.#teardownTextTracks();
@@ -156,12 +121,9 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
     super.destroy();
   }
 
-  // -- Source --
-
   get src() {
     return this.#src;
   }
-
   set src(value) {
     if (this.#src === value) return;
     this.#src = value;
@@ -176,26 +138,18 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
     return this.#readyState;
   }
 
-  /**
-   * Force a reload of the current source. Calls Vimeo's `loadVideo` API if
-   * the player is connected; otherwise a no-op until `attach()` is called.
-   */
+  /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
     if (!this.#player || !this.#src) return;
-
     this.#resetState();
     this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
-
     const loadOptions = toLoadVideoOptions(this.#src, this.#config);
     if (!loadOptions) return;
-
     // Vimeo dispatches an `error` event separately on failure.
     await this.#player.loadVideo(loadOptions).catch(() => {});
   }
-
-  // -- Playback --
 
   get paused() {
     return this.#paused;
@@ -218,12 +172,9 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
     void this.#player?.pause().catch(() => {});
   }
 
-  // -- Time --
-
   get currentTime() {
     return this.#currentTime;
   }
-
   set currentTime(value) {
     if (this.#currentTime === value) return;
     this.#currentTime = value;
@@ -234,12 +185,9 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
     return this.#duration;
   }
 
-  // -- Volume --
-
   get volume() {
     return this.#volume;
   }
-
   set volume(value) {
     if (this.#volume === value) return;
     this.#volume = value;
@@ -249,31 +197,24 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get muted() {
     return this.#muted;
   }
-
   set muted(value) {
     if (this.#muted === value) return;
     this.#muted = value;
     this.#afterLoad((p) => p.setMuted(value));
   }
 
-  // -- Playback rate --
-
   get playbackRate() {
     return this.#playbackRate;
   }
-
   set playbackRate(value) {
     if (this.#playbackRate === value) return;
     this.#playbackRate = value;
     this.#afterLoad((p) => p.setPlaybackRate(value));
   }
 
-  // -- Playback options --
-
   get autoplay() {
     return this.#autoplay;
   }
-
   set autoplay(value) {
     this.#autoplay = value;
   }
@@ -281,7 +222,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get defaultMuted() {
     return this.#defaultMuted;
   }
-
   set defaultMuted(value) {
     this.#defaultMuted = value;
   }
@@ -289,7 +229,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get loop() {
     return this.#loop;
   }
-
   set loop(value) {
     this.#loop = value;
     this.#afterLoad((p) => p.setLoop(value));
@@ -298,7 +237,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get controls() {
     return this.#controls;
   }
-
   set controls(value) {
     this.#controls = value;
   }
@@ -306,7 +244,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get playsInline() {
     return this.#playsInline;
   }
-
   set playsInline(value) {
     this.#playsInline = value;
   }
@@ -314,7 +251,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get preload() {
     return this.#preload;
   }
-
   set preload(value) {
     this.#preload = value;
   }
@@ -322,7 +258,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get poster() {
     return this.#poster;
   }
-
   set poster(value) {
     this.#poster = value;
   }
@@ -330,12 +265,9 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get config() {
     return this.#config as Record<string, unknown>;
   }
-
   set config(value) {
     this.#config = value as VimeoConfig;
   }
-
-  // -- Buffer --
 
   get buffered() {
     return this.#progress > 0 ? createTimeRanges(0, this.#progress) : EMPTY_TIME_RANGES;
@@ -347,22 +279,14 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
       : EMPTY_TIME_RANGES;
   }
 
-  // -- Error --
-
   get error() {
     return this.#error;
   }
 
-  // -- Text tracks --
-
   get textTracks() {
-    if (!this.#textTracksHost) {
-      this.#textTracksHost = globalThis.document?.createElement('video') ?? null;
-    }
+    this.#textTracksHost ??= globalThis.document?.createElement('video') ?? null;
     return (this.#textTracksHost?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS;
   }
-
-  // -- Dimensions --
 
   get videoWidth() {
     return this.#videoWidth;
@@ -371,8 +295,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get videoHeight() {
     return this.#videoHeight;
   }
-
-  // -- Fullscreen / Picture-in-Picture --
 
   get isFullscreen() {
     return this.#isFullscreen;
@@ -397,39 +319,28 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   get disablePictureInPicture() {
     return this.#disablePictureInPicture;
   }
-
   set disablePictureInPicture(value) {
     this.#disablePictureInPicture = value;
   }
 
   async requestPictureInPicture() {
     await this.#loadComplete;
-    try {
-      await this.#player?.requestPictureInPicture?.();
+    await this.#player?.requestPictureInPicture?.().then(() => {
       this.#isPictureInPicture = true;
-    } catch (error) {
-      console.error(error);
-    }
+    }, console.error);
   }
 
   async exitPictureInPicture() {
     await this.#loadComplete;
-    try {
-      await this.#player?.exitPictureInPicture?.();
+    await this.#player?.exitPictureInPicture?.().then(() => {
       this.#isPictureInPicture = false;
-    } catch (error) {
-      console.error(error);
-    }
+    }, console.error);
   }
-
-  // -- Internals --
 
   /** Defer a player call until `loadComplete` resolves, swallowing rejections. */
   #afterLoad(fn: (player: VimeoPlayer) => Promise<unknown>) {
     this.#loadComplete.then(
-      () => {
-        if (this.#player) fn(this.#player).catch(() => {});
-      },
+      () => this.#player && void fn(this.#player).catch(() => {}),
       () => {}
     );
   }
@@ -441,7 +352,7 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
       loop: this.#loop,
       controls: this.#controls,
       playsInline: this.#playsInline,
-      preload: (this.#preload || vimeoMediaDefaultProps.preload) as VimeoPreload,
+      preload: this.#preload || vimeoMediaDefaultProps.preload,
       config: this.#config,
     };
   }
@@ -466,11 +377,9 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
 
   async #onLoaded() {
     this.#readyState = READY_STATE_HAVE_METADATA;
-
     const player = this.#player;
     if (player) {
-      // Pull initial state in parallel; each falls back to the current value
-      // so a single failure doesn't clobber the others.
+      // Each value falls back to the current one so a single failure isn't fatal.
       const [muted, volume, duration] = await Promise.all([
         player.getMuted().catch(() => this.#muted),
         player.getVolume().catch(() => this.#volume),
@@ -480,114 +389,94 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
       this.#volume = volume;
       this.#duration = duration;
     }
-
-    this.dispatchEvent(new Event('loadedmetadata'));
-    this.dispatchEvent(new Event('durationchange'));
-    this.dispatchEvent(new Event('volumechange'));
-    this.dispatchEvent(new Event('loadcomplete'));
+    for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
+      this.dispatchEvent(new Event(type));
+    }
     this.#loadComplete.resolve();
   }
 
   #bindPlayerEvents(player: VimeoPlayer) {
+    const emit = (type: string) => this.dispatchEvent(new Event(type));
     player.on('loaded', () => this.#onLoaded());
-    player.on('bufferstart', () => this.dispatchEvent(new Event('waiting')));
-
+    player.on('bufferstart', () => emit('waiting'));
     player.on('play', () => {
       this.#paused = false;
-      this.dispatchEvent(new Event('play'));
+      emit('play');
     });
-
     player.on('playing', () => {
       this.#readyState = READY_STATE_HAVE_FUTURE_DATA;
       this.#paused = false;
-      this.dispatchEvent(new Event('playing'));
+      emit('playing');
     });
-
     player.on('seeking', () => {
       this.#seeking = true;
-      this.dispatchEvent(new Event('seeking'));
+      emit('seeking');
     });
-
     player.on('seeked', () => {
       this.#seeking = false;
-      this.dispatchEvent(new Event('seeked'));
+      emit('seeked');
     });
-
     player.on('pause', () => {
       this.#paused = true;
-      this.dispatchEvent(new Event('pause'));
+      emit('pause');
     });
-
     player.on('ended', () => {
       this.#paused = true;
       this.#ended = true;
-      this.dispatchEvent(new Event('ended'));
+      emit('ended');
     });
-
     player.on('playbackratechange', ({ playbackRate }) => {
       this.#playbackRate = playbackRate;
-      this.dispatchEvent(new Event('ratechange'));
+      emit('ratechange');
     });
-
     player.on('volumechange', ({ volume }) => {
       this.#volume = volume;
-      this.dispatchEvent(new Event('volumechange'));
+      emit('volumechange');
     });
-
     player.on('durationchange', ({ duration }) => {
       this.#duration = duration;
-      this.dispatchEvent(new Event('durationchange'));
+      emit('durationchange');
     });
-
     player.on('timeupdate', ({ seconds, duration }) => {
       this.#currentTime = seconds;
       if (Number.isFinite(duration) && duration !== this.#duration) this.#duration = duration;
-      this.dispatchEvent(new Event('timeupdate'));
+      emit('timeupdate');
     });
-
     player.on('progress', ({ seconds }) => {
       this.#progress = seconds;
-      this.dispatchEvent(new Event('progress'));
+      emit('progress');
     });
-
     player.on('resize', ({ videoWidth, videoHeight }) => {
       this.#videoWidth = videoWidth;
       this.#videoHeight = videoHeight;
-      this.dispatchEvent(new Event('resize'));
+      emit('resize');
     });
-
-    player.on('error', () => {
-      this.#error = { code: 1, message: 'Vimeo playback error' };
-      this.dispatchEvent(new Event('error'));
-      // Unblock callers awaiting load so play()/fullscreen/PiP don't hang.
-      this.#loadComplete.resolve();
-    });
-
     player.on('fullscreenchange', ({ fullscreen }) => {
       this.#isFullscreen = fullscreen;
-      this.dispatchEvent(new Event('fullscreenchange'));
+      emit('fullscreenchange');
     });
-
     player.on('enterpictureinpicture', () => {
       this.#isPictureInPicture = true;
-      this.dispatchEvent(new Event('enterpictureinpicture'));
+      emit('enterpictureinpicture');
     });
-
     player.on('leavepictureinpicture', () => {
       this.#isPictureInPicture = false;
-      this.dispatchEvent(new Event('leavepictureinpicture'));
+      emit('leavepictureinpicture');
+    });
+    player.on('error', () => {
+      this.#error = { code: 1, message: 'Vimeo playback error' };
+      emit('error');
+      // Unblock callers awaiting load so play()/fullscreen/PiP don't hang.
+      this.#loadComplete.resolve();
     });
   }
 
   #setupTextTracks(player: VimeoPlayer) {
     const doc = globalThis.document;
     if (isUndefined(doc)) return;
-
     this.#teardownTextTracks();
-
     const host = doc.createElement('video');
     this.#textTracksHost = host;
-
     player
       .getTextTracks()
       .then((tracks) => {
@@ -601,7 +490,6 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
         }
       })
       .catch(() => {});
-
     this.#textTracksDisconnect = new AbortController();
     host.textTracks?.addEventListener?.(
       'change',
@@ -621,52 +509,35 @@ export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements V
   }
 }
 
-// ----------------------------------------------------------------------------
-// Public utilities
-// ----------------------------------------------------------------------------
-
 /** Extract a Vimeo video id from a numeric id, vimeo.com URL, or player URL. */
 export function parseVimeoVideoId(src: string) {
   return parseVimeoSource(src)?.id ?? null;
 }
 
 /**
- * Parse a Vimeo source string. Recognizes:
- * - numeric ids (`'76979871'`),
- * - `vimeo.com/<id>` and `vimeo.com/video/<id>` URLs,
- * - `player.vimeo.com/video/<id>` URLs,
- * - `vimeo.com/event/<id>` URLs (live events),
- * - unlisted/event hash via `?h=` or `/<hash>` path segment.
+ * Parse a Vimeo source string. Recognizes numeric ids, `vimeo.com/<id>`,
+ * `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, `vimeo.com/event/<id>`
+ * (live events), and unlisted/event hashes via `?h=` or a `/<hash>` segment.
  */
 export function parseVimeoSource(src: string): VimeoSource | null {
   if (!src) return null;
-
-  if (/^\d+$/.test(src)) {
-    return { id: Number(src), kind: 'video', hash: null };
-  }
-
+  if (/^\d+$/.test(src)) return { id: Number(src), kind: 'video', hash: null };
   const match = MATCH_SRC.exec(src);
   if (!match) return null;
-
   const kind = match[1] === 'event/' ? 'event' : 'video';
-  const id = Number(match[2]);
-  const pathHash = match[3] ?? null;
-
   let queryHash: string | null = null;
   try {
     queryHash = new URL(src).searchParams.get('h');
   } catch {
     // src isn't a valid URL — ignore.
   }
-
-  return { id, kind, hash: queryHash ?? pathHash };
+  return { id: Number(match[2]), kind, hash: queryHash ?? match[3] ?? null };
 }
 
 /** Build the iframe `src` URL for an initial Vimeo embed from the given props. */
 export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps> = {}) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return '';
-
   const params: Record<string, unknown> = {
     // Hide Vimeo chrome by default; pass nothing only when controls is explicitly true.
     controls: props.controls === true ? null : 0,
@@ -680,19 +551,13 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
     // Vimeo-specific knobs (`autopause`, `byline`, `dnt`, …) flow through here.
     ...(props.config ?? undefined),
   };
-
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
     delete params.h;
     return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serialize(params)}`;
   }
-
   return `${EMBED_VIDEO_BASE}/${parsed.id}?${serialize(params)}`;
 }
-
-// ----------------------------------------------------------------------------
-// Module internals
-// ----------------------------------------------------------------------------
 
 const EMBED_VIDEO_BASE = 'https://player.vimeo.com/video';
 const EMBED_EVENT_BASE = 'https://vimeo.com/event';
@@ -703,19 +568,14 @@ const READY_STATE_HAVE_METADATA = 1;
 const READY_STATE_HAVE_FUTURE_DATA = 3;
 
 function createTimeRanges(start: number, end: number) {
-  return {
-    length: 1,
-    start: () => start,
-    end: () => end,
-  };
+  return { length: 1, start: () => start, end: () => end };
 }
 
 function toLoadVideoOptions(src: string, config: VimeoConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
-  const baseUrl = parsed.kind === 'event' ? EMBED_EVENT_BASE : EMBED_VIDEO_BASE;
-  const path = parsed.kind === 'event' ? `${baseUrl}/${parsed.id}/embed` : `${baseUrl}/${parsed.id}`;
-  const url = `${path}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
+  const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
+  const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
   return { url, ...config } as LoadVideoOptions;
 }
 
