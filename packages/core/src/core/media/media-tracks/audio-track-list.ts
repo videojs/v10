@@ -34,7 +34,7 @@ export function removeAudioTrack(track: AudioTrack) {
   if (!trackList) return;
 
   const trackSet = getPrivate(trackList).trackSet as Set<AudioTrack>;
-  trackSet.delete(track);
+  if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {
     trackList.dispatchEvent(new TrackEvent('removetrack', { track }));

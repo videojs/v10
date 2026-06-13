@@ -34,7 +34,7 @@ export function removeVideoTrack(track: VideoTrack) {
   if (!trackList) return;
 
   const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
-  trackSet.delete(track);
+  if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {
     trackList.dispatchEvent(new TrackEvent('removetrack', { track }));

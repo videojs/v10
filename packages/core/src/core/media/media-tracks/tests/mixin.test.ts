@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MediaTracksMixin } from '../mixin';
 
 class TestMedia extends EventTarget {}
@@ -41,6 +41,32 @@ describe('MediaTracksMixin', () => {
     expect(media.videoTracks.length).toBe(2);
     expect(media.videoRenditions.length).toBe(2);
     expect([...media.videoRenditions].map((rendition) => rendition.width)).toEqual([1920, 640]);
+  });
+
+  it('does not dispatch removetrack when the video track is not in the list', async () => {
+    const media = new TestMediaWithTracks();
+    const onRemoveTrack = vi.fn();
+    media.videoTracks.addEventListener('removetrack', onRemoveTrack);
+
+    const track = media.addVideoTrack('main');
+    media.removeVideoTrack(track);
+    media.removeVideoTrack(track);
+    await Promise.resolve();
+
+    expect(onRemoveTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dispatch removetrack when the audio track is not in the list', async () => {
+    const media = new TestMediaWithTracks();
+    const onRemoveTrack = vi.fn();
+    media.audioTracks.addEventListener('removetrack', onRemoveTrack);
+
+    const track = media.addAudioTrack('main');
+    media.removeAudioTrack(track);
+    media.removeAudioTrack(track);
+    await Promise.resolve();
+
+    expect(onRemoveTrack).toHaveBeenCalledTimes(1);
   });
 
   it('makes video track selection exclusive', () => {
