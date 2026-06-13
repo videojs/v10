@@ -73,6 +73,17 @@ class TestAudioHost extends HTMLAudioElementHost {
   destroy() {}
 }
 
+class TestIframeHost extends EventTarget {
+  target: EventTarget | null = null;
+  attach(target: EventTarget | null) {
+    this.target = target;
+  }
+  detach() {
+    this.target = null;
+  }
+  destroy() {}
+}
+
 let tagCounter = 0;
 
 function defineVideoElement() {
@@ -92,6 +103,13 @@ function defineVideoElementWithObjects() {
 function defineAudioElement() {
   const tag = `test-audio-${++tagCounter}`;
   const Ctor = CustomMediaElement('audio', TestAudioHost);
+  customElements.define(tag, Ctor);
+  return { Ctor, tag };
+}
+
+function defineIframeElement() {
+  const tag = `test-iframe-${++tagCounter}`;
+  const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -678,6 +696,18 @@ describe('CustomMediaElement', () => {
       el.target!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
 
       expect(handler).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('connectedCallback', () => {
+    it('marks iframe embeds with data-cross-origin-frame for cross-origin-safe styling', () => {
+      const el = create(defineIframeElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(true);
+    });
+
+    it('does not add data-cross-origin-frame to native media elements', () => {
+      const el = create(defineVideoElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(false);
     });
   });
 
