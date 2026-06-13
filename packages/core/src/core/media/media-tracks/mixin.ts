@@ -137,7 +137,7 @@ function getVideoTracks(media: any) {
     tracks = new VideoTrackList();
     getPrivate(media).videoTracks = tracks;
 
-    const nativeEl = media.nativeEl ?? media.target;
+    const nativeEl = media.target;
 
     if (nativeVideoTracksFn && nativeEl) {
       const currentTracks = tracks;
@@ -152,13 +152,7 @@ function getVideoTracks(media: any) {
       };
 
       const onAddTrack = (event: TrackEvent) => {
-        if ([...currentTracks].some((track) => track instanceof VideoTrack)) {
-          for (const nativeTrack of nativeTracks) {
-            removeVideoTrack(nativeTrack as VideoTrack);
-          }
-          return;
-        }
-
+        if ([...currentTracks].some((track) => track instanceof VideoTrack)) return;
         addVideoTrack(media, event.track as VideoTrack);
       };
 
@@ -166,9 +160,18 @@ function getVideoTracks(media: any) {
         removeVideoTrack(event.track as VideoTrack);
       };
 
+      // Adding a custom track replaces any mirrored native tracks.
+      const onCustomAddTrack = (event: Event) => {
+        if (!((event as TrackEvent).track instanceof VideoTrack)) return;
+        for (const nativeTrack of nativeTracks) {
+          removeVideoTrack(nativeTrack as VideoTrack);
+        }
+      };
+
       nativeTracks.addEventListener('change', onChange);
       nativeTracks.addEventListener('addtrack', onAddTrack);
       nativeTracks.addEventListener('removetrack', onRemoveTrack);
+      currentTracks.addEventListener('addtrack', onCustomAddTrack);
     }
   }
   return tracks;
@@ -180,7 +183,7 @@ function getAudioTracks(media: any) {
     tracks = new AudioTrackList();
     getPrivate(media).audioTracks = tracks;
 
-    const nativeEl = media.nativeEl ?? media.target;
+    const nativeEl = media.target;
 
     if (nativeAudioTracksFn && nativeEl) {
       const currentTracks = tracks;
@@ -195,13 +198,7 @@ function getAudioTracks(media: any) {
       };
 
       const onAddTrack = (event: TrackEvent) => {
-        if ([...currentTracks].some((track) => track instanceof AudioTrack)) {
-          for (const nativeTrack of nativeTracks) {
-            removeAudioTrack(nativeTrack as AudioTrack);
-          }
-          return;
-        }
-
+        if ([...currentTracks].some((track) => track instanceof AudioTrack)) return;
         addAudioTrack(media, event.track as AudioTrack);
       };
 
@@ -209,9 +206,18 @@ function getAudioTracks(media: any) {
         removeAudioTrack(event.track as AudioTrack);
       };
 
+      // Adding a custom track replaces any mirrored native tracks.
+      const onCustomAddTrack = (event: Event) => {
+        if (!((event as TrackEvent).track instanceof AudioTrack)) return;
+        for (const nativeTrack of nativeTracks) {
+          removeAudioTrack(nativeTrack as AudioTrack);
+        }
+      };
+
       nativeTracks.addEventListener('change', onChange);
       nativeTracks.addEventListener('addtrack', onAddTrack);
       nativeTracks.addEventListener('removetrack', onRemoveTrack);
+      currentTracks.addEventListener('addtrack', onCustomAddTrack);
     }
   }
   return tracks;
